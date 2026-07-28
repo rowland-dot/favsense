@@ -207,7 +207,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .search-box svg { width: 18px; color: var(--ink-soft); }
 .search-box input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); }
 .search-box input::placeholder { color: color-mix(in srgb, var(--ink-soft), transparent 22%); }
-.search-box kbd { padding: 3px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-soft); color: var(--ink-soft); font-family: var(--mono); font-size: 10px; }
+.search-box kbd { padding: 3px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-soft); color: var(--ink-soft); font-family: var(--mono); font-size: 10px; white-space: nowrap; }
 .sort-control { display: flex; align-items: center; gap: 7px; height: 48px; padding: 0 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink-soft); font-size: 11px; }
 .sort-control select { border: 0; outline: 0; background: transparent; color: var(--ink); font-weight: 650; }
 .view-toggle { width: 48px; height: 48px; border-radius: 14px; }
