@@ -179,7 +179,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .reel-caption i { flex: 1; height: 1px; margin: 0 7px; background: rgba(255,255,255,.4); }
 
 .workspace { display: grid; grid-template-columns: 235px minmax(0, 1fr); border-top: 1px solid var(--line); background: color-mix(in srgb, var(--paper), var(--surface) 30%); }
-.filter-sidebar { position: sticky; top: 87px; align-self: start; height: calc(100vh - 87px); padding: 34px 24px 30px clamp(22px, 4vw, 58px); border-right: 1px solid var(--line); overflow-y: auto; }
+.filter-sidebar { position: static; align-self: start; height: auto; padding: 34px 24px 30px clamp(22px, 4vw, 58px); overflow-y: visible; border-right: 1px solid var(--line); }
 .sidebar-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; font-size: 12px; font-weight: 750; }
 .sidebar-heading button { border: 0; background: transparent; color: var(--cobalt-dark); cursor: pointer; font-size: 11px; }
 .category-list { display: grid; gap: 5px; }
@@ -410,7 +410,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
   .hero { grid-template-columns: 1fr; padding-top: 62px; }
   .hero-reel { max-width: 540px; }
   .workspace { display: block; }
-  .filter-sidebar { position: static; height: auto; padding: 20px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .filter-sidebar { padding: 20px; border-right: 0; border-bottom: 1px solid var(--line); }
   .sidebar-heading, .sidebar-section, .open-source-note { display: none; }
   .sidebar-section--bookmark { display: block; margin: 13px 0 0; padding: 13px 0 0; }
   .sidebar-section--bookmark .filter-label, .sidebar-section--bookmark .filter-help { display: none; }

@@ -551,6 +551,8 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /FavSense · 拾光台/);
   assert.match(html, /name="keywords"[^>]*Xiaohongshu[^>]*RedNote[^>]*Obsidian/);
   assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /\.filter-sidebar \{[^}]*position:\s*static[^}]*height:\s*auto[^}]*overflow-y:\s*visible/);
+  assert.doesNotMatch(css, /\.filter-sidebar \{[^}]*overflow-y:\s*auto/);
   assert.match(css, /\[hidden\]\s*\{\s*display:\s*none\s*!important/);
   assert.match(css, /--brand-red:\s*#ff2442/);
   assert.match(css, /--cobalt:\s*#5b7cfa/);
