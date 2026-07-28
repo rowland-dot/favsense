@@ -467,7 +467,6 @@ function bindEvents() {
   document.querySelector("#dialog-close").addEventListener("click", closeDialog);
   elements.dialog.addEventListener("click", (event) => { if (event.target === elements.dialog) closeDialog(); });
   elements.dialog.addEventListener("close", () => history.replaceState(null, "", location.pathname + location.search));
-  document.querySelector("#clear-filters").addEventListener("click", clearFilters);
   document.querySelector("#empty-clear").addEventListener("click", clearFilters);
   document.querySelector("#theme-toggle").addEventListener("click", () => {
     const dark = document.documentElement.dataset.theme !== "dark";

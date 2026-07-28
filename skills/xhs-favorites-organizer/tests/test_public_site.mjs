@@ -442,6 +442,7 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /id="resource-result-count"/);
   assert.doesNotMatch(html, /owner\/repo|Star、许可证|从官方仓库确认/);
   assert.match(html, />同步设置</);
+  assert.doesNotMatch(html, /id="clear-filters"/);
   assert.doesNotMatch(html, /项目雷达|资源雷达|同步与方法/);
   assert.doesNotMatch(html, /项目、风险与下一步|视频核验后的判断|证据方法|TRY →/);
   assert.match(html, /id="board-manager"/);
