@@ -6,6 +6,12 @@
   "domain_profile": "config/domain-profiles/software.json",
   "curation_file": "skills/xhs-favorites-organizer/references/skills-board-curation.json",
   "public_stats": { "frame_evidence_count": 0 },
+  "publish": {
+    "enabled": false,
+    "provider": "huggingface",
+    "repository": "https://huggingface.co/spaces/YOUR_HF_USERNAME/YOUR_SPACE_NAME",
+    "branch": "main"
+  },
   "boards": [
     {
       "id": "YOUR_BOARD_ID",

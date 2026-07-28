@@ -11,9 +11,11 @@ const requiredFiles = [
   ".github/workflows/ci.yml", ".github/PULL_REQUEST_TEMPLATE.md", ".github/REPOSITORY_METADATA.md",
   ".github/ISSUE_TEMPLATE/bug_report.yml", ".github/ISSUE_TEMPLATE/feature_request.yml",
   "config/domain-profiles/software.json", "config/domain-profiles/fitness.json", "config/domain-profiles/skincare.json",
+  "config/xhs-favorites.example.json",
   "config/resource-registries/fitness.example.json", "config/resource-registries/skincare.example.json",
   "favsense.ps1", "site/index.html", "site/app.js", "site/resource-utils.mjs", "site/data/knowledge.json",
-  "skills/xhs-favorites-organizer/scripts/build-public-site.mjs", "skills/xhs-favorites-organizer/scripts/evidence-stats.mjs"
+  "skills/xhs-favorites-organizer/scripts/build-public-site.mjs", "skills/xhs-favorites-organizer/scripts/evidence-stats.mjs",
+  "skills/xhs-favorites-organizer/scripts/publish-huggingface.mjs"
 ];
 const publicFiles = ["README.md", "site/index.html", "site/app.js", "site/site-config.js", "site/data/knowledge.json"];
 const forbidden = [
@@ -44,6 +46,18 @@ for (const entry of [".xhs-favorites/", ".xhs-tools/", "knowledge-base/", "confi
 }
 const ignored = spawnSync("git", ["check-ignore", "site/.local/bridge.json", "config/xhs-favorites.json"], { cwd: root, encoding: "utf8" });
 if (ignored.status !== 0) failures.push("Git 未正确忽略本机运行时文件或私有配置");
+
+try {
+  const exampleConfig = JSON.parse(await readFile(resolve(root, "config/xhs-favorites.example.json"), "utf8"));
+  if (exampleConfig.version !== 1 || !Array.isArray(exampleConfig.boards)) {
+    failures.push("config/xhs-favorites.example.json has an unsupported structure");
+  }
+  if (Object.keys(exampleConfig.publish || {}).some((key) => /token|password|secret/i.test(key))) {
+    failures.push("config/xhs-favorites.example.json must not contain publish credentials");
+  }
+} catch (error) {
+  failures.push(`config/xhs-favorites.example.json is not valid JSON: ${error.message}`);
+}
 
 const siteConfig = await readFile(resolve(root, "site/site-config.js"), "utf8");
 if (/repositoryUrl:\s*""/.test(siteConfig)) failures.push("site/site-config.js 缺少 repositoryUrl");

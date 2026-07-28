@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 
 MODULE_PATH = Path(__file__).parents[1] / "scripts" / "bridge-server.py"
@@ -122,6 +123,54 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertEqual(resolved, workspace / "config" / "profile.json")
             with self.assertRaises(ValueError):
                 BRIDGE.resolve_workspace_path(workspace, "../outside.json", "domain_profile")
+
+    def test_huggingface_publish_config_is_explicit_and_token_free(self):
+        disabled = BRIDGE.normalize_publish_config({"version": 1})
+        self.assertIsNone(disabled)
+        enabled = BRIDGE.normalize_publish_config({
+            "version": 1,
+            "publish": {
+                "enabled": True,
+                "provider": "huggingface",
+                "repository": "https://huggingface.co/spaces/example/favsense",
+                "branch": "main",
+            },
+        })
+        self.assertEqual(enabled["repository"], "https://huggingface.co/spaces/example/favsense")
+        self.assertNotIn("token", enabled)
+        with self.assertRaisesRegex(ValueError, "Hugging Face Space"):
+            BRIDGE.normalize_publish_config({
+                "version": 1,
+                "publish": {"enabled": True, "provider": "huggingface", "repository": "https://example.com/repo"},
+            })
+
+    def test_publish_runs_only_after_the_final_enabled_board(self):
+        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge.board_order = ["first", "last"]
+        bridge.publish_config = {"enabled": True}
+        calls = []
+        bridge.publish_public_site = lambda: calls.append("published") or {"ok": True, "status": "published"}
+        self.assertIsNone(bridge.publish_after_board("first"))
+        self.assertEqual(bridge.publish_after_board("last")["status"], "published")
+        self.assertEqual(calls, ["published"])
+
+    def test_publish_timeout_is_reported_without_failing_local_sync(self):
+        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge.publisher = Path("publish-huggingface.mjs")
+        bridge.workspace = Path(".").resolve()
+        bridge.publish_config = {
+            "repository": "https://huggingface.co/spaces/example/favsense",
+            "branch": "main",
+        }
+        with mock.patch.object(
+            BRIDGE.subprocess,
+            "run",
+            side_effect=BRIDGE.subprocess.TimeoutExpired(["node", "publisher"], 180),
+        ):
+            result = bridge.publish_public_site()
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("timed out", result["error"])
 
 
 class DetailFetcherTest(unittest.IsolatedAsyncioTestCase):

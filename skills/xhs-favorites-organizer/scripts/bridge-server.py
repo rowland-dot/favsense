@@ -32,6 +32,10 @@ NOTE_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 RUN_ID = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 BOARD_ID = re.compile(r"^[a-z0-9]{1,80}$")
 TOKEN_QUERY = re.compile(r"(?i)(xsec_token=)[^&\s]+")
+HF_SPACE_REPOSITORY = re.compile(
+    r"^https://huggingface\.co/spaces/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(?:\.git)?$"
+)
+GIT_BRANCH = re.compile(r"^[A-Za-z0-9._/-]{1,100}$")
 
 
 class BridgeBusyError(RuntimeError):
@@ -95,6 +99,23 @@ def resolve_workspace_path(workspace: Path, value: str, label: str) -> Path:
     if candidate != resolved_workspace and resolved_workspace not in candidate.parents:
         raise ValueError(f"{label} must stay inside the workspace")
     return candidate
+
+
+def normalize_publish_config(config: dict) -> dict | None:
+    publish = config.get("publish") if isinstance(config, dict) else None
+    if not isinstance(publish, dict) or publish.get("enabled") is not True:
+        return None
+    if publish.get("provider") != "huggingface":
+        raise ValueError("publish.provider must be huggingface")
+    repository = str(publish.get("repository", "")).strip()
+    branch = str(publish.get("branch", "main")).strip()
+    if not HF_SPACE_REPOSITORY.fullmatch(repository):
+        raise ValueError("publish.repository must be an HTTPS Hugging Face Space repository URL")
+    if not GIT_BRANCH.fullmatch(branch) or ".." in branch:
+        raise ValueError("publish.branch contains unsupported characters")
+    if any(key in publish for key in ("token", "password", "secret")):
+        raise ValueError("publish credentials must use the system credential store, not the config file")
+    return {"enabled": True, "provider": "huggingface", "repository": repository, "branch": branch}
 
 
 def parse_board_url(value: str) -> tuple[str, str]:
@@ -198,6 +219,8 @@ class Bridge:
         self.organizer = self.skill_dir / "scripts" / "organize.mjs"
         self.builder = self.skill_dir / "scripts" / "build-knowledge-base.mjs"
         self.public_builder = self.skill_dir / "scripts" / "build-public-site.mjs"
+        self.publisher = self.skill_dir / "scripts" / "publish-huggingface.mjs"
+        self.publish_config = normalize_publish_config(config)
         self.curation = resolve_workspace_path(self.workspace, str(config.get("curation_file", "skills/xhs-favorites-organizer/references/skills-board-curation.json")), "curation_file")
         self.profile = resolve_workspace_path(self.workspace, str(config.get("domain_profile", "config/domain-profiles/software.json")), "domain_profile")
         self.resource_registry = None
@@ -217,6 +240,8 @@ class Bridge:
             self.userscript,
             self.userscript_template,
         ]
+        if self.publish_config is not None:
+            required_files.append(self.publisher)
         if self.profile.is_file():
             profile_config = json.loads(self.profile.read_text(encoding="utf-8-sig"))
             resource_index = profile_config.get("resource_index", {})
@@ -376,6 +401,63 @@ class Bridge:
         index = self.board_order.index(board_id)
         return self.board_order[index + 1] if index + 1 < len(self.board_order) else None
 
+    def publish_public_site(self) -> dict:
+        if self.publish_config is None:
+            return {"ok": True, "status": "disabled"}
+        try:
+            published = subprocess.run(
+                [
+                    "node", str(self.publisher),
+                    "--workspace", str(self.workspace),
+                    "--repository", self.publish_config["repository"],
+                    "--branch", self.publish_config["branch"],
+                ],
+                text=True,
+                encoding="utf-8",
+                capture_output=True,
+                cwd=self.workspace,
+                timeout=180,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return {
+                "ok": False,
+                "status": "failed",
+                "error": "Hugging Face publication timed out after 180 seconds",
+            }
+        except OSError as error:
+            return {
+                "ok": False,
+                "status": "failed",
+                "error": sanitize_error(f"publisher could not start: {error}"),
+            }
+        if published.returncode != 0:
+            return {
+                "ok": False,
+                "status": "failed",
+                "error": sanitize_error(published.stderr),
+            }
+        try:
+            result = json.loads(published.stdout)
+        except json.JSONDecodeError:
+            return {
+                "ok": False,
+                "status": "failed",
+                "error": "publisher returned invalid JSON",
+            }
+        if not isinstance(result, dict) or result.get("status") not in {"published", "unchanged"}:
+            return {
+                "ok": False,
+                "status": "failed",
+                "error": "publisher returned an unsupported result",
+            }
+        return result
+
+    def publish_after_board(self, board_id: str) -> dict | None:
+        if self.publish_config is None or self.next_board_id(board_id) is not None:
+            return None
+        return self.publish_public_site()
+
     def tag_catalog_sources(self, board_id: str, note_ids: set[str]) -> None:
         if not self.catalog_path.exists():
             return
@@ -461,6 +543,8 @@ class Bridge:
             if not pending:
                 self.tag_catalog_sources(board_id, set(unique))
                 self.rebuild_knowledge_base()
+                next_board_id = self.next_board_id(board_id)
+                publish = self.publish_after_board(board_id)
                 result = {
                     **status,
                     "state": "completed",
@@ -468,8 +552,10 @@ class Bridge:
                     "new": 0,
                     "baseline": False,
                     "report": None,
-                    "next_board_id": self.next_board_id(board_id),
+                    "next_board_id": next_board_id,
                 }
+                if publish is not None:
+                    result["publish"] = publish
                 self.write_status(result)
                 return
 
@@ -520,6 +606,8 @@ class Bridge:
             }
             self.tag_catalog_sources(board_id, (known & set(unique)) | fetched_ids)
             self.rebuild_knowledge_base()
+            next_board_id = self.next_board_id(board_id)
+            publish = self.publish_after_board(board_id)
 
             result = {
                 **status,
@@ -530,8 +618,10 @@ class Bridge:
                 "failures": failures,
                 "baseline": baseline,
                 "report": str(report),
-                "next_board_id": self.next_board_id(board_id),
+                "next_board_id": next_board_id,
             }
+            if publish is not None:
+                result["publish"] = publish
             self.write_status(result)
             return
         except Exception as error:  # noqa: BLE001

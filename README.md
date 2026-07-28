@@ -152,6 +152,21 @@ git push -u origin main
 
 ## 发布到 Hugging Face Spaces
 
+Hugging Face 不是只有项目介绍页：FavSense 会把 `site/` 作为完整、可交互的公网知识库发布。小红书登录、采集、视频证据和 Obsidian 完整库留在本机；每日任务完成最后一个已启用收藏夹后，可自动把新的脱敏网页数据同步到 Space。
+
+```json
+{
+  "publish": {
+    "enabled": true,
+    "provider": "huggingface",
+    "repository": "https://huggingface.co/spaces/YOUR_HF_USERNAME/YOUR_SPACE_NAME",
+    "branch": "main"
+  }
+}
+```
+
+Token 不写入配置或仓库，由系统 Git 凭据管理器保存。默认使用 Static HTML SDK，完整支持搜索、筛选、详情和资源索引，不需要 Docker、Python 服务或 GPU。首次发布、每日自动发布、数据保存位置和故障排查见 [完整发布指南](docs/PUBLISHING.md)。
+
 1. 在 Hugging Face 选择 **Create new Space**。
 2. SDK 选择 **Static HTML**，可见性由你决定。
 3. 创建后，把同一仓库推送到 Space：

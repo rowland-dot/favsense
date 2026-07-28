@@ -88,6 +88,8 @@ node ".\skills\xhs-favorites-organizer\scripts\build-knowledge-base.mjs" `
 node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs"
 ```
 
+当私有配置中的 `publish.enabled` 为 `true` 时，最后一个已启用收藏夹处理完成后，桥接服务调用 `publish-huggingface.mjs`，仅把 `site/` 镜像到指定 Hugging Face Static Space，并排除 `site/.local/`。发布凭据必须来自系统 Git 凭据管理器，不能写入配置、脚本或仓库；发布失败只记录在运行状态中，不得撤销或破坏本地 catalog、Obsidian 知识库和网页构建结果。
+
 本地预览：
 
 ```powershell

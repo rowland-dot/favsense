@@ -31,8 +31,9 @@
   "scripts": {
     "preview": "node scripts/serve-site.mjs",
     "test:site": "node --test skills/xhs-favorites-organizer/tests/test_public_site.mjs",
+    "test:publish": "node --test skills/xhs-favorites-organizer/tests/test_huggingface_publish.mjs",
     "test:knowledge": "node skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs",
-    "test": "npm run test:site && npm run test:knowledge",
+    "test": "npm run test:site && npm run test:publish && npm run test:knowledge",
     "verify": "node scripts/verify-release.mjs",
     "release:check": "npm test && npm run verify"
   }

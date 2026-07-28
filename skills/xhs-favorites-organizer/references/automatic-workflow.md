@@ -9,6 +9,8 @@ Windows 计划任务（21:00，仅当前用户登录时）
   -> catalog 以 note ID 全局去重、保留来源面板
   -> 固定版本 XHS-Downloader 只读取新增详情
   -> build-knowledge-base.mjs 生成 Obsidian 知识库
+  -> build-public-site.mjs 生成脱敏网页数据
+  -> 最后一个已启用面板完成后，可选发布 site/ 到 Hugging Face Static Space
 ```
 
 运行链路不调用 Codex App、Claude、浏览器控制插件、剪贴板或云端 LLM。
