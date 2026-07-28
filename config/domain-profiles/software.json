@@ -28,7 +28,7 @@
     ]
   },
   "fallback": {
-    "default_category": "开发部署与Vibe Coding",
+    "default_category": "其他软件与 AI",
     "default_kind": "Note",
     "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
     "kind_rules": [
@@ -39,12 +39,12 @@
     ],
     "rules": [
       { "category": "信息采集与搜索", "pattern": "搜索|爬虫|抓取|采集|markdown|markitdown|crawler" },
-      { "category": "知识管理与记忆", "pattern": "记忆|知识图谱|索引|rag|cognee" },
-      { "category": "Skills与工作流", "pattern": "skill|claude|codex|提示词|loop" },
+      { "category": "知识管理与记忆", "pattern": "记忆|知识库|知识图谱|索引|rag|cognee" },
+      { "category": "Skills与工作流", "pattern": "skill|工作流|workflow|提示词|loop" },
       { "category": "Agent与自动化", "pattern": "agent|自动化|rpa|gui" },
       { "category": "本地模型与成本", "pattern": "本地.*模型|token|代币|headroom|显存" },
-      { "category": "内容增长与商业", "pattern": "自媒体|一人公司|客户|出海|运营|会议" },
-      { "category": "AI设计与多媒体", "pattern": "设计|视频|剪辑|ppt|office" },
+      { "category": "内容增长与商业", "pattern": "自媒体|一人公司|客户|出海|运营|会议|博主|个人成长|知识付费|youtube|油管" },
+      { "category": "AI设计与多媒体", "pattern": "设计|视频|剪辑|影视|动画|拍摄|摄影|配音|语音|声音|图像|图片|ppt|office|comfyui|爱死机|tts|动捕|3d" },
       { "category": "垂直工具与数据", "pattern": "金融|股票|量化|database" }
     ]
   },

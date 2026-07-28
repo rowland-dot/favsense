@@ -24,7 +24,7 @@ Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成�
 视觉网页输出到 `site/`，作为日常阅读入口：
 
 - `site/index.html`：Hugging Face Static Space 入口；
-- `site/data/knowledge.json`：只包含可公开的原创策展字段、公开原帖链接和 GitHub 核验，不包含个人主页、收藏夹 ID、Cookie、Token、视频或帧文件；
+- `site/data/knowledge.json`：只包含可公开的原创策展字段、无 Token 的小红书站内检索入口和 GitHub 核验，不包含个人主页、收藏夹 ID、Cookie、Token、视频或帧文件；
 - 每次本地桥接服务完成 catalog 与 Obsidian 重建后，同时运行 `build-public-site.mjs` 更新网页数据；
 - “同步设置”页通过仅信任固定工作台 Origin `http://127.0.0.1:8766` 的本机凭据接口管理全部收藏夹开关；被 Git 忽略的 `site/.local/bridge.json` 只记录回环地址、不保存凭据，公共部署只显示本机连接说明；
 - 网页是纯 HTML/CSS/JavaScript，不依赖 Codex、Claude、后端服务或付费 Hugging Face 硬件。
@@ -107,6 +107,8 @@ python -m http.server 8000 --directory site
 `kind` 只回答“内容本身是什么”，绝不能表示“是否已经处理”。未进入人工策展的收藏也必须先按领域配置和公开元数据推断内容形态，不能统一写成 `Note`；`Note` 只用于观点、资讯或一般知识说明。深度解读是否完成由证据文本和策展内容体现，不得复用内容形态字段。每个领域配置必须声明有效的 `classification.default`；如需针对原始收藏使用不同规则，应提供 `fallback.default_kind` 与 `fallback.kind_rules`。构建器必须拒绝未在 `content_kinds` 中声明的默认值或规则结果。
 
 内容形态词汇本身也属于领域配置，禁止在构建器或网页中固定写死 software 的 `Tool / Skill / Workflow / Product`。例如 fitness 使用 `Movement / Program / Claim / Product`，skincare 使用 `Ingredient / Routine / Claim / Product`；前端筛选器必须从输出数据的 `meta.kindLabels` 动态生成。新增领域模板时必须同时验证其独立标签、默认值与规则，不能继承其他领域的可见标签。
+
+公开网页不得把笔记 ID 拼成裸 `/explore/{id}`，也不得发布会过期的 `xsec_token`。应使用标题与作者生成小红书站内检索入口，并在界面明确写成“搜索原帖”。缺少 `title` 时必须从公开描述或摘要生成稳定标题；完全缺少文本时使用作者或笔记 ID 尾段生成可区分名称，禁止输出“未命名收藏”。fallback 类别必须中性，不能把无法判断的内容默认归入 Vibe Coding、健身动作或护肤成分等具体类别。
 
 ### 视频内容分级核验
 

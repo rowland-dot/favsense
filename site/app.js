@@ -343,7 +343,7 @@ function renderDetail(note) {
     ${tagsHtml}
     <section class="detail-section"><h3>整理依据</h3><p>${escapeHtml(note.evidence.method)}。原视频和分析画面只保存在本机，不进入公开页面。</p></section>
     <footer class="detail-footer">
-      <a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">打开原帖</a>
+      <a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">在小红书搜索原帖</a>
       <button type="button" data-copy-note="${escapeHtml(note.id)}">复制卡片链接</button>
     </footer>
   `;

@@ -45,6 +45,8 @@ try {
   const noteB = fs.readFileSync(path.join(output, "02-知识卡片", "note_b.md"), "utf8");
   assert.doesNotMatch(noteB, /^(?:priority|status):/m);
   assert.doesNotMatch(noteB, /- \[ \]/);
+  assert.match(noteB, /https:\/\/www\.xiaohongshu\.com\/search_result\?keyword=Beta\+B&source=web_search_result_notes/);
+  assert.doesNotMatch(noteB, /\/explore\/|\/discovery\/item\//);
   assert.equal(fs.existsSync(path.join(output, "04-行动与实验", "行动清单.md")), false);
   assert.equal(fs.existsSync(path.join(output, "04-行动与实验", "使用建议.md")), true);
   for (const file of fs.readdirSync(path.join(output, "02-知识卡片"))) {

@@ -79,6 +79,38 @@ function plainText(markdown) {
     .trim();
 }
 
+function titleFromText(value) {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  const beforeTopics = normalized.split("#")[0].trim();
+  const withoutTopics = normalized
+    .replace(/#[^#]*?\[话题\]#?/gi, " ")
+    .replace(/\[[^\]]*话题[^\]]*\]/gi, " ")
+    .replace(/#+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const title = beforeTopics || withoutTopics;
+  return title.length > 52 ? `${title.slice(0, 51)}…` : title;
+}
+
+function displayTitle(raw, entry, deepSummary, noteId) {
+  const candidates = [raw.title, deepSummary?.heading, entry.tools?.[0], raw.description, entry.summary];
+  for (const candidate of candidates) {
+    const title = titleFromText(candidate);
+    if (title) return title;
+  }
+  const author = titleFromText(raw.author);
+  return author ? `${author}的收藏` : `收藏条目 · ${noteId.slice(-6)}`;
+}
+
+function publicSourceUrl(title, author) {
+  const params = new URLSearchParams({
+    keyword: [title, author].filter(Boolean).join(" "),
+    source: "web_search_result_notes"
+  });
+  return `https://www.xiaohongshu.com/search_result?${params.toString()}`;
+}
+
 function extractDeepSummaries(markdown) {
   const sections = [];
   const pattern = /^## (\d{2})\.\s+([^\n]+)\n+([\s\S]*?)(?=^## \d{2}\.|^---$|^## 总汇：|(?![\s\S]))/gm;
@@ -203,13 +235,14 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const matchedResources = [...new Map(
     (entry.tools || []).map(resourceForTool).filter(Boolean).map((resource) => [resource.name, resource])
   ).values()];
+  const title = displayTitle(raw, entry, deepSummaryById.get(noteId), noteId);
 
   return {
     id: noteId,
     number: index + 1,
-    title: raw.title || deepSummaryById.get(noteId)?.heading || entry.tools?.[0] || "未命名收藏",
+    title,
     author: raw.author || "",
-    sourceUrl: `https://www.xiaohongshu.com/explore/${encodeURIComponent(noteId)}`,
+    sourceUrl: publicSourceUrl(title, raw.author || ""),
     publishedAt: raw.published_at || "",
     likes: raw.liked_count || "",
     collections: raw.collected_count || "",

@@ -28,7 +28,7 @@ async function buildProfileFixture(profileFile, options = {}) {
       boards: [{ id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "Fixture", enabled: true }]
     })),
     writeFile(catalogPath, JSON.stringify({ notes: {
-      [noteId]: { title: "Fixture note", description: "Fixture description", source_boards: ["Fixture"] }
+      [noteId]: options.note || { title: "Fixture note", description: "Fixture description", source_boards: ["Fixture"] }
     } })),
     writeFile(curationPath, JSON.stringify(options.uncurated ? {} : {
       [noteId]: { category: "Fixture", themes: [], summary: "Fixture summary with enough content for deterministic profile compilation.", action: "Review the configured resource and its official evidence before taking action.", tools: [] }
@@ -68,7 +68,7 @@ test("public site ships complete, structured knowledge data", async () => {
     assert.ok(note.summary.length > 0);
     assert.ok(note.deepSummary.length >= note.summary.length);
     assert.ok(note.action.length > 20);
-    assert.match(note.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/explore\//);
+    assert.match(note.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/search_result\?/);
     assert.equal(Object.hasOwn(note, "priority"), false);
     assert.equal(Object.hasOwn(note, "risk"), false);
     assert.match(note.kind, /^(Note|Tool|Skill|Workflow|Product)$/);
@@ -76,6 +76,35 @@ test("public site ships complete, structured knowledge data", async () => {
 
   assert.equal(Object.hasOwn(data.meta, "priorityLabels"), false);
   assert.ok(data.meta.sourceBoards.includes("Skills"));
+  assert.equal(data.notes.some((note) => note.title === "未命名收藏"), false);
+});
+
+test("missing titles are inferred and public source navigation never publishes expiring direct links", async () => {
+  const data = await buildProfileFixture("software.json", {
+    uncurated: true,
+    note: {
+      title: "",
+      description: "国产“爱死机”《丧尸清道夫》创作思路分享#AI视频[话题]#",
+      author: "创作者",
+      source_boards: ["Fixture"]
+    }
+  });
+  const note = data.notes[0];
+  assert.equal(note.title, "国产“爱死机”《丧尸清道夫》创作思路分享");
+  assert.equal(note.category, "AI设计与多媒体");
+  const source = new URL(note.sourceUrl);
+  assert.equal(source.pathname, "/search_result");
+  assert.match(source.searchParams.get("keyword"), /丧尸清道夫/);
+  assert.equal(source.searchParams.get("source"), "web_search_result_notes");
+  assert.doesNotMatch(note.sourceUrl, /xsec_token|\/explore\/|\/discovery\/item\//);
+});
+
+test("uncertain software content uses a neutral category instead of Vibe Coding", async () => {
+  const data = await buildProfileFixture("software.json", {
+    uncurated: true,
+    note: { title: "一条暂时无法判断领域的收藏", description: "一般观点", source_boards: ["Fixture"] }
+  });
+  assert.equal(data.notes[0].category, "其他软件与 AI");
 });
 
 test("content kind supports an explicit curated override", async () => {

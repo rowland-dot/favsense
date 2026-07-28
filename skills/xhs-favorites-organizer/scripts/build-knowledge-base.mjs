@@ -93,7 +93,13 @@ function isPublishedInScope(note, publishedSince) {
 }
 function yaml(value) { return JSON.stringify(clean(value)); }
 function md(value) { return clean(value).replace(/([\\`*_[\]<>])/g, "\\$1"); }
-function canonicalUrl(id) { return `https://www.xiaohongshu.com/explore/${encodeURIComponent(id)}`; }
+function publicSourceUrl(title, author) {
+  const params = new URLSearchParams({
+    keyword: [title, author].filter(Boolean).join(" "),
+    source: "web_search_result_notes"
+  });
+  return `https://www.xiaohongshu.com/search_result?${params.toString()}`;
+}
 function safeFileSegment(value, label) {
   const segment = clean(value);
   if (
@@ -187,7 +193,7 @@ ${excerpt ? md(excerpt) : "正文待补充。"}
 ## 原始来源
 
 - 作者：${md(note.author || "未知作者")}
-- [打开小红书原帖](${canonicalUrl(item.id)})
+- [在小红书搜索原帖](${publicSourceUrl(item.title, note.author || "")})
 `;
 }
 
