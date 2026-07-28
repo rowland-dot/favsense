@@ -33,6 +33,8 @@ Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成�
 
 收藏夹只是来源字段，不等于最终分类。默认主题包含信息采集与搜索、Skills 与工作流、Agent 与自动化、知识管理与记忆、开发部署与 Vibe Coding、内容增长与商业、AI 设计与多媒体、本地模型与成本、垂直工具与数据。
 
+内容日期范围由私有配置的 `published_since` 控制，格式为 `YYYY-MM-DD`。知识库构建、待下载媒体队列和抽帧队列必须使用同一范围；发布日期缺失或早于下限的内容只保留在原始 catalog 中用于去重，不得进入知识卡、公开网页或视频分析队列。
+
 ## 安全边界
 
 - 只读用户已登录账号能看到的收藏与笔记详情；不点赞、不评论、不发布、不取消收藏。
@@ -88,7 +90,7 @@ node ".\skills\xhs-favorites-organizer\scripts\build-knowledge-base.mjs" `
 node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs"
 ```
 
-当私有配置中的 `publish.enabled` 为 `true` 时，最后一个已启用收藏夹处理完成后，桥接服务调用 `publish-huggingface.mjs`，仅把 `site/` 镜像到指定 Hugging Face Static Space，并排除 `site/.local/`。发布凭据必须来自系统 Git 凭据管理器，不能写入配置、脚本或仓库；发布失败只记录在运行状态中，不得撤销或破坏本地 catalog、Obsidian 知识库和网页构建结果。
+当私有配置中的 `publish.enabled` 为 `true` 时，最后一个已启用收藏夹处理完成后，桥接服务调用 `publish-huggingface.mjs`，把 `site/` 镜像到指定 Hugging Face Static Space 并排除 `site/.local/`；同时仅把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，保留其余元数据与正文。发布凭据必须来自系统 Git 凭据管理器，不能写入配置、脚本或仓库；发布失败只记录在运行状态中，不得撤销或破坏本地 catalog、Obsidian 知识库和网页构建结果。
 
 本地预览：
 
@@ -102,18 +104,26 @@ python -m http.server 8000 --directory site
 
 策展字段为：`category`、`themes`、`summary`、`action`、`tools`，以及可选人工覆盖字段 `kind`。系统自动完成分类和应用建议，不要求用户逐篇维护等级或处理状态；`kind` 省略时按当前领域配置自动判断。事实不充分时必须写“待确认”，不能从标题臆测工具名称。
 
-### 视频内容强制核验
+`kind` 只回答“内容本身是什么”，绝不能表示“是否已经处理”。未进入人工策展的收藏也必须先按领域配置和公开元数据推断内容形态，不能统一写成 `Note`；`Note` 只用于观点、资讯或一般知识说明。深度解读是否完成由证据文本和策展内容体现，不得复用内容形态字段。每个领域配置必须声明有效的 `classification.default`；如需针对原始收藏使用不同规则，应提供 `fallback.default_kind` 与 `fallback.kind_rules`。构建器必须拒绝未在 `content_kinds` 中声明的默认值或规则结果。
 
-视频笔记不得仅根据标题、简介、封面或自动字幕生成最终摘要。视频中项目名常只出现数帧，必须先完成以下证据链：
+内容形态词汇本身也属于领域配置，禁止在构建器或网页中固定写死 software 的 `Tool / Skill / Workflow / Product`。例如 fitness 使用 `Movement / Program / Claim / Product`，skincare 使用 `Ingredient / Routine / Claim / Product`；前端筛选器必须从输出数据的 `meta.kindLabels` 动态生成。新增领域模板时必须同时验证其独立标签、默认值与规则，不能继承其他领域的可见标签。
 
-1. 将本人有权访问的视频保存到项目内缓存，不把登录 Cookie 或 `xsec_token` 写入文件；
-2. 完整解码视频，默认抽取每 0.5 秒序列帧，并额外抽取转场/场景变化帧；
-3. 复核全部接触表或抽取帧，记录短暂出现的项目名、GitHub owner/repo、命令、功能演示和限制；
-4. 信息过快、字号过小或多个项目连续闪现时，针对相应时间段提高抽帧密度，直到可以可靠识别或明确标记“未确认”；
-5. 在 `.xhs-favorites/video-analysis/<note-id>/` 保留序列帧、转场帧、overview 和识别记录，使其他 Agent 与人工可以独立复核；全部复核完成后再写入 `analysis.json`，内容至少包含 `{ "status": "complete" }`，未完成或中断的分析不得写入该标记；
-6. 视频识别只负责确定候选实体；官方仓库、许可证、当前 Star 数和兼容性必须随后从官方来源独立核验。
+### 视频内容分级核验
 
-只有完成上述步骤，才允许把 `tools`、确定性 `summary` 和 Skill 名称写入策展文件。不得把视频中的营销数字当作当前事实；不能唯一确认项目时必须保留“待确认”。
+视频笔记不得仅根据标题、简介或封面生成最终摘要。按“音频优先、视觉按需升级”处理，避免为每条视频默认生成海量帧：
+
+1. 将本人有权访问的视频保存到项目内私有缓存，不把登录 Cookie 或 `xsec_token` 写入文件；
+2. 用 FFmpeg 提取临时 16 kHz 单声道音频，使用本地离线转写模型生成带时间戳的 `transcription.json`；转写结束后默认删除 WAV；
+3. 先完整阅读转写，生成内容摘要、用途和步骤。如果语音已经明确给出工具或 Skill 名称，则直接进入官方来源核验，不抽帧；
+4. 当语音过少、只说“这个 Skill/项目”、指向屏幕文字，或无法唯一确定实体时，先列出缺失事实，再按时间顺序检查每 5 秒一帧的低密度序列帧、转场帧和 overview；
+5. 一旦 Skill 名称、仓库地址或其他缺失事实已经补齐，立即停止检查当前及剩余画面，不再继续抽帧、转场检测或下一个时间窗；转入官方来源核验；
+6. 只有低密度画面尚未补齐缺失事实时，才对相关时间段按每 0.5 秒抽帧。禁止为了省判断步骤而对整条视频默认密集抽帧；
+7. 在 `.xhs-favorites/video-analysis/<note-id>/` 保留转写、视觉升级原因和必要帧，使其他 Agent 与人工可以独立复核；全部复核完成后再写入 `analysis.json`，内容至少包含 `{ "status": "complete" }`；
+8. 视频与音频识别只负责确定候选实体；官方仓库、许可证、当前 Star 数和兼容性必须随后从官方来源独立核验。
+
+对超长视频同样使用停止条件：默认先转写前 10 分钟，并记录 `audio_window.truncated`。如果已补齐 Skill 名称、用途和当前缺失事实，停止处理剩余音频；仍有缺失时才继续下一个时间窗口。不得把截断转写标记成“已完整听完”。
+
+运行 `scripts/run-video-analysis.ps1` 批量准备转写；默认不得自动批量抽帧。阅读转写并确认确有缺失事实后，才使用 `-PrepareVisualEvidence`，而且每次只准备一个条目的一个短时间窗。复核该窗口后，缺失事实已补齐就立即结束；仍未补齐才允许下一次从 `next_start_seconds` 继续。视觉处理必须同时受总帧数、总字节数与墙钟时间预算限制。转写脚本必须先处理体积较小的视频并逐条输出进度，以尽快形成可交付结果。只有完成与该笔记相匹配的证据级别，才允许把 `tools`、确定性 `summary` 和 Skill 名称写入策展文件。不得把视频中的营销数字当作当前事实；不能唯一确认项目时必须保留“待确认”。
 
 只要收藏提到 Skill，Agent 还必须维护 `knowledge-base/05-Skills成果/GitHub-Skills核验清单.md`，并在对应知识卡片加入“Skill 核验”区块。每个 Skill 至少记录：
 

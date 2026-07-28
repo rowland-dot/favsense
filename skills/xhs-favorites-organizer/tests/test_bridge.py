@@ -20,6 +20,24 @@ FETCH_SPEC.loader.exec_module(FETCHER)
 
 
 class BridgeHelpersTest(unittest.TestCase):
+    def test_media_candidates_respect_published_since(self):
+        current = "a" * 24
+        old = "b" * 24
+        unknown = "c" * 24
+        urls = {
+            current: f"https://www.xiaohongshu.com/explore/{current}",
+            old: f"https://www.xiaohongshu.com/explore/{old}",
+            unknown: f"https://www.xiaohongshu.com/explore/{unknown}",
+        }
+        notes = {
+            current: {"published_at": "2026-01-01_00:00:00"},
+            old: {"published_at": "2025-12-31_23:59:59"},
+        }
+        self.assertEqual(
+            BRIDGE.filter_media_candidates(urls, notes, "2026-01-01"),
+            {current: urls[current]},
+        )
+
     def test_checkout_verification_handles_the_dedicated_runtime_identity(self):
         source = FETCH_PATH.read_text(encoding="utf-8")
         self.assertIn('f"safe.directory={xhs_dir}"', source)
@@ -90,6 +108,66 @@ class BridgeHelpersTest(unittest.TestCase):
             path = Path(directory) / "catalog.json"
             path.write_text(json.dumps({"version": 1, "notes": {"a": {}}}), encoding="utf-8")
             self.assertEqual(BRIDGE.read_catalog_ids(path), {"a"})
+
+    def test_media_queue_skips_curated_and_cached_notes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            media = Path(directory)
+            cached = "b" * 24
+            (media / f"{cached}.mp4").write_bytes(b"cached")
+            unique = {
+                "a" * 24: "https://www.xiaohongshu.com/explore/" + "a" * 24 + "?xsec_token=one",
+                cached: "https://www.xiaohongshu.com/explore/" + cached + "?xsec_token=two",
+                "c" * 24: "https://www.xiaohongshu.com/explore/" + "c" * 24 + "?xsec_token=three",
+            }
+            queued = BRIDGE.media_urls_to_cache(unique, {"c" * 24}, media)
+            self.assertEqual(queued, [unique["a" * 24]])
+
+    def test_disabled_video_analysis_never_starts_media_download(self):
+        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge.video_analysis_enabled = False
+        with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
+            result = bridge.cache_missing_media({"a" * 24: "https://example.invalid"})
+        self.assertEqual(result["state"], "disabled")
+        popen.assert_not_called()
+
+    def test_enabled_video_analysis_schedules_download_off_sync_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.video_analysis_enabled = True
+            bridge.curation = root / "curation.json"
+            bridge.curation.write_text("{}", encoding="utf-8")
+            bridge.media_dir = root / "media"
+            bridge.media_dir.mkdir()
+            bridge.state_dir = root / "state"
+            bridge.state_dir.mkdir()
+            bridge.run_dir = root / "runs"
+            bridge.run_dir.mkdir()
+            bridge.python = Path("python.exe")
+            bridge.media_fetcher = Path("download-pending-media.py")
+            bridge.xhs_dir = root / "xhs"
+            bridge.workspace = root
+            process = mock.Mock()
+            process.stdin = mock.Mock()
+            with mock.patch.object(BRIDGE.subprocess, "Popen", return_value=process) as popen:
+                result = bridge.cache_missing_media({
+                    "a" * 24: "https://www.xiaohongshu.com/explore/" + "a" * 24
+                })
+            self.assertEqual(result["state"], "scheduled")
+            popen.assert_called_once()
+            process.stdin.close.assert_called_once()
+
+    def test_safety_stop_sentinel_prevents_future_media_workers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.video_analysis_enabled = True
+            bridge.state_dir = root
+            (root / "media-download-safety-stop.json").write_text("{}", encoding="utf-8")
+            with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
+                result = bridge.cache_missing_media({"a" * 24: "https://example.invalid"})
+            self.assertEqual(result["state"], "safety-stopped")
+            popen.assert_not_called()
 
     def test_fetch_payload_contract_keeps_sanitized_gaps(self):
         notes, failures = BRIDGE.parse_fetch_payload(json.dumps({

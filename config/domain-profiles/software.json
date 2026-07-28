@@ -13,7 +13,7 @@
     }
   },
   "content_kinds": {
-    "Note": "已同步的原始收藏",
+    "Note": "观点、资讯与知识说明",
     "Tool": "可直接使用的工具",
     "Skill": "可安装的 Agent 能力包",
     "Workflow": "可复用的方法与流程",
@@ -29,7 +29,14 @@
   },
   "fallback": {
     "default_category": "开发部署与Vibe Coding",
+    "default_kind": "Note",
     "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+    "kind_rules": [
+      { "kind": "Skill", "pattern": "agent[ -]?skills?|claude[ -]?skills?|codex[ -]?skills?|技能包|能力包|\\bskills?\\b" },
+      { "kind": "Workflow", "pattern": "工作流|workflow|方法|教程|步骤|攻略|流程|\\bsop\\b|如何|搭建|部署|实操|玩法|howto|跟我学|\\d+\\s*步|技巧|思路|提示词|\\btips?\\b|总结|指南" },
+      { "kind": "Product", "pattern": "商业产品|托管服务|在线平台|\\bsaas\\b|会员|付费产品|这个网站|这款应用|AI产品|产品是|平台|Copilot|refero" },
+      { "kind": "Tool", "pattern": "工具|神器|开源|github|项目|插件|\\bmcp\\b|\\bcli\\b|模型|软件|框架|数据库|\\bapi\\b|\\bagents?\\b|TradingAgents|自动化|AI动画|star|星标" }
+    ],
     "rules": [
       { "category": "信息采集与搜索", "pattern": "搜索|爬虫|抓取|采集|markdown|markitdown|crawler" },
       { "category": "知识管理与记忆", "pattern": "记忆|知识图谱|索引|rag|cognee" },
@@ -70,7 +77,7 @@
       { "field": "tutorial", "label": "查看教程" }
     ],
     "groups": [
-      { "label": "官方网站", "pattern": "官方网站|产品官网" },
+      { "label": "官方网站", "pattern": "官方网站|产品官网|提示词与案例网站" },
       { "label": "官方文档", "pattern": "官方文档" },
       { "label": "教程", "pattern": "教程|快速入门" },
       { "label": "参考资料", "pattern": "参考资料|指南|目录" }

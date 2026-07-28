@@ -50,6 +50,8 @@ GitHub 仓库用于发布程序、文档、示例配置和可公开的演示数�
 
 ### 让 Agent 配置资源索引
 
+部署前，Agent 必须先根据用户收藏主题选择或创建 `domain_profile`，不能默认沿用演示站的 software 标签。内容形态由该文件的 `content_kinds`、`classification` 与可选 `fallback.kind_rules` 共同决定：健身库不显示 Skill/Tool，护肤库不显示 Movement/Program。网页会从构建数据动态生成筛选项；若规则引用未声明的类型，构建器会直接失败。切换或新增领域后，先运行 `build-public-site.mjs` 并检查 `site/data/knowledge.json` 的 `meta.profileId` 与 `meta.kindLabels`，再发布。
+
 部署者可以让任意 Agent 读取当前领域的 `domain_profile.resource_index` 和对应 `registry_file`，再根据实际数据生成资源索引。Agent 必须遵守以下接口：
 
 1. `groups` 是一级资源类型；`sorts` 是依附于当前类型的二级选项；
@@ -86,12 +88,12 @@ git push space main
 sdk: static
 app_file: site/index.html
 fullWidth: true
-header: default
+header: mini
 ```
 
-请保留 `header: default`：Hugging Face 的 `mini` 模式会在应用内部叠加一条悬浮工具栏，容易遮住 FavSense 右上角的作者入口和主题按钮；`default` 会让平台导航在应用外部正常占位，不会覆盖 FavSense 自己的顶部导航。本地预览与 GitHub Pages 不受这个选项影响。
+FavSense 默认保留 Hugging Face README 中的 `header: mini` 浮动工具栏。网页只有在确认自己嵌入于 `huggingface.co/spaces/...` 且 `site/site-config.js` 标记为 mini 模式时，才把右上角的作者入口和主题按钮水平移到浮动工具栏左侧。它不会移动 FavSense 顶部导航，也不会增加顶部间距；本地预览、直接访问 Static Space、GitHub Pages 和 `default` 模式均按普通布局显示。
 
-如果 Space 是旧版本并且根目录 README 仍写着 `header: mini`，请在该 Space 的 **Files → README.md → Edit** 中把它一次性改为 `header: default`。日常发布器只更新脱敏的 `site/`，会刻意保留 Space 的根目录元数据，因此不会替你覆盖这个选项。
+日常发布器更新脱敏的 `site/` 时，会把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，同时保留其余元数据和说明正文。公开的 `site/site-config.js` 使用同一模式，仅控制右上角操作区的横向避让，不改变导航栏的纵向位置。
 
 Static Space 的直接访问地址通常是：
 
@@ -149,7 +151,7 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
 2. Tampermonkey 依次同步已启用的收藏夹；
 3. 本机更新 `.xhs-favorites/` 和 `knowledge-base/`；
 4. 构建器重建 `site/data/knowledge.json`；
-5. 最后一个收藏夹完成后，发布器只把 `site/` 镜像到 Space，并排除 `site/.local/`；
+5. 最后一个收藏夹完成后，发布器把 `site/` 镜像到 Space、排除 `site/.local/`，并确保 Space 使用 `header: mini`；
 6. Hugging Face 自动刷新公网知识库。
 
 发布失败不会撤销本地整理结果。失败信息写入本次运行状态，下次同步可再次发布。没有内容变化时，发布器返回 `unchanged`，不会产生空提交。

@@ -23,7 +23,11 @@ async function createRemoteFixture(root) {
   git(["config", "user.name", "FavSense Test"], seed);
   git(["config", "user.email", "test@example.invalid"], seed);
   await mkdir(path.join(seed, "site"), { recursive: true });
-  await writeFile(path.join(seed, "README.md"), "---\nsdk: static\napp_file: site/index.html\n---\n", "utf8");
+  await writeFile(
+    path.join(seed, "README.md"),
+    "---\ntitle: Existing Space\nsdk: static\napp_file: site/index.html\nheader: default\nheader: duplicate\n---\n\nKeep this description.\n",
+    "utf8"
+  );
   await writeFile(path.join(seed, "site", "index.html"), "old", "utf8");
   await writeFile(path.join(seed, "site", "stale.js"), "stale", "utf8");
   git(["add", "."], seed);
@@ -32,7 +36,7 @@ async function createRemoteFixture(root) {
   return remote;
 }
 
-test("publisher mirrors only the public site and preserves Space metadata", async () => {
+test("publisher mirrors only the public site and enforces the mini Space header", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "favsense-publish-test-"));
   const workspace = path.join(root, "workspace");
   const remote = await createRemoteFixture(root);
@@ -55,7 +59,11 @@ test("publisher mirrors only the public site and preserves Space metadata", asyn
 
   const checkout = path.join(root, "checkout");
   git(["clone", remote, checkout], root);
-  assert.match(await readFile(path.join(checkout, "README.md"), "utf8"), /sdk: static/);
+  const readme = await readFile(path.join(checkout, "README.md"), "utf8");
+  assert.match(readme, /sdk: static/);
+  assert.match(readme, /title: Existing Space/);
+  assert.match(readme, /Keep this description\./);
+  assert.deepEqual(readme.match(/^header:\s*.*$/gm), ["header: mini"]);
   assert.equal(await readFile(path.join(checkout, "site", "index.html"), "utf8"), "new");
   assert.equal(await readFile(path.join(checkout, "site", "data", "knowledge.json"), "utf8"), "{\"notes\":[]}");
   assert.throws(() => git(["ls-files", "--error-unmatch", "site/stale.js"], checkout));

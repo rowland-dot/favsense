@@ -1,7 +1,21 @@
 import { resourceGroup, resourceSortsForGroup, sortResources } from "./resource-utils.mjs";
 import { validateLocalBridgeConfig, validateLocalBridgeSession } from "./local-bridge-utils.mjs";
+import { hasHuggingFaceMiniHeader } from "./huggingface-layout.mjs";
 
 const DATA_URL = new URL("./data/knowledge.json", import.meta.url);
+
+function configureHostLayout() {
+  const configuredHeader = String(window.FAVSENSE_CONFIG?.huggingFaceHeader || "default").toLowerCase();
+  const miniHeaderIsPresent = hasHuggingFaceMiniHeader({
+    framed: window.self !== window.top,
+    referrer: document.referrer,
+    creatorUserId: window.huggingface?.variables?.SPACE_CREATOR_USER_ID,
+    configuredHeader,
+  });
+  document.documentElement.dataset.hfHeader = miniHeaderIsPresent ? "mini" : "default";
+}
+
+configureHostLayout();
 
 const elements = {
   notesGrid: document.querySelector("#notes-grid"),

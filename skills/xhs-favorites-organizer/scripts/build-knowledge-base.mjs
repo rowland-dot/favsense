@@ -79,6 +79,18 @@ function removeGeneratedFiles(output) {
 }
 
 function clean(value) { return String(value ?? "").replace(/\s+/g, " ").trim(); }
+function normalizedDate(value, label) {
+  const date = clean(value).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
+    throw new Error(`${label} must use YYYY-MM-DD`);
+  }
+  return date;
+}
+function isPublishedInScope(note, publishedSince) {
+  if (!publishedSince) return true;
+  const published = clean(note.published_at).slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(published) && published >= publishedSince;
+}
 function yaml(value) { return JSON.stringify(clean(value)); }
 function md(value) { return clean(value).replace(/([\\`*_[\]<>])/g, "\\$1"); }
 function canonicalUrl(id) { return `https://www.xiaohongshu.com/explore/${encodeURIComponent(id)}`; }
@@ -188,8 +200,13 @@ function main() {
     ? path.resolve(options.profile)
     : path.resolve(workspace, config.domain_profile || "config/domain-profiles/software.json");
   const profile = readJson(profilePath, "domain profile");
+  const publishedSince = config.published_since
+    ? normalizedDate(config.published_since, "published_since")
+    : "";
   const boardNames = new Map(config.boards.map((board) => [board.id, board.name]));
-  const notes = Object.entries(catalog.notes ?? {}).map(([id, note]) => {
+  const notes = Object.entries(catalog.notes ?? {}).filter(([, note]) => (
+    isPublishedInScope(note, publishedSince)
+  )).map(([id, note]) => {
     const curation = { ...fallback(note, profile), ...(curated[id] ?? {}) };
     const fallbackBoard = config.legacy_source_board_id || config.boards.find((board) => board.enabled)?.id;
     const ids = Array.isArray(note.source_board_ids) && note.source_board_ids.length ? note.source_board_ids : [fallbackBoard].filter(Boolean);
@@ -240,7 +257,7 @@ function main() {
   const categoryLinks = [...categories].sort(([a], [b]) => a.localeCompare(b, "zh-CN")).map(([category, items]) => `- [[01-主题地图/${category}|${md(category)}]]（${items.length}）`).join("\n");
   const excludedBoards = config.boards.filter((board) => !board.enabled).map((board) => board.name);
   const exclusionNote = excludedBoards.length ? `；已排除：${excludedBoards.map(md).join("、")}` : "";
-  atomicWrite(path.join(output, "00-首页.md"), `---\ntype: dashboard\ndomain_profile: ${yaml(profile.id)}\ngenerated_at: ${yaml(now)}\n---\n\n# ${md(profile.presentation?.title || "小红书知识库")}\n\n> 灵感在小红书发生，沉淀在知识工作台完成；收藏的终点不是归档，而是可检索、可关联、可复用。\n\n## 知识库概览\n\n- 已整理：**${notes.length}** 篇\n- 来源面板：**${config.boards.filter((board) => board.enabled).length}** 个${exclusionNote}\n- [[04-行动与实验/使用建议|查看使用建议]]\n- [[03-工具雷达/工具索引|查看工具雷达]]\n- [[90-来源索引/小红书面板|查看同步完整性]]\n\n## 主题地图\n\n${categoryLinks}\n\n## 自动整理流程\n\n1. 新收藏进入本地 catalog。\n2. 构建器自动生成知识卡片，并按主题而非收藏夹重新组织。\n3. 系统提取可实践建议；需要时查阅，不生成待办。\n`);
+  atomicWrite(path.join(output, "00-首页.md"), `---\ntype: dashboard\ndomain_profile: ${yaml(profile.id)}\ngenerated_at: ${yaml(now)}\n---\n\n# ${md(profile.presentation?.title || "小红书知识库")}\n\n> 灵感在小红书发生，沉淀在知识工作台完成；收藏的终点不是归档，而是可检索、可关联、可复用。\n\n## 知识库概览\n\n- 已整理：**${notes.length}** 篇\n${publishedSince ? `- 内容范围：**${publishedSince} 起发布**\n` : ""}- 来源面板：**${config.boards.filter((board) => board.enabled).length}** 个${exclusionNote}\n- [[04-行动与实验/使用建议|查看使用建议]]\n- [[03-工具雷达/工具索引|查看工具雷达]]\n- [[90-来源索引/小红书面板|查看同步完整性]]\n\n## 主题地图\n\n${categoryLinks}\n\n## 自动整理流程\n\n1. 新收藏进入本地 catalog。\n2. 构建器按发布日期范围生成知识卡片，并按主题而非收藏夹重新组织。\n3. 系统提取可实践建议；需要时查阅，不生成待办。\n`);
   atomicWrite(path.join(output, "99-模板", "收藏卡片模板.md"), `# {{title}}\n\n> [!summary] 一句话结论\n+> \n+\n## 为什么值得看\n+\n+## 怎么用\n+\n+\n+## 关联卡片\n+\n+## 原始来源\n+`);
   atomicWrite(path.join(output, "README.md"), `# 小红书知识库\n\n请在 Obsidian 中把本目录作为 Vault 打开，从 [[00-首页]] 开始。知识卡片文件名使用稳定的小红书 note ID，标题显示在笔记内部和双链别名中。\n`);
   process.stdout.write(JSON.stringify({ ok: true, notes: notes.length, categories: categories.size, tools: allTools.size, output }, null, 2) + "\n");

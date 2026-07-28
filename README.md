@@ -6,7 +6,7 @@ colorTo: pink
 sdk: static
 app_file: site/index.html
 fullWidth: true
-header: default
+header: mini
 license: mit
 short_description: 自动同步小红书收藏，通过视频分析、资源索引与 Obsidian 输出生成可搜索、可追溯、可行动的知识库
 tags:
@@ -33,6 +33,8 @@ FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整
 
 **Automated Xiaohongshu / RedNote favorites organizer with video analysis, a domain-aware resource index, Obsidian output, and a deployable static knowledge-base UI.**
 
+![FavSense 拾光台知识卡与收藏分析界面](docs/assets/favsense-overview.png)
+
 它不是一组需要每天打开的 Markdown 文件，而是一条本机自动同步、确定性整理、静态网页阅读的完整链路。公开网页可以零后端部署到 GitHub Pages 或 Hugging Face Static Spaces。
 
 项目由两层组成：
@@ -43,12 +45,29 @@ FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整
 ## 网页功能
 
 - 视觉化知识卡，不需要每天打开一堆 Markdown；
-- 全文搜索，以及主题、Skill/Tool/Workflow/Product 内容形态筛选；
+- 全文搜索，以及由当前领域定义的内容形态筛选；software 示例使用 Skill/Tool/Workflow/Product，其他领域使用自己的标签；
 - “同步设置”页首屏列出全部收藏夹，可用独立开关决定每日同步或忽略；
 - 单篇详情抽屉，集中显示深度总结、行动建议和相关资源；
 - 可配置资源索引：software 归类开源项目、网站、文档与教程，fitness 显示训练资料，skincare 显示成分与使用边界；
 - 深色模式、响应式移动端与键盘操作；
 - 公开网页不包含登录态、个人主页、收藏夹 ID、视频文件或帧图片。
+
+## 推荐：让 Agent 直接安装
+
+推荐使用能够操作本机终端和文件的 coding Agent 完成安装，例如 **Codex、Claude Code**，或其他遵循 `AGENTS.md` / `CLAUDE.md` 的 Agent。这样 Agent 可以自动检查依赖、复制公开配置模板、运行安装入口并执行发布检查，用户不需要逐条搬运命令。
+
+把下面这段话直接交给 Agent：
+
+```text
+请安装并配置这个仓库中的 FavSense。先完整阅读 AGENTS.md 和
+skills/xhs-favorites-organizer/SKILL.md，遵守隐私与只读边界；检查 Windows、
+Node.js、Python、Chrome 和 Tampermonkey 依赖；根据示例创建我的私有配置，
+引导我只填写无法自动发现的主页与收藏夹信息；运行 favsense.ps1 setup，
+完成测试并启动本地预览。不要读取、输出或提交 Cookie、Token、收藏夹 ID、
+原始视频、抽帧或 knowledge-base。遇到验证码、300031 或访问频繁立即停止。
+```
+
+Agent 能完成本机环境检查、配置和任务安装；出于浏览器安全边界，首次扫码登录以及 Tampermonkey 的最终安装确认仍由用户在普通 Chrome 中完成。安装后的每日同步、去重、知识库构建和网页生成均独立运行，不依赖 Codex、Claude 或任何模型服务。
 
 ## 快速预览
 
@@ -75,6 +94,26 @@ Copy-Item ".\config\xhs-favorites.example.json" ".\config\xhs-favorites.json"
 ```
 
 编辑私有配置中的个人主页和收藏夹 ID，然后运行：
+
+`published_since` 控制内容发布日期下限，格式为 `YYYY-MM-DD`。构建知识库、媒体下载、音频转写和按需视觉分析都会使用同一范围；发布日期缺失或早于下限的笔记不会进入整理结果。示例默认从 `2026-01-01` 开始。
+
+视频整理默认使用“音频优先、视觉按需升级”。首次启用离线转写：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
+  ".\skills\xhs-favorites-organizer\scripts\setup-transcription.ps1" `
+  -Workspace "." -Model small
+```
+
+之后可以批量处理待整理视频：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
+  ".\skills\xhs-favorites-organizer\scripts\run-video-analysis.ps1" `
+  -Workspace "." -Config ".\config\xhs-favorites.json" -MaxItems 20
+```
+
+工作任务默认先离线转写音频，不自动批量抽帧。长视频按可续跑时间窗处理：只要语音已经说出 Skill、仓库或所缺事实，就立刻停止剩余音频并进入官方核验；仍有缺口才继续下一段。只有语音没有给出明确名称、音频过少或讲解明确要求查看屏幕时，才在复核转写后追加 `-PrepareVisualEvidence`。该开关每次只处理一个条目的一个 30 秒低密度画面窗口，并受总帧数、磁盘字节和执行时间三重预算约束；找到目标后不再检查余下画面，未找到才从记录的下一个时间点继续。每 0.5 秒抽帧只用于仍未解决的局部时间段。临时 WAV 默认在转写后删除，原视频、转写和帧始终保留在 Git 忽略的私有目录中。
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
@@ -124,6 +163,8 @@ node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs"
 - `curation_file`：逐篇人工策展与自动判断覆盖。
 
 仓库提供 software、fitness 与 skincare 三个领域模板。当前公开演示使用 software；切换领域不会改变小红书登录、同步、去重和隐私边界。
+
+内容形态不是 FavSense 的全局固定枚举，而是 `domain_profile.content_kinds` 的领域接口：software 可使用 `Tool / Skill / Workflow / Product`，fitness 使用 `Movement / Program / Claim / Product`，skincare 使用 `Ingredient / Routine / Claim / Product`。网页筛选器直接读取当前构建结果中的 `meta.kindLabels`，不会把 software 标签带入健身或护肤知识库。创建新领域时必须同时定义 `classification.default`、分类规则和内容形态说明；未深度解读不等于 `Note`。
 
 ## 发布到 GitHub
 

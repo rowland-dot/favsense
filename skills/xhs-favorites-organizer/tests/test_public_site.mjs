@@ -5,6 +5,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { resourceGroup, resourceSortsForGroup, sortResources, validateResourceIndex } from "../../../site/resource-utils.mjs";
+import { hasHuggingFaceMiniHeader } from "../../../site/huggingface-layout.mjs";
 import { collectVideoEvidenceStats } from "../scripts/evidence-stats.mjs";
 import { validateLocalBridgeConfig, validateLocalBridgeSession } from "../../../site/local-bridge-utils.mjs";
 
@@ -29,7 +30,7 @@ async function buildProfileFixture(profileFile, options = {}) {
     writeFile(catalogPath, JSON.stringify({ notes: {
       [noteId]: { title: "Fixture note", description: "Fixture description", source_boards: ["Fixture"] }
     } })),
-    writeFile(curationPath, JSON.stringify({
+    writeFile(curationPath, JSON.stringify(options.uncurated ? {} : {
       [noteId]: { category: "Fixture", themes: [], summary: "Fixture summary with enough content for deterministic profile compilation.", action: "Review the configured resource and its official evidence before taking action.", tools: [] }
     }))
   ]);
@@ -64,7 +65,7 @@ test("public site ships complete, structured knowledge data", async () => {
   for (const note of data.notes) {
     assert.match(note.id, /^[a-f0-9]{24}$/);
     assert.ok(note.title.length > 0);
-    assert.ok(note.kind === "Note" ? note.summary.length > 0 : note.summary.length > 30);
+    assert.ok(note.summary.length > 0);
     assert.ok(note.deepSummary.length >= note.summary.length);
     assert.ok(note.action.length > 20);
     assert.match(note.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/explore\//);
@@ -87,13 +88,122 @@ test("content kind supports an explicit curated override", async () => {
   assert.match(schema, /不要求用户为每篇笔记维护等级/);
 });
 
+test("uncurated software notes infer content kind from public metadata", async () => {
+  const work = await mkdtemp(resolve(root, ".fallback-kind-test-"));
+  const configPath = resolve(work, "config.json");
+  const catalogPath = resolve(work, "catalog.json");
+  const curationPath = resolve(work, "curation.json");
+  const outputPath = resolve(work, "knowledge.json");
+  const cases = {
+    "aaaaaaaaaaaaaaaaaaaaaaaa": ["三个 Codex 神级 Skill", "", "Skill"],
+    "bbbbbbbbbbbbbbbbbbbbbbbb": ["4 步搭建自动化工作流教程", "", "Workflow"],
+    "cccccccccccccccccccccccc": ["这款在线平台需要会员", "", "Product"],
+    "dddddddddddddddddddddddd": ["GitHub 开源视频剪辑工具", "", "Tool"],
+    "eeeeeeeeeeeeeeeeeeeeeeee": ["关于个人知识管理的几点思考", "", "Note"]
+  };
+  try {
+    await Promise.all([
+      writeFile(configPath, JSON.stringify({
+        version: 1,
+        domain_profile: "config/domain-profiles/software.json",
+        curation_file: curationPath,
+        public_stats: {},
+        boards: [{ id: "ffffffffffffffffffffffff", name: "Fixture", enabled: true }]
+      })),
+      writeFile(catalogPath, JSON.stringify({ notes: Object.fromEntries(
+        Object.entries(cases).map(([id, [title, description]]) => [id, { title, description }])
+      ) })),
+      writeFile(curationPath, "{}")
+    ]);
+    const result = spawnSync(process.execPath, [
+      resolve(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"),
+      "--config", configPath,
+      "--catalog", catalogPath,
+      "--curation", curationPath,
+      "--profile", resolve(root, "config/domain-profiles/software.json"),
+      "--video-analysis", resolve(work, "video-analysis"),
+      "--output", outputPath
+    ], { cwd: root, encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const data = JSON.parse(await readFile(outputPath, "utf8"));
+    assert.deepEqual(
+      Object.fromEntries(data.notes.map((note) => [note.id, note.kind])),
+      Object.fromEntries(Object.entries(cases).map(([id, values]) => [id, values[2]]))
+    );
+  } finally {
+    await rm(work, { recursive: true, force: true });
+  }
+});
+
+test("uncurated domain content uses domain semantics instead of a Note status fallback", async () => {
+  const software = await buildProfileFixture("software.json", { uncurated: true });
+  const fitness = await buildProfileFixture("fitness.json", { uncurated: true });
+  const skincare = await buildProfileFixture("skincare.json", { uncurated: true });
+  assert.equal(software.notes[0].kind, "Note");
+  assert.equal(fitness.notes[0].kind, "Claim");
+  assert.equal(skincare.notes[0].kind, "Claim");
+});
+
+test("each domain exports only its own content-kind vocabulary", async () => {
+  const expectations = {
+    "software.json": ["Note", "Tool", "Skill", "Workflow", "Product"],
+    "fitness.json": ["Note", "Movement", "Program", "Claim", "Product"],
+    "skincare.json": ["Note", "Ingredient", "Routine", "Claim", "Product"]
+  };
+  for (const [profileFile, expectedKinds] of Object.entries(expectations)) {
+    const data = await buildProfileFixture(profileFile);
+    assert.deepEqual(Object.keys(data.meta.kindLabels), expectedKinds);
+  }
+  const app = await read("site/app.js");
+  assert.match(app, /state\.data\.meta\.kindLabels/);
+  assert.match(app, /new Set\(state\.data\.notes\.map\(\(note\) => note\.kind\)\)/);
+});
+
 test("resource index groups projects, websites, documentation and tutorials", async () => {
   const profile = JSON.parse(await read("config/domain-profiles/software.json"));
   const index = profile.resource_index;
   assert.equal(resourceGroup({ name: "Palmier Pro", type: "AI 视频编辑" }, index), "开源项目");
   assert.equal(resourceGroup({ name: "Crawl4AI 官网", type: "官方网站" }, index), "官方网站");
+  assert.equal(resourceGroup({ name: "AiWind", type: "提示词与案例网站" }, index), "官方网站");
   assert.equal(resourceGroup({ name: "Crawl4AI Docs", type: "官方文档" }, index), "官方文档");
   assert.equal(resourceGroup({ name: "Quick Start", type: "教程" }, index), "教程");
+});
+
+test("domain profile without an explicit valid default fails instead of falling back to Note", async () => {
+  const work = await mkdtemp(resolve(root, ".invalid-kind-profile-test-"));
+  const configPath = resolve(work, "config.json");
+  const catalogPath = resolve(work, "catalog.json");
+  const curationPath = resolve(work, "curation.json");
+  const profilePath = resolve(work, "profile.json");
+  const outputPath = resolve(work, "knowledge.json");
+  const baseProfile = JSON.parse(await read("config/domain-profiles/software.json"));
+  try {
+    await Promise.all([
+      writeFile(configPath, JSON.stringify({ version: 1, boards: [] })),
+      writeFile(catalogPath, JSON.stringify({ notes: {} })),
+      writeFile(curationPath, "{}")
+    ]);
+    for (const invalidDefault of [undefined, "MissingKind"]) {
+      const profile = structuredClone(baseProfile);
+      if (invalidDefault === undefined) delete profile.classification.default;
+      else profile.classification.default = invalidDefault;
+      await writeFile(profilePath, JSON.stringify(profile));
+      const result = spawnSync(process.execPath, [
+        resolve(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"),
+        "--config", configPath,
+        "--catalog", catalogPath,
+        "--curation", curationPath,
+        "--profile", profilePath,
+        "--video-analysis", resolve(work, "video-analysis"),
+        "--resources", resolve(root, "skills/xhs-favorites-organizer/references/software-resources.json"),
+        "--output", outputPath
+      ], { cwd: root, encoding: "utf8" });
+      assert.notEqual(result.status, 0);
+      assert.match(`${result.stderr}${result.stdout}`, /classification\.default|required|not declared/);
+    }
+  } finally {
+    await rm(work, { recursive: true, force: true });
+  }
 });
 
 test("resource index follows configured sorts and leaves missing metrics last", async () => {
@@ -142,6 +252,13 @@ test("software, fitness and skincare profiles expose a complete resource-index c
     assert.equal(Object.hasOwn(profile, "priorities"), false);
     assert.ok(Object.hasOwn(profile.content_kinds, profile.classification.default));
     for (const rule of profile.classification.rules) {
+      assert.ok(Object.hasOwn(profile.content_kinds, rule.kind));
+      assert.doesNotThrow(() => new RegExp(rule.pattern, "i"));
+    }
+    if (profile.fallback?.default_kind) {
+      assert.ok(Object.hasOwn(profile.content_kinds, profile.fallback.default_kind));
+    }
+    for (const rule of profile.fallback?.kind_rules || []) {
       assert.ok(Object.hasOwn(profile.content_kinds, rule.kind));
       assert.doesNotThrow(() => new RegExp(rule.pattern, "i"));
     }
@@ -205,7 +322,7 @@ test("video evidence statistics are derived from local evidence files", async ()
 
 test("all domain profiles compile through the same public builder", async () => {
   const expectations = [
-    ["software.json", "software", "资源索引", 35, []],
+    ["software.json", "software", "资源索引", null, []],
     ["fitness.json", "fitness", "训练资料库", 3, ["目标", "适用", "注意"]],
     ["skincare.json", "skincare", "成分资料库", 3, ["适用", "耐受", "边界"]]
   ];
@@ -213,7 +330,12 @@ test("all domain profiles compile through the same public builder", async () => 
     const data = await buildProfileFixture(file);
     assert.equal(data.meta.profileId, id);
     assert.equal(data.meta.resourceIndex.label, label);
-    assert.equal(data.resources.length, count);
+    if (count === null) {
+      assert.ok(data.resources.length >= 30);
+      assert.equal(data.meta.resourceCount, data.resources.length);
+    } else {
+      assert.equal(data.resources.length, count);
+    }
     assert.deepEqual((data.resources[0].attributes || []).map((attribute) => attribute.label), fields);
   }
 });
@@ -274,10 +396,11 @@ test("software resource registry mixes repositories, websites, docs and tutorial
 });
 
 test("static app has the required deployment assets", async () => {
-  const [html, css, js, readme, publishingGuide, archivedCss, archiveReadme] = await Promise.all([
+  const [html, css, js, siteConfig, readme, publishingGuide, archivedCss, archiveReadme] = await Promise.all([
     read("site/index.html"),
     read("site/styles.css"),
     read("site/app.js"),
+    read("site/site-config.js"),
     read("README.md"),
     read("docs/PUBLISHING.md"),
     read("site/themes/archive/research-blue-v1/styles.css"),
@@ -343,11 +466,54 @@ test("static app has the required deployment assets", async () => {
   assert.ok(frontMatter, "README must begin with Hugging Face YAML front matter");
   assert.deepEqual(
     frontMatter[1].split(/\r?\n/).filter((line) => /^header:\s*/.test(line)),
-    ["header: default"]
+    ["header: mini"]
   );
-  assert.match(publishingGuide, /`header: default`/);
-  assert.match(publishingGuide, /不会覆盖 FavSense 自己的顶部导航/);
-  assert.match(publishingGuide, /日常发布器只更新脱敏的 `site\/`/);
+  assert.match(siteConfig, /huggingFaceHeader:\s*"mini"/);
+  assert.match(js, /configureHostLayout/);
+  assert.match(js, /hasHuggingFaceMiniHeader/);
+  assert.match(js, /dataset\.hfHeader/);
+  assert.match(css, /--hf-mini-header-right-clearance:\s*360px/);
+  assert.match(css, /html\[data-hf-header="mini"\]\s+\.header-actions/);
+  assert.match(css, /right:\s*var\(--hf-mini-header-right-clearance\)/);
+  assert.doesNotMatch(css, /--hf-mini-header-clearance|margin-top:\s*var\(--hf/);
+  assert.match(css, /\.skip-link\s*\{[\s\S]*?top:\s*0;[\s\S]*?transform:\s*translateY\(-100%\)/);
+  assert.match(css, /\.skip-link:focus\s*\{[\s\S]*?top:\s*12px/);
+  assert.match(publishingGuide, /`header: mini`/);
+  assert.match(publishingGuide, /水平移到浮动工具栏左侧/);
+  assert.match(publishingGuide, /Space 根目录 README 前置配置中的 `header` 规范为 `mini`/);
+});
+
+test("Hugging Face mini header avoidance only activates for an embedded mini Space", () => {
+  assert.equal(hasHuggingFaceMiniHeader({
+    framed: true,
+    referrer: "https://huggingface.co/",
+    creatorUserId: "6a589b8bfe3a3b00f834c4c3",
+    configuredHeader: "mini",
+  }), true);
+  assert.equal(hasHuggingFaceMiniHeader({
+    framed: false,
+    referrer: "https://huggingface.co/",
+    creatorUserId: "6a589b8bfe3a3b00f834c4c3",
+    configuredHeader: "mini",
+  }), false);
+  assert.equal(hasHuggingFaceMiniHeader({
+    framed: true,
+    referrer: "https://huggingface.co/",
+    creatorUserId: "6a589b8bfe3a3b00f834c4c3",
+    configuredHeader: "default",
+  }), false);
+  assert.equal(hasHuggingFaceMiniHeader({
+    framed: true,
+    referrer: "https://example.com/",
+    creatorUserId: "6a589b8bfe3a3b00f834c4c3",
+    configuredHeader: "mini",
+  }), false);
+  assert.equal(hasHuggingFaceMiniHeader({
+    framed: true,
+    referrer: "https://huggingface.co/",
+    creatorUserId: "invalid",
+    configuredHeader: "mini",
+  }), false);
 });
 
 test("local board manager accepts only a tokenized loopback bridge", () => {

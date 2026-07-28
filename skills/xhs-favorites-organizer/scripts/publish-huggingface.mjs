@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { cp, lstat, mkdtemp, readdir, rm } from "node:fs/promises";
+import { cp, lstat, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -63,6 +63,32 @@ async function validatePublicTree(directory, relative = "") {
   }
 }
 
+async function ensureMiniHeader(readmePath) {
+  const readme = await readFile(readmePath, "utf8");
+  const frontMatter = readme.match(/^(---\r?\n)([\s\S]*?)(\r?\n---(?:\r?\n|$))/);
+  if (!frontMatter) throw new Error("Space README.md must begin with YAML front matter");
+
+  const lineEnding = frontMatter[1].includes("\r\n") ? "\r\n" : "\n";
+  const lines = frontMatter[2].split(/\r?\n/);
+  const headerLines = lines.reduce((indexes, line, index) => {
+    if (/^header\s*:/.test(line)) indexes.push(index);
+    return indexes;
+  }, []);
+
+  if (headerLines.length === 0) {
+    lines.push("header: mini");
+  } else {
+    lines[headerLines[0]] = "header: mini";
+    for (let index = headerLines.length - 1; index > 0; index -= 1) {
+      lines.splice(headerLines[index], 1);
+    }
+  }
+
+  const updatedFrontMatter = `${frontMatter[1]}${lines.join(lineEnding)}${frontMatter[3]}`;
+  const updated = `${updatedFrontMatter}${readme.slice(frontMatter[0].length)}`;
+  if (updated !== readme) await writeFile(readmePath, updated, "utf8");
+}
+
 async function main() {
   const workspace = path.resolve(readOption("workspace", process.cwd()));
   const repository = readOption("repository");
@@ -90,8 +116,9 @@ async function main() {
         return path.relative(publicSite, source).split(path.sep)[0] !== ".local";
       },
     });
+    await ensureMiniHeader(path.join(checkout, "README.md"));
 
-    runGit(["add", "-A", "--", "site"], checkout);
+    runGit(["add", "-A", "--", "site", "README.md"], checkout);
     const diff = runGit(["diff", "--cached", "--quiet"], checkout, [0, 1]);
     if (diff.status === 0) {
       process.stdout.write(`${JSON.stringify({ ok: true, status: "unchanged", repository, branch })}\n`);

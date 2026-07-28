@@ -22,6 +22,7 @@
   --radius-sm: 10px;
   --radius-md: 18px;
   --radius-lg: 28px;
+  --hf-mini-header-right-clearance: 360px;
   --grid-paper: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px), var(--paper);
   --grid-size: 48px 48px;
 }
@@ -76,16 +77,19 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
 .skip-link {
   position: fixed;
   z-index: 1000;
-  top: 12px;
+  top: 0;
   left: 12px;
-  transform: translateY(-150%);
+  transform: translateY(-100%);
   padding: 10px 16px;
   border-radius: var(--radius-sm);
   background: var(--ink);
   color: var(--surface);
   text-decoration: none;
 }
-.skip-link:focus { transform: translateY(0); }
+.skip-link:focus {
+  top: 12px;
+  transform: translateY(0);
+}
 
 .site-header {
   position: sticky;
@@ -113,6 +117,15 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
 .nav-button.is-active { background: var(--surface-soft); color: var(--ink); box-shadow: inset 0 -3px 0 var(--brand-red); }
 
 .header-actions { display: flex; justify-content: flex-end; gap: 9px; }
+
+@media (min-width: 640px) {
+  html[data-hf-header="mini"] .header-actions {
+    position: absolute;
+    top: 50%;
+    right: var(--hf-mini-header-right-clearance);
+    transform: translateY(-50%);
+  }
+}
 .icon-button, .view-toggle, .dialog-close { display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
 .icon-button { width: 42px; height: 42px; border-radius: 50%; }
 .icon-button svg, .view-toggle svg { width: 19px; }

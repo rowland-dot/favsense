@@ -36,6 +36,7 @@ HF_SPACE_REPOSITORY = re.compile(
     r"^https://huggingface\.co/spaces/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(?:\.git)?$"
 )
 GIT_BRANCH = re.compile(r"^[A-Za-z0-9._/-]{1,100}$")
+ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 class BridgeBusyError(RuntimeError):
@@ -160,6 +161,41 @@ def read_catalog_ids(path: Path) -> set[str]:
     return set(notes)
 
 
+def media_urls_to_cache(unique: dict[str, str], curated_ids: set[str], media_dir: Path) -> list[str]:
+    urls = []
+    for note_id, url in unique.items():
+        if note_id in curated_ids:
+            continue
+        if any(media_dir.glob(f"{note_id}.*")) or any(media_dir.glob(f"{note_id}_*.*")):
+            continue
+        urls.append(url)
+    return urls
+
+
+def normalize_published_since(value: object) -> str | None:
+    if value in (None, ""):
+        return None
+    date = str(value).strip()
+    if not ISO_DATE.fullmatch(date):
+        raise ValueError("published_since must use YYYY-MM-DD")
+    datetime.strptime(date, "%Y-%m-%d")
+    return date
+
+
+def filter_media_candidates(
+    unique: dict[str, str], notes: dict[str, dict], published_since: str | None
+) -> dict[str, str]:
+    if published_since is None:
+        return dict(unique)
+    selected = {}
+    for note_id, url in unique.items():
+        note = notes.get(note_id)
+        published = str(note.get("published_at") or "").strip()[:10] if isinstance(note, dict) else ""
+        if ISO_DATE.fullmatch(published) and published >= published_since:
+            selected[note_id] = url
+    return selected
+
+
 def parse_fetch_payload(
     value: str, expected_ids: set[str] | None = None
 ) -> tuple[list[dict], list[dict]]:
@@ -207,6 +243,11 @@ class Bridge:
         self.boards = {}
         self.board_order = []
         self.refresh_boards(config)
+        self.published_since = normalize_published_since(config.get("published_since"))
+        self.video_analysis_enabled = (
+            isinstance(config.get("video_analysis"), dict)
+            and config["video_analysis"].get("enabled") is True
+        )
         self.knowledge_base = resolve_workspace_path(self.workspace, str(config.get("knowledge_base", "knowledge-base")), "knowledge_base")
         self.port = port
         self.state_dir = self.workspace / ".xhs-favorites"
@@ -216,6 +257,9 @@ class Bridge:
         self.xhs_dir = self.workspace / ".xhs-tools" / "XHS-Downloader"
         self.python = self.xhs_dir / ".venv" / "Scripts" / "python.exe"
         self.fetcher = self.skill_dir / "scripts" / "fetch-xhs-details.py"
+        self.media_fetcher = self.skill_dir / "scripts" / "download-pending-media.py"
+        self.media_dir = self.state_dir / "media"
+        self.run_dir = self.state_dir / "runs"
         self.organizer = self.skill_dir / "scripts" / "organize.mjs"
         self.builder = self.skill_dir / "scripts" / "build-knowledge-base.mjs"
         self.public_builder = self.skill_dir / "scripts" / "build-public-site.mjs"
@@ -232,6 +276,7 @@ class Bridge:
         required_files = [
             self.python,
             self.fetcher,
+            self.media_fetcher,
             self.organizer,
             self.builder,
             self.public_builder,
@@ -257,6 +302,69 @@ class Bridge:
                 raise ValueError(f"required file was not found: {required}")
         self.config_id = hashlib.sha256(self.token.encode("utf-8")).hexdigest()
         self.processing_lock = threading.Lock()
+
+    def cache_missing_media(self, unique: dict[str, str]) -> dict:
+        if not self.video_analysis_enabled:
+            return {
+                "queued": 0,
+                "downloaded": 0,
+                "safety_stopped": False,
+                "state": "disabled",
+            }
+        safety_stop = self.state_dir / "media-download-safety-stop.json"
+        if safety_stop.exists():
+            return {
+                "queued": 0,
+                "downloaded": 0,
+                "safety_stopped": True,
+                "state": "safety-stopped",
+            }
+        curation = json.loads(self.curation.read_text(encoding="utf-8-sig"))
+        curated_ids = set(curation) if isinstance(curation, dict) else set()
+        urls = media_urls_to_cache(unique, curated_ids, self.media_dir)
+        if not urls:
+            return {"queued": 0, "downloaded": 0, "safety_stopped": False}
+        report = self.run_dir / f"media-{datetime.now().astimezone():%Y%m%d-%H%M%S-%f}.json"
+        creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        try:
+            process = subprocess.Popen(
+            [
+                str(self.python), "-X", "utf8", str(self.media_fetcher),
+                "--signed-urls-stdin",
+                "--xhs-dir", str(self.xhs_dir),
+                "--media-dir", str(self.media_dir),
+                "--report", str(report),
+                "--lock-file", str(self.state_dir / "media-download.lock"),
+                "--safety-stop-file", str(safety_stop),
+                "--max-items", str(len(urls)),
+                "--delay", "3",
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            cwd=self.workspace,
+            env={**os.environ, "PYTHONUTF8": "1"},
+            creationflags=creation_flags,
+            )
+            if process.stdin is None:
+                raise RuntimeError("media downloader stdin is unavailable")
+            process.stdin.write("\n".join(urls))
+            process.stdin.close()
+        except (OSError, RuntimeError):
+            return {
+                "queued": len(urls),
+                "downloaded": 0,
+                "safety_stopped": False,
+                "state": "not-started",
+            }
+        return {
+            "queued": len(urls),
+            "downloaded": 0,
+            "safety_stopped": False,
+            "state": "scheduled",
+        }
 
     def refresh_boards(self, config: dict) -> None:
         all_boards, enabled_boards = self.normalize_boards(config)
@@ -541,6 +649,10 @@ class Bridge:
             self.write_status(status)
 
             if not pending:
+                catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
+                media = self.cache_missing_media(filter_media_candidates(
+                    unique, catalog.get("notes", {}), self.published_since
+                ))
                 self.tag_catalog_sources(board_id, set(unique))
                 self.rebuild_knowledge_base()
                 next_board_id = self.next_board_id(board_id)
@@ -552,6 +664,7 @@ class Bridge:
                     "new": 0,
                     "baseline": False,
                     "report": None,
+                    "media": media,
                     "next_board_id": next_board_id,
                 }
                 if publish is not None:
@@ -579,6 +692,15 @@ class Bridge:
             fetched_notes, failures = parse_fetch_payload(
                 fetch.stdout, {note_id for note_id, _ in pending}
             )
+
+            catalog_notes = {}
+            if self.catalog_path.exists():
+                existing_catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
+                catalog_notes.update(existing_catalog.get("notes", {}))
+            catalog_notes.update({note["note_id"]: note for note in fetched_notes})
+            media = self.cache_missing_media(filter_media_candidates(
+                unique, catalog_notes, self.published_since
+            ))
 
             report = self.workspace / "xhs-favorites" / f"{datetime.now().astimezone():%Y-%m-%d}.md"
             organize_args = [
@@ -618,6 +740,7 @@ class Bridge:
                 "failures": failures,
                 "baseline": baseline,
                 "report": str(report),
+                "media": media,
                 "next_board_id": next_board_id,
             }
             if publish is not None:

@@ -20,6 +20,30 @@ const config = await parseJson(configPath);
 const configuredPath = (value, fallback) => resolve(workspace, value || fallback);
 const profilePath = arg("profile", configuredPath(config.domain_profile, "config/domain-profiles/software.json"));
 const profile = await parseJson(profilePath);
+function validateContentKindProfile(value) {
+  const allowedKinds = new Set(Object.keys(value.content_kinds || {}));
+  if (!allowedKinds.size) throw new Error("domain_profile.content_kinds must not be empty");
+  if (!value.classification || !String(value.classification.default || "").trim()) {
+    throw new Error("domain_profile.classification.default is required");
+  }
+  const groups = [
+    ["classification", value.classification?.default, value.classification?.rules || []],
+    ["fallback", value.fallback?.default_kind, value.fallback?.kind_rules || []]
+  ];
+  for (const [label, defaultKind, rules] of groups) {
+    if (defaultKind && !allowedKinds.has(defaultKind)) {
+      throw new Error(`${label} default kind is not declared in content_kinds: ${defaultKind}`);
+    }
+    for (const rule of rules) {
+      if (!allowedKinds.has(rule.kind)) {
+        throw new Error(`${label} rule kind is not declared in content_kinds: ${rule.kind}`);
+      }
+      if (!rule.pattern) throw new Error(`${label} kind rule is missing a pattern`);
+      new RegExp(rule.pattern, "i");
+    }
+  }
+}
+validateContentKindProfile(profile);
 const resourceIndex = profile.resource_index || {};
 if (profile.features?.resource_index) validateResourceIndex(resourceIndex);
 const paths = {
@@ -128,17 +152,31 @@ function classify(entry, matchedResources) {
     const source = ["resource_type", "project_type"].includes(rule.source) ? resourceTypes : text;
     if (new RegExp(rule.pattern, "i").test(source)) return rule.kind;
   }
-  return profile.classification?.default || [...allowedKinds][0] || "Content";
+  return profile.classification.default;
 }
 
 function fallbackEntry(raw) {
   const text = [raw.title, raw.description, raw.tags].filter(Boolean).join(" ");
   let category = profile.fallback?.default_category || "未分类";
+  let kind = profile.fallback?.default_kind
+    || profile.classification.default;
   for (const rule of profile.fallback?.rules || []) {
     if (new RegExp(rule.pattern, "i").test(text)) {
       category = rule.category;
       break;
     }
+  }
+  const fallbackKindRules = profile.fallback?.kind_rules?.length
+    ? profile.fallback.kind_rules
+    : (profile.classification?.rules || []).filter((rule) => !["resource_type", "project_type"].includes(rule.source));
+  for (const rule of fallbackKindRules) {
+    if (new RegExp(rule.pattern, "i").test(text)) {
+      kind = rule.kind;
+      break;
+    }
+  }
+  if (!Object.hasOwn(profile.content_kinds || {}, kind)) {
+    throw new Error(`Invalid fallback content kind: ${kind}`);
   }
   const excerpt = String(raw.description || raw.title || "")
     .replace(/\s+/g, " ")
@@ -151,7 +189,7 @@ function fallbackEntry(raw) {
       : "这条收藏已收录，完整内容尚未解读。",
     action: profile.fallback?.action || "内容解读完成后，这里会直接呈现核心结论和具体用法。",
     tools: [],
-    kind: "Note"
+    kind
   };
 }
 
