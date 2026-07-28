@@ -70,19 +70,27 @@ async function ensureMiniHeader(readmePath) {
 
   const lineEnding = frontMatter[1].includes("\r\n") ? "\r\n" : "\n";
   const lines = frontMatter[2].split(/\r?\n/);
-  const headerLines = lines.reduce((indexes, line, index) => {
-    if (/^header\s*:/.test(line)) indexes.push(index);
-    return indexes;
-  }, []);
-
-  if (headerLines.length === 0) {
-    lines.push("header: mini");
-  } else {
-    lines[headerLines[0]] = "header: mini";
-    for (let index = headerLines.length - 1; index > 0; index -= 1) {
-      lines.splice(headerLines[index], 1);
+  const setScalar = (key, value) => {
+    const indexes = lines.reduce((matches, line, index) => {
+      if (new RegExp(`^${key}\\s*:`).test(line)) matches.push(index);
+      return matches;
+    }, []);
+    if (indexes.length === 0) lines.push(`${key}: ${value}`);
+    else {
+      lines[indexes[0]] = `${key}: ${value}`;
+      for (let index = indexes.length - 1; index > 0; index -= 1) lines.splice(indexes[index], 1);
     }
+  };
+
+  setScalar("header", "mini");
+  setScalar("hf_oauth", "true");
+  const scopesIndex = lines.findIndex((line) => /^hf_oauth_scopes\s*:/.test(line));
+  if (scopesIndex !== -1) {
+    let end = scopesIndex + 1;
+    while (end < lines.length && (/^\s+/.test(lines[end]) || lines[end].trim() === "")) end += 1;
+    lines.splice(scopesIndex, end - scopesIndex);
   }
+  lines.push("hf_oauth_scopes:", "  - contribute-repos");
 
   const updatedFrontMatter = `${frontMatter[1]}${lines.join(lineEnding)}${frontMatter[3]}`;
   const updated = `${updatedFrontMatter}${readme.slice(frontMatter[0].length)}`;

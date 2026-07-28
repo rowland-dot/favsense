@@ -13,11 +13,11 @@ const requiredFiles = [
   "config/domain-profiles/software.json", "config/domain-profiles/fitness.json", "config/domain-profiles/skincare.json",
   "config/xhs-favorites.example.json",
   "config/resource-registries/fitness.example.json", "config/resource-registries/skincare.example.json",
-  "favsense.ps1", "site/index.html", "site/app.js", "site/resource-utils.mjs", "site/data/knowledge.json",
+  "favsense.ps1", "site/index.html", "site/app.js", "site/resource-utils.mjs", "site/personal-store.mjs", "site/hf-personal-sync.mjs", "site/hf-sync-guard.mjs", "site/data/knowledge.json",
   "skills/xhs-favorites-organizer/scripts/build-public-site.mjs", "skills/xhs-favorites-organizer/scripts/evidence-stats.mjs",
   "skills/xhs-favorites-organizer/scripts/publish-huggingface.mjs"
 ];
-const publicFiles = ["README.md", "site/index.html", "site/app.js", "site/site-config.js", "site/data/knowledge.json"];
+const publicFiles = ["README.md", "site/index.html", "site/app.js", "site/personal-store.mjs", "site/hf-personal-sync.mjs", "site/hf-sync-guard.mjs", "site/site-config.js", "site/data/knowledge.json"];
 const forbidden = [
   ["XHS temporary token", /xsec_token\s*=/i],
   ["profile URL", /xiaohongshu\.com\/user\/profile\//i],

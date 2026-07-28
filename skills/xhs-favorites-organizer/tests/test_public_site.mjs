@@ -6,8 +6,16 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { resourceGroup, resourceSortsForGroup, sortResources, validateResourceIndex } from "../../../site/resource-utils.mjs";
 import { hasHuggingFaceMiniHeader } from "../../../site/huggingface-layout.mjs";
+import { assertPrivateDataset, repositoryIsMissing, repositoryWriteConflict } from "../../../site/hf-sync-guard.mjs";
 import { collectVideoEvidenceStats } from "../scripts/evidence-stats.mjs";
 import { validateLocalBridgeConfig, validateLocalBridgeSession } from "../../../site/local-bridge-utils.mjs";
+import {
+  loadPersonalData,
+  mergePersonalData,
+  normalizePersonalData,
+  relatedResourceNames,
+  serializePersonalData
+} from "../../../site/personal-store.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const read = (path) => readFile(resolve(root, path), "utf8");
@@ -256,6 +264,86 @@ test("resource sort options follow the selected resource type", async () => {
   assert.deepEqual(resourceSortsForGroup(index, "官方文档").map((sort) => sort.id), ["name-asc", "name-desc"]);
 });
 
+test("personal curation stays note-scoped and links bookmarked resources", () => {
+  const ids = new Set(["note-a", "note-b"]);
+  const normalized = normalizePersonalData({
+    bookmarks: ["note-a", "unknown", "note-a"],
+    descriptionOverrides: {
+      "note-a": { description: "  我的修订  ", updatedAt: "2026-07-29T00:00:00.000Z" },
+      unknown: { description: "不应保留" }
+    }
+  }, ids);
+  assert.deepEqual(normalized.bookmarks, ["note-a"]);
+  assert.equal(normalized.descriptionOverrides["note-a"].description, "我的修订");
+  assert.equal(normalized.descriptionOverrides.unknown, undefined);
+
+  const resources = relatedResourceNames([
+    { id: "note-a", resources: ["Tool A", "Guide B"] },
+    { id: "note-b", resources: ["Tool C"] }
+  ], new Set(normalized.bookmarks));
+  assert.deepEqual([...resources], ["Tool A", "Guide B"]);
+});
+
+test("personal curation migrates old bookmarks and merges portable backups", () => {
+  const memory = new Map([["xhs-kb-saved", JSON.stringify(["note-a"])]]);
+  const storage = {
+    getItem: (key) => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, value),
+    removeItem: (key) => memory.delete(key)
+  };
+  const loaded = loadPersonalData(storage, new Set(["note-a", "note-b"]));
+  assert.deepEqual(loaded.bookmarks, ["note-a"]);
+  assert.equal(memory.has("xhs-kb-saved"), false);
+
+  const merged = mergePersonalData(loaded, {
+    bookmarks: ["note-b"],
+    descriptionOverrides: { "note-b": { description: "跨设备修订" } }
+  }, new Set(["note-a", "note-b"]));
+  assert.deepEqual(merged.bookmarks, ["note-a", "note-b"]);
+  assert.match(serializePersonalData(merged, new Set(["note-a", "note-b"])), /"version": 2/);
+});
+
+test("personal curation resolves stale cross-device edits and deletions", () => {
+  const ids = new Set(["note-a"]);
+  const remote = {
+    bookmarkStates: { "note-a": { bookmarked: false, updatedAt: "2026-07-29T02:00:00.000Z" } },
+    descriptionOverrides: { "note-a": { description: "", deleted: true, updatedAt: "2026-07-29T02:00:00.000Z" } }
+  };
+  const staleLocal = {
+    bookmarkStates: { "note-a": { bookmarked: true, updatedAt: "2026-07-29T01:00:00.000Z" } },
+    descriptionOverrides: { "note-a": { description: "旧修订", updatedAt: "2026-07-29T01:00:00.000Z" } }
+  };
+  const merged = mergePersonalData(remote, staleLocal, ids);
+  assert.deepEqual(merged.bookmarks, []);
+  assert.equal(merged.bookmarkStates["note-a"].bookmarked, false);
+  assert.equal(merged.descriptionOverrides["note-a"].deleted, true);
+  assert.equal(merged.descriptionOverrides["note-a"].description, "");
+});
+
+test("personal sync merges the latest remote snapshot before a second client writes", () => {
+  const ids = new Set(["note-a", "note-b"]);
+  const clientA = normalizePersonalData({
+    bookmarkStates: { "note-a": { bookmarked: true, updatedAt: "2026-07-29T01:00:00.000Z" } }
+  }, ids);
+  const clientB = normalizePersonalData({
+    bookmarkStates: { "note-b": { bookmarked: true, updatedAt: "2026-07-29T01:00:01.000Z" } }
+  }, ids);
+  const afterA = mergePersonalData({}, clientA, ids);
+  const afterB = mergePersonalData(afterA, clientB, ids);
+  assert.deepEqual(new Set(afterB.bookmarks), new Set(["note-a", "note-b"]));
+});
+
+test("Hugging Face personal sync fails closed when the Dataset is public", () => {
+  assert.equal(assertPrivateDataset({ private: true, sha: "a".repeat(40) }).private, true);
+  assert.throws(() => assertPrivateDataset({ private: false, sha: "a".repeat(40) }), /sync was stopped/);
+  assert.throws(() => assertPrivateDataset({ private: true }), /no verifiable revision/);
+  assert.throws(() => assertPrivateDataset(null), /sync was stopped/);
+  assert.equal(repositoryIsMissing(new Error("404 repository not found")), true);
+  assert.equal(repositoryIsMissing(new Error("network timeout")), false);
+  assert.equal(repositoryWriteConflict(new Error("409 Conflict: parent commit changed")), true);
+  assert.equal(repositoryWriteConflict(new Error("network timeout")), false);
+});
+
 test("resource index validation rejects broken type-sort contracts", () => {
   assert.throws(
     () => validateResourceIndex({ groups: [], default_group: "其他", sorts: [{ id: "metric", label: "指标", field: "metricNumeric", type: "number", direction: "desc", applies_to: ["拼错的类型"] }] }),
@@ -425,10 +513,13 @@ test("software resource registry mixes repositories, websites, docs and tutorial
 });
 
 test("static app has the required deployment assets", async () => {
-  const [html, css, js, siteConfig, readme, publishingGuide, archivedCss, archiveReadme] = await Promise.all([
+  const [html, css, js, personalStore, hfPersonalSync, hfSyncGuard, siteConfig, readme, publishingGuide, archivedCss, archiveReadme] = await Promise.all([
     read("site/index.html"),
     read("site/styles.css"),
     read("site/app.js"),
+    read("site/personal-store.mjs"),
+    read("site/hf-personal-sync.mjs"),
+    read("site/hf-sync-guard.mjs"),
     read("site/site-config.js"),
     read("README.md"),
     read("docs/PUBLISHING.md"),
@@ -440,6 +531,10 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /id="resource-type-filter"/);
   assert.match(html, /id="resource-sort"/);
   assert.match(html, /id="resource-result-count"/);
+  assert.match(html, /id="bookmark-filter"/);
+  assert.match(html, /id="resource-bookmark-filter"/);
+  assert.match(html, /id="personal-data-export"/);
+  assert.match(html, /id="personal-data-import"/);
   assert.doesNotMatch(html, /owner\/repo|Star、许可证|从官方仓库确认/);
   assert.match(html, />同步设置</);
   assert.doesNotMatch(html, /id="clear-filters"/);
@@ -462,6 +557,22 @@ test("static app has the required deployment assets", async () => {
   assert.match(js, /categoryAccents = new Map/);
   assert.match(js, /resourceGroup, resourceSortsForGroup, sortResources/);
   assert.match(js, /renderResourceSortOptions/);
+  assert.match(js, /data-bookmark-note/);
+  assert.match(js, /data-description-form/);
+  assert.match(js, /relatedResourceNames/);
+  assert.match(personalStore, /favsense-personal-v1/);
+  assert.match(personalStore, /MAX_DESCRIPTION_LENGTH = 4000/);
+  assert.match(hfPersonalSync, /@huggingface\/hub@2\.14\.2/);
+  assert.match(hfPersonalSync, /type: "dataset"/);
+  assert.match(hfPersonalSync, /private: true/);
+  assert.match(hfPersonalSync, /datasetInfo/);
+  assert.match(hfPersonalSync, /additionalFields: \["sha"\]/);
+  assert.match(hfPersonalSync, /assertPrivateDataset/);
+  assert.match(hfPersonalSync, /parentCommit: info\.sha,/);
+  assert.doesNotMatch(hfPersonalSync, /parentCommit: info\.sha \|\| undefined/);
+  assert.match(hfPersonalSync, /repositoryWriteConflict/);
+  assert.match(hfSyncGuard, /info\?\.private !== true/);
+  assert.match(readme, /hf_oauth_scopes:\s*\n\s+- contribute-repos/);
   assert.match(html, /统计随每次同步与站点构建自动更新/);
   assert.match(js, /\.\/\.local\/bridge\.json/);
   assert.match(js, /X-XHS-Bridge-Token/);

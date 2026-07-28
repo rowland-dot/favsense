@@ -69,7 +69,7 @@ npm.cmd run release:check
 
 ## 3. 创建 Hugging Face 公网知识库
 
-FavSense 使用 Hugging Face 的 **Static HTML** SDK。网页中的搜索、筛选、主题切换、详情抽屉和资源索引都在浏览器中运行，不需要 Python 服务、Docker、GPU 或付费算力。
+FavSense 使用 Hugging Face 的 **Static HTML** SDK。网页中的搜索、筛选、主题切换、详情抽屉、书签、个人修订和资源索引都在浏览器中运行，不需要 Python 服务、Docker、GPU 或付费算力。
 
 1. 打开 [Create a new Space](https://huggingface.co/new-space)。
 2. SDK 选择 **Static HTML**。
@@ -89,11 +89,18 @@ sdk: static
 app_file: site/index.html
 fullWidth: true
 header: mini
+hf_oauth: true
+hf_oauth_scopes:
+  - contribute-repos
 ```
+
+`contribute-repos` 是这里需要的最小额外权限：它只允许 FavSense 创建并访问由当前 OAuth 应用创建的仓库，不能读取或修改用户已有的其他仓库。用户首次在“同步设置 → 个人数据”登录后，FavSense 会在该用户账号下创建一个私有 Dataset，并把 `personal.json` 写入其中。该文件只包含书签状态、冲突处理时间戳和用户主动修订的描述，不包含 Cookie、小红书登录态、收藏夹 ID、原始视频或帧证据。每次读写前都会重新确认 Dataset 仍为私有；如果用户将它改为公开，FavSense 会停止云同步并保留浏览器本地版本。
+
+本地预览、GitHub Pages 或未登录状态会继续使用浏览器 `localStorage`。这份本地副本用于离线降级；用户也可以随时导出或导入 JSON。换设备时登录同一 HF 账号后，页面会读取私有 Dataset 并与本地副本合并。OAuth access token 由官方客户端产生并有过期时间，不应手动复制到配置或 Git 仓库。
 
 FavSense 默认保留 Hugging Face README 中的 `header: mini` 浮动工具栏。网页只有在确认自己嵌入于 `huggingface.co/spaces/...` 且 `site/site-config.js` 标记为 mini 模式时，才把右上角的作者入口和主题按钮水平移到浮动工具栏左侧。它不会移动 FavSense 顶部导航，也不会增加顶部间距；本地预览、直接访问 Static Space、GitHub Pages 和 `default` 模式均按普通布局显示。
 
-日常发布器更新脱敏的 `site/` 时，会把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，同时保留其余元数据和说明正文。公开的 `site/site-config.js` 使用同一模式，仅控制右上角操作区的横向避让，不改变导航栏的纵向位置。
+日常发布器更新脱敏的 `site/` 时，会把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，并确保启用 HF OAuth 与 `contribute-repos` 权限，同时保留其余元数据和说明正文。公开的 `site/site-config.js` 使用同一模式，仅控制右上角操作区的横向避让，不改变导航栏的纵向位置。
 
 Static Space 的直接访问地址通常是：
 
@@ -164,13 +171,14 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
 | 原始视频、抽帧和核验证据 | 是 | 否 | 否 |
 | Obsidian Markdown 知识库 | 是 | 否 | 否 |
 | 脱敏网页与 `knowledge.json` | 是 | 是 | 可选的公开演示 |
+| 书签与个人描述修订 | 浏览器副本 | 用户私有 Dataset | 否 |
 | Cookie、Token、个人配置 | 是 | 否 | 否 |
 
-因此，“两边都有”指的是：完整数据和可编辑知识库在本机；可跨设备浏览的脱敏网页知识库在 Hugging Face。Hugging Face 不是原始数据备份。
+因此，“两边都有”指的是：完整数据和 Obsidian 知识库在本机；脱敏网页知识库发布到 Space；书签与个人描述修订在浏览器保留副本，并在用户登录后同步到私有 HF Dataset。Hugging Face 仍然不是原始视频或账号数据的备份位置。
 
 ## 6. 为什么默认不使用 Docker
 
-Static Space 已能完整承载当前网页，而且没有容器休眠、临时磁盘和服务维护成本。小红书采集依赖普通 Chrome 中的扫码登录态，本机运行最稳定，也更符合最小暴露原则。
+Static Space 已能完整承载当前网页，而且没有容器休眠、临时磁盘和服务维护成本。需要跨设备保存的少量个人状态通过 HF OAuth 写入私有 Dataset，不需要为了一个 JSON 文件持续运行付费容器。小红书采集依赖普通 Chrome 中的扫码登录态，本机运行最稳定，也更符合最小暴露原则。
 
 只有在需要以下能力时才考虑 Docker Space：
 
@@ -179,7 +187,7 @@ Static Space 已能完整承载当前网页，而且没有容器休眠、临时�
 - 服务端数据库或搜索引擎；
 - 在云端执行采集或分析任务。
 
-即使改用 Docker，Space 本地磁盘仍不应被当作长期数据库；需要另配 Hugging Face Dataset、Storage Bucket 或外部数据库。云端小红书登录与稳定定时执行也需要独立设计，不能仅靠一个 Dockerfile 解决。
+即使改用 Docker，Space 本地磁盘仍不应被当作长期数据库；需要另配 Hugging Face Dataset、Storage Bucket 或外部数据库。当前的书签与个人修订已经直接使用私有 Dataset，因此只有真正需要服务端计算或复杂权限系统时才值得升级 Docker。
 
 ## 7. GitHub Actions 与个人知识库的区别
 
@@ -195,4 +203,4 @@ Hugging Face 官方 `huggingface/hub-sync` Action 可以在 GitHub `main` 更新
 - 计划任务没有运行：任务只在当前 Windows 用户已登录时执行，因为需要使用该用户的 Chrome 登录态。
 - 网页更新了但数据不对：先执行 `npm.cmd run release:check`，再检查 `site/data/knowledge.json`。
 
-官方参考：[Static HTML Spaces](https://huggingface.co/docs/hub/spaces-sdks-static)、[Spaces 配置](https://huggingface.co/docs/hub/spaces-config-reference)、[GitHub Actions 同步](https://huggingface.co/docs/hub/repositories-github-actions)。
+官方参考：[Static HTML Spaces](https://huggingface.co/docs/hub/spaces-sdks-static)、[Space OAuth](https://huggingface.co/docs/hub/spaces-oauth)、[Hugging Face JavaScript Hub API](https://huggingface.co/docs/huggingface.js/en/hub/README)、[Spaces 配置](https://huggingface.co/docs/hub/spaces-config-reference)、[GitHub Actions 同步](https://huggingface.co/docs/hub/repositories-github-actions)。

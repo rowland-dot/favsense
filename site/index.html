@@ -84,6 +84,14 @@
             <div class="kind-filters" id="kind-filter"></div>
             <p class="filter-help">内容形态会自动识别，你无需逐篇维护。</p>
           </div>
+          <div class="sidebar-section sidebar-section--bookmark">
+            <p class="filter-label">个人书签</p>
+            <button class="bookmark-filter" id="bookmark-filter" type="button" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5c0-1.1.9-2 2-2h7c1.1 0 2 .9 2 2v17L12 18l-5.5 3.5v-17Z" /></svg>
+              <span>只看书签</span><strong id="bookmark-count">0</strong>
+            </button>
+            <p class="filter-help">书签是你在 FavSense 里的二次筛选，不会改动小红书收藏。</p>
+          </div>
           <div class="open-source-note">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.5v5.3c0 5.1 3.4 9.8 8 11.2 4.6-1.4 8-6.1 8-11.2V5.5L12 2Zm0 4.2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm5.1 10.5A7.8 7.8 0 0 1 12 19.5a7.8 7.8 0 0 1-5.1-2.8c.5-1.8 2.1-3 4-3h2.2c1.9 0 3.5 1.2 4 3Z" /></svg>
             <div><strong>私人数据默认不公开</strong><span>网页数据不包含 Cookie、Token、个人主页或本地视频。</span></div>
@@ -139,6 +147,10 @@
             <input id="resource-search" type="search" placeholder="搜索资源名称、类型或用途…" />
           </label>
           <div class="resource-controls">
+            <button class="resource-bookmark-filter" id="resource-bookmark-filter" type="button" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5c0-1.1.9-2 2-2h7c1.1 0 2 .9 2 2v17L12 18l-5.5 3.5v-17Z" /></svg>
+              <span>书签关联</span><strong id="resource-bookmark-count">0</strong>
+            </button>
             <label class="resource-control"><span id="resource-filter-label">类型</span><select id="resource-type-filter" aria-label="筛选资源类型"></select></label>
             <label class="resource-control"><span>排序</span><select id="resource-sort" aria-label="资源排序方式"></select></label>
           </div>
@@ -163,6 +175,30 @@
               <div class="board-empty">收藏夹设置只在本机工作台显示，公开网页不会读取你的账号信息。</div>
             </div>
             <p class="board-manager-status" id="board-manager-status" role="status" aria-live="polite">设置只保存在本机，不会进入公开仓库或 Hugging Face 页面。</p>
+          </div>
+        </section>
+        <section class="personal-data-panel" aria-labelledby="personal-data-title">
+          <div>
+            <p class="eyebrow"><span></span> 个人数据</p>
+            <h3 id="personal-data-title">带走你的书签与修订。</h3>
+            <p>默认保存在当前浏览器；登录 Hugging Face 后，会同时写入你的私有 Dataset，从而在不同设备间继续使用。</p>
+          </div>
+          <div class="personal-data-card">
+            <div class="personal-data-stats">
+              <span><strong id="personal-bookmark-count">0</strong> 个书签</span>
+              <span><strong id="personal-edit-count">0</strong> 篇个人修订</span>
+            </div>
+            <div class="personal-data-actions">
+              <button type="button" id="personal-data-export">导出个人数据</button>
+              <button type="button" id="personal-data-import">导入个人数据</button>
+              <input id="personal-data-import-input" type="file" accept="application/json,.json" hidden />
+            </div>
+            <div class="cloud-sync-row" id="cloud-sync-row" hidden>
+              <span id="cloud-sync-status">正在检查 Hugging Face 同步…</span>
+              <a id="cloud-sync-login" href="#" target="_blank" rel="noreferrer">使用 HF 登录同步</a>
+              <a id="cloud-sync-logout" href="#" hidden>退出</a>
+            </div>
+            <p>导入会与当前数据合并，不会删除已有书签；登录后，个人数据会自动同步到由 FavSense 创建的私有 HF Dataset。</p>
           </div>
         </section>
         <div class="method-copy">

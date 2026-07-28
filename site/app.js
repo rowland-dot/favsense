@@ -1,8 +1,16 @@
 import { resourceGroup, resourceSortsForGroup, sortResources } from "./resource-utils.mjs";
 import { validateLocalBridgeConfig, validateLocalBridgeSession } from "./local-bridge-utils.mjs";
 import { hasHuggingFaceMiniHeader } from "./huggingface-layout.mjs";
-
+import {
+  MAX_DESCRIPTION_LENGTH,
+  loadPersonalData,
+  mergePersonalData,
+  relatedResourceNames,
+  savePersonalData,
+  serializePersonalData
+} from "./personal-store.mjs";
 const DATA_URL = new URL("./data/knowledge.json", import.meta.url);
+let hfPersonalSync = null;
 
 function configureHostLayout() {
   const configuredHeader = String(window.FAVSENSE_CONFIG?.huggingFaceHeader || "default").toLowerCase();
@@ -24,10 +32,14 @@ const elements = {
   activeFilterLabel: document.querySelector("#active-filter-label"),
   categoryList: document.querySelector("#category-list"),
   kindFilter: document.querySelector("#kind-filter"),
+  bookmarkFilter: document.querySelector("#bookmark-filter"),
+  bookmarkCount: document.querySelector("#bookmark-count"),
   searchInput: document.querySelector("#search-input"),
   resourceSearch: document.querySelector("#resource-search"),
   resourceTypeFilter: document.querySelector("#resource-type-filter"),
   resourceSort: document.querySelector("#resource-sort"),
+  resourceBookmarkFilter: document.querySelector("#resource-bookmark-filter"),
+  resourceBookmarkCount: document.querySelector("#resource-bookmark-count"),
   resourceResultCount: document.querySelector("#resource-result-count"),
   resourcesGrid: document.querySelector("#resources-grid"),
   sortSelect: document.querySelector("#sort-select"),
@@ -39,6 +51,15 @@ const elements = {
   boardList: document.querySelector("#board-list"),
   boardEnabledCount: document.querySelector("#board-enabled-count"),
   boardManagerStatus: document.querySelector("#board-manager-status"),
+  personalBookmarkCount: document.querySelector("#personal-bookmark-count"),
+  personalEditCount: document.querySelector("#personal-edit-count"),
+  personalExport: document.querySelector("#personal-data-export"),
+  personalImport: document.querySelector("#personal-data-import"),
+  personalImportInput: document.querySelector("#personal-data-import-input"),
+  cloudSyncRow: document.querySelector("#cloud-sync-row"),
+  cloudSyncStatus: document.querySelector("#cloud-sync-status"),
+  cloudSyncLogin: document.querySelector("#cloud-sync-login"),
+  cloudSyncLogout: document.querySelector("#cloud-sync-logout"),
   hero: document.querySelector("#hero-overview"),
   creatorSpaceLink: document.querySelector("#creator-space-link"),
   creatorSpaceName: document.querySelector("#creator-space-name")
@@ -53,12 +74,134 @@ const state = {
   resourceSort: "",
   category: "all",
   kind: "all",
+  bookmarksOnly: false,
+  resourceBookmarksOnly: false,
+  bookmarks: new Set(),
+  bookmarkStates: {},
+  descriptionOverrides: {},
+  editingDescriptionId: null,
+  cloud: { available: false, authenticated: false, username: "", repository: "", ready: false, oauth: null },
   sort: "curated",
   layout: localStorage.getItem("xhs-kb-layout") || "grid",
   localBridge: null,
   boards: [],
   boardUpdatePending: false
 };
+
+function bookmarkIcon() {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5c0-1.1.9-2 2-2h7c1.1 0 2 .9 2 2v17L12 18l-5.5 3.5v-17Z" /></svg>';
+}
+
+function validNoteIds() {
+  return new Set(state.data?.notes.map((note) => note.id) || []);
+}
+
+function personalData() {
+  return {
+    bookmarks: [...state.bookmarks],
+    bookmarkStates: state.bookmarkStates,
+    descriptionOverrides: state.descriptionOverrides
+  };
+}
+
+function persistPersonalData() {
+  try {
+    const saved = savePersonalData(localStorage, personalData(), validNoteIds());
+    state.bookmarks = new Set(saved.bookmarks);
+    state.bookmarkStates = saved.bookmarkStates;
+    state.descriptionOverrides = saved.descriptionOverrides;
+    renderPersonalControls();
+    queueCloudSave();
+    return true;
+  } catch {
+    showToast("浏览器无法保存个人数据，请先导出备份");
+    return false;
+  }
+}
+
+function noteDescription(note) {
+  const override = state.descriptionOverrides[note.id];
+  return (!override?.deleted && override?.description) || note.deepSummary || note.summary;
+}
+
+function renderPersonalControls() {
+  const bookmarkCount = state.bookmarks.size;
+  const editCount = Object.values(state.descriptionOverrides).filter((entry) => !entry.deleted).length;
+  elements.bookmarkCount.textContent = bookmarkCount;
+  elements.bookmarkFilter.classList.toggle("is-active", state.bookmarksOnly);
+  elements.bookmarkFilter.setAttribute("aria-pressed", String(state.bookmarksOnly));
+  elements.resourceBookmarkCount.textContent = relatedResourceNames(state.data?.notes, state.bookmarks).size;
+  elements.resourceBookmarkFilter.classList.toggle("is-active", state.resourceBookmarksOnly);
+  elements.resourceBookmarkFilter.setAttribute("aria-pressed", String(state.resourceBookmarksOnly));
+  elements.personalBookmarkCount.textContent = bookmarkCount;
+  elements.personalEditCount.textContent = editCount;
+}
+
+function renderCloudStatus(message = "") {
+  elements.cloudSyncRow.hidden = !state.cloud.available;
+  if (!state.cloud.available) return;
+  elements.cloudSyncLogin.hidden = state.cloud.authenticated;
+  elements.cloudSyncLogout.hidden = !state.cloud.authenticated;
+  if (message) elements.cloudSyncStatus.textContent = message;
+  else if (!state.cloud.authenticated) elements.cloudSyncStatus.textContent = "登录后可在不同设备之间同步书签与修订。";
+  else elements.cloudSyncStatus.textContent = `已同步到 HF 私有数据集 · ${state.cloud.username}`;
+}
+
+async function flushCloudSaves() {
+  if (flushCloudSaves.running || !state.cloud.ready || !state.cloud.authenticated) return;
+  flushCloudSaves.running = true;
+  try {
+    while (flushCloudSaves.dirty && state.cloud.ready && state.cloud.authenticated) {
+      flushCloudSaves.dirty = false;
+      renderCloudStatus("正在同步个人数据…");
+      const remoteMerged = await hfPersonalSync.saveHfPersonalData(state.cloud, personalData());
+      const currentMerged = mergePersonalData(remoteMerged, personalData(), validNoteIds());
+      const saved = savePersonalData(localStorage, currentMerged, validNoteIds());
+      state.bookmarks = new Set(saved.bookmarks);
+      state.bookmarkStates = saved.bookmarkStates;
+      state.descriptionOverrides = saved.descriptionOverrides;
+      renderPersonalControls();
+      renderNotes();
+      renderResources();
+    }
+    renderCloudStatus();
+  } catch {
+    flushCloudSaves.dirty = false;
+    renderCloudStatus("HF 同步已停止；请确认个人 Dataset 仍为私有。浏览器本地版本已保留。");
+  } finally {
+    flushCloudSaves.running = false;
+  }
+}
+
+function queueCloudSave() {
+  if (!state.cloud.ready || !state.cloud.authenticated) return;
+  flushCloudSaves.dirty = true;
+  window.clearTimeout(queueCloudSave.timer);
+  queueCloudSave.timer = window.setTimeout(flushCloudSaves, 300);
+}
+
+async function initCloudSync() {
+  try {
+    if (!window.huggingface?.variables?.OAUTH_CLIENT_ID) return;
+    hfPersonalSync ||= await import("./hf-personal-sync.mjs");
+    state.cloud = { ...(await hfPersonalSync.initializeHfPersonalSync()), ready: false };
+    if (state.cloud.loginUrl) elements.cloudSyncLogin.href = state.cloud.loginUrl;
+    renderCloudStatus();
+    if (!state.cloud.authenticated) return;
+
+    const remote = await hfPersonalSync.loadHfPersonalData(state.cloud);
+    const merged = mergePersonalData(remote || {}, personalData(), validNoteIds());
+    state.bookmarks = new Set(merged.bookmarks);
+    state.bookmarkStates = merged.bookmarkStates;
+    state.descriptionOverrides = merged.descriptionOverrides;
+    state.cloud.ready = true;
+    persistPersonalData();
+    renderNotes();
+    renderResources();
+  } catch {
+    if (state.cloud.available) renderCloudStatus("HF 私有数据集暂时不可用；浏览器本地版本仍可正常使用。");
+  }
+}
 
 const stationeryPalette = ["#3569e8", "#6f3cc3", "#d9368b", "#e66b00", "#b58b00", "#6b9e1b", "#008f66", "#00889a"];
 const categoryAccents = new Map([
@@ -202,10 +345,11 @@ async function initBoardManager() {
 function filteredNotes() {
   const query = state.query.toLocaleLowerCase("zh-CN").trim();
   const notes = state.data.notes.filter((note) => {
-    const haystack = [note.title, note.author, note.category, note.summary, note.deepSummary, note.action, ...note.themes, ...note.tools].join(" ").toLocaleLowerCase("zh-CN");
+    const haystack = [note.title, note.author, note.category, note.summary, noteDescription(note), note.action, ...note.themes, ...note.tools].join(" ").toLocaleLowerCase("zh-CN");
     return (!query || haystack.includes(query))
       && (state.category === "all" || note.category === state.category)
-      && (state.kind === "all" || note.kind === state.kind);
+      && (state.kind === "all" || note.kind === state.kind)
+      && (!state.bookmarksOnly || state.bookmarks.has(note.id));
   });
 
   if (state.sort === "newest") return notes.sort((a, b) => String(b.publishedAt).localeCompare(String(a.publishedAt)));
@@ -231,12 +375,16 @@ function renderCategories() {
 
 function noteCard(note) {
   const tools = note.tools.slice(0, 4).map((tool) => `<span class="tool-chip">${escapeHtml(tool)}</span>`).join("");
+  const bookmarked = state.bookmarks.has(note.id);
   return `
     <article class="note-card" style="--accent:${categoryAccent(note.category)}" data-note-id="${escapeHtml(note.id)}" data-kind="${escapeHtml(note.kind)}">
-      <div class="card-strip"><span class="card-kind">${escapeHtml(note.category)} · ${escapeHtml(note.kind)}</span></div>
+      <div class="card-strip">
+        <span class="card-kind">${escapeHtml(note.category)} · ${escapeHtml(note.kind)}</span>
+        <button class="bookmark-button ${bookmarked ? "is-active" : ""}" type="button" data-bookmark-note="${escapeHtml(note.id)}" aria-pressed="${bookmarked}" aria-label="${bookmarked ? "移除书签" : "添加书签"}" title="${bookmarked ? "移除书签" : "添加书签"}">${bookmarkIcon()}</button>
+      </div>
       <div class="card-body">
         <h3 class="card-title">${escapeHtml(note.title)}</h3>
-        <p class="card-summary">${escapeHtml(note.summary)}</p>
+        <p class="card-summary">${escapeHtml(noteDescription(note))}</p>
         <div class="tools-row">${tools}</div>
       </div>
       <footer class="card-footer">
@@ -253,7 +401,7 @@ function renderNotes() {
   elements.notesGrid.innerHTML = notes.map(noteCard).join("");
   elements.resultCount.textContent = notes.length;
   elements.emptyState.hidden = notes.length > 0;
-  const labels = [state.category !== "all" ? state.category : "全部知识卡", state.kind !== "all" ? state.kind : ""].filter(Boolean);
+  const labels = [state.bookmarksOnly ? "我的书签" : (state.category !== "all" ? state.category : "全部知识卡"), state.kind !== "all" ? state.kind : ""].filter(Boolean);
   elements.activeFilterLabel.textContent = labels.join(" · ");
 }
 
@@ -281,11 +429,15 @@ function resourceCard(resource) {
 function renderResources() {
   const radar = state.data.meta.resourceIndex;
   const query = state.resourceQuery.toLocaleLowerCase("zh-CN").trim();
+  const bookmarkedResourceNames = relatedResourceNames(state.data.notes, state.bookmarks);
   const filtered = state.data.resources
     .filter((resource) => state.resourceType === "all" || resourceGroup(resource, radar) === state.resourceType)
+    .filter((resource) => !state.resourceBookmarksOnly || bookmarkedResourceNames.has(resource.name))
     .filter((resource) => !query || [resource.name, resource.type, resource.description, resourceGroup(resource, radar), ...(resource.aliases || []), ...(resource.attributes || []).flatMap((attribute) => [attribute.label, attribute.value])].join(" ").toLocaleLowerCase("zh-CN").includes(query));
   const resources = sortResources(filtered, state.resourceSort, radar);
-  elements.resourcesGrid.innerHTML = resources.map(resourceCard).join("");
+  elements.resourcesGrid.innerHTML = resources.length
+    ? resources.map(resourceCard).join("")
+    : `<div class="resource-empty"><strong>${state.resourceBookmarksOnly ? "还没有书签关联资源" : "没有找到匹配的资源"}</strong><p>${state.resourceBookmarksOnly ? "先在知识卡上添加书签；卡片中提到的工具、项目与网站会出现在这里。" : "换一个关键词或资源类型试试。"}</p></div>`;
   elements.resourceResultCount.textContent = `显示 ${resources.length} / ${state.data.resources.length} 个${radar.entity_label || "资源"}`;
 }
 
@@ -312,6 +464,35 @@ function renderResourceSortOptions() {
   elements.resourceSort.value = state.resourceSort;
 }
 
+function descriptionSection(note) {
+  const override = state.descriptionOverrides[note.id]?.deleted ? null : state.descriptionOverrides[note.id];
+  const heading = note.kind === "Note" ? "原帖摘要" : "核心结论";
+  if (state.editingDescriptionId === note.id) {
+    return `
+      <section class="detail-section">
+        <form class="description-editor" data-description-form="${escapeHtml(note.id)}">
+          <label for="description-${escapeHtml(note.id)}">知识卡描述</label>
+          <textarea id="description-${escapeHtml(note.id)}" name="description" maxlength="${MAX_DESCRIPTION_LENGTH}" rows="8">${escapeHtml(noteDescription(note))}</textarea>
+          <p>这是你的个人修订，不会进入公开知识库；登录 HF 后会同步到你的私有 Dataset。</p>
+          <div class="description-editor-actions">
+            <button class="editor-primary" type="submit">保存修改</button>
+            <button type="button" data-cancel-description>取消</button>
+            ${override ? '<button type="button" data-restore-description>恢复系统版本</button>' : ""}
+          </div>
+        </form>
+      </section>`;
+  }
+  return `
+    <section class="detail-section">
+      <div class="detail-section-heading">
+        <h3>${heading}</h3>
+        <button type="button" data-edit-description="${escapeHtml(note.id)}">编辑描述</button>
+      </div>
+      <p>${escapeHtml(noteDescription(note))}</p>
+      ${override ? '<span class="personal-edit-label">已使用你的个人修订</span>' : ""}
+    </section>`;
+}
+
 function renderDetail(note) {
   const radar = state.data.meta.resourceIndex;
   const resources = resourceMap();
@@ -333,11 +514,12 @@ function renderDetail(note) {
   ` : "";
 
   elements.dialog.style.setProperty("--accent", categoryAccent(note.category));
+  elements.dialogContent.dataset.noteId = note.id;
   elements.dialogContent.innerHTML = `
     <p class="detail-kicker"><i></i> ${escapeHtml(note.category)} · ${escapeHtml(note.kind)}</p>
     <h2 class="detail-title">${escapeHtml(note.title)}</h2>
     <div class="detail-meta"><span>${escapeHtml(note.author || "作者未记录")}</span><span>${escapeHtml(formatDate(note.publishedAt))}</span></div>
-    <section class="detail-section"><h3>${note.kind === "Note" ? "原帖摘要" : "核心结论"}</h3><p>${escapeHtml(note.deepSummary)}</p></section>
+    ${descriptionSection(note)}
     ${actionHtml}
     ${resourceHtml}
     ${tagsHtml}
@@ -345,6 +527,7 @@ function renderDetail(note) {
     <footer class="detail-footer">
       <a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">在小红书搜索原帖</a>
       <button type="button" data-copy-note="${escapeHtml(note.id)}">复制卡片链接</button>
+      <button class="detail-bookmark ${state.bookmarks.has(note.id) ? "is-active" : ""}" type="button" data-bookmark-note="${escapeHtml(note.id)}" aria-pressed="${state.bookmarks.has(note.id)}">${bookmarkIcon()} ${state.bookmarks.has(note.id) ? "已加书签" : "添加书签"}</button>
     </footer>
   `;
 }
@@ -359,6 +542,7 @@ function openNote(noteId, updateHash = true) {
 }
 
 function closeDialog() {
+  state.editingDescriptionId = null;
   if (elements.dialog.open) elements.dialog.close();
   history.replaceState(null, "", location.pathname + location.search);
 }
@@ -367,6 +551,7 @@ function clearFilters() {
   state.query = "";
   state.category = "all";
   state.kind = "all";
+  state.bookmarksOnly = false;
   elements.searchInput.value = "";
   renderCategories();
   renderNotes();
@@ -387,6 +572,45 @@ function updateHeroVisibility() {
   elements.hero.hidden = !isNotesView;
 }
 
+function toggleBookmark(noteId) {
+  if (!validNoteIds().has(noteId)) return;
+  const adding = !state.bookmarks.has(noteId);
+  if (adding) state.bookmarks.add(noteId);
+  else state.bookmarks.delete(noteId);
+  state.bookmarkStates[noteId] = { bookmarked: adding, updatedAt: new Date().toISOString() };
+  if (!persistPersonalData()) return;
+  renderNotes();
+  renderResources();
+  const openNote = state.data.notes.find((note) => note.id === elements.dialogContent.dataset.noteId);
+  if (elements.dialog.open && openNote) renderDetail(openNote);
+  showToast(adding ? "已添加书签" : "已移除书签");
+}
+
+function exportPersonalData() {
+  const blob = new Blob([serializePersonalData(personalData(), validNoteIds())], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `favsense-personal-${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+  showToast("个人数据备份已导出");
+}
+
+async function importPersonalData(file) {
+  if (!file) return;
+  if (file.size > 256 * 1024) throw new Error("备份文件不能超过 256 KB");
+  const incoming = JSON.parse(await file.text());
+  const merged = mergePersonalData(personalData(), incoming, validNoteIds());
+  state.bookmarks = new Set(merged.bookmarks);
+  state.bookmarkStates = merged.bookmarkStates;
+  state.descriptionOverrides = merged.descriptionOverrides;
+  if (!persistPersonalData()) return;
+  renderNotes();
+  renderResources();
+  showToast("书签与个人修订已导入");
+}
+
 function bindEvents() {
   document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
   elements.categoryList.addEventListener("click", (event) => {
@@ -403,6 +627,11 @@ function bindEvents() {
     renderCategories();
     renderNotes();
   });
+  elements.bookmarkFilter.addEventListener("click", () => {
+    state.bookmarksOnly = !state.bookmarksOnly;
+    renderPersonalControls();
+    renderNotes();
+  });
   elements.searchInput.addEventListener("input", () => { state.query = elements.searchInput.value; renderNotes(); });
   elements.resourceSearch.addEventListener("input", () => { state.resourceQuery = elements.resourceSearch.value; renderResources(); });
   elements.resourceTypeFilter.addEventListener("change", () => {
@@ -411,6 +640,11 @@ function bindEvents() {
     renderResources();
   });
   elements.resourceSort.addEventListener("change", () => { state.resourceSort = elements.resourceSort.value; renderResources(); });
+  elements.resourceBookmarkFilter.addEventListener("click", () => {
+    state.resourceBookmarksOnly = !state.resourceBookmarksOnly;
+    renderPersonalControls();
+    renderResources();
+  });
   elements.boardList.addEventListener("change", async (event) => {
     const toggle = event.target.closest("[data-board-toggle]");
     if (!toggle || !state.localBridge || state.boardUpdatePending) return;
@@ -453,16 +687,83 @@ function bindEvents() {
     renderNotes();
   });
   elements.notesGrid.addEventListener("click", (event) => {
+    const bookmarkButton = event.target.closest("[data-bookmark-note]");
+    if (bookmarkButton) {
+      event.stopPropagation();
+      toggleBookmark(bookmarkButton.dataset.bookmarkNote);
+      return;
+    }
     const openButton = event.target.closest("[data-open-note]");
     const card = event.target.closest("[data-note-id]");
     if (openButton || card) openNote((openButton || card).dataset.openNote || card.dataset.noteId);
   });
   elements.dialogContent.addEventListener("click", async (event) => {
+    const bookmarkButton = event.target.closest("[data-bookmark-note]");
+    if (bookmarkButton) {
+      toggleBookmark(bookmarkButton.dataset.bookmarkNote);
+      return;
+    }
+    const editButton = event.target.closest("[data-edit-description]");
+    if (editButton) {
+      state.editingDescriptionId = editButton.dataset.editDescription;
+      renderDetail(state.data.notes.find((note) => note.id === state.editingDescriptionId));
+      elements.dialogContent.querySelector("textarea")?.focus();
+      return;
+    }
+    if (event.target.closest("[data-cancel-description]")) {
+      state.editingDescriptionId = null;
+      renderDetail(state.data.notes.find((note) => note.id === elements.dialogContent.dataset.noteId));
+      return;
+    }
+    if (event.target.closest("[data-restore-description]")) {
+      const noteId = elements.dialogContent.dataset.noteId;
+      state.descriptionOverrides[noteId] = { description: "", deleted: true, updatedAt: new Date().toISOString() };
+      state.editingDescriptionId = null;
+      persistPersonalData();
+      renderNotes();
+      renderDetail(state.data.notes.find((note) => note.id === noteId));
+      showToast("已恢复系统版本");
+      return;
+    }
     const copyButton = event.target.closest("[data-copy-note]");
     if (!copyButton) return;
     const url = `${location.origin}${location.pathname}#note=${encodeURIComponent(copyButton.dataset.copyNote)}`;
     try { await navigator.clipboard.writeText(url); showToast("卡片链接已复制"); }
     catch { showToast("浏览器未允许复制，请复制地址栏链接"); }
+  });
+  elements.dialogContent.addEventListener("submit", (event) => {
+    const form = event.target.closest("[data-description-form]");
+    if (!form) return;
+    event.preventDefault();
+    const description = String(new FormData(form).get("description") || "").trim();
+    if (!description) {
+      showToast("描述不能为空；也可以选择恢复系统版本");
+      return;
+    }
+    const noteId = form.dataset.descriptionForm;
+    state.descriptionOverrides[noteId] = { description, deleted: false, updatedAt: new Date().toISOString() };
+    state.editingDescriptionId = null;
+    persistPersonalData();
+    renderNotes();
+    renderDetail(state.data.notes.find((note) => note.id === noteId));
+    showToast(state.cloud.authenticated ? "描述已保存并等待私有同步" : "描述已保存到当前浏览器");
+  });
+  elements.personalExport.addEventListener("click", exportPersonalData);
+  elements.personalImport.addEventListener("click", () => elements.personalImportInput.click());
+  elements.personalImportInput.addEventListener("change", async () => {
+    try { await importPersonalData(elements.personalImportInput.files?.[0]); }
+    catch (error) { showToast(`导入失败：${error.message}`); }
+    finally { elements.personalImportInput.value = ""; }
+  });
+  elements.cloudSyncLogout.addEventListener("click", (event) => {
+    event.preventDefault();
+    hfPersonalSync?.signOutHfPersonalSync();
+    state.cloud = { available: true, authenticated: false, username: "", repository: "", ready: false, oauth: null };
+    renderCloudStatus("已退出 HF 同步；浏览器本地数据仍然保留。");
+    initCloudSync();
+  });
+  window.addEventListener("focus", () => {
+    if (!state.cloud.authenticated) initCloudSync();
   });
   document.querySelector("#dialog-close").addEventListener("click", closeDialog);
   elements.dialog.addEventListener("click", (event) => { if (event.target === elements.dialog) closeDialog(); });
@@ -505,6 +806,11 @@ async function init() {
     elements.notesGrid.innerHTML = `<div class="empty-state"><span>知识数据没有加载成功</span><p>${escapeHtml(error.message)}。请通过本地 HTTP 服务打开站点，而不是直接双击 HTML。</p></div>`;
     return;
   }
+
+  const storedPersonalData = loadPersonalData(localStorage, validNoteIds());
+  state.bookmarks = new Set(storedPersonalData.bookmarks);
+  state.bookmarkStates = storedPersonalData.bookmarkStates;
+  state.descriptionOverrides = storedPersonalData.descriptionOverrides;
 
   const configuredRepository = window.FAVSENSE_CONFIG?.repositoryUrl
     || window.huggingface?.variables?.GITHUB_REPOSITORY_URL
@@ -555,9 +861,10 @@ async function init() {
   renderCategories();
   renderNotes();
   renderResourceControls();
+  renderPersonalControls();
   renderResources();
   bindEvents();
-  await initBoardManager();
+  await Promise.all([initBoardManager(), initCloudSync()]);
 
   const noteId = new URLSearchParams(location.hash.slice(1)).get("note");
   if (noteId) openNote(noteId, false);

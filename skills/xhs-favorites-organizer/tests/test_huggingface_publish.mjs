@@ -61,6 +61,8 @@ test("publisher mirrors only the public site and enforces the mini Space header"
   git(["clone", remote, checkout], root);
   const readme = await readFile(path.join(checkout, "README.md"), "utf8");
   assert.match(readme, /sdk: static/);
+  assert.match(readme, /^hf_oauth:\s*true$/m);
+  assert.match(readme, /^hf_oauth_scopes:\s*\r?\n\s+- contribute-repos$/m);
   assert.match(readme, /title: Existing Space/);
   assert.match(readme, /Keep this description\./);
   assert.deepEqual(readme.match(/^header:\s*.*$/gm), ["header: mini"]);

@@ -7,6 +7,9 @@ sdk: static
 app_file: site/index.html
 fullWidth: true
 header: mini
+hf_oauth: true
+hf_oauth_scopes:
+  - contribute-repos
 license: mit
 short_description: 自动同步小红书收藏，通过视频分析、资源索引与 Obsidian 输出生成可搜索、可追溯、可行动的知识库
 tags:
@@ -48,6 +51,9 @@ FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整
 - 全文搜索，以及由当前领域定义的内容形态筛选；software 示例使用 Skill/Tool/Workflow/Product，其他领域使用自己的标签；
 - “同步设置”页首屏列出全部收藏夹，可用独立开关决定每日同步或忽略；
 - 单篇详情抽屉，集中显示深度总结、行动建议和相关资源；
+- 知识卡书签、只看书签，以及只显示书签关联资源；
+- 可在详情中修订知识卡描述，并随时恢复系统版本；
+- 个人书签与修订默认保存在浏览器；HF 登录后同步到用户自己的私有 Dataset，无需 Docker；
 - 可配置资源索引：software 归类开源项目、网站、文档与教程，fitness 显示训练资料，skincare 显示成分与使用边界；
 - 深色模式、响应式移动端与键盘操作；
 - 公开网页不包含登录态、个人主页、收藏夹 ID、视频文件或帧图片。
@@ -206,7 +212,7 @@ Hugging Face 不是只有项目介绍页：FavSense 会把 `site/` 作为完整�
 }
 ```
 
-Token 不写入配置或仓库，由系统 Git 凭据管理器保存。默认使用 Static HTML SDK，完整支持搜索、筛选、详情和资源索引，不需要 Docker、Python 服务或 GPU。首次发布、每日自动发布、数据保存位置和故障排查见 [完整发布指南](docs/PUBLISHING.md)。
+发布 Token 不写入配置或仓库，由系统 Git 凭据管理器保存。默认使用 Static HTML SDK，完整支持搜索、筛选、详情、书签、个人修订和资源索引，不需要 Docker、Python 服务或 GPU。个人数据通过 HF OAuth 的最小 `contribute-repos` 权限写入当前用户自己的私有 Dataset；OAuth 临时凭据不会进入 FavSense 仓库。首次发布、每日自动发布、数据保存位置和故障排查见 [完整发布指南](docs/PUBLISHING.md)。
 
 1. 在 Hugging Face 选择 **Create new Space**。
 2. SDK 选择 **Static HTML**，可见性由你决定。
@@ -217,7 +223,7 @@ git remote add space https://huggingface.co/spaces/YOUR_HF_USERNAME/YOUR_SPACE_N
 git push space main
 ```
 
-根目录 README 已配置 `sdk: static` 和 `app_file: site/index.html`，因此 Space 不需要 Python 服务、容器或付费硬件。
+根目录 README 已配置 `sdk: static`、`app_file: site/index.html` 和 HF OAuth，因此 Space 不需要 Python 服务、容器或付费硬件。部署后在“同步设置 → 个人数据”登录 HF，即可跨设备同步书签和知识卡修订。
 
 更完整的发布与更新流程见 [docs/PUBLISHING.md](docs/PUBLISHING.md)。
 
