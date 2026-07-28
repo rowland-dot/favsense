@@ -305,9 +305,9 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .board-toggle input:disabled + .board-toggle-track { cursor: wait; opacity: .55; }
 .board-manager-status { margin: 0; padding: 14px 20px 16px; color: var(--ink-soft); font-size: 9px; line-height: 1.6; }
 
-.detail-dialog { width: min(760px, calc(100% - 24px)); max-height: calc(100vh - 24px); margin: auto 12px auto auto; padding: 0; border: 0; border-radius: 26px; background: var(--surface); color: var(--ink); box-shadow: -30px 0 90px rgba(0,0,0,.26); }
+.detail-dialog { width: min(760px, calc(100% - 24px)); max-height: calc(100vh - 24px); margin: auto 12px auto auto; padding: 0; overflow-x: hidden; overflow-y: auto; border: 0; border-radius: 26px; background: var(--surface); color: var(--ink); box-shadow: -30px 0 90px rgba(0,0,0,.26); }
 .detail-dialog::backdrop { background: rgba(20, 20, 20, .58); backdrop-filter: blur(4px); }
-.dialog-shell { position: relative; min-height: 100%; padding: clamp(27px, 5vw, 55px); }
+.dialog-shell { position: relative; min-width: 0; min-height: 100%; padding: clamp(27px, 5vw, 55px); overflow-wrap: anywhere; }
 .dialog-close { position: sticky; z-index: 2; top: 0; margin-left: auto; width: 42px; height: 42px; border-radius: 50%; }
 .dialog-close svg { width: 18px; }
 .detail-kicker { display: flex; align-items: center; gap: 9px; margin: 4px 0 18px; color: var(--ink-soft); font-family: var(--mono); font-size: 10px; }

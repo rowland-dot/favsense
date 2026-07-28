@@ -328,6 +328,8 @@ test("static app has the required deployment assets", async () => {
   assert.match(js, /"知识管理与记忆", "#16803c"/);
   assert.match(css, /border-top:\s*4px solid var\(--accent\)/);
   assert.match(css, /\.card-title::after/);
+  assert.match(css, /\.detail-dialog\s*\{[^}]*overflow-x:\s*hidden;[^}]*overflow-y:\s*auto;/s);
+  assert.match(css, /\.dialog-shell\s*\{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;/s);
   assert.doesNotMatch(html, /priority-filter|data-priority|保存到本机/);
   assert.doesNotMatch(js, /priorityFilter|xhs-kb-saved|toggleSaved|保存到本机|project-status/);
   assert.doesNotMatch(`${html}\n${css}\n${js}`, /themes\/archive|#3158e8|#e2ddff|#28a783/i);
