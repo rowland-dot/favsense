@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="FavSense 自动同步小红书 / RedNote 收藏，通过视频分析、资源索引与 Obsidian 输出，生成可搜索、可追溯、可行动的知识库。" />
+    <meta name="keywords" content="FavSense, 拾光台, 小红书收藏整理, Xiaohongshu, RedNote, favorites organizer, bookmark organizer, knowledge base, Obsidian, Tampermonkey, video analysis, resource index, local-first" />
+    <meta property="og:title" content="FavSense · 拾光台" />
+    <meta property="og:description" content="Make sense of what you save. Turn Xiaohongshu / RedNote favorites into a searchable, traceable and actionable knowledge base." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="FavSense · 拾光台" />
+    <meta name="twitter:description" content="Automated favorites sync, video analysis, resource index, Obsidian output and a static knowledge-base UI." />
+    <meta name="theme-color" content="#ffffff" />
+    <title>FavSense · 拾光台 · 小红书收藏知识工作台</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="FavSense 拾光台首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 42 42" role="img">
+            <path d="M8 10.5h26v21H8z" />
+            <circle cx="15" cy="17" r="3" />
+            <path d="m12 28 7-7 5 5 3-3 4 5" />
+          </svg>
+        </span>
+        <span><strong>FavSense</strong><small>拾光台 · 收藏知识工作台</small></span>
+      </a>
+
+      <nav class="primary-nav" aria-label="主导航">
+        <button class="nav-button is-active" type="button" data-view="notes">知识卡</button>
+        <button class="nav-button" id="resources-nav" type="button" data-view="resources">资源索引</button>
+        <button class="nav-button" type="button" data-view="method">同步设置</button>
+      </nav>
+
+      <div class="header-actions">
+        <a class="creator-space-link" id="creator-space-link" href="#" target="_blank" rel="noreferrer" aria-label="访问作者 GitHub 空间" hidden>
+          <span class="creator-space-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.7-1.3-2.3-.3-4.7-1.1-4.7-5a3.9 3.9 0 0 1 1.1-2.8c-.1-.3-.5-1.3.1-2.8 0 0 .9-.3 2.9 1.1a10 10 0 0 1 5.3 0C17 5.5 18 5.8 18 5.8c.6 1.5.2 2.5.1 2.8a4 4 0 0 1 1.1 2.8c0 3.9-2.4 4.7-4.7 5 .4.3.7 1 .7 2V21c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" /></svg>
+          </span>
+          <span><small>OPEN SOURCE</small><strong id="creator-space-name">rowland-dot / favsense</strong></span>
+          <i aria-hidden="true">↗</i>
+        </a>
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="当前为浅色模式，切换到深色模式" title="当前为浅色模式，切换到深色模式">
+          <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 15.2A8.4 8.4 0 0 1 8.8 3.3 9 9 0 1 0 20.7 15.2Z" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="hero" id="hero-overview" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span><i id="hero-eyebrow">本期片场 · Skills 收藏夹</i></p>
+          <h1 id="hero-title">把「<i id="hero-from">收藏过</i>」<br />变成<span>「<i id="hero-to">判断过</i>」</span></h1>
+          <p class="hero-intro" id="hero-intro">收藏会先自动收录；完成解读的内容会整理成可搜索的总结、相关资源和具体用法。你只管收藏，拾光台负责把零散内容逐步变成有用的知识。</p>
+        </div>
+        <div class="hero-reel" aria-label="本期知识库统计">
+          <div class="reel-window">
+            <span class="reel-label">已收录</span>
+            <strong id="stat-notes">—</strong>
+            <small>条收藏</small>
+          </div>
+          <div class="reel-window reel-window--accent">
+            <span class="reel-label">视频画面</span>
+            <strong id="stat-frames">—</strong>
+            <small>张可复核画面</small>
+          </div>
+          <div class="reel-caption"><span>完整阅读</span><i></i><span>抓住关键信息</span><i></i><span>对照可靠来源</span></div>
+        </div>
+      </section>
+
+      <section class="workspace" id="notes-view" data-panel="notes">
+        <aside class="filter-sidebar" aria-label="知识卡筛选">
+          <div class="sidebar-heading">
+            <span>主题索引</span>
+            <button id="clear-filters" type="button">清除</button>
+          </div>
+          <div id="category-list" class="category-list"></div>
+          <div class="sidebar-section">
+            <p class="filter-label">内容形态</p>
+            <div class="kind-filters" id="kind-filter"></div>
+            <p class="filter-help">内容形态会自动识别，你无需逐篇维护。</p>
+          </div>
+          <div class="open-source-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.5v5.3c0 5.1 3.4 9.8 8 11.2 4.6-1.4 8-6.1 8-11.2V5.5L12 2Zm0 4.2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm5.1 10.5A7.8 7.8 0 0 1 12 19.5a7.8 7.8 0 0 1-5.1-2.8c.5-1.8 2.1-3 4-3h2.2c1.9 0 3.5 1.2 4 3Z" /></svg>
+            <div><strong>私人数据默认不公开</strong><span>网页数据不包含 Cookie、Token、个人主页或本地视频。</span></div>
+          </div>
+        </aside>
+
+        <div class="content-column">
+          <div class="toolbar">
+            <label class="search-box">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></svg>
+              <input id="search-input" type="search" placeholder="搜索标题、主题、工具或结论…" autocomplete="off" />
+              <kbd>/</kbd>
+            </label>
+            <label class="sort-control">
+              <span>排序</span>
+              <select id="sort-select">
+                <option value="curated">推荐顺序</option>
+                <option value="newest">最近发布</option>
+                <option value="popular">收藏热度</option>
+              </select>
+            </label>
+            <button class="view-toggle" id="view-toggle" type="button" aria-label="切换列表视图" title="切换列表视图">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
+            </button>
+          </div>
+
+          <div class="results-heading">
+            <p><strong id="result-count">—</strong> 篇知识卡</p>
+            <span id="active-filter-label">全部知识卡</span>
+          </div>
+
+          <div id="notes-grid" class="notes-grid" aria-live="polite">
+            <div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div>
+          </div>
+
+          <div id="empty-state" class="empty-state" hidden>
+            <span>没有找到匹配的知识卡</span>
+            <p>换一个关键词，或清除当前筛选。</p>
+            <button type="button" id="empty-clear">查看全部</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="resources-panel" id="resources-view" data-panel="resources" hidden>
+        <div class="section-intro">
+          <p class="eyebrow"><span></span> <i id="resource-eyebrow">来源明确的相关资源</i></p>
+          <h2 id="resource-title">从收藏里的名字，<br />直达可靠来源。</h2>
+          <p id="resource-description">集中查看资源的用途、适用条件与可靠来源，省去重复搜索和辨认。</p>
+        </div>
+        <div class="resource-toolbar">
+          <label class="search-box search-box--wide">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></svg>
+            <input id="resource-search" type="search" placeholder="搜索资源名称、类型或用途…" />
+          </label>
+          <div class="resource-controls">
+            <label class="resource-control"><span id="resource-filter-label">类型</span><select id="resource-type-filter" aria-label="筛选资源类型"></select></label>
+            <label class="resource-control"><span>排序</span><select id="resource-sort" aria-label="资源排序方式"></select></label>
+          </div>
+        </div>
+        <div class="resource-summary"><span id="resource-result-count"></span><span id="resource-verified-date"></span></div>
+        <div id="resources-grid" class="resources-grid"></div>
+      </section>
+
+      <section class="method-panel" id="method-view" data-panel="method" hidden>
+        <section class="board-manager" id="board-manager" aria-labelledby="board-manager-title">
+          <div class="board-manager-copy">
+            <p class="eyebrow"><span></span> 同步设置</p>
+            <h2 id="board-manager-title">选择每天整理哪些收藏夹。</h2>
+            <p>打开开关的收藏夹会自动进入每日同步；关闭只停止后续收录，不会删除已经整理的内容。</p>
+          </div>
+          <div class="board-manager-panel">
+            <div class="board-manager-head">
+              <strong>我的收藏夹</strong>
+              <span id="board-enabled-count">正在连接本机设置…</span>
+            </div>
+            <div class="board-list" id="board-list">
+              <div class="board-empty">收藏夹设置只在本机工作台显示，公开网页不会读取你的账号信息。</div>
+            </div>
+            <p class="board-manager-status" id="board-manager-status" role="status" aria-live="polite">设置只保存在本机，不会进入公开仓库或 Hugging Face 页面。</p>
+          </div>
+        </section>
+        <div class="method-copy">
+          <p class="eyebrow"><span></span> 如何整理</p>
+          <h3>不只看标题，<br />真正读完内容。</h3>
+          <p>工具名称、动作要领或产品信息常常只出现几秒。只看标题、封面或自动字幕，很容易漏掉真正有用的内容。</p>
+        </div>
+        <ol class="process-track">
+          <li><span class="process-number">01</span><div><strong>完整阅读</strong><p>读取你有权访问的完整内容；账号登录信息和临时凭据不会进入公开数据。</p></div></li>
+          <li><span class="process-number">02</span><div><strong>抓住关键画面</strong><p>重点检查转场和短暂闪现的片段，避免遗漏名称、步骤和限制。</p></div></li>
+          <li><span class="process-number">03</span><div><strong>整理成知识</strong><p>把合集拆成独立资源，提炼核心结论、适用场景和具体用法。</p></div></li>
+          <li><span class="process-number">04</span><div><strong>对照可靠来源</strong><p>软件查看官方仓库，健身和护肤查看专业指南；无法确认的内容不会写成确定结论。</p></div></li>
+        </ol>
+        <div class="method-proof">
+          <div><strong id="proof-videos">—</strong><span>条完成深度解读</span></div>
+          <div><strong id="proof-frames">—</strong><span>张可复核画面</span></div>
+          <div id="proof-resources-cell"><strong id="proof-resources">—</strong><span id="proof-resources-label">个来源明确的资源</span></div>
+          <p>统计随每次同步与站点构建自动更新。原视频和分析画面只保存在本机，公开页面只展示聚合数量、原创总结与可靠来源。<small class="proof-updated-at" id="proof-updated-at"></small></p>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="detail-dialog" id="detail-dialog">
+      <div class="dialog-shell">
+        <button class="dialog-close" id="dialog-close" type="button" aria-label="关闭详情">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" /></svg>
+        </button>
+        <div id="dialog-content"></div>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <noscript>这个知识工作台需要启用 JavaScript 才能搜索和筛选内容。</noscript>
+    <script src="./site-config.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

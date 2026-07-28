@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "id": "fitness",
+  "label": "健身与训练",
+  "presentation": {
+    "title": "小红书健身收藏知识工作台",
+    "description": "把训练收藏整理成可复习、有依据、能实践的个人训练知识。",
+    "hero": {
+      "eyebrow": "本期片场 · 健身收藏",
+      "from": "收藏过",
+      "to": "练过",
+      "intro": "把动作示范、训练计划和营养说法整理成动作要领、适用条件和下一次训练建议。你只管收藏，拾光台负责把内容变成练得起来的知识。"
+    }
+  },
+  "content_kinds": {
+    "Note": "已同步的原始收藏",
+    "Movement": "动作教程与技术要领",
+    "Program": "训练计划与周期安排",
+    "Claim": "需要对照资料的训练或营养说法",
+    "Product": "器械、装备或商业产品"
+  },
+  "classification": {
+    "default": "Claim",
+    "rules": [
+      { "kind": "Movement", "source": "content", "pattern": "动作|姿势|发力|握距|站距|关节|深蹲|硬拉|卧推" },
+      { "kind": "Program", "source": "content", "pattern": "计划|周期|分化|组数|次数|RPE|渐进超负荷" },
+      { "kind": "Product", "source": "content", "pattern": "器械|装备|测评|购买|品牌|产品" }
+    ]
+  },
+  "fallback": {
+    "default_category": "训练知识与说法",
+    "action": "内容解读完成后，这里会直接呈现动作要领、适用条件和练习建议。",
+    "rules": [
+      { "category": "力量训练", "pattern": "力量|深蹲|硬拉|卧推|推举" },
+      { "category": "增肌", "pattern": "增肌|肌肥大|容量|泵感" },
+      { "category": "减脂", "pattern": "减脂|热量|有氧|体脂" },
+      { "category": "灵活性与康复", "pattern": "灵活|拉伸|康复|疼痛|损伤" },
+      { "category": "营养", "pattern": "营养|蛋白质|碳水|脂肪|补剂" },
+      { "category": "睡眠与恢复", "pattern": "睡眠|恢复|疲劳|休息" },
+      { "category": "装备与器械", "pattern": "器械|装备|鞋|护具" }
+    ]
+  },
+  "features": {
+    "resource_index": true
+  },
+  "resource_index": {
+    "label": "训练资料库",
+    "entity_label": "训练资源",
+    "eyebrow": "动作、计划与专业指南",
+    "title": "从收藏里的动作，<br />直达可靠训练依据。",
+    "description": "集中查看动作、计划、训练目标、安全提示与专业来源，不用在碎片视频之间反复查找。",
+    "search_placeholder": "搜索动作、目标肌群或训练计划…",
+    "filter_label": "训练类型",
+    "verified_label": "资料更新于",
+    "detail_label": "相关训练资源",
+    "registry_file": "config/resource-registries/fitness.example.json",
+    "collection": "resources",
+    "mapping": {
+      "name": "name", "aliases": "aliases", "type": "type", "description": "description",
+      "metric": "evidence", "metric_numeric": "evidence_numeric"
+    },
+    "metric": { "label": "资料", "icon": "◆", "missing": "暂无资料" },
+    "fields": [
+      { "field": "goal", "label": "目标" },
+      { "field": "audience", "label": "适用" },
+      { "field": "caution", "label": "注意" }
+    ],
+    "actions": [
+      { "field": "source", "label": "权威依据" },
+      { "field": "guide", "label": "实践指南" }
+    ],
+    "groups": [
+      { "label": "力量动作", "pattern": "力量|深蹲|硬拉|卧推|推举" },
+      { "label": "有氧与体能", "pattern": "有氧|步行|跑步|体能" },
+      { "label": "训练计划", "pattern": "计划|周期|渐进|全身" },
+      { "label": "恢复与康复", "pattern": "恢复|灵活|康复|疼痛" },
+      { "label": "器械与装备", "pattern": "器械|装备|护具" }
+    ],
+    "default_group": "基础知识",
+    "sorts": [
+      { "id": "metric-desc", "label": "资料较完整优先", "field": "metricNumeric", "type": "number", "direction": "desc" },
+      { "id": "name-asc", "label": "名称 A–Z", "field": "name", "type": "text", "direction": "asc" },
+      { "id": "name-desc", "label": "名称 Z–A", "field": "name", "type": "text", "direction": "desc" }
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "verified_at": "2026-07-28",
+  "resources": [
+    {
+      "name": "成人基础活动量",
+      "aliases": ["150–300 分钟指南"],
+      "type": "有氧与力量基线",
+      "description": "以每周有氧活动和至少两天肌力训练作为基础框架；慢性病或长期不活动者需要按个人情况调整。",
+      "goal": "综合健康",
+      "audience": "一般成年人",
+      "caution": "按当前活动水平渐进",
+      "evidence": "政府指南",
+      "evidence_numeric": 3,
+      "source": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines/top-10-things-know",
+      "guide": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines"
+    },
+    {
+      "name": "阻力训练计划",
+      "aliases": ["力量与增肌训练"],
+      "type": "训练计划",
+      "description": "根据力量、肌肥大或爆发力目标调整负荷与训练量；一致性优先于复杂技巧。",
+      "goal": "力量或增肌",
+      "audience": "有训练基础者",
+      "caution": "动作质量优先于负重",
+      "evidence": "ACSM 立场声明",
+      "evidence_numeric": 3,
+      "source": "https://acsm.org/resistance-training-guidelines-update-2026/",
+      "guide": "https://www.acsm.org/wp-content/uploads/2026/03/Resistance-Training-Position-Stand-infographic.pdf"
+    },
+    {
+      "name": "渐进式开始训练",
+      "aliases": ["从少量活动开始"],
+      "type": "基础训练原则",
+      "description": "不活跃人群从可持续的小剂量开始，再逐步增加总量，避免把通用目标当成第一周任务。",
+      "goal": "建立活动习惯",
+      "audience": "久坐或刚开始者",
+      "caution": "疼痛或疾病先咨询专业人员",
+      "evidence": "政府指南",
+      "evidence_numeric": 3,
+      "source": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/about-physical-activity-guidelines/questions-answers",
+      "guide": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines"
+    }
+  ]
+}

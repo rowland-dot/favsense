@@ -1,0 +1,4139 @@
+{
+  "meta": {
+    "title": "小红书收藏知识工作台",
+    "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
+    "generatedAt": "2026-07-28T14:02:41.575Z",
+    "source": "xiaohongshu",
+    "sourceBoards": [
+      "Skills",
+      "AI电商",
+      "AI自媒体",
+      "SEO",
+      "AI设计",
+      "AI视频生成",
+      "AI基础知识",
+      "Vibe Coding",
+      "小红书内容运营",
+      "OpenClaw"
+    ],
+    "sourceBoard": "Skills、AI电商、AI自媒体、SEO、AI设计、AI视频生成、AI基础知识、Vibe Coding、小红书内容运营、OpenClaw",
+    "profileId": "software",
+    "profileLabel": "软件与 AI 工具",
+    "hero": {
+      "eyebrow": "本期片场 · 软件与 AI 收藏",
+      "from": "收藏过",
+      "to": "判断过",
+      "intro": "收藏会先自动收录；完成解读的内容会整理成可搜索的总结、相关资源和具体用法。你只管收藏，拾光台负责把零散内容逐步变成有用的知识。"
+    },
+    "noteCount": 128,
+    "verifiedNoteCount": 32,
+    "categoryCount": 9,
+    "resourceCount": 35,
+    "resourceIndexEnabled": true,
+    "resourcesVerifiedAt": "2026-07-28",
+    "resourceIndex": {
+      "label": "资源索引",
+      "entity_label": "资源",
+      "eyebrow": "项目、网站、文档与教程",
+      "title": "从收藏里的线索，<br />直达可靠资源。",
+      "description": "把开源项目、官方网站、文档、教程和参考资料集中归类。需要时直接打开，不必再回到帖子里重新寻找。",
+      "search_placeholder": "搜索项目、网站、文档或教程…",
+      "filter_label": "资源类型",
+      "verified_label": "链接核对日期",
+      "detail_label": "相关资源",
+      "registry_file": "skills/xhs-favorites-organizer/references/software-resources.json",
+      "collection": "resources",
+      "mapping": {
+        "name": "name",
+        "aliases": "aliases",
+        "type": "type",
+        "description": "usage_note",
+        "metric": "stars",
+        "metric_numeric": "stars_numeric",
+        "metric_icon": "metric_icon"
+      },
+      "metric": {
+        "label": "Star",
+        "icon": "★",
+        "missing": "暂无数据"
+      },
+      "fields": [],
+      "actions": [
+        {
+          "field": "repo",
+          "label": "官方仓库"
+        },
+        {
+          "field": "download",
+          "label": "下载 ZIP"
+        },
+        {
+          "field": "website",
+          "label": "打开官网"
+        },
+        {
+          "field": "documentation",
+          "label": "打开文档"
+        },
+        {
+          "field": "tutorial",
+          "label": "查看教程"
+        }
+      ],
+      "groups": [
+        {
+          "label": "官方网站",
+          "pattern": "官方网站|产品官网"
+        },
+        {
+          "label": "官方文档",
+          "pattern": "官方文档"
+        },
+        {
+          "label": "教程",
+          "pattern": "教程|快速入门"
+        },
+        {
+          "label": "参考资料",
+          "pattern": "参考资料|指南|目录"
+        }
+      ],
+      "default_group": "开源项目",
+      "sorts": [
+        {
+          "id": "name-asc",
+          "label": "名称 A–Z",
+          "field": "name",
+          "type": "text",
+          "direction": "asc"
+        },
+        {
+          "id": "name-desc",
+          "label": "名称 Z–A",
+          "field": "name",
+          "type": "text",
+          "direction": "desc"
+        },
+        {
+          "id": "metric-desc",
+          "label": "Star 从高到低",
+          "field": "metricNumeric",
+          "type": "number",
+          "direction": "desc",
+          "applies_to": [
+            "开源项目"
+          ]
+        },
+        {
+          "id": "metric-asc",
+          "label": "Star 从低到高",
+          "field": "metricNumeric",
+          "type": "number",
+          "direction": "asc",
+          "applies_to": [
+            "开源项目"
+          ]
+        }
+      ]
+    },
+    "frameEvidenceCount": 6116,
+    "evidenceStatsAutoUpdated": true,
+    "videoMethod": "32 条收藏已完成完整视频解读；其余条目目前按原帖公开文字展示",
+    "kindLabels": {
+      "Note": "已同步的原始收藏",
+      "Tool": "可直接使用的工具",
+      "Skill": "可安装的 Agent 能力包",
+      "Workflow": "可复用的方法与流程",
+      "Product": "托管或商业产品"
+    }
+  },
+  "categories": [
+    {
+      "name": "开发部署与Vibe Coding",
+      "count": 18
+    },
+    {
+      "name": "信息采集与搜索",
+      "count": 11
+    },
+    {
+      "name": "Agent与自动化",
+      "count": 17
+    },
+    {
+      "name": "Skills与工作流",
+      "count": 37
+    },
+    {
+      "name": "垂直工具与数据",
+      "count": 1
+    },
+    {
+      "name": "内容增长与商业",
+      "count": 14
+    },
+    {
+      "name": "本地模型与成本",
+      "count": 3
+    },
+    {
+      "name": "知识管理与记忆",
+      "count": 5
+    },
+    {
+      "name": "AI设计与多媒体",
+      "count": 22
+    }
+  ],
+  "notes": [
+    {
+      "id": "6a5cb781000000000a03a154",
+      "number": 1,
+      "title": "架构师们颤抖吧！",
+      "author": "遥望2035",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5cb781000000000a03a154",
+      "publishedAt": "2026-07-20_21:11:00",
+      "likes": "240",
+      "collections": "793",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [
+        "Archify",
+        "架构图",
+        "流程图"
+      ],
+      "summary": "视频展示 Archify：把自然语言系统描述转换为架构图、流程图、时序图和数据库图，并可导出 PNG/SVG；当前画面未显示公开 GitHub 仓库。",
+      "deepSummary": "视频展示 Archify：输入系统描述后生成架构图、流程图、时序图和数据库图，并导出 PNG/SVG。它最适合作为架构讨论的草图器，而不是替代架构判断。可复用方法是让它先画出当前收藏同步系统，再人工检查浏览器、回环服务、下载器、知识库、凭据边界和失败路径是否完整；图中的遗漏本身就是需求澄清材料。画面没有确认公开 GitHub 仓库。",
+      "action": "找到 Archify 官网并用本项目描述生成图，逐项检查组件、数据流和安全边界。",
+      "tools": [
+        "Archify"
+      ],
+      "kind": "Tool",
+      "resources": [],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a5cbbee000000000f00afaf",
+      "number": 2,
+      "title": "爬虫界的降维打击！",
+      "author": "遥望2035",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5cbbee000000000f00afaf",
+      "publishedAt": "2026-07-21_21:07:01",
+      "likes": "1209",
+      "collections": "3141",
+      "mediaType": "视频",
+      "category": "信息采集与搜索",
+      "themes": [
+        "Crawl4AI",
+        "网页转Markdown",
+        "LLM数据"
+      ],
+      "summary": "视频展示 Crawl4AI：输入网址后抓取正文并自动生成适合 LLM/RAG 使用的 Markdown，还支持深度爬取、代理切换、自定义 JavaScript 与 Docker 一键部署。",
+      "deepSummary": "视频演示的项目是 Crawl4AI。它不是普通“保存网页”工具，而是把网页正文、链接和结构清洗成适合 LLM/RAG 的 Markdown，并提供深度爬取、代理、自定义 JavaScript 与 Docker 部署。学习价值在于把“网页采集”设计成知识库入口层：先保留来源和结构，再交给模型总结。下一步应以动态页面、长文章和失败页面组成固定测试集，比较正文完整度、噪声和失败率。",
+      "action": "用 10 个含动态内容的页面对比 Crawl4AI 与当前采集器的正文完整度、Markdown 质量和失败率。",
+      "tools": [
+        "Crawl4AI"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Crawl4AI"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a5b9ac6000000000a0391f1",
+      "number": 3,
+      "title": "GitHub一周热点: AI剪视频、做设计、炒股票",
+      "author": "源点PI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5b9ac6000000000a0391f1",
+      "publishedAt": "2026-07-19_21:28:02",
+      "likes": "4583",
+      "collections": "5548",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [
+        "GitHub周榜",
+        "多Agent",
+        "内容生产"
+      ],
+      "summary": "长视频逐项讲解本周五个项目：OpenCut 视频编辑器、hallmark 设计工作流、Vibe-Trading 多 Agent 交易研究、orca 并行 Agent 编排和 OfficeCLI 文档自动化。",
+      "deepSummary": "视频逐项介绍 OpenCut、hallmark、Vibe-Trading、orca、OfficeCLI：分别对应本地视频编辑、设计工作流、多 Agent 交易研究、并行 Agent 编排和 Office 文档自动化。共同趋势不是“又有五个工具”，而是 Agent 正从聊天转向可检查的生产流水线。正确整理方式是拆成五张项目卡；其中交易项目必须把研究与真实下单严格隔离，文档和视频工具则重点检查输出是否可复现、可人工修改。",
+      "action": "把五个项目拆成独立实验卡；优先验证 OpenCut、orca 和 OfficeCLI 的本地可运行性。",
+      "tools": [
+        "OpenCut",
+        "hallmark",
+        "Vibe-Trading",
+        "orca",
+        "OfficeCLI"
+      ],
+      "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a5d5d1b000000001c010d2d",
+      "number": 4,
+      "title": "第158集 让你的AI长出手脚，不需额外API",
+      "author": "哈工大AI全栈工程师Peter",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5d5d1b000000001c010d2d",
+      "publishedAt": "2026-07-20_23:30:10",
+      "likes": "493",
+      "collections": "844",
+      "mediaType": "视频",
+      "category": "信息采集与搜索",
+      "themes": [
+        "Wigolo",
+        "本地搜索",
+        "MCP"
+      ],
+      "summary": "视频介绍 Wigolo：一个本地优先的网页搜索、抓取、爬取和研究 MCP，使用本地基础设施工作，不要求额外搜索 API Key。",
+      "deepSummary": "实际项目是 Wigolo，一个本地优先的网页搜索、抓取、爬取和研究 MCP。它试图以本地基础设施替代额外搜索 API Key，适合希望控制数据路径和调用成本的 Agent。真正需要验证的不是“无需 API”口号，而是索引来源、新鲜度、引用可追溯性和本地资源开销；如果来源不可解释，搜索结果再方便也不能进入严肃知识库。",
+      "action": "在隔离环境测试 Wigolo 的索引来源、搜索新鲜度、引用可追溯性及本地资源占用。",
+      "tools": [
+        "Wigolo"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Wigolo"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a5dbb1e000000000f00bcf8",
+      "number": 5,
+      "title": "强大！Claude Code和Codex必装Skill技能",
+      "author": "我是阿众",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5dbb1e000000000f00bcf8",
+      "publishedAt": "2026-07-20_20:00:58",
+      "likes": "4212",
+      "collections": "5793",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [
+        "AnySearch",
+        "联网搜索",
+        "Claude与Codex"
+      ],
+      "summary": "完整演示 AnySearch Skill：同一搜索层覆盖网页、代码、学术、安全与商业信息，可在 Claude、Codex 中生成带来源的研究结果，并提供 MCP/API 接入。",
+      "deepSummary": "视频完整演示 AnySearch Skill：统一搜索网页、代码、论文、安全和商业信息，并向 Claude、Codex 输出带来源的研究结果，也提供 MCP/API 接入。它的价值是把“检索—引用—综合”固化成 Agent 能调用的能力。采用前必须检查数据源、远程请求、凭据存放和引用准确率，并用同一问题与原生搜索做盲测；Star 数不能替代结果质量。",
+      "action": "审查 AnySearch 的数据源、远程请求和凭据处理，用固定研究问题与原生搜索做引用准确率对照。",
+      "tools": [
+        "AnySearch Skill"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "AnySearch Skill"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a5a3a29000000001c00d15b",
+      "number": 6,
+      "title": "Grok Build 直接全量开源！！！",
+      "author": "巧掌柜笔记",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5a3a29000000001c00d15b",
+      "publishedAt": "2026-07-18_00:20:25",
+      "likes": "123",
+      "collections": "304",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [
+        "Grok Build",
+        "Agent框架",
+        "开源"
+      ],
+      "summary": "视频系统介绍 Grok Build 的全量开源：以 Agent 为核心、Rust 工具链、Apache-2.0、可扩展模型与工具、SpaceXAI 集成，并讨论从需求到部署的完整开发循环。",
+      "deepSummary": "视频讲的是 xai-org/grok-build，展示其 Agent 核心、Rust 工具链、Apache-2.0 许可证、模型/工具扩展和从需求到部署的开发循环。学习重点是开源 coding agent 的工程边界：任务规划、工具调用、执行隔离、测试反馈和最终交付是否形成闭环。热榜增长只能说明关注度，是否采用仍需用同一小项目与现有 coding agent 比较测试覆盖、错误恢复和可维护性。",
+      "action": "核实官方仓库当前代码与许可证，用同一小应用对比现有 coding agent 的可测试性和可维护性。",
+      "tools": [
+        "Grok Build"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Grok Build"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a58cb21000000001101b30c",
+      "number": 7,
+      "title": "Codex新插件，淘汰RPA和重复性动作",
+      "author": "橙光_Lab",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a58cb21000000001101b30c",
+      "publishedAt": "2026-07-16_22:14:25",
+      "likes": "62",
+      "collections": "157",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [
+        "Record and Replay",
+        "Codex Skill",
+        "RPA"
+      ],
+      "summary": "短视频提出 Record & Replay 工作流：人工演示一次点击、填写与提交，Codex 将步骤固化成可复用 Skill，用于批量接管重复岗位流程；画面没有给出独立仓库名。",
+      "deepSummary": "这不是一个已确认的独立仓库，而是一种 Record & Replay 工作流：人先演示一次点击、输入和提交，Agent 将动作参数化并固化为可重复 Skill。它比坐标脚本更灵活，但风险也更大，因为网页变化、弹窗或登录状态都可能导致错误操作。可学习的设计是“录制、参数化、回放、断言、失败即停、人工接管”，只能先在虚拟表单验证，不能直接用于支付、发布或账号设置。",
+      "action": "将其视为工作流模式而非已核实插件，只在虚拟测试表单上验证录制、参数化、重放和失败回滚。",
+      "tools": [
+        "Record & Replay"
+      ],
+      "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a5420d500000000060310a2",
+      "number": 8,
+      "title": "X上那些搬运号的内容到底哪来的？终于被我",
+      "author": "沉默聊科技",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5420d500000000060310a2",
+      "publishedAt": "2026-07-13_09:18:45",
+      "likes": "74",
+      "collections": "297",
+      "mediaType": "视频",
+      "category": "信息采集与搜索",
+      "themes": [
+        "MediaCrawler",
+        "社媒采集",
+        "浏览器登录态"
+      ],
+      "summary": "视频明确展示 MediaCrawler 可抓取小红书、抖音、快手、B站、微博、贴吧、知乎的公开内容与评论，并通过浏览器登录态签名而不是逆向 JavaScript。",
+      "deepSummary": "视频明确展示 MediaCrawler，覆盖小红书、抖音、快手、B站、微博、贴吧和知乎等平台的公开内容与评论，并利用浏览器登录态完成签名，而不是硬编码逆向 JavaScript。技术上它适合社媒研究，治理上却是高风险能力：Cookie、频率、平台条款和账号风控都必须受控。本项目只应对自有账号或获授权内容做只读测试，禁止自动互动和绕过安全限制。",
+      "action": "仅对自有账号和获授权内容做只读测试，记录平台风控、登录态安全和可维护成本。",
+      "tools": [
+        "MediaCrawler"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "MediaCrawler"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a581de1000000000f006b3a",
+      "number": 9,
+      "title": "兄弟们！300,000+ 金融标的数据库开源了！",
+      "author": "爱吃折耳根的Ace",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a581de1000000000f006b3a",
+      "publishedAt": "2026-07-16_09:55:13",
+      "likes": "208",
+      "collections": "733",
+      "mediaType": "视频",
+      "category": "垂直工具与数据",
+      "themes": [
+        "FinanceDatabase",
+        "Python",
+        "金融标的"
+      ],
+      "summary": "视频实际演示 FinanceDatabase 的 Python API：按国家、行业和市值筛选股票、ETF、基金、指数、货币与加密资产，并可衔接 Finance Toolkit。它是标的元数据，不是实时行情源。",
+      "deepSummary": "项目是 FinanceDatabase。视频展示用 Python 按国家、行业、市值等条件筛选股票、ETF、基金、指数、货币和加密资产，并衔接 Finance Toolkit。它提供的是标的元数据和分类入口，不是实时行情源；因此适合生成研究 universe，不适合直接驱动交易。下一步应抽查澳洲和美国样本的字段、缺失值、更新时间与许可证，再决定是否作为金融知识库的基础表。",
+      "action": "抽查澳洲与美国市场的字段和更新时间，验证筛选结果后再决定是否作为金融知识库基础层。",
+      "tools": [
+        "FinanceDatabase",
+        "Finance Toolkit"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "FinanceDatabase"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a4afd18000000001101092b",
+      "number": 10,
+      "title": "手把手教你免费部署自己人生第一个AI Agent",
+      "author": "李叔聊AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4afd18000000001101092b",
+      "publishedAt": "2026-07-06_21:10:41",
+      "likes": "1479",
+      "collections": "2002",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [
+        "EdgeOne Pages",
+        "Agent部署",
+        "定时任务"
+      ],
+      "summary": "长视频从本地代码演示 EdgeOne Pages：导入项目后自动构建与部署，配置域名、环境变量、数据处理、定时任务、DDoS 防护、全球节点和身份认证。",
+      "deepSummary": "视频展示 EdgeOne Pages 从代码导入到自动构建部署，并配置域名、环境变量、定时任务、数据处理、DDoS 防护、全球节点和身份认证。学习价值是认识“上线”所需的完整运行面：构建、密钥、域名、日志、权限、成本和回滚，而不只是生成一个网页。应先用无敏感数据 Demo 验证失败回滚和费用边界，再考虑承载真实 Agent。",
+      "action": "用无敏感数据 Demo 验证构建日志、环境变量、域名、回滚和费用边界。",
+      "tools": [
+        "EdgeOne Pages"
+      ],
+      "kind": "Tool",
+      "resources": [],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a56e91c000000000803ce3f",
+      "number": 11,
+      "title": "有了这个skill 程序员不知道是该哭还是笑",
+      "author": "天才程序员杜少峰",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a56e91c000000000803ce3f",
+      "publishedAt": "2026-07-15_11:57:48",
+      "likes": "3488",
+      "collections": "5578",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [
+        "Graphify",
+        "知识图谱",
+        "代码理解"
+      ],
+      "summary": "视频中的 Skill 是 Graphify：把代码、SQL schema、脚本、文档、论文、图片和视频转换为可查询知识图谱，支持 Claude Code、Codex、Cursor、Gemini CLI 等宿主，并可追踪代码节点路径。",
+      "deepSummary": "短暂画面中的真实项目是 Graphify。它能把代码、SQL schema、脚本、文档、论文、图片和视频转换为可查询知识图谱，并支持 Claude Code、Codex、Cursor、Gemini CLI 等宿主。它解决的不是“替程序员写代码”，而是让 Agent 看懂跨文件实体和依赖路径。最有价值的实验是对本项目副本建图，提问“链接如何从浏览器进入知识卡”，再逐节点核对，判断图谱是否比普通文本检索更准确。",
+      "action": "在本仓库的小型副本运行 Graphify，检查图谱是否准确表达采集、构建和知识卡片之间的依赖。",
+      "tools": [
+        "Graphify"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "Graphify"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a52740f000000001503fec2",
+      "number": 12,
+      "title": "第130集 AI出海如何找客户找资源",
+      "author": "哈工大AI全栈工程师Peter",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a52740f000000001503fec2",
+      "publishedAt": "2026-07-12_22:30:21",
+      "likes": "738",
+      "collections": "1675",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [
+        "ScrapeGraphAI",
+        "出海获客",
+        "公开线索"
+      ],
+      "summary": "视频以 ScrapeGraphAI 演示用 Python 抓取目标网站并让模型抽取公司、联系人和资源字段，随后把结构化线索用于出海客户研究。",
+      "deepSummary": "视频用 ScrapeGraphAI 抓取目标网站，再由模型抽取公司、联系人和资源字段，形成结构化线索。它说明“获客”本质上是公开信息采集、字段抽取、质量校验和人工联系四步，而不是让 Agent 大规模骚扰。实际使用前应建立允许字段、禁止字段、来源证明和删除机制；先以少量公司页面测试准确率与人工复核成本，绝不能抓取私密数据。",
+      "action": "先定义合法公开字段和禁止采集项，再对 20 条公开公司资料验证准确率与人工复核成本。",
+      "tools": [
+        "ScrapeGraphAI"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "ScrapeGraphAI"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a53c47800000000150268e6",
+      "number": 13,
+      "title": "Claude Code 代币使用量减少最多 92%",
+      "author": "GitHunter",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a53c47800000000150268e6",
+      "publishedAt": "2026-07-13_02:44:40",
+      "likes": "54",
+      "collections": "118",
+      "mediaType": "视频",
+      "category": "本地模型与成本",
+      "themes": [
+        "Headroom",
+        "Token压缩",
+        "Claude Code"
+      ],
+      "summary": "视频介绍 Headroom：在工具输出、日志、文件、数据库转储与 RAG 片段进入模型前做压缩；示例把约 17,765 token 降到 1,408，并提供库、代理与 MCP 接入。",
+      "deepSummary": "真实项目是 Headroom。视频示例把约 17,765 token 的工具输出压缩到 1,408，再送入模型；它可作为库、代理或 MCP 接入，对日志、文件、数据库转储和 RAG 片段做预处理。学习价值是把上下文视为有限预算，而不是无脑塞满。宣传比例不能直接采信，必须在固定排错任务上同时记录 token、答案正确率、延迟和被省略的关键事实。",
+      "action": "用固定代码排错任务实测 token、答案正确率、延迟和遗漏；不能直接采用视频宣称的 92% 作为结论。",
+      "tools": [
+        "Headroom"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Headroom"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a506c6a000000002100b1a5",
+      "number": 14,
+      "title": "让AI看懂电脑屏幕？这个项目有点东西",
+      "author": "增长研习社",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a506c6a000000002100b1a5",
+      "publishedAt": "2026-07-10_13:52:10",
+      "likes": "313",
+      "collections": "994",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [
+        "Mano-P",
+        "GUI-VLA",
+        "本地推理"
+      ],
+      "summary": "视频演示 Mano-P 在本地视觉模型下理解屏幕、玩麻将和执行跨应用 GUI 任务；它强调端侧隐私，但硬件要求集中在 M4/32GB 以上 Apple Silicon 或专用算力棒。",
+      "deepSummary": "项目是 Mano-P，视频展示本地视觉模型理解屏幕、玩麻将并执行跨应用 GUI 任务。其亮点是端侧处理和不依赖单一软件 API，但画面也暴露较高硬件门槛，主要面向高内存 Apple Silicon 或专用算力硬件。Windows 当前应先做资料评估，重点核实模型/SDK 是否真正开放、失败保护和人为接管能力，而不是急于赋予完整电脑权限。",
+      "action": "当前 Windows 机器先做资料评估，不直接安装；重点核实模型与 SDK 实际开放程度、硬件和误操作防护。",
+      "tools": [
+        "Mano-P"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Mano-P"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a50c4a7000000001101e847",
+      "number": 15,
+      "title": "专为AI搜索打造的开源浏览器",
+      "author": "亚莱加德",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a50c4a7000000001101e847",
+      "publishedAt": "2026-07-10_20:08:39",
+      "likes": "97",
+      "collections": "271",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [
+        "last30days",
+        "社媒研究",
+        "时效检索"
+      ],
+      "summary": "视频实际展示 last30days Skill，而不是浏览器：输入主题后检索最近 30 天 Reddit、X、YouTube、TikTok、HN、GitHub 与网页讨论，最后生成带来源的趋势和观点报告。",
+      "deepSummary": "视频实际展示 last30days Skill，不是所谓“AI 浏览器”。它按主题检索最近 30 天的 Reddit、X、YouTube、TikTok、Hacker News、GitHub 和网页讨论，并生成带来源的近期共识、争议和趋势报告。它适合回答“最近大家如何评价某工具”，不能替代长期事实研究。安装前必须检查浏览器 Cookie/API Key 权限，用已知事件验证时间范围、漏源和引用是否真的对应结论。",
+      "action": "检查每个数据源所需 Cookie/API 权限，并用一个已知话题验证日期范围、引用和观点覆盖。",
+      "tools": [
+        "last30days Skill"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "last30days Skill"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a4e1432000000001603daf9",
+      "number": 16,
+      "title": "最火的GitHub项目！",
+      "author": "AIGC成也",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4e1432000000001603daf9",
+      "publishedAt": "2026-07-08_19:11:14",
+      "likes": "76",
+      "collections": "210",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [
+        "awesome-selfhosted",
+        "自托管",
+        "项目目录"
+      ],
+      "summary": "视频明确推荐 awesome-selfhosted：按 140 多个类别整理约 1,400 个可在自有服务器部署的应用与源码，覆盖网盘、自动化、游戏、邮件和博客。",
+      "deepSummary": "真实项目是 awesome-selfhosted，一个按 140 多类整理约 1,400 个可自托管应用的社区目录，涵盖网盘、自动化、邮件、博客和更多服务。它的学习意义是“候选发现索引”，不是一键安装清单。应该先用需求、许可证、维护状态、备份、升级和安全暴露面筛选，只把与采集、搜索和备份直接相关的项目转成独立实验卡。",
+      "action": "把它当发现索引而非安装清单，只挑与知识库采集、搜索和备份直接相关的项目继续审查。",
+      "tools": [
+        "awesome-selfhosted"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "awesome-selfhosted"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a4cc27e000000000803c3c9",
+      "number": 17,
+      "title": "宝藏项目库",
+      "author": "Max的AI干货",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4cc27e000000000803c3c9",
+      "publishedAt": "2026-07-07_19:10:22",
+      "likes": "830",
+      "collections": "2310",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [
+        "awesome-selfhosted",
+        "开源目录",
+        "自托管"
+      ],
+      "summary": "视频同样展示 awesome-selfhosted：GitHub 上的大型自托管项目目录，画面列出约 143 个分类和 1,497 个项目，并强调每项可查看源码与部署方式。",
+      "deepSummary": "第二条视频仍是 awesome-selfhosted，画面显示约 143 个分类、1,497 个项目，并强调每项都能查看源码和部署方式。它没有产生新的能力，应与第 15 条合并，只保留第二来源作为佐证。这个例子说明收藏整理必须按“项目实体”去重，而不是按帖子标题计数，否则知识库会把重复宣传误当成两个发现。",
+      "action": "与另一篇重复收藏合并来源，不重复建能力；仅保留目录入口和筛选规则。",
+      "tools": [
+        "awesome-selfhosted"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "awesome-selfhosted"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a4b71cd000000000f006747",
+      "number": 18,
+      "title": "可以记录会议的开源项目",
+      "author": "亚莱加德",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4b71cd000000000f006747",
+      "publishedAt": "2026-07-06_19:13:49",
+      "likes": "85",
+      "collections": "256",
+      "mediaType": "视频",
+      "category": "知识管理与记忆",
+      "themes": [
+        "Meetily",
+        "会议转写",
+        "本地隐私"
+      ],
+      "summary": "视频项目是 Meetily（仓库 Zackriya-Solutions/meetily）：本地录音、实时转写和会议摘要，可用 Ollama 本地模型，也可选 Claude 等服务；重点是会议数据不必上传云端。",
+      "deepSummary": "真实项目是 Zackriya-Solutions/meetily。它在本地录音、实时转写和生成会议摘要，可使用 Ollama 本地模型，也能选用 Claude 等服务，核心优势是会议内容不必默认上传云端。对知识库最有价值的是稳定导出带时间、议题、决定和行动项的 Markdown。验证时必须同时测试中文识别、系统音频、说话人区分和录音授权。",
+      "action": "测试中文转写、系统音频采集和 Markdown 导出，并在录音前建立参与者授权规则。",
+      "tools": [
+        "Meetily"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Meetily"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a4c8cb2000000001603ed97",
+      "number": 19,
+      "title": "Scritty——多Agent共享一个记忆池👾",
+      "author": "投机者日记",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4c8cb2000000001603ed97",
+      "publishedAt": "2026-07-07_15:20:51",
+      "likes": "191",
+      "collections": "506",
+      "mediaType": "视频",
+      "category": "知识管理与记忆",
+      "themes": [
+        "Scritty",
+        "多Agent记忆",
+        "MCP"
+      ],
+      "summary": "视频完整展示 Scritty：把 Claude Code、Codex、Copilot CLI、Antigravity、Aider 与 Ollama 放进同一终端，自动捕获每次对话，建立本地可搜索记忆，并通过 MCP/CLI 供 Agent 回读。",
+      "deepSummary": "视频完整展示 Scritty：把 Claude Code、Codex、Copilot CLI、Antigravity、Aider 和 Ollama 放在同一终端，自动捕获会话，建立本地可搜索记忆，并通过 MCP/CLI 回读。关键纠正是：其 GitHub 仓库只有文档、发布和问题跟踪，产品本身闭源且订阅收费，并非可自由下载修改的开源 Skill。评估重点应是本地存储、加密、遥测、导出和彻底删除，而不是“共享记忆”宣传。",
+      "action": "注意其产品闭源且收费；先审查本地存储、加密、遥测、导出和删除，再与纯 Markdown 方案对比。",
+      "tools": [
+        "Scritty"
+      ],
+      "kind": "Product",
+      "resources": [
+        "Scritty"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a43955b0000000015027d45",
+      "number": 20,
+      "title": "零员工社媒运营——Postiz",
+      "author": "娜娜的AI冒险",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a43955b0000000015027d45",
+      "publishedAt": "2026-06-30_20:07:23",
+      "likes": "1086",
+      "collections": "2024",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [
+        "Postiz",
+        "社媒运营",
+        "自动排期"
+      ],
+      "summary": "长视频以 Postiz 解释零员工社媒运营：集中管理账号、内容日历、AI 生成、评论互动和多平台发布，也展示与 Cursor/ChatGPT 等 AI 工具联动。",
+      "deepSummary": "视频用 Postiz 解释一人公司如何集中管理账号、内容日历、AI 草稿、评论互动和多平台发布。真正可复制的是“研究—草稿—审核—排期—发布—复盘”的内容流水线，而不是收入数字。初期只应让系统生成草稿和排期建议，所有发布保留人工批准，并核实各平台是否使用官方 OAuth、权限如何撤销以及失败后是否重复发布。",
+      "action": "只启用草稿和人工审核；核实各平台官方 OAuth、权限撤销和失败重试后再考虑发布。",
+      "tools": [
+        "Postiz"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Postiz"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a49ec170000000020038350",
+      "number": 21,
+      "title": "夯爆了!这开源项目 4 个月冲到 50.7k 星",
+      "author": "墨云说",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a49ec170000000020038350",
+      "publishedAt": "2026-07-05_15:31:03",
+      "likes": "269",
+      "collections": "889",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [
+        "Agent-Reach",
+        "跨平台检索",
+        "CLI"
+      ],
+      "summary": "视频项目是 Agent-Reach：为 Agent 选择并配置网页、X、Reddit、YouTube、GitHub、B站与小红书等上游读取工具，提供安装、诊断和路由层；部分平台仍依赖登录态。",
+      "deepSummary": "项目是 Agent-Reach。它为 Agent 安装、诊断并路由网页、X、Reddit、YouTube、GitHub、B站和小红书等上游读取工具，本身更像“能力配置层”而不是单一爬虫。它可能减少不同平台接入的重复劳动，但部分渠道仍依赖 Cookie 或登录态。应先运行 dry-run/safe 模式，检查将安装的依赖、凭据路径和写操作边界，主账号只允许只读研究。",
+      "action": "先用 dry-run/safe 模式审查它将安装的依赖和凭据路径，主账号不启用小红书写操作。",
+      "tools": [
+        "Agent-Reach"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Agent-Reach"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a36a67b0000000015027543",
+      "number": 22,
+      "title": "Netflix 工程师的 Headroom（重复来源）",
+      "author": "小明AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a36a67b0000000015027543",
+      "publishedAt": "2026-06-21_10:30:15",
+      "likes": "299",
+      "collections": "839",
+      "mediaType": "视频",
+      "category": "本地模型与成本",
+      "themes": [
+        "Headroom",
+        "Token压缩",
+        "成本"
+      ],
+      "summary": "7 秒信息图明确指向 Headroom，宣传对结构化工具输出可减少 60–95% token，并兼容 Claude、Cursor、MCP 与 API；它与另一篇长视频是重复来源。",
+      "deepSummary": "7 秒信息图再次指向 Headroom，宣传结构化工具输出可减少 60–95% token，并兼容 Claude、Cursor、MCP 和 API。它与第 11 条是同一项目，不应重复形成工具卡。第二来源只用于补充宣传口径，最终决策仍由固定 benchmark 决定，尤其要检查压缩后是否丢失堆栈、文件路径、数值和否定条件。",
+      "action": "与长视频合并到同一 Headroom 项目卡，只保留第二来源，不重复测试。",
+      "tools": [
+        "Headroom"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Headroom"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a4305de0000000017008217",
+      "number": 23,
+      "title": "你的电脑到底可以本地部署什么大模型？",
+      "author": "brizer",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4305de0000000017008217",
+      "publishedAt": "2026-06-30_09:55:10",
+      "likes": "89",
+      "collections": "221",
+      "mediaType": "视频",
+      "category": "本地模型与成本",
+      "themes": [
+        "whichllm",
+        "本地大模型",
+        "硬件评估"
+      ],
+      "summary": "视频画面显示的项目是 Andyyyy64/whichllm：读取 GPU、CPU 和内存配置，从 Hugging Face 模型中推荐适合本机的模型与量化规格。",
+      "deepSummary": "画面确认项目是 Andyyyy64/whichllm。它读取 GPU、CPU 和内存配置，从 Hugging Face 模型中推荐本机可运行的模型与量化规格。它解决“哪些模型适合这台机器”的初筛，但推荐结果仍需用真实任务复核。正确使用方式是先运行只读硬件检测，再测试 tokens/s、首 token 延迟、上下文长度、内存峰值和回答质量。",
+      "action": "使用只读硬件检测运行 whichllm，并以实际显存占用、生成速度和任务质量复核推荐结果。",
+      "tools": [
+        "whichllm"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "whichllm"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a40ee50000000001502518f",
+      "number": 24,
+      "title": "Agent 长期记忆——Cognee",
+      "author": "赛博吴同学",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a40ee50000000001502518f",
+      "publishedAt": "2026-06-28_19:50:08",
+      "likes": "88",
+      "collections": "235",
+      "mediaType": "视频",
+      "category": "知识管理与记忆",
+      "themes": [
+        "Cognee",
+        "知识图谱",
+        "长期记忆"
+      ],
+      "summary": "短视频展示 Cognee 把句子与文档转成可推理的记忆图谱，并支持 OpenClaw、Claude Code 等 Agent 共享、检索和持久化知识。",
+      "deepSummary": "视频展示 Cognee 把句子和文档转成可推理的知识/记忆图谱，并让 OpenClaw、Claude Code 等 Agent 共享、检索和持久化知识。它适合解决跨会话回忆，但图谱数据库不应成为唯一真源。本项目可用 32 条收藏作为隔离数据集测试 remember、recall、update、forget、导出和删除，并始终保留 Markdown/JSON 原始资料作为可审计底座。",
+      "action": "用 32 篇收藏做隔离数据集，测试 remember/recall/forget、更新冲突、导出和删除。",
+      "tools": [
+        "Cognee"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Cognee"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a3fdfbf000000001101ca6f",
+      "number": 25,
+      "title": "每天半小时AI知识｜AI索引、代码索引",
+      "author": "AI酋长Andy",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a3fdfbf000000001101ca6f",
+      "publishedAt": "2026-06-28_00:35:43",
+      "likes": "26",
+      "collections": "61",
+      "mediaType": "视频",
+      "category": "知识管理与记忆",
+      "themes": [
+        "CocoIndex",
+        "增量索引",
+        "AST"
+      ],
+      "summary": "视频项目是 CocoIndex：用 AST 语义索引替代把整仓库全文塞给模型，只向 Agent 提供相关结构与路径；示例强调约 70% token 节省和更低检索延迟。",
+      "deepSummary": "真实项目是 CocoIndex。视频强调用 AST 和增量语义索引替代把整个代码库塞给模型，只返回相关结构与路径，并展示约 70% token 节省的示例。它的核心价值是索引随文件变化增量更新，而不是一次性切块。应以同一组代码问答比较全文 RAG 与 CocoIndex 的召回率、token、延迟、错误答案和更新成本。",
+      "action": "用同一代码问答任务对比全文 RAG 与 CocoIndex 的 token、召回率、延迟和索引更新成本。",
+      "tools": [
+        "CocoIndex"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "CocoIndex"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a376f5a0000000022015195",
+      "number": 26,
+      "title": "13.8万星的个人开源整理",
+      "author": "GitHub星探",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a376f5a0000000022015195",
+      "publishedAt": "2026-06-21_14:58:02",
+      "likes": "408",
+      "collections": "910",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [
+        "GitHub合集",
+        "Skill",
+        "开发工具"
+      ],
+      "summary": "视频逐项列出六个项目：mattpocock/skills、Pake、Palmier Pro、Headroom、codebase-memory-mcp 和 SmsForwarder；分别覆盖 Skill 集合、网页打包、AI 视频编辑、上下文压缩、代码记忆和短信转发。",
+      "deepSummary": "视频依次出现 mattpocock/skills、Pake、Palmier Pro、Headroom、codebase-memory-mcp、SmsForwarder。它们分别是 Agent Skill 集合、网页打包桌面应用、AI 视频编辑、上下文压缩、代码库记忆 MCP 和短信转发，不能被合并为一个“13.8 万星项目”。学习价值在于识别合集帖的拆分规则：每个实体分别记录仓库、许可证、权限和适用场景；优先审查 skills 与 codebase-memory-mcp，其他按真实需求进入候选池。",
+      "action": "保留六个独立项目记录；优先审查 skills 与 codebase-memory-mcp，其他按平台需求归档。",
+      "tools": [
+        "mattpocock/skills",
+        "Pake",
+        "Palmier Pro",
+        "Headroom",
+        "codebase-memory-mcp",
+        "SmsForwarder"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "mattpocock/skills",
+        "Pake",
+        "Palmier Pro",
+        "Headroom",
+        "codebase-memory-mcp"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a33fe4e000000001003ec3a",
+      "number": 27,
+      "title": "Claude、Codex双持必须要掌握的技巧：软链",
+      "author": "塔斯海",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a33fe4e000000001003ec3a",
+      "publishedAt": "2026-06-19_00:18:54",
+      "likes": "778",
+      "collections": "1254",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [
+        "符号链接",
+        "Claude",
+        "Codex"
+      ],
+      "summary": "长教程在 macOS 用 ln -s 让 Claude Code 与 Codex 共享同一 Skills 源目录，避免复制和版本漂移；核心是单一真源，不是一个独立 Skill。",
+      "deepSummary": "这是一套方法，不是可下载 Skill。视频在 macOS 使用 ln -s 让 Claude Code 与 Codex 指向同一 Skills 真源，避免复制、分叉和版本漂移。可迁移原则是“业务逻辑一份、宿主适配层很薄”；本项目因此把 Skill 和脚本放在项目目录，Claude/Codex 只需链接或读取同一目录。Windows 应使用受控符号链接/目录联接并检测失效，不能把浏览器用户数据和业务文件混在一起。",
+      "action": "本项目维持单一源目录；Windows 使用项目内适配层或受控目录联接，并加入失效检测。",
+      "tools": [
+        "符号链接"
+      ],
+      "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a2ffe49000000001503c4f2",
+      "number": 28,
+      "title": "一人开公司？靠这款 AI～",
+      "author": "虾头说",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a2ffe49000000001503c4f2",
+      "publishedAt": "2026-06-16_13:00:25",
+      "likes": "462",
+      "collections": "1101",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [
+        "Omnify AI",
+        "一人公司",
+        "多Agent团队"
+      ],
+      "summary": "视频产品是 Omnify AI：通过智能 HR 招募脚本、角色、分镜、视频生成和质检等 Agent，自动拆解短剧任务并协作产出成片；属于托管产品，不是已核实 GitHub Skill。",
+      "deepSummary": "视频产品是 Omnify AI：通过“智能 HR”组织脚本、角色、分镜、视频生成和质检等 Agent，把短剧任务拆给虚拟团队后汇总成片。它是托管商业产品，不是已确认的 GitHub Skill。可学习的是角色分工和质量关卡设计；是否采用则取决于定价、素材版权、模型来源、数据出口和能否迁移，不能把厂商演示当作可复用资产。",
+      "action": "只做产品研究，先核实定价、素材版权、模型来源和数据出口，再判断是否值得试用。",
+      "tools": [
+        "Omnify AI"
+      ],
+      "kind": "Product",
+      "resources": [],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a316666000000001c024e6f",
+      "number": 29,
+      "title": "好用的Claude skill,不一定是官方出的 👀",
+      "author": "Sav同学",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a316666000000001c024e6f",
+      "publishedAt": "2026-06-17_01:06:14",
+      "likes": "596",
+      "collections": "1180",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [
+        "社区Skill",
+        "工作流设计",
+        "联网"
+      ],
+      "summary": "长视频依次讲解五个社区项目：andrej-karpathy-skills、PPT Master、dot-skill、PUA/PIP 和 web-access，并明确讨论编码约束、演示文稿、人格蒸馏、持续调试与联网能力的差异和风险。",
+      "deepSummary": "视频明确列出 andrej-karpathy-skills、PPT Master、dot-skill/colleague-skill、PUA/PIP、web-access。它们分别聚焦编码约束、演示文稿、风格/人格知识提取、持续施压式调试和联网访问。值得吸收的是最小改动、证据验证、循环调试和可审计联网；风险最高的是对真人资料进行人格蒸馏，以及会读取浏览器/网页数据的联网能力。每个项目都必须单独审查，不能因“社区热门”而批量安装。",
+      "action": "优先测试编码约束与 PPT；web-access 仅隔离浏览器；dot-skill 不处理未授权真人资料。",
+      "tools": [
+        "andrej-karpathy-skills",
+        "PPT Master",
+        "dot-skill",
+        "PUA",
+        "web-access"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "andrej-karpathy-skills",
+        "PPT Master",
+        "dot-skill / colleague-skill",
+        "PUA / PIP",
+        "web-access"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a275d1d000000001702f817",
+      "number": 30,
+      "title": "claude使用技巧",
+      "author": "GitHunter",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a275d1d000000001702f817",
+      "publishedAt": "2026-06-09_10:23:57",
+      "likes": "7955",
+      "collections": "1.2万",
+      "mediaType": "视频",
+      "category": "信息采集与搜索",
+      "themes": [
+        "MarkItDown",
+        "文档转换",
+        "Token优化"
+      ],
+      "summary": "视频明确讲解 Microsoft MarkItDown：大 PDF 直接交给 Claude 会消耗大量 token，先转换成保留标题、列表、表格和链接的 Markdown 可明显降低上下文成本，并可通过 MCP 接入。",
+      "deepSummary": "真实项目是 Microsoft MarkItDown。视频说明大 PDF 直接放入上下文会消耗大量 token，而先转成保留标题、列表、表格和链接的 Markdown，能让 Claude/其他 Agent 更高效读取；它也支持多种 Office 与媒体格式及 MCP 接入。这是低风险、可立即验证的工具：用同一 PDF 比较转换前后 token、表格保真、OCR 缺失和回答准确率即可作出决策。",
+      "action": "用同一份 PDF 对比直接上传与 MarkItDown 的 token、表格保真、OCR 缺失和回答准确率。",
+      "tools": [
+        "Microsoft MarkItDown"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Microsoft MarkItDown"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a2a81d1000000001702d3de",
+      "number": 31,
+      "title": "AI搜索引擎项目，GitHub TrendIing榜第一",
+      "author": "AI小蔡狗",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a2a81d1000000001702d3de",
+      "publishedAt": "2026-06-12_10:38:01",
+      "likes": "534",
+      "collections": "1436",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [
+        "last30days",
+        "社媒研究",
+        "趋势"
+      ],
+      "summary": "视频中的 GitHub 热门项目是 last30days Skill：聚合最近 30 天 Reddit、X、TikTok、Instagram、YouTube 等讨论，输出近期共识、争议、来源和研究简报。",
+      "deepSummary": "视频再次介绍 last30days Skill，聚合最近 30 天的 Reddit、X、TikTok、Instagram、YouTube 等讨论并输出来源、共识和争议。这与第 13 条是同一项目，应合并为一个能力和两条来源。采用前最关键的不是热榜位置，而是 Cookie/API 权限、平台覆盖是否名副其实、日期过滤和引用质量；对不可访问的平台必须明确标注缺口。",
+      "action": "与另一篇重复来源合并；安装前检查浏览器 Cookie、可选 API Key、保存路径和引用质量。",
+      "tools": [
+        "last30days Skill"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "last30days Skill"
+      ],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a2e130d0000000007011c4a",
+      "number": 32,
+      "title": "Claude Code之父告别提示词，40个高频loop",
+      "author": "阿博粒",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a2e130d0000000007011c4a",
+      "publishedAt": "2026-06-14_12:33:49",
+      "likes": "622",
+      "collections": "1605",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [
+        "Loop Engineering",
+        "Claude Code",
+        "验证循环"
+      ],
+      "summary": "视频展示一个含 40 个可复制 Loop 的网站，覆盖构建至绿、覆盖率、性能、Bug、文档与安全等场景；关键结构是步骤、检查命令、退出条件和护栏，而不是单次提示词。",
+      "deepSummary": "视频展示 Loop Engineering 网站中的约 40 个可复制循环，覆盖 build-until-green、覆盖率、性能、Bug、文档和安全等场景。核心不是某条神奇提示词，而是每个循环都有步骤、检查命令、退出条件和护栏。当前项目应提取研究、实现、测试、复盘四类通用结构，以 Markdown/YAML 表达，保证 Claude、Codex 或其他 Agent 都能执行，而不是绑定某个厂商命令。",
+      "action": "从中选研究、实现、测试、复盘四类，改写为不绑定 Claude 的跨 Agent 模板。",
+      "tools": [
+        "Loop Engineering"
+      ],
+      "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "已完整查看视频，并重点复核短暂出现的关键画面",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6a2bb8db000000001603de2d",
+      "number": 33,
+      "title": "🔥GitHub本周热榜-AI Skill技能包成趋势",
+      "author": "星探AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a2bb8db000000001603de2d",
+      "publishedAt": "2026-06-12_21:51:00",
+      "likes": "7053",
+      "collections": "1.3万",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "这周没人卷模型大小，全在给现成的AI装专业技能包 缺啥补啥即插即用 #AI[话题]# #程序员[话题]# #智能体[话题]# #skills[话题]# #agent[话题]# #claude[话题]# #好视频扶持计划[话题]#",
+      "deepSummary": "这周没人卷模型大小，全在给现成的AI装专业技能包 缺啥补啥即插即用 #AI[话题]# #程序员[话题]# #智能体[话题]# #skills[话题]# #agent[话题]# #claude[话题]# #好视频扶持计划[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a25baca000000000803d0c8",
+      "number": 34,
+      "title": "未命名收藏",
+      "author": "阿甘探AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a25baca000000000803d0c8",
+      "publishedAt": "2026-06-08_09:55:01",
+      "likes": "544",
+      "collections": "1589",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "一人自媒体公司全流程（内容创作、分发、互动、变现）打通的开源项目 #开源项目 #自媒体 #开发者 #一人公司 #效率神器",
+      "deepSummary": "一人自媒体公司全流程（内容创作、分发、互动、变现）打通的开源项目 #开源项目 #自媒体 #开发者 #一人公司 #效率神器",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a2bde9300000000160268de",
+      "number": 35,
+      "title": "514K星标的神器，教你从0手搓万物",
+      "author": "AI小蔡狗",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a2bde9300000000160268de",
+      "publishedAt": "2026-06-13_12:26:01",
+      "likes": "1.2万",
+      "collections": "2万",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "#编程[话题]# #github开源项目推荐[话题]# #开源[话题]# #开发[话题]#",
+      "deepSummary": "#编程[话题]# #github开源项目推荐[话题]# #开源[话题]# #开发[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a29439c000000002202cf7d",
+      "number": 36,
+      "title": "接了个开源CLI，ClaudeCode能生图生视频了",
+      "author": "跟着阿亮学AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a29439c000000002202cf7d",
+      "publishedAt": "2026-06-11_20:11:59",
+      "likes": "777",
+      "collections": "1206",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "阿里云百炼开源CLI，可以让Agent具有生成声音、图片、视频的能力。这个CLI其实就是一个skill，安装这个skill以后，在Claude Code、Codex、hermes Agent里就可以生成高质量的电商图片、口播视频、带货视频、短剧等等，一下子让Agent变成了六边形战士。 #AI[话题]# #agent[话题]# #claudecode[话题]# #codex[话题]# #cli[话题]# #vibecoding[话题]# #效率神器[话题]# #阿里云百炼CL",
+      "deepSummary": "阿里云百炼开源CLI，可以让Agent具有生成声音、图片、视频的能力。这个CLI其实就是一个skill，安装这个skill以后，在Claude Code、Codex、hermes Agent里就可以生成高质量的电商图片、口播视频、带货视频、短剧等等，一下子让Agent变成了六边形战士。 #AI[话题]# #agent[话题]# #claudecode[话题]# #codex[话题]# #cli[话题]# #vibecoding[话题]# #效率神器[话题]# #阿里云百炼CL",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a2953790000000006033b61",
+      "number": 37,
+      "title": "教你用上Karpathy开源AutoResearch！",
+      "author": "氪研所",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a2953790000000006033b61",
+      "publishedAt": "2026-06-10_22:07:21",
+      "likes": "151",
+      "collections": "352",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "让AI自己跑实验、自己优化自己？我睡了一觉，它自动跑了100轮实验，醒来网站加载速度直接从50毫秒干到25毫秒，快了整整一倍！！！#AI[话题]# #AI学习[话题]# #AI效率[话题]# #AI教程[话题]# #干货[话题]# #小红书科技AMA[话题]# #科技[话题]# #好视频扶持计划[话题]#",
+      "deepSummary": "让AI自己跑实验、自己优化自己？我睡了一觉，它自动跑了100轮实验，醒来网站加载速度直接从50毫秒干到25毫秒，快了整整一倍！！！#AI[话题]# #AI学习[话题]# #AI效率[话题]# #AI教程[话题]# #干货[话题]# #小红书科技AMA[话题]# #科技[话题]# #好视频扶持计划[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a26ddbb0000000017008a8b",
+      "number": 38,
+      "title": "未命名收藏",
+      "author": "GitHunter",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a26ddbb0000000017008a8b",
+      "publishedAt": "2026-06-09_01:20:27",
+      "likes": "5224",
+      "collections": "9722",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "用 /artifacts 构建应用，并用 OODA、L99 和 god mode 解锁专家级 AI 提示。Claude 提示词小技巧就像这样，是任何在寻找 Claude 秘密代码和更好提示工程的人都能用的聪明 AI 效率小窍门。#RED新生代创作大赛[话题]# #ai[话题]# #claude[话题]#",
+      "deepSummary": "用 /artifacts 构建应用，并用 OODA、L99 和 god mode 解锁专家级 AI 提示。Claude 提示词小技巧就像这样，是任何在寻找 Claude 秘密代码和更好提示工程的人都能用的聪明 AI 效率小窍门。#RED新生代创作大赛[话题]# #ai[话题]# #claude[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a26d979000000003502fb50",
+      "number": 39,
+      "title": "把邮箱服务放到 Cloudflare 上",
+      "author": "靓仔AI_进化论",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a26d979000000003502fb50",
+      "publishedAt": "2026-06-09_01:02:17",
+      "likes": "188",
+      "collections": "445",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#AI[话题]# #邮箱[话题]# #vibecoding[话题]# #AI编程[话题]# #程序员[话题]# #开发者[话题]# #AIChannel[话题]# #claudecode[话题]#",
+      "deepSummary": "#AI[话题]# #邮箱[话题]# #vibecoding[话题]# #AI编程[话题]# #程序员[话题]# #开发者[话题]# #AIChannel[话题]# #claudecode[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a621f16000000001303e77b",
+      "number": 40,
+      "title": "为什么很多独立站卖家不愿意透露自己的网址",
+      "author": "Lily超爱搭建独立站",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a621f16000000001303e77b",
+      "publishedAt": "2026-07-24_00:03:02",
+      "likes": "214",
+      "collections": "424",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "#留学生创业[话题]# #独立站[话题]# #独立站建站[话题]# #外贸网站[话题]# #外贸网站建设[话题]# #网站建设[话题]# #海外创业[话题]##wordpress[话题]##沙滩鞋[话题]##布鞋[话题]#",
+      "deepSummary": "#留学生创业[话题]# #独立站[话题]# #独立站建站[话题]# #外贸网站[话题]# #外贸网站建设[话题]# #网站建设[话题]# #海外创业[话题]##wordpress[话题]##沙滩鞋[话题]##布鞋[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69febd02000000003700c629",
+      "number": 41,
+      "title": "程序员狂喜！开源宝藏！副业神器！",
+      "author": "程序员三千",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69febd02000000003700c629",
+      "publishedAt": "2026-05-09_14:50:10",
+      "likes": "194",
+      "collections": "538",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "#ai[话题]# #程序员[话题]# #java[话题]# #php[话题]# #编程[话题]# #github开源项目推荐[话题]#",
+      "deepSummary": "#ai[话题]# #程序员[话题]# #java[话题]# #php[话题]# #编程[话题]# #github开源项目推荐[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69d0771d000000001a027404",
+      "number": 42,
+      "title": "这是一个让电商卖家无法拒绝的网站！",
+      "author": "豆豆_AI_实战",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69d0771d000000001a027404",
+      "publishedAt": "2026-04-04_15:03:04",
+      "likes": "3633",
+      "collections": "6869",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "里面收集了 1000+Nanobanana Pro 专属提示词，不管你是想要女装服饰图，还是商品细节图，它全都有！重点是不用登入，完全免费！！！#电商美工[话题]# #电商ai工具[话题]# #AI工具[话题]# #AI[话题]# #ai提示词[话题]# #提示词[话题]# #指令[话题]# #网站推荐[话题]# #实用网站[话题]# #电商[话题]#",
+      "deepSummary": "里面收集了 1000+Nanobanana Pro 专属提示词，不管你是想要女装服饰图，还是商品细节图，它全都有！重点是不用登入，完全免费！！！#电商美工[话题]# #电商ai工具[话题]# #AI工具[话题]# #AI[话题]# #ai提示词[话题]# #提示词[话题]# #指令[话题]# #网站推荐[话题]# #实用网站[话题]# #电商[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a44938c0000000006021e9e",
+      "number": 43,
+      "title": "小红书爆款高赞Skill汇总‼️",
+      "author": "金黄说AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a44938c0000000006021e9e",
+      "publishedAt": "2026-07-01_14:11:56",
+      "likes": "1704",
+      "collections": "2607",
+      "mediaType": "图文",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "最近的小红书越来越像一个Skill Hub了，越来越多的创作者都在分享各种Skill，再加上官方现在还趁热打铁发布了Red Skill这个新功能，允许创作者直接在笔记里分享自己的完整的Skill直接让观众下载，这一步真的很超前。最近沉迷于在小红书上收集整理各种Skill，在这里归纳总结了我找到的所有小红书分享的高赞Skill 📚图文制作类 1️⃣jimeng-infographic-skill - @陈困困 分享的即梦信息图生成 Skill，把信息图制作流程封装进 Agen",
+      "deepSummary": "最近的小红书越来越像一个Skill Hub了，越来越多的创作者都在分享各种Skill，再加上官方现在还趁热打铁发布了Red Skill这个新功能，允许创作者直接在笔记里分享自己的完整的Skill直接让观众下载，这一步真的很超前。最近沉迷于在小红书上收集整理各种Skill，在这里归纳总结了我找到的所有小红书分享的高赞Skill 📚图文制作类 1️⃣jimeng-infographic-skill - @陈困困 分享的即梦信息图生成 Skill，把信息图制作流程封装进 Agen",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69de2f91000000001b002282",
+      "number": 44,
+      "title": "一款叫RedBox的小红书AI创作工具火了",
+      "author": "不1不2",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69de2f91000000001b002282",
+      "publishedAt": "2026-04-14_22:14:09",
+      "likes": "38",
+      "collections": "59",
+      "mediaType": "图文",
+      "category": "信息采集与搜索",
+      "themes": [],
+      "summary": "小红书版 OpenClaw 来了！ 快速搞定爆款笔记，新手轻松涨粉。 一款叫RedBox的小红书AI创作工具火了， 核心思路很直接： 把小红书从\"灵感-创作-发布\"全链路搬到本地， 用AI接管中间所有脏活累活。 工作流分三步：浏览器插件一键采集爆款笔记、YouTube视频、网页内容→存进本地知识库按空间分类管理→AI辅助写作+自动化定时发布。 封面、标题组、生图全在内。 几个值得留意的细节。 采集能力是Chrome插件实现的，支持小红书笔记和YouTube视频直接抓取。这意味",
+      "deepSummary": "小红书版 OpenClaw 来了！ 快速搞定爆款笔记，新手轻松涨粉。 一款叫RedBox的小红书AI创作工具火了， 核心思路很直接： 把小红书从\"灵感-创作-发布\"全链路搬到本地， 用AI接管中间所有脏活累活。 工作流分三步：浏览器插件一键采集爆款笔记、YouTube视频、网页内容→存进本地知识库按空间分类管理→AI辅助写作+自动化定时发布。 封面、标题组、生图全在内。 几个值得留意的细节。 采集能力是Chrome插件实现的，支持小红书笔记和YouTube视频直接抓取。这意味",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a0b0f31000000003601f010",
+      "number": 45,
+      "title": "我把1000+爆文浓缩成一套【爆文知识库】",
+      "author": "S的爆文情报库",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a0b0f31000000003601f010",
+      "publishedAt": "2026-05-18_23:08:01",
+      "likes": "15",
+      "collections": "19",
+      "mediaType": "图文",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "做这套「内容创作选题册」， 是因为读了很多爆款创作的书籍都提到了一点。 爆款是重复的。 这其实是给后来的入局者们一个信心。 爆款是有规律的，它并非天才创作者的灵光乍现。 所以我集合了六大头部赛道的优质内容，并按书中以及自我实践中总结下来的经验对爆文进行拆解与总结。 拆解1篇爆文、10篇爆文、100篇爆文， 那隐藏在千变万幻的爆文中不变的骨骼框架， 必将被你窥见。至此，爆款易如反掌。 [红书R]「01优质内容」 优质内容存在飞书多维表格中。里面记录了每篇爆文的核心信息，标题、文",
+      "deepSummary": "做这套「内容创作选题册」， 是因为读了很多爆款创作的书籍都提到了一点。 爆款是重复的。 这其实是给后来的入局者们一个信心。 爆款是有规律的，它并非天才创作者的灵光乍现。 所以我集合了六大头部赛道的优质内容，并按书中以及自我实践中总结下来的经验对爆文进行拆解与总结。 拆解1篇爆文、10篇爆文、100篇爆文， 那隐藏在千变万幻的爆文中不变的骨骼框架， 必将被你窥见。至此，爆款易如反掌。 [红书R]「01优质内容」 优质内容存在飞书多维表格中。里面记录了每篇爆文的核心信息，标题、文",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a4606410000000017009025",
+      "number": 46,
+      "title": "如何从零搭建AI+小红书工作流？",
+      "author": "果桃通告",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4606410000000017009025",
+      "publishedAt": "2026-07-02_16:33:37",
+      "likes": "5",
+      "collections": "16",
+      "mediaType": "图文",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "#记录吧就现在[话题]# #小红书运营干货[话题]# #爆款标题[话题]# #AI工具[话题]# #AI人工智能[话题]# #自媒体风口[话题]# #内容运营[话题]# #如何做博主[话题]# #提高工作效率的方法[话题]# #新媒体运营工具[话题]#",
+      "deepSummary": "#记录吧就现在[话题]# #小红书运营干货[话题]# #爆款标题[话题]# #AI工具[话题]# #AI人工智能[话题]# #自媒体风口[话题]# #内容运营[话题]# #如何做博主[话题]# #提高工作效率的方法[话题]# #新媒体运营工具[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a4ccf88000000001101d144",
+      "number": 47,
+      "title": "原来小红书 + Obsidian，可以这么好用！",
+      "author": "坦丁_场景化AI知识库",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4ccf88000000001101d144",
+      "publishedAt": "2026-07-07_20:06:00",
+      "likes": "408",
+      "collections": "652",
+      "mediaType": "图文",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "小红书 + Obsidian 这个组合特别适合我这种平时爱收藏、爱记东西、又想把内容真正用起来的人。 以前刷到有用的内容，我也会先收藏、点赞， 但收藏久了基本就等于“躺在那儿”。 想找的时候找不到， 想复用的时候也不知道从哪翻。 后来我把小红书的内容慢慢同步到 Obsidian 里之后，体验完全不一样了[偷笑R] 它对我最大的帮助不是“存起来”， 而是终于可以开始继续通过AI加工和使用了： [飞盘R]收藏的内容可以集中整理 [飞盘R]图片、正文、视频都能沉淀下来 [飞盘R]评",
+      "deepSummary": "小红书 + Obsidian 这个组合特别适合我这种平时爱收藏、爱记东西、又想把内容真正用起来的人。 以前刷到有用的内容，我也会先收藏、点赞， 但收藏久了基本就等于“躺在那儿”。 想找的时候找不到， 想复用的时候也不知道从哪翻。 后来我把小红书的内容慢慢同步到 Obsidian 里之后，体验完全不一样了[偷笑R] 它对我最大的帮助不是“存起来”， 而是终于可以开始继续通过AI加工和使用了： [飞盘R]收藏的内容可以集中整理 [飞盘R]图片、正文、视频都能沉淀下来 [飞盘R]评",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a017b900000000036033c00",
+      "number": 48,
+      "title": "还没发布，AI 已经知道你的视频会不会爆",
+      "author": "硅基棱镜",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a017b900000000036033c00",
+      "publishedAt": "2026-05-11_16:47:44",
+      "likes": "535",
+      "collections": "1314",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "#AI[话题]# #higgsfield[话题]# #爆款视频[话题]#",
+      "deepSummary": "#AI[话题]# #higgsfield[话题]# #爆款视频[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69ff34730000000023017de6",
+      "number": 49,
+      "title": "高阶玩法｜5个Claude Skills搭建AI营销团队",
+      "author": "Luna_Green",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69ff34730000000023017de6",
+      "publishedAt": "2026-05-09_23:19:47",
+      "likes": "1290",
+      "collections": "2729",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "玩了AI营销整整一个月，终于筛出5个真正落地有用的AI营销Skills，营销人、创业者直接抄作业，免费真香～ Copywriting Ad Creative SEO+AEO Email Sequence Page CRO 💡 拉开差距的关键 2026年了，还是有很多marketer只会把AI当聊天工具。 真正的高阶玩法是：把这些技能做成独立专项子Agent，各司其职。 再搭建一个专属CMO主控Agent，你只需要下达「Create a marketing campaign ",
+      "deepSummary": "玩了AI营销整整一个月，终于筛出5个真正落地有用的AI营销Skills，营销人、创业者直接抄作业，免费真香～ Copywriting Ad Creative SEO+AEO Email Sequence Page CRO 💡 拉开差距的关键 2026年了，还是有很多marketer只会把AI当聊天工具。 真正的高阶玩法是：把这些技能做成独立专项子Agent，各司其职。 再搭建一个专属CMO主控Agent，你只需要下达「Create a marketing campaign ",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69fe986a000000003501ea35",
+      "number": 50,
+      "title": "最强的中文Ai信源扫描Skill，我爆款全靠它",
+      "author": "柱子哥TzFilm",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69fe986a000000003501ea35",
+      "publishedAt": "2026-05-09_12:14:02",
+      "likes": "1216",
+      "collections": "2837",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#RED新生代创作大赛[话题]# #万物漫评[话题]#",
+      "deepSummary": "#RED新生代创作大赛[话题]# #万物漫评[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69fb2924000000003700e5c8",
+      "number": 51,
+      "title": "做内容的人，必装的7个Skill！",
+      "author": "几口酱聊AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69fb2924000000003700e5c8",
+      "publishedAt": "2026-05-06_21:42:28",
+      "likes": "5905",
+      "collections": "9458",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "艾特@问一问 总结下视频里的skill名称[扯脸H]",
+      "deepSummary": "艾特@问一问 总结下视频里的skill名称[扯脸H]",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a5b7854000000000f0310fd",
+      "number": 52,
+      "title": "每月花4小时，用AI把独立站SEO做起来",
+      "author": "AI与鱼",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5b7854000000000f0310fd",
+      "publishedAt": "2026-07-18_22:57:56",
+      "likes": "455",
+      "collections": "815",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "#SEO[话题]# #GEO[话题]# #独立站[话题]# #shopify[话题]# #AI自动化[话题]# #howto用好AI[话题]#",
+      "deepSummary": "#SEO[话题]# #GEO[话题]# #独立站[话题]# #shopify[话题]# #AI自动化[话题]# #howto用好AI[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a0fb1430000000013020401",
+      "number": 53,
+      "title": "如何用claude管理meta广告投放",
+      "author": "Elite_Media精英北美营销",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a0fb1430000000013020401",
+      "publishedAt": "2026-05-22_11:28:35",
+      "likes": "1930",
+      "collections": "3390",
+      "mediaType": "视频",
+      "category": "信息采集与搜索",
+      "themes": [],
+      "summary": "#小品牌出海[话题]# #marketing[话题]# #搜索关键词[话题]# #fyp[话题]## marketing#ai[话题]# #claude[话题]#",
+      "deepSummary": "#小品牌出海[话题]# #marketing[话题]# #搜索关键词[话题]# #fyp[话题]## marketing#ai[话题]# #claude[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a058b540000000038034851",
+      "number": 54,
+      "title": "永久免费域名项目，简直就是开源公益！",
+      "author": "AI小蔡狗",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a058b540000000038034851",
+      "publishedAt": "2026-05-15_19:44:02",
+      "likes": "3564",
+      "collections": "7849",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "#github开源项目推荐[话题]# #开源[话题]# #域名[话题]# #编程[话题]# #前端开发[话题]#",
+      "deepSummary": "#github开源项目推荐[话题]# #开源[话题]# #域名[话题]# #编程[话题]# #前端开发[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69fc9d19000000001f0073c6",
+      "number": 55,
+      "title": "WordPress SEO 全自动工作流开源",
+      "author": "重生之我在香港玩机器人",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69fc9d19000000001f0073c6",
+      "publishedAt": "2026-05-08_00:09:29",
+      "likes": "164",
+      "collections": "221",
+      "mediaType": "图文",
+      "category": "信息采集与搜索",
+      "themes": [],
+      "summary": "工作流整体分为3步，已经进行独立解耦： 1. SEO关键词获取 中文+英文双语关键词抓取，serp排名前三对手核心词，痛点词等，已设定判定标准，避免词一大堆但是一个有用的都没有 2. SEO文章制作 关键词排布要求（筛选主次关键词，段落排布），高转化公式，CTA，AEO优化，文章风格约束 3. WordPress自动发布 文章自动发布到对应的分类中，包含文章的Meta数据发布，自动实现xml sitemap站点图加速收录，问题去重，Open graphs tag，breadc",
+      "deepSummary": "工作流整体分为3步，已经进行独立解耦： 1. SEO关键词获取 中文+英文双语关键词抓取，serp排名前三对手核心词，痛点词等，已设定判定标准，避免词一大堆但是一个有用的都没有 2. SEO文章制作 关键词排布要求（筛选主次关键词，段落排布），高转化公式，CTA，AEO优化，文章风格约束 3. WordPress自动发布 文章自动发布到对应的分类中，包含文章的Meta数据发布，自动实现xml sitemap站点图加速收录，问题去重，Open graphs tag，breadc",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a041c630000000035020f0c",
+      "number": 56,
+      "title": "爱用Claude做Reddit，网站SEO流量效果绝绝子",
+      "author": "云端共赢WeSeeAI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a041c630000000035020f0c",
+      "publishedAt": "2026-05-13_16:38:27",
+      "likes": "192",
+      "collections": "365",
+      "mediaType": "图文",
+      "category": "信息采集与搜索",
+      "themes": [],
+      "summary": "做户外独立站朋友SEO自然流量从日均120涨到了8100+ 而且Google SGE里他的产品页直接排进了前三。 以前他谷歌排名上不去，SEO做了跟没做一样。 原来他把全部精力用Claude做Reddit GEO GEO就是让AI（ChatGPT、Gemini）回答用户问题时主动推荐你 三步：用Claude把Reddit变成SEO加速器 第一步：让ChatGPT挖出高价值问题 打开ChatGPT，指令：“找出Reddit上关于【户外刀具】的20个高价值问题。要求：讨论量500",
+      "deepSummary": "做户外独立站朋友SEO自然流量从日均120涨到了8100+ 而且Google SGE里他的产品页直接排进了前三。 以前他谷歌排名上不去，SEO做了跟没做一样。 原来他把全部精力用Claude做Reddit GEO GEO就是让AI（ChatGPT、Gemini）回答用户问题时主动推荐你 三步：用Claude把Reddit变成SEO加速器 第一步：让ChatGPT挖出高价值问题 打开ChatGPT，指令：“找出Reddit上关于【户外刀具】的20个高价值问题。要求：讨论量500",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a3e3ea70000000006036097",
+      "number": 57,
+      "title": "4步打造同款高级动态网站工作流",
+      "author": "安娜设计师",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a3e3ea70000000006036097",
+      "publishedAt": "2026-06-26_18:56:08",
+      "likes": "2996",
+      "collections": "5546",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "我看完 5 个国外博主的 AI 网站教程后，发现真正有用的不是某一个工具，而是一套流程。 简单说就是： 1， 先找参考图 别让 AI 凭空想，给它一个明确方向。 2，再洗素材 把参考图变成干净的视觉骨架。 3，做循环视频 让网站主视觉动起来，质感会明显提升。 4，丢给 AI 构建 用 prompt + 图片 + 视频链接生成网站，再通过聊天一点点改细节。 我也尝试了一下这套方法流，生成了一个动态网站。 动态网站比静态网站更吸引人的地方是： 它更有氛围感，也更像一个真实品牌页面",
+      "deepSummary": "我看完 5 个国外博主的 AI 网站教程后，发现真正有用的不是某一个工具，而是一套流程。 简单说就是： 1， 先找参考图 别让 AI 凭空想，给它一个明确方向。 2，再洗素材 把参考图变成干净的视觉骨架。 3，做循环视频 让网站主视觉动起来，质感会明显提升。 4，丢给 AI 构建 用 prompt + 图片 + 视频链接生成网站，再通过聊天一点点改细节。 我也尝试了一下这套方法流，生成了一个动态网站。 动态网站比静态网站更吸引人的地方是： 它更有氛围感，也更像一个真实品牌页面",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a5e14d0000000000100eba3",
+      "number": 58,
+      "title": "让AI操控你ps 的教程来了",
+      "author": "蓝戈AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5e14d0000000000100eba3",
+      "publishedAt": "2026-07-20_22:30:08",
+      "likes": "6856",
+      "collections": "9258",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#AI工具[话题]# #howto入门codex[话题]# #AI技巧[话题]# #chatGPT[话题]# #photoshop[话题]# #ps[话题]# #howto用好AI[话题]#",
+      "deepSummary": "#AI工具[话题]# #howto入门codex[话题]# #AI技巧[话题]# #chatGPT[话题]# #photoshop[话题]# #ps[话题]# #howto用好AI[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69ff1c7f000000001a02c50e",
+      "number": 59,
+      "title": "🔥UI设计师必备的高质量动态图标库",
+      "author": "一言设计师",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69ff1c7f000000001a02c50e",
+      "publishedAt": "2026-05-09_21:37:35",
+      "likes": "1020",
+      "collections": "1853",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "一站式动态图标库，拿来就用，不用自己画，不用自己调，风格统一，省去制作图标动效，直接导出json或gif，交付研发一步到位～ #ui设计[话题]# #设计灵感[话题]# #icon设计[话题]# #动态icon[话题]# #图标设计[话题]# #工具[话题]# #高效[话题]# #设计干货[话题]# #设计网站[话题]# #有趣的网站[话题]# @小红书成长笔记",
+      "deepSummary": "一站式动态图标库，拿来就用，不用自己画，不用自己调，风格统一，省去制作图标动效，直接导出json或gif，交付研发一步到位～ #ui设计[话题]# #设计灵感[话题]# #icon设计[话题]# #动态icon[话题]# #图标设计[话题]# #工具[话题]# #高效[话题]# #设计干货[话题]# #设计网站[话题]# #有趣的网站[话题]# @小红书成长笔记",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69e63022000000002301c7df",
+      "number": 60,
+      "title": "跟我学，做个好看的网站不是很简单吗？",
+      "author": "瑞哥那",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69e63022000000002301c7df",
+      "publishedAt": "2026-04-21_10:00:44",
+      "likes": "4850",
+      "collections": "7722",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "#做网站[话题]# #个人网站[话题]# #设计[话题]# #交互[话题]# #AI做设计[话题]# #AI做网站[话题]# #审美[话题]#",
+      "deepSummary": "#做网站[话题]# #个人网站[话题]# #设计[话题]# #交互[话题]# #AI做设计[话题]# #AI做网站[话题]# #审美[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69a90d81000000001d026a45",
+      "number": 61,
+      "title": "Figma Vibe Design 教程来啦😭！解放双手",
+      "author": "唐妮可_nicole",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69a90d81000000001d026a45",
+      "publishedAt": "2026-03-05_15:58:41",
+      "likes": "4012",
+      "collections": "5922",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "AI 协作 Figma 画布的时代到来了！本教程教各位设计师如何解放双手让 Claude Code 替你干活😭 #Figma[话题]# #Vibma[话题]# #Claudecode[话题]# #Cursor[话题]# #vibecoding大赏[话题]# #AI[话题]#",
+      "deepSummary": "AI 协作 Figma 画布的时代到来了！本教程教各位设计师如何解放双手让 Claude Code 替你干活😭 #Figma[话题]# #Vibma[话题]# #Claudecode[话题]# #Cursor[话题]# #vibecoding大赏[话题]# #AI[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69a516fd0000000022020a79",
+      "number": 62,
+      "title": "国内版Lovart来了！超强AI图像编辑，有手就会",
+      "author": "老王AI工具库",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69a516fd0000000022020a79",
+      "publishedAt": "2026-03-02_23:09:21",
+      "likes": "2.2万",
+      "collections": "1.4万",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "#AI工具[话题]# #AI视频[话题]# #后期制作[话题]# #设计软件[话题]# #星流Agent[话题]# #Lovart[话题]# #AI修图[话题]# #设计[话题]# #PS[话题]# #ai视频生成[话题]#",
+      "deepSummary": "#AI工具[话题]# #AI视频[话题]# #后期制作[话题]# #设计软件[话题]# #星流Agent[话题]# #Lovart[话题]# #AI修图[话题]# #设计[话题]# #PS[话题]# #ai视频生成[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a603e4e000000001d00c0a0",
+      "number": 63,
+      "title": "GitHub 上火出圈的视频翻译神器，好用高效",
+      "author": "琦琦的AI工具库",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a603e4e000000001d00c0a0",
+      "publishedAt": "2026-07-22_13:51:42",
+      "likes": "49",
+      "collections": "143",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "它可以将视频快速翻译成多语言版本并配音！ #视频翻译[话题]# #视频配音[话题]# #VividDub[话题]# #翻译软件[话题]# #ai视频翻译[话题]# #视频去字幕[话题]# #效率神器[话题]# #出海[话题]#",
+      "deepSummary": "它可以将视频快速翻译成多语言版本并配音！ #视频翻译[话题]# #视频配音[话题]# #VividDub[话题]# #翻译软件[话题]# #ai视频翻译[话题]# #视频去字幕[话题]# #效率神器[话题]# #出海[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a5b1bee000000000f007345",
+      "number": 64,
+      "title": "本地部署AI绘画软件！",
+      "author": "有点坏有点可爱",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5b1bee000000000f007345",
+      "publishedAt": "2026-07-18_16:23:42",
+      "likes": "2438",
+      "collections": "3975",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "最强AI已无需确认！！#AI工具[话题]# #ai漫剧[话题]# #AIgc[话题]# #AI视频[话题]# #ai视频制作[话题]# #ai教程分享[话题]# #ai动态漫[话题]# #ai漫剧制作[话题]#",
+      "deepSummary": "最强AI已无需确认！！#AI工具[话题]# #ai漫剧[话题]# #AIgc[话题]# #AI视频[话题]# #ai视频制作[话题]# #ai教程分享[话题]# #ai动态漫[话题]# #ai漫剧制作[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a4a67ca000000001603daba",
+      "number": 65,
+      "title": "全球首个开源Agent视频制作神器，3万点赞。",
+      "author": "逛逛GitHub",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4a67ca000000001603daba",
+      "publishedAt": "2026-07-07_01:04:00",
+      "likes": "289",
+      "collections": "621",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#skill[话题]# #ai[话题]# #人工智能[话题]# #大模型[话题]# #Agent[话题]# #智能体[话题]#",
+      "deepSummary": "#skill[话题]# #ai[话题]# #人工智能[话题]# #大模型[话题]# #Agent[话题]# #智能体[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a3b9aa2000000001102e1ff",
+      "number": 66,
+      "title": "帮你打通一人自媒体全流程的开源项目",
+      "author": "梦莱加德",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a3b9aa2000000001102e1ff",
+      "publishedAt": "2026-06-24_18:51:46",
+      "likes": "395",
+      "collections": "974",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "#ai[话题]# #开源[话题]# #编程[话题]# #自媒体工具[话题]# #新媒体时代[话题]# #新媒体运营工具[话题]# #自媒‮创体‬业[话题]#",
+      "deepSummary": "#ai[话题]# #开源[话题]# #编程[话题]# #自媒体工具[话题]# #新媒体时代[话题]# #新媒体运营工具[话题]# #自媒‮创体‬业[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a462248000000001102cab2",
+      "number": 67,
+      "title": "comfyui7月最新，超好用的AI生产力工具！",
+      "author": "老温",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a462248000000001102cab2",
+      "publishedAt": "2026-07-02_18:33:12",
+      "likes": "1483",
+      "collections": "2408",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "#comfyui[话题]# #comfyui下载[话题]# #comfyui安装[话题]# #comfyui找工作[话题]#",
+      "deepSummary": "#comfyui[话题]# #comfyui下载[话题]# #comfyui安装[话题]# #comfyui找工作[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a43875c000000001700a2f4",
+      "number": 68,
+      "title": "全自动一键剪辑视频",
+      "author": "成也2077",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a43875c000000001700a2f4",
+      "publishedAt": "2026-06-30_19:07:40",
+      "likes": "92",
+      "collections": "219",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "阿里开源，GitHub ，AI全自动视频剪辑！ #GitHub[话题]# #AI自动剪辑[话题]# #ai[话题]# #干货分享[话题]# #开源[话题]#",
+      "deepSummary": "阿里开源，GitHub ，AI全自动视频剪辑！ #GitHub[话题]# #AI自动剪辑[话题]# #ai[话题]# #干货分享[话题]# #开源[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a408c74000000001702dd1b",
+      "number": 69,
+      "title": "有码秒变无码，超强的视频马赛克修复神器！",
+      "author": "萌哥科技酷（主页置顶）",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a408c74000000001702dd1b",
+      "publishedAt": "2026-06-28_12:52:36",
+      "likes": "1247",
+      "collections": "2574",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "#马赛克修复[话题]# #马赛克[话题]# #无码[话题]# #软件分享[话题]# #电脑知识[话题]#",
+      "deepSummary": "#马赛克修复[话题]# #马赛克[话题]# #无码[话题]# #软件分享[话题]# #电脑知识[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a3a0665000000002201a15d",
+      "number": 70,
+      "title": "这个网站太棒啦❗️无需会员 直接使用",
+      "author": "辰远玖零AIGC",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a3a0665000000002201a15d",
+      "publishedAt": "2026-06-23_14:07:01",
+      "likes": "424",
+      "collections": "809",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "找到了这个Ai聚合站，无需会员直接使用，图片，视频，音乐全都有，还有各种Ai智能体，一键生成。 #ai绘画[话题]# #ai摄影[话题]# #ai智能体[话题]# #ai绘图[话题]# #AI视频[话题]# #ai聚合站[话题]# #软件分享[话题]# #ai工具[话题]#",
+      "deepSummary": "找到了这个Ai聚合站，无需会员直接使用，图片，视频，音乐全都有，还有各种Ai智能体，一键生成。 #ai绘画[话题]# #ai摄影[话题]# #ai智能体[话题]# #ai绘图[话题]# #AI视频[话题]# #ai聚合站[话题]# #软件分享[话题]# #ai工具[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a3517de0000000022008c7f",
+      "number": 71,
+      "title": "未命名收藏",
+      "author": "深度AI橘子",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a3517de0000000022008c7f",
+      "publishedAt": "2026-06-19_20:20:14",
+      "likes": "5516",
+      "collections": "7229",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "豆包的灰产让拍摄彻底要被洗牌了#ai[话题]##职场干货[话题]# #个人ip[话题]#",
+      "deepSummary": "豆包的灰产让拍摄彻底要被洗牌了#ai[话题]##职场干货[话题]# #个人ip[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a226ba9000000002202f4e3",
+      "number": 72,
+      "title": "三个Codex神级Skill，用上直接拉开一个段位",
+      "author": "老麦不废话",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a226ba9000000002202f4e3",
+      "publishedAt": "2026-06-05_16:24:41",
+      "likes": "7573",
+      "collections": "1.6万",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#Codex[话题]# #Codex[话题]# #AI[话题]# #神级[话题]# #Skill[话题]# #Agent[话题]#",
+      "deepSummary": "#Codex[话题]# #Codex[话题]# #AI[话题]# #神级[话题]# #Skill[话题]# #Agent[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a26863e000000000803c827",
+      "number": 73,
+      "title": "一键翻配视频玩转海外流量",
+      "author": "成也2077",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a26863e000000000803c827",
+      "publishedAt": "2026-06-08_19:07:10",
+      "likes": "168",
+      "collections": "533",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "Github宝藏开源Voice-Pro，可下载海外视频去原声直接翻译！支持对语言！ #开源工具[话题]# #github[话题]# #AI[话题]# #跨境创作[话题]# #干货分享[话题]#",
+      "deepSummary": "Github宝藏开源Voice-Pro，可下载海外视频去原声直接翻译！支持对语言！ #开源工具[话题]# #github[话题]# #AI[话题]# #跨境创作[话题]# #干货分享[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a169230000000003503b383",
+      "number": 74,
+      "title": "这个开源skill直接把做视频的门口砸烂了",
+      "author": "亚莱加德",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a169230000000003503b383",
+      "publishedAt": "2026-05-27_20:42:01",
+      "likes": "1066",
+      "collections": "2615",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#skill[话题]# #开源[话题]# #AI工具[话题]# #ai[话题]#",
+      "deepSummary": "#skill[话题]# #开源[话题]# #AI工具[话题]# #ai[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a1fffc40000000022024663",
+      "number": 75,
+      "title": "爱死机爆火后，短剧最新Agent2.0更吊了！",
+      "author": "翔翔是大拿",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a1fffc40000000022024663",
+      "publishedAt": "2026-06-03_20:19:49",
+      "likes": "4046",
+      "collections": "5108",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "#AI视频[话题]# #AIGC[话题]# #AI漫剧[话题]# #短剧Agent[话题]# #小云雀短剧Agent2全面升级[话题]# #AI[话题]# #爱死机[话题]#",
+      "deepSummary": "#AI视频[话题]# #AIGC[话题]# #AI漫剧[话题]# #短剧Agent[话题]# #小云雀短剧Agent2全面升级[话题]# #AI[话题]# #爱死机[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a1fd8a2000000003601ff7a",
+      "number": 76,
+      "title": "未命名收藏",
+      "author": "Mx-Shell",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a1fd8a2000000003601ff7a",
+      "publishedAt": "2026-06-03_17:32:50",
+      "likes": "9345",
+      "collections": "7941",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "国产“爱死机”《丧尸清道夫》创作思路分享",
+      "deepSummary": "国产“爱死机”《丧尸清道夫》创作思路分享",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a1ab6bb00000000360012d3",
+      "number": 77,
+      "title": "AI直出4K高级质感视频。",
+      "author": "想疯狂的Bin",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a1ab6bb00000000360012d3",
+      "publishedAt": "2026-05-30_20:06:51",
+      "likes": "2836",
+      "collections": "2892",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "AI视频不够真实？模糊？用这个流程做出4K高级质感。#原生4K直出[话题]# #可灵[话题]# #可灵AI[话题]# #AI还可以这样玩[话题]# #AI智能分镜[话题]# #ai教程[话题]# #ai工具[话题]# #ai广告[话题]#",
+      "deepSummary": "AI视频不够真实？模糊？用这个流程做出4K高级质感。#原生4K直出[话题]# #可灵[话题]# #可灵AI[话题]# #AI还可以这样玩[话题]# #AI智能分镜[话题]# #ai教程[话题]# #ai工具[话题]# #ai广告[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a05eef6000000003701ee63",
+      "number": 78,
+      "title": "华强买瓜天河福音AI演唱会现场｜喂饭式教程",
+      "author": "AIGC自修室",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a05eef6000000003701ee63",
+      "publishedAt": "2026-05-15_12:01:15",
+      "likes": "2964",
+      "collections": "3022",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "🍉这年头谁还不会“买两瓜”…… 🎤但把华强买瓜变成万人福音演唱会，你见过吗？ 🔥喂饭教程：从AI写歌到对口型MV，全流程拆解 🎉不用实拍，一张九宫格图片就能进入广州天河体育馆华强福音演唱会现场。 #AI六边形战士[话题]# #一句话P视频[话题]# #AI视频[话题]# #AI教程[话题]# #AI提示词[话题]# #小红书4k视频浪潮计划[话题]# #视觉震撼[话题]# @视频薯 #RED新生代创作大赛[话题]# #OCVideo[话题]# #好视频扶持计划[话题]",
+      "deepSummary": "🍉这年头谁还不会“买两瓜”…… 🎤但把华强买瓜变成万人福音演唱会，你见过吗？ 🔥喂饭教程：从AI写歌到对口型MV，全流程拆解 🎉不用实拍，一张九宫格图片就能进入广州天河体育馆华强福音演唱会现场。 #AI六边形战士[话题]# #一句话P视频[话题]# #AI视频[话题]# #AI教程[话题]# #AI提示词[话题]# #小红书4k视频浪潮计划[话题]# #视觉震撼[话题]# @视频薯 #RED新生代创作大赛[话题]# #OCVideo[话题]# #好视频扶持计划[话题]",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a1969f90000000036003607",
+      "number": 79,
+      "title": "活人感ai台词配音技巧",
+      "author": "芥末酱AI（华小二团队）",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a1969f90000000036003607",
+      "publishedAt": "2026-05-29_20:27:05",
+      "likes": "384",
+      "collections": "479",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "新手写 AI 配音提示词的通病，就是太笼统！教你用细节词，让 AI 精准 get 情绪，委屈、愤怒、害怕，让你的 AI 配音也能有故事感，建议收藏!#ai短片[话题]# #AI教程[话题]# #AI配音[话题]# #AI活人感[话题]##AI提示实技巧[话题]#",
+      "deepSummary": "新手写 AI 配音提示词的通病，就是太笼统！教你用细节词，让 AI 精准 get 情绪，委屈、愤怒、害怕，让你的 AI 配音也能有故事感，建议收藏!#ai短片[话题]# #AI教程[话题]# #AI配音[话题]# #AI活人感[话题]##AI提示实技巧[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a1a2f67000000003701cfa0",
+      "number": 80,
+      "title": "AI 工作流",
+      "author": "GitHunter",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a1a2f67000000003701cfa0",
+      "publishedAt": "2026-05-30_10:29:27",
+      "likes": "3933",
+      "collections": "4419",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "这个 AI 工作流用来重拍视频简直是宝藏 😲 工具 - beeble.ai Beeble 让你用基于节点的 AI 工作流，替换现有画面里的灯光、背景，甚至服装，只用几步就能把任何房间变成电影级场景。对想拍出影棚级画面但没有影棚预算的创作者、电影人、视频营销人来说，这简直是游戏规则改变者。#RED新生代创作大赛[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #AI人工智能[话题]# #AI视频[话题]#",
+      "deepSummary": "这个 AI 工作流用来重拍视频简直是宝藏 😲 工具 - beeble.ai Beeble 让你用基于节点的 AI 工作流，替换现有画面里的灯光、背景，甚至服装，只用几步就能把任何房间变成电影级场景。对想拍出影棚级画面但没有影棚预算的创作者、电影人、视频营销人来说，这简直是游戏规则改变者。#RED新生代创作大赛[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #AI人工智能[话题]# #AI视频[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a156a110000000035029eef",
+      "number": 81,
+      "title": "不同工资的编导如何使用AI？",
+      "author": "小新讲AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a156a110000000035029eef",
+      "publishedAt": "2026-05-26_19:38:25",
+      "likes": "5.6万",
+      "collections": "5.5万",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "#编导[话题]# #短视频运营[话题]# #ai[话题]#",
+      "deepSummary": "#编导[话题]# #短视频运营[话题]# #ai[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a06c4c7000000003601c46d",
+      "number": 82,
+      "title": "短剧一键Skill，告别抽卡！",
+      "author": "程序员三千",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a06c4c7000000003601c46d",
+      "publishedAt": "2026-05-15_22:02:33",
+      "likes": "1495",
+      "collections": "2166",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#ai[话题]# #短剧[话题]# #skill[话题]# #Flovaai[话题]# #Flova1[话题]# #gptimage2[话题]#",
+      "deepSummary": "#ai[话题]# #短剧[话题]# #skill[话题]# #Flovaai[话题]# #Flova1[话题]# #gptimage2[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a0064a40000000006035187",
+      "number": 83,
+      "title": "刚刚用一张照片做出了一条口播视频❗️",
+      "author": "雅竹Peony",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a0064a40000000006035187",
+      "publishedAt": "2026-05-10_20:57:40",
+      "likes": "2576",
+      "collections": "5201",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "#AI创意视频[话题]# #虚实结合[话题]# #Seedance2[话题]#.0 #AI视频[话题]# #自媒体[话题]# #AI教程[话题]# #AI[话题]# #AI工具[话题]# #ai关键词[话题]# #干货[话题]# #AIGC[话题]# #aigc[话题]# #AI生成[话题]# #自媒体运营[话题]# #教程[话题]# #人工智能[话题]# #AI教学[话题]# #ai教程[话题]# #ai视频[话题]# #口播[话题]# #口播视频[话题]##AI自媒体[话",
+      "deepSummary": "#AI创意视频[话题]# #虚实结合[话题]# #Seedance2[话题]#.0 #AI视频[话题]# #自媒体[话题]# #AI教程[话题]# #AI[话题]# #AI工具[话题]# #ai关键词[话题]# #干货[话题]# #AIGC[话题]# #aigc[话题]# #AI生成[话题]# #自媒体运营[话题]# #教程[话题]# #人工智能[话题]# #AI教学[话题]# #ai教程[话题]# #ai视频[话题]# #口播[话题]# #口播视频[话题]##AI自媒体[话",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69fde21f000000003502ce0a",
+      "number": 84,
+      "title": "新手零门槛｜5分钟自动化搭建AI漫剧工作流",
+      "author": "李一帆",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69fde21f000000003502ce0a",
+      "publishedAt": "2026-05-08_23:16:15",
+      "likes": "521",
+      "collections": "623",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "做 AI 漫剧再也不用一步步“手搓”、熬夜搭工作流了😭一帆老师教你告别繁琐流程，用 AI 智能体自动搭建专业工作流，从策划到生成画面，再到剪辑成片全搞定，新手也能 5 分钟直接出片！不用再对着晦涩流程啃半天，跟着这个流程走，小白也能做出流畅丝滑、一致性准确的 AI 漫剧！ #AI漫剧[话题]# #AI视频[话题]# #rhtv[话题]# #runninghub[话题]# #AI短剧[话题]# #AI动画[话题]# #AI教程[话题]# #AI工具[话题]# #AIGC[话题",
+      "deepSummary": "做 AI 漫剧再也不用一步步“手搓”、熬夜搭工作流了😭一帆老师教你告别繁琐流程，用 AI 智能体自动搭建专业工作流，从策划到生成画面，再到剪辑成片全搞定，新手也能 5 分钟直接出片！不用再对着晦涩流程啃半天，跟着这个流程走，小白也能做出流畅丝滑、一致性准确的 AI 漫剧！ #AI漫剧[话题]# #AI视频[话题]# #rhtv[话题]# #runninghub[话题]# #AI短剧[话题]# #AI动画[话题]# #AI教程[话题]# #AI工具[话题]# #AIGC[话题",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a05923e0000000037034a10",
+      "number": 85,
+      "title": "影视解说Skill来了！",
+      "author": "成也2077",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a05923e0000000037034a10",
+      "publishedAt": "2026-05-14_19:13:34",
+      "likes": "393",
+      "collections": "1127",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "宝藏Github开源项目！NarratorAISkill适配小龙虾I，影视短剧漫剧全覆盖，从拉片、文案到剪辑全程全自动，24 小时无人生产。#github[话题]# #小龙虾[话题]# #AI[话题]# #影视解说[话题]# #AI全自动剪辑[话题]# #干货分享[话题]# #自媒体工具[话题]# #创作提效神器[话题]#",
+      "deepSummary": "宝藏Github开源项目！NarratorAISkill适配小龙虾I，影视短剧漫剧全覆盖，从拉片、文案到剪辑全程全自动，24 小时无人生产。#github[话题]# #小龙虾[话题]# #AI[话题]# #影视解说[话题]# #AI全自动剪辑[话题]# #干货分享[话题]# #自媒体工具[话题]# #创作提效神器[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a033907000000003502d46a",
+      "number": 86,
+      "title": "AI 配音没感情？3 步调出演员级真实感！",
+      "author": "李一帆",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a033907000000003502d46a",
+      "publishedAt": "2026-05-13_00:28:23",
+      "likes": "2616",
+      "collections": "3973",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "做视频用 AI 配音，总被说像机器人读稿？一帆老师分享 3 个一直在用的 AI 配音技巧，新手也能生成出自然 “人味”告别机械感，让你的视频配音直接上一个档次！ #AI影视[话题]# #AI视频[话题]# #AIGC[话题]# #AI配音[话题]#",
+      "deepSummary": "做视频用 AI 配音，总被说像机器人读稿？一帆老师分享 3 个一直在用的 AI 配音技巧，新手也能生成出自然 “人味”告别机械感，让你的视频配音直接上一个档次！ #AI影视[话题]# #AI视频[话题]# #AIGC[话题]# #AI配音[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69fc2dd00000000023005c56",
+      "number": 87,
+      "title": "Agent已经开始正式接管视频创作了",
+      "author": "AI大法师",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69fc2dd00000000023005c56",
+      "publishedAt": "2026-05-07_16:14:40",
+      "likes": "441",
+      "collections": "691",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "漫剧、TVC、带货视频全拿下 #ai[话题]# #ai视频[话题]# #agent[话题]# #runninghub[话题]# #RHTV[话题]#",
+      "deepSummary": "漫剧、TVC、带货视频全拿下 #ai[话题]# #ai视频[话题]# #agent[话题]# #runninghub[话题]# #RHTV[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69f693110000000037037db1",
+      "number": 88,
+      "title": "又一个自动剪视频的黑科技",
+      "author": "广叔AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69f693110000000037037db1",
+      "publishedAt": "2026-05-03_10:13:05",
+      "likes": "400",
+      "collections": "1183",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "该开源工具可实现视频制作全流程自动化处理，支持用户输入主题后自动完成文案生成、配图查找、配音、BGM添加及成品合成功能。Windows用户可下载整合包直接双击打开，配置API后即可使用。 #AI视频[话题]# #短视频创作[话题]# #自动化工具[话题]# #开源神器[话题]# #打工人必备[话题]#",
+      "deepSummary": "该开源工具可实现视频制作全流程自动化处理，支持用户输入主题后自动完成文案生成、配图查找、配音、BGM添加及成品合成功能。Windows用户可下载整合包直接双击打开，配置API后即可使用。 #AI视频[话题]# #短视频创作[话题]# #自动化工具[话题]# #开源神器[话题]# #打工人必备[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69e603b4000000001a025a1c",
+      "number": 89,
+      "title": "写一句话就能造声音！VoxCPM2开源了",
+      "author": "星探AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69e603b4000000001a025a1c",
+      "publishedAt": "2026-04-21_21:51:00",
+      "likes": "406",
+      "collections": "1139",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "VoxCPM2 是 OpenBMB 开源的语音合成模型，2B参数，支持30种语言，本地部署。 #AI[话题]# #TTS[话题]# #语音合成[话题]# #github[话题]# #AI工具[话题]#",
+      "deepSummary": "VoxCPM2 是 OpenBMB 开源的语音合成模型，2B参数，支持30种语言，本地部署。 #AI[话题]# #TTS[话题]# #语音合成[话题]# #github[话题]# #AI工具[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69e6ddb8000000001f00413c",
+      "number": 90,
+      "title": "用自然语言剪视频，这个 Skill 太牛了",
+      "author": "C哥聊科技",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69e6ddb8000000001f00413c",
+      "publishedAt": "2026-04-21_12:15:20",
+      "likes": "1840",
+      "collections": "3469",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "Github 上出了一个开源项目叫 video-use，一个帮你自动剪辑视频的 Skill，只要用自然语言就能做视频剪辑。#ai[话题]# #剪辑[话题]# #ai剪辑[话题]# #skill[话题]#",
+      "deepSummary": "Github 上出了一个开源项目叫 video-use，一个帮你自动剪辑视频的 Skill，只要用自然语言就能做视频剪辑。#ai[话题]# #剪辑[话题]# #ai剪辑[话题]# #skill[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69e595c20000000023020a09",
+      "number": 91,
+      "title": "这个开源的视频自动剪辑项目太🐮了！",
+      "author": "AI_产品小马",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69e595c20000000023020a09",
+      "publishedAt": "2026-04-20_12:56:02",
+      "likes": "3666",
+      "collections": "7209",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "#AI工具测评[话题]# #ai[话题]# #全自动剪辑[话题]# #科技下一站[话题]# #干货分享[话题]#",
+      "deepSummary": "#AI工具测评[话题]# #ai[话题]# #全自动剪辑[话题]# #科技下一站[话题]# #干货分享[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69de08cd0000000022000efd",
+      "number": 92,
+      "title": "AI自动剪辑！",
+      "author": "AIGC成也",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69de08cd0000000022000efd",
+      "publishedAt": "2026-04-15_19:30:27",
+      "likes": "2825",
+      "collections": "7591",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "高光片段一键生成！ #AI[话题]# #干货分享[话题]# #剪辑工具[话题]# #GitHub[话题]# #AI工具[话题]#",
+      "deepSummary": "高光片段一键生成！ #AI[话题]# #干货分享[话题]# #剪辑工具[话题]# #GitHub[话题]# #AI工具[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69d11726000000001d01e2d2",
+      "number": 93,
+      "title": "翻译视频提示词",
+      "author": "煜林AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69d11726000000001d01e2d2",
+      "publishedAt": "2026-04-05_00:50:30",
+      "likes": "3776",
+      "collections": "8589",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#AI[话题]# #网站[话题]# #提示词[话题]#",
+      "deepSummary": "#AI[话题]# #网站[话题]# #提示词[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69c8b201000000001d01b7b7",
+      "number": 94,
+      "title": "开箱即用，这Skill帮你搞定视频创作全流程",
+      "author": "张小燕儿",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69c8b201000000001d01b7b7",
+      "publishedAt": "2026-03-29_16:00:49",
+      "likes": "443",
+      "collections": "1070",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "每天一个神奇网站（第42期）只需要一句话，它能自动写脚本，出素材，自动剪辑，视频一键全搞定！#ai视频[话题]# #skill[话题]# #视频创作[话题]# #ai视频生成[话题]# #视频剪辑[话题]#",
+      "deepSummary": "每天一个神奇网站（第42期）只需要一句话，它能自动写脚本，出素材，自动剪辑，视频一键全搞定！#ai视频[话题]# #skill[话题]# #视频创作[话题]# #ai视频生成[话题]# #视频剪辑[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a5c62f6000000001003da08",
+      "number": 95,
+      "title": "未命名收藏",
+      "author": "青青王-AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a5c62f6000000001003da08",
+      "publishedAt": "2026-07-19_15:39:02",
+      "likes": "3232",
+      "collections": "8789",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "AI“股神”来了，以后交易不再凭感觉！ 研究员、风控、投资经理，AI 一次配齐？#TradingAgents[话题]# #AI[话题]# #人工智能[话题]#",
+      "deepSummary": "AI“股神”来了，以后交易不再凭感觉！ 研究员、风控、投资经理，AI 一次配齐？#TradingAgents[话题]# #AI[话题]# #人工智能[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a354dba00000000170088c6",
+      "number": 96,
+      "title": "小公司最该先用AI",
+      "author": "大树AI创业圈",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a354dba00000000170088c6",
+      "publishedAt": "2026-06-20_00:10:02",
+      "likes": "190",
+      "collections": "333",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "不是降本增效，是重做组织 #AI[话题]# #AI创业[话题]# #大树学AI[话题]# #小公司运营[话题]# #大树AI创业圈[话题]# #AI工具[话题]# #员工与老板[话题]# #ai化商业模式[话题]#",
+      "deepSummary": "不是降本增效，是重做组织 #AI[话题]# #AI创业[话题]# #大树学AI[话题]# #小公司运营[话题]# #大树AI创业圈[话题]# #AI工具[话题]# #员工与老板[话题]# #ai化商业模式[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a523217000000002100b841",
+      "number": 97,
+      "title": "🔥【知识库】如何在1小时内完全吃透一个行业",
+      "author": "郑茜茜_xi",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a523217000000002100b841",
+      "publishedAt": "2026-07-11_22:07:51",
+      "likes": "2.5万",
+      "collections": "5万",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "#howto用AI手搓APP[话题]# #howto用AI抢救一切[话题]# #AI工具[话题]# #AI人工智能[话题]# #大模型[话题]#",
+      "deepSummary": "#howto用AI手搓APP[话题]# #howto用AI抢救一切[话题]# #AI工具[话题]# #AI人工智能[话题]# #大模型[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a4a2473000000002201b7a7",
+      "number": 98,
+      "title": "Claude额度实在用不完，我用这9招省token",
+      "author": "Cyrus宇",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a4a2473000000002201b7a7",
+      "publishedAt": "2026-07-05_19:31:31",
+      "likes": "1175",
+      "collections": "2153",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "claude省token这件事我可能有点发言权， 大家都在说额度不够用，我是实在用不完 我是Max5x 我一天挂五六个会话让它干活， 这9个习惯养成后就没撞过限额， 前5招入门的做起来很方便 后面几个也很重要 另外这个不止针对Claude， Codex怎么省token也是通用的 评论区聊聊有没有别的好用的省token的方法 谢谢大家观看，我是Cyrus，我们下期见[回招呼] #claude[话题]# #codex[话题]# #claudecode[话题]# #AI工具[话题]",
+      "deepSummary": "claude省token这件事我可能有点发言权， 大家都在说额度不够用，我是实在用不完 我是Max5x 我一天挂五六个会话让它干活， 这9个习惯养成后就没撞过限额， 前5招入门的做起来很方便 后面几个也很重要 另外这个不止针对Claude， Codex怎么省token也是通用的 评论区聊聊有没有别的好用的省token的方法 谢谢大家观看，我是Cyrus，我们下期见[回招呼] #claude[话题]# #codex[话题]# #claudecode[话题]# #AI工具[话题]",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a368882000000001700bf8c",
+      "number": 99,
+      "title": "两个好用的提示词，让AI输出质量翻倍",
+      "author": "QY的AI思考笔记",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a368882000000001700bf8c",
+      "publishedAt": "2026-06-21_13:30:17",
+      "likes": "8499",
+      "collections": "1.7万",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#howto用好AI[话题]# #提示词工程[话题]# #AI教程[话题]#",
+      "deepSummary": "#howto用好AI[话题]# #提示词工程[话题]# #AI教程[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a262697000000000800255e",
+      "number": 100,
+      "title": "未命名收藏",
+      "author": "鹅厂奇妙姐",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a262697000000000800255e",
+      "publishedAt": "2026-06-08_12:19:03",
+      "likes": "6848",
+      "collections": "1.7万",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "YouTube推荐的5个AI博主#Ai#油管推荐博主[话题]# #个人成长[话题]# #知识付费[话题]# #小鹅通[话题]# #好视频扶持计划[话题]#",
+      "deepSummary": "YouTube推荐的5个AI博主#Ai#油管推荐博主[话题]# #个人成长[话题]# #知识付费[话题]# #小鹅通[话题]# #好视频扶持计划[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a3a7a8200000000110193b6",
+      "number": 101,
+      "title": "微软 Copilot 遭“破解”！GPT-5 竟能白嫖",
+      "author": "零度解说",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a3a7a8200000000110193b6",
+      "publishedAt": "2026-06-23_22:22:26",
+      "likes": "302",
+      "collections": "608",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "微软 Copilot 遭“破解”！GPT-5 竟能白嫖",
+      "deepSummary": "微软 Copilot 遭“破解”！GPT-5 竟能白嫖",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69f32b15000000002202747d",
+      "number": 102,
+      "title": "用一次就烧我5美刀！AI做爆款视频工具",
+      "author": "金角大王Alex",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69f32b15000000002202747d",
+      "publishedAt": "2026-05-02_18:00:33",
+      "likes": "309",
+      "collections": "272",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "#人工智能[话题]# #ai工具[话题]# #打工人[话题]# #自媒体[话题]#",
+      "deepSummary": "#人工智能[话题]# #ai工具[话题]# #打工人[话题]# #自媒体[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a2ea6fa0000000021020f92",
+      "number": 103,
+      "title": "5 Tips",
+      "author": "小小猫的小铺_Little_Cat_Shop",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a2ea6fa0000000021020f92",
+      "publishedAt": "2026-06-14_23:04:58",
+      "likes": "206",
+      "collections": "402",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#Claude[话题]# #ai[话题]# #人工智能[话题]# #vibecoding[话题]# #智能体[话题]# #agent[话题]#",
+      "deepSummary": "#Claude[话题]# #ai[话题]# #人工智能[话题]# #vibecoding[话题]# #智能体[话题]# #agent[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a06e86e0000000007021df5",
+      "number": 104,
+      "title": "是的！我做了个 AI 批量搜索插件—开源免费",
+      "author": "名字就叫30",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a06e86e0000000007021df5",
+      "publishedAt": "2026-05-15_20:34:04",
+      "likes": "2029",
+      "collections": "2824",
+      "mediaType": "视频",
+      "category": "信息采集与搜索",
+      "themes": [],
+      "summary": "希望这个手搓的小工具可以帮助到大家提升效率！#电脑知识[话题]# #浏览器插件[话题]# #vibecoding[话题]# #ai实用小技巧[话题]# #批量搜索AI[话题]# #个人开发者[话题]#",
+      "deepSummary": "希望这个手搓的小工具可以帮助到大家提升效率！#电脑知识[话题]# #浏览器插件[话题]# #vibecoding[话题]# #ai实用小技巧[话题]# #批量搜索AI[话题]# #个人开发者[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69f81ca100000000380213c5",
+      "number": 105,
+      "title": "就离谱，Claude Design还能这样用？",
+      "author": "一福UX",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69f81ca100000000380213c5",
+      "publishedAt": "2026-05-04_14:12:17",
+      "likes": "3088",
+      "collections": "4813",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "#uiux[话题]# #claude[话题]# #设计师[话题]# #交互设计[话题]# #ai提示词[话题]# #ai工具[话题]# #前端[话题]# #科技公司[话题]# #ai提效[话题]# #token[话题]#",
+      "deepSummary": "#uiux[话题]# #claude[话题]# #设计师[话题]# #交互设计[话题]# #ai提示词[话题]# #ai工具[话题]# #前端[话题]# #科技公司[话题]# #ai提效[话题]# #token[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69ff2cb6000000003601fe11",
+      "number": 106,
+      "title": "3个开源项目帮我搭了一个AI信息源系统",
+      "author": "几口酱聊AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69ff2cb6000000003601fe11",
+      "publishedAt": "2026-05-09_22:46:46",
+      "likes": "568",
+      "collections": "723",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "3个开源项目帮我搭了一个AI信息源系统",
+      "deepSummary": "3个开源项目帮我搭了一个AI信息源系统",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69eee7950000000036031070",
+      "number": 107,
+      "title": "挖到宝藏✨大家都在用的工具库太顶了",
+      "author": "优设AIGC",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69eee7950000000036031070",
+      "publishedAt": "2026-04-27_14:35:33",
+      "likes": "331",
+      "collections": "838",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "朋友们，如果你正在寻找 AI 工具，这个完全免费的宝藏级工具库，请你一定一定收藏好。 它叫 AI星踪岛，一个几乎把整个互联网上所有大模型、AI 神器和效率工具全部打包整合的中文导航站。毫不夸张地说，它大概是你目前能在全网找到的收录最全、更新最快的 AI 工具导航，没有之一。你花几个小时到处翻找的时间，它一秒帮你省下；你面对海量工具无从下手的那种焦虑，它一站式替你终结。 这个网站把成百上千款 AI 工具按功能拆成了 15 个清晰的大类，从 AI 绘画到视频生成，从智能对话到效率",
+      "deepSummary": "朋友们，如果你正在寻找 AI 工具，这个完全免费的宝藏级工具库，请你一定一定收藏好。 它叫 AI星踪岛，一个几乎把整个互联网上所有大模型、AI 神器和效率工具全部打包整合的中文导航站。毫不夸张地说，它大概是你目前能在全网找到的收录最全、更新最快的 AI 工具导航，没有之一。你花几个小时到处翻找的时间，它一秒帮你省下；你面对海量工具无从下手的那种焦虑，它一站式替你终结。 这个网站把成百上千款 AI 工具按功能拆成了 15 个清晰的大类，从 AI 绘画到视频生成，从智能对话到效率",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69ef32aa0000000020038f8a",
+      "number": 108,
+      "title": "0-1学会智能体Agent",
+      "author": "AIGC成也",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69ef32aa0000000020038f8a",
+      "publishedAt": "2026-04-27_19:55:54",
+      "likes": "217",
+      "collections": "673",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "#AI[话题]# #github[话题]# #智能体[话题]# #干货分享[话题]# #Agent[话题]#",
+      "deepSummary": "#AI[话题]# #github[话题]# #智能体[话题]# #干货分享[话题]# #Agent[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69eb71750000000035033611",
+      "number": 109,
+      "title": "你敢信吗？单卡2小时就能从0到1搭建大模型",
+      "author": "李叔聊AI",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69eb71750000000035033611",
+      "publishedAt": "2026-04-24_23:34:45",
+      "likes": "326",
+      "collections": "900",
+      "mediaType": "视频",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "minimind两小时训练出超轻量级大模型 普通电脑在家也能训！可能是全网最有价值的开源模型项目！ #minimind[话题]# #人工智能[话题]##大语言模型[话题]# #ai工具[话题]##ai[话题]# #大模型[话题]# #小红书科技AMA[话题]# #个人开发者[话题]# #李叔聊AI[话题]#",
+      "deepSummary": "minimind两小时训练出超轻量级大模型 普通电脑在家也能训！可能是全网最有价值的开源模型项目！ #minimind[话题]# #人工智能[话题]##大语言模型[话题]# #ai工具[话题]##ai[话题]# #大模型[话题]# #小红书科技AMA[话题]# #个人开发者[话题]# #李叔聊AI[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69e89e2c000000002102d175",
+      "number": 110,
+      "title": "Github宝藏开源项目",
+      "author": "成也2077",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69e89e2c000000002102d175",
+      "publishedAt": "2026-04-22_20:08:44",
+      "likes": "1780",
+      "collections": "5315",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "AI Agent保姆级教学课程全部开源。 #AI[话题]# #智能体[话题]# #AIAgent[话题]# #学习资料分享[话题]# #干货分享[话题]#",
+      "deepSummary": "AI Agent保姆级教学课程全部开源。 #AI[话题]# #智能体[话题]# #AIAgent[话题]# #学习资料分享[话题]# #干货分享[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69dafc08000000002200246c",
+      "number": 111,
+      "title": "2026最全AI工具终极指南！别再交智商税了",
+      "author": "小邓Talk",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69dafc08000000002200246c",
+      "publishedAt": "2026-04-12_14:01:31",
+      "likes": "2187",
+      "collections": "4405",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "2025-2026年，AI 圈神仙打架！我和圈内大佬花了10万多块钱，深度测试了全网 200 多款 AI 工具，终于爆肝整理出这期【2026年 AI 工具终极指南】！🔥 不要再盲目跟风买会员了！这期视频我会按“真实使用场景”，为你盘点文本大模型、AI生图、AI视频、AI编程、AI Agent 等10大核心领域的真正王者，以及超高性价比的“免费白嫖平替”！看完至少帮你少走一年弯路，避免被 AI 时代淘汰！全程无广，放心食用！👇#ai[话题]# #ai工具[话题]# #ai神",
+      "deepSummary": "2025-2026年，AI 圈神仙打架！我和圈内大佬花了10万多块钱，深度测试了全网 200 多款 AI 工具，终于爆肝整理出这期【2026年 AI 工具终极指南】！🔥 不要再盲目跟风买会员了！这期视频我会按“真实使用场景”，为你盘点文本大模型、AI生图、AI视频、AI编程、AI Agent 等10大核心领域的真正王者，以及超高性价比的“免费白嫖平替”！看完至少帮你少走一年弯路，避免被 AI 时代淘汰！全程无广，放心食用！👇#ai[话题]# #ai工具[话题]# #ai神",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69c7a73a000000002103930b",
+      "number": 112,
+      "title": "假如从26年4月开始转型大模型！",
+      "author": "沐子学姐",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69c7a73a000000002103930b",
+      "publishedAt": "2026-03-28_21:02:34",
+      "likes": "76",
+      "collections": "180",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "#大模型[话题]# #互联网[话题]# #程序员[话题]# #人工智能[话题]# #大模型应用[话题]# #计算机技术[话题]# #Agent[话题]# #AI[话题]# #科技[话题]# #智能体[话题]#",
+      "deepSummary": "#大模型[话题]# #互联网[话题]# #程序员[话题]# #人工智能[话题]# #大模型应用[话题]# #计算机技术[话题]# #Agent[话题]# #AI[话题]# #科技[话题]# #智能体[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a1d56c5000000003502cc93",
+      "number": 113,
+      "title": "0 成本！关于 Vibe Coding 部署的一切！",
+      "author": "浩辰_Alex_AI_版",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a1d56c5000000003502cc93",
+      "publishedAt": "2026-06-01_19:54:13",
+      "likes": "2699",
+      "collections": "5516",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "Vibecoding 部署上线所需要的所有！ 1️⃣快速部署：Vercel 2️⃣稳定部署：Cloudflare 3️⃣后端数据：Supabase 4️⃣国内访问：Vercel + Cloudfare 不会的，报错的都直接问AI就好了！ #vibecoding[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #ai教程[话题]# #ai学习[话题]# #个人开发者[话题]# #Codex[话题]# @科技薯",
+      "deepSummary": "Vibecoding 部署上线所需要的所有！ 1️⃣快速部署：Vercel 2️⃣稳定部署：Cloudflare 3️⃣后端数据：Supabase 4️⃣国内访问：Vercel + Cloudfare 不会的，报错的都直接问AI就好了！ #vibecoding[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #ai教程[话题]# #ai学习[话题]# #个人开发者[话题]# #Codex[话题]# @科技薯",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69e86028000000001a02043f",
+      "number": 114,
+      "title": "未命名收藏",
+      "author": "AK007设计师",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69e86028000000001a02043f",
+      "publishedAt": "2026-04-22_15:44:08",
+      "likes": "1888",
+      "collections": "2561",
+      "mediaType": "视频",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "不会写代码的设计师不是好前端，一个AI产品把这三个岗位给混合做一起了~！#ai产品[话题]##aigc[话题]##claude[话题]# design#ai设计[话题]#",
+      "deepSummary": "不会写代码的设计师不是好前端，一个AI产品把这三个岗位给混合做一起了~！#ai产品[话题]##aigc[话题]##claude[话题]# design#ai设计[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69e73c110000000023026d3e",
+      "number": 115,
+      "title": "普通人也能做出设计师金奖级别的网站！",
+      "author": "艾克ai分享",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69e73c110000000023026d3e",
+      "publishedAt": "2026-04-21_18:57:53",
+      "likes": "2659",
+      "collections": "5131",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "#人工智能[话题]# #科技[话题]# #AIChannel[话题]# #网站设计[话题]# #科技改变生活[话题]# #vibecoding[话题]# #大模型[话题]# #vibecoding大赏[话题]# #干货分享[话题]#",
+      "deepSummary": "#人工智能[话题]# #科技[话题]# #AIChannel[话题]# #网站设计[话题]# #科技改变生活[话题]# #vibecoding[话题]# #大模型[话题]# #vibecoding大赏[话题]# #干货分享[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69e0b576000000002003a92e",
+      "number": 116,
+      "title": "小红书商家获客，终于有合规新方式了！",
+      "author": "朱想想",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69e0b576000000002003a92e",
+      "publishedAt": "2026-04-17_16:40:25",
+      "likes": "5554",
+      "collections": "5221",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "商家做宣传需要开通企业专业号来稳定获客， 过去如果有多个账户，就要全部认证专业号 但现在小红书新推出了KOS号，可以用同一个专业号号，绑定多个KOS账号 而KOS只需要个人认证，就可以稳定的做业务推广了 想要了解KOS营销，可以点击下方组件或私信@好生意薯 了解详情 #kos[话题]# #小红书获客[话题]# #蓝v[话题]# #小红书营销[话题]# #kos账号[话题]# #账号矩阵[话题]# #小红书企业号运营[话题]# #内容营销[话题]#",
+      "deepSummary": "商家做宣传需要开通企业专业号来稳定获客， 过去如果有多个账户，就要全部认证专业号 但现在小红书新推出了KOS号，可以用同一个专业号号，绑定多个KOS账号 而KOS只需要个人认证，就可以稳定的做业务推广了 想要了解KOS营销，可以点击下方组件或私信@好生意薯 了解详情 #kos[话题]# #小红书获客[话题]# #蓝v[话题]# #小红书营销[话题]# #kos账号[话题]# #账号矩阵[话题]# #小红书企业号运营[话题]# #内容营销[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a05d372000000000803127c",
+      "number": 117,
+      "title": "起号最快的方法，就是用搜索流量埋长尾词",
+      "author": "春春不上班",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/6a05d372000000000803127c",
+      "publishedAt": "2026-05-14_23:51:47",
+      "likes": "2.7万",
+      "collections": "3.9万",
+      "mediaType": "视频",
+      "category": "信息采集与搜索",
+      "themes": [],
+      "summary": "#小红书运营干货[话题]# #起号成功[话题]##搜索流量密码[话题]# #自媒体创业[话题]# #长尾词挖掘[话题]#",
+      "deepSummary": "#小红书运营干货[话题]# #起号成功[话题]##搜索流量密码[话题]# #自媒体创业[话题]# #长尾词挖掘[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69f08cd6000000003502664e",
+      "number": 118,
+      "title": "面试三万的运营，值不值？",
+      "author": "锤导",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69f08cd6000000003502664e",
+      "publishedAt": "2026-04-28_20:32:54",
+      "likes": "1.1万",
+      "collections": "1.9万",
+      "mediaType": "视频",
+      "category": "内容增长与商业",
+      "themes": [],
+      "summary": "昨天面试三万的运营，大家看值不值？#短视频运营[话题]# #这个面试有点硬[话题]# #创作者运营[话题]# #面试日常[话题]##锤导IP打造[话题]#",
+      "deepSummary": "昨天面试三万的运营，大家看值不值？#短视频运营[话题]# #这个面试有点硬[话题]# #创作者运营[话题]# #面试日常[话题]##锤导IP打造[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69e8cf3a000000001d01dd76",
+      "number": 119,
+      "title": "满分答卷：卡帕西 LLM Wiki 的最佳实现",
+      "author": "杰森的效率工坊",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69e8cf3a000000001d01dd76",
+      "publishedAt": "2026-04-22_23:38:02",
+      "likes": "1098",
+      "collections": "2412",
+      "mediaType": "图文",
+      "category": "Skills与工作流",
+      "themes": [],
+      "summary": "卡帕西的 LLM Wiki 这坑挖的真够深的，自己不给出实现，全靠社区用户自己手搓。看起来很美好，做起来一团糟。（我之前视频中做的skill也很初级） 但是YC总裁Garry Tan (陈嘉里)，给出了满分答卷：GBrain。 GitHub 仓库garrytan/gbrain，上线一周多目前10.1k Stars。 来看看这个专为OpenClaw和Hermes Agent打造的重度工作流如何使用。 #Karpathy[话题]# #LLMWiki[话题]# #gbrain[话题",
+      "deepSummary": "卡帕西的 LLM Wiki 这坑挖的真够深的，自己不给出实现，全靠社区用户自己手搓。看起来很美好，做起来一团糟。（我之前视频中做的skill也很初级） 但是YC总裁Garry Tan (陈嘉里)，给出了满分答卷：GBrain。 GitHub 仓库garrytan/gbrain，上线一周多目前10.1k Stars。 来看看这个专为OpenClaw和Hermes Agent打造的重度工作流如何使用。 #Karpathy[话题]# #LLMWiki[话题]# #gbrain[话题",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69d3ae4c000000001b003429",
+      "number": 120,
+      "title": "玩了几个月 OpenClaw，我总结出这四条血泪",
+      "author": "顾见",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69d3ae4c000000001b003429",
+      "publishedAt": "2026-04-06_22:59:56",
+      "likes": "142",
+      "collections": "259",
+      "mediaType": "图文",
+      "category": "开发部署与Vibe Coding",
+      "themes": [],
+      "summary": "#OpenClaw[话题]#",
+      "deepSummary": "#OpenClaw[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69df912d0000000023005dfb",
+      "number": 121,
+      "title": "你怎么知道？147个AI员工我一键部署了！",
+      "author": "卡尔的AI沃茨",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69df912d0000000023005dfb",
+      "publishedAt": "2026-04-15_23:22:53",
+      "likes": "2473",
+      "collections": "6496",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "@科技薯 @视频薯 #干货分享[话题]# #AI[话题]# #github开源项目推荐[话题]# #效率神器[话题]# #AIchannel[话题]# #小红书科技AMA[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #程序员[话题]# #大模型[话题]#",
+      "deepSummary": "@科技薯 @视频薯 #干货分享[话题]# #AI[话题]# #github开源项目推荐[话题]# #效率神器[话题]# #AIchannel[话题]# #小红书科技AMA[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #程序员[话题]# #大模型[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69c35e0b000000001d01cce7",
+      "number": 122,
+      "title": "养个电商🦞团队，让它们自主开店、谈客户",
+      "author": "赛文乔伊",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69c35e0b000000001d01cce7",
+      "publishedAt": "2026-03-25_15:01:15",
+      "likes": "3330",
+      "collections": "6392",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "以前你开公司，先找人；以后你开公司，可能先拉 Agent。 #小红书科技AMA[话题]# #科技热点[话题]# #电商运营[话题]# #人工智能[话题]# #跨境电商[话题]# #AI技术[话题]# #Agent[话题]# #前沿技术[话题]# #AI工具[话题]# #跨境创业[话题]#",
+      "deepSummary": "以前你开公司，先找人；以后你开公司，可能先拉 Agent。 #小红书科技AMA[话题]# #科技热点[话题]# #电商运营[话题]# #人工智能[话题]# #跨境电商[话题]# #AI技术[话题]# #Agent[话题]# #前沿技术[话题]# #AI工具[话题]# #跨境创业[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69c34f53000000002200dfe0",
+      "number": 123,
+      "title": "这是全网*全的免费api开源项目仓库",
+      "author": "旭哥AI笔记",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69c34f53000000002200dfe0",
+      "publishedAt": "2026-03-25_13:58:27",
+      "likes": "583",
+      "collections": "1879",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "这里收录了几千款免费API，总共五十四个大类，无论你在学AI编程还是养openclaw小龙虾，不用再花钱或者自己开发，省时又省力#ai工具测评[话题]# #软件设计与开发[话题]# #AI人工智能[话题]# #小程序开发[话题]# #openclaw[话题]# #api[话题]# #ai编程[话题]#",
+      "deepSummary": "这里收录了几千款免费API，总共五十四个大类，无论你在学AI编程还是养openclaw小龙虾，不用再花钱或者自己开发，省时又省力#ai工具测评[话题]# #软件设计与开发[话题]# #AI人工智能[话题]# #小程序开发[话题]# #openclaw[话题]# #api[话题]# #ai编程[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69c7ac430000000022027cb0",
+      "number": 124,
+      "title": "别再说不会用！OpenClaw一键管理神器来了！",
+      "author": "吞吞AI成长之路",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69c7ac430000000022027cb0",
+      "publishedAt": "2026-03-28_21:24:03",
+      "likes": "313",
+      "collections": "772",
+      "mediaType": "视频",
+      "category": "知识管理与记忆",
+      "themes": [],
+      "summary": "小白都能一键管理OpenClaw的工具，自带一键安装，模型管理，模型对话，问题修复，状态看板，技能管理，记忆管理，对话渠道配置。 #AI工具测评[话题]# #AI工具[话题]# #OpenClaw[话题]# #openclaw[话题]# #AI助理[话题]# #AI助手[话题]# #openclaw教程[话题]# #OpenClaw教程[话题]#",
+      "deepSummary": "小白都能一键管理OpenClaw的工具，自带一键安装，模型管理，模型对话，问题修复，状态看板，技能管理，记忆管理，对话渠道配置。 #AI工具测评[话题]# #AI工具[话题]# #OpenClaw[话题]# #openclaw[话题]# #AI助理[话题]# #AI助手[话题]# #openclaw教程[话题]# #OpenClaw教程[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69b8d4e2000000001f000870",
+      "number": 125,
+      "title": "OpenClaw工具解决数据抓取网页访问绕过痛点",
+      "author": "程序员少北晨",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69b8d4e2000000001f000870",
+      "publishedAt": "2026-03-17_15:13:22",
+      "likes": "851",
+      "collections": "2547",
+      "mediaType": "视频",
+      "category": "信息采集与搜索",
+      "themes": [],
+      "summary": "#开源项目[话题]# #openclaw[话题]# #爬虫[话题]#",
+      "deepSummary": "#开源项目[话题]# #openclaw[话题]# #爬虫[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69c3acb9000000001a028e64",
+      "number": 126,
+      "title": "记住这3个网站",
+      "author": "成也2077",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69c3acb9000000001a028e64",
+      "publishedAt": "2026-03-25_20:36:57",
+      "likes": "1550",
+      "collections": "4575",
+      "mediaType": "视频",
+      "category": "Agent与自动化",
+      "themes": [],
+      "summary": "让你无痛学习OpenClaw！ #AI[话题]# #Agent[话题]# #智能体[话题]# #OpenClaw[话题]# #干货分享[话题]#",
+      "deepSummary": "让你无痛学习OpenClaw！ #AI[话题]# #Agent[话题]# #智能体[话题]# #OpenClaw[话题]# #干货分享[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69b80bba0000000021010292",
+      "number": 127,
+      "title": "Mission Control，让 OpenClaw 好用100倍。",
+      "author": "AI_虾哥",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69b80bba0000000021010292",
+      "publishedAt": "2026-03-17_00:55:06",
+      "likes": "11",
+      "collections": "18",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "OpenClaw 任务控制教程丨让你的AI助手井井有条 本期视频详细讲解 OpenClaw 的任务控制功能，帮助你更好地管理和调度AI任务。 📋 时间轨： 00:00 - 开场介绍 01:30 - 创建第一个任务 03:00 - 任务分配与优先级 05:00 - 进度实时跟踪 07:00 - 任务完成与验收 09:00 - 高级功能：子任务与依赖 12:00 - 总结与进阶技巧 #OpenClaw #AI #任务控制 #教程 #效率工具",
+      "deepSummary": "OpenClaw 任务控制教程丨让你的AI助手井井有条 本期视频详细讲解 OpenClaw 的任务控制功能，帮助你更好地管理和调度AI任务。 📋 时间轨： 00:00 - 开场介绍 01:30 - 创建第一个任务 03:00 - 任务分配与优先级 05:00 - 进度实时跟踪 07:00 - 任务完成与验收 09:00 - 高级功能：子任务与依赖 12:00 - 总结与进阶技巧 #OpenClaw #AI #任务控制 #教程 #效率工具",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "69ba1ae9000000001b022fe4",
+      "number": 128,
+      "title": "🔥一人+半天！用AI做了个百万TVC",
+      "author": "小杰AIGC",
+      "sourceUrl": "https://www.xiaohongshu.com/explore/69ba1ae9000000001b022fe4",
+      "publishedAt": "2026-03-18_14:24:25",
+      "likes": "1365",
+      "collections": "1636",
+      "mediaType": "视频",
+      "category": "AI设计与多媒体",
+      "themes": [],
+      "summary": "半天把运动相机拍出了百万TVC？在LibTV创作平台，它的能力将彻底帮你打通商业视频全链路！我们将带你从图片生成、视频生成到分镜拆解，从零落地一支运动相机商业广告。更有“邪修”技巧带你一键还原大片脚本，告别构思烦恼！ #AIGC[话题]# #AI视频[话题]# #ai[话题]# #TVC[话题]# #人工智能[话题]# #AI工具[话题]# #AI动画[话题]# #AI教程[话题]# #产品设计[话题]# #广告[话题]#",
+      "deepSummary": "半天把运动相机拍出了百万TVC？在LibTV创作平台，它的能力将彻底帮你打通商业视频全链路！我们将带你从图片生成、视频生成到分镜拆解，从零落地一支运动相机商业广告。更有“邪修”技巧带你一键还原大片脚本，告别构思烦恼！ #AIGC[话题]# #AI视频[话题]# #ai[话题]# #TVC[话题]# #人工智能[话题]# #AI工具[话题]# #AI动画[话题]# #AI教程[话题]# #产品设计[话题]# #广告[话题]#",
+      "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    }
+  ],
+  "resources": [
+    {
+      "id": "resource-1",
+      "name": "AnySearch Skill",
+      "aliases": [
+        "AnySearch"
+      ],
+      "type": "Agent Skill",
+      "description": "使用前确认远程数据来源，以及凭据会被发送到哪里。",
+      "metric": "4.8k",
+      "metricNumeric": 4800,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/anysearch-ai/anysearch-skill"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/anysearch-ai/anysearch-skill/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-2",
+      "name": "Graphify",
+      "aliases": [],
+      "type": "跨 Agent Skill / CLI",
+      "description": "建议先在仓库副本中建立图谱，避免直接影响工作目录。",
+      "metric": "97.0k",
+      "metricNumeric": 97000,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/Graphify-Labs/graphify"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/Graphify-Labs/graphify/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-3",
+      "name": "last30days Skill",
+      "aliases": [
+        "last30days"
+      ],
+      "type": "近期研究 Skill",
+      "description": "部分来源需要 Cookie 或第三方平台访问权限。",
+      "metric": "54.0k",
+      "metricNumeric": 54000,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/mvanhorn/last30days-skill"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/mvanhorn/last30days-skill/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-4",
+      "name": "Agent-Reach",
+      "aliases": [],
+      "type": "Agent 能力路由层",
+      "description": "建议启用只读和安全模式，再逐步开放能力。",
+      "metric": "61.2k",
+      "metricNumeric": 61200,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/Panniantong/Agent-Reach"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/Panniantong/Agent-Reach/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-5",
+      "name": "mattpocock/skills",
+      "aliases": [],
+      "type": "Skill 集合",
+      "description": "建议逐项选择和测试，不要直接安装整个合集。",
+      "metric": "191.2k",
+      "metricNumeric": 191200,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/mattpocock/skills"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/mattpocock/skills/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-6",
+      "name": "andrej-karpathy-skills",
+      "aliases": [],
+      "type": "编码指令 / Skill 包",
+      "description": "使用前检查其中的编码规则是否与现有项目约定冲突。",
+      "metric": "196.8k",
+      "metricNumeric": 196800,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/multica-ai/andrej-karpathy-skills"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/multica-ai/andrej-karpathy-skills/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-7",
+      "name": "PPT Master",
+      "aliases": [
+        "ppt-master"
+      ],
+      "type": "演示文稿 Skill",
+      "description": "需要确认素材授权和导出后的可编辑性。",
+      "metric": "41.4k",
+      "metricNumeric": 41400,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/hugohe3/ppt-master"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/hugohe3/ppt-master/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-8",
+      "name": "dot-skill / colleague-skill",
+      "aliases": [
+        "dot-skill",
+        "colleague-skill"
+      ],
+      "type": "知识/风格提取 Skill",
+      "description": "只处理本人资料或已经取得明确授权的内容。",
+      "metric": "20.5k",
+      "metricNumeric": 20500,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/titanwings/colleague-skill"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/titanwings/colleague-skill/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-9",
+      "name": "PUA / PIP",
+      "aliases": [
+        "PUA",
+        "PIP"
+      ],
+      "type": "持续调试指令包",
+      "description": "可借鉴持续验证循环，不建议照搬其中的对抗性措辞。",
+      "metric": "19.1k",
+      "metricNumeric": 19100,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/tanweai/pua"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/tanweai/pua/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-10",
+      "name": "web-access",
+      "aliases": [],
+      "type": "联网访问 Skill",
+      "description": "建议在隔离浏览器中使用，并限制下载和网页访问权限。",
+      "metric": "8.5k",
+      "metricNumeric": 8500,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/eze-is/web-access"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/eze-is/web-access/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-11",
+      "name": "Microsoft MarkItDown",
+      "aliases": [
+        "MarkItDown"
+      ],
+      "type": "文档转换 / MCP",
+      "description": "适合优先测试 Markdown 转换的格式保真度。",
+      "metric": "169.4k",
+      "metricNumeric": 169400,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/microsoft/markitdown"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/microsoft/markitdown/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-12",
+      "name": "Crawl4AI",
+      "aliases": [],
+      "type": "网页采集框架",
+      "description": "重点测试动态页面抓取与 Markdown 输出质量。",
+      "metric": "75.3k",
+      "metricNumeric": 75300,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/unclecode/crawl4ai"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/unclecode/crawl4ai/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-13",
+      "name": "Wigolo",
+      "aliases": [],
+      "type": "本地搜索 / 抓取 MCP",
+      "description": "使用前确认索引来源、覆盖范围和更新时间。",
+      "metric": "3.7k",
+      "metricNumeric": 3700,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/KnockOutEZ/wigolo"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/KnockOutEZ/wigolo/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-14",
+      "name": "Headroom",
+      "aliases": [],
+      "type": "上下文压缩库 / MCP",
+      "description": "评估压缩率时，应同时检查答案正确率是否下降。",
+      "metric": "62.8k",
+      "metricNumeric": 62800,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/headroomlabs-ai/headroom"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/headroomlabs-ai/headroom/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-15",
+      "name": "CocoIndex",
+      "aliases": [],
+      "type": "增量数据与代码索引",
+      "description": "重点比较 AST 索引质量、增量更新时间和运行成本。",
+      "metric": "11.1k",
+      "metricNumeric": 11100,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/cocoindex-io/cocoindex"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/cocoindex-io/cocoindex/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-16",
+      "name": "Cognee",
+      "aliases": [],
+      "type": "Agent 记忆 / 知识图谱",
+      "description": "采用前确认数据能否完整导出和彻底删除。",
+      "metric": "29.5k",
+      "metricNumeric": 29500,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/topoteretes/cognee"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/topoteretes/cognee/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-17",
+      "name": "Meetily",
+      "aliases": [],
+      "type": "本地会议转写",
+      "description": "需要实测中文转写质量，并确认所有参会者同意录音。",
+      "metric": "27.0k",
+      "metricNumeric": 27000,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/Zackriya-Solutions/meetily"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/Zackriya-Solutions/meetily/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-18",
+      "name": "MediaCrawler",
+      "aliases": [],
+      "type": "多平台公开内容采集",
+      "description": "只处理自有、公开或已授权数据；遇到平台限制立即停止。",
+      "metric": "58.1k",
+      "metricNumeric": 58100,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/NanmiCoder/MediaCrawler"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/NanmiCoder/MediaCrawler/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-19",
+      "name": "ScrapeGraphAI",
+      "aliases": [
+        "Scrapegraph-ai"
+      ],
+      "type": "LLM 网页抽取",
+      "description": "开始前应明确允许采集的公开字段和禁止采集的信息。",
+      "metric": "28.7k",
+      "metricNumeric": 28700,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/ScrapeGraphAI/Scrapegraph-ai"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/ScrapeGraphAI/Scrapegraph-ai/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-20",
+      "name": "FinanceDatabase",
+      "aliases": [],
+      "type": "金融标的元数据库",
+      "description": "它提供标的元数据，不是实时行情来源。",
+      "metric": "8.3k",
+      "metricNumeric": 8300,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/JerBouma/FinanceDatabase"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/JerBouma/FinanceDatabase/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-21",
+      "name": "Mano-P",
+      "aliases": [],
+      "type": "本地 GUI-VLA",
+      "description": "需要核对硬件要求，并设置防止误操作的保护措施。",
+      "metric": "2.5k",
+      "metricNumeric": 2500,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/Mininglamp-AI/Mano-P"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/Mininglamp-AI/Mano-P/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-22",
+      "name": "Grok Build",
+      "aliases": [],
+      "type": "开源 coding agent",
+      "description": "建议用相同任务与现有 Coding Agent 做对比测试。",
+      "metric": "23.0k",
+      "metricNumeric": 23000,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/xai-org/grok-build"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/xai-org/grok-build/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-23",
+      "name": "Postiz",
+      "aliases": [],
+      "type": "社媒运营平台",
+      "description": "采用 AGPL；自动发布前应保留人工确认。",
+      "metric": "30.9k",
+      "metricNumeric": 30900,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/gitroomhq/postiz-app"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/gitroomhq/postiz-app/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-24",
+      "name": "awesome-selfhosted",
+      "aliases": [],
+      "type": "自托管项目目录",
+      "description": "适合发现项目，不建议按目录整体安装。",
+      "metric": "308.7k",
+      "metricNumeric": 308700,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/awesome-selfhosted/awesome-selfhosted"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/awesome-selfhosted/awesome-selfhosted/archive/refs/heads/master.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-25",
+      "name": "Pake",
+      "aliases": [],
+      "type": "网页打包桌面应用",
+      "description": "是否采用取决于桌面封装需求和目标平台。",
+      "metric": "60.3k",
+      "metricNumeric": 60300,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/tw93/Pake"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/tw93/Pake/archive/refs/heads/master.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-26",
+      "name": "Palmier Pro",
+      "aliases": [],
+      "type": "AI 视频编辑",
+      "description": "使用前确认媒体访问权限和输出是否可继续编辑。",
+      "metric": "12.3k",
+      "metricNumeric": 12300,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/palmier-io/palmier-pro"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/palmier-io/palmier-pro/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-27",
+      "name": "codebase-memory-mcp",
+      "aliases": [],
+      "type": "代码库记忆 MCP",
+      "description": "与 CocoIndex、Graphify 功能重叠，建议先做同题比较。",
+      "metric": "35.9k",
+      "metricNumeric": 35900,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/DeusData/codebase-memory-mcp"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/DeusData/codebase-memory-mcp/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-28",
+      "name": "Scritty",
+      "aliases": [],
+      "type": "闭源付费本地记忆产品",
+      "description": "GitHub 主要提供文档和发布包；使用前确认加密、遥测与删除机制。",
+      "metric": "9",
+      "metricNumeric": 9,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/scritty-org/scritty"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/scritty-org/scritty/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-29",
+      "name": "whichllm",
+      "aliases": [],
+      "type": "本地模型硬件评估",
+      "description": "会读取本机硬件并访问 Hugging Face；使用前确认联网行为与模型缓存位置。",
+      "metric": "6k",
+      "metricNumeric": 6000,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/Andyyyy64/whichllm"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/Andyyyy64/whichllm/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-30",
+      "name": "Crawl4AI 官网",
+      "aliases": [
+        "Crawl4AI Website"
+      ],
+      "type": "官方网站",
+      "description": "查看产品入口、托管服务与项目概览；开源库的具体用法以官方文档为准。",
+      "metric": "官方网站",
+      "metricNumeric": null,
+      "metricIcon": "↗",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "打开官网",
+          "url": "https://crawl4ai.com/"
+        }
+      ]
+    },
+    {
+      "id": "resource-31",
+      "name": "Crawl4AI 官方文档",
+      "aliases": [
+        "Crawl4AI Docs"
+      ],
+      "type": "官方文档",
+      "description": "包含安装、抓取配置、结构化抽取、命令行与 API 参考。",
+      "metric": "官方资料",
+      "metricNumeric": null,
+      "metricIcon": "↗",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "打开文档",
+          "url": "https://docs.crawl4ai.com/"
+        }
+      ]
+    },
+    {
+      "id": "resource-32",
+      "name": "Crawl4AI 快速入门",
+      "aliases": [
+        "Crawl4AI Quick Start"
+      ],
+      "type": "教程",
+      "description": "用最小示例完成首次抓取、Markdown 输出与结构化数据提取。",
+      "metric": "入门教程",
+      "metricNumeric": null,
+      "metricIcon": "→",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "查看教程",
+          "url": "https://docs.crawl4ai.com/core/quickstart/"
+        }
+      ]
+    },
+    {
+      "id": "resource-33",
+      "name": "CocoIndex 官方文档",
+      "aliases": [
+        "CocoIndex Docs"
+      ],
+      "type": "官方文档",
+      "description": "查看增量处理、代码索引、知识图谱与数据管道的当前用法。",
+      "metric": "官方资料",
+      "metricNumeric": null,
+      "metricIcon": "↗",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "打开文档",
+          "url": "https://cocoindex.io/docs/index"
+        }
+      ]
+    },
+    {
+      "id": "resource-34",
+      "name": "Cognee 官方文档",
+      "aliases": [
+        "Cognee Docs"
+      ],
+      "type": "官方文档",
+      "description": "用于比较开源部署与云服务，并核对记忆、检索和数据删除能力。",
+      "metric": "官方资料",
+      "metricNumeric": null,
+      "metricIcon": "↗",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "打开文档",
+          "url": "https://docs.cognee.ai/"
+        }
+      ]
+    },
+    {
+      "id": "resource-35",
+      "name": "Postiz 官方文档",
+      "aliases": [
+        "Postiz Docs"
+      ],
+      "type": "官方文档",
+      "description": "包含自托管安装、平台连接、内容排程和公开 API 说明。",
+      "metric": "官方资料",
+      "metricNumeric": null,
+      "metricIcon": "↗",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "打开文档",
+          "url": "https://docs.postiz.com/introduction"
+        }
+      ]
+    }
+  ]
+}

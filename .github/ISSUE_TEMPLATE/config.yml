@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 私密安全报告
+    url: https://github.com/rowland-dot/favsense/security/advisories/new
+    about: 请使用 GitHub Private vulnerability reporting，不要公开发布凭据或个人数据。

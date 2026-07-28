@@ -1,0 +1,30 @@
+name: 功能建议
+description: 提议对用户有明确价值的新能力
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 用户问题
+      description: 不描述实现，先说明现在什么事情费时间或做不到。
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 希望的结果
+      description: 完成后用户会看到或能够做什么？
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 适用范围
+      options: [小红书同步, 知识卡, 资源雷达, 网页体验, 新领域模板, 部署与开源, 其他]
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: 已知限制或替代方案

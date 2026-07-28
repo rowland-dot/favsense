@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "id": "software",
+  "label": "软件与 AI 工具",
+  "presentation": {
+    "title": "小红书收藏知识工作台",
+    "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
+    "hero": {
+      "eyebrow": "本期片场 · 软件与 AI 收藏",
+      "from": "收藏过",
+      "to": "判断过",
+      "intro": "收藏会先自动收录；完成解读的内容会整理成可搜索的总结、相关资源和具体用法。你只管收藏，拾光台负责把零散内容逐步变成有用的知识。"
+    }
+  },
+  "content_kinds": {
+    "Note": "已同步的原始收藏",
+    "Tool": "可直接使用的工具",
+    "Skill": "可安装的 Agent 能力包",
+    "Workflow": "可复用的方法与流程",
+    "Product": "托管或商业产品"
+  },
+  "classification": {
+    "default": "Tool",
+    "rules": [
+      { "kind": "Skill", "source": "resource_type", "pattern": "skill" },
+      { "kind": "Workflow", "source": "content", "pattern": "工作流|方法而非|符号链接|Loop" },
+      { "kind": "Product", "source": "content", "pattern": "托管产品|托管服务|商业产品|产品闭源|闭源且收费" }
+    ]
+  },
+  "fallback": {
+    "default_category": "开发部署与Vibe Coding",
+    "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
+    "rules": [
+      { "category": "信息采集与搜索", "pattern": "搜索|爬虫|抓取|采集|markdown|markitdown|crawler" },
+      { "category": "知识管理与记忆", "pattern": "记忆|知识图谱|索引|rag|cognee" },
+      { "category": "Skills与工作流", "pattern": "skill|claude|codex|提示词|loop" },
+      { "category": "Agent与自动化", "pattern": "agent|自动化|rpa|gui" },
+      { "category": "本地模型与成本", "pattern": "本地.*模型|token|代币|headroom|显存" },
+      { "category": "内容增长与商业", "pattern": "自媒体|一人公司|客户|出海|运营|会议" },
+      { "category": "AI设计与多媒体", "pattern": "设计|视频|剪辑|ppt|office" },
+      { "category": "垂直工具与数据", "pattern": "金融|股票|量化|database" }
+    ]
+  },
+  "features": {
+    "resource_index": true
+  },
+  "resource_index": {
+    "label": "资源索引",
+    "entity_label": "资源",
+    "eyebrow": "项目、网站、文档与教程",
+    "title": "从收藏里的线索，<br />直达可靠资源。",
+    "description": "把开源项目、官方网站、文档、教程和参考资料集中归类。需要时直接打开，不必再回到帖子里重新寻找。",
+    "search_placeholder": "搜索项目、网站、文档或教程…",
+    "filter_label": "资源类型",
+    "verified_label": "链接核对日期",
+    "detail_label": "相关资源",
+    "registry_file": "skills/xhs-favorites-organizer/references/software-resources.json",
+    "collection": "resources",
+    "mapping": {
+      "name": "name", "aliases": "aliases", "type": "type", "description": "usage_note",
+      "metric": "stars", "metric_numeric": "stars_numeric", "metric_icon": "metric_icon"
+    },
+    "metric": { "label": "Star", "icon": "★", "missing": "暂无数据" },
+    "fields": [],
+    "actions": [
+      { "field": "repo", "label": "官方仓库" },
+      { "field": "download", "label": "下载 ZIP" },
+      { "field": "website", "label": "打开官网" },
+      { "field": "documentation", "label": "打开文档" },
+      { "field": "tutorial", "label": "查看教程" }
+    ],
+    "groups": [
+      { "label": "官方网站", "pattern": "官方网站|产品官网" },
+      { "label": "官方文档", "pattern": "官方文档" },
+      { "label": "教程", "pattern": "教程|快速入门" },
+      { "label": "参考资料", "pattern": "参考资料|指南|目录" }
+    ],
+    "default_group": "开源项目",
+    "sorts": [
+      { "id": "name-asc", "label": "名称 A–Z", "field": "name", "type": "text", "direction": "asc" },
+      { "id": "name-desc", "label": "名称 Z–A", "field": "name", "type": "text", "direction": "desc" },
+      { "id": "metric-desc", "label": "Star 从高到低", "field": "metricNumeric", "type": "number", "direction": "desc", "applies_to": ["开源项目"] },
+      { "id": "metric-asc", "label": "Star 从低到高", "field": "metricNumeric", "type": "number", "direction": "asc", "applies_to": ["开源项目"] }
+    ]
+  }
+}

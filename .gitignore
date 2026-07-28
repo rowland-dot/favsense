@@ -1,0 +1,23 @@
+# Local/private Xiaohongshu state and generated knowledge content
+.xhs-favorites/
+.xhs-tools/
+xhs-favorites/
+knowledge-base/
+config/xhs-favorites.json
+site/.local/
+
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+*.log
+
+# Frontend/tool caches
+node_modules/
+dist/
+.coverage/
+.test-tmp/
+
+# Python caches
+__pycache__/
+*.pyc

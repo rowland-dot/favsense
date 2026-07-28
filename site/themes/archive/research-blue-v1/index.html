@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="把小红书视频收藏转成可搜索、可核验、可行动的知识资产。" />
+    <meta name="theme-color" content="#f4f7ff" />
+    <title>拾光台 · 小红书收藏知识工作台</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+
+    <div class="film-rail" aria-hidden="true"><span></span></div>
+
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="拾光台首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 42 42" role="img">
+            <path d="M8 10.5h26v21H8z" />
+            <circle cx="15" cy="17" r="3" />
+            <path d="m12 28 7-7 5 5 3-3 4 5" />
+          </svg>
+        </span>
+        <span><strong>拾光台</strong><small>收藏知识工作台</small></span>
+      </a>
+
+      <nav class="primary-nav" aria-label="主导航">
+        <button class="nav-button is-active" type="button" data-view="notes">知识卡</button>
+        <button class="nav-button" type="button" data-view="projects">项目雷达</button>
+        <button class="nav-button" type="button" data-view="method">核验方法</button>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="切换深色模式" title="切换深色模式">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 15.2A8.4 8.4 0 0 1 8.8 3.3 9 9 0 1 0 20.7 15.2Z" /></svg>
+        </button>
+        <a class="source-button" id="source-button" href="#" target="_blank" rel="noreferrer" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.7-1.3-2.3-.3-4.7-1.1-4.7-5a3.9 3.9 0 0 1 1.1-2.8c-.1-.3-.5-1.3.1-2.8 0 0 .9-.3 2.9 1.1a10 10 0 0 1 5.3 0C17 5.5 18 5.8 18 5.8c.6 1.5.2 2.5.1 2.8a4 4 0 0 1 1.1 2.8c0 3.9-2.4 4.7-4.7 5 .4.3.7 1 .7 2V21c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" /></svg>
+          <span>开源项目</span>
+        </a>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> 本期片场 · Skills 收藏夹</p>
+          <h1 id="hero-title">把「收藏过」<br />变成<span>「判断过」</span></h1>
+          <p class="hero-intro">每条视频都经过帧级核验，再拆成项目、风险与下一步。这里不是收藏陈列柜，而是一张持续生长的学习桌。</p>
+        </div>
+        <div class="hero-reel" aria-label="本期知识库统计">
+          <div class="reel-window">
+            <span class="reel-label">已整理</span>
+            <strong id="stat-notes">—</strong>
+            <small>条视频收藏</small>
+          </div>
+          <div class="reel-window reel-window--accent">
+            <span class="reel-label">帧证据</span>
+            <strong id="stat-frames">—</strong>
+            <small>张可复核画面</small>
+          </div>
+          <div class="reel-caption"><span>完整解码</span><i></i><span>实体识别</span><i></i><span>官方核验</span></div>
+        </div>
+      </section>
+
+      <section class="workspace" id="notes-view" data-panel="notes">
+        <aside class="filter-sidebar" aria-label="知识卡筛选">
+          <div class="sidebar-heading">
+            <span>主题索引</span>
+            <button id="clear-filters" type="button">清除</button>
+          </div>
+          <div id="category-list" class="category-list"></div>
+          <div class="sidebar-section">
+            <p class="filter-label">价值等级</p>
+            <div class="segmented" id="priority-filter" role="group" aria-label="按价值等级筛选">
+              <button class="is-active" type="button" data-priority="all">全部</button>
+              <button type="button" data-priority="A">A</button>
+              <button type="button" data-priority="B">B</button>
+              <button type="button" data-priority="C">C</button>
+            </div>
+          </div>
+          <div class="sidebar-section">
+            <p class="filter-label">内容形态</p>
+            <div class="kind-filters" id="kind-filter"></div>
+          </div>
+          <div class="open-source-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.5v5.3c0 5.1 3.4 9.8 8 11.2 4.6-1.4 8-6.1 8-11.2V5.5L12 2Zm0 4.2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm5.1 10.5A7.8 7.8 0 0 1 12 19.5a7.8 7.8 0 0 1-5.1-2.8c.5-1.8 2.1-3 4-3h2.2c1.9 0 3.5 1.2 4 3Z" /></svg>
+            <div><strong>隐私默认关闭</strong><span>网页数据不包含 Cookie、Token、个人主页或本地视频。</span></div>
+          </div>
+        </aside>
+
+        <div class="content-column">
+          <div class="toolbar">
+            <label class="search-box">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></svg>
+              <input id="search-input" type="search" placeholder="搜索项目、主题或判断…" autocomplete="off" />
+              <kbd>/</kbd>
+            </label>
+            <label class="sort-control">
+              <span>排序</span>
+              <select id="sort-select">
+                <option value="curated">策展顺序</option>
+                <option value="priority">价值等级</option>
+                <option value="newest">最近发布</option>
+                <option value="popular">收藏热度</option>
+              </select>
+            </label>
+            <button class="view-toggle" id="view-toggle" type="button" aria-label="切换列表视图" title="切换列表视图">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
+            </button>
+          </div>
+
+          <div class="results-heading">
+            <p><strong id="result-count">—</strong> 条判断</p>
+            <span id="active-filter-label">全部知识卡</span>
+          </div>
+
+          <div id="notes-grid" class="notes-grid" aria-live="polite">
+            <div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div>
+          </div>
+
+          <div id="empty-state" class="empty-state" hidden>
+            <span>没有找到匹配的知识卡</span>
+            <p>换一个关键词，或清除当前筛选。</p>
+            <button type="button" id="empty-clear">查看全部</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="projects-panel" id="projects-view" data-panel="projects" hidden>
+        <div class="section-intro">
+          <p class="eyebrow"><span></span> GitHub 官方页面核验</p>
+          <h2>项目不是清单，<br />而是待验证的选择。</h2>
+          <p>Star 只是时间快照。真正决定是否采用的是许可证、维护状态、权限、凭据处理和实测结果。</p>
+        </div>
+        <div class="project-toolbar">
+          <label class="search-box search-box--wide">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></svg>
+            <input id="project-search" type="search" placeholder="搜索 Skill、MCP 或开源工具…" />
+          </label>
+          <span id="project-verified-date"></span>
+        </div>
+        <div id="projects-grid" class="projects-grid"></div>
+      </section>
+
+      <section class="method-panel" id="method-view" data-panel="method" hidden>
+        <div class="method-copy">
+          <p class="eyebrow"><span></span> 视频不是标题</p>
+          <h2>一条收藏，<br />经过四道工序。</h2>
+          <p>项目名可能只在视频中闪过几帧。因此标题、封面和自动字幕只能建立待处理记录，不能直接生成结论。</p>
+        </div>
+        <ol class="process-track">
+          <li><span class="process-number">01</span><div><strong>完整解码</strong><p>保存有权访问的视频，在本地完整解码；登录态和临时 Token 不落盘。</p></div></li>
+          <li><span class="process-number">02</span><div><strong>帧级识别</strong><p>抽取每 0.5 秒序列帧与转场帧；快速闪现片段提高密度。</p></div></li>
+          <li><span class="process-number">03</span><div><strong>实体拆分</strong><p>识别项目名、owner/repo、命令、功能与限制；合集拆成独立实体。</p></div></li>
+          <li><span class="process-number">04</span><div><strong>官方核验</strong><p>从官方仓库确认链接、Star、许可证与兼容性，再形成行动建议。</p></div></li>
+        </ol>
+        <div class="method-proof">
+          <div><strong id="proof-videos">32</strong><span>条视频</span></div>
+          <div><strong id="proof-frames">6,116</strong><span>张帧证据</span></div>
+          <div><strong id="proof-projects">29</strong><span>个 GitHub 项目</span></div>
+          <p>证据原图和视频只保留在本机，不进入公开仓库。公开站点只发布原创总结与经过核验的项目元数据。</p>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="detail-dialog" id="detail-dialog">
+      <div class="dialog-shell">
+        <button class="dialog-close" id="dialog-close" type="button" aria-label="关闭详情">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" /></svg>
+        </button>
+        <div id="dialog-content"></div>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <noscript>这个知识工作台需要启用 JavaScript 才能搜索和筛选内容。</noscript>
+    <script src="./site-config.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

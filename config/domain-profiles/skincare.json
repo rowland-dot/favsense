@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "id": "skincare",
+  "label": "护肤与成分",
+  "presentation": {
+    "title": "小红书护肤收藏知识工作台",
+    "description": "把护肤收藏整理成可比较、有来源、适合自身肤质的知识。",
+    "hero": {
+      "eyebrow": "本期片场 · 护肤收藏",
+      "from": "种草过",
+      "to": "看懂过",
+      "intro": "把成分、产品和功效说法整理成适用肤质、耐受提示、搭配边界与可靠来源。你只管收藏，拾光台负责把种草内容变成清楚的护肤知识。"
+    }
+  },
+  "content_kinds": {
+    "Note": "已同步的原始收藏",
+    "Ingredient": "成分机理与使用边界",
+    "Routine": "护肤流程与搭配顺序",
+    "Claim": "需要对照资料的功效说法",
+    "Product": "具体产品或商业方案"
+  },
+  "classification": {
+    "default": "Claim",
+    "rules": [
+      { "kind": "Ingredient", "source": "content", "pattern": "成分|浓度|视黄醇|维C|烟酰胺|水杨酸" },
+      { "kind": "Routine", "source": "content", "pattern": "流程|早C晚A|顺序|叠加|搭配" },
+      { "kind": "Product", "source": "content", "pattern": "产品|品牌|测评|购买|价格" }
+    ]
+  },
+  "fallback": {
+    "default_category": "功效说法与依据",
+    "action": "内容解读完成后，这里会直接呈现适用肤质、耐受提示、搭配边界和使用建议。",
+    "rules": [
+      { "category": "防晒", "pattern": "防晒|SPF|UVA|UVB" },
+      { "category": "痤疮护理", "pattern": "痘|痤疮|粉刺|水杨酸|过氧化苯甲酰" },
+      { "category": "色素与提亮", "pattern": "色斑|提亮|维C|烟酰胺|色沉" },
+      { "category": "屏障与敏感", "pattern": "屏障|敏感|泛红|刺激|保湿" },
+      { "category": "抗老", "pattern": "抗老|视黄醇|维A|细纹|胶原" }
+    ]
+  },
+  "features": { "resource_index": true },
+  "resource_index": {
+    "label": "成分资料库",
+    "entity_label": "成分与方案",
+    "eyebrow": "肤质、耐受与搭配依据",
+    "title": "从种草里的成分，<br />直达皮肤科依据。",
+    "description": "集中查看成分用途、适用场景、耐受提示、搭配边界与专业来源，避免只看营销浓度。",
+    "search_placeholder": "搜索成分、肤质、功效或搭配提示…",
+    "filter_label": "资源类型",
+    "verified_label": "资料更新于",
+    "detail_label": "相关成分与方案",
+    "registry_file": "config/resource-registries/skincare.example.json",
+    "collection": "resources",
+    "mapping": {
+      "name": "name", "aliases": "aliases", "type": "type", "description": "description",
+      "metric": "evidence", "metric_numeric": "evidence_numeric"
+    },
+    "metric": { "label": "资料", "icon": "◆", "missing": "暂无资料" },
+    "fields": [
+      { "field": "suitable", "label": "适用" },
+      { "field": "irritation", "label": "耐受" },
+      { "field": "caution", "label": "边界" }
+    ],
+    "actions": [
+      { "field": "source", "label": "权威依据" },
+      { "field": "guide", "label": "使用边界" }
+    ],
+    "groups": [
+      { "label": "防晒", "pattern": "防晒|SPF|紫外线" },
+      { "label": "痤疮护理", "pattern": "痤疮|粉刺|过氧化苯甲酰|水杨酸" },
+      { "label": "维A与抗老", "pattern": "视黄|维A|retino" },
+      { "label": "提亮与色素", "pattern": "维C|烟酰胺|色素|提亮" },
+      { "label": "屏障与敏感", "pattern": "屏障|敏感|保湿|刺激" }
+    ],
+    "default_group": "基础护理",
+    "sorts": [
+      { "id": "metric-desc", "label": "资料较完整优先", "field": "metricNumeric", "type": "number", "direction": "desc" },
+      { "id": "name-asc", "label": "名称 A–Z", "field": "name", "type": "text", "direction": "asc" },
+      { "id": "name-desc", "label": "名称 Z–A", "field": "name", "type": "text", "direction": "desc" }
+    ]
+  }
+}

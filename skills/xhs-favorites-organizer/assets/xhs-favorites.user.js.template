@@ -1,0 +1,121 @@
+// ==UserScript==
+// @name         小红书收藏知识库自动同步
+// @namespace    local.xhs-favorites-organizer
+// @version      2.1.0
+// @description  将已登录 Chrome 中的收藏面板增量同步到本地 Obsidian 知识库
+// @match        https://www.xiaohongshu.com/board/*
+// @grant        GM_xmlhttpRequest
+// @grant        GM_registerMenuCommand
+// @connect      127.0.0.1
+// @run-at       document-idle
+// @updateURL    http://127.0.0.1:__PORT__/xhs-favorites.user.js
+// @downloadURL  http://127.0.0.1:__PORT__/xhs-favorites.user.js
+// ==/UserScript==
+
+(() => {
+  "use strict";
+  const PORT = __PORT__;
+  const TOKEN = "__TOKEN__";
+  const BOARDS = __BOARDS__;
+  const boardId = location.pathname.match(/^\/board\/([a-z0-9]{1,80})$/)?.[1];
+  const board = BOARDS[boardId];
+
+  function show(message, error = false) {
+    let box = document.getElementById("xhs-kb-sync-status");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "xhs-kb-sync-status";
+      Object.assign(box.style, { position: "fixed", right: "18px", bottom: "18px", zIndex: 2147483647, maxWidth: "420px", padding: "12px 16px", borderRadius: "10px", color: "white", font: "14px/1.5 system-ui", boxShadow: "0 4px 24px #0004" });
+      document.documentElement.appendChild(box);
+    }
+    box.style.background = error ? "#b42318" : "#16794b";
+    box.textContent = `小红书知识库：${message}`;
+  }
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  function collect() {
+    const found = new Map();
+    for (const anchor of document.querySelectorAll("a[href]")) {
+      try {
+        const url = new URL(anchor.href, location.href);
+        const match = url.pathname.match(new RegExp(`^/board/${boardId}/([A-Za-z0-9_-]{1,128})$`));
+        const token = url.searchParams.get("xsec_token");
+        if (!match || !token) continue;
+        const target = new URL(`https://www.xiaohongshu.com/discovery/item/${match[1]}`);
+        target.searchParams.set("xsec_token", token);
+        target.searchParams.set("xsec_source", url.searchParams.get("xsec_source") || "pc_share");
+        found.set(match[1], target.href);
+      } catch { /* ignore malformed page links */ }
+    }
+    return found;
+  }
+
+  async function scan(mode) {
+    const history = mode === "history";
+    const collected = new Map();
+    let stable = 0;
+    const deadline = Date.now() + (history ? 300000 : 30000);
+    while (Date.now() < deadline) {
+      const bodyText = document.body?.innerText || "";
+      if (/300031|安全限制|访问频繁|验证码/.test(bodyText)) throw new Error("页面触发安全限制，已停止且不会重试");
+      const before = collected.size;
+      for (const [id, url] of collect()) collected.set(id, url);
+      stable = collected.size === before ? stable + 1 : 0;
+      show(`正在扫描 ${board.name}：${collected.size}${board.count ? ` / ${board.count}` : ""} 篇`);
+      if (!history && collected.size > 0 && stable >= 2) break;
+      if (history && (collected.size >= Math.min(board.count || 200, 200) || stable >= 20)) break;
+      if (history) {
+        if (stable > 0 && stable % 8 === 0) window.scrollBy({ top: -Math.round(innerHeight * 0.8), behavior: "instant" });
+        else window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+      }
+      await sleep(history ? 2200 : 1300);
+    }
+    if (!collected.size) throw new Error("没有找到可同步的收藏链接；请确认登录状态");
+    return [...collected.values()].slice(0, history ? 200 : 60);
+  }
+
+  function post(payload, timeout) {
+    return new Promise((resolve, reject) => GM_xmlhttpRequest({
+      method: "POST",
+      url: `http://127.0.0.1:${PORT}/import-sync`,
+      headers: { "Content-Type": "application/json", "X-XHS-Bridge-Token": TOKEN },
+      data: JSON.stringify(payload),
+      timeout,
+      onload: (response) => {
+        try {
+          const value = JSON.parse(response.responseText);
+          if (response.status < 200 || response.status >= 300 || !value.ok) throw new Error(value.error || `本地服务返回 ${response.status}`);
+          resolve(value);
+        } catch (error) { reject(error); }
+      },
+      onerror: () => reject(new Error("无法连接本地同步服务")),
+      ontimeout: () => reject(new Error("本地同步超时")),
+    }));
+  }
+
+  async function run(mode = "daily", batch = String(Date.now())) {
+    if (!boardId || !board) return;
+    try {
+      show(`准备扫描 ${board.name}`);
+      const urls = await scan(mode);
+      show(`正在入库 ${board.name} 的 ${urls.length} 篇`);
+      const timeout = mode === "history" ? 80 * 60 * 1000 : 30 * 60 * 1000;
+      const result = await post({ run_id: `${batch}_${boardId}`.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80), board_id: boardId, urls }, timeout);
+      show(`${board.name} 完成：扫描 ${result.scanned}，新增 ${result.new}`);
+      if (result.next_board_id) {
+        await sleep(1200);
+        const next = new URL(`https://www.xiaohongshu.com/board/${result.next_board_id}`);
+        next.searchParams.set("source", "web_user_page");
+        next.searchParams.set("xhs_kb_sync", "1");
+        next.searchParams.set("xhs_kb_batch", batch);
+        next.searchParams.set("xhs_kb_mode", mode);
+        location.assign(next.href);
+      }
+    } catch (error) { show(error.message || String(error), true); }
+  }
+
+  GM_registerMenuCommand("同步当前面板到知识库", () => run("daily", String(Date.now())));
+  const query = new URLSearchParams(location.search);
+  if (query.get("xhs_kb_sync") === "1") run(query.get("xhs_kb_mode") === "history" ? "history" : "daily", query.get("xhs_kb_batch") || String(Date.now()));
+})();

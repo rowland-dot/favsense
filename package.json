@@ -1,0 +1,39 @@
+{
+  "name": "favsense-xhs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first Xiaohongshu and RedNote favorites organizer with automated sync, video analysis, a resource index, Obsidian output, and a static knowledge-base UI.",
+  "keywords": [
+    "xiaohongshu",
+    "rednote",
+    "favorites-manager",
+    "bookmark-organizer",
+    "knowledge-base",
+    "obsidian",
+    "local-first",
+    "video-analysis",
+    "resource-index",
+    "tampermonkey"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rowland-dot/favsense.git"
+  },
+  "homepage": "https://github.com/rowland-dot/favsense#readme",
+  "bugs": {
+    "url": "https://github.com/rowland-dot/favsense/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "preview": "node scripts/serve-site.mjs",
+    "test:site": "node --test skills/xhs-favorites-organizer/tests/test_public_site.mjs",
+    "test:knowledge": "node skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs",
+    "test": "npm run test:site && npm run test:knowledge",
+    "verify": "node scripts/verify-release.mjs",
+    "release:check": "npm test && npm run verify"
+  }
+}

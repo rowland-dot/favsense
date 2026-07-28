@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "profile_url": "https://www.xiaohongshu.com/user/profile/YOUR_PROFILE_ID?tab=fav&subTab=board",
+  "schedule_local": "21:00",
+  "knowledge_base": "knowledge-base",
+  "domain_profile": "config/domain-profiles/software.json",
+  "curation_file": "skills/xhs-favorites-organizer/references/skills-board-curation.json",
+  "public_stats": { "frame_evidence_count": 0 },
+  "boards": [
+    {
+      "id": "YOUR_BOARD_ID",
+      "name": "Skills",
+      "enabled": true,
+      "advertised_count": 0
+    },
+    {
+      "id": "OPTIONAL_EXCLUDED_BOARD_ID",
+      "name": "不需要整理的收藏夹",
+      "enabled": false,
+      "advertised_count": 0,
+      "reason": "用户主动排除"
+    }
+  ]
+}

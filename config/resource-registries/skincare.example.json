@@ -1,0 +1,44 @@
+{
+  "verified_at": "2026-07-28",
+  "resources": [
+    {
+      "name": "外用维A类",
+      "aliases": ["视黄醇", "Retinoid", "Retinol"],
+      "type": "维A与抗老成分",
+      "description": "可用于部分痤疮、色素和光老化问题，但需要低频起步、保湿与白天防晒；孕期及明显炎症人群需先咨询医生。",
+      "suitable": "痤疮、色素或光老化诉求",
+      "irritation": "较高，需渐进",
+      "caution": "孕期及明显炎症先咨询医生",
+      "evidence": "AAD 皮肤科指南",
+      "evidence_numeric": 3,
+      "source": "https://www.aad.org/public/everyday-care/skin-care-secrets/anti-aging/retinoid-retinol",
+      "guide": "https://www.aad.org/public/diseases/acne/derm-treat/treat"
+    },
+    {
+      "name": "痤疮基础治疗成分",
+      "aliases": ["过氧化苯甲酰", "水杨酸"],
+      "type": "痤疮护理",
+      "description": "不同成分针对堵塞、细菌或炎症的路径不同；中重度、瘢痕或持续恶化不应只靠自行叠加产品。",
+      "suitable": "轻度痤疮的基础护理",
+      "irritation": "因成分和浓度而异",
+      "caution": "中重度、瘢痕或恶化需就医",
+      "evidence": "NIAMS / AAD",
+      "evidence_numeric": 3,
+      "source": "https://www.niams.nih.gov/health-topics/acne/diagnosis-treatment-and-steps-to-take",
+      "guide": "https://www.aad.org/public/diseases/acne/derm-treat/treat"
+    },
+    {
+      "name": "防晒基础",
+      "aliases": ["广谱 SPF 30+"],
+      "type": "防晒与基础护理",
+      "description": "防晒应放在日间护肤最后一步；具体选择仍需结合肤质、暴露环境和耐受性。",
+      "suitable": "所有日间护肤流程",
+      "irritation": "取决于配方与肤质",
+      "caution": "结合暴露环境补涂",
+      "evidence": "AAD 皮肤科建议",
+      "evidence_numeric": 3,
+      "source": "https://www.aad.org/public/everyday-care/skin-care-basics/care/skin-care-in-your-20s",
+      "guide": "https://www.aad.org/public/everyday-care/sun-protection/shade-clothing-sunscreen/choosing-right-sunscreen"
+    }
+  ]
+}

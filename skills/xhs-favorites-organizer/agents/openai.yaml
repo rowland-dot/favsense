@@ -1,0 +1,4 @@
+interface:
+  display_name: "小红书收藏整理"
+  short_description: "安全导入、增量去重、智能分类并归档每日小红书收藏内容"
+  default_prompt: "Use $xhs-favorites-organizer to automatically sync and organize today's new Xiaohongshu favorites without asking me to copy or paste links."
