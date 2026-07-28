@@ -532,6 +532,7 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /id="resource-sort"/);
   assert.match(html, /id="resource-result-count"/);
   assert.match(html, /id="bookmark-filter"/);
+  assert.doesNotMatch(html, /open-source-note|私人数据默认不公开/);
   assert.match(html, /id="resource-bookmark-filter"/);
   assert.match(html, /id="personal-data-export"/);
   assert.match(html, /id="personal-data-import"/);

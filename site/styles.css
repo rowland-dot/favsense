@@ -199,12 +199,6 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .bookmark-filter svg { width: 17px; }
 .bookmark-filter strong { min-width: 25px; padding: 2px 6px; border-radius: 99px; background: var(--surface-soft); color: var(--ink); text-align: center; font-family: var(--mono); font-size: 9px; }
 .bookmark-filter.is-active { border-color: var(--brand-red); background: color-mix(in srgb, var(--brand-red), var(--surface) 92%); color: var(--ink); box-shadow: inset 3px 0 0 var(--brand-red); font-weight: 700; }
-.open-source-note { display: flex; gap: 10px; margin-top: 34px; padding: 14px; border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--surface-soft); }
-.open-source-note svg { flex: 0 0 20px; color: var(--ink-soft); }
-.open-source-note strong, .open-source-note span { display: block; }
-.open-source-note strong { font-size: 11px; }
-.open-source-note span { margin-top: 4px; color: var(--ink-soft); font-size: 9px; line-height: 1.5; }
-
 .content-column { min-width: 0; padding: 28px clamp(20px, 4vw, 62px) 90px; }
 .toolbar { display: flex; gap: 10px; align-items: center; }
 .search-box { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 200px; height: 48px; padding: 0 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 6px 25px rgba(34,34,34,.05); }
@@ -411,7 +405,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
   .hero-reel { max-width: 540px; }
   .workspace { display: block; }
   .filter-sidebar { padding: 20px; border-right: 0; border-bottom: 1px solid var(--line); }
-  .sidebar-heading, .sidebar-section, .open-source-note { display: none; }
+  .sidebar-heading, .sidebar-section { display: none; }
   .sidebar-section--bookmark { display: block; margin: 13px 0 0; padding: 13px 0 0; }
   .sidebar-section--bookmark .filter-label, .sidebar-section--bookmark .filter-help { display: none; }
   .sidebar-section--bookmark .bookmark-filter { max-width: 190px; }
