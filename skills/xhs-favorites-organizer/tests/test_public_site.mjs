@@ -274,11 +274,12 @@ test("software resource registry mixes repositories, websites, docs and tutorial
 });
 
 test("static app has the required deployment assets", async () => {
-  const [html, css, js, readme, archivedCss, archiveReadme] = await Promise.all([
+  const [html, css, js, readme, publishingGuide, archivedCss, archiveReadme] = await Promise.all([
     read("site/index.html"),
     read("site/styles.css"),
     read("site/app.js"),
     read("README.md"),
+    read("docs/PUBLISHING.md"),
     read("site/themes/archive/research-blue-v1/styles.css"),
     read("site/themes/archive/research-blue-v1/README.md")
   ]);
@@ -338,6 +339,15 @@ test("static app has the required deployment assets", async () => {
   assert.match(js, /escapeHtml/);
   assert.match(readme, /sdk: static/);
   assert.match(readme, /app_file: site\/index\.html/);
+  const frontMatter = readme.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  assert.ok(frontMatter, "README must begin with Hugging Face YAML front matter");
+  assert.deepEqual(
+    frontMatter[1].split(/\r?\n/).filter((line) => /^header:\s*/.test(line)),
+    ["header: default"]
+  );
+  assert.match(publishingGuide, /`header: default`/);
+  assert.match(publishingGuide, /不会覆盖 FavSense 自己的顶部导航/);
+  assert.match(publishingGuide, /日常发布器只更新脱敏的 `site\/`/);
 });
 
 test("local board manager accepts only a tokenized loopback bridge", () => {

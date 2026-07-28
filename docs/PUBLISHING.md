@@ -86,8 +86,12 @@ git push space main
 sdk: static
 app_file: site/index.html
 fullWidth: true
-header: mini
+header: default
 ```
+
+请保留 `header: default`：Hugging Face 的 `mini` 模式会在应用内部叠加一条悬浮工具栏，容易遮住 FavSense 右上角的作者入口和主题按钮；`default` 会让平台导航在应用外部正常占位，不会覆盖 FavSense 自己的顶部导航。本地预览与 GitHub Pages 不受这个选项影响。
+
+如果 Space 是旧版本并且根目录 README 仍写着 `header: mini`，请在该 Space 的 **Files → README.md → Edit** 中把它一次性改为 `header: default`。日常发布器只更新脱敏的 `site/`，会刻意保留 Space 的根目录元数据，因此不会替你覆盖这个选项。
 
 Static Space 的直接访问地址通常是：
 

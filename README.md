@@ -6,7 +6,7 @@ colorTo: pink
 sdk: static
 app_file: site/index.html
 fullWidth: true
-header: mini
+header: default
 license: mit
 short_description: 自动同步小红书收藏，通过视频分析、资源索引与 Obsidian 输出生成可搜索、可追溯、可行动的知识库
 tags:
