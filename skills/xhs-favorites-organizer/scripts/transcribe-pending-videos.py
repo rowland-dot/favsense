@@ -21,6 +21,15 @@ REPO_OR_URL = re.compile(
     r"https?://\S+|github(?:\.com)?[/：:\s]+[\w.-]+/[\w.-]+|\b[\w.-]+/[\w.-]+\b",
     re.IGNORECASE,
 )
+REPOSITORY_CUE = re.compile(r"github|开源|代码仓库|官方仓库|repository|\brepo\b", re.IGNORECASE)
+GITHUB_REPOSITORY = re.compile(
+    r"https?://github\.com/\s*[\w.-]+\s*/\s*[\w.-]+"
+    r"|github(?:\.com)?\s*[/：:]\s*[\w.-]+\s*/\s*[\w.-]+"
+    r"|(?:repository|repo|仓库)\s*"
+    r"(?:is|=|:|：|是|为|名为|地址(?:是|为)?|链接(?:是|为)?)\s*"
+    r"[\w.-]+\s*/\s*[\w.-]+",
+    re.IGNORECASE,
+)
 NAMED_ENTITY = re.compile(
     r"(?:(?<!什么)叫做?|名为|名称是|项目名是|工具名是|技能名是)\s*[《「『\"']?"
     r"([A-Za-z][A-Za-z0-9_.-]{2,}|[\u4e00-\u9fff]{2,12})",
@@ -244,6 +253,11 @@ def assess_visual_need(note: dict, transcript: str) -> dict:
     if entity_topic and not named_entity:
         reasons.append("entity-name-missing")
         missing_facts.append("entity-name")
+    repository_claim = bool(REPOSITORY_CUE.search(context))
+    repository_evidence = " ".join([text, metadata])
+    if repository_claim and not GITHUB_REPOSITORY.search(repository_evidence):
+        reasons.append("repository-identity-unverified")
+        missing_facts.append("repository-identity")
     if VISUAL_CUE.search(text) and not named_entity:
         reasons.append("visual-reference-without-name")
         if "entity-name" not in missing_facts:

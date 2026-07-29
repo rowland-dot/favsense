@@ -261,6 +261,7 @@ test("resource sort options follow the selected resource type", async () => {
   const index = profile.resource_index;
   assert.deepEqual(resourceSortsForGroup(index, "all").map((sort) => sort.id), ["name-asc", "name-desc"]);
   assert.deepEqual(resourceSortsForGroup(index, "开源项目").map((sort) => sort.id), ["metric-desc", "metric-asc", "name-asc", "name-desc"]);
+  assert.deepEqual(resourceSortsForGroup(index, "GitHub 项目").map((sort) => sort.id), ["metric-desc", "metric-asc", "name-asc", "name-desc"]);
   assert.deepEqual(resourceSortsForGroup(index, "官方文档").map((sort) => sort.id), ["name-asc", "name-desc"]);
 });
 
@@ -510,6 +511,26 @@ test("software resource registry mixes repositories, websites, docs and tutorial
   assert.ok(urls.some((url) => url.startsWith("https://docs.")));
   assert.ok(data.resources.some((resource) => resource.type === "官方网站"));
   assert.ok(data.resources.some((resource) => resource.type === "教程"));
+});
+
+test("VividDub keeps its verified GitHub project identity", async () => {
+  const registry = JSON.parse(await read("skills/xhs-favorites-organizer/references/software-resources.json"));
+  const vividdub = registry.resources.find((resource) => resource.name === "VividDub");
+  assert.ok(vividdub);
+  assert.equal(vividdub.type, "GitHub 产品项目");
+  assert.equal(vividdub.repo, "https://github.com/VividDub/VividDub");
+  assert.equal(vividdub.stars_numeric, 7);
+  assert.doesNotMatch(vividdub.usage_note, /没有 GitHub|不是已确认的 GitHub/);
+});
+
+test("verified video evidence does not claim every frame was reviewed", async () => {
+  const data = JSON.parse(await read("site/data/knowledge.json"));
+  const vividdub = data.notes.find((note) => note.id === "6a603e4e000000001d00c0a0");
+  assert.ok(vividdub);
+  assert.equal(vividdub.evidence.method, "已结合本地视频证据核验内容");
+  assert.doesNotMatch(vividdub.evidence.method, /完整查看视频/);
+  assert.doesNotMatch(vividdub.evidence.method, /音频转写/);
+  assert.doesNotMatch(data.meta.videoMethod, /完整视频解读/);
 });
 
 test("static app has the required deployment assets", async () => {

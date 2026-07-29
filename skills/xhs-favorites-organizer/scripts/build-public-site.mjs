@@ -257,7 +257,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     resources: matchedResources.map((resource) => resource.name),
     evidence: {
       method: isFrameVerified
-        ? "已完整查看视频，并重点复核短暂出现的关键画面"
+        ? "已结合本地视频证据核验内容"
         : "目前依据原帖公开文字整理，视频内容尚未完整解读",
       locallyAvailable: isFrameVerified
     }
@@ -295,7 +295,7 @@ const output = {
     resourceIndex,
     frameEvidenceCount,
     evidenceStatsAutoUpdated: evidenceStats.derivedFromLocalEvidence,
-    videoMethod: `${verifiedNoteCount} 条收藏已完成完整视频解读；其余条目目前按原帖公开文字展示`,
+    videoMethod: `${verifiedNoteCount} 条收藏已完成视频内容核验；其余条目目前按原帖公开文字展示`,
     kindLabels: profile.content_kinds || {}
   },
   categories,

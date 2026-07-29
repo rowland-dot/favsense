@@ -140,16 +140,17 @@ class TranscriptionPipelineTests(unittest.TestCase):
 
             self.assertFalse((analysis / item["note_id"] / "audio-16khz.wav").exists())
 
-    def test_visual_review_is_not_needed_when_audio_names_the_tool(self):
+    def test_open_source_tool_name_does_not_replace_repository_identity(self):
         note = {"title": "一个很实用的开源视频工具", "description": ""}
         transcript = "这个项目叫 AutoClip，可以下载视频并自动识别高光片段。"
 
         assessment = self.module.assess_visual_need(note, transcript)
 
-        self.assertEqual(assessment["level"], "none")
-        self.assertEqual(assessment["reasons"], [])
+        self.assertEqual(assessment["level"], "sparse")
+        self.assertIn("repository-identity-unverified", assessment["reasons"])
+        self.assertEqual(assessment["missing_facts"], ["repository-identity"])
 
-    def test_tagged_tool_name_stops_visual_review_without_frames(self):
+    def test_tagged_tool_name_does_not_hide_an_unverified_github_repository(self):
         note = {
             "title": "GitHub video translation tool",
             "description": "#video #VividDub #translation",
@@ -160,8 +161,63 @@ class TranscriptionPipelineTests(unittest.TestCase):
         assessment = self.module.assess_visual_need(note, transcript)
 
         self.assertEqual(self.module.tagged_entity_candidates(note), ["VividDub"])
+        self.assertEqual(assessment["level"], "sparse")
+        self.assertIn("repository-identity-unverified", assessment["reasons"])
+        self.assertEqual(assessment["missing_facts"], ["repository-identity"])
+
+    def test_explicit_github_repository_stops_repository_visual_review(self):
+        note = {
+            "title": "GitHub video translation tool",
+            "description": "#video #VividDub #translation",
+            "tags": "video VividDub translation",
+        }
+        transcript = "The official repository is VividDub/VividDub and it translates and dubs videos."
+
+        assessment = self.module.assess_visual_need(note, transcript)
+
         self.assertEqual(assessment["level"], "none")
         self.assertEqual(assessment["missing_facts"], [])
+
+    def test_spaced_github_repository_stops_repository_visual_review(self):
+        note = {
+            "title": "GitHub video translation tool",
+            "description": "#video #VividDub #translation",
+            "tags": "video VividDub translation",
+        }
+        transcript = "The official repository is VividDub / VividDub and it translates videos."
+
+        assessment = self.module.assess_visual_need(note, transcript)
+
+        self.assertEqual(assessment["level"], "none")
+        self.assertEqual(assessment["missing_facts"], [])
+
+    def test_unrelated_slash_pair_does_not_count_as_github_repository(self):
+        note = {
+            "title": "GitHub video translation tool",
+            "description": "#video #VividDub #translation",
+            "tags": "video VividDub translation",
+        }
+        transcript = "It accepts YouTube/TikTok links and translates videos with VividDub."
+
+        assessment = self.module.assess_visual_need(note, transcript)
+
+        self.assertEqual(assessment["level"], "sparse")
+        self.assertIn("repository-identity-unverified", assessment["reasons"])
+        self.assertEqual(assessment["missing_facts"], ["repository-identity"])
+
+    def test_repository_feature_slash_pair_does_not_count_as_repository_identity(self):
+        note = {
+            "title": "GitHub video translation tool",
+            "description": "#video #VividDub #translation",
+            "tags": "video VividDub translation",
+        }
+        transcript = "The repository supports YouTube/TikTok links and the product is VividDub."
+
+        assessment = self.module.assess_visual_need(note, transcript)
+
+        self.assertEqual(assessment["level"], "sparse")
+        self.assertIn("repository-identity-unverified", assessment["reasons"])
+        self.assertEqual(assessment["missing_facts"], ["repository-identity"])
 
     def test_generic_tags_do_not_hide_a_missing_tool_name(self):
         note = {
@@ -223,13 +279,15 @@ class TranscriptionPipelineTests(unittest.TestCase):
         self.assertEqual(assessment["level"], "sparse")
         self.assertIn("entity-name-missing", assessment["reasons"])
 
-    def test_numbered_project_name_is_valid_audio_evidence(self):
+    def test_numbered_github_project_names_still_need_repository_identities(self):
         note = {"title": "六个 GitHub 项目", "description": ""}
         transcript = "第一个 OpenHuman 是本地 AI 助手，第二个 CodeBrowser 是浏览器。"
 
         assessment = self.module.assess_visual_need(note, transcript)
 
-        self.assertEqual(assessment["level"], "none")
+        self.assertEqual(assessment["level"], "sparse")
+        self.assertIn("repository-identity-unverified", assessment["reasons"])
+        self.assertEqual(assessment["missing_facts"], ["repository-identity"])
 
     def test_explaining_what_aesthetic_means_is_not_a_project_name(self):
         note = {"title": "这个 Skill 专治 AI 味网页", "description": ""}

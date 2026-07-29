@@ -35,7 +35,7 @@
 
 超长视频先处理前 10 分钟并记录音频窗口。若已找到实体和关键内容则停止；否则继续下一音频窗口。任何截断结果必须保留 `audio_window.truncated: true`，不能声称完整覆盖整条视频。
 
-在 `.xhs-favorites/video-analysis/<note-id>/` 保存 `transcription.json`、视觉升级原因和必要帧。语音或画面中的候选实体仍需与官方 GitHub/官网分开核验。若无法可靠读出项目名，`tools` 保持为空并明确写“未能唯一确认项目”，不得从营销标题猜测。
+在 `.xhs-favorites/video-analysis/<note-id>/` 保存 `transcription.json`、视觉升级原因和必要帧。语音或画面中的候选实体仍需与官方 GitHub/官网分开核验。若无法可靠读出项目名，`tools` 保持为空并明确写“未能唯一确认项目”，不得从营销标题猜测。标题或转写提到 GitHub、开源或仓库时，仅识别品牌名仍不算完成核验；必须获得可唯一定位的 `owner/repo`。公开仓库也不能直接推断为开源源码或 Agent Skill，仍须分别检查源码、许可证与 Skill 结构。
 
 ## Skill 专项核验
 
