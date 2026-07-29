@@ -1,6 +1,6 @@
 import { resourceGroup, resourceSortsForGroup, sortResources } from "./resource-utils.mjs";
 import { validateLocalBridgeConfig, validateLocalBridgeSession } from "./local-bridge-utils.mjs";
-import { hasHuggingFaceMiniHeader } from "./huggingface-layout.mjs";
+import { hasHuggingFaceMiniHeader, resolveHuggingFaceHeaderLayout } from "./huggingface-layout.mjs";
 import {
   MAX_DESCRIPTION_LENGTH,
   loadPersonalData,
@@ -11,6 +11,7 @@ import {
 } from "./personal-store.mjs";
 const DATA_URL = new URL("./data/knowledge.json", import.meta.url);
 let hfPersonalSync = null;
+let hfHostViewportBaseline = null;
 
 function configureHostLayout() {
   const configuredHeader = String(window.FAVSENSE_CONFIG?.huggingFaceHeader || "default").toLowerCase();
@@ -20,10 +21,19 @@ function configureHostLayout() {
     creatorUserId: window.huggingface?.variables?.SPACE_CREATOR_USER_ID,
     configuredHeader,
   });
-  document.documentElement.dataset.hfHeader = miniHeaderIsPresent ? "mini" : "default";
+  const layout = resolveHuggingFaceHeaderLayout({
+    capable: miniHeaderIsPresent,
+    outerHeight: window.outerHeight,
+    innerHeight: window.innerHeight,
+    baselineGap: hfHostViewportBaseline,
+  });
+  hfHostViewportBaseline = layout.baselineGap;
+  document.documentElement.dataset.hfHeader = layout.mode;
 }
 
 configureHostLayout();
+window.addEventListener("resize", configureHostLayout, { passive: true });
+window.visualViewport?.addEventListener("resize", configureHostLayout, { passive: true });
 
 const elements = {
   notesGrid: document.querySelector("#notes-grid"),

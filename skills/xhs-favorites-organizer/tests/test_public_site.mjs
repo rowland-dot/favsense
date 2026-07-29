@@ -5,7 +5,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { resourceGroup, resourceSortsForGroup, sortResources, validateResourceIndex } from "../../../site/resource-utils.mjs";
-import { hasHuggingFaceMiniHeader } from "../../../site/huggingface-layout.mjs";
+import { hasHuggingFaceMiniHeader, resolveHuggingFaceHeaderLayout } from "../../../site/huggingface-layout.mjs";
 import { assertPrivateDataset, repositoryIsMissing, repositoryWriteConflict } from "../../../site/hf-sync-guard.mjs";
 import { collectVideoEvidenceStats } from "../scripts/evidence-stats.mjs";
 import { validateLocalBridgeConfig, validateLocalBridgeSession } from "../../../site/local-bridge-utils.mjs";
@@ -689,6 +689,39 @@ test("Hugging Face mini header avoidance only activates for an embedded mini Spa
     creatorUserId: "invalid",
     configuredHeader: "mini",
   }), false);
+});
+
+test("Hugging Face controls return to the site header when the host expands", () => {
+  const initial = resolveHuggingFaceHeaderLayout({
+    capable: true,
+    outerHeight: 1187,
+    innerHeight: 1100,
+    baselineGap: null,
+  });
+  assert.deepEqual(initial, { mode: "mini", baselineGap: 87 });
+
+  const expanded = resolveHuggingFaceHeaderLayout({
+    capable: true,
+    outerHeight: 1187,
+    innerHeight: 1050,
+    baselineGap: initial.baselineGap,
+  });
+  assert.deepEqual(expanded, { mode: "default", baselineGap: 87 });
+
+  const restored = resolveHuggingFaceHeaderLayout({
+    capable: true,
+    outerHeight: 1187,
+    innerHeight: 1100,
+    baselineGap: expanded.baselineGap,
+  });
+  assert.deepEqual(restored, { mode: "mini", baselineGap: 87 });
+
+  assert.deepEqual(resolveHuggingFaceHeaderLayout({
+    capable: false,
+    outerHeight: 1187,
+    innerHeight: 1050,
+    baselineGap: 87,
+  }), { mode: "default", baselineGap: null });
 });
 
 test("local board manager accepts only a tokenized loopback bridge", () => {
