@@ -100,7 +100,7 @@ hf_oauth_scopes:
 
 FavSense 默认保留 Hugging Face README 中的 `header: mini` 浮动工具栏。网页只有在确认自己嵌入于 `huggingface.co/spaces/...` 且 `site/site-config.js` 标记为 mini 模式时，才把右上角的作者入口和主题按钮水平移到浮动工具栏左侧。它不会移动 FavSense 顶部导航，也不会增加顶部间距；本地预览、直接访问 Static Space、GitHub Pages 和 `default` 模式均按普通布局显示。
 
-日常发布器更新脱敏的 `site/` 时，会把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，并确保启用 HF OAuth 与 `contribute-repos` 权限，同时保留其余元数据和说明正文。公开的 `site/site-config.js` 使用同一模式，仅控制右上角操作区的横向避让，不改变导航栏的纵向位置。
+用户主动整理后的发布器更新脱敏的 `site/` 时，会把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，并确保启用 HF OAuth 与 `contribute-repos` 权限，同时保留其余元数据和说明正文。公开的 `site/site-config.js` 使用同一模式，仅控制右上角操作区的横向避让，不改变导航栏的纵向位置。
 
 Static Space 的直接访问地址通常是：
 
@@ -110,7 +110,7 @@ https://YOUR_HF_USERNAME-YOUR_SPACE_NAME.static.hf.space/index.html
 
 也可以始终从 `https://huggingface.co/spaces/YOUR_HF_USERNAME/YOUR_SPACE_NAME` 打开嵌入页面。
 
-## 4. 配置每日自动发布
+## 4. 配置主动整理后的发布
 
 先复制私人配置模板：
 
@@ -146,20 +146,21 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
   --branch main
 ```
 
-安装日常任务：
+完成本机设置：
 
 ```powershell
 .\favsense.ps1 setup
 ```
 
-从此每天的完整流程是：
+之后每次需要更新时：
 
-1. Windows 计划任务 `FavSense-Daily` 按 `schedule_local` 启动普通 Chrome；
-2. Tampermonkey 依次同步已启用的收藏夹；
-3. 本机更新 `.xhs-favorites/` 和 `knowledge-base/`；
-4. 构建器重建 `site/data/knowledge.json`；
-5. 最后一个收藏夹完成后，发布器把 `site/` 镜像到 Space、排除 `site/.local/`，并确保 Space 使用 `header: mini`；
-6. Hugging Face 自动刷新公网知识库。
+1. 运行 `.\favsense.ps1 preview` 打开本地工作台；
+2. 在“同步设置”选择收藏夹并点击“开始整理”；
+3. FavSense 才会打开普通 Chrome，Tampermonkey 依次同步已启用的收藏夹；
+4. 本机更新 `.xhs-favorites/` 和 `knowledge-base/`；
+5. 构建器重建 `site/data/knowledge.json`；
+6. 最后一个收藏夹完成后，发布器把 `site/` 镜像到 Space、排除 `site/.local/`，并确保 Space 使用 `header: mini`；
+7. Hugging Face 刷新公网知识库。关闭本地工作台后，回环服务随之停止。
 
 发布失败不会撤销本地整理结果。失败信息写入本次运行状态，下次同步可再次发布。没有内容变化时，发布器返回 `unchanged`，不会产生空提交。
 
@@ -191,7 +192,7 @@ Static Space 已能完整承载当前网页，而且没有容器休眠、临时�
 
 ## 7. GitHub Actions 与个人知识库的区别
 
-Hugging Face 官方 `huggingface/hub-sync` Action 可以在 GitHub `main` 更新时同步 Space，适合发布开源程序和公共演示。但个人每日收藏数据只在本机生成，不会进入 GitHub，因此默认由本机发布器直接更新 Space。
+Hugging Face 官方 `huggingface/hub-sync` Action 可以在 GitHub `main` 更新时同步 Space，适合发布开源程序和公共演示。但个人收藏数据只在本机生成，不会进入 GitHub，因此默认由用户主动整理完成后的本机发布器直接更新 Space。
 
 如果团队明确决定把 `site/data/knowledge.json` 也提交到 GitHub，可以改用官方 Action；请把 `HF_TOKEN` 存在 GitHub Actions Secret 或使用 Trusted Publisher，绝不能写进仓库。
 
@@ -200,7 +201,8 @@ Hugging Face 官方 `huggingface/hub-sync` Action 可以在 GitHub `main` 更新
 - Space 页面显示 Running 但普通 `.hf.space` 返回 404：Static SDK 的直接域名包含 `.static.hf.space`。
 - 手动发布提示认证失败：重新登录 Hugging Face Git 凭据，并确认 Token 对目标 Space 有写权限。
 - 本地有新卡片但公网没变化：查看 `.xhs-favorites/runs/` 最新状态中的 `publish` 字段。
-- 计划任务没有运行：任务只在当前 Windows 用户已登录时执行，因为需要使用该用户的 Chrome 登录态。
+- “开始整理”没有出现：请确认当前地址是 `http://127.0.0.1:8766`，并通过 `.\favsense.ps1 preview` 启动本地工作台。
+- 点击后没有打开 Chrome：确认普通 Chrome 已安装且小红书登录有效，然后查看设置页显示的本机错误信息。
 - 网页更新了但数据不对：先执行 `npm.cmd run release:check`，再检查 `site/data/knowledge.json`。
 
 官方参考：[Static HTML Spaces](https://huggingface.co/docs/hub/spaces-sdks-static)、[Space OAuth](https://huggingface.co/docs/hub/spaces-oauth)、[Hugging Face JavaScript Hub API](https://huggingface.co/docs/huggingface.js/en/hub/README)、[Spaces 配置](https://huggingface.co/docs/hub/spaces-config-reference)、[GitHub Actions 同步](https://huggingface.co/docs/hub/repositories-github-actions)。

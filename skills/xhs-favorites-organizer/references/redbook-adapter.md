@@ -69,7 +69,7 @@ redbook board "<board-url-or-id>" --json
 redbook read "<note-url>" --json
 ```
 
-每日同步只运行一次 `favorites --json`，不使用 `--all`。完整历史导入需要用户单独授权，并应采用分批、延迟和可恢复的方案。
+每次用户主动触发的增量整理只运行一次 `favorites --json`，不使用 `--all`。完整历史导入需要用户单独授权，并应采用分批、延迟和可恢复的方案。
 
 ## 禁止自动执行的命令
 

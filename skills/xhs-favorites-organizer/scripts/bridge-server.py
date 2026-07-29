@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Loopback-only bridge for automatic Xiaohongshu favorites imports."""
+"""Loopback-only bridge for user-triggered Xiaohongshu favorites imports."""
 
 from __future__ import annotations
 
@@ -25,7 +25,8 @@ from urllib.parse import parse_qs, urlparse
 HOST = "127.0.0.1"
 DEFAULT_PORT = 47631
 MANAGER_ORIGIN = "http://127.0.0.1:8766"
-PROTOCOL_VERSION = 4
+PROTOCOL_VERSION = 5
+MANUAL_START_TIMEOUT_SECONDS = 90
 MAX_BODY_BYTES = 256 * 1024
 NOTE_PATH = re.compile(r"^/(?:explore|discovery/item)/([A-Za-z0-9_-]{1,128})$")
 NOTE_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
@@ -253,6 +254,7 @@ class Bridge:
         self.state_dir = self.workspace / ".xhs-favorites"
         self.token_path = self.state_dir / "bridge-token"
         self.status_path = self.state_dir / "bridge-status.json"
+        self.manual_sync_path = self.state_dir / "manual-sync.json"
         self.catalog_path = self.state_dir / "catalog.json"
         self.xhs_dir = self.workspace / ".xhs-tools" / "XHS-Downloader"
         self.python = self.xhs_dir / ".venv" / "Scripts" / "python.exe"
@@ -302,6 +304,173 @@ class Bridge:
                 raise ValueError(f"required file was not found: {required}")
         self.config_id = hashlib.sha256(self.token.encode("utf-8")).hexdigest()
         self.processing_lock = threading.Lock()
+        self.trigger_lock = threading.Lock()
+
+    @staticmethod
+    def manual_run_id(batch: str, board_id: str) -> str:
+        return re.sub(r"[^A-Za-z0-9_-]", "", f"{batch}_{board_id}")[:80]
+
+    def read_manual_sync(self) -> dict:
+        if not self.manual_sync_path.exists():
+            return {"state": "idle"}
+        try:
+            value = json.loads(self.manual_sync_path.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            return {"state": "idle"}
+        return value if isinstance(value, dict) else {"state": "idle"}
+
+    def manual_sync_status(self) -> dict:
+        value = self.read_manual_sync()
+        if value.get("state") == "starting":
+            try:
+                started = datetime.fromisoformat(str(value.get("started_at", "")))
+                age_seconds = (datetime.now().astimezone() - started).total_seconds()
+            except (TypeError, ValueError):
+                age_seconds = MANUAL_START_TIMEOUT_SECONDS + 1
+            if age_seconds > MANUAL_START_TIMEOUT_SECONDS:
+                value.update({
+                    "state": "failed",
+                    "completed_at": datetime.now().astimezone().isoformat(),
+                    "error": "Chrome 已打开，但未检测到 Tampermonkey 响应；请确认脚本已启用后重试。",
+                })
+                atomic_json(self.manual_sync_path, value)
+        allowed = {
+            "state", "started_at", "completed_at", "board_count", "processed_boards",
+            "current_board", "scanned", "new", "error", "publish_status",
+        }
+        return {key: value[key] for key in allowed if key in value}
+
+    def trigger_manual_sync(self) -> dict:
+        if not self.trigger_lock.acquire(blocking=False):
+            raise BridgeBusyError("a manual organization request is already starting")
+        try:
+            if not self.board_order:
+                raise ValueError("请至少开启一个收藏夹")
+            self.manual_sync_status()
+            current = self.read_manual_sync()
+            if current.get("state") in {"starting", "running"}:
+                try:
+                    started = datetime.fromisoformat(str(current.get("started_at", "")))
+                    age_seconds = (datetime.now().astimezone() - started).total_seconds()
+                except (TypeError, ValueError):
+                    age_seconds = 0
+                if age_seconds < 2 * 60 * 60:
+                    raise BridgeBusyError("organization is already running in Chrome")
+            if self.processing_lock.locked():
+                raise BridgeBusyError("organization is already processing a collection")
+
+            batch = f"manual{datetime.now().astimezone():%Y%m%d%H%M%S%f}"
+            state = {
+                "batch": batch,
+                "state": "starting",
+                "started_at": datetime.now().astimezone().isoformat(),
+                "board_count": len(self.board_order),
+                "processed_boards": 0,
+                "current_board": self.boards[self.board_order[0]],
+                "scanned": 0,
+                "new": 0,
+                "processed_run_ids": [],
+            }
+            atomic_json(self.manual_sync_path, state)
+            chrome_candidates = [
+                Path(os.environ.get("ProgramFiles", "")) / "Google" / "Chrome" / "Application" / "chrome.exe",
+                Path(os.environ.get("ProgramFiles(x86)", "")) / "Google" / "Chrome" / "Application" / "chrome.exe",
+                Path(os.environ.get("LOCALAPPDATA", "")) / "Google" / "Chrome" / "Application" / "chrome.exe",
+            ]
+            chrome = next((candidate for candidate in chrome_candidates if candidate.is_file()), None)
+            if chrome is None:
+                state.update({
+                    "state": "failed",
+                    "completed_at": datetime.now().astimezone().isoformat(),
+                    "error": "Google Chrome was not found",
+                })
+                atomic_json(self.manual_sync_path, state)
+                raise RuntimeError(state["error"])
+            first_board_id = self.board_order[0]
+            url = (
+                f"https://www.xiaohongshu.com/board/{first_board_id}"
+                f"?source=web_user_page&xhs_kb_sync=1&xhs_kb_batch={batch}&xhs_kb_mode=incremental"
+            )
+            try:
+                subprocess.Popen(
+                    [str(chrome), url],
+                    cwd=self.workspace,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except OSError as error:
+                state.update({
+                    "state": "failed",
+                    "completed_at": datetime.now().astimezone().isoformat(),
+                    "error": sanitize_error(f"could not open Chrome: {error}"),
+                })
+                atomic_json(self.manual_sync_path, state)
+                raise RuntimeError(state["error"]) from error
+            return self.manual_sync_status()
+        finally:
+            self.trigger_lock.release()
+
+    def record_manual_result(self, run_id: str, board_id: str, result: dict) -> None:
+        state = self.read_manual_sync()
+        batch = str(state.get("batch", ""))
+        if not batch or run_id != self.manual_run_id(batch, board_id):
+            return
+        processed = state.get("processed_run_ids")
+        if not isinstance(processed, list):
+            processed = []
+        if run_id not in processed:
+            processed.append(run_id)
+            state["scanned"] = int(state.get("scanned", 0) or 0) + int(result.get("scanned", 0) or 0)
+            state["new"] = int(state.get("new", 0) or 0) + int(result.get("new", 0) or 0)
+        state["processed_run_ids"] = processed
+        state["processed_boards"] = len(processed)
+        if result.get("state") == "failed":
+            state.update({
+                "state": "failed",
+                "completed_at": result.get("completed_at") or datetime.now().astimezone().isoformat(),
+                "error": sanitize_error(str(result.get("error") or "organization failed")),
+            })
+        elif result.get("state") == "completed" and result.get("next_board_id") is None:
+            publish = result.get("publish") if isinstance(result.get("publish"), dict) else None
+            state.update({
+                "state": "completed",
+                "completed_at": result.get("completed_at") or datetime.now().astimezone().isoformat(),
+                "current_board": "",
+            })
+            if publish:
+                state["publish_status"] = str(publish.get("status") or "")
+        elif result.get("state") == "completed":
+            next_board_id = str(result.get("next_board_id") or "")
+            state.update({
+                "state": "running",
+                "current_board": self.boards.get(next_board_id, "下一个收藏夹"),
+            })
+        atomic_json(self.manual_sync_path, state)
+
+    def record_manual_started(self, run_id: str, board_id: str) -> None:
+        state = self.read_manual_sync()
+        batch = str(state.get("batch", ""))
+        if not batch or run_id != self.manual_run_id(batch, board_id):
+            return
+        state.update({"state": "running", "current_board": self.boards[board_id]})
+        atomic_json(self.manual_sync_path, state)
+
+    def record_manual_failure(self, payload: dict) -> dict:
+        run_id = str(payload.get("run_id", ""))
+        board_id = str(payload.get("board_id", ""))
+        if not RUN_ID.fullmatch(run_id) or board_id not in self.boards:
+            raise ValueError("invalid manual organization failure payload")
+        state = self.read_manual_sync()
+        batch = str(state.get("batch", ""))
+        if not batch or run_id != self.manual_run_id(batch, board_id):
+            raise ValueError("manual organization batch does not match")
+        state.update({
+            "state": "failed",
+            "completed_at": datetime.now().astimezone().isoformat(),
+            "error": sanitize_error(str(payload.get("error") or "Chrome could not finish the collection")),
+        })
+        atomic_json(self.manual_sync_path, state)
+        return self.manual_sync_status()
 
     def cache_missing_media(self, unique: dict[str, str]) -> dict:
         if not self.video_analysis_enabled:
@@ -441,7 +610,7 @@ class Bridge:
 
     def update_board(self, board_id: str, enabled: bool) -> list[dict]:
         if not self.processing_lock.acquire(blocking=False):
-            raise BridgeBusyError("daily sync is running; retry after it finishes")
+            raise BridgeBusyError("organization is running; retry after it finishes")
         try:
             config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
             original = copy.deepcopy(config)
@@ -495,13 +664,16 @@ class Bridge:
         with self.processing_lock:
             run_id, unique = self.prepare_import(payload)
             board_id = payload["board_id"]
+            self.record_manual_started(run_id, board_id)
             run_status_path = self.state_dir / "runs" / f"{run_id}.json"
             if run_status_path.exists():
                 existing = json.loads(run_status_path.read_text(encoding="utf-8-sig"))
+                self.record_manual_result(run_id, board_id, existing)
                 ok = existing.get("state") == "completed"
                 return (HTTPStatus.OK if ok else HTTPStatus.CONFLICT), {"ok": ok, **existing}
             self.process_import(run_id, board_id, unique)
             result = json.loads(run_status_path.read_text(encoding="utf-8-sig"))
+            self.record_manual_result(run_id, board_id, result)
             ok = result.get("state") == "completed"
             return (HTTPStatus.OK if ok else HTTPStatus.INTERNAL_SERVER_ERROR), {"ok": ok, **result}
 
@@ -825,6 +997,12 @@ def make_handler(bridge: Bridge):
                 boards = bridge.board_settings()
                 self.send_json(HTTPStatus.OK, {"ok": True, "boards": boards})
                 return
+            if parsed.path == "/sync/status":
+                if not self.authorized() or not is_manager_origin(self.headers.get("Origin")):
+                    self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
+                    return
+                self.send_json(HTTPStatus.OK, {"ok": True, **bridge.manual_sync_status()})
+                return
             if parsed.path == "/local-session":
                 if not is_manager_origin(self.headers.get("Origin")):
                     self.send_json(HTTPStatus.FORBIDDEN, {"ok": False})
@@ -861,13 +1039,13 @@ def make_handler(bridge: Bridge):
             if not self.valid_host():
                 self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
                 return
-            if self.path not in {"/import-sync", "/boards"}:
+            if self.path not in {"/import-sync", "/boards", "/sync/start", "/sync/failure"}:
                 self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
                 return
             if not self.authorized():
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
-            if self.path == "/boards" and not is_manager_origin(self.headers.get("Origin")):
+            if self.path in {"/boards", "/sync/start"} and not is_manager_origin(self.headers.get("Origin")):
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
             try:
@@ -881,12 +1059,20 @@ def make_handler(bridge: Bridge):
                     boards = bridge.update_board(str(payload.get("board_id", "")), payload.get("enabled"))
                     self.send_json(HTTPStatus.OK, {"ok": True, "boards": boards})
                     return
+                if self.path == "/sync/start":
+                    self.send_json(HTTPStatus.ACCEPTED, {"ok": True, **bridge.trigger_manual_sync()})
+                    return
+                if self.path == "/sync/failure":
+                    self.send_json(HTTPStatus.OK, {"ok": True, **bridge.record_manual_failure(payload)})
+                    return
                 status, result = bridge.import_sync(payload)
                 self.send_json(status, result)
             except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
                 self.send_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": sanitize_error(str(error))})
             except BridgeBusyError as error:
                 self.send_json(HTTPStatus.CONFLICT, {"ok": False, "error": sanitize_error(str(error))})
+            except RuntimeError as error:
+                self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "error": sanitize_error(str(error))})
             except OSError as error:
                 self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "error": sanitize_error(str(error))})
 

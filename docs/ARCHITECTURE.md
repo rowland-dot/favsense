@@ -1,10 +1,11 @@
 # 架构说明
 
-FavSense · 拾光台把“使用者的私有采集环境”和“可以公开部署的阅读界面”严格分开。日常同步不依赖 Codex、Claude 或任何特定 Agent。
+FavSense · 拾光台把“使用者的私有采集环境”和“可以公开部署的阅读界面”严格分开。用户主动触发的同步不依赖 Codex、Claude 或任何特定 Agent。
 
 ```mermaid
 flowchart LR
-  XHS["普通 Chrome 中的小红书收藏夹"] --> TM["Tampermonkey 只读脚本"]
+  CLICK["本地设置页：开始整理"] --> XHS["普通 Chrome 中的小红书收藏夹"]
+  XHS --> TM["Tampermonkey 只读脚本"]
   TM -->|"回环地址 + token"| BRIDGE["本机 Bridge"]
   BRIDGE --> CATALOG["私有 Catalog"]
   CATALOG --> KB["Obsidian 知识库"]
@@ -20,7 +21,7 @@ flowchart LR
 
 包含个人收藏夹配置、随机 bridge token、去重 catalog、原始媒体、视频分析画面和本地工具。它们都在 `.gitignore` 中，服务只监听 `127.0.0.1`。
 
-“同步设置”页的 `.local/bridge.json` 只保存回环服务地址。只有固定工作台 Origin `http://127.0.0.1:8766` 能从回环服务取得本机凭据并修改收藏夹范围；公共托管没有该文件，因此只显示不含账号信息的本机连接说明。
+“同步设置”页的 `.local/bridge.json` 只保存回环服务地址。只有固定工作台 Origin `http://127.0.0.1:8766` 能从回环服务取得本机凭据、修改收藏夹范围并触发整理；公共托管没有该文件，因此既不显示触发按钮，也不具备本机控制能力。
 
 ### 公开展示层
 

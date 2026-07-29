@@ -2,7 +2,7 @@
   "name": "favsense-xhs",
   "version": "0.1.0",
   "private": true,
-  "description": "Local-first Xiaohongshu and RedNote favorites organizer with automated sync, video analysis, a resource index, Obsidian output, and a static knowledge-base UI.",
+  "description": "Local-first Xiaohongshu and RedNote favorites organizer with user-triggered sync, video analysis, a resource index, Obsidian output, and a static knowledge-base UI.",
   "keywords": [
     "xiaohongshu",
     "rednote",

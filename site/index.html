@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="FavSense 自动同步小红书 / RedNote 收藏，通过视频分析、资源索引与 Obsidian 输出，生成可搜索、可追溯、可行动的知识库。" />
+    <meta name="description" content="FavSense 按需整理小红书 / RedNote 收藏，通过视频分析、资源索引与 Obsidian 输出，生成可搜索、可追溯、可行动的知识库。" />
     <meta name="keywords" content="FavSense, 拾光台, 小红书收藏整理, Xiaohongshu, RedNote, favorites organizer, bookmark organizer, knowledge base, Obsidian, Tampermonkey, video analysis, resource index, local-first" />
     <meta property="og:title" content="FavSense · 拾光台" />
     <meta property="og:description" content="Make sense of what you save. Turn Xiaohongshu / RedNote favorites into a searchable, traceable and actionable knowledge base." />
@@ -159,10 +159,18 @@
         <section class="board-manager" id="board-manager" aria-labelledby="board-manager-title">
           <div class="board-manager-copy">
             <p class="eyebrow"><span></span> 同步设置</p>
-            <h2 id="board-manager-title">选择每天整理哪些收藏夹。</h2>
-            <p>打开开关的收藏夹会自动进入每日同步；关闭只停止后续收录，不会删除已经整理的内容。</p>
+            <h2 id="board-manager-title">选择这次要整理的收藏夹。</h2>
+            <p>FavSense 不会定时访问小红书。打开需要纳入的收藏夹，然后由你决定什么时候开始整理。</p>
           </div>
           <div class="board-manager-panel">
+            <div class="manual-sync-control" id="manual-sync-control" hidden>
+              <div class="manual-sync-copy">
+                <span class="manual-sync-label"><i aria-hidden="true"></i> 按需整理</span>
+                <strong id="manual-sync-title">准备好后再开始</strong>
+                <small id="manual-sync-detail">只在你点击后打开普通 Chrome，并依次整理已开启的收藏夹。</small>
+              </div>
+              <button class="manual-sync-button" id="manual-sync-start" type="button">开始整理</button>
+            </div>
             <div class="board-manager-head">
               <strong>我的收藏夹</strong>
               <span id="board-enabled-count">正在连接本机设置…</span>
@@ -170,7 +178,7 @@
             <div class="board-list" id="board-list">
               <div class="board-empty">收藏夹设置只在本机工作台显示，公开网页不会读取你的账号信息。</div>
             </div>
-            <p class="board-manager-status" id="board-manager-status" role="status" aria-live="polite">设置只保存在本机，不会进入公开仓库或 Hugging Face 页面。</p>
+            <p class="board-manager-status" id="board-manager-status" role="status" aria-live="polite">收藏夹范围只保存在本机；整理仅由上方按钮触发。</p>
           </div>
         </section>
         <section class="personal-data-panel" aria-labelledby="personal-data-title">

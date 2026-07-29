@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('setup', 'sync', 'preview', 'test', 'verify')]
+    [ValidateSet('setup', 'preview', 'stop', 'test', 'verify')]
     [string]$Command = 'preview'
 )
 
@@ -20,11 +20,16 @@ switch ($Command) {
         }
         & (Join-Path $skillScripts 'setup-autosync.ps1') -Workspace $workspacePath -Config $configPath
     }
-    'sync' {
+    'preview' {
         if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { throw '请先运行 .\favsense.ps1 setup。' }
-        & (Join-Path $skillScripts 'run-daily.ps1') -Workspace $workspacePath -Config $configPath -Mode daily
+        & (Join-Path $skillScripts 'start-autosync.ps1') -Workspace $workspacePath -Config $configPath
+        try {
+            & node (Join-Path $workspacePath 'scripts\serve-site.mjs')
+        } finally {
+            & (Join-Path $skillScripts 'stop-autosync.ps1')
+        }
     }
-    'preview' { & node (Join-Path $workspacePath 'scripts\serve-site.mjs') }
+    'stop' { & (Join-Path $skillScripts 'stop-autosync.ps1') }
     'test' { & npm.cmd test }
     'verify' { & npm.cmd run release:check }
 }

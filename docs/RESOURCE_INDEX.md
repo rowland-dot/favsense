@@ -86,7 +86,7 @@ Agent 不应把 software 模板中的 GitHub/Star 逻辑复制到其他领域；
 }
 ```
 
-然后重新运行每日同步或：
+然后重新运行主动整理流程或：
 
 ```powershell
 node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs"

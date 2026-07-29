@@ -53,9 +53,14 @@ $localRuntime = [ordered]@{
 } | ConvertTo-Json -Compress
 [System.IO.File]::WriteAllText($localRuntimePath, $localRuntime, [System.Text.UTF8Encoding]::new($false))
 
-& (Join-Path $PSScriptRoot 'start-autosync.ps1') -Workspace $workspacePath -Config $configPath -Port $Port
-& (Join-Path $PSScriptRoot 'install-windows-task.ps1') -Workspace $workspacePath -Config $configPath
+$legacyTask = Get-ScheduledTask -TaskName 'FavSense-Daily' -ErrorAction SilentlyContinue
+if ($legacyTask) {
+    Unregister-ScheduledTask -TaskName 'FavSense-Daily' -Confirm:$false
+    Write-Output "Removed legacy daily task 'FavSense-Daily'."
+}
 
-Write-Output "FavSense local service and daily task are ready."
+& (Join-Path $PSScriptRoot 'start-autosync.ps1') -Workspace $workspacePath -Config $configPath -Port $Port
+
+Write-Output "FavSense local service is ready. No daily or Windows startup task was installed."
 Write-Output "One browser step remains: open http://127.0.0.1:$Port/xhs-favorites.user.js in regular Chrome and confirm installation in Tampermonkey."
-Write-Output "Automatic sync starts after the userscript is installed."
+Write-Output "After installation, open the local settings page and click '开始整理' whenever you want to update the knowledge base."

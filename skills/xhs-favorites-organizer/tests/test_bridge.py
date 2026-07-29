@@ -55,7 +55,93 @@ class BridgeHelpersTest(unittest.TestCase):
         self.assertIn('`safe.directory=${root}`', builder)
 
     def test_protocol_version_is_pinned(self):
-        self.assertEqual(BRIDGE.PROTOCOL_VERSION, 4)
+        self.assertEqual(BRIDGE.PROTOCOL_VERSION, 5)
+
+    def test_manual_organization_only_launches_chrome_after_explicit_trigger(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            chrome = root / "Google" / "Chrome" / "Application" / "chrome.exe"
+            chrome.parent.mkdir(parents=True)
+            chrome.write_bytes(b"chrome")
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.trigger_lock = BRIDGE.threading.Lock()
+            bridge.processing_lock = BRIDGE.threading.Lock()
+            bridge.manual_sync_path = root / "manual-sync.json"
+            bridge.board_order = ["first"]
+            bridge.boards = {"first": "First"}
+            bridge.workspace = root
+            bridge.config_path = root / "config.json"
+            bridge.port = 47631
+
+            with mock.patch.dict(BRIDGE.os.environ, {"LOCALAPPDATA": str(root)}, clear=True), mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
+                self.assertFalse(popen.called)
+                status = bridge.trigger_manual_sync()
+
+            self.assertEqual(status["state"], "starting")
+            self.assertEqual(status["board_count"], 1)
+            self.assertNotIn("batch", status)
+            launched = popen.call_args.args[0]
+            self.assertEqual(Path(launched[0]), chrome)
+            self.assertIn("xhs_kb_sync=1", launched[1])
+            self.assertIn("xhs_kb_mode=incremental", launched[1])
+            with self.assertRaisesRegex(BRIDGE.BridgeBusyError, "already running"):
+                bridge.trigger_manual_sync()
+
+    def test_manual_organization_aggregates_board_results_without_exposing_ids(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.manual_sync_path = root / "manual-sync.json"
+            bridge.boards = {"first": "First", "last": "Last"}
+            batch = "manual20260729010101"
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": batch,
+                "state": "running",
+                "board_count": 2,
+                "processed_boards": 0,
+                "processed_run_ids": [],
+                "scanned": 0,
+                "new": 0,
+            })
+            first_run = bridge.manual_run_id(batch, "first")
+            bridge.record_manual_result(first_run, "first", {
+                "state": "completed", "scanned": 12, "new": 2, "next_board_id": "last",
+            })
+            running = bridge.manual_sync_status()
+            self.assertEqual(running["state"], "running")
+            self.assertEqual(running["processed_boards"], 1)
+            self.assertEqual(running["current_board"], "Last")
+            self.assertNotIn("processed_run_ids", running)
+
+            last_run = bridge.manual_run_id(batch, "last")
+            bridge.record_manual_result(last_run, "last", {
+                "state": "completed", "scanned": 8, "new": 1, "next_board_id": None,
+                "publish": {"status": "published"},
+            })
+            completed = bridge.manual_sync_status()
+            self.assertEqual(completed["state"], "completed")
+            self.assertEqual(completed["scanned"], 20)
+            self.assertEqual(completed["new"], 3)
+            self.assertEqual(completed["publish_status"], "published")
+
+    def test_manual_organization_starting_state_expires_when_userscript_never_responds(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.manual_sync_path = root / "manual-sync.json"
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "manual-stale",
+                "state": "starting",
+                "started_at": "2000-01-01T00:00:00+00:00",
+                "processed_run_ids": [],
+            })
+
+            status = bridge.manual_sync_status()
+
+            self.assertEqual(status["state"], "failed")
+            self.assertIn("Tampermonkey", status["error"])
+            self.assertNotIn("batch", status)
+            self.assertEqual(bridge.read_manual_sync()["state"], "failed")
 
     def test_board_manager_only_accepts_the_exact_workbench_origin(self):
         self.assertTrue(BRIDGE.is_manager_origin("http://127.0.0.1:8766"))

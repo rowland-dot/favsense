@@ -22,7 +22,7 @@ export function validateLocalBridgeConfig(value) {
 }
 
 export function validateLocalBridgeSession(value) {
-  if (!value || value.ok !== true || value.protocol_version !== 4) throw new Error("本机同步服务版本不匹配");
+  if (!value || value.ok !== true || value.protocol_version !== 5) throw new Error("本机同步服务版本不匹配");
   if (typeof value.token !== "string" || !/^[a-f0-9]{64}$/.test(value.token)) throw new Error("本机同步会话无效");
   return value.token;
 }

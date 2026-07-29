@@ -51,6 +51,10 @@ const elements = {
   boardList: document.querySelector("#board-list"),
   boardEnabledCount: document.querySelector("#board-enabled-count"),
   boardManagerStatus: document.querySelector("#board-manager-status"),
+  manualSyncControl: document.querySelector("#manual-sync-control"),
+  manualSyncStart: document.querySelector("#manual-sync-start"),
+  manualSyncTitle: document.querySelector("#manual-sync-title"),
+  manualSyncDetail: document.querySelector("#manual-sync-detail"),
   personalBookmarkCount: document.querySelector("#personal-bookmark-count"),
   personalEditCount: document.querySelector("#personal-edit-count"),
   personalExport: document.querySelector("#personal-data-export"),
@@ -85,7 +89,10 @@ const state = {
   layout: localStorage.getItem("xhs-kb-layout") || "grid",
   localBridge: null,
   boards: [],
-  boardUpdatePending: false
+  boardUpdatePending: false,
+  manualSync: { state: "idle" },
+  manualSyncStartedHere: false,
+  manualSyncPoll: 0
 };
 
 function bookmarkIcon() {
@@ -302,7 +309,7 @@ async function localBridgeRequest(path, options = {}) {
 
 function renderBoardManager() {
   const enabledCount = state.boards.filter((board) => board.enabled).length;
-  elements.boardEnabledCount.textContent = `每天同步 ${enabledCount} / ${state.boards.length}`;
+  elements.boardEnabledCount.textContent = `已选择 ${enabledCount} / ${state.boards.length}`;
   elements.boardList.innerHTML = state.boards.map((board) => {
     const count = Number.isFinite(board.advertised_count) && board.advertised_count > 0
       ? `${board.captured_count || 0} / ${board.advertised_count} 篇已收录`
@@ -313,13 +320,84 @@ function renderBoardManager() {
           <strong>${escapeHtml(board.name)}</strong>
           <span>${count}</span>
         </div>
-        <span class="board-state">${board.enabled ? "每日同步" : "已忽略"}</span>
+        <span class="board-state">${board.enabled ? "已纳入" : "已忽略"}</span>
         <label class="board-toggle">
-          <input type="checkbox" data-board-toggle="${escapeHtml(board.id)}" aria-label="每天同步 ${escapeHtml(board.name)}" ${board.enabled ? "checked" : ""} ${state.boardUpdatePending ? "disabled" : ""} />
+          <input type="checkbox" data-board-toggle="${escapeHtml(board.id)}" aria-label="整理时纳入 ${escapeHtml(board.name)}" ${board.enabled ? "checked" : ""} ${state.boardUpdatePending ? "disabled" : ""} />
           <span class="board-toggle-track" aria-hidden="true"><i></i></span>
         </label>
       </div>`;
   }).join("");
+}
+
+function renderManualSync(status = state.manualSync) {
+  state.manualSync = status;
+  const active = ["starting", "running"].includes(status.state);
+  const completed = status.state === "completed";
+  const failed = status.state === "failed";
+  elements.manualSyncControl.classList.toggle("is-running", active);
+  elements.manualSyncControl.classList.toggle("is-complete", completed);
+  elements.manualSyncControl.classList.toggle("is-failed", failed);
+  elements.manualSyncStart.disabled = active;
+  elements.manualSyncStart.textContent = active ? "整理中…" : (completed || failed ? "再次整理" : "开始整理");
+
+  if (status.state === "starting") {
+    elements.manualSyncTitle.textContent = "正在打开普通 Chrome";
+    elements.manualSyncDetail.textContent = "请保持小红书登录；扫描与整理进度会自动回到这里。";
+  } else if (status.state === "running") {
+    elements.manualSyncTitle.textContent = status.current_board ? `正在整理「${status.current_board}」` : "正在整理收藏";
+    elements.manualSyncDetail.textContent = `已完成 ${status.processed_boards || 0} / ${status.board_count || state.boards.length} 个收藏夹，请保持 Chrome 窗口开启。`;
+  } else if (completed) {
+    elements.manualSyncTitle.textContent = "本次整理完成";
+    elements.manualSyncDetail.textContent = `共扫描 ${status.scanned || 0} 条，新增 ${status.new || 0} 条；本地知识库已经更新。`;
+  } else if (failed) {
+    elements.manualSyncTitle.textContent = "本次整理未完成";
+    elements.manualSyncDetail.textContent = status.error || "请检查 Chrome 登录状态后再次整理。";
+  } else {
+    elements.manualSyncTitle.textContent = "准备好后再开始";
+    elements.manualSyncDetail.textContent = "只在你点击后打开普通 Chrome，并依次整理已开启的收藏夹。";
+  }
+}
+
+async function refreshManualSyncStatus() {
+  const status = await localBridgeRequest("/sync/status");
+  renderManualSync(status);
+  if (!["starting", "running"].includes(status.state)) {
+    window.clearInterval(state.manualSyncPoll);
+    state.manualSyncPoll = 0;
+    if (status.state === "completed" && state.manualSyncStartedHere) {
+      state.manualSyncStartedHere = false;
+      showToast("整理完成，正在刷新知识库");
+      window.setTimeout(() => location.reload(), 900);
+    }
+  }
+  return status;
+}
+
+function watchManualSync() {
+  window.clearInterval(state.manualSyncPoll);
+  state.manualSyncPoll = window.setInterval(() => {
+    refreshManualSyncStatus().catch(() => {
+      window.clearInterval(state.manualSyncPoll);
+      state.manualSyncPoll = 0;
+      renderManualSync({ state: "failed", error: "暂时无法读取本机整理进度，请确认工作台仍在运行。" });
+    });
+  }, 2000);
+}
+
+async function startManualSync() {
+  if (!state.localBridge || ["starting", "running"].includes(state.manualSync.state)) return;
+  elements.manualSyncStart.disabled = true;
+  renderManualSync({ state: "starting" });
+  try {
+    const status = await localBridgeRequest("/sync/start", { method: "POST", body: "{}" });
+    state.manualSyncStartedHere = true;
+    renderManualSync(status);
+    watchManualSync();
+    showToast("已打开 Chrome，开始整理收藏");
+  } catch (error) {
+    renderManualSync({ state: "failed", error: error.message });
+    showToast("没有开始整理");
+  }
 }
 
 async function initBoardManager() {
@@ -332,10 +410,14 @@ async function initBoardManager() {
     const payload = await localBridgeRequest("/boards");
     state.boards = payload.boards;
     renderBoardManager();
+    elements.manualSyncControl.hidden = false;
+    const syncStatus = await refreshManualSyncStatus();
+    if (["starting", "running"].includes(syncStatus.state)) watchManualSync();
   } catch (error) {
     state.localBridge = null;
     elements.boardEnabledCount.textContent = "仅限本机";
-    elements.boardList.innerHTML = '<div class="board-empty">在本机运行 FavSense 后，这里会显示你的全部收藏夹和每日同步开关。</div>';
+    elements.manualSyncControl.hidden = true;
+    elements.boardList.innerHTML = '<div class="board-empty">在本机运行 FavSense 后，这里会显示你的全部收藏夹和按需整理开关。</div>';
     elements.boardManagerStatus.textContent = error.message === "本机同步服务尚未连接"
       ? "当前是公开预览；账号与收藏夹设置不会上传。"
       : "暂时无法连接本机同步服务，请确认 FavSense 已启动。";
@@ -660,8 +742,8 @@ function bindEvents() {
         body: JSON.stringify({ board_id: board.id, enabled })
       });
       state.boards = payload.boards;
-      elements.boardManagerStatus.textContent = "设置已保存；下次自动同步会使用新的收藏夹范围。";
-      showToast(enabled ? `已开启「${board.name}」每日同步` : `已忽略「${board.name}」`);
+      elements.boardManagerStatus.textContent = "设置已保存；下次点击“开始整理”时会使用新的收藏夹范围。";
+      showToast(enabled ? `整理时将纳入「${board.name}」` : `已忽略「${board.name}」`);
     } catch (error) {
       try {
         const authoritative = await localBridgeRequest("/boards");
@@ -749,6 +831,7 @@ function bindEvents() {
     showToast(state.cloud.authenticated ? "描述已保存并等待私有同步" : "描述已保存到当前浏览器");
   });
   elements.personalExport.addEventListener("click", exportPersonalData);
+  elements.manualSyncStart.addEventListener("click", startManualSync);
   elements.personalImport.addEventListener("click", () => elements.personalImportInput.click());
   elements.personalImportInput.addEventListener("change", async () => {
     try { await importPersonalData(elements.personalImportInput.files?.[0]); }

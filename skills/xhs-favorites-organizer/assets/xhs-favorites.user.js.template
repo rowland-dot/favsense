@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         小红书收藏知识库自动同步
+// @name         小红书收藏知识库按需整理
 // @namespace    local.xhs-favorites-organizer
-// @version      2.1.0
-// @description  将已登录 Chrome 中的收藏面板增量同步到本地 Obsidian 知识库
+// @version      2.2.0
+// @description  仅在用户主动触发时，将已登录 Chrome 中的收藏面板整理到本地知识库
 // @match        https://www.xiaohongshu.com/board/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
@@ -75,10 +75,10 @@
     return [...collected.values()].slice(0, history ? 200 : 60);
   }
 
-  function post(payload, timeout) {
+  function post(path, payload, timeout) {
     return new Promise((resolve, reject) => GM_xmlhttpRequest({
       method: "POST",
-      url: `http://127.0.0.1:${PORT}/import-sync`,
+      url: `http://127.0.0.1:${PORT}${path}`,
       headers: { "Content-Type": "application/json", "X-XHS-Bridge-Token": TOKEN },
       data: JSON.stringify(payload),
       timeout,
@@ -94,14 +94,15 @@
     }));
   }
 
-  async function run(mode = "daily", batch = String(Date.now())) {
+  async function run(mode = "incremental", batch = String(Date.now())) {
     if (!boardId || !board) return;
+    const runId = `${batch}_${boardId}`.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
     try {
       show(`准备扫描 ${board.name}`);
       const urls = await scan(mode);
       show(`正在入库 ${board.name} 的 ${urls.length} 篇`);
       const timeout = mode === "history" ? 80 * 60 * 1000 : 30 * 60 * 1000;
-      const result = await post({ run_id: `${batch}_${boardId}`.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80), board_id: boardId, urls }, timeout);
+      const result = await post("/import-sync", { run_id: runId, board_id: boardId, urls }, timeout);
       show(`${board.name} 完成：扫描 ${result.scanned}，新增 ${result.new}`);
       if (result.next_board_id) {
         await sleep(1200);
@@ -112,10 +113,14 @@
         next.searchParams.set("xhs_kb_mode", mode);
         location.assign(next.href);
       }
-    } catch (error) { show(error.message || String(error), true); }
+    } catch (error) {
+      const message = error.message || String(error);
+      show(message, true);
+      await post("/sync/failure", { run_id: runId, board_id: boardId, error: message }, 10000).catch(() => {});
+    }
   }
 
-  GM_registerMenuCommand("同步当前面板到知识库", () => run("daily", String(Date.now())));
+  GM_registerMenuCommand("整理当前收藏夹到知识库", () => run("incremental", String(Date.now())));
   const query = new URLSearchParams(location.search);
-  if (query.get("xhs_kb_sync") === "1") run(query.get("xhs_kb_mode") === "history" ? "history" : "daily", query.get("xhs_kb_batch") || String(Date.now()));
+  if (query.get("xhs_kb_sync") === "1") run(query.get("xhs_kb_mode") === "history" ? "history" : "incremental", query.get("xhs_kb_batch") || String(Date.now()));
 })();

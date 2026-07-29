@@ -1,13 +1,13 @@
 ---
 name: xhs-favorites-organizer
-description: 使用普通 Chrome、Tampermonkey 和本地脚本全自动同步、去重、分类并沉淀小红书收藏为 Obsidian 知识库。适用于每日收藏同步、收藏面板整理、知识卡片生成、资源索引和行动清单维护；运行时不依赖 Codex、Claude 或任何特定 AI Agent。
+description: 使用普通 Chrome、Tampermonkey 和本地脚本按需同步、去重、分类并沉淀小红书收藏为 Obsidian 知识库。适用于主动触发收藏整理、收藏面板管理、知识卡片生成、资源索引和行动清单维护；运行时不依赖 Codex、Claude 或任何特定 AI Agent。
 ---
 
 # 小红书收藏知识库
 
-核心链路必须独立运行：普通 Chrome 中的 Tampermonkey 用户脚本读取用户已登录且有权访问的收藏面板，把临时链接直接提交到仅监听 `127.0.0.1` 的本地服务；本地服务按笔记 ID 增量去重、调用固定版本的 XHS-Downloader 获取详情，并用确定性 Node.js 构建器生成 Obsidian Markdown。
+核心链路必须独立运行：用户在本地“同步设置”页点击“开始整理”后，普通 Chrome 中的 Tampermonkey 用户脚本读取用户已登录且有权访问的收藏面板，把临时链接直接提交到仅监听 `127.0.0.1` 的本地服务；本地服务按笔记 ID 增量去重、调用固定版本的 XHS-Downloader 获取详情，并用确定性 Node.js 构建器生成 Obsidian Markdown。不得设置每日定时访问或 Windows 开机自动整理。
 
-Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成为每日同步、计划任务、去重或知识库生成的运行依赖。
+Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成为主动同步、去重或知识库生成的运行依赖。
 
 ## 当前知识体系
 
@@ -26,7 +26,7 @@ Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成�
 - `site/index.html`：Hugging Face Static Space 入口；
 - `site/data/knowledge.json`：只包含可公开的原创策展字段、无 Token 的小红书站内检索入口和 GitHub 核验，不包含个人主页、收藏夹 ID、Cookie、Token、视频或帧文件；
 - 每次本地桥接服务完成 catalog 与 Obsidian 重建后，同时运行 `build-public-site.mjs` 更新网页数据；
-- “同步设置”页通过仅信任固定工作台 Origin `http://127.0.0.1:8766` 的本机凭据接口管理全部收藏夹开关；被 Git 忽略的 `site/.local/bridge.json` 只记录回环地址、不保存凭据，公共部署只显示本机连接说明；
+- “同步设置”页通过仅信任固定工作台 Origin `http://127.0.0.1:8766` 的本机凭据接口管理全部收藏夹开关并主动触发整理；“开始整理”只在本地桥接成功后出现。被 Git 忽略的 `site/.local/bridge.json` 只记录回环地址、不保存凭据，公共部署只显示本机连接说明；
 - 网页是纯 HTML/CSS/JavaScript，不依赖 Codex、Claude、后端服务或付费 Hugging Face 硬件。
 
 采集来源当前只实现小红书。用 `config/xhs-favorites.json` 的 `domain_profile` 选择知识领域；来源适配与领域规则分离，因此同一套小红书同步链路可以整理软件、健身、护肤或其他主题，而不把 GitHub/Skills 规则写进采集层。内置示例位于 `config/domain-profiles/`，领域资源注册表示例位于 `config/resource-registries/`。
@@ -61,11 +61,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
 http://127.0.0.1:47631/xhs-favorites.user.js
 ```
 
-安装命令会同时创建 Windows 计划任务。计划时间读取配置中的 `schedule_local`，按运行机器的本地时间解释。计划任务仅在当前 Windows 用户已登录时运行，因为它需要使用该用户普通 Chrome 中现有的小红书登录态。只有 Tampermonkey 的安装确认需要在浏览器中完成；安装前不得宣称自动同步已经启用。
+安装命令不会创建 Windows 计划任务或开机启动项；升级时还会删除旧版的 `FavSense-Daily` 任务。只有 Tampermonkey 的安装确认需要在浏览器中完成。日常使用时运行 `.\favsense.ps1 preview` 打开本地工作台，在“同步设置”页选择收藏夹并点击“开始整理”；关闭本地工作台后，本地桥接服务也会停止。
 
 ## 运行方式
 
-每日增量同步：
+主动增量整理的命令行备用入口：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
@@ -100,7 +100,7 @@ python -m http.server 8000 --directory site
 
 ## Agent 可选增强
 
-无论由 Claude、Codex 还是其他 Agent 执行，都只编辑 `references/*-curation.json` 的结构化策展字段，随后运行同一个构建器。不得让 Agent 直接控制每日计划任务，也不得要求用户每日复制粘贴链接。
+无论由 Claude、Codex 还是其他 Agent 执行，都只编辑 `references/*-curation.json` 的结构化策展字段，随后运行同一个构建器。不得让 Agent 创建每日或开机整理任务，也不得要求用户复制粘贴链接。
 
 策展字段为：`category`、`themes`、`summary`、`action`、`tools`，以及可选人工覆盖字段 `kind`。系统自动完成分类和应用建议，不要求用户逐篇维护等级或处理状态；`kind` 省略时按当前领域配置自动判断。事实不充分时必须写“待确认”，不能从标题臆测工具名称。
 
@@ -142,7 +142,7 @@ python -m http.server 8000 --directory site
 
 ## 故障恢复
 
-- Chrome 未登录：用户在普通 Chrome 恢复登录，下次手动或计划任务再运行。
+- Chrome 未登录：用户在普通 Chrome 恢复登录，然后回到本地设置页再次点击“开始整理”。
 - 本地服务未启动：运行 `start-autosync.ps1`。
 - 协议或配置不匹配：先运行 `stop-autosync.ps1`，再运行 `setup-autosync.ps1`。
 - 页面无链接：检查 Tampermonkey 是否启用及页面是否为白名单面板。

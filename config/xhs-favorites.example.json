@@ -1,7 +1,6 @@
 {
   "version": 1,
   "profile_url": "https://www.xiaohongshu.com/user/profile/YOUR_PROFILE_ID?tab=fav&subTab=board",
-  "schedule_local": "21:00",
   "published_since": "2026-01-01",
   "video_analysis": {
     "enabled": false,

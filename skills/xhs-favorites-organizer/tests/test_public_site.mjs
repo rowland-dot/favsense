@@ -566,6 +566,9 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /id="board-manager"/);
   assert.match(html, /id="board-list"/);
   assert.match(html, /id="board-enabled-count"/);
+  assert.match(html, /id="manual-sync-control"[^>]*hidden/);
+  assert.match(html, /id="manual-sync-start"[^>]*>开始整理</);
+  assert.doesNotMatch(html, /选择每天整理|自动进入每日同步/);
   assert.match(html, /id="creator-space-link"/);
   assert.doesNotMatch(html, /id="hero-dismiss"|id="hero-restore"/);
   assert.match(html, /theme-icon--sun/);
@@ -601,6 +604,9 @@ test("static app has the required deployment assets", async () => {
   assert.match(js, /\.\/\.local\/bridge\.json/);
   assert.match(js, /X-XHS-Bridge-Token/);
   assert.match(js, /localBridgeRequest\("\/boards"/);
+  assert.match(js, /localBridgeRequest\("\/sync\/start"/);
+  assert.match(js, /localBridgeRequest\("\/sync\/status"/);
+  assert.match(js, /manualSyncStartedHere/);
   assert.match(js, /creatorGitHubUrl/);
   assert.match(js, /FAVSENSE_CONFIG/);
   assert.match(js, /CREATOR_GITHUB_URL/);
@@ -694,20 +700,24 @@ test("local board manager accepts only a tokenized loopback bridge", () => {
     { baseUrl: "http://127.0.0.1" },
     { baseUrl: "http://127.0.0.1:47631/private" }
   ]) assert.throws(() => validateLocalBridgeConfig(config));
-  assert.equal(validateLocalBridgeSession({ ok: true, protocol_version: 4, token: "a".repeat(64) }), "a".repeat(64));
-  assert.throws(() => validateLocalBridgeSession({ ok: true, protocol_version: 3, token: "a".repeat(64) }));
+  assert.equal(validateLocalBridgeSession({ ok: true, protocol_version: 5, token: "a".repeat(64) }), "a".repeat(64));
+  assert.throws(() => validateLocalBridgeSession({ ok: true, protocol_version: 4, token: "a".repeat(64) }));
 });
 
-test("setup installs the daily task and leaves only Tampermonkey confirmation", async () => {
-  const [setup, task, readme] = await Promise.all([
+test("setup removes the legacy daily task and keeps organization user-triggered", async () => {
+  const [setup, start, task, readme] = await Promise.all([
     read("skills/xhs-favorites-organizer/scripts/setup-autosync.ps1"),
+    read("skills/xhs-favorites-organizer/scripts/start-autosync.ps1"),
     read("skills/xhs-favorites-organizer/scripts/install-windows-task.ps1"),
     read("README.md")
   ]);
-  assert.match(setup, /install-windows-task\.ps1/);
+  assert.doesNotMatch(setup, /install-windows-task\.ps1/);
+  assert.match(setup, /Unregister-ScheduledTask/);
   assert.match(setup, /One browser step remains/);
-  assert.doesNotMatch(setup, /Automatic sync is configured/);
+  assert.match(setup, /No daily or Windows startup task was installed/);
+  assert.match(start, /\$expectedProtocolVersion = 5/);
   assert.match(task, /FavSense-Daily/);
-  assert.doesNotMatch(task, /non-cooking/i);
-  assert.match(readme, /Tampermonkey 安装页确认安装后，自动同步才正式启用/);
+  assert.match(task, /Unregister-ScheduledTask/);
+  assert.doesNotMatch(task, /Register-ScheduledTask|New-ScheduledTaskTrigger/);
+  assert.match(readme, /开始整理/);
 });

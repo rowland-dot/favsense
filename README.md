@@ -11,7 +11,7 @@ hf_oauth: true
 hf_oauth_scopes:
   - contribute-repos
 license: mit
-short_description: 自动同步小红书收藏，通过视频分析、资源索引与 Obsidian 输出生成可搜索、可追溯、可行动的知识库
+short_description: 主动整理小红书收藏，通过视频分析、资源索引与 Obsidian 输出生成可搜索、可追溯、可行动的知识库
 tags:
   - knowledge-base
   - xiaohongshu
@@ -32,24 +32,24 @@ tags:
 
 > Make sense of what you save.
 
-FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整理引擎：自动同步收藏，通过视频画面分析识别短暂出现的信息，再生成可搜索、可追溯、可行动的知识库、资源索引与 Obsidian 笔记。
+FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整理引擎：由用户主动同步收藏，通过视频画面分析识别短暂出现的信息，再生成可搜索、可追溯、可行动的知识库、资源索引与 Obsidian 笔记。
 
 **Automated Xiaohongshu / RedNote favorites organizer with video analysis, a domain-aware resource index, Obsidian output, and a deployable static knowledge-base UI.**
 
 ![FavSense 拾光台知识卡与收藏分析界面](docs/assets/favsense-overview.png)
 
-它不是一组需要每天打开的 Markdown 文件，而是一条本机自动同步、确定性整理、静态网页阅读的完整链路。公开网页可以零后端部署到 GitHub Pages 或 Hugging Face Static Spaces。
+它不是一组需要每天打开的 Markdown 文件，而是一条本机按需同步、确定性整理、静态网页阅读的完整链路。公开网页可以零后端部署到 GitHub Pages 或 Hugging Face Static Spaces。
 
 项目由两层组成：
 
-- **本地私有层**：普通 Chrome、Tampermonkey、本地服务和计划任务负责只读同步；Cookie、临时 Token、原始视频和个人收藏配置不进入 Git。
+- **本地私有层**：普通 Chrome、Tampermonkey 和临时本地服务负责用户主动发起的只读同步；Cookie、临时 Token、原始视频和个人收藏配置不进入 Git。
 - **公开展示层**：零后端静态网页展示原创总结、领域资源、权威来源和下一步行动，可免费部署到 Hugging Face Static Space。
 
 ## 网页功能
 
 - 视觉化知识卡，不需要每天打开一堆 Markdown；
 - 全文搜索，以及由当前领域定义的内容形态筛选；software 示例使用 Skill/Tool/Workflow/Product，其他领域使用自己的标签；
-- “同步设置”页首屏列出全部收藏夹，可用独立开关决定每日同步或忽略；
+- “同步设置”页首屏列出全部收藏夹，可用独立开关决定本次整理范围，并通过“开始整理”按钮主动触发；
 - 单篇详情抽屉，集中显示深度总结、行动建议和相关资源；
 - 知识卡书签、只看书签，以及只显示书签关联资源；
 - 可在详情中修订知识卡描述，并随时恢复系统版本；
@@ -73,7 +73,7 @@ Node.js、Python、Chrome 和 Tampermonkey 依赖；根据示例创建我的私�
 原始视频、抽帧或 knowledge-base。遇到验证码、300031 或访问频繁立即停止。
 ```
 
-Agent 能完成本机环境检查、配置和任务安装；出于浏览器安全边界，首次扫码登录以及 Tampermonkey 的最终安装确认仍由用户在普通 Chrome 中完成。安装后的每日同步、去重、知识库构建和网页生成均独立运行，不依赖 Codex、Claude 或任何模型服务。
+Agent 能完成本机环境检查和配置；出于浏览器安全边界，首次扫码登录、Tampermonkey 的最终安装确认和“开始整理”按钮仍由用户在普通浏览器中操作。安装后的同步、去重、知识库构建和网页生成均独立运行，不依赖 Codex、Claude 或任何模型服务，也不会创建每日或开机整理任务。
 
 ## 快速预览
 
@@ -127,24 +127,24 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
   -Workspace "." -Config ".\config\xhs-favorites.json"
 ```
 
-安装命令会启动本机服务并创建 Windows 每日任务。命令完成后，在装有 Tampermonkey 的普通 Chrome 中打开：
+安装命令会启动本机服务用于完成首次安装，但不会创建 Windows 每日任务或开机启动项；升级时会删除旧版 `FavSense-Daily` 任务。命令完成后，在装有 Tampermonkey 的普通 Chrome 中打开：
 
 ```text
 http://127.0.0.1:47631/xhs-favorites.user.js
 ```
 
-在 Tampermonkey 安装页确认安装后，自动同步才正式启用。计划时间来自 `config/xhs-favorites.json` 的 `schedule_local`。
+在 Tampermonkey 安装页确认安装后，运行本地工作台，在“同步设置”中选择收藏夹并点击“开始整理”。只有这次点击会打开小红书并开始读取；关闭工作台后本地桥接服务会停止。
 
 Windows 用户也可以使用统一入口：
 
 ```powershell
 .\favsense.ps1 setup
-.\favsense.ps1 sync
 .\favsense.ps1 preview
+.\favsense.ps1 stop
 .\favsense.ps1 verify
 ```
 
-生成 Obsidian 知识库和公开网页数据：
+“开始整理”会自动生成 Obsidian 知识库和公开网页数据。命令行备用入口为：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
@@ -153,11 +153,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
 node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs"
 ```
 
-每日同步本身不依赖 Codex、Claude 或其他 Agent。Agent 只作为可选的二次策展者，并统一读写项目内的开放 JSON/Markdown 数据。
+主动整理本身不依赖 Codex、Claude 或其他 Agent。Agent 只作为可选的二次策展者，并统一读写项目内的开放 JSON/Markdown 数据。
 
-网页中的收录数、深度解读数、可复核画面数和资源数不是手工展示值：构建器从当前 catalog、`.xhs-favorites/video-analysis/` 的本机证据文件以及领域资源注册表重新计算。每次每日同步完成后都会重建网页数据；画面路径和原始文件不会进入公开 JSON。
+网页中的收录数、深度解读数、可复核画面数和资源数不是手工展示值：构建器从当前 catalog、`.xhs-favorites/video-analysis/` 的本机证据文件以及领域资源注册表重新计算。每次主动整理完成后都会重建网页数据；画面路径和原始文件不会进入公开 JSON。
 
-`setup-autosync.ps1` 会为本机网页生成 Git 忽略的 `site/.local/bridge.json`，其中只有回环服务地址，不包含 token。收藏夹开关只在本机工作台显示并直接更新私有配置；部署到 GitHub 或 Hugging Face 后只显示不含账号信息的本机连接说明。关闭收藏夹只停止后续采集，不会删除已经整理的知识卡。
+`setup-autosync.ps1` 会为本机网页生成 Git 忽略的 `site/.local/bridge.json`，其中只有回环服务地址，不包含 token。“开始整理”和收藏夹开关只在本机工作台显示；部署到 GitHub 或 Hugging Face 后不会获得本机触发能力。关闭收藏夹只停止后续采集，不会删除已经整理的知识卡。
 
 ## 小红书来源与领域配置
 
@@ -199,7 +199,7 @@ git push -u origin main
 
 ## 发布到 Hugging Face Spaces
 
-Hugging Face 不是只有项目介绍页：FavSense 会把 `site/` 作为完整、可交互的公网知识库发布。小红书登录、采集、视频证据和 Obsidian 完整库留在本机；每日任务完成最后一个已启用收藏夹后，可自动把新的脱敏网页数据同步到 Space。
+Hugging Face 不是只有项目介绍页：FavSense 会把 `site/` 作为完整、可交互的公网知识库发布。小红书登录、采集、视频证据和 Obsidian 完整库留在本机；用户主动整理完最后一个已启用收藏夹后，可把新的脱敏网页数据同步到 Space。
 
 ```json
 {
@@ -212,7 +212,7 @@ Hugging Face 不是只有项目介绍页：FavSense 会把 `site/` 作为完整�
 }
 ```
 
-发布 Token 不写入配置或仓库，由系统 Git 凭据管理器保存。默认使用 Static HTML SDK，完整支持搜索、筛选、详情、书签、个人修订和资源索引，不需要 Docker、Python 服务或 GPU。个人数据通过 HF OAuth 的最小 `contribute-repos` 权限写入当前用户自己的私有 Dataset；OAuth 临时凭据不会进入 FavSense 仓库。首次发布、每日自动发布、数据保存位置和故障排查见 [完整发布指南](docs/PUBLISHING.md)。
+发布 Token 不写入配置或仓库，由系统 Git 凭据管理器保存。默认使用 Static HTML SDK，完整支持搜索、筛选、详情、书签、个人修订和资源索引，不需要 Docker、Python 服务或 GPU。个人数据通过 HF OAuth 的最小 `contribute-repos` 权限写入当前用户自己的私有 Dataset；OAuth 临时凭据不会进入 FavSense 仓库。首次发布、主动整理后的发布、数据保存位置和故障排查见 [完整发布指南](docs/PUBLISHING.md)。
 
 1. 在 Hugging Face 选择 **Create new Space**。
 2. SDK 选择 **Static HTML**，可见性由你决定。
