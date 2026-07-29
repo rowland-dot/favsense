@@ -98,9 +98,9 @@ hf_oauth_scopes:
 
 本地预览、GitHub Pages 或未登录状态会继续使用浏览器 `localStorage`。这份本地副本用于离线降级；用户也可以随时导出或导入 JSON。换设备时登录同一 HF 账号后，页面会读取私有 Dataset 并与本地副本合并。OAuth access token 由官方客户端产生并有过期时间，不应手动复制到配置或 Git 仓库。
 
-FavSense 默认保留 Hugging Face README 中的 `header: mini` 浮动工具栏。网页只有在确认自己嵌入于 `huggingface.co/spaces/...` 且 `site/site-config.js` 标记为 mini 模式时，才把右上角的作者入口和主题按钮水平移到浮动工具栏左侧。它不会移动 FavSense 顶部导航，也不会增加顶部间距；本地预览、直接访问 Static Space、GitHub Pages 和 `default` 模式均按普通布局显示。
+FavSense 默认保留 Hugging Face README 中的 `header: mini` 浮动工具栏。网页只有在确认自己嵌入于 `huggingface.co/spaces/...` 且 `site/site-config.js` 标记为 mini 模式时，才为右上角的作者入口和主题按钮预留第二行，并将它们放在浮动工具栏下方。这个垂直避让不依赖 mini header 的水平宽度；本地预览、直接访问 Static Space、GitHub Pages 和 `default` 模式均按普通布局显示。
 
-用户主动整理后的发布器更新脱敏的 `site/` 时，会把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，并确保启用 HF OAuth 与 `contribute-repos` 权限，同时保留其余元数据和说明正文。公开的 `site/site-config.js` 使用同一模式，仅控制右上角操作区的横向避让，不改变导航栏的纵向位置。
+用户主动整理后的发布器更新脱敏的 `site/` 时，会把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，并确保启用 HF OAuth 与 `contribute-repos` 权限，同时保留其余元数据和说明正文。公开的 `site/site-config.js` 使用同一模式，仅为右上角操作区增加 mini header 下方的垂直避让，不改变非 Hugging Face 部署的布局。
 
 Static Space 的直接访问地址通常是：
 
