@@ -644,18 +644,17 @@ test("static app has the required deployment assets", async () => {
   assert.match(js, /configureHostLayout/);
   assert.match(js, /hasHuggingFaceMiniHeader/);
   assert.match(js, /dataset\.hfHeader/);
-  assert.match(css, /--hf-mini-controls-top:\s*108px/);
-  assert.match(css, /--hf-mini-site-header-height:\s*166px/);
+  assert.match(css, /--hf-mini-controls-top:\s*72px/);
   assert.match(css, /html\[data-hf-header="mini"\]\s+\.header-actions/);
   assert.match(css, /top:\s*var\(--hf-mini-controls-top\)/);
-  assert.match(css, /html\[data-hf-header="mini"\]\s+\.site-header\s*\{[\s\S]*?min-height:\s*var\(--hf-mini-site-header-height\)/);
-  assert.match(css, /html\[data-hf-header="mini"\]\s+\.site-header\s*\{[\s\S]*?padding-bottom:\s*88px/);
+  assert.doesNotMatch(css, /--hf-mini-site-header-height|html\[data-hf-header="mini"\]\s+\.site-header\s*\{/);
   assert.doesNotMatch(css, /--hf-mini-header-right-clearance|right:\s*var\(--hf-mini-header-right-clearance\)/);
   assert.doesNotMatch(css, /--hf-mini-header-clearance|margin-top:\s*var\(--hf/);
   assert.match(css, /\.skip-link\s*\{[\s\S]*?top:\s*0;[\s\S]*?transform:\s*translateY\(-100%\)/);
   assert.match(css, /\.skip-link:focus\s*\{[\s\S]*?top:\s*12px/);
   assert.match(publishingGuide, /`header: mini`/);
-  assert.match(publishingGuide, /放在浮动工具栏下方/);
+  assert.match(publishingGuide, /浮动放在 mini header 下方/);
+  assert.match(publishingGuide, /不增加 FavSense 头部高度/);
   assert.match(publishingGuide, /Space 根目录 README 前置配置中的 `header` 规范为 `mini`/);
 });
 

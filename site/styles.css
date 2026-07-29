@@ -23,8 +23,7 @@
   --radius-sm: 10px;
   --radius-md: 18px;
   --radius-lg: 28px;
-  --hf-mini-controls-top: 108px;
-  --hf-mini-site-header-height: 166px;
+  --hf-mini-controls-top: 72px;
   --grid-paper: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px), var(--paper);
   --grid-size: 48px 48px;
 }
@@ -121,10 +120,6 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
 
 .header-actions { display: flex; justify-content: flex-end; gap: 9px; }
 
-html[data-hf-header="mini"] .site-header {
-  min-height: var(--hf-mini-site-header-height);
-  padding-bottom: 88px;
-}
 html[data-hf-header="mini"] .header-actions {
   position: absolute;
   top: var(--hf-mini-controls-top);
