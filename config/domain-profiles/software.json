@@ -30,7 +30,6 @@
   "fallback": {
     "default_category": "其他软件与 AI",
     "default_kind": "Note",
-    "action": "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。",
     "kind_rules": [
       { "kind": "Skill", "pattern": "agent[ -]?skills?|claude[ -]?skills?|codex[ -]?skills?|技能包|能力包|\\bskills?\\b" },
       { "kind": "Workflow", "pattern": "工作流|workflow|方法|教程|步骤|攻略|流程|\\bsop\\b|如何|搭建|部署|实操|玩法|howto|跟我学|\\d+\\s*步|技巧|思路|提示词|\\btips?\\b|总结|指南" },

@@ -132,7 +132,7 @@ function fallback(note, profile) {
   const match = (profile.fallback?.rules || []).find((rule) => new RegExp(rule.pattern, "i").test(haystack));
   const category = match?.category || profile.fallback?.default_category || "待分类";
   const summary = clean(note.description).replace(/#[^#]+\[话题\]#/g, "").slice(0, 90) || "正文信息待补充。";
-  return { category, themes: [category], summary, action: profile.fallback?.action || "补全来源与可验证材料。", tools: [] };
+  return { category, themes: [category], summary, action: "", tools: [] };
 }
 
 function related(notes, current) {
@@ -174,11 +174,11 @@ last_seen_at: ${yaml(note.last_seen_at || "")}
 - 内容形态：${md(c.kind || "自动判断")}
 - 来源面板：${sourceBoards.map(md).join("、")}
 
-## 怎么用
+${c.action ? `## 怎么用
 
 - ${md(c.action)}
 
-## 涉及工具
+` : ""}## 涉及工具
 
 ${c.tools.length ? c.tools.map((tool) => `- [[03-工具雷达/工具索引#${md(tool)}|${md(tool)}]]`).join("\n") : "- 待确认"}
 
@@ -250,7 +250,12 @@ function main() {
   const toolBody = `# 工具雷达\n\n> 自动汇集收藏中明确出现的工具；使用前请通过官方来源确认权限、许可证和适用范围。\n\n${[...allTools].sort(([a], [b]) => a.localeCompare(b, "zh-CN")).map(([tool, items]) => `## ${md(tool)}\n\n- 来自：${items.map((item) => `[[02-知识卡片/${item.id}|${md(item.title)}]]`).join("、")}\n`).join("\n")}\n`;
   atomicWrite(path.join(output, "03-工具雷达", "工具索引.md"), toolBody);
 
-  const suggestions = [...categories].sort(([a], [b]) => a.localeCompare(b, "zh-CN")).map(([category, items]) => `## ${md(category)}\n\n${items.map((item) => `- ${md(item.curation.action)} — [[02-知识卡片/${item.id}|${md(item.title)}]]`).join("\n")}`).join("\n\n");
+  const suggestions = [...categories]
+    .sort(([a], [b]) => a.localeCompare(b, "zh-CN"))
+    .map(([category, items]) => [category, items.filter((item) => item.curation.action)])
+    .filter(([, items]) => items.length)
+    .map(([category, items]) => `## ${md(category)}\n\n${items.map((item) => `- ${md(item.curation.action)} — [[02-知识卡片/${item.id}|${md(item.title)}]]`).join("\n")}`)
+    .join("\n\n");
   atomicWrite(path.join(output, "04-行动与实验", "使用建议.md"), `# 使用建议\n\n> 系统从收藏中自动提取的应用方式，不是需要逐项完成的任务。需要时查阅即可。\n\n${suggestions}\n`);
 
   const boards = config.boards.map((board) => {

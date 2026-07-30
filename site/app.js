@@ -597,7 +597,7 @@ function renderDetail(note) {
       }).join("")}
     </div></section>
   ` : "";
-  const actionHtml = note.kind === "Note" ? "" : `
+  const actionHtml = note.kind === "Note" || !String(note.action || "").trim() ? "" : `
     <section class="detail-section"><h3>具体用法</h3><div class="action-box"><span>下一步</span><p>${escapeHtml(note.action)}</p></div></section>
   `;
   const tags = [...note.themes, ...note.tools];

@@ -29,7 +29,6 @@
   },
   "fallback": {
     "default_category": "训练知识与说法",
-    "action": "内容解读完成后，这里会直接呈现动作要领、适用条件和练习建议。",
     "rules": [
       { "category": "力量训练", "pattern": "力量|深蹲|硬拉|卧推|推举" },
       { "category": "增肌", "pattern": "增肌|肌肥大|容量|泵感" },

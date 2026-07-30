@@ -9,7 +9,7 @@
 - `category`：一个稳定主分类。
 - `themes`：1 至 3 个可检索概念。
 - `summary`：说明内容提供了什么，不复述标题，建议不超过 80 字。
-- `action`：系统自动提取的应用建议；不是要求用户维护的待办。
+- `action`：系统自动提取、且必须针对当前收藏的应用建议；不是要求用户维护的待办。未完成解读时保持为空，网页和 Obsidian 均不显示占位内容。
 - `kind`：可选的内容形态人工覆盖值，必须属于当前 `domain_profile` 的 `content_kinds`。例如 software 使用 `Tool`、`Skill`、`Workflow`、`Product`，fitness 使用 `Movement`、`Program`、`Claim`、`Product`。省略时由公开网页构建器自动判断。
 - `tools`：只写可确认的工具或项目名称；不确定则留空。
 

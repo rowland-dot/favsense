@@ -75,7 +75,8 @@ test("public site ships complete, structured knowledge data", async () => {
     assert.ok(note.title.length > 0);
     assert.ok(note.summary.length > 0);
     assert.ok(note.deepSummary.length >= note.summary.length);
-    assert.ok(note.action.length > 20);
+    assert.equal(typeof note.action, "string");
+    if (note.action) assert.ok(note.action.length > 20);
     assert.match(note.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/search_result\?/);
     assert.equal(Object.hasOwn(note, "priority"), false);
     assert.equal(Object.hasOwn(note, "risk"), false);
@@ -85,6 +86,7 @@ test("public site ships complete, structured knowledge data", async () => {
   assert.equal(Object.hasOwn(data.meta, "priorityLabels"), false);
   assert.ok(data.meta.sourceBoards.includes("Skills"));
   assert.equal(data.notes.some((note) => note.title === "未命名收藏"), false);
+  assert.equal(data.notes.some((note) => note.action === "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。"), false);
 });
 
 test("missing titles are inferred and public source navigation never publishes expiring direct links", async () => {
@@ -105,6 +107,11 @@ test("missing titles are inferred and public source navigation never publishes e
   assert.match(source.searchParams.get("keyword"), /丧尸清道夫/);
   assert.equal(source.searchParams.get("source"), "web_search_result_notes");
   assert.doesNotMatch(note.sourceUrl, /xsec_token|\/explore\/|\/discovery\/item\//);
+});
+
+test("uncurated notes do not expose a generic action placeholder", async () => {
+  const data = await buildProfileFixture("software.json", { uncurated: true });
+  assert.equal(data.notes[0].action, "");
 });
 
 test("uncertain software content uses a neutral category instead of Vibe Coding", async () => {
@@ -563,6 +570,7 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /<kbd[^>]*>按 \/ 搜索<\/kbd>/);
   assert.doesNotMatch(html, /项目雷达|资源雷达|同步与方法/);
   assert.doesNotMatch(html, /项目、风险与下一步|视频核验后的判断|证据方法|TRY →/);
+  assert.match(js, /note\.kind === "Note" \|\| !String\(note\.action \|\| ""\)\.trim\(\)/);
   assert.match(html, /id="board-manager"/);
   assert.match(html, /id="board-list"/);
   assert.match(html, /id="board-enabled-count"/);

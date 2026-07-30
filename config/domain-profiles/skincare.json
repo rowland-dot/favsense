@@ -29,7 +29,6 @@
   },
   "fallback": {
     "default_category": "功效说法与依据",
-    "action": "内容解读完成后，这里会直接呈现适用肤质、耐受提示、搭配边界和使用建议。",
     "rules": [
       { "category": "防晒", "pattern": "防晒|SPF|UVA|UVB" },
       { "category": "痤疮护理", "pattern": "痘|痤疮|粉刺|水杨酸|过氧化苯甲酰" },

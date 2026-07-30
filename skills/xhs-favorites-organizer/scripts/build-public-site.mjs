@@ -219,7 +219,7 @@ function fallbackEntry(raw) {
     summary: excerpt
       ? excerpt.slice(0, 240)
       : "这条收藏已收录，完整内容尚未解读。",
-    action: profile.fallback?.action || "内容解读完成后，这里会直接呈现核心结论和具体用法。",
+    action: "",
     tools: [],
     kind
   };
@@ -251,7 +251,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     themes: entry.themes || [],
     summary: entry.summary,
     deepSummary: deepSummaryById.get(noteId)?.text || entry.summary,
-    action: entry.action,
+    action: String(entry.action || "").trim(),
     tools: entry.tools || [],
     kind: classify(entry, matchedResources),
     resources: matchedResources.map((resource) => resource.name),
