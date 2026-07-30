@@ -8,6 +8,7 @@ import { resourceGroup, resourceSortsForGroup, sortResources, validateResourceIn
 import { hasHuggingFaceMiniHeader, resolveHuggingFaceHeaderLayout } from "../../../site/huggingface-layout.mjs";
 import { assertPrivateDataset, repositoryIsMissing, repositoryWriteConflict } from "../../../site/hf-sync-guard.mjs";
 import { collectVideoEvidenceStats } from "../scripts/evidence-stats.mjs";
+import { resolveCategoryPolicy, sourceBoardNames } from "../scripts/category-policy.mjs";
 import { validateLocalBridgeConfig, validateLocalBridgeSession } from "../../../site/local-bridge-utils.mjs";
 import {
   loadPersonalData,
@@ -33,14 +34,14 @@ async function buildProfileFixture(profileFile, options = {}) {
       domain_profile: `config/domain-profiles/${profileFile}`,
       curation_file: curationPath,
       public_stats: {},
-      boards: [{ id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "Fixture", enabled: true }]
+      boards: options.boards || [{ id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "Fixture", enabled: true }]
     })),
     writeFile(catalogPath, JSON.stringify({ notes: {
       [noteId]: options.note || { title: "Fixture note", description: "Fixture description", source_boards: ["Fixture"] }
     } })),
-    writeFile(curationPath, JSON.stringify(options.uncurated ? {} : {
+    writeFile(curationPath, JSON.stringify(options.curation ?? (options.uncurated ? {} : {
       [noteId]: { category: "Fixture", themes: [], summary: "Fixture summary with enough content for deterministic profile compilation.", action: "Review the configured resource and its official evidence before taking action.", tools: [] }
-    }))
+    })))
   ]);
   const args = [
     resolve(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"),
@@ -68,6 +69,7 @@ test("public site ships complete, structured knowledge data", async () => {
   assert.ok(data.resources.length >= 30);
   assert.equal(data.meta.resourceCount, data.resources.length);
   assert.equal(data.meta.resourceIndexEnabled, true);
+  assert.equal(data.meta.categoryStrategy, "source-board-first");
   assert.ok(data.categories.length >= 8);
 
   for (const note of data.notes) {
@@ -81,6 +83,9 @@ test("public site ships complete, structured knowledge data", async () => {
     assert.equal(Object.hasOwn(note, "priority"), false);
     assert.equal(Object.hasOwn(note, "risk"), false);
     assert.match(note.kind, /^(Note|Tool|Skill|Workflow|Product)$/);
+    assert.equal(note.categorySource, "source_board");
+    assert.ok(Array.isArray(note.sourceBoards) && note.sourceBoards.length > 0);
+    assert.equal(Object.keys(note).some((key) => /board.*id/i.test(key)), false);
   }
 
   assert.equal(Object.hasOwn(data.meta, "priorityLabels"), false);
@@ -101,7 +106,9 @@ test("missing titles are inferred and public source navigation never publishes e
   });
   const note = data.notes[0];
   assert.equal(note.title, "国产“爱死机”《丧尸清道夫》创作思路分享");
-  assert.equal(note.category, "AI设计与多媒体");
+  assert.equal(note.category, "Fixture");
+  assert.equal(note.suggestedCategory, "AI设计与多媒体");
+  assert.equal(note.categorySource, "source_board");
   const source = new URL(note.sourceUrl);
   assert.equal(source.pathname, "/search_result");
   assert.match(source.searchParams.get("keyword"), /丧尸清道夫/);
@@ -119,7 +126,75 @@ test("uncertain software content uses a neutral category instead of Vibe Coding"
     uncurated: true,
     note: { title: "一条暂时无法判断领域的收藏", description: "一般观点", source_boards: ["Fixture"] }
   });
-  assert.equal(data.notes[0].category, "其他软件与 AI");
+  assert.equal(data.notes[0].category, "Fixture");
+  assert.equal(data.notes[0].suggestedCategory, "其他软件与 AI");
+});
+
+test("source boards are the default primary category while content remains a searchable suggestion", () => {
+  const result = resolveCategoryPolicy({
+    entry: { category: "动作技术", themes: ["深蹲"] },
+    note: { source_boards: ["下肢训练"] },
+    config: { boards: [{ name: "下肢训练", enabled: true }] },
+    profile: { classification: { category_strategy: "source-board-first" }, fallback: {} }
+  });
+  assert.equal(result.category, "下肢训练");
+  assert.equal(result.categorySource, "source_board");
+  assert.equal(result.suggestedCategory, "动作技术");
+  assert.deepEqual(result.themes, ["深蹲"]);
+});
+
+test("board aliases, priorities and explicit curated overrides are deterministic", () => {
+  const config = { boards: [
+    { id: "first-private-id", name: "随手收藏", category: "待阅读", category_priority: 1 },
+    { id: "second-private-id", name: "训练计划", category_priority: 20 }
+  ] };
+  const note = { source_board_ids: ["first-private-id", "second-private-id"] };
+  assert.deepEqual(sourceBoardNames(note, config), ["随手收藏", "训练计划"]);
+  const boardFirst = resolveCategoryPolicy({
+    entry: { category: "力量训练", themes: [] }, note, config,
+    profile: { classification: { category_strategy: "source-board-first" }, fallback: {} }
+  });
+  assert.equal(boardFirst.category, "训练计划");
+  const overridden = resolveCategoryPolicy({
+    entry: { category: "康复", category_override: true, category_reason: "内容是伤后恢复方案", themes: [] }, note, config,
+    profile: { classification: { category_strategy: "source-board-first" }, fallback: {} }, entryOrigin: "curation"
+  });
+  assert.equal(overridden.category, "康复");
+  assert.equal(overridden.categorySource, "curation");
+  assert.equal(overridden.categoryReason, "内容是伤后恢复方案");
+});
+
+test("content-first remains an explicit domain option", () => {
+  const result = resolveCategoryPolicy({
+    entry: { category: "成分机制", themes: [] },
+    note: { source_boards: ["护肤收藏"] },
+    config: { boards: [{ name: "护肤收藏", enabled: true }] },
+    profile: { classification: { category_strategy: "content-first" }, fallback: {} }
+  });
+  assert.equal(result.category, "成分机制");
+  assert.equal(result.categorySource, "content_rule");
+});
+
+test("a curated category override requires an auditable reason", () => {
+  assert.throws(() => resolveCategoryPolicy({
+    entry: { category: "康复", category_override: true, themes: [] },
+    note: { source_boards: ["训练计划"] },
+    config: { boards: [{ name: "训练计划", enabled: true }] },
+    profile: { classification: { category_strategy: "source-board-first" }, fallback: {} },
+    entryOrigin: "curation"
+  }), /category_reason is required/);
+});
+
+test("automatic content rules cannot override a source board", () => {
+  const result = resolveCategoryPolicy({
+    entry: { category: "动作技术", category_override: true, themes: ["一", "二", "三", "四"] },
+    note: { source_boards: ["训练计划"] },
+    config: { boards: [{ name: "训练计划", enabled: true }] },
+    profile: { classification: { category_strategy: "source-board-first" }, fallback: {} },
+    entryOrigin: "content_rule"
+  });
+  assert.equal(result.category, "训练计划");
+  assert.deepEqual(result.themes, ["一", "二", "三"]);
 });
 
 test("content kind supports an explicit curated override", async () => {
@@ -594,6 +669,9 @@ test("static app has the required deployment assets", async () => {
   assert.match(js, /renderResourceSortOptions/);
   assert.match(js, /data-bookmark-note/);
   assert.match(js, /data-description-form/);
+  assert.match(js, /note\.suggestedCategory && note\.suggestedCategory !== note\.category/);
+  assert.match(js, /note\.category, note\.suggestedCategory, note\.summary/);
+  assert.match(css, /\.category-suggestion/);
   assert.match(js, /relatedResourceNames/);
   assert.match(personalStore, /favsense-personal-v1/);
   assert.match(personalStore, /MAX_DESCRIPTION_LENGTH = 4000/);

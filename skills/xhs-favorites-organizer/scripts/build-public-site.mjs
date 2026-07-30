@@ -4,6 +4,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { collectVideoEvidenceStats } from "./evidence-stats.mjs";
+import { resolveCategoryPolicy } from "./category-policy.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -232,6 +233,13 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const isCurated = Object.hasOwn(curation, noteId);
   const isFrameVerified = frameVerifiedNoteIds.has(noteId);
   const entry = isCurated ? curation[noteId] : fallbackEntry(raw);
+  const categoryPolicy = resolveCategoryPolicy({
+    entry,
+    note: raw,
+    config,
+    profile,
+    entryOrigin: isCurated ? "curation" : "content_rule"
+  });
   const matchedResources = [...new Map(
     (entry.tools || []).map(resourceForTool).filter(Boolean).map((resource) => [resource.name, resource])
   ).values()];
@@ -247,8 +255,12 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     likes: raw.liked_count || "",
     collections: raw.collected_count || "",
     mediaType: raw.type || "视频",
-    category: entry.category,
-    themes: entry.themes || [],
+    category: categoryPolicy.category,
+    categorySource: categoryPolicy.categorySource,
+    categoryReason: categoryPolicy.categoryReason,
+    suggestedCategory: categoryPolicy.suggestedCategory,
+    sourceBoards: categoryPolicy.sourceBoards,
+    themes: categoryPolicy.themes,
     summary: entry.summary,
     deepSummary: deepSummaryById.get(noteId)?.text || entry.summary,
     action: String(entry.action || "").trim(),
@@ -285,6 +297,7 @@ const output = {
     sourceBoard: visibleBoards.join("、"),
     profileId: profile.id,
     profileLabel: profile.label,
+    categoryStrategy: profile.classification?.category_strategy || "source-board-first",
     hero: profile.presentation?.hero || {},
     noteCount: notes.length,
     verifiedNoteCount,

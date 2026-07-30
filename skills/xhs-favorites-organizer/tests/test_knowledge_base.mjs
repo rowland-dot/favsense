@@ -21,8 +21,8 @@ try {
     { id: "cooking", name: "烹饪", enabled: false, reason: "用户明确排除", advertised_count: 1 },
   ] }), "utf8");
   fs.writeFileSync(curationPath, JSON.stringify({
-    note_a: { category: "信息采集与搜索", themes: ["搜索"], summary: "搜索摘要", action: "验证搜索", tools: ["SearchTool"] },
-    note_b: { category: "知识管理与记忆", themes: ["知识图谱"], summary: "知识摘要", action: "验证知识", tools: [] },
+    note_a: { category: "信息采集与搜索", category_override: true, category_reason: "测试显式覆盖", themes: ["搜索"], summary: "搜索摘要", action: "验证搜索", tools: ["SearchTool"] },
+    note_b: { category: "知识管理与记忆", category_override: true, category_reason: "测试显式覆盖", themes: ["知识图谱"], summary: "知识摘要", action: "验证知识", tools: [] },
   }), "utf8");
 
   const run = () => spawnSync("node", [

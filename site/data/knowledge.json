@@ -2,7 +2,7 @@
   "meta": {
     "title": "小红书收藏知识工作台",
     "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
-    "generatedAt": "2026-07-30T08:58:10.063Z",
+    "generatedAt": "2026-07-30T15:12:21.251Z",
     "source": "xiaohongshu",
     "sourceBoards": [
       "Skills",
@@ -19,6 +19,7 @@
     "sourceBoard": "Skills、AI电商、AI自媒体、SEO、AI设计、AI视频生成、AI基础知识、Vibe Coding、小红书内容运营、OpenClaw",
     "profileId": "software",
     "profileLabel": "软件与 AI 工具",
+    "categoryStrategy": "source-board-first",
     "hero": {
       "eyebrow": "本期片场 · 软件与 AI 收藏",
       "from": "收藏过",
@@ -155,44 +156,44 @@
   },
   "categories": [
     {
-      "name": "开发部署与Vibe Coding",
-      "count": 8
+      "name": "Skills",
+      "count": 107
     },
     {
-      "name": "信息采集与搜索",
-      "count": 15
+      "name": "AI电商",
+      "count": 4
     },
     {
-      "name": "Agent与自动化",
-      "count": 25
-    },
-    {
-      "name": "Skills与工作流",
-      "count": 46
-    },
-    {
-      "name": "垂直工具与数据",
-      "count": 1
-    },
-    {
-      "name": "内容增长与商业",
-      "count": 19
-    },
-    {
-      "name": "本地模型与成本",
+      "name": "AI自媒体",
       "count": 9
     },
     {
-      "name": "知识管理与记忆",
-      "count": 13
+      "name": "SEO",
+      "count": 5
     },
     {
-      "name": "AI设计与多媒体",
-      "count": 46
+      "name": "AI设计",
+      "count": 6
     },
     {
-      "name": "其他软件与 AI",
-      "count": 15
+      "name": "AI视频生成",
+      "count": 33
+    },
+    {
+      "name": "AI基础知识",
+      "count": 18
+    },
+    {
+      "name": "Vibe Coding",
+      "count": 3
+    },
+    {
+      "name": "小红书内容运营",
+      "count": 3
+    },
+    {
+      "name": "OpenClaw",
+      "count": 9
     }
   ],
   "notes": [
@@ -206,7 +207,13 @@
       "likes": "240",
       "collections": "793",
       "mediaType": "视频",
-      "category": "开发部署与Vibe Coding",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "开发部署与Vibe Coding",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Archify",
         "架构图",
@@ -235,7 +242,13 @@
       "likes": "1209",
       "collections": "3141",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Crawl4AI",
         "网页转Markdown",
@@ -266,7 +279,13 @@
       "likes": "4583",
       "collections": "5548",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "GitHub周榜",
         "多Agent",
@@ -299,7 +318,13 @@
       "likes": "493",
       "collections": "844",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Wigolo",
         "本地搜索",
@@ -330,7 +355,13 @@
       "likes": "4212",
       "collections": "5793",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "AnySearch",
         "联网搜索",
@@ -361,7 +392,13 @@
       "likes": "123",
       "collections": "304",
       "mediaType": "视频",
-      "category": "开发部署与Vibe Coding",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "开发部署与Vibe Coding",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Grok Build",
         "Agent框架",
@@ -392,7 +429,13 @@
       "likes": "62",
       "collections": "157",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Record and Replay",
         "Codex Skill",
@@ -421,7 +464,13 @@
       "likes": "74",
       "collections": "297",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "MediaCrawler",
         "社媒采集",
@@ -452,7 +501,13 @@
       "likes": "208",
       "collections": "733",
       "mediaType": "视频",
-      "category": "垂直工具与数据",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "垂直工具与数据",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "FinanceDatabase",
         "Python",
@@ -484,7 +539,13 @@
       "likes": "1479",
       "collections": "2002",
       "mediaType": "视频",
-      "category": "开发部署与Vibe Coding",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "开发部署与Vibe Coding",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "EdgeOne Pages",
         "Agent部署",
@@ -513,7 +574,13 @@
       "likes": "3488",
       "collections": "5578",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Graphify",
         "知识图谱",
@@ -544,7 +611,13 @@
       "likes": "738",
       "collections": "1675",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "ScrapeGraphAI",
         "出海获客",
@@ -575,7 +648,13 @@
       "likes": "54",
       "collections": "118",
       "mediaType": "视频",
-      "category": "本地模型与成本",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "本地模型与成本",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Headroom",
         "Token压缩",
@@ -606,7 +685,13 @@
       "likes": "313",
       "collections": "994",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Mano-P",
         "GUI-VLA",
@@ -637,7 +722,13 @@
       "likes": "97",
       "collections": "271",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "last30days",
         "社媒研究",
@@ -668,7 +759,13 @@
       "likes": "76",
       "collections": "210",
       "mediaType": "视频",
-      "category": "开发部署与Vibe Coding",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "开发部署与Vibe Coding",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "awesome-selfhosted",
         "自托管",
@@ -699,7 +796,13 @@
       "likes": "830",
       "collections": "2310",
       "mediaType": "视频",
-      "category": "开发部署与Vibe Coding",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "开发部署与Vibe Coding",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "awesome-selfhosted",
         "开源目录",
@@ -730,7 +833,13 @@
       "likes": "85",
       "collections": "256",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Meetily",
         "会议转写",
@@ -761,7 +870,13 @@
       "likes": "191",
       "collections": "506",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Scritty",
         "多Agent记忆",
@@ -792,7 +907,13 @@
       "likes": "1086",
       "collections": "2024",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Postiz",
         "社媒运营",
@@ -823,7 +944,13 @@
       "likes": "269",
       "collections": "889",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Agent-Reach",
         "跨平台检索",
@@ -854,7 +981,13 @@
       "likes": "299",
       "collections": "839",
       "mediaType": "视频",
-      "category": "本地模型与成本",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "本地模型与成本",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Headroom",
         "Token压缩",
@@ -885,7 +1018,13 @@
       "likes": "89",
       "collections": "221",
       "mediaType": "视频",
-      "category": "本地模型与成本",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "本地模型与成本",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "whichllm",
         "本地大模型",
@@ -916,7 +1055,13 @@
       "likes": "88",
       "collections": "235",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Cognee",
         "知识图谱",
@@ -947,7 +1092,13 @@
       "likes": "26",
       "collections": "61",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "CocoIndex",
         "增量索引",
@@ -978,7 +1129,13 @@
       "likes": "408",
       "collections": "910",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "GitHub合集",
         "Skill",
@@ -1018,7 +1175,13 @@
       "likes": "778",
       "collections": "1254",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "符号链接",
         "Claude",
@@ -1047,7 +1210,13 @@
       "likes": "462",
       "collections": "1101",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Omnify AI",
         "一人公司",
@@ -1076,7 +1245,13 @@
       "likes": "596",
       "collections": "1180",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "社区Skill",
         "工作流设计",
@@ -1115,7 +1290,13 @@
       "likes": "7955",
       "collections": "1.2万",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "MarkItDown",
         "文档转换",
@@ -1146,7 +1327,13 @@
       "likes": "534",
       "collections": "1436",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "last30days",
         "社媒研究",
@@ -1177,7 +1364,13 @@
       "likes": "622",
       "collections": "1605",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Loop Engineering",
         "Claude Code",
@@ -1206,7 +1399,13 @@
       "likes": "7053",
       "collections": "1.3万",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "GitHub周榜",
         "Agent Skills",
@@ -1253,7 +1452,13 @@
       "likes": "544",
       "collections": "1589",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "AiToEarn",
         "一人公司",
@@ -1284,7 +1489,13 @@
       "likes": "1.2万",
       "collections": "2万",
       "mediaType": "视频",
-      "category": "开发部署与Vibe Coding",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "开发部署与Vibe Coding",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Build Your Own X",
         "计算机基础",
@@ -1315,7 +1526,13 @@
       "likes": "777",
       "collections": "1206",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "阿里云百炼",
         "多模态生成",
@@ -1347,7 +1564,13 @@
       "likes": "151",
       "collections": "352",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "AutoResearch",
         "自主实验",
@@ -1378,7 +1601,13 @@
       "likes": "5224",
       "collections": "9722",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Claude",
         "提示模式",
@@ -1407,7 +1636,13 @@
       "likes": "188",
       "collections": "445",
       "mediaType": "视频",
-      "category": "开发部署与Vibe Coding",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "开发部署与Vibe Coding",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Cloud Mail",
         "Cloudflare",
@@ -1438,7 +1673,13 @@
       "likes": "214",
       "collections": "424",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "AI电商",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI电商"
+      ],
       "themes": [
         "独立站",
         "竞争情报",
@@ -1465,7 +1706,13 @@
       "likes": "194",
       "collections": "538",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "AI电商",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI电商"
+      ],
       "themes": [
         "CRMEB",
         "电商系统",
@@ -1496,7 +1743,13 @@
       "likes": "3633",
       "collections": "6869",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI电商",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI电商"
+      ],
       "themes": [
         "AiWind",
         "电商图片",
@@ -1527,7 +1780,13 @@
       "likes": "1704",
       "collections": "2607",
       "mediaType": "图文",
-      "category": "Skills与工作流",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
       "themes": [],
       "summary": "最近的小红书越来越像一个Skill Hub了，越来越多的创作者都在分享各种Skill，再加上官方现在还趁热打铁发布了Red Skill这个新功能，允许创作者直接在笔记里分享自己的完整的Skill直接让观众下载，这一步真的很超前。最近沉迷于在小红书上收集整理各种Skill，在这里归纳总结了我找到的所有小红书分享的高赞Skill 📚图文制作类 1️⃣jimeng-infographic-skill - @陈困困 分享的即梦信息图生成 Skill，把信息图制作流程封装进 Agen",
       "deepSummary": "最近的小红书越来越像一个Skill Hub了，越来越多的创作者都在分享各种Skill，再加上官方现在还趁热打铁发布了Red Skill这个新功能，允许创作者直接在笔记里分享自己的完整的Skill直接让观众下载，这一步真的很超前。最近沉迷于在小红书上收集整理各种Skill，在这里归纳总结了我找到的所有小红书分享的高赞Skill 📚图文制作类 1️⃣jimeng-infographic-skill - @陈困困 分享的即梦信息图生成 Skill，把信息图制作流程封装进 Agen",
@@ -1550,7 +1809,13 @@
       "likes": "38",
       "collections": "59",
       "mediaType": "图文",
-      "category": "信息采集与搜索",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
       "themes": [],
       "summary": "小红书版 OpenClaw 来了！ 快速搞定爆款笔记，新手轻松涨粉。 一款叫RedBox的小红书AI创作工具火了， 核心思路很直接： 把小红书从\"灵感-创作-发布\"全链路搬到本地， 用AI接管中间所有脏活累活。 工作流分三步：浏览器插件一键采集爆款笔记、YouTube视频、网页内容→存进本地知识库按空间分类管理→AI辅助写作+自动化定时发布。 封面、标题组、生图全在内。 几个值得留意的细节。 采集能力是Chrome插件实现的，支持小红书笔记和YouTube视频直接抓取。这意味",
       "deepSummary": "小红书版 OpenClaw 来了！ 快速搞定爆款笔记，新手轻松涨粉。 一款叫RedBox的小红书AI创作工具火了， 核心思路很直接： 把小红书从\"灵感-创作-发布\"全链路搬到本地， 用AI接管中间所有脏活累活。 工作流分三步：浏览器插件一键采集爆款笔记、YouTube视频、网页内容→存进本地知识库按空间分类管理→AI辅助写作+自动化定时发布。 封面、标题组、生图全在内。 几个值得留意的细节。 采集能力是Chrome插件实现的，支持小红书笔记和YouTube视频直接抓取。这意味",
@@ -1573,7 +1838,13 @@
       "likes": "15",
       "collections": "19",
       "mediaType": "图文",
-      "category": "知识管理与记忆",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
       "themes": [],
       "summary": "做这套「内容创作选题册」， 是因为读了很多爆款创作的书籍都提到了一点。 爆款是重复的。 这其实是给后来的入局者们一个信心。 爆款是有规律的，它并非天才创作者的灵光乍现。 所以我集合了六大头部赛道的优质内容，并按书中以及自我实践中总结下来的经验对爆文进行拆解与总结。 拆解1篇爆文、10篇爆文、100篇爆文， 那隐藏在千变万幻的爆文中不变的骨骼框架， 必将被你窥见。至此，爆款易如反掌。 [红书R]「01优质内容」 优质内容存在飞书多维表格中。里面记录了每篇爆文的核心信息，标题、文",
       "deepSummary": "做这套「内容创作选题册」， 是因为读了很多爆款创作的书籍都提到了一点。 爆款是重复的。 这其实是给后来的入局者们一个信心。 爆款是有规律的，它并非天才创作者的灵光乍现。 所以我集合了六大头部赛道的优质内容，并按书中以及自我实践中总结下来的经验对爆文进行拆解与总结。 拆解1篇爆文、10篇爆文、100篇爆文， 那隐藏在千变万幻的爆文中不变的骨骼框架， 必将被你窥见。至此，爆款易如反掌。 [红书R]「01优质内容」 优质内容存在飞书多维表格中。里面记录了每篇爆文的核心信息，标题、文",
@@ -1596,7 +1867,13 @@
       "likes": "5",
       "collections": "16",
       "mediaType": "图文",
-      "category": "Skills与工作流",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
       "themes": [],
       "summary": "#记录吧就现在[话题]# #小红书运营干货[话题]# #爆款标题[话题]# #AI工具[话题]# #AI人工智能[话题]# #自媒体风口[话题]# #内容运营[话题]# #如何做博主[话题]# #提高工作效率的方法[话题]# #新媒体运营工具[话题]#",
       "deepSummary": "#记录吧就现在[话题]# #小红书运营干货[话题]# #爆款标题[话题]# #AI工具[话题]# #AI人工智能[话题]# #自媒体风口[话题]# #内容运营[话题]# #如何做博主[话题]# #提高工作效率的方法[话题]# #新媒体运营工具[话题]#",
@@ -1619,7 +1896,13 @@
       "likes": "408",
       "collections": "652",
       "mediaType": "图文",
-      "category": "知识管理与记忆",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
       "themes": [],
       "summary": "小红书 + Obsidian 这个组合特别适合我这种平时爱收藏、爱记东西、又想把内容真正用起来的人。 以前刷到有用的内容，我也会先收藏、点赞， 但收藏久了基本就等于“躺在那儿”。 想找的时候找不到， 想复用的时候也不知道从哪翻。 后来我把小红书的内容慢慢同步到 Obsidian 里之后，体验完全不一样了[偷笑R] 它对我最大的帮助不是“存起来”， 而是终于可以开始继续通过AI加工和使用了： [飞盘R]收藏的内容可以集中整理 [飞盘R]图片、正文、视频都能沉淀下来 [飞盘R]评",
       "deepSummary": "小红书 + Obsidian 这个组合特别适合我这种平时爱收藏、爱记东西、又想把内容真正用起来的人。 以前刷到有用的内容，我也会先收藏、点赞， 但收藏久了基本就等于“躺在那儿”。 想找的时候找不到， 想复用的时候也不知道从哪翻。 后来我把小红书的内容慢慢同步到 Obsidian 里之后，体验完全不一样了[偷笑R] 它对我最大的帮助不是“存起来”， 而是终于可以开始继续通过AI加工和使用了： [飞盘R]收藏的内容可以集中整理 [飞盘R]图片、正文、视频都能沉淀下来 [飞盘R]评",
@@ -1642,7 +1925,13 @@
       "likes": "535",
       "collections": "1314",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
       "themes": [
         "Higgsfield",
         "视频预测",
@@ -1675,7 +1964,13 @@
       "likes": "1290",
       "collections": "2729",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
       "themes": [
         "营销团队",
         "Agent Skills",
@@ -1708,7 +2003,13 @@
       "likes": "1216",
       "collections": "2837",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
       "themes": [
         "AI HOT",
         "热点扫描",
@@ -1740,7 +2041,13 @@
       "likes": "5905",
       "collections": "9458",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
       "themes": [
         "内容创作",
         "Agent Skills",
@@ -1783,7 +2090,13 @@
       "likes": "455",
       "collections": "815",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "SEO",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "SEO"
+      ],
       "themes": [],
       "summary": "#SEO[话题]# #GEO[话题]# #独立站[话题]# #shopify[话题]# #AI自动化[话题]# #howto用好AI[话题]#",
       "deepSummary": "#SEO[话题]# #GEO[话题]# #独立站[话题]# #shopify[话题]# #AI自动化[话题]# #howto用好AI[话题]#",
@@ -1806,7 +2119,13 @@
       "likes": "1930",
       "collections": "3390",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "SEO",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "SEO"
+      ],
       "themes": [
         "Meta Ads",
         "Claude Connector",
@@ -1837,7 +2156,13 @@
       "likes": "3564",
       "collections": "7849",
       "mediaType": "视频",
-      "category": "开发部署与Vibe Coding",
+      "category": "SEO",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "开发部署与Vibe Coding",
+      "sourceBoards": [
+        "SEO"
+      ],
       "themes": [
         "FreeDomain",
         "免费子域名",
@@ -1868,7 +2193,13 @@
       "likes": "164",
       "collections": "221",
       "mediaType": "图文",
-      "category": "信息采集与搜索",
+      "category": "SEO",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "SEO"
+      ],
       "themes": [],
       "summary": "工作流整体分为3步，已经进行独立解耦： 1. SEO关键词获取 中文+英文双语关键词抓取，serp排名前三对手核心词，痛点词等，已设定判定标准，避免词一大堆但是一个有用的都没有 2. SEO文章制作 关键词排布要求（筛选主次关键词，段落排布），高转化公式，CTA，AEO优化，文章风格约束 3. WordPress自动发布 文章自动发布到对应的分类中，包含文章的Meta数据发布，自动实现xml sitemap站点图加速收录，问题去重，Open graphs tag，breadc",
       "deepSummary": "工作流整体分为3步，已经进行独立解耦： 1. SEO关键词获取 中文+英文双语关键词抓取，serp排名前三对手核心词，痛点词等，已设定判定标准，避免词一大堆但是一个有用的都没有 2. SEO文章制作 关键词排布要求（筛选主次关键词，段落排布），高转化公式，CTA，AEO优化，文章风格约束 3. WordPress自动发布 文章自动发布到对应的分类中，包含文章的Meta数据发布，自动实现xml sitemap站点图加速收录，问题去重，Open graphs tag，breadc",
@@ -1891,7 +2222,13 @@
       "likes": "192",
       "collections": "365",
       "mediaType": "图文",
-      "category": "信息采集与搜索",
+      "category": "SEO",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "SEO"
+      ],
       "themes": [],
       "summary": "做户外独立站朋友SEO自然流量从日均120涨到了8100+ 而且Google SGE里他的产品页直接排进了前三。 以前他谷歌排名上不去，SEO做了跟没做一样。 原来他把全部精力用Claude做Reddit GEO GEO就是让AI（ChatGPT、Gemini）回答用户问题时主动推荐你 三步：用Claude把Reddit变成SEO加速器 第一步：让ChatGPT挖出高价值问题 打开ChatGPT，指令：“找出Reddit上关于【户外刀具】的20个高价值问题。要求：讨论量500",
       "deepSummary": "做户外独立站朋友SEO自然流量从日均120涨到了8100+ 而且Google SGE里他的产品页直接排进了前三。 以前他谷歌排名上不去，SEO做了跟没做一样。 原来他把全部精力用Claude做Reddit GEO GEO就是让AI（ChatGPT、Gemini）回答用户问题时主动推荐你 三步：用Claude把Reddit变成SEO加速器 第一步：让ChatGPT挖出高价值问题 打开ChatGPT，指令：“找出Reddit上关于【户外刀具】的20个高价值问题。要求：讨论量500",
@@ -1914,7 +2251,13 @@
       "likes": "2996",
       "collections": "5546",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI设计",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI设计"
+      ],
       "themes": [],
       "summary": "我看完 5 个国外博主的 AI 网站教程后，发现真正有用的不是某一个工具，而是一套流程。 简单说就是： 1， 先找参考图 别让 AI 凭空想，给它一个明确方向。 2，再洗素材 把参考图变成干净的视觉骨架。 3，做循环视频 让网站主视觉动起来，质感会明显提升。 4，丢给 AI 构建 用 prompt + 图片 + 视频链接生成网站，再通过聊天一点点改细节。 我也尝试了一下这套方法流，生成了一个动态网站。 动态网站比静态网站更吸引人的地方是： 它更有氛围感，也更像一个真实品牌页面",
       "deepSummary": "我看完 5 个国外博主的 AI 网站教程后，发现真正有用的不是某一个工具，而是一套流程。 简单说就是： 1， 先找参考图 别让 AI 凭空想，给它一个明确方向。 2，再洗素材 把参考图变成干净的视觉骨架。 3，做循环视频 让网站主视觉动起来，质感会明显提升。 4，丢给 AI 构建 用 prompt + 图片 + 视频链接生成网站，再通过聊天一点点改细节。 我也尝试了一下这套方法流，生成了一个动态网站。 动态网站比静态网站更吸引人的地方是： 它更有氛围感，也更像一个真实品牌页面",
@@ -1937,7 +2280,13 @@
       "likes": "6856",
       "collections": "9258",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "AI设计",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "AI设计"
+      ],
       "themes": [],
       "summary": "#AI工具[话题]# #howto入门codex[话题]# #AI技巧[话题]# #chatGPT[话题]# #photoshop[话题]# #ps[话题]# #howto用好AI[话题]#",
       "deepSummary": "#AI工具[话题]# #howto入门codex[话题]# #AI技巧[话题]# #chatGPT[话题]# #photoshop[话题]# #ps[话题]# #howto用好AI[话题]#",
@@ -1960,7 +2309,13 @@
       "likes": "1020",
       "collections": "1853",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI设计",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI设计"
+      ],
       "themes": [],
       "summary": "一站式动态图标库，拿来就用，不用自己画，不用自己调，风格统一，省去制作图标动效，直接导出json或gif，交付研发一步到位～ #ui设计[话题]# #设计灵感[话题]# #icon设计[话题]# #动态icon[话题]# #图标设计[话题]# #工具[话题]# #高效[话题]# #设计干货[话题]# #设计网站[话题]# #有趣的网站[话题]# @小红书成长笔记",
       "deepSummary": "一站式动态图标库，拿来就用，不用自己画，不用自己调，风格统一，省去制作图标动效，直接导出json或gif，交付研发一步到位～ #ui设计[话题]# #设计灵感[话题]# #icon设计[话题]# #动态icon[话题]# #图标设计[话题]# #工具[话题]# #高效[话题]# #设计干货[话题]# #设计网站[话题]# #有趣的网站[话题]# @小红书成长笔记",
@@ -1983,7 +2338,13 @@
       "likes": "4850",
       "collections": "7722",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI设计",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI设计"
+      ],
       "themes": [],
       "summary": "#做网站[话题]# #个人网站[话题]# #设计[话题]# #交互[话题]# #AI做设计[话题]# #AI做网站[话题]# #审美[话题]#",
       "deepSummary": "#做网站[话题]# #个人网站[话题]# #设计[话题]# #交互[话题]# #AI做设计[话题]# #AI做网站[话题]# #审美[话题]#",
@@ -2006,7 +2367,13 @@
       "likes": "4012",
       "collections": "5922",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI设计",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI设计"
+      ],
       "themes": [],
       "summary": "AI 协作 Figma 画布的时代到来了！本教程教各位设计师如何解放双手让 Claude Code 替你干活😭 #Figma[话题]# #Vibma[话题]# #Claudecode[话题]# #Cursor[话题]# #vibecoding大赏[话题]# #AI[话题]#",
       "deepSummary": "AI 协作 Figma 画布的时代到来了！本教程教各位设计师如何解放双手让 Claude Code 替你干活😭 #Figma[话题]# #Vibma[话题]# #Claudecode[话题]# #Cursor[话题]# #vibecoding大赏[话题]# #AI[话题]#",
@@ -2029,7 +2396,13 @@
       "likes": "2.2万",
       "collections": "1.4万",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI设计",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI设计"
+      ],
       "themes": [],
       "summary": "#AI工具[话题]# #AI视频[话题]# #后期制作[话题]# #设计软件[话题]# #星流Agent[话题]# #Lovart[话题]# #AI修图[话题]# #设计[话题]# #PS[话题]# #ai视频生成[话题]#",
       "deepSummary": "#AI工具[话题]# #AI视频[话题]# #后期制作[话题]# #设计软件[话题]# #星流Agent[话题]# #Lovart[话题]# #AI修图[话题]# #设计[话题]# #PS[话题]# #ai视频生成[话题]#",
@@ -2052,7 +2425,13 @@
       "likes": "49",
       "collections": "143",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [
         "VividDub",
         "视频翻译",
@@ -2083,7 +2462,13 @@
       "likes": "2438",
       "collections": "3975",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "最强AI已无需确认！！#AI工具[话题]# #ai漫剧[话题]# #AIgc[话题]# #AI视频[话题]# #ai视频制作[话题]# #ai教程分享[话题]# #ai动态漫[话题]# #ai漫剧制作[话题]#",
       "deepSummary": "最强AI已无需确认！！#AI工具[话题]# #ai漫剧[话题]# #AIgc[话题]# #AI视频[话题]# #ai视频制作[话题]# #ai教程分享[话题]# #ai动态漫[话题]# #ai漫剧制作[话题]#",
@@ -2106,7 +2491,13 @@
       "likes": "289",
       "collections": "621",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#skill[话题]# #ai[话题]# #人工智能[话题]# #大模型[话题]# #Agent[话题]# #智能体[话题]#",
       "deepSummary": "#skill[话题]# #ai[话题]# #人工智能[话题]# #大模型[话题]# #Agent[话题]# #智能体[话题]#",
@@ -2129,7 +2520,13 @@
       "likes": "395",
       "collections": "974",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#ai[话题]# #开源[话题]# #编程[话题]# #自媒体工具[话题]# #新媒体时代[话题]# #新媒体运营工具[话题]# #自媒‮创体‬业[话题]#",
       "deepSummary": "#ai[话题]# #开源[话题]# #编程[话题]# #自媒体工具[话题]# #新媒体时代[话题]# #新媒体运营工具[话题]# #自媒‮创体‬业[话题]#",
@@ -2152,7 +2549,13 @@
       "likes": "1483",
       "collections": "2408",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#comfyui[话题]# #comfyui下载[话题]# #comfyui安装[话题]# #comfyui找工作[话题]#",
       "deepSummary": "#comfyui[话题]# #comfyui下载[话题]# #comfyui安装[话题]# #comfyui找工作[话题]#",
@@ -2175,7 +2578,13 @@
       "likes": "92",
       "collections": "219",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "阿里开源，GitHub ，AI全自动视频剪辑！ #GitHub[话题]# #AI自动剪辑[话题]# #ai[话题]# #干货分享[话题]# #开源[话题]#",
       "deepSummary": "阿里开源，GitHub ，AI全自动视频剪辑！ #GitHub[话题]# #AI自动剪辑[话题]# #ai[话题]# #干货分享[话题]# #开源[话题]#",
@@ -2198,7 +2607,13 @@
       "likes": "1247",
       "collections": "2574",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#马赛克修复[话题]# #马赛克[话题]# #无码[话题]# #软件分享[话题]# #电脑知识[话题]#",
       "deepSummary": "#马赛克修复[话题]# #马赛克[话题]# #无码[话题]# #软件分享[话题]# #电脑知识[话题]#",
@@ -2221,7 +2636,13 @@
       "likes": "424",
       "collections": "809",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "找到了这个Ai聚合站，无需会员直接使用，图片，视频，音乐全都有，还有各种Ai智能体，一键生成。 #ai绘画[话题]# #ai摄影[话题]# #ai智能体[话题]# #ai绘图[话题]# #AI视频[话题]# #ai聚合站[话题]# #软件分享[话题]# #ai工具[话题]#",
       "deepSummary": "找到了这个Ai聚合站，无需会员直接使用，图片，视频，音乐全都有，还有各种Ai智能体，一键生成。 #ai绘画[话题]# #ai摄影[话题]# #ai智能体[话题]# #ai绘图[话题]# #AI视频[话题]# #ai聚合站[话题]# #软件分享[话题]# #ai工具[话题]#",
@@ -2244,7 +2665,13 @@
       "likes": "5516",
       "collections": "7229",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "豆包的灰产让拍摄彻底要被洗牌了#ai[话题]##职场干货[话题]# #个人ip[话题]#",
       "deepSummary": "豆包的灰产让拍摄彻底要被洗牌了#ai[话题]##职场干货[话题]# #个人ip[话题]#",
@@ -2267,7 +2694,13 @@
       "likes": "7573",
       "collections": "1.6万",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#Codex[话题]# #Codex[话题]# #AI[话题]# #神级[话题]# #Skill[话题]# #Agent[话题]#",
       "deepSummary": "#Codex[话题]# #Codex[话题]# #AI[话题]# #神级[话题]# #Skill[话题]# #Agent[话题]#",
@@ -2290,7 +2723,13 @@
       "likes": "168",
       "collections": "533",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "Github宝藏开源Voice-Pro，可下载海外视频去原声直接翻译！支持对语言！ #开源工具[话题]# #github[话题]# #AI[话题]# #跨境创作[话题]# #干货分享[话题]#",
       "deepSummary": "Github宝藏开源Voice-Pro，可下载海外视频去原声直接翻译！支持对语言！ #开源工具[话题]# #github[话题]# #AI[话题]# #跨境创作[话题]# #干货分享[话题]#",
@@ -2313,7 +2752,13 @@
       "likes": "1066",
       "collections": "2615",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#skill[话题]# #开源[话题]# #AI工具[话题]# #ai[话题]#",
       "deepSummary": "#skill[话题]# #开源[话题]# #AI工具[话题]# #ai[话题]#",
@@ -2336,7 +2781,13 @@
       "likes": "4046",
       "collections": "5108",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#AI视频[话题]# #AIGC[话题]# #AI漫剧[话题]# #短剧Agent[话题]# #小云雀短剧Agent2全面升级[话题]# #AI[话题]# #爱死机[话题]#",
       "deepSummary": "#AI视频[话题]# #AIGC[话题]# #AI漫剧[话题]# #短剧Agent[话题]# #小云雀短剧Agent2全面升级[话题]# #AI[话题]# #爱死机[话题]#",
@@ -2359,7 +2810,13 @@
       "likes": "9345",
       "collections": "7941",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "国产“爱死机”《丧尸清道夫》创作思路分享",
       "deepSummary": "国产“爱死机”《丧尸清道夫》创作思路分享",
@@ -2382,7 +2839,13 @@
       "likes": "2836",
       "collections": "2892",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "AI视频不够真实？模糊？用这个流程做出4K高级质感。#原生4K直出[话题]# #可灵[话题]# #可灵AI[话题]# #AI还可以这样玩[话题]# #AI智能分镜[话题]# #ai教程[话题]# #ai工具[话题]# #ai广告[话题]#",
       "deepSummary": "AI视频不够真实？模糊？用这个流程做出4K高级质感。#原生4K直出[话题]# #可灵[话题]# #可灵AI[话题]# #AI还可以这样玩[话题]# #AI智能分镜[话题]# #ai教程[话题]# #ai工具[话题]# #ai广告[话题]#",
@@ -2405,7 +2868,13 @@
       "likes": "2964",
       "collections": "3022",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "🍉这年头谁还不会“买两瓜”…… 🎤但把华强买瓜变成万人福音演唱会，你见过吗？ 🔥喂饭教程：从AI写歌到对口型MV，全流程拆解 🎉不用实拍，一张九宫格图片就能进入广州天河体育馆华强福音演唱会现场。 #AI六边形战士[话题]# #一句话P视频[话题]# #AI视频[话题]# #AI教程[话题]# #AI提示词[话题]# #小红书4k视频浪潮计划[话题]# #视觉震撼[话题]# @视频薯 #RED新生代创作大赛[话题]# #OCVideo[话题]# #好视频扶持计划[话题]",
       "deepSummary": "🍉这年头谁还不会“买两瓜”…… 🎤但把华强买瓜变成万人福音演唱会，你见过吗？ 🔥喂饭教程：从AI写歌到对口型MV，全流程拆解 🎉不用实拍，一张九宫格图片就能进入广州天河体育馆华强福音演唱会现场。 #AI六边形战士[话题]# #一句话P视频[话题]# #AI视频[话题]# #AI教程[话题]# #AI提示词[话题]# #小红书4k视频浪潮计划[话题]# #视觉震撼[话题]# @视频薯 #RED新生代创作大赛[话题]# #OCVideo[话题]# #好视频扶持计划[话题]",
@@ -2428,7 +2897,13 @@
       "likes": "384",
       "collections": "479",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "新手写 AI 配音提示词的通病，就是太笼统！教你用细节词，让 AI 精准 get 情绪，委屈、愤怒、害怕，让你的 AI 配音也能有故事感，建议收藏!#ai短片[话题]# #AI教程[话题]# #AI配音[话题]# #AI活人感[话题]##AI提示实技巧[话题]#",
       "deepSummary": "新手写 AI 配音提示词的通病，就是太笼统！教你用细节词，让 AI 精准 get 情绪，委屈、愤怒、害怕，让你的 AI 配音也能有故事感，建议收藏!#ai短片[话题]# #AI教程[话题]# #AI配音[话题]# #AI活人感[话题]##AI提示实技巧[话题]#",
@@ -2451,7 +2926,13 @@
       "likes": "3933",
       "collections": "4419",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "这个 AI 工作流用来重拍视频简直是宝藏 😲 工具 - beeble.ai Beeble 让你用基于节点的 AI 工作流，替换现有画面里的灯光、背景，甚至服装，只用几步就能把任何房间变成电影级场景。对想拍出影棚级画面但没有影棚预算的创作者、电影人、视频营销人来说，这简直是游戏规则改变者。#RED新生代创作大赛[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #AI人工智能[话题]# #AI视频[话题]#",
       "deepSummary": "这个 AI 工作流用来重拍视频简直是宝藏 😲 工具 - beeble.ai Beeble 让你用基于节点的 AI 工作流，替换现有画面里的灯光、背景，甚至服装，只用几步就能把任何房间变成电影级场景。对想拍出影棚级画面但没有影棚预算的创作者、电影人、视频营销人来说，这简直是游戏规则改变者。#RED新生代创作大赛[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #AI人工智能[话题]# #AI视频[话题]#",
@@ -2474,7 +2955,13 @@
       "likes": "5.6万",
       "collections": "5.5万",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#编导[话题]# #短视频运营[话题]# #ai[话题]#",
       "deepSummary": "#编导[话题]# #短视频运营[话题]# #ai[话题]#",
@@ -2497,7 +2984,13 @@
       "likes": "1495",
       "collections": "2166",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#ai[话题]# #短剧[话题]# #skill[话题]# #Flovaai[话题]# #Flova1[话题]# #gptimage2[话题]#",
       "deepSummary": "#ai[话题]# #短剧[话题]# #skill[话题]# #Flovaai[话题]# #Flova1[话题]# #gptimage2[话题]#",
@@ -2520,7 +3013,13 @@
       "likes": "2576",
       "collections": "5201",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [
         "Seedance 2.0",
         "数字人口播",
@@ -2549,7 +3048,13 @@
       "likes": "521",
       "collections": "623",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "做 AI 漫剧再也不用一步步“手搓”、熬夜搭工作流了😭一帆老师教你告别繁琐流程，用 AI 智能体自动搭建专业工作流，从策划到生成画面，再到剪辑成片全搞定，新手也能 5 分钟直接出片！不用再对着晦涩流程啃半天，跟着这个流程走，小白也能做出流畅丝滑、一致性准确的 AI 漫剧！ #AI漫剧[话题]# #AI视频[话题]# #rhtv[话题]# #runninghub[话题]# #AI短剧[话题]# #AI动画[话题]# #AI教程[话题]# #AI工具[话题]# #AIGC[话题",
       "deepSummary": "做 AI 漫剧再也不用一步步“手搓”、熬夜搭工作流了😭一帆老师教你告别繁琐流程，用 AI 智能体自动搭建专业工作流，从策划到生成画面，再到剪辑成片全搞定，新手也能 5 分钟直接出片！不用再对着晦涩流程啃半天，跟着这个流程走，小白也能做出流畅丝滑、一致性准确的 AI 漫剧！ #AI漫剧[话题]# #AI视频[话题]# #rhtv[话题]# #runninghub[话题]# #AI短剧[话题]# #AI动画[话题]# #AI教程[话题]# #AI工具[话题]# #AIGC[话题",
@@ -2572,7 +3077,13 @@
       "likes": "393",
       "collections": "1127",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "宝藏Github开源项目！NarratorAISkill适配小龙虾I，影视短剧漫剧全覆盖，从拉片、文案到剪辑全程全自动，24 小时无人生产。#github[话题]# #小龙虾[话题]# #AI[话题]# #影视解说[话题]# #AI全自动剪辑[话题]# #干货分享[话题]# #自媒体工具[话题]# #创作提效神器[话题]#",
       "deepSummary": "宝藏Github开源项目！NarratorAISkill适配小龙虾I，影视短剧漫剧全覆盖，从拉片、文案到剪辑全程全自动，24 小时无人生产。#github[话题]# #小龙虾[话题]# #AI[话题]# #影视解说[话题]# #AI全自动剪辑[话题]# #干货分享[话题]# #自媒体工具[话题]# #创作提效神器[话题]#",
@@ -2595,7 +3106,13 @@
       "likes": "2616",
       "collections": "3973",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "做视频用 AI 配音，总被说像机器人读稿？一帆老师分享 3 个一直在用的 AI 配音技巧，新手也能生成出自然 “人味”告别机械感，让你的视频配音直接上一个档次！ #AI影视[话题]# #AI视频[话题]# #AIGC[话题]# #AI配音[话题]#",
       "deepSummary": "做视频用 AI 配音，总被说像机器人读稿？一帆老师分享 3 个一直在用的 AI 配音技巧，新手也能生成出自然 “人味”告别机械感，让你的视频配音直接上一个档次！ #AI影视[话题]# #AI视频[话题]# #AIGC[话题]# #AI配音[话题]#",
@@ -2618,7 +3135,13 @@
       "likes": "441",
       "collections": "691",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "漫剧、TVC、带货视频全拿下 #ai[话题]# #ai视频[话题]# #agent[话题]# #runninghub[话题]# #RHTV[话题]#",
       "deepSummary": "漫剧、TVC、带货视频全拿下 #ai[话题]# #ai视频[话题]# #agent[话题]# #runninghub[话题]# #RHTV[话题]#",
@@ -2641,7 +3164,13 @@
       "likes": "400",
       "collections": "1183",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "该开源工具可实现视频制作全流程自动化处理，支持用户输入主题后自动完成文案生成、配图查找、配音、BGM添加及成品合成功能。Windows用户可下载整合包直接双击打开，配置API后即可使用。 #AI视频[话题]# #短视频创作[话题]# #自动化工具[话题]# #开源神器[话题]# #打工人必备[话题]#",
       "deepSummary": "该开源工具可实现视频制作全流程自动化处理，支持用户输入主题后自动完成文案生成、配图查找、配音、BGM添加及成品合成功能。Windows用户可下载整合包直接双击打开，配置API后即可使用。 #AI视频[话题]# #短视频创作[话题]# #自动化工具[话题]# #开源神器[话题]# #打工人必备[话题]#",
@@ -2664,7 +3193,13 @@
       "likes": "406",
       "collections": "1139",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "VoxCPM2 是 OpenBMB 开源的语音合成模型，2B参数，支持30种语言，本地部署。 #AI[话题]# #TTS[话题]# #语音合成[话题]# #github[话题]# #AI工具[话题]#",
       "deepSummary": "VoxCPM2 是 OpenBMB 开源的语音合成模型，2B参数，支持30种语言，本地部署。 #AI[话题]# #TTS[话题]# #语音合成[话题]# #github[话题]# #AI工具[话题]#",
@@ -2687,7 +3222,13 @@
       "likes": "1840",
       "collections": "3469",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [
         "video-use",
         "自然语言剪辑",
@@ -2719,7 +3260,13 @@
       "likes": "3666",
       "collections": "7209",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#AI工具测评[话题]# #ai[话题]# #全自动剪辑[话题]# #科技下一站[话题]# #干货分享[话题]#",
       "deepSummary": "#AI工具测评[话题]# #ai[话题]# #全自动剪辑[话题]# #科技下一站[话题]# #干货分享[话题]#",
@@ -2742,7 +3289,13 @@
       "likes": "2825",
       "collections": "7591",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "高光片段一键生成！ #AI[话题]# #干货分享[话题]# #剪辑工具[话题]# #GitHub[话题]# #AI工具[话题]#",
       "deepSummary": "高光片段一键生成！ #AI[话题]# #干货分享[话题]# #剪辑工具[话题]# #GitHub[话题]# #AI工具[话题]#",
@@ -2765,7 +3318,13 @@
       "likes": "3776",
       "collections": "8589",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "#AI[话题]# #网站[话题]# #提示词[话题]#",
       "deepSummary": "#AI[话题]# #网站[话题]# #提示词[话题]#",
@@ -2788,7 +3347,13 @@
       "likes": "443",
       "collections": "1070",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "每天一个神奇网站（第42期）只需要一句话，它能自动写脚本，出素材，自动剪辑，视频一键全搞定！#ai视频[话题]# #skill[话题]# #视频创作[话题]# #ai视频生成[话题]# #视频剪辑[话题]#",
       "deepSummary": "每天一个神奇网站（第42期）只需要一句话，它能自动写脚本，出素材，自动剪辑，视频一键全搞定！#ai视频[话题]# #skill[话题]# #视频创作[话题]# #ai视频生成[话题]# #视频剪辑[话题]#",
@@ -2811,7 +3376,13 @@
       "likes": "3232",
       "collections": "8789",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "AI“股神”来了，以后交易不再凭感觉！ 研究员、风控、投资经理，AI 一次配齐？#TradingAgents[话题]# #AI[话题]# #人工智能[话题]#",
       "deepSummary": "AI“股神”来了，以后交易不再凭感觉！ 研究员、风控、投资经理，AI 一次配齐？#TradingAgents[话题]# #AI[话题]# #人工智能[话题]#",
@@ -2834,7 +3405,13 @@
       "likes": "190",
       "collections": "333",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "不是降本增效，是重做组织 #AI[话题]# #AI创业[话题]# #大树学AI[话题]# #小公司运营[话题]# #大树AI创业圈[话题]# #AI工具[话题]# #员工与老板[话题]# #ai化商业模式[话题]#",
       "deepSummary": "不是降本增效，是重做组织 #AI[话题]# #AI创业[话题]# #大树学AI[话题]# #小公司运营[话题]# #大树AI创业圈[话题]# #AI工具[话题]# #员工与老板[话题]# #ai化商业模式[话题]#",
@@ -2857,7 +3434,13 @@
       "likes": "2.5万",
       "collections": "5万",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "#howto用AI手搓APP[话题]# #howto用AI抢救一切[话题]# #AI工具[话题]# #AI人工智能[话题]# #大模型[话题]#",
       "deepSummary": "#howto用AI手搓APP[话题]# #howto用AI抢救一切[话题]# #AI工具[话题]# #AI人工智能[话题]# #大模型[话题]#",
@@ -2880,7 +3463,13 @@
       "likes": "1175",
       "collections": "2153",
       "mediaType": "视频",
-      "category": "本地模型与成本",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "本地模型与成本",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "claude省token这件事我可能有点发言权， 大家都在说额度不够用，我是实在用不完 我是Max5x 我一天挂五六个会话让它干活， 这9个习惯养成后就没撞过限额， 前5招入门的做起来很方便 后面几个也很重要 另外这个不止针对Claude， Codex怎么省token也是通用的 评论区聊聊有没有别的好用的省token的方法 谢谢大家观看，我是Cyrus，我们下期见[回招呼] #claude[话题]# #codex[话题]# #claudecode[话题]# #AI工具[话题]",
       "deepSummary": "claude省token这件事我可能有点发言权， 大家都在说额度不够用，我是实在用不完 我是Max5x 我一天挂五六个会话让它干活， 这9个习惯养成后就没撞过限额， 前5招入门的做起来很方便 后面几个也很重要 另外这个不止针对Claude， Codex怎么省token也是通用的 评论区聊聊有没有别的好用的省token的方法 谢谢大家观看，我是Cyrus，我们下期见[回招呼] #claude[话题]# #codex[话题]# #claudecode[话题]# #AI工具[话题]",
@@ -2903,7 +3492,13 @@
       "likes": "8499",
       "collections": "1.7万",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "#howto用好AI[话题]# #提示词工程[话题]# #AI教程[话题]#",
       "deepSummary": "#howto用好AI[话题]# #提示词工程[话题]# #AI教程[话题]#",
@@ -2926,7 +3521,13 @@
       "likes": "6848",
       "collections": "1.7万",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "YouTube推荐的5个AI博主#Ai#油管推荐博主[话题]# #个人成长[话题]# #知识付费[话题]# #小鹅通[话题]# #好视频扶持计划[话题]#",
       "deepSummary": "YouTube推荐的5个AI博主#Ai#油管推荐博主[话题]# #个人成长[话题]# #知识付费[话题]# #小鹅通[话题]# #好视频扶持计划[话题]#",
@@ -2949,7 +3550,13 @@
       "likes": "302",
       "collections": "608",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "微软 Copilot 遭“破解”！GPT-5 竟能白嫖",
       "deepSummary": "微软 Copilot 遭“破解”！GPT-5 竟能白嫖",
@@ -2972,7 +3579,13 @@
       "likes": "309",
       "collections": "272",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "#人工智能[话题]# #ai工具[话题]# #打工人[话题]# #自媒体[话题]#",
       "deepSummary": "#人工智能[话题]# #ai工具[话题]# #打工人[话题]# #自媒体[话题]#",
@@ -2995,7 +3608,13 @@
       "likes": "206",
       "collections": "402",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "#Claude[话题]# #ai[话题]# #人工智能[话题]# #vibecoding[话题]# #智能体[话题]# #agent[话题]#",
       "deepSummary": "#Claude[话题]# #ai[话题]# #人工智能[话题]# #vibecoding[话题]# #智能体[话题]# #agent[话题]#",
@@ -3018,7 +3637,13 @@
       "likes": "2029",
       "collections": "2824",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "希望这个手搓的小工具可以帮助到大家提升效率！#电脑知识[话题]# #浏览器插件[话题]# #vibecoding[话题]# #ai实用小技巧[话题]# #批量搜索AI[话题]# #个人开发者[话题]#",
       "deepSummary": "希望这个手搓的小工具可以帮助到大家提升效率！#电脑知识[话题]# #浏览器插件[话题]# #vibecoding[话题]# #ai实用小技巧[话题]# #批量搜索AI[话题]# #个人开发者[话题]#",
@@ -3041,7 +3666,13 @@
       "likes": "3088",
       "collections": "4813",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "#uiux[话题]# #claude[话题]# #设计师[话题]# #交互设计[话题]# #ai提示词[话题]# #ai工具[话题]# #前端[话题]# #科技公司[话题]# #ai提效[话题]# #token[话题]#",
       "deepSummary": "#uiux[话题]# #claude[话题]# #设计师[话题]# #交互设计[话题]# #ai提示词[话题]# #ai工具[话题]# #前端[话题]# #科技公司[话题]# #ai提效[话题]# #token[话题]#",
@@ -3064,7 +3695,13 @@
       "likes": "568",
       "collections": "723",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [
         "AI HOT",
         "Follow Builders",
@@ -3097,7 +3734,13 @@
       "likes": "331",
       "collections": "838",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "朋友们，如果你正在寻找 AI 工具，这个完全免费的宝藏级工具库，请你一定一定收藏好。 它叫 AI星踪岛，一个几乎把整个互联网上所有大模型、AI 神器和效率工具全部打包整合的中文导航站。毫不夸张地说，它大概是你目前能在全网找到的收录最全、更新最快的 AI 工具导航，没有之一。你花几个小时到处翻找的时间，它一秒帮你省下；你面对海量工具无从下手的那种焦虑，它一站式替你终结。 这个网站把成百上千款 AI 工具按功能拆成了 15 个清晰的大类，从 AI 绘画到视频生成，从智能对话到效率",
       "deepSummary": "朋友们，如果你正在寻找 AI 工具，这个完全免费的宝藏级工具库，请你一定一定收藏好。 它叫 AI星踪岛，一个几乎把整个互联网上所有大模型、AI 神器和效率工具全部打包整合的中文导航站。毫不夸张地说，它大概是你目前能在全网找到的收录最全、更新最快的 AI 工具导航，没有之一。你花几个小时到处翻找的时间，它一秒帮你省下；你面对海量工具无从下手的那种焦虑，它一站式替你终结。 这个网站把成百上千款 AI 工具按功能拆成了 15 个清晰的大类，从 AI 绘画到视频生成，从智能对话到效率",
@@ -3120,7 +3763,13 @@
       "likes": "217",
       "collections": "673",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "#AI[话题]# #github[话题]# #智能体[话题]# #干货分享[话题]# #Agent[话题]#",
       "deepSummary": "#AI[话题]# #github[话题]# #智能体[话题]# #干货分享[话题]# #Agent[话题]#",
@@ -3143,7 +3792,13 @@
       "likes": "326",
       "collections": "900",
       "mediaType": "视频",
-      "category": "本地模型与成本",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "本地模型与成本",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [
         "MiniMind",
         "从零训练LLM",
@@ -3174,7 +3829,13 @@
       "likes": "1780",
       "collections": "5315",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "AI Agent保姆级教学课程全部开源。 #AI[话题]# #智能体[话题]# #AIAgent[话题]# #学习资料分享[话题]# #干货分享[话题]#",
       "deepSummary": "AI Agent保姆级教学课程全部开源。 #AI[话题]# #智能体[话题]# #AIAgent[话题]# #学习资料分享[话题]# #干货分享[话题]#",
@@ -3197,7 +3858,13 @@
       "likes": "2187",
       "collections": "4405",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "2025-2026年，AI 圈神仙打架！我和圈内大佬花了10万多块钱，深度测试了全网 200 多款 AI 工具，终于爆肝整理出这期【2026年 AI 工具终极指南】！🔥 不要再盲目跟风买会员了！这期视频我会按“真实使用场景”，为你盘点文本大模型、AI生图、AI视频、AI编程、AI Agent 等10大核心领域的真正王者，以及超高性价比的“免费白嫖平替”！看完至少帮你少走一年弯路，避免被 AI 时代淘汰！全程无广，放心食用！👇#ai[话题]# #ai工具[话题]# #ai神",
       "deepSummary": "2025-2026年，AI 圈神仙打架！我和圈内大佬花了10万多块钱，深度测试了全网 200 多款 AI 工具，终于爆肝整理出这期【2026年 AI 工具终极指南】！🔥 不要再盲目跟风买会员了！这期视频我会按“真实使用场景”，为你盘点文本大模型、AI生图、AI视频、AI编程、AI Agent 等10大核心领域的真正王者，以及超高性价比的“免费白嫖平替”！看完至少帮你少走一年弯路，避免被 AI 时代淘汰！全程无广，放心食用！👇#ai[话题]# #ai工具[话题]# #ai神",
@@ -3220,7 +3887,13 @@
       "likes": "76",
       "collections": "180",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
       "themes": [],
       "summary": "#大模型[话题]# #互联网[话题]# #程序员[话题]# #人工智能[话题]# #大模型应用[话题]# #计算机技术[话题]# #Agent[话题]# #AI[话题]# #科技[话题]# #智能体[话题]#",
       "deepSummary": "#大模型[话题]# #互联网[话题]# #程序员[话题]# #人工智能[话题]# #大模型应用[话题]# #计算机技术[话题]# #Agent[话题]# #AI[话题]# #科技[话题]# #智能体[话题]#",
@@ -3243,7 +3916,13 @@
       "likes": "2699",
       "collections": "5516",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Vibe Coding",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Vibe Coding"
+      ],
       "themes": [],
       "summary": "Vibecoding 部署上线所需要的所有！ 1️⃣快速部署：Vercel 2️⃣稳定部署：Cloudflare 3️⃣后端数据：Supabase 4️⃣国内访问：Vercel + Cloudfare 不会的，报错的都直接问AI就好了！ #vibecoding[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #ai教程[话题]# #ai学习[话题]# #个人开发者[话题]# #Codex[话题]# @科技薯",
       "deepSummary": "Vibecoding 部署上线所需要的所有！ 1️⃣快速部署：Vercel 2️⃣稳定部署：Cloudflare 3️⃣后端数据：Supabase 4️⃣国内访问：Vercel + Cloudfare 不会的，报错的都直接问AI就好了！ #vibecoding[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #ai教程[话题]# #ai学习[话题]# #个人开发者[话题]# #Codex[话题]# @科技薯",
@@ -3266,7 +3945,13 @@
       "likes": "1888",
       "collections": "2561",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Vibe Coding",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Vibe Coding"
+      ],
       "themes": [],
       "summary": "不会写代码的设计师不是好前端，一个AI产品把这三个岗位给混合做一起了~！#ai产品[话题]##aigc[话题]##claude[话题]# design#ai设计[话题]#",
       "deepSummary": "不会写代码的设计师不是好前端，一个AI产品把这三个岗位给混合做一起了~！#ai产品[话题]##aigc[话题]##claude[话题]# design#ai设计[话题]#",
@@ -3289,7 +3974,13 @@
       "likes": "2659",
       "collections": "5131",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Vibe Coding",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Vibe Coding"
+      ],
       "themes": [],
       "summary": "#人工智能[话题]# #科技[话题]# #AIChannel[话题]# #网站设计[话题]# #科技改变生活[话题]# #vibecoding[话题]# #大模型[话题]# #vibecoding大赏[话题]# #干货分享[话题]#",
       "deepSummary": "#人工智能[话题]# #科技[话题]# #AIChannel[话题]# #网站设计[话题]# #科技改变生活[话题]# #vibecoding[话题]# #大模型[话题]# #vibecoding大赏[话题]# #干货分享[话题]#",
@@ -3312,7 +4003,13 @@
       "likes": "5554",
       "collections": "5221",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "小红书内容运营",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "小红书内容运营"
+      ],
       "themes": [
         "小红书KOS",
         "企业专业号",
@@ -3339,7 +4036,13 @@
       "likes": "2.7万",
       "collections": "3.9万",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "小红书内容运营",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "小红书内容运营"
+      ],
       "themes": [
         "小红书搜索",
         "长尾词",
@@ -3366,7 +4069,13 @@
       "likes": "1.1万",
       "collections": "1.9万",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "小红书内容运营",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "小红书内容运营"
+      ],
       "themes": [],
       "summary": "昨天面试三万的运营，大家看值不值？#短视频运营[话题]# #这个面试有点硬[话题]# #创作者运营[话题]# #面试日常[话题]##锤导IP打造[话题]#",
       "deepSummary": "昨天面试三万的运营，大家看值不值？#短视频运营[话题]# #这个面试有点硬[话题]# #创作者运营[话题]# #面试日常[话题]##锤导IP打造[话题]#",
@@ -3389,7 +4098,13 @@
       "likes": "1098",
       "collections": "2412",
       "mediaType": "图文",
-      "category": "Skills与工作流",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
       "themes": [],
       "summary": "卡帕西的 LLM Wiki 这坑挖的真够深的，自己不给出实现，全靠社区用户自己手搓。看起来很美好，做起来一团糟。（我之前视频中做的skill也很初级） 但是YC总裁Garry Tan (陈嘉里)，给出了满分答卷：GBrain。 GitHub 仓库garrytan/gbrain，上线一周多目前10.1k Stars。 来看看这个专为OpenClaw和Hermes Agent打造的重度工作流如何使用。 #Karpathy[话题]# #LLMWiki[话题]# #gbrain[话题",
       "deepSummary": "卡帕西的 LLM Wiki 这坑挖的真够深的，自己不给出实现，全靠社区用户自己手搓。看起来很美好，做起来一团糟。（我之前视频中做的skill也很初级） 但是YC总裁Garry Tan (陈嘉里)，给出了满分答卷：GBrain。 GitHub 仓库garrytan/gbrain，上线一周多目前10.1k Stars。 来看看这个专为OpenClaw和Hermes Agent打造的重度工作流如何使用。 #Karpathy[话题]# #LLMWiki[话题]# #gbrain[话题",
@@ -3412,7 +4127,13 @@
       "likes": "142",
       "collections": "259",
       "mediaType": "图文",
-      "category": "其他软件与 AI",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
       "themes": [],
       "summary": "#OpenClaw[话题]#",
       "deepSummary": "#OpenClaw[话题]#",
@@ -3435,7 +4156,13 @@
       "likes": "2473",
       "collections": "6496",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
       "themes": [],
       "summary": "@科技薯 @视频薯 #干货分享[话题]# #AI[话题]# #github开源项目推荐[话题]# #效率神器[话题]# #AIchannel[话题]# #小红书科技AMA[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #程序员[话题]# #大模型[话题]#",
       "deepSummary": "@科技薯 @视频薯 #干货分享[话题]# #AI[话题]# #github开源项目推荐[话题]# #效率神器[话题]# #AIchannel[话题]# #小红书科技AMA[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #程序员[话题]# #大模型[话题]#",
@@ -3458,7 +4185,13 @@
       "likes": "3330",
       "collections": "6392",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
       "themes": [],
       "summary": "以前你开公司，先找人；以后你开公司，可能先拉 Agent。 #小红书科技AMA[话题]# #科技热点[话题]# #电商运营[话题]# #人工智能[话题]# #跨境电商[话题]# #AI技术[话题]# #Agent[话题]# #前沿技术[话题]# #AI工具[话题]# #跨境创业[话题]#",
       "deepSummary": "以前你开公司，先找人；以后你开公司，可能先拉 Agent。 #小红书科技AMA[话题]# #科技热点[话题]# #电商运营[话题]# #人工智能[话题]# #跨境电商[话题]# #AI技术[话题]# #Agent[话题]# #前沿技术[话题]# #AI工具[话题]# #跨境创业[话题]#",
@@ -3481,7 +4214,13 @@
       "likes": "583",
       "collections": "1879",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
       "themes": [],
       "summary": "这里收录了几千款免费API，总共五十四个大类，无论你在学AI编程还是养openclaw小龙虾，不用再花钱或者自己开发，省时又省力#ai工具测评[话题]# #软件设计与开发[话题]# #AI人工智能[话题]# #小程序开发[话题]# #openclaw[话题]# #api[话题]# #ai编程[话题]#",
       "deepSummary": "这里收录了几千款免费API，总共五十四个大类，无论你在学AI编程还是养openclaw小龙虾，不用再花钱或者自己开发，省时又省力#ai工具测评[话题]# #软件设计与开发[话题]# #AI人工智能[话题]# #小程序开发[话题]# #openclaw[话题]# #api[话题]# #ai编程[话题]#",
@@ -3504,7 +4243,13 @@
       "likes": "313",
       "collections": "772",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
       "themes": [],
       "summary": "小白都能一键管理OpenClaw的工具，自带一键安装，模型管理，模型对话，问题修复，状态看板，技能管理，记忆管理，对话渠道配置。 #AI工具测评[话题]# #AI工具[话题]# #OpenClaw[话题]# #openclaw[话题]# #AI助理[话题]# #AI助手[话题]# #openclaw教程[话题]# #OpenClaw教程[话题]#",
       "deepSummary": "小白都能一键管理OpenClaw的工具，自带一键安装，模型管理，模型对话，问题修复，状态看板，技能管理，记忆管理，对话渠道配置。 #AI工具测评[话题]# #AI工具[话题]# #OpenClaw[话题]# #openclaw[话题]# #AI助理[话题]# #AI助手[话题]# #openclaw教程[话题]# #OpenClaw教程[话题]#",
@@ -3527,7 +4272,13 @@
       "likes": "851",
       "collections": "2547",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
       "themes": [],
       "summary": "#开源项目[话题]# #openclaw[话题]# #爬虫[话题]#",
       "deepSummary": "#开源项目[话题]# #openclaw[话题]# #爬虫[话题]#",
@@ -3550,7 +4301,13 @@
       "likes": "1550",
       "collections": "4575",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
       "themes": [
         "OpenClaw",
         "学习资源",
@@ -3577,7 +4334,13 @@
       "likes": "11",
       "collections": "18",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
       "themes": [],
       "summary": "OpenClaw 任务控制教程丨让你的AI助手井井有条 本期视频详细讲解 OpenClaw 的任务控制功能，帮助你更好地管理和调度AI任务。 📋 时间轨： 00:00 - 开场介绍 01:30 - 创建第一个任务 03:00 - 任务分配与优先级 05:00 - 进度实时跟踪 07:00 - 任务完成与验收 09:00 - 高级功能：子任务与依赖 12:00 - 总结与进阶技巧 #OpenClaw #AI #任务控制 #教程 #效率工具",
       "deepSummary": "OpenClaw 任务控制教程丨让你的AI助手井井有条 本期视频详细讲解 OpenClaw 的任务控制功能，帮助你更好地管理和调度AI任务。 📋 时间轨： 00:00 - 开场介绍 01:30 - 创建第一个任务 03:00 - 任务分配与优先级 05:00 - 进度实时跟踪 07:00 - 任务完成与验收 09:00 - 高级功能：子任务与依赖 12:00 - 总结与进阶技巧 #OpenClaw #AI #任务控制 #教程 #效率工具",
@@ -3600,7 +4363,13 @@
       "likes": "1365",
       "collections": "1636",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
       "themes": [],
       "summary": "半天把运动相机拍出了百万TVC？在LibTV创作平台，它的能力将彻底帮你打通商业视频全链路！我们将带你从图片生成、视频生成到分镜拆解，从零落地一支运动相机商业广告。更有“邪修”技巧带你一键还原大片脚本，告别构思烦恼！ #AIGC[话题]# #AI视频[话题]# #ai[话题]# #TVC[话题]# #人工智能[话题]# #AI工具[话题]# #AI动画[话题]# #AI教程[话题]# #产品设计[话题]# #广告[话题]#",
       "deepSummary": "半天把运动相机拍出了百万TVC？在LibTV创作平台，它的能力将彻底帮你打通商业视频全链路！我们将带你从图片生成、视频生成到分镜拆解，从零落地一支运动相机商业广告。更有“邪修”技巧带你一键还原大片脚本，告别构思烦恼！ #AIGC[话题]# #AI视频[话题]# #ai[话题]# #TVC[话题]# #人工智能[话题]# #AI工具[话题]# #AI动画[话题]# #AI教程[话题]# #产品设计[话题]# #广告[话题]#",
@@ -3623,7 +4392,13 @@
       "likes": "113",
       "collections": "270",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "AI驱动开发平台，这周火到爆炸",
       "deepSummary": "AI驱动开发平台，这周火到爆炸",
@@ -3646,7 +4421,13 @@
       "likes": "3454",
       "collections": "1万",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "几乎把世界上所有工作的skill都收集起来了。#AI人工智能[话题]# #AI工具测评[话题]# #skill[话题]# #插件[话题]#",
       "deepSummary": "几乎把世界上所有工作的skill都收集起来了。#AI人工智能[话题]# #AI工具测评[话题]# #skill[话题]# #插件[话题]#",
@@ -3669,7 +4450,13 @@
       "likes": "351",
       "collections": "1169",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "一款免费开源的文档解析工具。可以将含有图片、表格、复杂公式等内容的文档，解析成 AI 能读懂的格式，还支持接入多个主流Agent工作流。#AI工具测评[话题]# #文档解析[话题]# #效率神器[话题]# #pdf转word[话题]# #LLM[话题]# #rag知识库[话题]# #Agent[话题]# #pdf转换器[话题]# #办公软件[话题]# #AI工具[话题]#",
       "deepSummary": "一款免费开源的文档解析工具。可以将含有图片、表格、复杂公式等内容的文档，解析成 AI 能读懂的格式，还支持接入多个主流Agent工作流。#AI工具测评[话题]# #文档解析[话题]# #效率神器[话题]# #pdf转word[话题]# #LLM[话题]# #rag知识库[话题]# #Agent[话题]# #pdf转换器[话题]# #办公软件[话题]# #AI工具[话题]#",
@@ -3692,7 +4479,13 @@
       "likes": "434",
       "collections": "1301",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#skill[话题]# #大模型[话题]# #ai[话题]# #程序员[话题]# #产品经理[话题]# #学习网站[话题]# #ai大模型[话题]# #人工智能[话题]# #计算机[话题]# #ai产品经理[话题]#",
       "deepSummary": "#skill[话题]# #大模型[话题]# #ai[话题]# #程序员[话题]# #产品经理[话题]# #学习网站[话题]# #ai大模型[话题]# #人工智能[话题]# #计算机[话题]# #ai产品经理[话题]#",
@@ -3715,7 +4508,13 @@
       "likes": "208",
       "collections": "488",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "你的 AI 网站之所以看起来千篇一律，是因为配置问题，不是因为 Claude。这套设计技能能让每个界面都拥有精致布局、流畅动效和真正的设计品味。#claude[话题]# #AI工具[话题]# #vibecoding大赏[话题]# #ai[话题]# #开发[话题]#",
       "deepSummary": "你的 AI 网站之所以看起来千篇一律，是因为配置问题，不是因为 Claude。这套设计技能能让每个界面都拥有精致布局、流畅动效和真正的设计品味。#claude[话题]# #AI工具[话题]# #vibecoding大赏[话题]# #ai[话题]# #开发[话题]#",
@@ -3738,7 +4537,13 @@
       "likes": "2068",
       "collections": "4798",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#ai[话题]# #ai工具[话题]# #大模型[话题]# #语音[话题]# #开发[话题]# #AI聊天[话题]# #开发者选项[话题]# #人工智能[话题]#",
       "deepSummary": "#ai[话题]# #ai工具[话题]# #大模型[话题]# #语音[话题]# #开发[话题]# #AI聊天[话题]# #开发者选项[话题]# #人工智能[话题]#",
@@ -3761,7 +4566,13 @@
       "likes": "36",
       "collections": "82",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#ai[话题]# #开源[话题]# #GitHub[话题]# #编程[话题]# #开发者选项[话题]#",
       "deepSummary": "#ai[话题]# #开源[话题]# #GitHub[话题]# #编程[话题]# #开发者选项[话题]#",
@@ -3784,7 +4595,13 @@
       "likes": "1045",
       "collections": "2490",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "该开源工具可支持目标检测、语义分割、图像分类及实时追踪等功能，兼容Ultralytics、Transformers、MMDetection等多种模型，提供标注器辅助检测框绘制与可视化效果生成，可应用于停留时间分析、速度估计、客流统计等场景，有助于提升相关工作效率。 #计算机视觉[话题]# #AI工具[话题]# #目标检测[话题]# #开源[话题]# #Python[话题]#",
       "deepSummary": "该开源工具可支持目标检测、语义分割、图像分类及实时追踪等功能，兼容Ultralytics、Transformers、MMDetection等多种模型，提供标注器辅助检测框绘制与可视化效果生成，可应用于停留时间分析、速度估计、客流统计等场景，有助于提升相关工作效率。 #计算机视觉[话题]# #AI工具[话题]# #目标检测[话题]# #开源[话题]# #Python[话题]#",
@@ -3807,7 +4624,13 @@
       "likes": "592",
       "collections": "1608",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "每次想自己动手做一个 SaaS，一看到高额的云服务器租金、复杂的鉴权登录，和高门槛的关系型数据库配置，是不是头直接大了一圈，甚至还没写代码就直接打退堂鼓？ 说实话，作为独立开发者，最需要的就是低成本快速验证。今天给打算自己做产品的朋友，掏心窝子分享一套我私藏的「免费 Serverless 极速上线套件」，用它们直接把服务器和鉴权成本压到 0 块钱！ 📌 1. hono 搞定后端 API。代码一键部署到 Cloudflare 边缘网络，冷启动速度极其强悍，每天 10 万次请求",
       "deepSummary": "每次想自己动手做一个 SaaS，一看到高额的云服务器租金、复杂的鉴权登录，和高门槛的关系型数据库配置，是不是头直接大了一圈，甚至还没写代码就直接打退堂鼓？ 说实话，作为独立开发者，最需要的就是低成本快速验证。今天给打算自己做产品的朋友，掏心窝子分享一套我私藏的「免费 Serverless 极速上线套件」，用它们直接把服务器和鉴权成本压到 0 块钱！ 📌 1. hono 搞定后端 API。代码一键部署到 Cloudflare 边缘网络，冷启动速度极其强悍，每天 10 万次请求",
@@ -3830,7 +4653,13 @@
       "likes": "6139",
       "collections": "1.2万",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#skill[话题]# #交互设计[话题]# #网站建设[话题]# #ai[话题]# #vibecoding[话题]# #ui设计[话题]# #skills[话题]# #前端[话题]#",
       "deepSummary": "#skill[话题]# #交互设计[话题]# #网站建设[话题]# #ai[话题]# #vibecoding[话题]# #ui设计[话题]# #skills[话题]# #前端[话题]#",
@@ -3853,7 +4682,13 @@
       "likes": "222",
       "collections": "521",
       "mediaType": "视频",
-      "category": "本地模型与成本",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "本地模型与成本",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#大模型[话题]# #AI工具[话题]# #科技[话题]# #程序员[话题]# #AIGC[话题]# #人工智能[话题]# #黑科技[话题]# #互联网[话题]# #ai[话题]# #智能体[话题]#",
       "deepSummary": "#大模型[话题]# #AI工具[话题]# #科技[话题]# #程序员[话题]# #AIGC[话题]# #人工智能[话题]# #黑科技[话题]# #互联网[话题]# #ai[话题]# #智能体[话题]#",
@@ -3876,7 +4711,13 @@
       "likes": "360",
       "collections": "746",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#ai[话题]# #编程[话题]# #代码[话题]# #榨干设备howto[话题]# #UI界面设计[话题]# #网站建设[话题]# #APP设计[话题]# #小程序制作[话题]# #网站设计[话题]# #AI工具[话题]#",
       "deepSummary": "#ai[话题]# #编程[话题]# #代码[话题]# #榨干设备howto[话题]# #UI界面设计[话题]# #网站建设[话题]# #APP设计[话题]# #小程序制作[话题]# #网站设计[话题]# #AI工具[话题]#",
@@ -3899,7 +4740,13 @@
       "likes": "388",
       "collections": "1227",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#程序员[话题]# #前端[话题]# #大模型[话题]# #AI工具[话题]# #科技[话题]# #网站设计[话题]# #有趣的网站[话题]# #AIGC[话题]# #黑科技[话题]# #人工智能[话题]#",
       "deepSummary": "#程序员[话题]# #前端[话题]# #大模型[话题]# #AI工具[话题]# #科技[话题]# #网站设计[话题]# #有趣的网站[话题]# #AIGC[话题]# #黑科技[话题]# #人工智能[话题]#",
@@ -3922,7 +4769,13 @@
       "likes": "362",
       "collections": "855",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "FreeMoCap 免费开源！不用穿任何专业设备，拿几个普通摄像头对着人拍，AI自动捕捉全身骨骼动作！ #开源项目[话题]# #GitHub[话题]# #动作捕捉[话题]# #3D动捕[话题]# #AI[话题]# #动画制作[话题]# #游戏开发[话题]# #Blender[话题]# #独立开发者[话题]# #开源神器[话题]#",
       "deepSummary": "FreeMoCap 免费开源！不用穿任何专业设备，拿几个普通摄像头对着人拍，AI自动捕捉全身骨骼动作！ #开源项目[话题]# #GitHub[话题]# #动作捕捉[话题]# #3D动捕[话题]# #AI[话题]# #动画制作[话题]# #游戏开发[话题]# #Blender[话题]# #独立开发者[话题]# #开源神器[话题]#",
@@ -3945,7 +4798,13 @@
       "likes": "3077",
       "collections": "8234",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "Github开源！打破信息差壁垒，数据爬取效率提升数十倍，原生绕过各类屏蔽，无需维护选择器！ #Github[话题]# #数据爬取[话题]# #信息差[话题]# #爬虫神器[话题]# #干货分享[话题]#",
       "deepSummary": "Github开源！打破信息差壁垒，数据爬取效率提升数十倍，原生绕过各类屏蔽，无需维护选择器！ #Github[话题]# #数据爬取[话题]# #信息差[话题]# #爬虫神器[话题]# #干货分享[话题]#",
@@ -3968,7 +4827,13 @@
       "likes": "849",
       "collections": "2502",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#视频下载[话题]# #github开源项目推荐[话题]# #开源[话题]# #自媒体干货[话题]# #办公技巧[话题]#",
       "deepSummary": "#视频下载[话题]# #github开源项目推荐[话题]# #开源[话题]# #自媒体干货[话题]# #办公技巧[话题]#",
@@ -3991,7 +4856,13 @@
       "likes": "1906",
       "collections": "5056",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI工具[话题]# #开源项目[话题]# #AI[话题]# #人工智能[话题]# #大模型[话题]# #TTS[话题]#",
       "deepSummary": "#AI工具[话题]# #开源项目[话题]# #AI[话题]# #人工智能[话题]# #大模型[话题]# #TTS[话题]#",
@@ -4014,7 +4885,13 @@
       "likes": "1213",
       "collections": "1960",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "注意了，今天 GitHub 有个项目把域名注册做成了免费 另一个项目给 AI 加了长期记忆，关掉对话下次还记得 这些信息差你错过了可能要等很久 你知道哪些服务本来收费结果被开源干掉了吗？评论区说说 #GitHub[话题]# #开源项目[话题]# #程序员[话题]# #AI[话题]# #科技圈[话题]#",
       "deepSummary": "注意了，今天 GitHub 有个项目把域名注册做成了免费 另一个项目给 AI 加了长期记忆，关掉对话下次还记得 这些信息差你错过了可能要等很久 你知道哪些服务本来收费结果被开源干掉了吗？评论区说说 #GitHub[话题]# #开源项目[话题]# #程序员[话题]# #AI[话题]# #科技圈[话题]#",
@@ -4037,7 +4914,13 @@
       "likes": "2991",
       "collections": "5845",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "##AI动画[话题]# #人工智能[话题]# #动画设计[话题]# #让插画动起来[话题]# #动画制作[话题]# #动画[话题]# #产品动画[话题]# #3D动画[话题]#",
       "deepSummary": "##AI动画[话题]# #人工智能[话题]# #动画设计[话题]# #让插画动起来[话题]# #动画制作[话题]# #动画[话题]# #产品动画[话题]# #3D动画[话题]#",
@@ -4060,7 +4943,13 @@
       "likes": "1010",
       "collections": "2774",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI[话题]# #AIChannel[话题]# #AI编程[话题]# #浏览器自动化[话题]# #AI浏览器[话题]# #vibecoding[话题]# #自动化[话题]# #vibecoding大赏[话题]# #智能体[话题]# #agent[话题]#",
       "deepSummary": "#AI[话题]# #AIChannel[话题]# #AI编程[话题]# #浏览器自动化[话题]# #AI浏览器[话题]# #vibecoding[话题]# #自动化[话题]# #vibecoding大赏[话题]# #智能体[话题]# #agent[话题]#",
@@ -4083,7 +4972,13 @@
       "likes": "2787",
       "collections": "4521",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "今天 GitHub 涨星最猛的 6 个项目，AI 相关的占了一半！ 一个 Rust 写的个人 AI 大脑，一天涨近四千星 还有用 WiFi 信号做空间感知的，完全不用摄像头 离线语音合成、反检测浏览器、开源情报平台 每个都值得关注，感兴趣的可以看看 #GitHub[话题]# #开源[话题]# #AI[话题]# #程序员[话题]# #科技[话题]#",
       "deepSummary": "今天 GitHub 涨星最猛的 6 个项目，AI 相关的占了一半！ 一个 Rust 写的个人 AI 大脑，一天涨近四千星 还有用 WiFi 信号做空间感知的，完全不用摄像头 离线语音合成、反检测浏览器、开源情报平台 每个都值得关注，感兴趣的可以看看 #GitHub[话题]# #开源[话题]# #AI[话题]# #程序员[话题]# #科技[话题]#",
@@ -4106,7 +5001,13 @@
       "likes": "1655",
       "collections": "4160",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI工具[话题]# #ai关键词[话题]# #效率神器[话题]# #挑战人工智能[话题]# #ai[话题]# #大模型[话题]# #gpt[话题]# #软件开发[话题]# #人工智能[话题]#",
       "deepSummary": "#AI工具[话题]# #ai关键词[话题]# #效率神器[话题]# #挑战人工智能[话题]# #ai[话题]# #大模型[话题]# #gpt[话题]# #软件开发[话题]# #人工智能[话题]#",
@@ -4129,7 +5030,13 @@
       "likes": "1439",
       "collections": "4065",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Scrapling",
         "自适应选择器",
@@ -4160,7 +5067,13 @@
       "likes": "630",
       "collections": "1476",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI工具[话题]# #开源项目[话题]# #ClaudeCode[话题]# #AI编程[话题]#",
       "deepSummary": "#AI工具[话题]# #开源项目[话题]# #ClaudeCode[话题]# #AI编程[话题]#",
@@ -4183,7 +5096,13 @@
       "likes": "317",
       "collections": "1087",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI[话题]# #干货分享[话题]# #AI工具[话题]# #GitHub[话题]# #开源[话题]#",
       "deepSummary": "#AI[话题]# #干货分享[话题]# #AI工具[话题]# #GitHub[话题]# #开源[话题]#",
@@ -4206,7 +5125,13 @@
       "likes": "3123",
       "collections": "6548",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "可以帮你完美复刻大厂UI设计开源项目它来了",
       "deepSummary": "可以帮你完美复刻大厂UI设计开源项目它来了",
@@ -4229,7 +5154,13 @@
       "likes": "257",
       "collections": "542",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "这周GitHub半壁江山都是它#GitHub[话题]# #AI[话题]# #程序员[话题]# #Agent[话题]# #Claude[话题]# #claudecode[话题]# #AI工具[话题]#",
       "deepSummary": "这周GitHub半壁江山都是它#GitHub[话题]# #AI[话题]# #程序员[话题]# #Agent[话题]# #Claude[话题]# #claudecode[话题]# #AI工具[话题]#",
@@ -4252,7 +5183,13 @@
       "likes": "946",
       "collections": "1882",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#ai[话题]# #人工智能[话题]# #claudecode[话题]# #skill[话题]# #agent[话题]# #开源项目[话题]# #开源工具[话题]# #AI工具[话题]# #一人公司[话题]# #编程入门[话题]#",
       "deepSummary": "#ai[话题]# #人工智能[话题]# #claudecode[话题]# #skill[话题]# #agent[话题]# #开源项目[话题]# #开源工具[话题]# #AI工具[话题]# #一人公司[话题]# #编程入门[话题]#",
@@ -4275,7 +5212,13 @@
       "likes": "386",
       "collections": "1287",
       "mediaType": "视频",
-      "category": "本地模型与成本",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "本地模型与成本",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "极大降低Token消耗",
       "deepSummary": "极大降低Token消耗",
@@ -4298,7 +5241,13 @@
       "likes": "301",
       "collections": "838",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "字节放大招了，刚刚在github上开源 UI-TARS Desktop！ 基于顶尖多模态视觉模型，一句话就能操控电脑与浏览器。精准识别界面、自动键鼠操作，跨 Windows、Mac 双平台适配。 支持本地和远程控制，全程隐私安全无需复杂配置，订机票、改设置、查项目问题全都自动搞定。 免费开源可商用，AI 自动化办公神器，开发者和普通用户都能直接上手！ #UITARS[话题]# #字节开源[话题]# #github开源项目推荐[话题]# #牛码架构[话题]#",
       "deepSummary": "字节放大招了，刚刚在github上开源 UI-TARS Desktop！ 基于顶尖多模态视觉模型，一句话就能操控电脑与浏览器。精准识别界面、自动键鼠操作，跨 Windows、Mac 双平台适配。 支持本地和远程控制，全程隐私安全无需复杂配置，订机票、改设置、查项目问题全都自动搞定。 免费开源可商用，AI 自动化办公神器，开发者和普通用户都能直接上手！ #UITARS[话题]# #字节开源[话题]# #github开源项目推荐[话题]# #牛码架构[话题]#",
@@ -4321,7 +5270,13 @@
       "likes": "1.4万",
       "collections": "2.7万",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Agent能力栈",
         "工程化",
@@ -4353,7 +5308,13 @@
       "likes": "6860",
       "collections": "1万",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "该开源工具是一款前端排版及动画处理工具，目前在GitHub上获得46k星标，具有15k的较小体积，支持直接绕过DOM进行渲染，可提升排版与动画的流畅度，并兼容多种语言。 #javascript[话题]# #文本测量[话题]# #性能优化[话题]# #开源[话题]# #前端开发[话题]#",
       "deepSummary": "该开源工具是一款前端排版及动画处理工具，目前在GitHub上获得46k星标，具有15k的较小体积，支持直接绕过DOM进行渲染，可提升排版与动画的流畅度，并兼容多种语言。 #javascript[话题]# #文本测量[话题]# #性能优化[话题]# #开源[话题]# #前端开发[话题]#",
@@ -4376,7 +5337,13 @@
       "likes": "2064",
       "collections": "4602",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Browser Harness",
         "CDP",
@@ -4407,7 +5374,13 @@
       "likes": "1078",
       "collections": "2967",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "GitNexus通过为整个代码库构建一个完整的知识图谱，并让AI智能体通过MCP协议直接查询，使得ClaudeCode、Codex等编程智能体秒懂整个Github代码仓库",
       "deepSummary": "GitNexus通过为整个代码库构建一个完整的知识图谱，并让AI智能体通过MCP协议直接查询，使得ClaudeCode、Codex等编程智能体秒懂整个Github代码仓库",
@@ -4430,7 +5403,13 @@
       "likes": "767",
       "collections": "2061",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#PPT[话题]# #ai[话题]# #ai新手村[话题]# #浅川同学[话题]# #好视频扶持计划[话题]# #AI工具[话题]# #github开源项目推荐[话题]# #开源[话题]#",
       "deepSummary": "#PPT[话题]# #ai[话题]# #ai新手村[话题]# #浅川同学[话题]# #好视频扶持计划[话题]# #AI工具[话题]# #github开源项目推荐[话题]# #开源[话题]#",
@@ -4453,7 +5432,13 @@
       "likes": "1040",
       "collections": "2864",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "这个开源项目Scrapling，不只是爬虫，而是实战级数据采集框架 #开源项目 #GitHub[话题]# #github[话题]# #ai[话题]# #程序员[话题]# #Python[话题]# #爬虫[话题]# #人工智能[话题]#",
       "deepSummary": "这个开源项目Scrapling，不只是爬虫，而是实战级数据采集框架 #开源项目 #GitHub[话题]# #github[话题]# #ai[话题]# #程序员[话题]# #Python[话题]# #爬虫[话题]# #人工智能[话题]#",
@@ -4476,7 +5461,13 @@
       "likes": "899",
       "collections": "2323",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "你想改的任何文字它都支持。#AI工具[话题]# #OpenCut[话题]# #图片改字[话题]# #vibecoding[话题]# #vibecoding大赏[话题]# #openclaw[话题]# #无痕改字[话题]# #p图改字[话题]#",
       "deepSummary": "你想改的任何文字它都支持。#AI工具[话题]# #OpenCut[话题]# #图片改字[话题]# #vibecoding[话题]# #vibecoding大赏[话题]# #openclaw[话题]# #无痕改字[话题]# #p图改字[话题]#",
@@ -4499,7 +5490,13 @@
       "likes": "325",
       "collections": "949",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "20k Star，腾讯、阿里的架构，这个项目直接开源了#大厂[话题]##互联网[话题]##架构师[话题]##黑客松巅峰赛[话题]# #黑科技[话题]#",
       "deepSummary": "20k Star，腾讯、阿里的架构，这个项目直接开源了#大厂[话题]##互联网[话题]##架构师[话题]##黑客松巅峰赛[话题]# #黑科技[话题]#",
@@ -4522,7 +5519,13 @@
       "likes": "874",
       "collections": "2385",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI[话题]# #AI工具[话题]# #干货分享[话题]# #N8N[话题]# #工作流[话题]#",
       "deepSummary": "#AI[话题]# #AI工具[话题]# #干货分享[话题]# #N8N[话题]# #工作流[话题]#",
@@ -4545,7 +5548,13 @@
       "likes": "524",
       "collections": "673",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI工具[话题]# #生产力工具[话题]# #信息差[话题]# #AI人工智能[话题]# 1.DeepSeek-TUI开源终端编程Agent爆火，GitHub星标冲至2.3k，功能对标Claude Code，支持百万上下文与并行子Agent。 2.微软开源VibeVoice ASR语音模型，可一次性处理60分钟长音频，内置说话人识别，支持50+语言。 3.Kling AI发布MCP接口，开发者可在主流编程工具中直接调用视频生成与4K图像能力。 4.Anthropic推出Cl",
       "deepSummary": "#AI工具[话题]# #生产力工具[话题]# #信息差[话题]# #AI人工智能[话题]# 1.DeepSeek-TUI开源终端编程Agent爆火，GitHub星标冲至2.3k，功能对标Claude Code，支持百万上下文与并行子Agent。 2.微软开源VibeVoice ASR语音模型，可一次性处理60分钟长音频，内置说话人识别，支持50+语言。 3.Kling AI发布MCP接口，开发者可在主流编程工具中直接调用视频生成与4K图像能力。 4.Anthropic推出Cl",
@@ -4568,7 +5577,13 @@
       "likes": "334",
       "collections": "893",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "一个框架搞定所有文档格式 pip install一行装好 #AI[话题]# #RAG[话题]# #多模态[话题]# #Claude[话题]# #Skills[话题]# #ClaudeCode[话题]# #AI工具[话题]#",
       "deepSummary": "一个框架搞定所有文档格式 pip install一行装好 #AI[话题]# #RAG[话题]# #多模态[话题]# #Claude[话题]# #Skills[话题]# #ClaudeCode[话题]# #AI工具[话题]#",
@@ -4591,7 +5606,13 @@
       "likes": "774",
       "collections": "2042",
       "mediaType": "视频",
-      "category": "本地模型与成本",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "本地模型与成本",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "RTK",
         "终端输出压缩",
@@ -4622,7 +5643,13 @@
       "likes": "102",
       "collections": "177",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "如果您使用Claude，这些是您实际需要的5台MCP服务器。#claude[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #个人开发者[话题]# #开发者选项[话题]# #大模型[话题]# #RED新生代创作大赛[话题]#",
       "deepSummary": "如果您使用Claude，这些是您实际需要的5台MCP服务器。#claude[话题]# #vibecoding大赏[话题]# #AI工具[话题]# #个人开发者[话题]# #开发者选项[话题]# #大模型[话题]# #RED新生代创作大赛[话题]#",
@@ -4645,7 +5672,13 @@
       "likes": "5885",
       "collections": "8725",
       "mediaType": "视频",
-      "category": "本地模型与成本",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "本地模型与成本",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Hugging Face",
         "开源模型",
@@ -4674,7 +5707,13 @@
       "likes": "211",
       "collections": "684",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI[话题]# #AI工具[话题]# #干货分享[话题]# #图表[话题]# #架构图[话题]#",
       "deepSummary": "#AI[话题]# #AI工具[话题]# #干货分享[话题]# #图表[话题]# #架构图[话题]#",
@@ -4697,7 +5736,13 @@
       "likes": "1379",
       "collections": "3622",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "最近有人把Andrej Karpathy的编程哲学封装成技能，让AI少写80%废代码\"✨ #效率神器[话题]# #vibecoding[话题]# #编程[话题]# #ai工具[话题]# #ai[话题]# #人工智能[话题]#",
       "deepSummary": "最近有人把Andrej Karpathy的编程哲学封装成技能，让AI少写80%废代码\"✨ #效率神器[话题]# #vibecoding[话题]# #编程[话题]# #ai工具[话题]# #ai[话题]# #人工智能[话题]#",
@@ -4720,7 +5765,13 @@
       "likes": "1425",
       "collections": "3576",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#人工智能[话题]# #AI[话题]# #开源项目[话题]#",
       "deepSummary": "#人工智能[话题]# #AI[话题]# #开源项目[话题]#",
@@ -4743,7 +5794,13 @@
       "likes": "3202",
       "collections": "5745",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#从夯到拉[话题]# #有趣的网站[话题]# #UI设计师[话题]# #AI工具[话题]# #VibeCoding[话题]# #网站设计[话题]# #网站推荐[话题]#",
       "deepSummary": "#从夯到拉[话题]# #有趣的网站[话题]# #UI设计师[话题]# #AI工具[话题]# #VibeCoding[话题]# #网站设计[话题]# #网站推荐[话题]#",
@@ -4766,7 +5823,13 @@
       "likes": "1352",
       "collections": "1134",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Design Lab",
         "设计语言",
@@ -4795,7 +5858,13 @@
       "likes": "1768",
       "collections": "3395",
       "mediaType": "视频",
-      "category": "知识管理与记忆",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "知识管理与记忆",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "LLM Wiki",
         "Obsidian",
@@ -4825,7 +5894,13 @@
       "likes": "147",
       "collections": "196",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "知识蒸馏",
         "数字分身",
@@ -4852,7 +5927,13 @@
       "likes": "182",
       "collections": "376",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "这 10 个 Skills 来自 Anthropic/OpenAI/Vercel 等团队开源的 Skills 精选，考虑到设计落地频率、对视觉/交互质量的直接提升、在 Codex/Claude Code 等的高复用性，朋友们可以直接复制 Skills 名字让你的 AI Agent 安装。 1. frontend-skill 适合做 landing page、品牌页、demo 页。强项是视觉论点、内容节奏、首屏质量 2. frontend-design 更偏“高完成度、强风格”",
       "deepSummary": "这 10 个 Skills 来自 Anthropic/OpenAI/Vercel 等团队开源的 Skills 精选，考虑到设计落地频率、对视觉/交互质量的直接提升、在 Codex/Claude Code 等的高复用性，朋友们可以直接复制 Skills 名字让你的 AI Agent 安装。 1. frontend-skill 适合做 landing page、品牌页、demo 页。强项是视觉论点、内容节奏、首屏质量 2. frontend-design 更偏“高完成度、强风格”",
@@ -4875,7 +5956,13 @@
       "likes": "1700",
       "collections": "3307",
       "mediaType": "图文",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "最近 GitHub 上有个项目悄悄炸了。 不到一个月，狂揽 52,100 颗星。 没有大厂背书，没有融资新闻，没有 KOL 车轮战推广。 就连创始人接受采访时，都异常低调，全程没有真人出镜，而是一个 AI animoji 的形象。 这个项目叫 Paperclip 📎。 口号只有三个词：Zero Human Companies（零人类公司）。 我去把创始人 Dota 的 46 分钟实操演示和访谈，从头到尾每一帧细看了两遍。 大腿都被拍红了 —— 这不是什么小龙虾，也不是什么爱",
       "deepSummary": "最近 GitHub 上有个项目悄悄炸了。 不到一个月，狂揽 52,100 颗星。 没有大厂背书，没有融资新闻，没有 KOL 车轮战推广。 就连创始人接受采访时，都异常低调，全程没有真人出镜，而是一个 AI animoji 的形象。 这个项目叫 Paperclip 📎。 口号只有三个词：Zero Human Companies（零人类公司）。 我去把创始人 Dota 的 46 分钟实操演示和访谈，从头到尾每一帧细看了两遍。 大腿都被拍红了 —— 这不是什么小龙虾，也不是什么爱",
@@ -4898,7 +5985,13 @@
       "likes": "681",
       "collections": "1180",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "最近做了一个特别实用的skill。如果你脑子里有个产品 idea，连 UI 都还没画，但明天就要去给老板路演。与其放干瘪的草图，不如直接跑出这种发布会级别的演示片。 #Skill[话题]# #UI动效[话题]# #UI设计[话题]##可灵[话题]# #效率神器[话题]# #AI智能分镜[话题]# #AI还可以这样玩[话题]# #可灵AI[话题]# #动态设计[话题]#",
       "deepSummary": "最近做了一个特别实用的skill。如果你脑子里有个产品 idea，连 UI 都还没画，但明天就要去给老板路演。与其放干瘪的草图，不如直接跑出这种发布会级别的演示片。 #Skill[话题]# #UI动效[话题]# #UI设计[话题]##可灵[话题]# #效率神器[话题]# #AI智能分镜[话题]# #AI还可以这样玩[话题]# #可灵AI[话题]# #动态设计[话题]#",
@@ -4921,7 +6014,13 @@
       "likes": "1229",
       "collections": "3143",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#GitHub[话题]# #开源项目[话题]# #AI[话题]# #干货分享[话题]# #智能体[话题]#",
       "deepSummary": "#GitHub[话题]# #开源项目[话题]# #AI[话题]# #干货分享[话题]# #智能体[话题]#",
@@ -4944,7 +6043,13 @@
       "likes": "967",
       "collections": "2924",
       "mediaType": "视频",
-      "category": "信息采集与搜索",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "信息采集与搜索",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "last30days",
         "趋势研究",
@@ -4975,7 +6080,13 @@
       "likes": "2342",
       "collections": "5147",
       "mediaType": "视频",
-      "category": "其他软件与 AI",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#github开源项目推荐[话题]# #开源[话题]# #网络安全[话题]# #网站推荐[话题]# #黑科技[话题]#",
       "deepSummary": "#github开源项目推荐[话题]# #开源[话题]# #网络安全[话题]# #网站推荐[话题]# #黑科技[话题]#",
@@ -4998,7 +6109,13 @@
       "likes": "935",
       "collections": "2358",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#ui设计[话题]# #前端[话题]# #github开源项目推荐[话题]# #开源[话题]# #网站开发[话题]# #网站设计[话题]# #网站推荐[话题]# #网站制作[话题]# #网站建设[话题]#",
       "deepSummary": "#ui设计[话题]# #前端[话题]# #github开源项目推荐[话题]# #开源[话题]# #网站开发[话题]# #网站设计[话题]# #网站推荐[话题]# #网站制作[话题]# #网站建设[话题]#",
@@ -5021,7 +6138,13 @@
       "likes": "3563",
       "collections": "9052",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI[话题]# #干货分享[话题]# #提示词[话题]# #提示词优化[话题]# #Github[话题]#",
       "deepSummary": "#AI[话题]# #干货分享[话题]# #提示词[话题]# #提示词优化[话题]# #Github[话题]#",
@@ -5044,7 +6167,13 @@
       "likes": "1029",
       "collections": "2339",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "OpenPencil",
         "MCP",
@@ -5075,7 +6204,13 @@
       "likes": "1148",
       "collections": "3092",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#AI[话题]# #vibecoding[话题]# #agent[话题]# #seo[话题]# #skills[话题]# #AIChannel[话题]# #AI编程[话题]# #claudecode[话题]# #黑客松巅峰赛[话题]#",
       "deepSummary": "#AI[话题]# #vibecoding[话题]# #agent[话题]# #seo[话题]# #skills[话题]# #AIChannel[话题]# #AI编程[话题]# #claudecode[话题]# #黑客松巅峰赛[话题]#",
@@ -5098,7 +6233,13 @@
       "likes": "2849",
       "collections": "7473",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#人工智能[话题]# #小红书科技AMA[话题]# #一人公司[话题]# #大模型[话题]# #skill[话题]# #claudecode[话题]# #AI工具[话题]# #ai[话题]##RED新生代创作大赛[话题]#",
       "deepSummary": "#人工智能[话题]# #小红书科技AMA[话题]# #一人公司[话题]# #大模型[话题]# #skill[话题]# #claudecode[话题]# #AI工具[话题]# #ai[话题]##RED新生代创作大赛[话题]#",
@@ -5121,7 +6262,13 @@
       "likes": "144",
       "collections": "119",
       "mediaType": "视频",
-      "category": "Agent与自动化",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Claude Code",
         "未发布功能",
@@ -5150,7 +6297,13 @@
       "likes": "730",
       "collections": "1781",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "#openclaw[话题]#",
       "deepSummary": "#openclaw[话题]#",
@@ -5173,7 +6326,13 @@
       "likes": "2060",
       "collections": "5229",
       "mediaType": "视频",
-      "category": "Skills与工作流",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "你装了Claude Code之后，是不是就直接开始用了？其实它就像一台裸机——能跑，但没装任何应用。今天推荐的这三个skill，装上之后你会觉得完全不是同一个东西～#小红书科技AMA[话题]# #效率[话题]# #高效生产力[话题]# #skills[话题]# #skills推荐[话题]#",
       "deepSummary": "你装了Claude Code之后，是不是就直接开始用了？其实它就像一台裸机——能跑，但没装任何应用。今天推荐的这三个skill，装上之后你会觉得完全不是同一个东西～#小红书科技AMA[话题]# #效率[话题]# #高效生产力[话题]# #skills[话题]# #skills推荐[话题]#",
@@ -5196,7 +6355,13 @@
       "likes": "1213",
       "collections": "2801",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [],
       "summary": "126 万个真实界面，喂出了这个AI 的设计审美 #refero[话题]##AI编程[话题]##AI设计[话题]##UI设计[话题]##黑客松巅峰赛[话题]# #黑科技[话题]#",
       "deepSummary": "126 万个真实界面，喂出了这个AI 的设计审美 #refero[话题]##AI编程[话题]##AI设计[话题]##UI设计[话题]##黑客松巅峰赛[话题]# #黑科技[话题]#",
@@ -5219,7 +6384,13 @@
       "likes": "2113",
       "collections": "3173",
       "mediaType": "视频",
-      "category": "AI设计与多媒体",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Design Skills",
         "前端审美",
@@ -5258,7 +6429,13 @@
       "likes": "3382",
       "collections": "4736",
       "mediaType": "视频",
-      "category": "内容增长与商业",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "Skills"
+      ],
       "themes": [
         "Marketing Skills",
         "用户增长",
@@ -5289,7 +6466,13 @@
       "likes": "15",
       "collections": "29",
       "mediaType": "图文",
-      "category": "内容增长与商业",
+      "category": "AI电商",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI电商"
+      ],
       "themes": [],
       "summary": "#外贸独立站[话题]# #独立站搭建[话题]# #独立站创业[话题]# #独立站运营[话题]# #独立站建站[话题]# #独立站[话题]# #独立站推广[话题]# #外贸网站[话题]# #外贸经验[话题]# #独立站引流[话题]#",
       "deepSummary": "#外贸独立站[话题]# #独立站搭建[话题]# #独立站创业[话题]# #独立站运营[话题]# #独立站建站[话题]# #独立站[话题]# #独立站推广[话题]# #外贸网站[话题]# #外贸经验[话题]# #独立站引流[话题]#",

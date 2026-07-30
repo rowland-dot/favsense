@@ -52,6 +52,8 @@ GitHub 仓库用于发布程序、文档、示例配置和可公开的演示数�
 
 部署前，Agent 必须先根据用户收藏主题选择或创建 `domain_profile`，不能默认沿用演示站的 software 标签。内容形态由该文件的 `content_kinds`、`classification` 与可选 `fallback.kind_rules` 共同决定：健身库不显示 Skill/Tool，护肤库不显示 Movement/Program。网页会从构建数据动态生成筛选项；若规则引用未声明的类型，构建器会直接失败。切换或新增领域后，先运行 `build-public-site.mjs` 并检查 `site/data/knowledge.json` 的 `meta.profileId` 与 `meta.kindLabels`，再发布。
 
+分类默认采用 `classification.category_strategy: "source-board-first"`。Agent 应读取当前用户的收藏夹名称建立主分类，而不是复制演示站标签；可在单个收藏夹配置中用 `category` 改展示名，用 `category_priority` 解决多收藏夹归属冲突。内容规则产生的不同分类只作为建议。确需移动主分类时，策展记录必须同时写 `category_override: true` 和可审计的 `category_reason`。发布前检查 `meta.categoryStrategy`，并确认每条公开数据只包含收藏夹名称、`categorySource` 和建议分类，不包含收藏夹 ID。
+
 部署者可以让任意 Agent 读取当前领域的 `domain_profile.resource_index` 和对应 `registry_file`，再根据实际数据生成资源索引。Agent 必须遵守以下接口：
 
 1. `groups` 是一级资源类型；`sorts` 是依附于当前类型的二级选项；

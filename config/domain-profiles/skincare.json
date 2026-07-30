@@ -20,6 +20,7 @@
     "Product": "具体产品或商业方案"
   },
   "classification": {
+    "category_strategy": "source-board-first",
     "default": "Claim",
     "rules": [
       { "kind": "Ingredient", "source": "content", "pattern": "成分|浓度|视黄醇|维C|烟酰胺|水杨酸" },

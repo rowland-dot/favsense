@@ -168,6 +168,8 @@ node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs"
 - `domain_profile`：领域分类、内容形态、首页叙事和资源索引接口；
 - `curation_file`：逐篇人工策展与自动判断覆盖。
 
+主分类默认直接继承用户自己的收藏夹，因此新部署不会显示演示站的主题标签。收藏夹可以用可选的 `category` 映射展示名称；同一笔记进入多个收藏夹时，`category_priority` 较高者优先。内容规则发现更合适的分类时，只在详情页显示建议，并独立纳入搜索；只有策展数据同时写入 `"category_override": true` 和 `category_reason`，才会真正跨收藏夹移动主分类。领域若明确需要旧式内容优先行为，可以把 `classification.category_strategy` 改为 `content-first`。
+
 仓库提供 software、fitness 与 skincare 三个领域模板。当前公开演示使用 software；切换领域不会改变小红书登录、同步、去重和隐私边界。
 
 内容形态不是 FavSense 的全局固定枚举，而是 `domain_profile.content_kinds` 的领域接口：software 可使用 `Tool / Skill / Workflow / Product`，fitness 使用 `Movement / Program / Claim / Product`，skincare 使用 `Ingredient / Routine / Claim / Product`。网页筛选器直接读取当前构建结果中的 `meta.kindLabels`，不会把 software 标签带入健身或护肤知识库。创建新领域时必须同时定义 `classification.default`、分类规则和内容形态说明；未深度解读不等于 `Note`。

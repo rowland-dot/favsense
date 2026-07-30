@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { resolveCategoryPolicy } from "./category-policy.mjs";
 
 const workspace = path.resolve(import.meta.dirname, "../../..");
 
@@ -132,7 +133,13 @@ function fallback(note, profile) {
   const match = (profile.fallback?.rules || []).find((rule) => new RegExp(rule.pattern, "i").test(haystack));
   const category = match?.category || profile.fallback?.default_category || "待分类";
   const summary = clean(note.description).replace(/#[^#]+\[话题\]#/g, "").slice(0, 90) || "正文信息待补充。";
-  return { category, themes: [category], summary, action: "", tools: [] };
+  return {
+    category,
+    themes: [category],
+    summary,
+    action: "",
+    tools: []
+  };
 }
 
 function related(notes, current) {
@@ -157,6 +164,8 @@ author: ${yaml(note.author || "未知作者")}
 source: xiaohongshu
 source_boards: [${sourceBoards.map(yaml).join(", ")}]
 category: ${yaml(c.category)}
+category_source: ${yaml(c.categorySource)}
+suggested_category: ${yaml(c.suggestedCategory || "")}
 themes: [${c.themes.map(yaml).join(", ")}]
 content_kind: ${yaml(c.kind || "自动判断")}
 published_at: ${yaml(note.published_at || "")}
@@ -173,6 +182,7 @@ last_seen_at: ${yaml(note.last_seen_at || "")}
 - 主题：${c.themes.map((v) => `#${md(v)}`).join(" ")}
 - 内容形态：${md(c.kind || "自动判断")}
 - 来源面板：${sourceBoards.map(md).join("、")}
+${c.suggestedCategory ? `- 内容建议分类：${md(c.suggestedCategory)}（主分类仍按收藏夹归档）` : ""}
 
 ${c.action ? `## 怎么用
 
@@ -209,14 +219,27 @@ function main() {
   const publishedSince = config.published_since
     ? normalizedDate(config.published_since, "published_since")
     : "";
-  const boardNames = new Map(config.boards.map((board) => [board.id, board.name]));
   const notes = Object.entries(catalog.notes ?? {}).filter(([, note]) => (
     isPublishedInScope(note, publishedSince)
   )).map(([id, note]) => {
-    const curation = { ...fallback(note, profile), ...(curated[id] ?? {}) };
-    const fallbackBoard = config.legacy_source_board_id || config.boards.find((board) => board.enabled)?.id;
-    const ids = Array.isArray(note.source_board_ids) && note.source_board_ids.length ? note.source_board_ids : [fallbackBoard].filter(Boolean);
-    return { id, note, title: curated[id]?.title || inferredTitle(note), curation, sourceBoards: ids.map((value) => boardNames.get(value) ?? value) };
+    const isCurated = Object.hasOwn(curated, id);
+    const entry = { ...fallback(note, profile), ...(curated[id] ?? {}) };
+    const categoryPolicy = resolveCategoryPolicy({
+      entry,
+      note,
+      config,
+      profile,
+      entryOrigin: isCurated ? "curation" : "content_rule"
+    });
+    const curation = {
+      ...entry,
+      category: categoryPolicy.category,
+      categorySource: categoryPolicy.categorySource,
+      suggestedCategory: categoryPolicy.suggestedCategory,
+      categoryReason: categoryPolicy.categoryReason,
+      themes: categoryPolicy.themes
+    };
+    return { id, note, title: curated[id]?.title || inferredTitle(note), curation, sourceBoards: categoryPolicy.sourceBoards };
   }).sort((a, b) => (a.curation.category + a.title).localeCompare(b.curation.category + b.title, "zh-CN"));
   const safeNoteIds = new Map(notes.map((item) => [item.id, safeFileSegment(item.id, "note id")]));
   const safeCategories = new Map(notes.map((item) => [item.curation.category, safeFileSegment(item.curation.category, "category")]));
@@ -268,7 +291,7 @@ function main() {
   const categoryLinks = [...categories].sort(([a], [b]) => a.localeCompare(b, "zh-CN")).map(([category, items]) => `- [[01-主题地图/${category}|${md(category)}]]（${items.length}）`).join("\n");
   const excludedBoards = config.boards.filter((board) => !board.enabled).map((board) => board.name);
   const exclusionNote = excludedBoards.length ? `；已排除：${excludedBoards.map(md).join("、")}` : "";
-  atomicWrite(path.join(output, "00-首页.md"), `---\ntype: dashboard\ndomain_profile: ${yaml(profile.id)}\ngenerated_at: ${yaml(now)}\n---\n\n# ${md(profile.presentation?.title || "小红书知识库")}\n\n> 灵感在小红书发生，沉淀在知识工作台完成；收藏的终点不是归档，而是可检索、可关联、可复用。\n\n## 知识库概览\n\n- 已整理：**${notes.length}** 篇\n${publishedSince ? `- 内容范围：**${publishedSince} 起发布**\n` : ""}- 来源面板：**${config.boards.filter((board) => board.enabled).length}** 个${exclusionNote}\n- [[04-行动与实验/使用建议|查看使用建议]]\n- [[03-工具雷达/工具索引|查看工具雷达]]\n- [[90-来源索引/小红书面板|查看同步完整性]]\n\n## 主题地图\n\n${categoryLinks}\n\n## 自动整理流程\n\n1. 新收藏进入本地 catalog。\n2. 构建器按发布日期范围生成知识卡片，并按主题而非收藏夹重新组织。\n3. 系统提取可实践建议；需要时查阅，不生成待办。\n`);
+  atomicWrite(path.join(output, "00-首页.md"), `---\ntype: dashboard\ndomain_profile: ${yaml(profile.id)}\ngenerated_at: ${yaml(now)}\n---\n\n# ${md(profile.presentation?.title || "小红书知识库")}\n\n> 灵感在小红书发生，沉淀在知识工作台完成；收藏的终点不是归档，而是可检索、可关联、可复用。\n\n## 知识库概览\n\n- 已整理：**${notes.length}** 篇\n${publishedSince ? `- 内容范围：**${publishedSince} 起发布**\n` : ""}- 来源面板：**${config.boards.filter((board) => board.enabled).length}** 个${exclusionNote}\n- [[04-行动与实验/使用建议|查看使用建议]]\n- [[03-工具雷达/工具索引|查看工具雷达]]\n- [[90-来源索引/小红书面板|查看同步完整性]]\n\n## 主题地图\n\n${categoryLinks}\n\n## 自动整理流程\n\n1. 新收藏进入本地 catalog。\n2. 构建器按发布日期范围生成知识卡片，默认以收藏夹建立主分类；内容识别负责补充主题与分类建议。\n3. 系统提取可实践建议；需要时查阅，不生成待办。\n`);
   atomicWrite(path.join(output, "99-模板", "收藏卡片模板.md"), `# {{title}}\n\n> [!summary] 一句话结论\n+> \n+\n## 为什么值得看\n+\n+## 怎么用\n+\n+\n+## 关联卡片\n+\n+## 原始来源\n+`);
   atomicWrite(path.join(output, "README.md"), `# 小红书知识库\n\n请在 Obsidian 中把本目录作为 Vault 打开，从 [[00-首页]] 开始。知识卡片文件名使用稳定的小红书 note ID，标题显示在笔记内部和双链别名中。\n`);
   process.stdout.write(JSON.stringify({ ok: true, notes: notes.length, categories: categories.size, tools: allTools.size, output }, null, 2) + "\n");

@@ -437,7 +437,7 @@ async function initBoardManager() {
 function filteredNotes() {
   const query = state.query.toLocaleLowerCase("zh-CN").trim();
   const notes = state.data.notes.filter((note) => {
-    const haystack = [note.title, note.author, note.category, note.summary, noteDescription(note), note.action, ...note.themes, ...note.tools].join(" ").toLocaleLowerCase("zh-CN");
+    const haystack = [note.title, note.author, note.category, note.suggestedCategory, note.summary, noteDescription(note), note.action, ...note.themes, ...note.tools].join(" ").toLocaleLowerCase("zh-CN");
     return (!query || haystack.includes(query))
       && (state.category === "all" || note.category === state.category)
       && (state.kind === "all" || note.kind === state.kind)
@@ -604,6 +604,9 @@ function renderDetail(note) {
   const tagsHtml = tags.length ? `
     <section class="detail-section"><h3>相关主题与工具</h3><div class="tools-row">${tags.map((item) => `<span class="tool-chip">${escapeHtml(item)}</span>`).join("")}</div></section>
   ` : "";
+  const categorySuggestionHtml = note.suggestedCategory && note.suggestedCategory !== note.category ? `
+    <p class="category-suggestion"><span>内容建议分类</span>${escapeHtml(note.suggestedCategory)}<small>当前仍按收藏夹“${escapeHtml(note.category)}”归档</small></p>
+  ` : "";
 
   elements.dialog.style.setProperty("--accent", categoryAccent(note.category));
   elements.dialogContent.dataset.noteId = note.id;
@@ -611,6 +614,7 @@ function renderDetail(note) {
     <p class="detail-kicker"><i></i> ${escapeHtml(note.category)} · ${escapeHtml(note.kind)}</p>
     <h2 class="detail-title">${escapeHtml(note.title)}</h2>
     <div class="detail-meta"><span>${escapeHtml(note.author || "作者未记录")}</span><span>${escapeHtml(formatDate(note.publishedAt))}</span></div>
+    ${categorySuggestionHtml}
     ${descriptionSection(note)}
     ${actionHtml}
     ${resourceHtml}

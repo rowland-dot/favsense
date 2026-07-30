@@ -20,6 +20,7 @@
     "Product": "器械、装备或商业产品"
   },
   "classification": {
+    "category_strategy": "source-board-first",
     "default": "Claim",
     "rules": [
       { "kind": "Movement", "source": "content", "pattern": "动作|姿势|发力|握距|站距|关节|深蹲|硬拉|卧推" },

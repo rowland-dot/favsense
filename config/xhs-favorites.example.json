@@ -30,6 +30,8 @@
     {
       "id": "YOUR_BOARD_ID",
       "name": "Skills",
+      "category": "Skills与工作流",
+      "category_priority": 50,
       "enabled": true,
       "advertised_count": 0
     },

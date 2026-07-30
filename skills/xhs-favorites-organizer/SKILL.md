@@ -102,7 +102,7 @@ python -m http.server 8000 --directory site
 
 无论由 Claude、Codex 还是其他 Agent 执行，都只编辑 `references/*-curation.json` 的结构化策展字段，随后运行同一个构建器。不得让 Agent 创建每日或开机整理任务，也不得要求用户复制粘贴链接。
 
-策展字段为：`category`、`themes`、`summary`、`action`、`tools`，以及可选人工覆盖字段 `kind`。系统自动完成分类和应用建议，不要求用户逐篇维护等级或处理状态；`kind` 省略时按当前领域配置自动判断。事实不充分时必须写“待确认”，不能从标题臆测工具名称。
+策展字段为：`category`、`themes`、`summary`、`action`、`tools`，以及可选人工覆盖字段 `kind`、`category_override`、`category_reason`。默认 `source-board-first`：收藏夹名称（或收藏夹配置的 `category`）是网页与知识库的主分类；内容规则和策展 `category` 只产生详情页建议并独立纳入搜索。仅在有明确语义依据时设置 `category_override: true` 跨收藏夹归档，并填写 `category_reason`；自动内容规则不得触发此覆盖。同一条目来自多个收藏夹时使用数值较高的 `category_priority`；不得把演示库的分类写死到其他用户的领域。系统自动完成分类和应用建议，不要求用户逐篇维护等级或处理状态；`kind` 省略时按当前领域配置自动判断。事实不充分时必须写“待确认”，不能从标题臆测工具名称。
 
 `kind` 只回答“内容本身是什么”，绝不能表示“是否已经处理”。未进入人工策展的收藏也必须先按领域配置和公开元数据推断内容形态，不能统一写成 `Note`；`Note` 只用于观点、资讯或一般知识说明。深度解读是否完成由证据文本和策展内容体现，不得复用内容形态字段。每个领域配置必须声明有效的 `classification.default`；如需针对原始收藏使用不同规则，应提供 `fallback.default_kind` 与 `fallback.kind_rules`。构建器必须拒绝未在 `content_kinds` 中声明的默认值或规则结果。
 
