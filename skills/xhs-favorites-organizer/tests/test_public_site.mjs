@@ -631,6 +631,10 @@ test("static app has the required deployment assets", async () => {
     read("Start-FavSense.cmd"),
     read("scripts/open-favsense-when-ready.ps1")
   ]);
+  const [windowsEntrypoint, setupEntrypoint] = await Promise.all([
+    readFile(resolve(root, "favsense.ps1")),
+    readFile(resolve(root, "skills/xhs-favorites-organizer/scripts/setup-autosync.ps1"))
+  ]);
   assert.match(html, /id="notes-grid"/);
   assert.match(html, /id="resources-grid"/);
   assert.match(html, /id="resource-type-filter"/);
@@ -666,6 +670,8 @@ test("static app has the required deployment assets", async () => {
   assert.doesNotMatch(windowsLauncher, /schtasks|Register-ScheduledTask|Startup/);
   assert.match(browserWaiter, /http:\/\/127\.0\.0\.1:8766\//);
   assert.match(browserWaiter, /Start-Process \$url/);
+  assert.deepEqual([...windowsEntrypoint.subarray(0, 3)], [0xef, 0xbb, 0xbf]);
+  assert.deepEqual([...setupEntrypoint.subarray(0, 3)], [0xef, 0xbb, 0xbf]);
   assert.match(html, /name="keywords"[^>]*Xiaohongshu[^>]*RedNote[^>]*Obsidian/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /\.filter-sidebar \{[^}]*position:\s*static[^}]*height:\s*auto[^}]*overflow-y:\s*visible/);
