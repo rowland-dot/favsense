@@ -577,6 +577,20 @@ test("public payload excludes private account state", async () => {
   }
 });
 
+test("public payload never includes raw comment evidence", async () => {
+  const secretComment = "private-comment-evidence-must-stay-local";
+  const data = await buildProfileFixture("software.json", {
+    uncurated: true,
+    note: {
+      title: "Fixture",
+      description: "Public description",
+      source_boards: ["Fixture"],
+      comment_evidence: [{ text: secretComment, reply: false, liked_count: "9" }]
+    }
+  });
+  assert.doesNotMatch(JSON.stringify(data), new RegExp(secretComment));
+});
+
 test("software resource registry mixes repositories, websites, docs and tutorials", async () => {
   const data = JSON.parse(await read("site/data/knowledge.json"));
   const urls = [];
@@ -659,7 +673,7 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /id="manual-sync-control"[^>]*hidden/);
   assert.match(html, /id="manual-sync-start"[^>]*>开始整理</);
   assert.match(html, />\s*一键整理</);
-  assert.match(html, /同步已开启的收藏夹、增量去重，并更新知识库与公开网页/);
+  assert.match(html, /刷新收藏夹、同步正文与可用评论线索、增量去重，并更新知识库与公开网页/);
   assert.doesNotMatch(html, /选择每天整理|自动进入每日同步/);
   assert.match(html, /id="creator-space-link"/);
   assert.doesNotMatch(html, /id="hero-dismiss"|id="hero-restore"/);
@@ -845,8 +859,8 @@ test("local board manager accepts only a tokenized loopback bridge", () => {
     { baseUrl: "http://127.0.0.1" },
     { baseUrl: "http://127.0.0.1:47631/private" }
   ]) assert.throws(() => validateLocalBridgeConfig(config));
-  assert.equal(validateLocalBridgeSession({ ok: true, protocol_version: 5, token: "a".repeat(64) }), "a".repeat(64));
-  assert.throws(() => validateLocalBridgeSession({ ok: true, protocol_version: 4, token: "a".repeat(64) }));
+  assert.equal(validateLocalBridgeSession({ ok: true, protocol_version: 6, token: "a".repeat(64) }), "a".repeat(64));
+  assert.throws(() => validateLocalBridgeSession({ ok: true, protocol_version: 5, token: "a".repeat(64) }));
 });
 
 test("setup removes the legacy daily task and keeps organization user-triggered", async () => {

@@ -4,7 +4,8 @@ FavSense · 拾光台把“使用者的私有采集环境”和“可以公开�
 
 ```mermaid
 flowchart LR
-  CLICK["本地设置页：开始整理"] --> XHS["普通 Chrome 中的小红书收藏夹"]
+  CLICK["本地设置页：开始整理"] --> PROFILE["刷新收藏夹清单与名称"]
+  PROFILE --> XHS["普通 Chrome 中的已启用收藏夹"]
   XHS --> TM["Tampermonkey 只读脚本"]
   TM -->|"回环地址 + token"| BRIDGE["本机 Bridge"]
   BRIDGE --> CATALOG["私有 Catalog"]
@@ -29,11 +30,12 @@ flowchart LR
 
 ## 数据流
 
-1. 用户脚本只在配置白名单中的收藏夹页面运行并收集笔记链接。
-2. Bridge 校验 Host、token、面板 ID、请求大小和小红书 URL。
-3. 新笔记按 ID 增量去重；失败条目单独记录，不循环重试。
-4. 构建器从私有 catalog 生成 Markdown 与脱敏 `site/data/knowledge.json`。
-5. 网页在浏览器中完成搜索、筛选、排序和详情展示。
+1. 用户脚本先在个人收藏页发现收藏夹；本地桥接按稳定 ID 合并改名和新增项，再只扫描当前启用且可见的收藏夹。
+2. 详情适配器在同一次只读页面请求中提取正文与页面初始评论；评论去除用户身份后作为未经核实的补充线索保存，原始评论不进入公开网页。
+3. Bridge 校验 Host、token、面板 ID、请求大小和小红书 URL。
+4. 新笔记按 ID 增量去重；失败条目单独记录，不循环重试。
+5. 构建器从私有 catalog 生成 Markdown 与脱敏 `site/data/knowledge.json`。
+6. 网页在浏览器中完成搜索、筛选、排序和详情展示。
 
 ## 领域层与资源索引
 

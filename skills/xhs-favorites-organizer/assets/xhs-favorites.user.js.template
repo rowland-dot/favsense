@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         小红书收藏知识库按需整理
 // @namespace    local.xhs-favorites-organizer
-// @version      2.2.0
-// @description  仅在用户主动触发时，将已登录 Chrome 中的收藏面板整理到本地知识库
+// @version      2.3.0
+// @description  用户主动触发后，先刷新收藏夹清单，再把已登录 Chrome 中的收藏整理到本地知识库
 // @match        https://www.xiaohongshu.com/board/*
+// @match        https://www.xiaohongshu.com/user/profile/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
 // @connect      127.0.0.1
@@ -16,9 +17,9 @@
   "use strict";
   const PORT = __PORT__;
   const TOKEN = "__TOKEN__";
-  const BOARDS = __BOARDS__;
+  const INSTALLED_BOARDS = __BOARDS__;
   const boardId = location.pathname.match(/^\/board\/([a-z0-9]{1,80})$/)?.[1];
-  const board = BOARDS[boardId];
+  const onProfile = /^\/user\/profile\/[a-z0-9]{1,128}$/.test(location.pathname);
 
   function show(message, error = false) {
     let box = document.getElementById("xhs-kb-sync-status");
@@ -34,53 +35,19 @@
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  function collect() {
-    const found = new Map();
-    for (const anchor of document.querySelectorAll("a[href]")) {
-      try {
-        const url = new URL(anchor.href, location.href);
-        const match = url.pathname.match(new RegExp(`^/board/${boardId}/([A-Za-z0-9_-]{1,128})$`));
-        const token = url.searchParams.get("xsec_token");
-        if (!match || !token) continue;
-        const target = new URL(`https://www.xiaohongshu.com/discovery/item/${match[1]}`);
-        target.searchParams.set("xsec_token", token);
-        target.searchParams.set("xsec_source", url.searchParams.get("xsec_source") || "pc_share");
-        found.set(match[1], target.href);
-      } catch { /* ignore malformed page links */ }
+  function assertSafePage() {
+    const bodyText = document.body?.innerText || "";
+    if (/300031|安全限制|访问频繁|验证码/.test(bodyText)) {
+      throw new Error("页面触发安全限制，已停止且不会重试");
     }
-    return found;
   }
 
-  async function scan(mode) {
-    const history = mode === "history";
-    const collected = new Map();
-    let stable = 0;
-    const deadline = Date.now() + (history ? 300000 : 30000);
-    while (Date.now() < deadline) {
-      const bodyText = document.body?.innerText || "";
-      if (/300031|安全限制|访问频繁|验证码/.test(bodyText)) throw new Error("页面触发安全限制，已停止且不会重试");
-      const before = collected.size;
-      for (const [id, url] of collect()) collected.set(id, url);
-      stable = collected.size === before ? stable + 1 : 0;
-      show(`正在扫描 ${board.name}：${collected.size}${board.count ? ` / ${board.count}` : ""} 篇`);
-      if (!history && collected.size > 0 && stable >= 2) break;
-      if (history && (collected.size >= Math.min(board.count || 200, 200) || stable >= 20)) break;
-      if (history) {
-        if (stable > 0 && stable % 8 === 0) window.scrollBy({ top: -Math.round(innerHeight * 0.8), behavior: "instant" });
-        else window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
-      }
-      await sleep(history ? 2200 : 1300);
-    }
-    if (!collected.size) throw new Error("没有找到可同步的收藏链接；请确认登录状态");
-    return [...collected.values()].slice(0, history ? 200 : 60);
-  }
-
-  function post(path, payload, timeout) {
+  function request(method, path, payload, timeout = 30000) {
     return new Promise((resolve, reject) => GM_xmlhttpRequest({
-      method: "POST",
+      method,
       url: `http://127.0.0.1:${PORT}${path}`,
       headers: { "Content-Type": "application/json", "X-XHS-Bridge-Token": TOKEN },
-      data: JSON.stringify(payload),
+      data: payload === undefined ? undefined : JSON.stringify(payload),
       timeout,
       onload: (response) => {
         try {
@@ -94,24 +61,142 @@
     }));
   }
 
-  async function run(mode = "incremental", batch = String(Date.now())) {
-    if (!boardId || !board) return;
-    const runId = `${batch}_${boardId}`.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
+  const post = (path, payload, timeout) => request("POST", path, payload, timeout);
+  const get = (path, timeout) => request("GET", path, undefined, timeout);
+
+  function cleanBoardName(anchor) {
+    const values = [
+      anchor.getAttribute("title"),
+      anchor.getAttribute("aria-label"),
+      anchor.querySelector('[class*="title"], [class*="name"]')?.textContent,
+      anchor.textContent,
+    ];
+    for (const value of values) {
+      const lines = String(value || "").split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim());
+      const candidate = lines.find((line) => line && line.length <= 100 && !/^\d+(?:\.\d+)?[万千]?$/.test(line) && !/^(?:收藏夹|公开|私密)$/.test(line));
+      if (candidate) {
+        const withoutCount = candidate.replace(/(?:\s+\d+(?:\.\d+)?[万千]?|\d+(?:\.\d+)?[万千]?\s*(?:篇|条))$/, "").trim();
+        return withoutCount || candidate;
+      }
+    }
+    return "";
+  }
+
+  function collectBoards() {
+    const found = new Map();
+    for (const anchor of document.querySelectorAll('a[href*="/board/"]')) {
+      try {
+        const url = new URL(anchor.href, location.href);
+        const match = url.pathname.match(/^\/board\/([a-z0-9]{1,80})$/);
+        if (!match) continue;
+        const id = match[1];
+        const name = cleanBoardName(anchor) || INSTALLED_BOARDS[id]?.name;
+        if (!name) continue;
+        const container = anchor.closest('li, section, [class*="board-item"], [class*="collection"]') || anchor;
+        const numbers = [...String(container.textContent || "").matchAll(/(?:^|\s)(\d{1,6})(?:\s*(?:篇|条))?(?=\s|$)/g)];
+        const advertisedCount = numbers.length ? Number(numbers.at(-1)[1]) : 0;
+        found.set(id, { id, name, advertised_count: advertisedCount });
+      } catch { /* ignore malformed page links */ }
+    }
+    return found;
+  }
+
+  async function discoverBoards() {
+    const collected = new Map();
+    let stable = 0;
+    const deadline = Date.now() + 45000;
+    while (Date.now() < deadline) {
+      assertSafePage();
+      const before = collected.size;
+      for (const [id, board] of collectBoards()) collected.set(id, board);
+      stable = collected.size === before ? stable + 1 : 0;
+      show(`正在刷新收藏夹：已发现 ${collected.size} 个`);
+      if (collected.size > 0 && stable >= 6) break;
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+      await sleep(1500);
+    }
+    if (!collected.size) throw new Error("没有找到收藏夹；请确认已登录并停留在收藏夹页面");
+    return [...collected.values()];
+  }
+
+  function collectNotes(currentBoardId) {
+    const found = new Map();
+    for (const anchor of document.querySelectorAll("a[href]")) {
+      try {
+        const url = new URL(anchor.href, location.href);
+        const match = url.pathname.match(new RegExp(`^/board/${currentBoardId}/([A-Za-z0-9_-]{1,128})$`));
+        const token = url.searchParams.get("xsec_token");
+        if (!match || !token) continue;
+        const target = new URL(`https://www.xiaohongshu.com/discovery/item/${match[1]}`);
+        target.searchParams.set("xsec_token", token);
+        target.searchParams.set("xsec_source", url.searchParams.get("xsec_source") || "pc_share");
+        found.set(match[1], target.href);
+      } catch { /* ignore malformed page links */ }
+    }
+    return found;
+  }
+
+  async function scan(board, mode) {
+    const history = mode === "history";
+    const collected = new Map();
+    let stable = 0;
+    const deadline = Date.now() + (history ? 300000 : 30000);
+    while (Date.now() < deadline) {
+      assertSafePage();
+      const before = collected.size;
+      for (const [id, url] of collectNotes(board.id)) collected.set(id, url);
+      stable = collected.size === before ? stable + 1 : 0;
+      show(`正在扫描 ${board.name}：${collected.size}${board.advertised_count ? ` / ${board.advertised_count}` : ""} 篇`);
+      if (!history && collected.size > 0 && stable >= 2) break;
+      if (history && (collected.size >= Math.min(board.advertised_count || 200, 200) || stable >= 20)) break;
+      if (history) {
+        if (stable > 0 && stable % 8 === 0) window.scrollBy({ top: -Math.round(innerHeight * 0.8), behavior: "instant" });
+        else window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+      }
+      await sleep(history ? 2200 : 1300);
+    }
+    if (!collected.size) throw new Error("没有找到可同步的收藏链接；请确认登录状态");
+    return [...collected.values()].slice(0, history ? 200 : 60);
+  }
+
+  function goToBoard(id, batch, mode) {
+    const next = new URL(`https://www.xiaohongshu.com/board/${id}`);
+    next.searchParams.set("source", "web_user_page");
+    next.searchParams.set("xhs_kb_sync", "1");
+    next.searchParams.set("xhs_kb_batch", batch);
+    next.searchParams.set("xhs_kb_mode", mode);
+    location.assign(next.href);
+  }
+
+  async function runProfile(mode, batch) {
     try {
+      const boards = await discoverBoards();
+      const result = await post("/sync/discover", { batch, boards }, 30000);
+      show(`收藏夹已刷新：${result.boards.length} 个已纳入整理`);
+      await sleep(800);
+      goToBoard(result.boards[0].id, batch, mode);
+    } catch (error) {
+      const message = error.message || String(error);
+      show(message, true);
+      await post("/sync/failure", { run_id: batch, error: message }, 10000).catch(() => {});
+    }
+  }
+
+  async function runBoard(mode, batch) {
+    let runId = batch;
+    try {
+      const context = await get(`/sync/board-context?batch=${encodeURIComponent(batch)}&board_id=${encodeURIComponent(boardId)}`, 10000);
+      const board = context.board;
+      runId = `${batch}_${board.id}`.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
       show(`准备扫描 ${board.name}`);
-      const urls = await scan(mode);
-      show(`正在入库 ${board.name} 的 ${urls.length} 篇`);
+      const urls = await scan(board, mode);
+      show(`正在入库 ${board.name} 的 ${urls.length} 篇（含可用评论区线索）`);
       const timeout = mode === "history" ? 80 * 60 * 1000 : 30 * 60 * 1000;
-      const result = await post("/import-sync", { run_id: runId, board_id: boardId, urls }, timeout);
+      const result = await post("/import-sync", { run_id: runId, board_id: board.id, urls }, timeout);
       show(`${board.name} 完成：扫描 ${result.scanned}，新增 ${result.new}`);
       if (result.next_board_id) {
         await sleep(1200);
-        const next = new URL(`https://www.xiaohongshu.com/board/${result.next_board_id}`);
-        next.searchParams.set("source", "web_user_page");
-        next.searchParams.set("xhs_kb_sync", "1");
-        next.searchParams.set("xhs_kb_batch", batch);
-        next.searchParams.set("xhs_kb_mode", mode);
-        location.assign(next.href);
+        goToBoard(result.next_board_id, batch, mode);
       }
     } catch (error) {
       const message = error.message || String(error);
@@ -120,7 +205,11 @@
     }
   }
 
-  GM_registerMenuCommand("整理当前收藏夹到知识库", () => run("incremental", String(Date.now())));
+  GM_registerMenuCommand("打开拾光台后开始整理", () => show("请在本地拾光台的“同步与设置”页面点击“开始整理”"));
   const query = new URLSearchParams(location.search);
-  if (query.get("xhs_kb_sync") === "1") run(query.get("xhs_kb_mode") === "history" ? "history" : "incremental", query.get("xhs_kb_batch") || String(Date.now()));
+  if (query.get("xhs_kb_sync") !== "1") return;
+  const mode = query.get("xhs_kb_mode") === "history" ? "history" : "incremental";
+  const batch = (query.get("xhs_kb_batch") || String(Date.now())).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
+  if (onProfile) runProfile(mode, batch);
+  else if (boardId) runBoard(mode, batch);
 })();

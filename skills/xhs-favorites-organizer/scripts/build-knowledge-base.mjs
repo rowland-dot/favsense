@@ -156,6 +156,9 @@ function noteMarkdown(item, relatedItems) {
   const sourceBoards = item.sourceBoards;
   const original = clean(note.description);
   const excerpt = original.length > 700 ? `${original.slice(0, 700)}…` : original;
+  const commentEvidence = Array.isArray(note.comment_evidence)
+    ? note.comment_evidence.filter((item) => item && clean(item.text)).slice(0, 12)
+    : [];
   return `---
 type: xhs-knowledge-card
 note_id: ${yaml(item.id)}
@@ -199,6 +202,12 @@ ${relatedItems.length ? relatedItems.map((other) => `- [[02-知识卡片/${other
 ## 来源摘录
 
 ${excerpt ? md(excerpt) : "正文待补充。"}
+
+## 评论区线索
+
+${commentEvidence.length
+    ? `${commentEvidence.map((item) => `- ${item.reply ? "回复：" : ""}${md(clean(item.text))}${item.liked_count ? `（${md(item.liked_count)} 赞）` : ""}`).join("\n")}\n\n> 评论内容仅作补充线索，未经事实核验；评论者身份未保存。`
+    : "- 本轮未取得可用的评论区线索。"}
 
 ## 原始来源
 

@@ -172,6 +172,20 @@ function normalizeCount(value) {
   return text || undefined;
 }
 
+function normalizeCommentEvidence(value) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = value.slice(0, 30).map((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+    const text = cleanText(item.text).slice(0, 500);
+    if (!text) return null;
+    const result = { text, reply: item.reply === true };
+    const likedCount = normalizeCount(item.liked_count ?? item.likedCount);
+    if (likedCount !== undefined) result.liked_count = likedCount;
+    return result;
+  }).filter(Boolean);
+  return normalized.length ? normalized : undefined;
+}
+
 function normalizeNote(item, seenAt) {
   const body = noteBody(item);
   const id = cleanText(firstValue(item, ID_KEYS) ?? firstValue(body, ID_KEYS));
@@ -212,6 +226,9 @@ function normalizeNote(item, seenAt) {
     published_at: cleanText(firstValue(body, ["published_at", "publishedAt"])) || undefined,
     fetch_error: cleanText(firstValue(body, ["fetch_error", "fetchError"])) || undefined,
     detail_fetched: body.detail_fetched === true || body.detailFetched === true,
+    comment_evidence: normalizeCommentEvidence(
+      body.comment_evidence ?? body.commentEvidence ?? item.comment_evidence ?? item.commentEvidence,
+    ),
     first_seen_at: seenAt,
     last_seen_at: seenAt,
   };
@@ -296,6 +313,9 @@ function noteEntryLines(note, index) {
     lines.push(`- 原文描述：${markdownText(description)}`);
   }
   if (note.fetch_error) lines.push("- 详情状态：正文待补充");
+  if (note.comment_evidence?.length) {
+    lines.push(`- 评论区线索：已匿名收录 ${note.comment_evidence.length} 条（未经核实）`);
+  }
   lines.push(
     "- 分类：`待分类`",
     "- 标签：",

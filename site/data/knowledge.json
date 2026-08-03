@@ -2,7 +2,7 @@
   "meta": {
     "title": "小红书收藏知识工作台",
     "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
-    "generatedAt": "2026-07-30T15:12:21.251Z",
+    "generatedAt": "2026-08-03T17:21:58.972Z",
     "source": "xiaohongshu",
     "sourceBoards": [
       "Skills",
@@ -26,7 +26,7 @@
       "to": "判断过",
       "intro": "收藏会先自动收录；完成解读的内容会整理成可搜索的总结、相关资源和具体用法。你只管收藏，拾光台负责把零散内容逐步变成有用的知识。"
     },
-    "noteCount": 197,
+    "noteCount": 209,
     "verifiedNoteCount": 49,
     "categoryCount": 10,
     "resourceCount": 71,
@@ -157,7 +157,7 @@
   "categories": [
     {
       "name": "Skills",
-      "count": 107
+      "count": 108
     },
     {
       "name": "AI电商",
@@ -165,11 +165,11 @@
     },
     {
       "name": "AI自媒体",
-      "count": 9
+      "count": 12
     },
     {
       "name": "SEO",
-      "count": 5
+      "count": 6
     },
     {
       "name": "AI设计",
@@ -177,15 +177,15 @@
     },
     {
       "name": "AI视频生成",
-      "count": 33
+      "count": 37
     },
     {
       "name": "AI基础知识",
-      "count": 18
+      "count": 19
     },
     {
       "name": "Vibe Coding",
-      "count": 3
+      "count": 4
     },
     {
       "name": "小红书内容运营",
@@ -193,7 +193,7 @@
     },
     {
       "name": "OpenClaw",
-      "count": 9
+      "count": 10
     }
   ],
   "notes": [
@@ -6479,6 +6479,354 @@
       "action": "",
       "tools": [],
       "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a6b611700000000240257ab",
+      "number": 198,
+      "title": "Howto怒省94%token消耗，codex用到爽❗️",
+      "author": "AI_李放心",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Howto%E6%80%92%E7%9C%8194%25token%E6%B6%88%E8%80%97%EF%BC%8Ccodex%E7%94%A8%E5%88%B0%E7%88%BD%E2%9D%97%EF%B8%8F+AI_%E6%9D%8E%E6%94%BE%E5%BF%83&source=web_search_result_notes",
+      "publishedAt": "2026-07-31_09:35:01",
+      "likes": "2814",
+      "collections": "6345",
+      "mediaType": "视频",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Skills"
+      ],
+      "themes": [],
+      "summary": "#Howto[话题]# #REDSkill[话题]# #howto用好AI[话题]# #howto用AI抢救一切[话题]# #howto入门codex[话题]# #agent[话题]# #ai工具[话题]# #ai教程[话题]# #省token[话题]# #skill推荐[话题]# @HOWTO薯 @科技薯",
+      "deepSummary": "#Howto[话题]# #REDSkill[话题]# #howto用好AI[话题]# #howto用AI抢救一切[话题]# #howto入门codex[话题]# #agent[话题]# #ai工具[话题]# #ai教程[话题]# #省token[话题]# #skill推荐[话题]# @HOWTO薯 @科技薯",
+      "action": "",
+      "tools": [],
+      "kind": "Skill",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a5b2393000000001400509f",
+      "number": 199,
+      "title": "会用Codex，你就是一个人的小红书运营组",
+      "author": "我是一个人",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%BC%9A%E7%94%A8Codex%EF%BC%8C%E4%BD%A0%E5%B0%B1%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BA%BA%E7%9A%84%E5%B0%8F%E7%BA%A2%E4%B9%A6%E8%BF%90%E8%90%A5%E7%BB%84+%E6%88%91%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BA%BA&source=web_search_result_notes",
+      "publishedAt": "2026-07-18_16:56:19",
+      "likes": "1071",
+      "collections": "1340",
+      "mediaType": "图文",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
+      "themes": [],
+      "summary": "小红书最浪费时间的，不是写一篇笔记，而是每天纠结“发什么、怎么写、封面放什么、数据差在哪”。这 12 个 Skill，把内容从定位到复盘做成稳定流程。 xhs-positioning：根据你的经历、产品和目标人群，找出长期能持续写的内容方向。 xhs-painpoint-miner：从评论、私信和咨询里整理真实问题，不再闭门造车想选题。 xhs-topic-radar：一次产出 30 个选题，并标明适合清单、案例、观点还是避坑切入。 xhs-title-ab-test：为同一",
+      "deepSummary": "小红书最浪费时间的，不是写一篇笔记，而是每天纠结“发什么、怎么写、封面放什么、数据差在哪”。这 12 个 Skill，把内容从定位到复盘做成稳定流程。 xhs-positioning：根据你的经历、产品和目标人群，找出长期能持续写的内容方向。 xhs-painpoint-miner：从评论、私信和咨询里整理真实问题，不再闭门造车想选题。 xhs-topic-radar：一次产出 30 个选题，并标明适合清单、案例、观点还是避坑切入。 xhs-title-ab-test：为同一",
+      "action": "",
+      "tools": [],
+      "kind": "Skill",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a2ba768000000002201866e",
+      "number": 200,
+      "title": "2026 年普通人做自媒体，只需要搞懂这两件事",
+      "author": "NN_不是你",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=2026+%E5%B9%B4%E6%99%AE%E9%80%9A%E4%BA%BA%E5%81%9A%E8%87%AA%E5%AA%92%E4%BD%93%EF%BC%8C%E5%8F%AA%E9%9C%80%E8%A6%81%E6%90%9E%E6%87%82%E8%BF%99%E4%B8%A4%E4%BB%B6%E4%BA%8B+NN_%E4%B8%8D%E6%98%AF%E4%BD%A0&source=web_search_result_notes",
+      "publishedAt": "2026-06-18_20:00:11",
+      "likes": "1万",
+      "collections": "9425",
+      "mediaType": "视频",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
+      "themes": [],
+      "summary": "#自媒体[话题]# #学习方法[话题]# #普通人[话题]# #赚钱[话题]# @好生意薯",
+      "deepSummary": "#自媒体[话题]# #学习方法[话题]# #普通人[话题]# #赚钱[话题]# @好生意薯",
+      "action": "",
+      "tools": [],
+      "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a6a0f230000000001031c5d",
+      "number": 201,
+      "title": "10 个 Skill 帮你轻松做起小红书",
+      "author": "空格的键盘",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=10+%E4%B8%AA+Skill+%E5%B8%AE%E4%BD%A0%E8%BD%BB%E6%9D%BE%E5%81%9A%E8%B5%B7%E5%B0%8F%E7%BA%A2%E4%B9%A6+%E7%A9%BA%E6%A0%BC%E7%9A%84%E9%94%AE%E7%9B%98&source=web_search_result_notes",
+      "publishedAt": "2026-07-30_00:33:07",
+      "likes": "2775",
+      "collections": "4665",
+      "mediaType": "视频",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
+      "themes": [],
+      "summary": "这篇我把「运营一个小红书号」从头到尾拆成了 定位、选题、写作、视觉、复盘 五个环节。 每个环节做一两个 Skill，再加一个总控把它们串起来，一共 10 个。 #小红书小工具[话题]# #AI搞学习howto[话题]# #howto用好AI[话题]# #howto手搓skill[话题]# #howto实现一万种vibecoding[话题]# #howto入门vibecoding[话题]# #大模型[话题]# #AI工具[话题]#",
+      "deepSummary": "这篇我把「运营一个小红书号」从头到尾拆成了 定位、选题、写作、视觉、复盘 五个环节。 每个环节做一两个 Skill，再加一个总控把它们串起来，一共 10 个。 #小红书小工具[话题]# #AI搞学习howto[话题]# #howto用好AI[话题]# #howto手搓skill[话题]# #howto实现一万种vibecoding[话题]# #howto入门vibecoding[话题]# #大模型[话题]# #AI工具[话题]#",
+      "action": "",
+      "tools": [],
+      "kind": "Skill",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a634fae0000000001031fe8",
+      "number": 202,
+      "title": "AISEO一气呵成，全流程",
+      "author": "老朱SEO课_8_21深圳",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=AISEO%E4%B8%80%E6%B0%94%E5%91%B5%E6%88%90%EF%BC%8C%E5%85%A8%E6%B5%81%E7%A8%8B+%E8%80%81%E6%9C%B1SEO%E8%AF%BE_8_21%E6%B7%B1%E5%9C%B3&source=web_search_result_notes",
+      "publishedAt": "2026-07-24_21:42:38",
+      "likes": "998",
+      "collections": "1912",
+      "mediaType": "视频",
+      "category": "SEO",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "SEO"
+      ],
+      "themes": [],
+      "summary": "独立站做SEO，今天才算能完成用AI跑下来。很快。很强大。没有多少SEO基础也能快速铺出页面，做出流量了。#外贸独立站[话题]# #独立站[话题]# #Codex[话题]# #谷歌seo[话题]# #独立站引流[话题]# #ai[话题]# #独立站运营[话题]#",
+      "deepSummary": "独立站做SEO，今天才算能完成用AI跑下来。很快。很强大。没有多少SEO基础也能快速铺出页面，做出流量了。#外贸独立站[话题]# #独立站[话题]# #Codex[话题]# #谷歌seo[话题]# #独立站引流[话题]# #ai[话题]# #独立站运营[话题]#",
+      "action": "",
+      "tools": [],
+      "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a6b29800000000006005817",
+      "number": 203,
+      "title": "几个小时到20分钟，AI真会剪了",
+      "author": "桃子AI",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%87%A0%E4%B8%AA%E5%B0%8F%E6%97%B6%E5%88%B020%E5%88%86%E9%92%9F%EF%BC%8CAI%E7%9C%9F%E4%BC%9A%E5%89%AA%E4%BA%86+%E6%A1%83%E5%AD%90AI&source=web_search_result_notes",
+      "publishedAt": "2026-08-01_14:50:06",
+      "likes": "43",
+      "collections": "54",
+      "mediaType": "视频",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
+      "themes": [],
+      "summary": "#AI工具[话题]##Aixcut[话题]##AI剪辑[话题]##AI剪辑师[话题]##AI视频[话题]##AI自媒体[话题]##剪辑[话题]##skill[话题]##aixcut[话题]#",
+      "deepSummary": "#AI工具[话题]##Aixcut[话题]##AI剪辑[话题]##AI剪辑师[话题]##AI视频[话题]##AI自媒体[话题]##剪辑[话题]##skill[话题]##aixcut[话题]#",
+      "action": "",
+      "tools": [],
+      "kind": "Skill",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a6a1736000000000f02871e",
+      "number": 204,
+      "title": "Codex王炸插件❗️1句话直出高质量AI短片",
+      "author": "AI教练振轩",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Codex%E7%8E%8B%E7%82%B8%E6%8F%92%E4%BB%B6%E2%9D%97%EF%B8%8F1%E5%8F%A5%E8%AF%9D%E7%9B%B4%E5%87%BA%E9%AB%98%E8%B4%A8%E9%87%8FAI%E7%9F%AD%E7%89%87+AI%E6%95%99%E7%BB%83%E6%8C%AF%E8%BD%A9&source=web_search_result_notes",
+      "publishedAt": "2026-07-31_14:15:22",
+      "likes": "533",
+      "collections": "1019",
+      "mediaType": "视频",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
+      "themes": [],
+      "summary": "给 Codex 装个 Flova 插件，它直接进化成 AI 导演了！一句话就能生成品牌 TVC、氛围感电影、网感甜宠短剧，光影质感直接拉满。 不用手搓提示词，发张产品图说清需求，先出分镜再生成视频，大白话就能改效果。 上百个短片 Skills 随心用，脚本分镜素材统一管理。后续还将接入 Seedance 2.5，出片效率直接起飞，做 AI 视频的真的可以冲！ #AI视频[话题]# #Codex[话题]# #Flovaai[话题]# #Flovaai教程[话题]# #skill",
+      "deepSummary": "给 Codex 装个 Flova 插件，它直接进化成 AI 导演了！一句话就能生成品牌 TVC、氛围感电影、网感甜宠短剧，光影质感直接拉满。 不用手搓提示词，发张产品图说清需求，先出分镜再生成视频，大白话就能改效果。 上百个短片 Skills 随心用，脚本分镜素材统一管理。后续还将接入 Seedance 2.5，出片效率直接起飞，做 AI 视频的真的可以冲！ #AI视频[话题]# #Codex[话题]# #Flovaai[话题]# #Flovaai教程[话题]# #skill",
+      "action": "",
+      "tools": [],
+      "kind": "Skill",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a54d0d600000000110149c0",
+      "number": 205,
+      "title": "Codex自动剪视频，完整流程SOP开源！",
+      "author": "清华鑫哥讲AI智能体",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Codex%E8%87%AA%E5%8A%A8%E5%89%AA%E8%A7%86%E9%A2%91%EF%BC%8C%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8BSOP%E5%BC%80%E6%BA%90%EF%BC%81+%E6%B8%85%E5%8D%8E%E9%91%AB%E5%93%A5%E8%AE%B2AI%E6%99%BA%E8%83%BD%E4%BD%93&source=web_search_result_notes",
+      "publishedAt": "2026-07-13_21:49:42",
+      "likes": "2157",
+      "collections": "2618",
+      "mediaType": "视频",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
+      "themes": [],
+      "summary": "#codex剪视频[话题]# #codex自动剪辑[话题]# #ai剪辑[话题]# #ai自动剪辑[话题]# #codex剪辑[话题]# #codex全自动剪辑[话题]#",
+      "deepSummary": "#codex剪视频[话题]# #codex自动剪辑[话题]# #ai剪辑[话题]# #ai自动剪辑[话题]# #codex剪辑[话题]# #codex全自动剪辑[话题]#",
+      "action": "",
+      "tools": [],
+      "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a65c709000000000f007050",
+      "number": 206,
+      "title": "一个选题让AI数字人加自动剪辑生成口播视频",
+      "author": "猪脚AI短视频",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%B8%80%E4%B8%AA%E9%80%89%E9%A2%98%E8%AE%A9AI%E6%95%B0%E5%AD%97%E4%BA%BA%E5%8A%A0%E8%87%AA%E5%8A%A8%E5%89%AA%E8%BE%91%E7%94%9F%E6%88%90%E5%8F%A3%E6%92%AD%E8%A7%86%E9%A2%91+%E7%8C%AA%E8%84%9AAI%E7%9F%AD%E8%A7%86%E9%A2%91&source=web_search_result_notes",
+      "publishedAt": "2026-07-26_18:36:25",
+      "likes": "14",
+      "collections": "16",
+      "mediaType": "视频",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI设计与多媒体",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
+      "themes": [],
+      "summary": "#职场那些事儿[话题]# #AI工具[话题]# #口播[话题]# #口播短视频[话题]# #AI视频[话题]# #AI教程[话题]#",
+      "deepSummary": "#职场那些事儿[话题]# #AI工具[话题]# #口播[话题]# #口播短视频[话题]# #AI视频[话题]# #AI教程[话题]#",
+      "action": "",
+      "tools": [],
+      "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a4bd81c000000002100bb24",
+      "number": 207,
+      "title": "全网最适合小白的WorkBuddy入门指南！",
+      "author": "珍妮丁丁说AI",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%85%A8%E7%BD%91%E6%9C%80%E9%80%82%E5%90%88%E5%B0%8F%E7%99%BD%E7%9A%84WorkBuddy%E5%85%A5%E9%97%A8%E6%8C%87%E5%8D%97%EF%BC%81+%E7%8F%8D%E5%A6%AE%E4%B8%81%E4%B8%81%E8%AF%B4AI&source=web_search_result_notes",
+      "publishedAt": "2026-07-07_14:01:15",
+      "likes": "818",
+      "collections": "1277",
+      "mediaType": "视频",
+      "category": "AI基础知识",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "其他软件与 AI",
+      "sourceBoards": [
+        "AI基础知识"
+      ],
+      "themes": [],
+      "summary": "这期用最小白的方式，带你看懂 ✅WorkBuddy 的三种模式 ✅三大特色功能：技能、专家团、连接器 ✅团队协作方法：项目空间。 快快收藏起来！跟练一下！！ #howto用AI抢救一切[话题]# #howto用好AI[话题]# #AI工具[话题]# #AI教学[话题]##workbuddy[话题]# #workbuddy教程[话题]#",
+      "deepSummary": "这期用最小白的方式，带你看懂 ✅WorkBuddy 的三种模式 ✅三大特色功能：技能、专家团、连接器 ✅团队协作方法：项目空间。 快快收藏起来！跟练一下！！ #howto用AI抢救一切[话题]# #howto用好AI[话题]# #AI工具[话题]# #AI教学[话题]##workbuddy[话题]# #workbuddy教程[话题]#",
+      "action": "",
+      "tools": [],
+      "kind": "Workflow",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a6aa7d70000000011010130",
+      "number": 208,
+      "title": "Codex入门终极指南,手把手教你玩转VibeCode",
+      "author": "Python阿风",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Codex%E5%85%A5%E9%97%A8%E7%BB%88%E6%9E%81%E6%8C%87%E5%8D%97%2C%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E7%8E%A9%E8%BD%ACVibeCode+Python%E9%98%BF%E9%A3%8E&source=web_search_result_notes",
+      "publishedAt": "2026-07-30_11:24:39",
+      "likes": "86",
+      "collections": "137",
+      "mediaType": "视频",
+      "category": "Vibe Coding",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "Vibe Coding"
+      ],
+      "themes": [],
+      "summary": "Codex入门终极指南,手把手教你玩转Vibe Coding #howto入门codex[话题]# #howto实现一万种vibecoding[话题]# #计算机[话题]# #howto入门codex[话题]# #howto手搓skill[话题]# #howto用AI手搓APP[话题]# #人类高质量科研工具[话题]# #大模型[话题]#",
+      "deepSummary": "Codex入门终极指南,手把手教你玩转Vibe Coding #howto入门codex[话题]# #howto实现一万种vibecoding[话题]# #计算机[话题]# #howto入门codex[话题]# #howto手搓skill[话题]# #howto用AI手搓APP[话题]# #人类高质量科研工具[话题]# #大模型[话题]#",
+      "action": "",
+      "tools": [],
+      "kind": "Skill",
+      "resources": [],
+      "evidence": {
+        "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",
+        "locallyAvailable": false
+      }
+    },
+    {
+      "id": "6a672d9f000000001102d3ae",
+      "number": 209,
+      "title": "深圳公司造远程控制硬件海外抢疯狂揽400万",
+      "author": "AI硬件情报局",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E6%B7%B1%E5%9C%B3%E5%85%AC%E5%8F%B8%E9%80%A0%E8%BF%9C%E7%A8%8B%E6%8E%A7%E5%88%B6%E7%A1%AC%E4%BB%B6%E6%B5%B7%E5%A4%96%E6%8A%A2%E7%96%AF%E7%8B%82%E6%8F%BD400%E4%B8%87+AI%E7%A1%AC%E4%BB%B6%E6%83%85%E6%8A%A5%E5%B1%80&source=web_search_result_notes",
+      "publishedAt": "2026-07-27_20:06:23",
+      "likes": "1353",
+      "collections": "1704",
+      "mediaType": "视频",
+      "category": "OpenClaw",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Agent与自动化",
+      "sourceBoards": [
+        "OpenClaw"
+      ],
+      "themes": [],
+      "summary": "#AI[话题]# #AI硬件[话题]# #远程控制[话题]# #远程办公[话题]# #aiagent[话题]# #CometQ[话题]# #深圳[话题]# #黑科技[话题]#",
+      "deepSummary": "#AI[话题]# #AI硬件[话题]# #远程控制[话题]# #远程办公[话题]# #aiagent[话题]# #CometQ[话题]# #深圳[话题]# #黑科技[话题]#",
+      "action": "",
+      "tools": [],
+      "kind": "Note",
       "resources": [],
       "evidence": {
         "method": "目前依据原帖公开文字整理，视频内容尚未完整解读",

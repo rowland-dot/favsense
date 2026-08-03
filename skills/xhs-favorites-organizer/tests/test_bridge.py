@@ -55,7 +55,7 @@ class BridgeHelpersTest(unittest.TestCase):
         self.assertIn('`safe.directory=${root}`', builder)
 
     def test_protocol_version_is_pinned(self):
-        self.assertEqual(BRIDGE.PROTOCOL_VERSION, 5)
+        self.assertEqual(BRIDGE.PROTOCOL_VERSION, 6)
 
     def test_manual_organization_only_launches_chrome_after_explicit_trigger(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -72,6 +72,7 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.workspace = root
             bridge.config_path = root / "config.json"
             bridge.port = 47631
+            bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
 
             with mock.patch.dict(BRIDGE.os.environ, {"LOCALAPPDATA": str(root)}, clear=True), mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
                 self.assertFalse(popen.called)
@@ -82,6 +83,7 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertNotIn("batch", status)
             launched = popen.call_args.args[0]
             self.assertEqual(Path(launched[0]), chrome)
+            self.assertIn("/user/profile/testprofile", launched[1])
             self.assertIn("xhs_kb_sync=1", launched[1])
             self.assertIn("xhs_kb_mode=incremental", launched[1])
             with self.assertRaisesRegex(BRIDGE.BridgeBusyError, "already running"):
@@ -174,6 +176,49 @@ class BridgeHelpersTest(unittest.TestCase):
             BRIDGE.update_board_enabled(config, "missing", True)
         with self.assertRaisesRegex(ValueError, "boolean"):
             BRIDGE.update_board_enabled(config, "second", "yes")
+
+    def test_discovery_renames_existing_boards_adds_new_boards_and_keeps_history(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config_path = root / "config.json"
+            config_path.write_text(json.dumps({"version": 1, "boards": [
+                {"id": "first", "name": "Old name", "enabled": True},
+                {"id": "missing", "name": "Historical", "enabled": True},
+            ]}), encoding="utf-8")
+            catalog_path = root / "catalog.json"
+            catalog_path.write_text(json.dumps({"version": 1, "notes": {
+                "note": {"source_board_ids": ["first"], "source_boards": ["Old name"]},
+            }}), encoding="utf-8")
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.config_path = config_path
+            bridge.catalog_path = catalog_path
+            bridge.userscript = root / "installed.user.js"
+            bridge.userscript_template = root / "template.user.js"
+            bridge.userscript_template.write_text("__PORT__ __TOKEN__ __BOARDS__", encoding="utf-8")
+            bridge.port = 47631
+            bridge.token = "a" * 64
+            bridge.processing_lock = BRIDGE.threading.Lock()
+            bridge.manual_sync_path = root / "manual.json"
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "manualbatch", "state": "starting", "processed_run_ids": [],
+            })
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            bridge.all_boards, bridge.boards = bridge.normalize_boards(config)
+            bridge.board_order = list(bridge.boards)
+
+            active = bridge.discover_boards({"batch": "manualbatch", "boards": [
+                {"id": "first", "name": "New name", "advertised_count": 12},
+                {"id": "newboard", "name": "New board", "advertised_count": 3},
+            ]})
+
+            saved = json.loads(config_path.read_text(encoding="utf-8"))
+            by_id = {item["id"]: item for item in saved["boards"]}
+            self.assertEqual(by_id["first"]["name"], "New name")
+            self.assertTrue(by_id["newboard"]["enabled"])
+            self.assertFalse(by_id["missing"]["available"])
+            self.assertEqual([item["name"] for item in active], ["New name", "New board"])
+            catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+            self.assertEqual(catalog["notes"]["note"]["source_boards"], ["New name"])
 
     def test_accepts_supported_note_url(self):
         url = "https://www.xiaohongshu.com/discovery/item/abc_123?xsec_token=secret"
@@ -339,17 +384,47 @@ class BridgeHelpersTest(unittest.TestCase):
 
 class DetailFetcherTest(unittest.IsolatedAsyncioTestCase):
     async def test_each_note_is_requested_once_and_failures_do_not_stop_the_batch(self):
+        class FakeHtml:
+            def __init__(self, calls):
+                self.calls = calls
+
+            async def request_url(self, url):
+                self.calls.append(url)
+                if url == "gone":
+                    return ""
+                if url == "broken":
+                    raise RuntimeError("https://x/?xsec_token=secret")
+                return "ok"
+
+        class FakeConvert:
+            @staticmethod
+            def _extract_object(html):
+                return html
+
+            @staticmethod
+            def _convert_object(script):
+                if not script:
+                    return {}
+                return {"note": {"noteDetailMap": {"ok": {
+                    "note": {"noteId": "ok", "title": "A note"},
+                    "comments": [{"content": "Useful detail", "userInfo": {"userId": "private"}}],
+                }}}}
+
+        class FakeExplore:
+            @staticmethod
+            def run(namespace):
+                return {"作品标题": namespace["title"]}
+
         class FakeApp:
             def __init__(self):
                 self.calls = []
+                self.html = FakeHtml(self.calls)
+                self.convert = FakeConvert()
+                self.explore = FakeExplore()
 
-            async def extract(self, url, *, download, data):
-                self.calls.append(url)
-                if url == "gone":
-                    return []
-                if url == "broken":
-                    raise RuntimeError("https://x/?xsec_token=secret")
-                return [{"note_id": "ok", "title": "A note"}]
+            @staticmethod
+            def json_to_namespace(value):
+                return value
 
         app = FakeApp()
         ok, no_detail = await FETCHER.extract_note(app, "ok", "ok")
@@ -357,12 +432,28 @@ class DetailFetcherTest(unittest.IsolatedAsyncioTestCase):
         broken, failed = await FETCHER.extract_note(app, "broken", "broken")
 
         self.assertIsNotNone(ok)
+        self.assertEqual(ok["comment_evidence"], [{"text": "Useful detail", "reply": False}])
+        self.assertNotIn("private", json.dumps(ok))
         self.assertIsNone(no_detail)
         self.assertIsNone(gone)
         self.assertEqual(unavailable, {"note_id": "gone", "reason": "detail unavailable"})
         self.assertIsNone(broken)
         self.assertEqual(failed, {"note_id": "broken", "reason": "request failed"})
         self.assertEqual(app.calls, ["ok", "gone", "broken"])
+
+    def test_comment_evidence_is_bounded_and_removes_identity(self):
+        comments = [{
+            "content": "Top-level lesson",
+            "likeCount": "8",
+            "userInfo": {"nickname": "Private name", "userId": "private-id"},
+            "subComments": [{"content": "Author clarification", "userId": "also-private"}],
+        }]
+        evidence = FETCHER.normalize_comments(comments)
+        self.assertEqual(evidence, [
+            {"text": "Top-level lesson", "reply": False, "liked_count": "8"},
+            {"text": "Author clarification", "reply": True},
+        ])
+        self.assertNotIn("private", json.dumps(evidence))
 
 
 if __name__ == "__main__":

@@ -19,13 +19,13 @@ import subprocess
 import sys
 import tempfile
 import threading
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 47631
 MANAGER_ORIGIN = "http://127.0.0.1:8766"
-PROTOCOL_VERSION = 5
+PROTOCOL_VERSION = 6
 MANUAL_START_TIMEOUT_SECONDS = 90
 MAX_BODY_BYTES = 256 * 1024
 NOTE_PATH = re.compile(r"^/(?:explore|discovery/item)/([A-Za-z0-9_-]{1,128})$")
@@ -61,7 +61,16 @@ def update_board_enabled(config: dict, board_id: str, enabled: bool) -> dict:
         raise ValueError("unknown board_id")
     if not isinstance(enabled, bool):
         raise ValueError("enabled must be a boolean")
-    if not enabled and sum(board.get("enabled") is True for board in boards) <= 1 and matched.get("enabled") is True:
+    active_enabled = sum(
+        board.get("enabled") is True and board.get("available") is not False
+        for board in boards if isinstance(board, dict)
+    )
+    if (
+        not enabled
+        and matched.get("enabled") is True
+        and matched.get("available") is not False
+        and active_enabled <= 1
+    ):
         raise ValueError("at least one board must remain enabled")
     matched["enabled"] = enabled
     if enabled:
@@ -134,6 +143,24 @@ def parse_board_url(value: str) -> tuple[str, str]:
     ):
         raise ValueError("--board-url must be an https://www.xiaohongshu.com/board/... URL")
     return value, match.group(1)
+
+
+def normalize_profile_url(value: object) -> str:
+    parsed = urlparse(str(value or "").strip())
+    if (
+        parsed.scheme != "https"
+        or parsed.hostname != "www.xiaohongshu.com"
+        or parsed.port not in (None, 443)
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+        or not re.fullmatch(r"/user/profile/[a-z0-9]{1,128}", parsed.path)
+    ):
+        raise ValueError("profile_url must be an https://www.xiaohongshu.com/user/profile/... URL")
+    query = parse_qs(parsed.query)
+    query["tab"] = ["fav"]
+    query["subTab"] = ["board"]
+    return parsed._replace(query=urlencode(query, doseq=True)).geturl()
 
 
 def note_id_from_url(value: str) -> str:
@@ -240,6 +267,7 @@ class Bridge:
         self.skill_dir = skill_dir.resolve()
         self.config_path = config_path.resolve()
         config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
+        self.profile_url = normalize_profile_url(config.get("profile_url"))
         self.all_boards = []
         self.boards = {}
         self.board_order = []
@@ -344,8 +372,6 @@ class Bridge:
         if not self.trigger_lock.acquire(blocking=False):
             raise BridgeBusyError("a manual organization request is already starting")
         try:
-            if not self.board_order:
-                raise ValueError("请至少开启一个收藏夹")
             self.manual_sync_status()
             current = self.read_manual_sync()
             if current.get("state") in {"starting", "running"}:
@@ -366,7 +392,7 @@ class Bridge:
                 "started_at": datetime.now().astimezone().isoformat(),
                 "board_count": len(self.board_order),
                 "processed_boards": 0,
-                "current_board": self.boards[self.board_order[0]],
+                "current_board": "正在刷新收藏夹",
                 "scanned": 0,
                 "new": 0,
                 "processed_run_ids": [],
@@ -386,11 +412,14 @@ class Bridge:
                 })
                 atomic_json(self.manual_sync_path, state)
                 raise RuntimeError(state["error"])
-            first_board_id = self.board_order[0]
-            url = (
-                f"https://www.xiaohongshu.com/board/{first_board_id}"
-                f"?source=web_user_page&xhs_kb_sync=1&xhs_kb_batch={batch}&xhs_kb_mode=incremental"
-            )
+            parsed_profile = urlparse(self.profile_url)
+            query = parse_qs(parsed_profile.query)
+            query.update({
+                "xhs_kb_sync": ["1"],
+                "xhs_kb_batch": [batch],
+                "xhs_kb_mode": ["incremental"],
+            })
+            url = parsed_profile._replace(query=urlencode(query, doseq=True)).geturl()
             try:
                 subprocess.Popen(
                     [str(chrome), url],
@@ -458,11 +487,14 @@ class Bridge:
     def record_manual_failure(self, payload: dict) -> dict:
         run_id = str(payload.get("run_id", ""))
         board_id = str(payload.get("board_id", ""))
-        if not RUN_ID.fullmatch(run_id) or board_id not in self.boards:
-            raise ValueError("invalid manual organization failure payload")
         state = self.read_manual_sync()
         batch = str(state.get("batch", ""))
-        if not batch or run_id != self.manual_run_id(batch, board_id):
+        discovery_failure = not board_id and run_id == batch and state.get("state") in {"starting", "running"}
+        board_failure = (
+            board_id in self.boards
+            and run_id == self.manual_run_id(batch, board_id)
+        )
+        if not RUN_ID.fullmatch(run_id) or not batch or not (discovery_failure or board_failure):
             raise ValueError("manual organization batch does not match")
         state.update({
             "state": "failed",
@@ -557,13 +589,12 @@ class Bridge:
                 "id": board_id,
                 "name": name,
                 "enabled": board.get("enabled") is True,
+                "available": board.get("available") is not False,
                 "advertised_count": max(0, int(board.get("advertised_count", 0) or 0)),
             }
             all_boards.append(normalized)
-            if normalized["enabled"]:
+            if normalized["enabled"] and normalized["available"]:
                 enabled_boards[board_id] = name
-        if not enabled_boards:
-            raise ValueError("config does not contain any enabled boards")
         return all_boards, enabled_boards
 
     def board_settings(self) -> list[dict]:
@@ -635,6 +666,119 @@ class Bridge:
         finally:
             self.processing_lock.release()
 
+    def update_catalog_board_names(self, renamed: dict[str, tuple[str, str]]) -> None:
+        if not renamed or not self.catalog_path.exists():
+            return
+        catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
+        changed = False
+        for note in catalog.get("notes", {}).values():
+            if not isinstance(note, dict):
+                continue
+            ids = note.get("source_board_ids")
+            names = note.get("source_boards")
+            if not isinstance(ids, list) or not isinstance(names, list):
+                continue
+            for index, board_id in enumerate(ids):
+                if board_id not in renamed or index >= len(names):
+                    continue
+                old_name, new_name = renamed[board_id]
+                if names[index] == old_name:
+                    names[index] = new_name
+                    changed = True
+        if changed:
+            atomic_json(self.catalog_path, catalog)
+
+    def discover_boards(self, payload: dict) -> list[dict]:
+        batch = str(payload.get("batch", ""))
+        discovered = payload.get("boards")
+        state = self.read_manual_sync()
+        if not RUN_ID.fullmatch(batch) or state.get("batch") != batch:
+            raise ValueError("invalid discovery batch")
+        if state.get("state") not in {"starting", "running"}:
+            raise ValueError("manual organization is not awaiting board discovery")
+        if not isinstance(discovered, list) or not 1 <= len(discovered) <= 200:
+            raise ValueError("board discovery must contain between 1 and 200 boards")
+
+        normalized = []
+        seen = set()
+        for item in discovered:
+            board_id = str(item.get("id", "")) if isinstance(item, dict) else ""
+            name = " ".join(str(item.get("name", "")).split()).strip() if isinstance(item, dict) else ""
+            if not BOARD_ID.fullmatch(board_id) or not name or len(name) > 100 or board_id in seen:
+                raise ValueError("board discovery contained an invalid board")
+            seen.add(board_id)
+            try:
+                count = max(0, min(100000, int(item.get("advertised_count", 0) or 0)))
+            except (TypeError, ValueError):
+                count = 0
+            normalized.append({"id": board_id, "name": name, "advertised_count": count})
+
+        if not self.processing_lock.acquire(blocking=False):
+            raise BridgeBusyError("organization is running; retry after it finishes")
+        try:
+            config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
+            original = copy.deepcopy(config)
+            existing = {
+                str(board.get("id", "")): board
+                for board in config.get("boards", []) if isinstance(board, dict)
+            }
+            renamed = {}
+            for item in normalized:
+                board = existing.get(item["id"])
+                if board is None:
+                    board = {
+                        "id": item["id"],
+                        "name": item["name"],
+                        "enabled": True,
+                        "advertised_count": item["advertised_count"],
+                    }
+                    config["boards"].append(board)
+                    existing[item["id"]] = board
+                else:
+                    old_name = str(board.get("name", "")).strip()
+                    if old_name != item["name"]:
+                        renamed[item["id"]] = (old_name, item["name"])
+                        board["name"] = item["name"]
+                    board["advertised_count"] = item["advertised_count"]
+                board["available"] = True
+            for board_id, board in existing.items():
+                if board_id not in seen:
+                    board["available"] = False
+
+            all_boards, enabled_boards = self.normalize_boards(config)
+            if not enabled_boards:
+                raise ValueError("没有可整理的已启用收藏夹")
+            userscript = self.userscript_content(all_boards)
+            temporary = self.userscript.with_name(
+                f"{self.userscript.name}.{os.getpid()}.{threading.get_ident()}.tmp"
+            )
+            try:
+                temporary.write_text(userscript, encoding="utf-8")
+                atomic_json(self.config_path, config)
+                try:
+                    temporary.replace(self.userscript)
+                except OSError:
+                    atomic_json(self.config_path, original)
+                    raise
+            finally:
+                temporary.unlink(missing_ok=True)
+            self.all_boards = all_boards
+            self.boards = enabled_boards
+            self.board_order = list(enabled_boards)
+            self.update_catalog_board_names(renamed)
+            state.update({
+                "state": "running",
+                "board_count": len(self.board_order),
+                "current_board": self.boards[self.board_order[0]],
+            })
+            atomic_json(self.manual_sync_path, state)
+            return [
+                {"id": board_id, "name": self.boards[board_id]}
+                for board_id in self.board_order
+            ]
+        finally:
+            self.processing_lock.release()
+
     def write_status(self, value: dict) -> None:
         run_id = value.get("run_id")
         if not isinstance(run_id, str) or not RUN_ID.fullmatch(run_id):
@@ -680,6 +824,19 @@ class Bridge:
     def next_board_id(self, board_id: str) -> str | None:
         index = self.board_order.index(board_id)
         return self.board_order[index + 1] if index + 1 < len(self.board_order) else None
+
+    def board_context(self, batch: str, board_id: str) -> dict:
+        state = self.read_manual_sync()
+        if not RUN_ID.fullmatch(batch) or state.get("batch") != batch:
+            raise ValueError("invalid organization batch")
+        if board_id not in self.boards:
+            raise ValueError("board is not enabled or is no longer available")
+        board = next(item for item in self.all_boards if item["id"] == board_id)
+        return {
+            "id": board_id,
+            "name": board["name"],
+            "advertised_count": board["advertised_count"],
+        }
 
     def publish_public_site(self) -> dict:
         if self.publish_config is None:
@@ -997,6 +1154,18 @@ def make_handler(bridge: Bridge):
                 boards = bridge.board_settings()
                 self.send_json(HTTPStatus.OK, {"ok": True, "boards": boards})
                 return
+            if parsed.path == "/sync/board-context" and self.authorized():
+                query = parse_qs(parsed.query)
+                try:
+                    context = bridge.board_context(
+                        query.get("batch", [""])[0],
+                        query.get("board_id", [""])[0],
+                    )
+                except ValueError as error:
+                    self.send_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": sanitize_error(str(error))})
+                    return
+                self.send_json(HTTPStatus.OK, {"ok": True, "board": context})
+                return
             if parsed.path == "/sync/status":
                 if not self.authorized() or not is_manager_origin(self.headers.get("Origin")):
                     self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
@@ -1039,7 +1208,7 @@ def make_handler(bridge: Bridge):
             if not self.valid_host():
                 self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
                 return
-            if self.path not in {"/import-sync", "/boards", "/sync/start", "/sync/failure"}:
+            if self.path not in {"/import-sync", "/boards", "/sync/start", "/sync/failure", "/sync/discover"}:
                 self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
                 return
             if not self.authorized():
@@ -1061,6 +1230,10 @@ def make_handler(bridge: Bridge):
                     return
                 if self.path == "/sync/start":
                     self.send_json(HTTPStatus.ACCEPTED, {"ok": True, **bridge.trigger_manual_sync()})
+                    return
+                if self.path == "/sync/discover":
+                    boards = bridge.discover_boards(payload)
+                    self.send_json(HTTPStatus.OK, {"ok": True, "boards": boards})
                     return
                 if self.path == "/sync/failure":
                     self.send_json(HTTPStatus.OK, {"ok": True, **bridge.record_manual_failure(payload)})

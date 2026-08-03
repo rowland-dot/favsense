@@ -318,7 +318,7 @@ async function localBridgeRequest(path, options = {}) {
 }
 
 function renderBoardManager() {
-  const enabledCount = state.boards.filter((board) => board.enabled).length;
+  const enabledCount = state.boards.filter((board) => board.enabled && board.available !== false).length;
   elements.boardEnabledCount.textContent = `已选择 ${enabledCount} / ${state.boards.length}`;
   elements.boardList.innerHTML = state.boards.map((board) => {
     const count = Number.isFinite(board.advertised_count) && board.advertised_count > 0
@@ -330,9 +330,9 @@ function renderBoardManager() {
           <strong>${escapeHtml(board.name)}</strong>
           <span>${count}</span>
         </div>
-        <span class="board-state">${board.enabled ? "已纳入" : "已忽略"}</span>
+        <span class="board-state">${board.available === false ? "本轮不可见" : (board.enabled ? "已纳入" : "已忽略")}</span>
         <label class="board-toggle">
-          <input type="checkbox" data-board-toggle="${escapeHtml(board.id)}" aria-label="整理时纳入 ${escapeHtml(board.name)}" ${board.enabled ? "checked" : ""} ${state.boardUpdatePending ? "disabled" : ""} />
+          <input type="checkbox" data-board-toggle="${escapeHtml(board.id)}" aria-label="整理时纳入 ${escapeHtml(board.name)}" ${board.enabled ? "checked" : ""} ${state.boardUpdatePending || board.available === false ? "disabled" : ""} />
           <span class="board-toggle-track" aria-hidden="true"><i></i></span>
         </label>
       </div>`;

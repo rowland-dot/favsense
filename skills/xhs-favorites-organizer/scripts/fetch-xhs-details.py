@@ -92,8 +92,69 @@ def clean_text(value):
     return text or None
 
 
-def normalize(raw: dict, note_id: str) -> dict:
-    return {
+def first_list(value):
+    if isinstance(value, list):
+        return value
+    if isinstance(value, dict):
+        for key in ("comments", "list", "data", "items"):
+            if isinstance(value.get(key), list):
+                return value[key]
+    return []
+
+
+def normalize_comments(value, max_items: int = 30) -> list[dict]:
+    """Keep useful comment evidence without retaining commenter identity."""
+    results = []
+
+    def append(items, reply: bool = False):
+        for item in first_list(items):
+            if len(results) >= max_items:
+                return
+            if not isinstance(item, dict):
+                continue
+            text = clean_text(
+                item.get("content")
+                or item.get("contentText")
+                or item.get("content_text")
+                or item.get("text")
+            )
+            if text:
+                evidence = {"text": text[:500], "reply": reply}
+                likes = clean_text(item.get("likeCount") or item.get("like_count"))
+                if likes:
+                    evidence["liked_count"] = likes
+                results.append(evidence)
+            replies = (
+                item.get("subComments")
+                or item.get("sub_comments")
+                or item.get("replies")
+            )
+            if replies:
+                append(replies, True)
+
+    append(value)
+    return results
+
+
+def note_and_comments_from_state(state: dict, note_id: str) -> tuple[dict, object]:
+    detail_map = state.get("note", {}).get("noteDetailMap", {}) if isinstance(state, dict) else {}
+    if isinstance(detail_map, dict) and detail_map:
+        detail = detail_map.get(note_id) or next(iter(detail_map.values()))
+        if isinstance(detail, dict):
+            note = detail.get("note")
+            if isinstance(note, dict):
+                return note, detail.get("comments", [])
+
+    phone = state.get("noteData", {}).get("data", {}) if isinstance(state, dict) else {}
+    if isinstance(phone, dict):
+        note = phone.get("noteData")
+        if isinstance(note, dict):
+            return note, phone.get("comments", note.get("comments", []))
+    return {}, []
+
+
+def normalize(raw: dict, note_id: str, comments=None) -> dict:
+    result = {
         "note_id": note_id,
         "detail_fetched": True,
         "title": clean_text(raw.get("作品标题")),
@@ -110,6 +171,10 @@ def normalize(raw: dict, note_id: str) -> dict:
         "share_count": clean_text(raw.get("分享数量")),
         "liked_count": clean_text(raw.get("点赞数量")),
     }
+    evidence = normalize_comments(comments)
+    if evidence:
+        result["comment_evidence"] = evidence
+    return result
 
 
 async def replace_insecure_clients(app) -> None:
@@ -150,11 +215,14 @@ async def extract_note(app, url: str, note_id: str) -> tuple[dict | None, dict |
     diagnostics = io.StringIO()
     try:
         with redirect_stdout(diagnostics):
-            rows = await app.extract(url, download=False, data=True)
-        raw = next((row for row in rows if row), {})
+            html = await app.html.request_url(url)
+            script = app.convert._extract_object(html)  # pinned adapter boundary
+            state = app.convert._convert_object(script) if script else {}
+            note_data, comments = note_and_comments_from_state(state, note_id)
+            raw = app.explore.run(app.json_to_namespace(note_data)) if note_data else {}
         if not raw:
             return None, {"note_id": note_id, "reason": "detail unavailable"}
-        return normalize(raw, note_id), None
+        return normalize(raw, note_id, comments), None
     except Exception:  # noqa: BLE001
         # Do not expose signed Xiaohongshu URLs or xsec tokens in the gap report.
         return None, {"note_id": note_id, "reason": "request failed"}
