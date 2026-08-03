@@ -965,7 +965,16 @@ class Bridge:
         try:
             baseline = not self.catalog_path.exists()
             known = read_catalog_ids(self.catalog_path)
-            pending = [(note_id, value) for note_id, value in unique.items() if note_id not in known]
+            existing_notes = {}
+            if self.catalog_path.exists():
+                existing_catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
+                existing_notes = existing_catalog.get("notes", {})
+            pending = [
+                (note_id, value) for note_id, value in unique.items()
+                if note_id not in known
+                or not isinstance(existing_notes.get(note_id), dict)
+                or existing_notes[note_id].get("comment_evidence_checked") is not True
+            ]
             status = {
                 "run_id": run_id,
                 "state": "running",
@@ -1022,10 +1031,7 @@ class Bridge:
                 fetch.stdout, {note_id for note_id, _ in pending}
             )
 
-            catalog_notes = {}
-            if self.catalog_path.exists():
-                existing_catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
-                catalog_notes.update(existing_catalog.get("notes", {}))
+            catalog_notes = dict(existing_notes)
             catalog_notes.update({note["note_id"]: note for note in fetched_notes})
             media = self.cache_missing_media(filter_media_candidates(
                 unique, catalog_notes, self.published_since

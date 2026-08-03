@@ -157,6 +157,7 @@ def normalize(raw: dict, note_id: str, comments=None) -> dict:
     result = {
         "note_id": note_id,
         "detail_fetched": True,
+        "comment_evidence_checked": True,
         "title": clean_text(raw.get("作品标题")),
         "description": clean_text(raw.get("作品描述")),
         "type": clean_text(raw.get("作品类型")),

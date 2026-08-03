@@ -226,6 +226,7 @@ function normalizeNote(item, seenAt) {
     published_at: cleanText(firstValue(body, ["published_at", "publishedAt"])) || undefined,
     fetch_error: cleanText(firstValue(body, ["fetch_error", "fetchError"])) || undefined,
     detail_fetched: body.detail_fetched === true || body.detailFetched === true,
+    comment_evidence_checked: body.comment_evidence_checked === true || body.commentEvidenceChecked === true,
     comment_evidence: normalizeCommentEvidence(
       body.comment_evidence ?? body.commentEvidence ?? item.comment_evidence ?? item.commentEvidence,
     ),
