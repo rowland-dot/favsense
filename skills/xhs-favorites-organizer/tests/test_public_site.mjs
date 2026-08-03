@@ -635,6 +635,7 @@ test("static app has the required deployment assets", async () => {
     readFile(resolve(root, "favsense.ps1")),
     readFile(resolve(root, "skills/xhs-favorites-organizer/scripts/setup-autosync.ps1"))
   ]);
+  const windowsEntrypointText = windowsEntrypoint.toString("utf8");
   assert.match(html, /id="notes-grid"/);
   assert.match(html, /id="resources-grid"/);
   assert.match(html, /id="resource-type-filter"/);
@@ -672,6 +673,12 @@ test("static app has the required deployment assets", async () => {
   assert.match(browserWaiter, /Start-Process \$url/);
   assert.deepEqual([...windowsEntrypoint.subarray(0, 3)], [0xef, 0xbb, 0xbf]);
   assert.deepEqual([...setupEntrypoint.subarray(0, 3)], [0xef, 0xbb, 0xbf]);
+  assert.match(windowsEntrypointText, /site-preview\.json/);
+  assert.match(windowsEntrypointText, /Stop-LegacySitePreview/);
+  assert.match(windowsEntrypointText, /started_at_ticks/);
+  assert.match(windowsEntrypointText, /Local\\FavSensePreview/);
+  assert.match(windowsEntrypointText, /System\.Diagnostics\.ProcessStartInfo/);
+  assert.doesNotMatch(windowsEntrypointText, /Start-Process -FilePath 'node\.exe'/);
   assert.match(html, /name="keywords"[^>]*Xiaohongshu[^>]*RedNote[^>]*Obsidian/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /\.filter-sidebar \{[^}]*position:\s*static[^}]*height:\s*auto[^}]*overflow-y:\s*visible/);
