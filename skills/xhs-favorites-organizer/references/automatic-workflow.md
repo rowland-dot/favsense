@@ -48,4 +48,4 @@
 
 ## 可移植性
 
-同步和构建由 PowerShell、Python、Node.js、Tampermonkey 与 Windows Task Scheduler 完成。Agent 只可选地维护策展 JSON，因此 Claude Code、Codex CLI、Codex App 或无 Agent 环境均可使用同一套项目文件。
+同步和构建由 PowerShell、Python、Node.js 与 Tampermonkey 完成。Agent 只可选地维护策展 JSON，因此 Claude Code、Codex CLI、Codex App 或无 Agent 环境均可使用同一套项目文件；系统不会创建 Windows 计划任务或开机启动项。

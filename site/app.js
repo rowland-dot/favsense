@@ -358,13 +358,18 @@ function renderManualSync(status = state.manualSync) {
     elements.manualSyncDetail.textContent = `已完成 ${status.processed_boards || 0} / ${status.board_count || state.boards.length} 个收藏夹，请保持 Chrome 窗口开启。`;
   } else if (completed) {
     elements.manualSyncTitle.textContent = "本次整理完成";
-    elements.manualSyncDetail.textContent = `共扫描 ${status.scanned || 0} 条，新增 ${status.new || 0} 条；本地知识库已经更新。`;
+    const publishMessage = status.publish_status === "published"
+      ? "，Hugging Face 已更新"
+      : status.publish_status === "unchanged"
+        ? "，Hugging Face 内容无变化"
+        : "";
+    elements.manualSyncDetail.textContent = `共扫描 ${status.scanned || 0} 条，新增 ${status.new || 0} 条；本地知识库与网页已经更新${publishMessage}。`;
   } else if (failed) {
     elements.manualSyncTitle.textContent = "本次整理未完成";
     elements.manualSyncDetail.textContent = status.error || "请检查 Chrome 登录状态后再次整理。";
   } else {
     elements.manualSyncTitle.textContent = "准备好后再开始";
-    elements.manualSyncDetail.textContent = "只在你点击后打开普通 Chrome，并依次整理已开启的收藏夹。";
+    elements.manualSyncDetail.textContent = "点击一次即可同步已开启的收藏夹、增量去重，并更新知识库与公开网页。";
   }
 }
 

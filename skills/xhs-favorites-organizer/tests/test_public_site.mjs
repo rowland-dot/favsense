@@ -616,7 +616,7 @@ test("verified video evidence does not claim every frame was reviewed", async ()
 });
 
 test("static app has the required deployment assets", async () => {
-  const [html, css, js, personalStore, hfPersonalSync, hfSyncGuard, siteConfig, readme, publishingGuide, archivedCss, archiveReadme] = await Promise.all([
+  const [html, css, js, personalStore, hfPersonalSync, hfSyncGuard, siteConfig, readme, publishingGuide, archivedCss, archiveReadme, windowsLauncher, browserWaiter] = await Promise.all([
     read("site/index.html"),
     read("site/styles.css"),
     read("site/app.js"),
@@ -627,7 +627,9 @@ test("static app has the required deployment assets", async () => {
     read("README.md"),
     read("docs/PUBLISHING.md"),
     read("site/themes/archive/research-blue-v1/styles.css"),
-    read("site/themes/archive/research-blue-v1/README.md")
+    read("site/themes/archive/research-blue-v1/README.md"),
+    read("Start-FavSense.cmd"),
+    read("scripts/open-favsense-when-ready.ps1")
   ]);
   assert.match(html, /id="notes-grid"/);
   assert.match(html, /id="resources-grid"/);
@@ -651,12 +653,19 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /id="board-enabled-count"/);
   assert.match(html, /id="manual-sync-control"[^>]*hidden/);
   assert.match(html, /id="manual-sync-start"[^>]*>开始整理</);
+  assert.match(html, />\s*一键整理</);
+  assert.match(html, /同步已开启的收藏夹、增量去重，并更新知识库与公开网页/);
   assert.doesNotMatch(html, /选择每天整理|自动进入每日同步/);
   assert.match(html, /id="creator-space-link"/);
   assert.doesNotMatch(html, /id="hero-dismiss"|id="hero-restore"/);
   assert.match(html, /theme-icon--sun/);
   assert.match(html, /theme-icon--moon/);
   assert.match(html, /FavSense · 拾光台/);
+  assert.match(windowsLauncher, /favsense\.ps1" preview/);
+  assert.match(windowsLauncher, /open-favsense-when-ready\.ps1/);
+  assert.doesNotMatch(windowsLauncher, /schtasks|Register-ScheduledTask|Startup/);
+  assert.match(browserWaiter, /http:\/\/127\.0\.0\.1:8766\//);
+  assert.match(browserWaiter, /Start-Process \$url/);
   assert.match(html, /name="keywords"[^>]*Xiaohongshu[^>]*RedNote[^>]*Obsidian/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /\.filter-sidebar \{[^}]*position:\s*static[^}]*height:\s*auto[^}]*overflow-y:\s*visible/);
@@ -692,6 +701,7 @@ test("static app has the required deployment assets", async () => {
   assert.match(js, /localBridgeRequest\("\/boards"/);
   assert.match(js, /localBridgeRequest\("\/sync\/start"/);
   assert.match(js, /localBridgeRequest\("\/sync\/status"/);
+  assert.match(js, /status\.publish_status === "published"/);
   assert.match(js, /manualSyncStartedHere/);
   assert.match(js, /creatorGitHubUrl/);
   assert.match(js, /FAVSENSE_CONFIG/);
