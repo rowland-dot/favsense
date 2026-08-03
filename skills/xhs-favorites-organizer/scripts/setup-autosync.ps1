@@ -33,13 +33,12 @@ if (-not (Test-Path -LiteralPath $tokenPath -PathType Leaf)) {
 $configPath = [System.IO.Path]::GetFullPath($Config)
 $configObject = Get-Content -Raw -Encoding UTF8 -LiteralPath $configPath | ConvertFrom-Json
 $boardMap = [ordered]@{}
-foreach ($board in @($configObject.boards | Where-Object { $_.enabled -eq $true })) {
+foreach ($board in @($configObject.boards | Where-Object { $_.enabled -eq $true -and $_.available -ne $false })) {
     $boardMap[[string]$board.id] = [ordered]@{
         name = [string]$board.name
         count = [int]$board.advertised_count
     }
 }
-if ($boardMap.Count -eq 0) { throw 'Configuration does not contain enabled boards.' }
 $token = [System.IO.File]::ReadAllText($tokenPath).Trim()
 $template = [System.IO.File]::ReadAllText($templatePath)
 $userscript = $template.Replace('__PORT__', [string]$Port).Replace('__TOKEN__', $token).Replace('__BOARDS__', ($boardMap | ConvertTo-Json -Compress))

@@ -44,9 +44,8 @@ if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) {
     throw "Configuration was not found: $configPath"
 }
 $configObject = Get-Content -Raw -Encoding UTF8 -LiteralPath $configPath | ConvertFrom-Json
-$expectedBoardIds = @($configObject.boards | Where-Object { $_.enabled -eq $true } | ForEach-Object { [string]$_.id })
-if ($expectedBoardIds.Count -eq 0) { throw 'Configuration does not contain enabled boards.' }
-$expectedProtocolVersion = 5
+$expectedBoardIds = @($configObject.boards | Where-Object { $_.enabled -eq $true -and $_.available -ne $false } | ForEach-Object { [string]$_.id })
+$expectedProtocolVersion = 6
 $healthHeaders = @{ 'X-XHS-Bridge-Token' = $token }
 
 function Get-ExpectedBridgeHealth {

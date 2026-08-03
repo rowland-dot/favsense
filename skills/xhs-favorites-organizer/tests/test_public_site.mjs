@@ -874,7 +874,7 @@ test("setup removes the legacy daily task and keeps organization user-triggered"
   assert.match(setup, /Unregister-ScheduledTask/);
   assert.match(setup, /One browser step remains/);
   assert.match(setup, /No daily or Windows startup task was installed/);
-  assert.match(start, /\$expectedProtocolVersion = 5/);
+  assert.match(start, /\$expectedProtocolVersion = 6/);
   assert.match(task, /FavSense-Daily/);
   assert.match(task, /Unregister-ScheduledTask/);
   assert.doesNotMatch(task, /Register-ScheduledTask|New-ScheduledTaskTrigger/);
