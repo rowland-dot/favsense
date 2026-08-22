@@ -6,7 +6,7 @@
 > 批准日期：2026-08-22
 > 适用范围：小红书收藏整理、点点总结、Skill/GitHub 资源核验、私有知识库、公开网页、本地工作台与发布流程
 > 实施授权：**无**。本文件获批前，不修改生产代码、配置、测试或发布内容。
-> 审批后的唯一执行入口：`/dev-pipeline plan..brief`
+> 审批后的唯一执行入口：`/dev-pipeline how..brief`（HOW 生成实施计划，PLAN 审查实施计划）
 
 ---
 
@@ -595,7 +595,7 @@ SPEC（用户审批）
 执行规则：
 
 1. **Spec gate**：先在 `docs/specs/*-spec.md` 写清目标、非目标、不变量、Entry/Action/Expected Result、失败与回滚；状态必须由用户从 DRAFT 批准为 APPROVED。
-2. **Plan gate**：只有获批 Spec 才能运行 `/dev-pipeline plan..brief`；计划必须映射 Spec 验收 ID。
+2. **Plan gate**：只有获批 Spec 才能运行 `/dev-pipeline how..brief`；HOW 生成实施计划，PLAN 审查计划，且任务必须映射 Spec 验收 ID。
 3. **TDD gate**：行为修改前必须先有能够失败的测试；修复不得通过削弱测试完成。
 4. **Review gate**：代码审查必须处理正确性、安全、隐私、状态语义和回滚问题。
 5. **QA gate**：用户可见流程必须从真实入口测试，不以单元测试替代 E2E。
@@ -626,7 +626,7 @@ SPEC（用户审批）
 
 本 Spec 已于 2026-08-22 获得用户批准。后续执行必须遵守以下已批准约束：
 
-- 从 `/dev-pipeline plan..brief` 开始，不跳过 Plan、TDD、Review、QA、Audit 或 Brief；
+- 从 `/dev-pipeline how..brief` 开始，不跳过计划生成、计划审查、TDD、Review、QA、Audit 或 Brief；
 - 若后续发现需要改变本 Spec 的目标、范围、不变量或用户可见行为，必须先把 Spec 改回 DRAFT 并重新送审；
 - 仅实现细节的收敛可以在获批范围内由实施计划确定。
 
