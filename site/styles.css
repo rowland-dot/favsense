@@ -474,10 +474,15 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .action-box { display: flex; gap: 12px; padding: 18px; border: 1px solid color-mix(in srgb, var(--accent, var(--mint)), transparent 45%); border-radius: 14px; background: color-mix(in srgb, var(--accent, var(--mint)), var(--surface) 74%); color: var(--ink); }
 .action-box span { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; font-weight: 700; }
 .detail-resources { display: grid; gap: 8px; }
-.detail-resource { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 13px; border: 1px solid var(--line); border-radius: 11px; }
+.detail-resource { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, auto); gap: 12px; align-items: center; padding: 13px; border: 1px solid var(--line); border-radius: 11px; }
 .detail-resource strong { font-size: 12px; }
 .detail-resource span { color: var(--ink-soft); font-family: var(--mono); font-size: 10px; }
+.detail-resource-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .detail-resource a { padding: 6px 9px; border-radius: 7px; background: var(--ink); color: var(--surface); text-decoration: none; font-size: 9px; }
+.pending-evidence-overlay { border: 1px solid color-mix(in srgb, var(--cobalt), var(--line) 50%); background: color-mix(in srgb, var(--cobalt), var(--surface) 96%); }
+.pending-evidence-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.pending-evidence-heading span { padding: 4px 8px; border-radius: 999px; background: var(--cobalt); color: white; font: 9px var(--mono); }
+.pending-evidence-overlay > p { color: var(--ink-soft); font-size: 10px; line-height: 1.65; }
 .detail-footer { display: flex; flex-wrap: wrap; gap: 9px; padding-top: 24px; border-top: 1px solid var(--line); }
 .detail-footer a, .detail-footer button { padding: 11px 15px; border: 1px solid var(--ink); border-radius: 999px; background: var(--surface); color: var(--ink); cursor: pointer; text-decoration: none; font-size: 11px; font-weight: 700; }
 .detail-footer a:first-child { background: var(--ink); color: var(--surface); }
@@ -563,6 +568,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
   .cloud-sync-row { align-items: stretch; flex-direction: column; }
   .detail-resource { grid-template-columns: 1fr auto; }
   .detail-resource span { grid-column: 1; grid-row: 2; }
+  .detail-resource-actions { grid-column: 1 / -1; justify-content: flex-start; }
   .summary-provenance { grid-template-columns: 1fr; }
   .summary-provenance strong { justify-self: start; }
 }

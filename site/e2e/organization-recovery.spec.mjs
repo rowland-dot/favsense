@@ -25,6 +25,16 @@ test("build and publish failure transitions never claim full completion", async 
   await expect(organizationStatus).not.toContainText("本次整理完成，本地知识库与网页已经更新");
 });
 
+test("local note detail shows captured summary as pending review without publishing it", async ({ page }) => {
+  await scenario(page, "success");
+  await page.goto("/");
+  await page.getByRole("button", { name: "查看总结" }).nth(1).click();
+  const overlay = page.getByRole("status", { name: "本机待审核证据" });
+  await expect(overlay).toContainText("总结已捕获，等待审核");
+  await expect(overlay).toContainText("Captured private synthetic summary");
+  await expect(overlay).toContainText("点点总结");
+});
+
 test("public origin never mounts or requests the private pending overlay", async ({ page }) => {
   const requests = [];
   page.on("request", (request) => requests.push(request.url()));

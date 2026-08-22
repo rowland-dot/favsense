@@ -3591,6 +3591,45 @@ class BridgeHelpersTest(unittest.TestCase):
             })
             self.assertNotIn("navigation_url", result)
 
+    def test_local_note_organization_status_returns_only_current_pending_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            note_id = "n" * 24
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.catalog_path = root / "catalog.json"
+            BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
+                note_id: {"note_id": note_id, "content_sha256": "b" * 64},
+            }})
+            bridge.saved_diandian_record = mock.Mock(return_value={
+                "version": 2,
+                "provider": "xiaohongshu-diandian",
+                "summary": "Synthetic captured summary",
+                "summary_sha256": "c" * 64,
+            })
+
+            result = bridge.note_organization_status(note_id)
+
+            self.assertEqual(result, {
+                "schema_version": 2,
+                "note_id": note_id,
+                "status": "pending_review",
+                "reason_code": "audit_pending",
+                "display_summary": "Synthetic captured summary",
+                "evidence_methods": [{
+                    "method": "point",
+                    "provider": "xiaohongshu-diandian",
+                    "version": "2",
+                    "result_sha256": "c" * 64,
+                }],
+                "blockers": ["audit_pending"],
+            })
+            self.assertNotIn("content_sha256", result)
+            self.assertNotIn("source_url", result)
+
+            bridge.saved_diandian_record.return_value = None
+            with self.assertRaisesRegex(ValueError, "current captured summary"):
+                bridge.note_organization_status(note_id)
+
     def test_sop_runtime_contract_fails_closed_without_its_fixed_paths(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

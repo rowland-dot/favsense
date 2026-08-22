@@ -122,6 +122,58 @@ export function validateOrganizationStatusContract(value) {
   return organizationContract(value);
 }
 
+const LOCAL_EVIDENCE_METHODS = new Set(["point", "ocr", "transcription", "description", "comments"]);
+const SENSITIVE_LOCAL_TEXT = /(?:cookie|xsec[_-]?token|authorization|bearer|bridge[_-]?token)\s*[:=]/iu;
+
+export function validateLocalNoteOrganizationStatus(value, sourceContract) {
+  const contract = organizationContract(sourceContract);
+  const keys = Object.keys(value || {}).sort().join(",");
+  if (keys !== "blockers,display_summary,evidence_methods,note_id,ok,reason_code,schema_version,status") {
+    throw new Error("本机单篇整理状态不可用");
+  }
+  if (
+    value.ok !== true
+    || value.schema_version !== 2
+    || value.status !== "pending_review"
+    || !contract.note_statuses.curation.includes(value.status)
+    || !contract.reason_codes.includes(value.reason_code)
+    || typeof value.note_id !== "string"
+    || !/^[A-Za-z0-9_-]{1,128}$/.test(value.note_id)
+    || typeof value.display_summary !== "string"
+    || !value.display_summary.trim()
+    || value.display_summary.length > 200_000
+    || SENSITIVE_LOCAL_TEXT.test(value.display_summary)
+    || !Array.isArray(value.blockers)
+    || value.blockers.length > 20
+    || !value.blockers.every((reason) => typeof reason === "string" && reason && contract.reason_codes.includes(reason))
+    || !Array.isArray(value.evidence_methods)
+    || value.evidence_methods.length < 1
+    || value.evidence_methods.length > 20
+  ) throw new Error("本机单篇整理状态不可用");
+  const evidenceMethods = value.evidence_methods.map((evidence) => {
+    if (
+      !evidence
+      || typeof evidence !== "object"
+      || Array.isArray(evidence)
+      || Object.keys(evidence).sort().join(",") !== "method,provider,result_sha256,version"
+      || !LOCAL_EVIDENCE_METHODS.has(evidence.method)
+      || typeof evidence.provider !== "string"
+      || !/^[A-Za-z0-9._-]{1,80}$/.test(evidence.provider)
+      || typeof evidence.version !== "string"
+      || !/^[A-Za-z0-9._-]{1,40}$/.test(evidence.version)
+      || typeof evidence.result_sha256 !== "string"
+      || !/^[a-f0-9]{64}$/.test(evidence.result_sha256)
+    ) throw new Error("本机单篇整理状态不可用");
+    return { ...evidence };
+  });
+  return {
+    ...value,
+    display_summary: value.display_summary.trim(),
+    evidence_methods: evidenceMethods,
+    blockers: [...value.blockers]
+  };
+}
+
 function validateV2SyncStatus(value, sourceContract) {
   const contract = organizationContract(sourceContract);
   const keys = Object.keys(value).sort().join(",");

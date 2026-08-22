@@ -2,6 +2,7 @@ import { resourceGroup, resourceSortsForGroup, sortResources, validateResourceIn
 import {
   validateLocalBridgeBoards,
   validateLocalBridgeConfig,
+  validateLocalNoteOrganizationStatus,
   validateLocalBridgeSession,
   validateLocalBridgeSyncStatus,
   validateOrganizationStatusContract,
@@ -224,6 +225,8 @@ const state = {
   boardUpdatePending: false,
   manualSync: { state: "idle" },
   manualSyncStartedHere: false,
+  noteOrganizationStatus: new Map(),
+  noteOrganizationPending: new Set(),
   manualSyncPoll: 0
 };
 
@@ -955,10 +958,20 @@ function renderDetail(note) {
   const resourceHtml = matchedResources.length ? `
     <section class="detail-section"><h3>${escapeHtml(radar.detail_label || "相关资源")}</h3><div class="detail-resources">
       ${matchedResources.map((resource) => {
-        const action = resource.actions.find((item) => safeUrl(item.url) !== "#");
-        return `<div class="detail-resource"><strong>${escapeHtml(resource.name)}</strong><span>${escapeHtml(resource.metricIcon || radar.metric?.icon || "◆")} ${escapeHtml(resource.metric || radar.metric?.missing || "暂无数据")}</span>${action ? `<a href="${safeUrl(action.url)}" target="_blank" rel="noreferrer">${escapeHtml(action.label)}</a>` : ""}</div>`;
+        const actions = resource.actions
+          .map((action) => ({ ...action, url: safeUrl(action.url) }))
+          .filter((action) => action.url !== "#");
+        return `<div class="detail-resource"><strong>${escapeHtml(resource.name)}</strong><span>${escapeHtml(resource.metricIcon || radar.metric?.icon || "◆")} ${escapeHtml(resource.metric || radar.metric?.missing || "暂无数据")}</span><div class="detail-resource-actions">${actions.map((action) => `<a href="${action.url}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(`${resource.name} ${action.label}`)}">${escapeHtml(action.label)}</a>`).join("")}</div></div>`;
       }).join("")}
     </div></section>
+  ` : "";
+  const localOrganization = state.noteOrganizationStatus?.get(note.id);
+  const localOrganizationHtml = localOrganization ? `
+    <section class="detail-section pending-evidence-overlay" role="status" aria-label="本机待审核证据">
+      <div class="pending-evidence-heading"><span>仅本机</span><strong>${escapeHtml(state.statusContract.copy.summary_captured)}</strong></div>
+      <div class="structured-summary">${formatSummaryHtml(localOrganization.display_summary)}</div>
+      <p>证据：${localOrganization.evidence_methods.map((evidence) => evidence.method === "point" ? "点点总结" : escapeHtml(evidence.method)).join(" · ")}。尚未通过审核，不会进入公开知识库。</p>
+    </section>
   ` : "";
   const actionHtml = note.kind === "Note" || !String(note.action || "").trim() ? "" : `
     <section class="detail-section"><h3>具体用法</h3><div class="action-box"><span>下一步</span><p>${escapeHtml(note.action)}</p></div></section>
@@ -990,6 +1003,7 @@ function renderDetail(note) {
     <h2 class="detail-title" id="detail-title">${escapeHtml(note.title)}</h2>
     <div class="detail-meta"><span>${escapeHtml(note.author || "作者未记录")}</span><span>${escapeHtml(formatDate(note.publishedAt))}</span></div>
     ${categorySuggestionHtml}
+    ${localOrganizationHtml}
     ${descriptionSection(note)}
     ${actionHtml}
     ${resourceHtml}
@@ -1004,6 +1018,31 @@ function renderDetail(note) {
   `;
 }
 
+async function loadLocalNoteOrganizationStatus(note) {
+  if (
+    !state.localBridge
+    || !state.statusContract
+    || note.summaryStatus === "accepted"
+    || state.noteOrganizationStatus.has(note.id)
+    || state.noteOrganizationPending.has(note.id)
+  ) return;
+  state.noteOrganizationPending.add(note.id);
+  try {
+    const payload = await localBridgeRequest("/notes/organization-status", {
+      method: "POST",
+      body: JSON.stringify({ note_id: note.id })
+    });
+    const status = validateLocalNoteOrganizationStatus(payload, state.statusContract);
+    if (status.note_id !== note.id) throw new Error("本机单篇整理状态不匹配");
+    state.noteOrganizationStatus.set(note.id, status);
+    if (elements.dialog.open && elements.dialogContent.dataset.noteId === note.id) renderDetail(note);
+  } catch {
+    // A missing or stale private overlay must not replace the published safe fallback.
+  } finally {
+    state.noteOrganizationPending.delete(note.id);
+  }
+}
+
 function openNote(noteId, updateHash = true) {
   const note = state.data.notes.find((item) => item.id === noteId);
   if (!note) return;
@@ -1013,6 +1052,7 @@ function openNote(noteId, updateHash = true) {
     else elements.dialog.setAttribute("open", "");
   }
   lockDialogBackground();
+  if (typeof loadLocalNoteOrganizationStatus === "function") void loadLocalNoteOrganizationStatus(note);
   if (updateHash) history.replaceState(null, "", `#note=${encodeURIComponent(noteId)}`);
 }
 

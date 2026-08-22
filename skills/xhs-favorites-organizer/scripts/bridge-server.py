@@ -3832,6 +3832,34 @@ class Bridge:
         )
         return {"status": "opened"}
 
+    def note_organization_status(self, note_id: str) -> dict:
+        if not isinstance(note_id, str) or not NOTE_ID.fullmatch(note_id):
+            raise ValueError("invalid note_id")
+        if not self.catalog_path.is_file():
+            raise ValueError("catalog is unavailable")
+        catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
+        notes = catalog.get("notes") if isinstance(catalog, dict) else None
+        note = notes.get(note_id) if isinstance(notes, dict) else None
+        if not isinstance(note, dict):
+            raise ValueError("unknown note_id")
+        saved = self.saved_diandian_record(note_id)
+        if not isinstance(saved, dict):
+            raise ValueError("current captured summary is unavailable")
+        return {
+            "schema_version": 2,
+            "note_id": note_id,
+            "status": "pending_review",
+            "reason_code": "audit_pending",
+            "display_summary": saved["summary"],
+            "evidence_methods": [{
+                "method": "point",
+                "provider": saved["provider"],
+                "version": str(saved["version"]),
+                "result_sha256": saved["summary_sha256"],
+            }],
+            "blockers": ["audit_pending"],
+        }
+
     def record_manual_failure(self, payload: dict) -> dict:
         run_id = str(payload.get("run_id", ""))
         board_id = str(payload.get("board_id", ""))
@@ -4936,6 +4964,7 @@ def make_handler(bridge: Bridge):
                 "/import-sync", "/boards", "/sync/start", "/sync/failure", "/sync/discover",
                 "/sync/summary-plan", "/sync/diandian-result", "/sync/diandian-skip",
                 "/sync/diandian-halt", "/sync/diandian-cdp", "/notes/open",
+                "/notes/organization-status",
                 "/install/complete",
             }:
                 self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
@@ -4943,7 +4972,7 @@ def make_handler(bridge: Bridge):
             if not self.authorized():
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
-            if self.path in {"/boards", "/sync/start", "/notes/open"} and not is_manager_origin(self.headers.get("Origin")):
+            if self.path in {"/boards", "/sync/start", "/notes/open", "/notes/organization-status"} and not is_manager_origin(self.headers.get("Origin")):
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
             try:
@@ -4999,6 +5028,14 @@ def make_handler(bridge: Bridge):
                     self.send_json(
                         HTTPStatus.ACCEPTED,
                         {"ok": True, **bridge.open_original_note(str(payload.get("note_id", "")))},
+                    )
+                    return
+                if self.path == "/notes/organization-status":
+                    if set(payload) != {"note_id"}:
+                        raise ValueError("organization status request must contain only note_id")
+                    self.send_json(
+                        HTTPStatus.OK,
+                        {"ok": True, **bridge.note_organization_status(str(payload.get("note_id", "")))},
                     )
                     return
                 status, result = bridge.import_sync(payload)

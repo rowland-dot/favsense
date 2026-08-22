@@ -18,6 +18,7 @@ import {
   normalizeLocalBridgeDiagnostic,
   validateLocalBridgeBoards,
   validateLocalBridgeConfig,
+  validateLocalNoteOrganizationStatus,
   validateLocalBridgeSession,
   validateLocalBridgeSyncStatus
 } from "../../../site/local-bridge-utils.mjs";
@@ -1960,6 +1961,28 @@ test("Hugging Face controls return to the site header when the host expands", ()
     innerHeight: 1050,
     baselineGap: 87,
   }), { mode: "default", baselineGap: null });
+});
+
+test("local pending note status exposes only a strict loopback-safe review projection", () => {
+  const status = validateLocalNoteOrganizationStatus({
+    ok: true,
+    schema_version: 2,
+    note_id: "note-pending",
+    status: "pending_review",
+    reason_code: "audit_pending",
+    display_summary: "Captured private synthetic summary",
+    evidence_methods: [{ method: "point", provider: "xiaohongshu-diandian", version: "2", result_sha256: "a".repeat(64) }],
+    blockers: ["audit_pending"]
+  }, ORGANIZATION_STATUS_CONTRACT);
+  assert.equal(status.display_summary, "Captured private synthetic summary");
+  assert.deepEqual(status.blockers, ["audit_pending"]);
+  for (const malformed of [
+    { ...status, source_url: "https://example.invalid/private" },
+    { ...status, note_id: "../private" },
+    { ...status, status: "accepted" },
+    { ...status, display_summary: "cookie=private-value" },
+    { ...status, blockers: ["not-in-contract"] }
+  ]) assert.throws(() => validateLocalNoteOrganizationStatus(malformed, ORGANIZATION_STATUS_CONTRACT));
 });
 
 test("local board manager accepts only protocol 11 with a redacted SOP browser session", () => {

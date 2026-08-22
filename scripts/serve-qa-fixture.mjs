@@ -82,7 +82,16 @@ const bridge = createServer(async (request, response) => {
   if (url.pathname === "/boards") return sendJson(response, 200, { ok: true, boards: [{ id: "synthetic", name: "Synthetic", enabled: true, available: true, advertised_count: 2, captured_count: 2 }] });
   if (url.pathname === "/sync/status") return sendJson(response, 200, hasStarted ? syncStatus() : { ok: true, state: "idle" });
   if (url.pathname === "/sync/start") { hasStarted = true; return sendJson(response, 200, syncStatus()); }
-  if (url.pathname === "/notes/organization-status") return sendJson(response, 200, { ok: true, note_id: "note-pending", summary: "Captured private synthetic summary", evidence_methods: ["point"], blockers: ["audit_pending"] });
+  if (url.pathname === "/notes/organization-status") return sendJson(response, 200, {
+    ok: true,
+    schema_version: 2,
+    note_id: "note-pending",
+    status: "pending_review",
+    reason_code: "audit_pending",
+    display_summary: "Captured private synthetic summary",
+    evidence_methods: [{ method: "point", provider: "xiaohongshu-diandian", version: "2", result_sha256: "a".repeat(64) }],
+    blockers: ["audit_pending"]
+  });
   return sendJson(response, 404, { ok: false });
 });
 
