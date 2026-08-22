@@ -323,6 +323,22 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertIn("点点 AI", legacy["error"])
             self.assertIn("核心整理结果已保留", legacy["error"])
 
+    def test_manual_status_v2_exposes_orthogonal_safe_projection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.manual_sync_path = Path(directory) / "manual-sync.json"
+            bridge.organization_status_v2_enabled = True
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "fixture-run", "state": "failed", "core_completed": True,
+                "scanned": 3, "new": 2, "summarized": 1, "summary_failed": 1,
+                "summary_pending": 1, "summary_halt_reason": "transport-failed",
+            })
+            status = bridge.manual_sync_status()
+            self.assertEqual(status["schema_version"], 2)
+            self.assertEqual(status["phases"]["core"]["status"], "completed")
+            self.assertEqual(status["phases"]["summary"]["status"], "failed")
+            self.assertNotIn("error", status)
+
     def test_manual_failure_turns_encoded_blank_diagnostics_into_actionable_guidance(self):
         with tempfile.TemporaryDirectory() as directory:
             bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)

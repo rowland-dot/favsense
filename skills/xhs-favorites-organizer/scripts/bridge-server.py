@@ -29,6 +29,14 @@ from urllib.parse import parse_qs, quote, unquote, urlencode, urlparse
 from urllib.request import ProxyHandler, Request, build_opener, urlopen
 
 
+ORGANIZATION_STATE_PATH = Path(__file__).with_name("organization_state.py")
+ORGANIZATION_STATE_SPEC = importlib.util.spec_from_file_location("favsense_organization_state", ORGANIZATION_STATE_PATH)
+if ORGANIZATION_STATE_SPEC is None or ORGANIZATION_STATE_SPEC.loader is None:
+    raise RuntimeError("organization state reducer is unavailable")
+ORGANIZATION_STATE = importlib.util.module_from_spec(ORGANIZATION_STATE_SPEC)
+ORGANIZATION_STATE_SPEC.loader.exec_module(ORGANIZATION_STATE)
+
+
 HOST = "127.0.0.1"
 DEFAULT_PORT = 47631
 MANAGER_ORIGIN = "http://127.0.0.1:8766"
@@ -1818,6 +1826,8 @@ class Bridge:
         self.workspace = raw_workspace.resolve()
         self.skill_dir = raw_skill_dir.resolve()
         self.config_path = raw_config_path.resolve()
+        ORGANIZATION_STATE._contract()
+        self.organization_status_v2_enabled = True
         config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
         self.profile_url = normalize_profile_url(config.get("profile_url"))
         self.all_boards = []
@@ -2250,6 +2260,11 @@ class Bridge:
                 )
             except ValueError:
                 public.pop("summary_halt_reason")
+        if getattr(self, "organization_status_v2_enabled", False) and value.get("state") != "idle":
+            projection = ORGANIZATION_STATE.project_legacy_manual_state(value)
+            if value.get("state") == "completed":
+                projection["state"] = "completed_with_warnings"
+            return projection
         return public
 
     def open_sop_browser_page(self, url: str, *, activate: bool = True) -> dict:

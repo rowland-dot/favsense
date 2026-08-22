@@ -94,6 +94,41 @@ def normalize_run_state(value):
     return value
 
 
+def project_legacy_manual_state(value):
+    run_id = str(value.get("batch") or "legacy-run")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", run_id):
+        run_id = "legacy-run"
+    run = new_run_state(run_id)
+    legacy_state = value.get("state")
+    core_completed = value.get("core_completed") is True or legacy_state == "completed"
+    run = transition_phase(run, "core", "completed" if core_completed else ("running" if legacy_state in {"starting", "running"} else "failed"), "" if core_completed or legacy_state in {"starting", "running"} else "contract_invalid")
+    captured = max(0, int(value.get("summarized", 0) or 0))
+    failed = max(0, int(value.get("summary_failed", 0) or 0))
+    aborted = max(0, int(value.get("summary_pending", 0) or 0)) if failed else 0
+    if legacy_state == "safety-stopped":
+        run = transition_phase(run, "summary", "safety_stopped", "safety_signal")
+    elif failed:
+        reason = "transport_failed" if value.get("summary_halt_reason") in {"transport-failed", "transport_failed"} else "contract_invalid"
+        run = transition_phase(run, "summary", "failed", reason)
+    elif value.get("summary_plan_pending") is True or value.get("summary_pending", 0):
+        run = transition_phase(run, "summary", "running")
+    elif core_completed:
+        run = transition_phase(run, "summary", "completed" if captured else "not_required")
+    run["counts"].update({
+        "scanned": max(0, int(value.get("scanned", 0) or 0)),
+        "new": max(0, int(value.get("new", 0) or 0)),
+        "summary_captured": captured,
+        "summary_failed": failed,
+        "summary_batch_aborted": aborted,
+    })
+    if core_completed:
+        evidence_status = "missing" if failed or aborted else "ready"
+        run = transition_phase(run, "evidence", evidence_status, "evidence_missing" if evidence_status == "missing" else "")
+        run = transition_phase(run, "curation", "pending_review", "audit_pending")
+    run["state"] = derive_overall_state(run)
+    return safe_public_projection(run)
+
+
 def visible_copy(run):
     contract = _contract()["copy"]
     phases = run.get("phases", {})

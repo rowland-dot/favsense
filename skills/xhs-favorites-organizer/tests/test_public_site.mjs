@@ -36,6 +36,7 @@ const TEST_DIANDIAN_CONTRACT = {
   enabled: true,
   ...JSON.parse(await read("skills/xhs-diandian-summarize-note/runtime/browser-contract.json"))
 };
+const ORGANIZATION_STATUS_CONTRACT = JSON.parse(await read("site/organization-status-contract.json"));
 
 function sourceSlice(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
@@ -489,6 +490,9 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
     dianDian: summarySourcePresentation({ deepSummarySource: "xiaohongshu-diandian" }),
     curated: summarySourcePresentation({ deepSummarySource: "curation" }),
     metadata: summarySourcePresentation({ deepSummarySource: "source-metadata" }),
+    failed: summarySourcePresentation({ summaryState: "failed" }),
+    aborted: summarySourcePresentation({ summaryState: "batch_aborted" }),
+    stale: summarySourcePresentation({ summaryState: "stale", summaryReasonCode: "content_changed" }),
     formatted: formatSummaryHtml("执行步骤：\\n1，先找参考图\\n2，再洗素材\\n\\n**补充说明**\\n补充说明。<script>alert(1)</script>"),
     longPlainText: formatSummaryHtml("这是没有原始换行的长总结句子。".repeat(48)),
     pointStyle: formatSummaryHtml("核心逻辑 先判断需求。 三步实操方法 1. 收集证据 2. 验证结果 案例与价值 用真实数据复核。 补充提醒 不要把假设当结论。")
@@ -496,7 +500,10 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
 
   assert.equal(result.dianDian.label, "点点 AI 深度总结");
   assert.equal(result.curated.label, "使用其他证据整理");
-  assert.equal(result.metadata.label, "当前未展示点点总结");
+  assert.equal(result.metadata.label, "尚未开始深度整理");
+  assert.equal(result.failed.label, "本篇总结失败，可在下次继续");
+  assert.equal(result.aborted.label, "本次未尝试，可继续整理");
+  assert.equal(result.stale.label, "正文已变化，等待重新审核");
   assert.match(result.formatted, /<h4>执行步骤<\/h4>/);
   assert.match(result.formatted, /<h4>补充说明<\/h4>/);
   assert.match(result.formatted, /<ol[^>]*>\s*<li>先找参考图<\/li>\s*<li>再洗素材<\/li>\s*<\/ol>/);
@@ -2044,6 +2051,28 @@ test("local board manager accepts only protocol 11 with a redacted SOP browser s
     { ok: true, state: "failed", summary_failed: -1 },
     { ok: true, state: "failed", unexpected: "field" },
   ]) assert.throws(() => validateLocalBridgeSyncStatus(malformed));
+
+  const v2 = validateLocalBridgeSyncStatus({
+    ok: true,
+    schema_version: 2,
+    run_id: "fixture-run",
+    state: "failed",
+    build_version: "",
+    phases: {
+      core: { status: "completed", reason_code: "", updated_at: "2026-08-23T00:00:00Z" },
+      summary: { status: "completed", reason_code: "", updated_at: "2026-08-23T00:00:00Z" },
+      evidence: { status: "ready", reason_code: "", updated_at: "2026-08-23T00:00:00Z" },
+      curation: { status: "validated", reason_code: "", updated_at: "2026-08-23T00:00:00Z" },
+      build: { status: "failed", artifact_status: "held_previous", reason_code: "build_failed", updated_at: "2026-08-23T00:00:00Z" },
+      publish: { status: "not_started", reason_code: "", updated_at: "2026-08-23T00:00:00Z" },
+    },
+    counts: { scanned: 1, new: 1, summary_captured: 1, summary_failed: 0, summary_batch_aborted: 0, curation_accepted: 1, curation_pending: 0 },
+  }, ORGANIZATION_STATUS_CONTRACT);
+  assert.equal(v2.phases.build.reason_code, "build_failed");
+  assert.throws(() => validateLocalBridgeSyncStatus({ ...v2, state: "completed" }, ORGANIZATION_STATUS_CONTRACT));
+  const legacy = validateLocalBridgeSyncStatus({ ok: true, state: "completed", scanned: 1 }, ORGANIZATION_STATUS_CONTRACT);
+  assert.equal(legacy.state, "completed_with_warnings");
+  assert.equal(legacy.reason_code, "unknown_legacy");
 });
 
 test("Hugging Face personal sync validates every remote snapshot before merging or upload", async () => {

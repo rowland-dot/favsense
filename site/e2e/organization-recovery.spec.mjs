@@ -19,9 +19,10 @@ test("build and publish failure transitions never claim full completion", async 
   await page.goto("/");
   await page.getByRole("button", { name: "同步设置" }).click();
   await page.getByRole("button", { name: "开始整理" }).click();
-  await expect(page.getByRole("status")).toContainText("构建失败，已保留上一版");
-  await expect(page.getByRole("status")).toContainText("核心收藏已保存");
-  await expect(page.getByRole("status")).not.toContainText("本次整理完成，本地知识库与网页已经更新");
+  const organizationStatus = page.locator("#manual-sync-control");
+  await expect(organizationStatus).toContainText("构建失败，已保留上一版");
+  await expect(organizationStatus).toContainText("核心收藏已保存");
+  await expect(organizationStatus).not.toContainText("本次整理完成，本地知识库与网页已经更新");
 });
 
 test("public origin never mounts or requests the private pending overlay", async ({ page }) => {

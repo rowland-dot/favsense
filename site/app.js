@@ -4,6 +4,7 @@ import {
   validateLocalBridgeConfig,
   validateLocalBridgeSession,
   validateLocalBridgeSyncStatus,
+  validateOrganizationStatusContract,
   normalizeLocalBridgeDiagnostic
 } from "./local-bridge-utils.mjs";
 import { hasHuggingFaceMiniHeader, resolveHuggingFaceHeaderLayout } from "./huggingface-layout.mjs";
@@ -218,6 +219,7 @@ const state = {
   sort: "newest",
   layout: savedLayoutPreference(),
   localBridge: null,
+  statusContract: null,
   boards: [],
   boardUpdatePending: false,
   manualSync: { state: "idle" },
@@ -453,10 +455,27 @@ function summarySourcePresentation(note) {
     tone: "evidence",
     explanation: "未获得可用于这张卡的点点总结；当前内容根据已记录的其他证据整理。"
   };
+  const summaryStatus = String(note.summaryState || note.summary_state || "not_started");
+  const reason = String(note.summaryReasonCode || note.summary_reason_code || "");
+  if (summaryStatus === "failed") return {
+    label: "本篇总结失败，可在下次继续",
+    tone: "warning",
+    explanation: "核心收藏已保存；本篇深度总结已尝试但未完成。"
+  };
+  if (summaryStatus === "batch_aborted") return {
+    label: "本次未尝试，可继续整理",
+    tone: "warning",
+    explanation: "核心收藏已保存；本轮在处理本篇前已经停止。"
+  };
+  if (summaryStatus === "stale") return {
+    label: reason === "evidence_changed" ? "证据已变化，等待重新审核" : "正文已变化，等待重新审核",
+    tone: "warning",
+    explanation: "历史整理结果仍保留，但不会作为当前正式总结展示。"
+  };
   return {
-    label: "当前未展示点点总结",
+    label: "尚未开始深度整理",
     tone: "metadata",
-    explanation: "可能尚未处理、处理未完成，或仍在等待整理检查；这张卡暂按原帖公开信息整理。"
+    explanation: "核心收藏已保存；这张卡尚未完成深度总结。"
   };
 }
 
@@ -571,10 +590,15 @@ function renderBoardManager() {
 
 function renderManualSync(status = state.manualSync) {
   state.manualSync = status;
-  const active = ["starting", "running"].includes(status.state);
-  const completed = status.state === "completed";
+  const v2 = status.schema_version === 2 && status.phases;
+  const active = v2
+    ? Object.values(status.phases).some((phase) => phase.status === "running")
+    : ["starting", "running"].includes(status.state);
+  const completed = v2
+    ? ["organization_ready", "published"].includes(status.state)
+    : status.state === "completed";
   const failed = status.state === "failed";
-  const safetyStopped = status.state === "safety-stopped";
+  const safetyStopped = ["safety-stopped", "safety_stopped"].includes(status.state);
   elements.manualSyncControl.classList.toggle("is-running", active);
   elements.manualSyncControl.classList.toggle("is-complete", completed);
   elements.manualSyncControl.classList.toggle("is-failed", failed || safetyStopped);
@@ -585,7 +609,30 @@ function renderManualSync(status = state.manualSync) {
   const singleNoteButton = elements.dialogContent.querySelector("[data-summarize-note]");
   if (singleNoteButton) singleNoteButton.disabled = active || !sopBrowserReady();
 
-  if (status.state === "starting") {
+  if (v2) {
+    const copy = state.statusContract?.copy || {};
+    const phases = status.phases;
+    if (safetyStopped) {
+      elements.manualSyncTitle.textContent = copy.safety_stopped;
+    } else if (phases.build.status === "failed") {
+      elements.manualSyncTitle.textContent = copy.build_failed;
+    } else if (phases.publish.status === "failed") {
+      elements.manualSyncTitle.textContent = copy.publish_failed;
+    } else if (phases.publish.status === "unchanged") {
+      elements.manualSyncTitle.textContent = copy.publish_unchanged;
+    } else if (phases.summary.status === "failed") {
+      elements.manualSyncTitle.textContent = copy.summary_failed;
+    } else if (phases.summary.status === "batch_aborted") {
+      elements.manualSyncTitle.textContent = copy.summary_batch_aborted;
+    } else if (["missing", "partial", "blocked"].includes(phases.evidence.status)) {
+      elements.manualSyncTitle.textContent = copy.evidence_missing;
+    } else if (phases.summary.status === "not_started") {
+      elements.manualSyncTitle.textContent = copy.summary_not_started;
+    } else {
+      elements.manualSyncTitle.textContent = copy.core_completed;
+    }
+    elements.manualSyncDetail.textContent = `${copy.core_completed}；已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`;
+  } else if (status.state === "starting") {
     elements.manualSyncTitle.textContent = "正在使用 SOP 小红书扫描浏览器";
     elements.manualSyncDetail.textContent = "请在 SOP 扫描浏览器中保持小红书登录；扫描与整理进度会自动回到这里。";
   } else if (status.state === "running") {
@@ -623,7 +670,7 @@ function renderManualSync(status = state.manualSync) {
 }
 
 async function refreshManualSyncStatus() {
-  const status = validateLocalBridgeSyncStatus(await localBridgeRequest("/sync/status"));
+  const status = validateLocalBridgeSyncStatus(await localBridgeRequest("/sync/status"), state.statusContract);
   renderManualSync(status);
   if (!["starting", "running"].includes(status.state)) {
     window.clearInterval(state.manualSyncPoll);
@@ -659,7 +706,7 @@ async function startManualSync() {
   renderManualSync({ state: "starting" });
   try {
     const status = validateLocalBridgeSyncStatus(
-      await localBridgeRequest("/sync/start", { method: "POST", body: "{}" })
+      await localBridgeRequest("/sync/start", { method: "POST", body: "{}" }), state.statusContract
     );
     state.manualSyncStartedHere = true;
     renderManualSync(status);
@@ -682,7 +729,7 @@ async function startSingleNoteSync(noteId) {
     const status = validateLocalBridgeSyncStatus(await localBridgeRequest("/sync/start", {
       method: "POST",
       body: JSON.stringify({ note_id: noteId })
-    }));
+    }), state.statusContract);
     state.manualSyncStartedHere = true;
     renderManualSync(status);
     watchManualSync();
@@ -893,6 +940,12 @@ function isLocalWorkbenchLocation(locationValue = window.location) {
     || hostname === "127.0.0.1"
     || hostname === "localhost"
     || hostname === "[::1]";
+}
+
+async function initStatusContract() {
+  const response = await fetch("./organization-status-contract.json", { cache: "no-store" });
+  if (!response.ok) throw new Error("整理状态契约不可用");
+  state.statusContract = validateOrganizationStatusContract(await response.json());
 }
 
 function renderDetail(note) {
@@ -1270,6 +1323,7 @@ async function init() {
   updateThemeToggle();
   updateHeroVisibility();
   bindEvents();
+  await initStatusContract();
   const boardManagerReady = initBoardManager();
 
   try {

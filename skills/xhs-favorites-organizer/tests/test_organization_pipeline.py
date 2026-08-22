@@ -64,6 +64,19 @@ class OrganizationPipelineTests(unittest.TestCase):
         self.assertEqual(point_change["summary"], ("stale", "provider_changed"))
         self.assertEqual(point_change["curation"], ("stale", "evidence_changed"))
 
+    def test_legacy_manual_projection_keeps_core_success_and_summary_failure_orthogonal(self):
+        state = load_state_module()
+        projected = state.project_legacy_manual_state({
+            "batch": "fixture-run", "state": "failed", "core_completed": True,
+            "scanned": 3, "new": 2, "summarized": 1, "summary_failed": 1,
+            "summary_pending": 1, "summary_halt_reason": "transport-failed",
+        })
+        self.assertEqual(projected["phases"]["core"]["status"], "completed")
+        self.assertEqual(projected["phases"]["summary"]["status"], "failed")
+        self.assertEqual(projected["phases"]["summary"]["reason_code"], "transport_failed")
+        self.assertEqual(projected["counts"]["summary_batch_aborted"], 1)
+        self.assertEqual(projected["state"], "organization_partial")
+
 
 if __name__ == "__main__":
     unittest.main()

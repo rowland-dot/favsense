@@ -53,4 +53,3 @@ export function evidenceRevision({ contentSha256, comments = [], commentsChecked
 export function normalizeEvidenceMethod(method) {
   return normalizeMethod(method);
 }
-

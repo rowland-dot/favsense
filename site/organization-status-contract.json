@@ -17,7 +17,7 @@
     "curation": ["not_started", "pending_review", "accepted", "rejected", "stale"],
     "public": ["not_eligible", "ready", "published", "held_previous"]
   },
-  "reason_codes": ["", "unknown_legacy", "auth_failed", "bridge_unavailable", "scope_invalid", "safety_signal", "transport_failed", "contract_invalid", "batch_aborted", "evidence_missing", "ocr_unavailable", "audit_pending", "resource_not_applicable", "resource_ambiguous", "resource_stale", "content_changed", "evidence_changed", "build_failed", "publish_failed"],
+  "reason_codes": ["", "unknown_legacy", "auth_failed", "bridge_unavailable", "scope_invalid", "safety_signal", "transport_failed", "contract_invalid", "batch_aborted", "evidence_missing", "ocr_unavailable", "audit_pending", "resource_not_applicable", "resource_ambiguous", "resource_stale", "content_changed", "evidence_changed", "provider_changed", "prompt_changed", "summary_changed", "build_failed", "publish_failed"],
   "copy": {
     "core_completed": "核心收藏已保存",
     "summary_not_started": "尚未开始深度整理",

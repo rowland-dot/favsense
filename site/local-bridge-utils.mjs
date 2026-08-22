@@ -108,9 +108,55 @@ export function normalizeLocalBridgeDiagnostic(value) {
   return /^No diagnostic output was returned\.?$/i.test(visible) ? "" : visible;
 }
 
-export function validateLocalBridgeSyncStatus(value) {
+function organizationContract(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value) || value.schema_version !== 2) {
+    throw new Error("本机整理状态契约不可用");
+  }
+  for (const key of ["overall_states", "phase_statuses", "note_statuses", "reason_codes", "copy"]) {
+    if (!value[key] || typeof value[key] !== "object") throw new Error("本机整理状态契约不可用");
+  }
+  return value;
+}
+
+export function validateOrganizationStatusContract(value) {
+  return organizationContract(value);
+}
+
+function validateV2SyncStatus(value, sourceContract) {
+  const contract = organizationContract(sourceContract);
+  const keys = Object.keys(value).sort().join(",");
+  if (keys !== "build_version,counts,ok,phases,run_id,schema_version,state") throw new Error("本机整理状态不可用");
+  if (value.ok !== true || value.schema_version !== 2 || !contract.overall_states.includes(value.state)) throw new Error("本机整理状态不可用");
+  if (typeof value.run_id !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(value.run_id)) throw new Error("本机整理状态不可用");
+  if (typeof value.build_version !== "string" || (value.build_version && !/^[a-f0-9]{64}$/.test(value.build_version))) throw new Error("本机整理状态不可用");
+  if (!value.phases || Object.keys(value.phases).sort().join(",") !== "build,core,curation,evidence,publish,summary") throw new Error("本机整理状态不可用");
+  const phases = {};
+  for (const [name, statuses] of Object.entries(contract.phase_statuses)) {
+    const phase = value.phases[name];
+    if (!phase || typeof phase !== "object" || Array.isArray(phase)) throw new Error("本机整理状态不可用");
+    const allowedKeys = new Set(["status", "reason_code", "updated_at", ...(name === "build" || name === "publish" ? ["artifact_status"] : [])]);
+    if (Object.keys(phase).some((key) => !allowedKeys.has(key)) || !statuses.includes(phase.status)) throw new Error("本机整理状态不可用");
+    if (!contract.reason_codes.includes(phase.reason_code) || typeof phase.updated_at !== "string" || Number.isNaN(Date.parse(phase.updated_at))) throw new Error("本机整理状态不可用");
+    if ("artifact_status" in phase && phase.artifact_status !== "held_previous") throw new Error("本机整理状态不可用");
+    phases[name] = { ...phase };
+  }
+  const countKeys = ["scanned", "new", "summary_captured", "summary_failed", "summary_batch_aborted", "curation_accepted", "curation_pending"];
+  if (!value.counts || Object.keys(value.counts).sort().join(",") !== [...countKeys].sort().join(",")) throw new Error("本机整理状态不可用");
+  for (const key of countKeys) if (!Number.isSafeInteger(value.counts[key]) || value.counts[key] < 0 || value.counts[key] > 10_000_000) throw new Error("本机整理状态不可用");
+  return { ...value, phases, counts: { ...value.counts } };
+}
+
+export function validateLocalBridgeSyncStatus(value, contract = null) {
   if (!value || typeof value !== "object" || Array.isArray(value) || value.ok !== true) {
     throw new Error("本机整理状态不可用");
+  }
+  if (contract) {
+    if (value.schema_version === 2) return validateV2SyncStatus(value, contract);
+    if (value.state === "completed") {
+      return { ok: true, schema_version: 2, state: "completed_with_warnings", reason_code: "unknown_legacy", legacy: true };
+    }
+    const legacy = validateLocalBridgeSyncStatus(value);
+    return { ...legacy, schema_version: 2, state: "completed_with_warnings", reason_code: "unknown_legacy", legacy: true };
   }
   if (Object.keys(value).some((key) => !SYNC_ALLOWED_KEYS.has(key)) || !SYNC_STATES.has(value.state)) {
     throw new Error("本机整理状态不可用");
