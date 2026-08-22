@@ -485,6 +485,32 @@ def diandian_result_digest(title: str, summary: str) -> str:
     return hashlib.sha256(f"{title}\0{summary}".encode("utf-8")).hexdigest()
 
 
+def parse_snapshot_build_result(source: str) -> dict:
+    if not isinstance(source, str) or len(source.encode("utf-8")) > 16 * 1024:
+        raise ValueError("snapshot result is unavailable")
+    try:
+        value = json.loads(source)
+    except json.JSONDecodeError as error:
+        raise ValueError("snapshot result is not valid JSON") from error
+    if not isinstance(value, dict) or set(value) != {
+        "schema_version", "ok", "outcome", "build_version", "counts"
+    }:
+        raise ValueError("snapshot result contract is invalid")
+    counts = value.get("counts")
+    if (
+        value.get("schema_version") != 1
+        or value.get("ok") is not True
+        or value.get("outcome") != "built"
+        or not isinstance(value.get("build_version"), str)
+        or re.fullmatch(r"[a-f0-9]{64}", value["build_version"]) is None
+        or not isinstance(counts, dict)
+        or set(counts) != {"notes", "categories", "resources"}
+        or any(not isinstance(item, int) or isinstance(item, bool) or item < 0 or item > 10_000_000 for item in counts.values())
+    ):
+        raise ValueError("snapshot result contract is invalid")
+    return value
+
+
 def safe_diandian_fallback_reason(value: str) -> str:
     normalized = normalize_sensitive_scan(value).strip()
     if not normalized:
@@ -1862,6 +1888,7 @@ class Bridge:
         self.organizer = self.skill_dir / "scripts" / "organize.mjs"
         self.builder = self.skill_dir / "scripts" / "build-knowledge-base.mjs"
         self.public_builder = self.skill_dir / "scripts" / "build-public-site.mjs"
+        self.snapshot_builder = self.skill_dir / "scripts" / "build-organization-snapshot.mjs"
         self.publisher = self.skill_dir / "scripts" / "publish-huggingface.mjs"
         self.publish_config = normalize_publish_config(config)
         self.curation = resolve_workspace_path(self.workspace, str(config.get("curation_file", "skills/xhs-favorites-organizer/references/skills-board-curation.json")), "curation_file")
@@ -1935,6 +1962,7 @@ class Bridge:
             self.organizer,
             self.builder,
             self.public_builder,
+            self.snapshot_builder,
             self.curation,
             self.profile,
             self.userscript_template,
@@ -2378,6 +2406,19 @@ class Bridge:
             state["new"] = int(state.get("new", 0) or 0) + int(result.get("new", 0) or 0)
             state["processed_run_ids"] = processed
             state["processed_boards"] = len(processed)
+            result_note_ids = result.get("note_ids")
+            if isinstance(result_note_ids, list) and all(isinstance(note_id, str) and NOTE_ID.fullmatch(note_id) for note_id in result_note_ids):
+                board_note_ids = state.get("board_note_ids") if isinstance(state.get("board_note_ids"), dict) else {}
+                board_note_ids[board_id] = sorted(set(result_note_ids))
+                state["board_note_ids"] = board_note_ids
+                if len(processed) == len(state.get("run_board_ids", [])):
+                    sealed = sorted({note_id for values in board_note_ids.values() for note_id in values})
+                    state["frozen_scope"] = {
+                        "note_ids": sealed,
+                        "mode": state.get("run_mode", "incremental"),
+                        "local_only": state.get("local_only") is True,
+                        "config_sha256": hashlib.sha256(self.config_path.read_bytes()).hexdigest(),
+                    }
             summary_pending = bool(getattr(self, "summary_plans", {}).get(run_id))
             resolved_plans = state.get("summary_plan_resolved_run_ids")
             if not isinstance(resolved_plans, list):
@@ -2986,7 +3027,14 @@ class Bridge:
                 result = json.loads(status_path.read_text(encoding="utf-8-sig"))
                 if self.diandian_is_halted(run_id):
                     return
-                self.rebuild_knowledge_base()
+                if getattr(self, "organization_status_v2_enabled", False):
+                    if result.get("next_board_id"):
+                        self.complete_manual_after_diandian(run_id, board_id, result, None, "")
+                        return
+                    snapshot = self.build_organization_snapshot()
+                    result["build_version"] = snapshot["build_version"]
+                else:
+                    self.rebuild_knowledge_base()
                 if self.diandian_is_halted(run_id):
                     return
                 publish = self.publish_after_board(
@@ -4398,6 +4446,43 @@ class Bridge:
             restore_file_snapshot(public_output, public_snapshot)
             raise
 
+    def build_organization_snapshot(self) -> dict:
+        manual = self.read_manual_sync()
+        frozen_scope = manual.get("frozen_scope") if isinstance(manual.get("frozen_scope"), dict) else {}
+        note_ids = frozen_scope.get("note_ids") if isinstance(frozen_scope.get("note_ids"), list) else None
+        if note_ids is None:
+            catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
+            note_ids = sorted(str(note_id) for note_id in catalog.get("notes", {}) if NOTE_ID.fullmatch(str(note_id)))
+        sealed_scope_digest = hashlib.sha256(json.dumps(sorted(set(note_ids)), separators=(",", ":")).encode("utf-8")).hexdigest()
+        curation_input_digest = hashlib.sha256(self.curation.read_bytes()).hexdigest()
+        config_digest = hashlib.sha256(self.config_path.read_bytes()).hexdigest()
+        command = [
+            "node", str(self.snapshot_builder),
+            "--root", str(self.workspace),
+            "--kb-target", str(self.knowledge_base),
+            "--public-target", str(self.workspace / "site" / "data" / "knowledge.json"),
+            "--catalog", str(self.catalog_path),
+            "--config", str(self.config_path),
+            "--curation", str(self.curation),
+            "--profile", str(self.profile),
+            "--sealed-scope-digest", sealed_scope_digest,
+            "--curation-input-digest", curation_input_digest,
+            "--config-digest", config_digest,
+            "--diandian-dir", str(self.diandian_dir),
+        ]
+        if self.resource_registry is not None:
+            command.extend(["--resources", str(self.resource_registry)])
+        completed = run_bounded_subprocess(
+            command,
+            cwd=self.workspace,
+            timeout=180,
+            stdout_limit=16 * 1024,
+            stderr_limit=16 * 1024,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(f"organization snapshot failed: {sanitize_error(completed.stderr)}")
+        return parse_snapshot_build_result(completed.stdout)
+
     def process_import(self, run_id: str, board_id: str, unique: dict[str, str]) -> None:
         started_at = datetime.now().astimezone().isoformat()
         try:
@@ -4449,7 +4534,8 @@ class Bridge:
                 catalog_snapshot = self.catalog_path.read_bytes()
                 try:
                     self.tag_catalog_sources(board_id, set(unique))
-                    self.rebuild_knowledge_base()
+                    if not getattr(self, "organization_status_v2_enabled", False):
+                        self.rebuild_knowledge_base()
                 except Exception:
                     restore_file_snapshot(self.catalog_path, catalog_snapshot)
                     raise
@@ -4459,7 +4545,7 @@ class Bridge:
                 ))
                 safety_stopped = bool(media.get("safety_stopped"))
                 next_board_id = None if safety_stopped else self.next_board_id(board_id, run_id)
-                publish = None if safety_stopped else self.publish_after_board(board_id, run_id)
+                publish = None if safety_stopped or getattr(self, "organization_status_v2_enabled", False) else self.publish_after_board(board_id, run_id)
                 result = {
                     **status,
                     "state": "safety-stopped" if safety_stopped else "completed",
@@ -4469,6 +4555,7 @@ class Bridge:
                     "report": None,
                     "media": media,
                     "next_board_id": next_board_id,
+                    "note_ids": sorted(unique),
                 }
                 if safety_stopped:
                     result["error"] = "小红书触发安全限制，已停止本轮且不会继续重试"
@@ -4571,7 +4658,8 @@ class Bridge:
                     if organized.returncode != 0:
                         raise RuntimeError(f"organizer failed: {sanitize_error(organized.stderr)}")
                     self.tag_catalog_sources(board_id, (known & set(unique)) | fetched_ids)
-                    self.rebuild_knowledge_base()
+                    if not getattr(self, "organization_status_v2_enabled", False):
+                        self.rebuild_knowledge_base()
                 except Exception:
                     restore_file_snapshot(self.catalog_path, catalog_snapshot)
                     restore_file_snapshot(report, report_snapshot)
@@ -4580,7 +4668,7 @@ class Bridge:
                 media = self.cache_missing_media(media_candidates)
                 safety_stopped = bool(media.get("safety_stopped"))
             next_board_id = None if safety_stopped else self.next_board_id(board_id, run_id)
-            publish = None if safety_stopped else self.publish_after_board(board_id, run_id)
+            publish = None if safety_stopped or getattr(self, "organization_status_v2_enabled", False) else self.publish_after_board(board_id, run_id)
 
             result = {
                 **status,
@@ -4593,6 +4681,7 @@ class Bridge:
                 "report": str(report) if fetched_notes or not safety_stopped else None,
                 "media": media,
                 "next_board_id": next_board_id,
+                "note_ids": sorted(unique),
             }
             if safety_stopped:
                 result["error"] = "小红书触发安全限制，已停止本轮且不会继续重试"

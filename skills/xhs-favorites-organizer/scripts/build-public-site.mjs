@@ -66,6 +66,9 @@ const paths = {
   diandian: arg("diandian-dir", resolve(workspace, ".xhs-favorites/diandian-summaries")),
   output: arg("output", resolve(workspace, "site/data/knowledge.json"))
 };
+const buildVersionIndex = process.argv.indexOf("--build-version");
+const buildVersion = buildVersionIndex >= 0 ? String(process.argv[buildVersionIndex + 1] || "") : "";
+if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) throw new Error("--build-version must be a 64-character lowercase SHA-256");
 
 const [catalog, curation] = await Promise.all([
   parseJson(paths.catalog),
@@ -347,6 +350,7 @@ const verifiedNoteCount = notes.filter((note) => note.evidence.locallyAvailable)
 
 const output = {
   meta: {
+    buildVersion,
     title: profile.presentation?.title || "小红书收藏知识工作台",
     description: profile.presentation?.description || "把收藏转成可搜索、可核验、可行动的知识资产。",
     generatedAt: new Date().toISOString(),

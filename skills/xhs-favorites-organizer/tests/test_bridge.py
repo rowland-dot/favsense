@@ -339,6 +339,25 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertEqual(status["phases"]["summary"]["status"], "failed")
             self.assertNotIn("error", status)
 
+    def test_snapshot_subprocess_result_is_an_exact_safe_envelope(self):
+        valid = {
+            "schema_version": 1,
+            "ok": True,
+            "outcome": "built",
+            "build_version": "a" * 64,
+            "counts": {"notes": 2, "categories": 1, "resources": 1},
+        }
+        self.assertEqual(BRIDGE.parse_snapshot_build_result(json.dumps(valid)), valid)
+        for invalid in [
+            {**valid, "path": "private"},
+            {**valid, "build_version": "short"},
+            {**valid, "counts": {"notes": -1, "categories": 1, "resources": 1}},
+            {**valid, "outcome": "published"},
+        ]:
+            with self.subTest(invalid=invalid):
+                with self.assertRaises(ValueError):
+                    BRIDGE.parse_snapshot_build_result(json.dumps(invalid))
+
     def test_manual_failure_turns_encoded_blank_diagnostics_into_actionable_guidance(self):
         with tempfile.TemporaryDirectory() as directory:
             bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
