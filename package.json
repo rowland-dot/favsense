@@ -40,5 +40,9 @@
     "test": "npm run test:site && npm run test:publish && npm run test:knowledge && npm run test:curation && npm run test:skill-sync && npm run test:release-contracts",
     "verify": "node scripts/verify-release.mjs",
     "release:check": "npm test && npm run test:python && npm run verify"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2"
   }
 }
