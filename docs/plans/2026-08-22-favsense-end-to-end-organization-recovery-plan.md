@@ -1,0 +1,715 @@
+# FavSense 收藏整理端到端闭环与回归修复 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 将用户主动触发的一键整理恢复为可验证的 `core → summary → evidence → candidate → resource → audit → build → publish` 闭环，使每条笔记和每个公开 Skill 都有真实状态、可信总结与可核验资源，并使失败、恢复、迁移和发布都可追溯且可回滚。
+
+**Architecture:** 保留现有 loopback Bridge、SOP 扫描浏览器、确定性 Node 构建器和私有/公开目录边界。新增一套小而明确的运行状态契约、确定性候选/证据/资源/策展编排器，以及只在最终质量门后执行的单次构建发布门；Bridge 负责阶段顺序与原子运行状态，Node 模块负责可重复的数据契约和构建，前端只消费经过白名单验证的状态和本机 overlay。现有 curation 严格门不放宽，问题在上游补齐和下游真实展示。
+
+**Tech Stack:** Python 3.12 `unittest`/本地 HTTP Bridge、Node.js 20 ESM/`node:test`、原生 HTML/CSS/JavaScript、Playwright Chromium、PowerShell、GitHub Actions。
+
+**Governing Spec:** `docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`（APPROVED，v1.0）。
+
+**Verification Checklist:** `docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md`。
+
+**Design inputs:** 本次批准范围没有 `docs/designs/*.html` mockup。UI 的结构与行为 source of truth 是 governing Spec 的 UX-01..UX-14 Entry → Action → Expected Result；视觉细节只按现有站点模式实现，并由 `VC-QA-14/15` 复核，不在计划中发明新信息架构。
+
+---
+
+## Scope and constraints
+
+- [ ] 所有实现都在当前项目内完成；绝不修改 `/dev-pipeline` Skill、dev-methodology 规则或其安装副本。
+- [ ] 采集继续只读；不读取、导出、打印或提交 Cookie、`xsec_token`、bridge token、个人主页、收藏夹 ID、原始视频、音频、图片帧或 OCR 全文。
+- [ ] 平台输入、点点回复、评论、OCR 和外部网页始终按不可信内容处理，不能触发命令或改变流程。
+- [ ] 验证码、访问频繁、`300031` 或其他安全信号第一次出现即停止，不切换通道绕过、不自动重试。
+- [ ] 核心同步、候选生成和本地构建不依赖 Codex、Claude、Gemini 或其他模型；Agent 仅可选编辑结构化 curation JSON。
+- [ ] 不在本次流水线中读取或迁移真实私有数据；迁移只用合成夹具验证，真实 `--apply` 留给用户在 review brief 验收后显式触发。
+- [ ] 不自动创建 PR、推送、合并或部署；`/dev-pipeline` 在 review brief 停止。
+
+## Root-cause-aligned file map
+
+### Lifecycle governance
+
+- Create `scripts/verify-development-lifecycle.mjs` — 只在 pull-request 事件上校验 APPROVED Spec、Plan、TDD/Review/QA/Brief 证据链接和回滚说明。
+- Create `scripts/test-verify-development-lifecycle.mjs` — 使用临时仓库事件夹具证明缺门失败、完整闭环通过。
+- Create `scripts/check-syntax.mjs` and `scripts/test-check-syntax.mjs` — 从 `git ls-files` 获取公开跟踪的 `.js/.mjs`，逐文件运行当前 Node 的语法检查；不遍历任何私有/忽略目录。
+- Modify `.github/workflows/ci.yml` — PR 时运行生命周期门；push 仍运行现有 release gate。
+- Modify `.github/PULL_REQUEST_TEMPLATE.md` — 固定 Spec/Plan/TDD/Review/QA/Brief/Rollback 字段。
+- Modify `package.json` — 注册生命周期契约测试和 Playwright E2E 命令。
+- Modify `scripts/verify-release.mjs` and `scripts/test-verify-release.mjs` — 把新增公共脚本/测试列入发布契约，但不让本地 release check 假装拥有 PR 事件正文。
+
+### Core state and trust contracts
+
+- Create `skills/xhs-favorites-organizer/scripts/organization_state.py` — Python 运行阶段、逐条状态、旧状态兼容映射、总体状态推导和安全投影的唯一来源。
+- Create `skills/xhs-favorites-organizer/scripts/content-revision.mjs` — 规范化笔记正文/匿名评论后计算 `content_sha256`；Node 构建、候选和迁移共用。
+- Create `skills/xhs-favorites-organizer/scripts/resource-quality.mjs` — 稳定 resource ID、GitHub URL、Skill 完整字段、过期策略和单资源不变量。
+- Modify `skills/xhs-favorites-organizer/scripts/organize.mjs` — 写入稳定 `content_sha256`，正文变化保留旧记录但使下游状态 stale。
+- Modify `skills/xhs-favorites-organizer/scripts/bridge-server.py` — 使用新状态模块；在点点记录中绑定正文哈希；暴露安全的运行状态与本机单篇 overlay。
+- Modify `site/local-bridge-utils.mjs` — 严格校验 v2 运行状态、阶段计数、原因码和单篇 overlay；兼容旧状态只映射到允许的安全状态并附 `reason_code=unknown_legacy`。
+
+### Deterministic organization pipeline
+
+- Create `skills/xhs-favorites-organizer/scripts/generate-curation-candidates.mjs` — 从当前核心记录、领域规则和仍 current 的既有 accepted 记录生成确定性候选骨架；没有足够事实时生成 blocker，不编造实体或摘要。
+- Create `skills/xhs-favorites-organizer/scripts/normalize-evidence.mjs` — 将公开文字、匿名评论、点点、转写、图片 OCR 归一为绑定正文哈希的 evidence packet，并在 candidate 生成后以纯函数附加可支持声明/摘要与 blocker。
+- Create `skills/xhs-favorites-organizer/scripts/verify-github-resources.mjs`（Task 7）— 只验证证据中已明确出现的 canonical `owner/repo`；使用依赖注入的 `fetch`、单次请求、超时、无凭据、无搜索猜测，并实现 Task 5 的封闭 resource-assessment seam。
+- Create `skills/xhs-favorites-organizer/scripts/run-curation-pipeline.mjs` — 在 staging 中严格按 scope → initialize hash-bound audit placeholders → candidate → attach normalized evidence → closed resource assessment → optional review → status-aware merge → validate 顺序运行，并原子交换私有状态文件。
+- Modify `prepare-curation-review.mjs`, `initialize-curation-audit.mjs`, `merge-curation-results.mjs`, `validate-curation.mjs`, `curation-quality.mjs`, `curation-revision.mjs` — 使用相同正文哈希、资源 ID、accepted 门和标准 reason code。
+- Modify `bridge-server.py` — 最后一块核心数据只建立 checkpoint；最后一个本轮条目终态后调用一次 curation pipeline、正式构建和可选发布。
+
+### Formal snapshot transaction
+
+- Create `skills/xhs-favorites-organizer/scripts/build-organization-snapshot.mjs` — 在同一私有事务目录分别构建 KB 与 public 候选快照，二者全部验证成功后才以 journal 驱动交换；任一构建或交换失败都把两份 live 恢复到同一旧版本。
+- Modify `build-knowledge-base.mjs` and `build-public-site.mjs` — 增加显式 library-mode staging target；单独 CLI 行为保持兼容，但 Bridge 正式 finalizer 只能调用双输出事务协调器。
+- Create `skills/xhs-favorites-organizer/tests/test_organization_snapshot.mjs` — 对第二构建器失败、第一次交换后失败、重复 finalizer 和 build-version 一致性做 fault-injection 断言。
+
+### Fallback, output, UI and migration
+
+- Create `skills/xhs-favorites-organizer/scripts/extract-pending-image-text.py` — 对已经位于私有媒体缓存中的图片调用显式配置的本地 OCR 可执行文件；无引擎时精确返回 `ocr_unavailable`，不访问平台。
+- Modify `download-pending-media.py`, `transcribe-pending-videos.py`, `run-video-analysis.ps1`, `prepare-curation-review.mjs` — 只在用户本轮范围、安全允许且工具可用时准备证据；视觉升级仍按缺失事实和预算停止。
+- Modify `build-public-site.mjs` and `build-knowledge-base.mjs` — 共用 accepted/hash/resource 门；正式输出不直接消费 raw 点点；输出 `candidateKind`、精确 summary state、唯一 verified resource 和 build version。
+- Modify `site/app.js`, `site/styles.css`, `site/index.html` — 分阶段进度、精确失败文案、本机待审核 overlay、全部安全资源动作、键盘/屏幕阅读器语义。
+- Create `skills/xhs-favorites-organizer/scripts/migrate-organization-state.mjs` — 默认 dry-run，计数守恒、备份、`unknown_legacy`、stale 和回滚清单；真实 apply 需要显式确认值。
+- Modify `skills/xhs-favorites-organizer/SKILL.md`, `references/automatic-workflow.md`, `references/curation-standard.md`, `references/organization-schema.md`, `README.md`, `CONTRIBUTING.md`, `docs/ARCHITECTURE.md` — 文档与实际单次最终发布、候选类型、overlay 和治理门一致；修改项目 Skill 时同步增加契约夹具。
+
+## Target contracts
+
+### Bridge ↔ Node subprocess boundary
+
+Bridge 不直接猜测 Node 脚本的 stdout。`run-curation-pipeline.mjs` 和 `build-organization-snapshot.mjs` 都必须提供 CLI 包装层，只接受 Bridge 从受信配置和冻结运行状态组装的绝对路径参数；不接受平台文本、临时 URL 或自由命令。两个脚本的 stdout 都只允许一个 UTF-8 JSON 对象，stderr 只允许经清理的错误码/说明：
+
+```json
+{
+  "schema_version": 1,
+  "ok": true,
+  "outcome": "ready_for_safe_build",
+  "counts": { "accepted": 0, "pending": 0, "rejected": 0, "resource_pending": 0 }
+}
+```
+
+```json
+{
+  "schema_version": 1,
+  "ok": true,
+  "outcome": "built",
+  "build_version": "64-lower-hex",
+  "counts": { "notes": 0, "categories": 0, "resources": 0 }
+}
+```
+
+Bridge 通过现有 `run_bounded_subprocess()` 执行，对 command path、cwd、timeout、stdout/stderr 字节上限和环境变量做固定限制；然后使用严格白名单解析器 `parse_curation_pipeline_result()` / `parse_snapshot_build_result()` 验证精确 key set、枚举、整数边界和 hash。非 0 exit、超时、超限、多余 key、非法 JSON 或路径/私密值出现均 fail closed：curation 失败时不调用 snapshot，snapshot 失败时不调用 publisher。返回体永不包含文件路径、note/board 列表、原始证据或临时 URL。
+
+### Point record v2 without changing external saver API 1
+
+外部 `xhs-diandian-summarize-note` 的 `save_record(destination, title, summary_text, note_id)` API 1 保持不变。Bridge 从刚由 `organize.mjs` 原子写入的 catalog 重新读取目标 note 的 `content_sha256`；`prompt_version` 由已验证 `release.json` 版本与 `runtime/browser-contract.json` 内容 hash 组合得出，userscript/transport/API payload 都不得提供或覆盖这两个值。
+
+Bridge 先让 API 1 saver 写入私有 transaction 目录中符合 `.xhs-favorites/diandian-summaries/<note-id>.json` 形状的 staging 目标，再验证清理后回复，组装包含 `version=2`、provider、prompt、prompt_version、content_sha256、request_sha256 和 captured_at 的完整记录，最后一次原子替换 live 文件。任何 staging/扩充/验证/替换失败都不改变旧 live 字节，也不将 note 标记为 captured。旧 v1 记录仍可读，但只能映射为 `stale` + `reason_code=unknown_legacy`。
+
+### Exact user-visible status copy
+
+| State/reason | Required visible copy |
+|---|---|
+| core complete while downstream is incomplete | `核心收藏已保存` |
+| summary `not_started` | `尚未开始深度整理` |
+| summary `captured`, curation pending | `总结已捕获，等待审核` |
+| summary `failed` / `transport_failed` | `本篇总结失败，可在下次继续` |
+| summary `batch_aborted` | `本次未尝试，可继续整理` |
+| evidence `missing` | `证据不足，等待补齐` |
+| summary/curation `stale` | `正文已变化，等待重新审核` |
+| build `failed` | `构建失败，已保留上一版` |
+| publish `failed` | `发布失败，远端仍为上一版；本地结果已保留` |
+| publish `unchanged` | `内容无变化，无需发布` |
+| any `safety_stopped` | `安全限制已触发，本轮已停止；请在 SOP 扫描浏览器完成验证后重新开始` |
+
+完整成功文案仍只能在 Spec §6.2 六个条件全部成立时出现；前端不允许用 error string 自由拼接上述语义。
+
+### Run-state v2
+
+```json
+{
+  "schema_version": 2,
+  "run_id": "safe-random-id",
+  "state": "organization_partial",
+  "build_version": "sha256-or-empty",
+  "phases": {
+    "core": { "status": "completed", "reason_code": "", "updated_at": "ISO-8601" },
+    "summary": { "status": "batch_aborted", "reason_code": "transport_failed", "updated_at": "ISO-8601" },
+    "evidence": { "status": "partial", "reason_code": "evidence_missing", "updated_at": "ISO-8601" },
+    "curation": { "status": "pending_review", "reason_code": "audit_pending", "updated_at": "ISO-8601" },
+    "build": { "status": "failed", "artifact_status": "held_previous", "reason_code": "build_failed", "updated_at": "ISO-8601" },
+    "publish": { "status": "failed", "artifact_status": "held_previous", "reason_code": "publish_failed", "updated_at": "ISO-8601" }
+  },
+  "counts": {
+    "scanned": 0,
+    "new": 0,
+    "summary_captured": 0,
+    "summary_failed": 0,
+    "summary_batch_aborted": 0,
+    "curation_accepted": 0,
+    "curation_pending": 0
+  }
+}
+```
+
+`derive_overall_state()` 只允许从阶段状态推导 `core_completed`、`organization_partial`、`organization_ready`、`published`、`completed_with_warnings`、`failed`、`safety_stopped`；旧 `completed` 读取为 `completed_with_warnings` 并附 `reason_code=unknown_legacy`，不得把 `unknown_legacy` 发明为总体状态或直接映射为完整成功。
+
+### Phase-state v2
+
+阶段状态使用以下封闭枚举，禁止调用者传入自由文本：
+
+| Phase | Allowed `status` |
+|---|---|
+| `core` | `not_started`, `running`, `completed`, `failed`, `safety_stopped` |
+| `summary` | `not_required`, `not_started`, `running`, `completed`, `partial`, `failed`, `batch_aborted`, `stale` |
+| `evidence` | `not_started`, `missing`, `partial`, `ready`, `blocked` |
+| `curation` | `not_started`, `running`, `pending_review`, `validated`, `failed`, `stale` |
+| `build` | `not_started`, `running`, `succeeded`, `failed` |
+| `publish` | `not_enabled`, `not_started`, `running`, `published`, `unchanged`, `failed` |
+
+`build`/`publish` 失败时另设封闭字段 `artifact_status="held_previous"`，不把 `held_previous` 同时当成执行结果。总体状态按固定优先级推导：任一阶段 `safety_stopped` → `safety_stopped`；core 未产生可用结果或双输出事务失败 → `failed`；core 刚成功而下游仍全为 `not_started/not_required` → `core_completed`；下游已开始且存在 failed/batch_aborted/missing/pending/stale 等已报告非完整结果 → `organization_partial`（即使安全元数据快照已成功发布，也不覆盖为完整 `published`）；没有非完整项且同版本 KB/public 构建成功、publish 未启用 → `organization_ready`；没有非完整项且 publish 为 `published`/`unchanged` → `published`；没有非完整项、本地可用结果已保留但 publish 失败 → `completed_with_warnings`。完整成功文案还必须满足 Spec §6.2 的六个条件。
+
+### Note-state v2
+
+```json
+{
+  "schema_version": 2,
+  "note_id": "stable-id",
+  "content_sha256": "64-lower-hex",
+  "core_status": "saved",
+  "summary_status": "captured",
+  "evidence_status": "ready",
+  "resource_status": "verified",
+  "curation_status": "accepted",
+  "public_status": "ready",
+  "reason_code": "",
+  "updated_at": "ISO-8601"
+}
+```
+
+每一维只接受 Spec §6.1 的枚举。`summary_status=failed` 仅用于真正尝试过的当前项；未尝试项必须是 `batch_aborted`。正文哈希变化时 summary/curation/resource 状态进入 `stale`，但历史 raw evidence 不删除。
+
+### Verified Skill resource
+
+```json
+{
+  "id": "github-owner-repo",
+  "name": "Official project name",
+  "type": "Agent Skill",
+  "canonical_repo": "owner/repo",
+  "repo": "https://github.com/owner/repo",
+  "download": "https://github.com/owner/repo/archive/refs/heads/main.zip",
+  "license": "MIT",
+  "skill_manifest": "path/to/SKILL.md",
+  "verified_at": "YYYY-MM-DD",
+  "stars_numeric": 123,
+  "compatibility": ["Codex"],
+  "status": "verified"
+}
+```
+
+公开 `kind="Skill"` 的条件是：accepted curation + 当前正文哈希 + 恰好一个 `status=verified` 的 resource ID + 完整资源字段。其他情况输出安全的 confirmed `kind`（通常为领域 fallback）和可选 `candidateKind="Skill"`，不输出猜测链接。
+
+---
+
+## Implementation tasks
+
+### Task 0: Mechanical Spec → Plan → TDD → QA → PR gate
+
+**Dependencies:** Approved Spec only. **Risk:** Medium — the gate must not make local development depend on GitHub PR metadata. **Outcome:** CI rejects lifecycle-incomplete behavior PRs while local release checks remain deterministic.
+
+**Files:**
+- Create: `scripts/verify-development-lifecycle.mjs`
+- Create: `scripts/test-verify-development-lifecycle.mjs`
+- Create: `scripts/check-syntax.mjs`
+- Create: `scripts/test-check-syntax.mjs`
+- Modify: `.github/workflows/ci.yml`
+- Modify: `.github/PULL_REQUEST_TEMPLATE.md`
+- Modify: `package.json`
+- Modify: `scripts/verify-release.mjs`
+- Modify: `scripts/test-verify-release.mjs`
+- Modify: `CONTRIBUTING.md`
+
+**Covers:** Spec §3.3 governance invariant, §10 Step 0, §14, §15 human/PR gates; `VC-GOV-*`, `AC-13`.
+
+- [ ] **RED — write lifecycle and syntax contract tests.** Add lifecycle tests named `rejects_behavior_change_without_approved_spec`, `rejects_missing_plan_tdd_qa_or_brief_links`, `rejects_unchecked_rollback`, `rejects_external_or_traversing_evidence_links`, `accepts_preexisting_approved_spec_and_plan`, and `accepts_complete_pull_request_lifecycle`. Add syntax-runner tests proving it checks every tracked `.js/.mjs`, ignores untracked/private files, and returns the exact failing path/exit code. Temporary-repository fixtures contain only synthetic public artifacts; assertions compare exact gate IDs/paths, not generic truthiness.
+- [ ] **RED — run the focused tests.** Run `node --test scripts/test-verify-development-lifecycle.mjs scripts/test-check-syntax.mjs`. Expected: FAIL because both production scripts do not exist.
+- [ ] **GREEN — implement the PR-event verifier.** Export `verifyDevelopmentLifecycle({ root, event })`. Treat changes under production/config/UI/Skill paths as governed; resolve the PR body’s repository-relative Spec/Plan/Review/QA/Test outcome/Brief links inside the checkout, require the Spec to be APPROVED and the Plan to cite that exact Spec, and reject missing files, path traversal, external evidence URLs or mismatched slugs. The approved Spec and Plan may have been committed before the implementation PR; do not require meaningless edits to either artifact. Require a non-empty RED/GREEN evidence reference inside the canonical brief and an explicit rollback statement. Do not inspect private directories or require PR metadata during local `npm.cmd run release:check`.
+- [ ] **GREEN — wire CI, syntax and template.** Add `npm ci` before JavaScript checks and a `pull_request`-only lifecycle step after the release gate. Update the PR template with explicit `Spec`, `Plan`, `RED/GREEN evidence`, `Review`, `QA`, `Review brief`, `Rollback`, privacy, and human-approval checkboxes. Register `test:lifecycle` under `npm test` and `check:syntax` as `node scripts/check-syntax.mjs`; make CI and the final release gate invoke it.
+- [ ] **REFACTOR/VERIFY.** Run `node --test scripts/test-verify-development-lifecycle.mjs scripts/test-check-syntax.mjs scripts/test-verify-release.mjs`, `npm.cmd run check:syntax`, and `npm.cmd run verify`; expected all commands exit 0 and the existing privacy/public-tree gate remains intact.
+- [ ] **COMMIT.** Stage only the files above and commit `chore: enforce development lifecycle evidence`.
+
+### Task 1: Characterize the six broken end-to-end invariants before implementation
+
+**Dependencies:** Task 0 test command registration. **Risk:** Medium — RED tests must fail for requirements, not brittle source text. **Outcome:** Every reported regression has a reproducible failing contract before production edits.
+
+**Files:**
+- Create: `skills/xhs-favorites-organizer/tests/test_organization_pipeline.py`
+- Create: `skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`
+- Create: `site/e2e/organization-recovery.spec.mjs`
+- Create: `scripts/serve-qa-fixture.mjs`
+- Create: `playwright.config.mjs`
+- Modify: `.github/workflows/ci.yml`
+- Modify: `package.json`, `package-lock.json`
+
+**Covers:** Spec §8–§9, §10 Step 1, BUG-01..BUG-16, AC-01/04/06/07/09/10/15.
+
+- [ ] **RED — bridge lifecycle fixtures.** In `test_organization_pipeline.py`, add independent synthetic tests proving: current failure marks pending peers incorrectly; finalizer error can coexist with completed; core-last-board calls publish before summary plan; safety stop never calls fallback/publish; rerun must skip current-hash captured items.
+- [ ] **RED — Node pipeline fixtures.** In `test_organization_contracts.mjs`, add fixtures proving: a saved point record has no production path to candidate/audit/build; fallback keyword can create `kind=Skill` without resource; KB and public builders disagree on raw point acceptance; confirmed Skill resource completeness is not enforced at the public projection.
+- [ ] **SETUP — deterministic browser runner.** Run `npm.cmd install --save-dev @playwright/test` and `npx.cmd playwright install chromium`. In CI, add OS-specific Chromium installation after `npm ci` (`npx playwright install --with-deps chromium` on Ubuntu; `npx.cmd playwright install chromium` on Windows). Do not install or invoke a real platform browser profile.
+- [ ] **RED — browser journey.** Create `serve-qa-fixture.mjs` and `npm.cmd run preview:qa-fixture` to serve the real `site/` plus a loopback-only synthetic Bridge whose data is fixed, contains no private values, performs no platform/network access and supports success/partial/failure states. Configure `chromium` plus `mobile-chromium` projects and register `test:e2e` plus `lint:a11y` package scripts under the release gate. Assert the rendered detail shows repo and ZIP, the run panel never claims full completion after build/publish failure, and local pending overlay is absent from public origin.
+- [ ] **SETUP — fixture boundary.** The fixture owns an in-memory token and two loopback listeners: the real manager origin at `127.0.0.1:8766` and an ephemeral synthetic Bridge port. It serves `/.local/bridge.json` virtually rather than writing `site/.local/bridge.json`, never reads `.xhs-favorites/`, and fails the test on any request outside those listeners or any platform/GitHub hostname. The public-origin project receives no bridge descriptor; the local project exercises the real `localBridgeRequest()` path rather than a mocked DOM final state.
+- [ ] **RED — execute and record exact failures.** Run `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_organization_pipeline.py"`, `node --test skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`, `npm.cmd run test:site`, and `npm.cmd run test:e2e`. Expected: each new target invariant fails for the documented current behavior while existing release/privacy tests remain green. Store RED evidence through `/dev-pipeline`; do not weaken assertions or mark tests todo.
+- [ ] **GREEN ownership handoff — no product edit in this characterization task.** Record the exact downstream GREEN owner beside each failing assertion: revision/currentness → Task 2; status/copy → Task 3; build/publish order and rollback → Task 4; candidate chain → Task 5; fallback/resume → Task 6; Skill resource invariant → Task 7; overlay/actions → Task 8; cross-builder trust → Task 9. Task 1 is not considered green on its own; Task 11 must rerun the unchanged assertions after all named owners land.
+- [ ] **COMMIT — preserve the RED checkpoint.** Commit only the new test harness/fixtures as `test: capture organization recovery regressions`. The branch is intentionally red at this intermediate TDD commit; Tasks 2–9 turn the same assertions green before any handoff.
+
+### Task 2: Bind summaries and acceptance to the current content revision
+
+**Dependencies:** Task 1 RED fixtures. **Risk:** High — a wrong hash boundary can invalidate good work or accept stale evidence. **Outcome:** summary/audit eligibility is provably tied to the current canonical content.
+
+**Files:**
+- Create: `skills/xhs-favorites-organizer/scripts/content-revision.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/organize.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/bridge-server.py`
+- Modify: `skills/xhs-favorites-organizer/scripts/curation-revision.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/curation-quality.mjs`
+- Modify: `skills/xhs-favorites-organizer/tests/test_bridge.py`
+- Modify: `skills/xhs-favorites-organizer/tests/test_organization_pipeline.py`
+- Modify: `skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`
+
+**Covers:** Spec §3.3 version consistency, §4, §5.3–§5.4, §6.1 stale, UX-03/12/14, BUG-01/12, AC-02/08.
+
+- [ ] **RED.** Add `content_revision_changes_only_when_trust_input_changes`, `saved_summary_requires_current_content_sha256`, `summary_payload_cannot_supply_revision_metadata`, `point_v2_commit_failure_preserves_previous_bytes`, `changed_content_marks_old_summary_and_audit_stale`, and `rerun_skips_current_hash_capture`. Assert the complete transition `captured(current) → content change → stale → recapture(current)` and assert external saver API 1 remains unchanged.
+- [ ] **Run RED.** Run `node --test skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs` and `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_organization_pipeline.py"`; expected targeted failures for missing `content_sha256` and stale transition.
+- [ ] **GREEN — canonical revision.** Implement `contentRevision(note)` over normalized title, description, tags, media type and anonymous comment text/check flag; exclude author/account IDs, source-board IDs, timestamps, URLs and counters. `organize.mjs` computes it during merge and preserves prior hash only when canonical content is unchanged.
+- [ ] **GREEN — point record v2 adapter.** Keep the external Skill saver API 1 byte-for-byte compatible. After `organize.mjs` commits the catalog, Bridge reloads the target stable ID and obtains its trusted `content_sha256`; derive `prompt_version` from the already validated Skill release version plus browser-contract digest. Invoke the external saver only against a private transaction-shaped staging root, validate its v1 result, wrap it into the plan’s point-record v2 envelope, and atomically replace the live note file once. Payload-supplied revision fields are rejected as unsupported. A failure before the final replace preserves the previous live bytes and leaves the note uncaptured; legacy live v1 maps to `stale` + `unknown_legacy`.
+- [ ] **GREEN — acceptance gate.** Extend `hasCompleteAcceptedAudit()`/`isPublishableCuration()` so accepted audit, candidate revision, point hash and catalog content hash must all match. Preserve historical evidence and accepted curation data, but return false until re-reviewed.
+- [ ] **REFACTOR/VERIFY.** Run `node --test skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`, `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_bridge.py"`, `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_organization_pipeline.py"`, and `python -m unittest discover -s ".\skills\xhs-diandian-summarize-note\tests" -p "test_save_summary.py"`; expected all commands exit 0, the external API 1 signature test remains green, and no private value appears in failure output.
+- [ ] **COMMIT.** `feat: bind organization evidence to content revisions`.
+
+### Task 3: Introduce orthogonal run/note states and truthful UI messages
+
+**Dependencies:** Task 2 content revision. **Risk:** High — status semantics affect resume and user trust. **Outcome:** note/run phases have one validated reducer and the UI cannot infer full success from a legacy flag.
+
+**Files:**
+- Create: `skills/xhs-favorites-organizer/scripts/organization_state.py`
+- Modify: `skills/xhs-favorites-organizer/scripts/bridge-server.py`
+- Modify: `site/local-bridge-utils.mjs`
+- Modify: `site/app.js`
+- Modify: `site/styles.css`
+- Modify: `skills/xhs-favorites-organizer/tests/test_organization_pipeline.py`
+- Modify: `skills/xhs-favorites-organizer/tests/test_public_site.mjs`
+- Modify: `site/e2e/organization-recovery.spec.mjs`
+
+**Covers:** Spec §5.10, §6, §7 UX-02/03/04/10/11/12/13/14, §12, BUG-07/10/11/13, AC-07/08/10/12.
+
+- [ ] **RED — requested board scope.** Add `freezes_requested_board_scope_after_discovery_merge` and `fails_if_selected_board_becomes_unavailable`. Start with renamed/new boards and assert board IDs, mode, local-only target and configuration digest remain immutable for the run while a new run sees later configuration.
+- [ ] **RED — state reducer.** Add tests for every allowed dimension, invalid enumeration rejection, safe reason-code whitelist, legacy `completed → unknown_legacy/completed_with_warnings`, and full run arcs. Assert that build or publish failure makes complete-success copy impossible.
+- [ ] **RED — exact failure distinction.** Add a three-note plan test: first captured, second transport failure, third never attempted. Expected note statuses are `captured`, `failed`, `batch_aborted`; counts are 1/1/1.
+- [ ] **RED — UI transition.** Extend existing mounted tests and Playwright to start in running, inject finalizer/build/publish failure, and assert the live region changes to the exact partial/failure message while retaining “核心收藏已保存”.
+- [ ] **Run RED.** Run `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_organization_pipeline.py"`, `npm.cmd run test:site`, and `npm.cmd run test:e2e`; expected failures at current single-state logic and generic source-metadata copy.
+- [ ] **GREEN — state source of truth.** Implement constructors, enum validation, `transition_note_state()`, `transition_phase()`, `derive_overall_state()`, and `safe_public_projection()` in `organization_state.py`. Persist private per-note state under `.xhs-favorites/organization-state/` via staging + atomic replace; public run projection includes only safe counts/status/reason/build version.
+- [ ] **GREEN — requested board scope.** `trigger_manual_sync()` freezes the requested board IDs, mode, local-only target and configuration digest before navigation. Discovery may merge names/new boards, but a selected board that disappears or is disabled fails the run rather than widening it. Task 4 seals the resulting note set before any downstream phase begins.
+- [ ] **GREEN — Bridge adoption.** Replace manual arithmetic fields in `trigger_manual_sync`, `record_manual_result`, `update_diandian_progress`, `halt_diandian_cdp_run`, `complete_manual_after_diandian`, and `manual_sync_status` with the new transitions. Current attempted item gets `failed`; remaining plan items get `batch_aborted`; safety maps to `safety_stopped` and suppresses fallback/retry.
+- [ ] **GREEN — strict frontend contract.** Extend `validateLocalBridgeSyncStatus()` for schema v2 and nested phases/counts with exact key allowlists. Update `renderManualSync()` and refresh/reload logic so copy is derived from phases, not `state === completed`. Replace “当前未展示点点总结” with reason-driven labels such as “尚未开始深度整理”, “总结已捕获，等待审核”, “本次未尝试”, “证据不足”, “正文变化，等待重新审核”.
+- [ ] **REFACTOR/VERIFY.** Test every transition arc and run `npm.cmd run lint:a11y`; expected no a11y lint error and all behavior tests PASS.
+- [ ] **COMMIT.** `feat: expose truthful organization phase states`.
+
+### Task 4: Make final build and publish a single run-level transaction
+
+**Dependencies:** Task 3 phase reducer. **Risk:** High — multi-board and thread races can double publish or strand a run. **Outcome:** zero pre-gate publishes and at most one final publish per build version through an injected, fail-closed curation-gate seam that Task 5 supplies in production.
+
+**Files:**
+- Create: `skills/xhs-favorites-organizer/scripts/build-organization-snapshot.mjs`
+- Create: `skills/xhs-favorites-organizer/tests/test_organization_snapshot.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/bridge-server.py`
+- Modify: `skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/build-public-site.mjs`
+- Modify: `skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template`
+- Modify: `skills/xhs-favorites-organizer/test-fixtures/diandian-one-click-plan.json`
+- Modify: `skills/xhs-favorites-organizer/tests/test_bridge.py`
+- Modify: `skills/xhs-favorites-organizer/tests/test_organization_pipeline.py`
+- Modify: `skills/xhs-favorites-organizer/tests/test_public_site.mjs`
+
+**Covers:** Spec §5.3/5.9, §6.2, UX-02/10/11, BUG-09/10/11, AC-09/10/11.
+
+- [ ] **RED — ordering spy.** Use a fake two-board run and record calls. Assert zero formal build/publish before every summary plan reaches a terminal state; assert exactly one final build and at most one publish using the same `build_version`.
+- [ ] **RED — note scope seal.** Have both selected boards submit stable IDs, seal their deduplicated union, then mutate board discovery and catalog before summary planning. Assert the sealed note IDs stay byte-identical, every downstream plan uses exactly that set, and notes appearing after the seal wait for the next run.
+- [ ] **RED — rollback paths.** Simulate public build failure and publisher failure. Assert both prior local snapshots are restored on build failure and publisher is not called; publish failure keeps the local build but sets `publish.status=failed`, `publish.artifact_status=held_previous`, `reason_code=publish_failed`.
+- [ ] **RED — subprocess contract.** Feed Bridge a valid coordinator result, non-JSON, extra keys, oversized stdout/stderr, path/private-looking values, wrong hash length, timeout and non-zero exit. Assert only the exact safe envelope advances the run; all other cases set the typed build/curation failure and call neither the next coordinator nor publisher.
+- [ ] **Run RED.** Run `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_organization_pipeline.py"` and `node --test skills/xhs-favorites-organizer/tests/test_organization_snapshot.mjs`; current `process_import()`/`publish_after_board()` ordering and independent builder swaps must fail.
+- [ ] **GREEN — server-known plan and note seal.** At `trigger_manual_sync()`, freeze `summary_required` from validated server configuration and initialize `summary_plan_status=awaiting_plan` before any board completes. After all frozen boards submit their stable-ID sets, Bridge atomically seals their deduplicated union as `frozen_scope.note_ids`; the userscript may then submit only transient URL work for IDs in that set and no longer decides whether formal build/publication may occur. Summary/evidence/curation/finalization all read the sealed set. A missing/invalid/out-of-scope plan reaches an explicit failure/partial terminal state and cannot release the final gate.
+- [ ] **GREEN — dual-output transaction.** Implement `buildOrganizationSnapshot()` so both builders write to sibling staging targets under one private transaction directory, both outputs pass schema/privacy checks, one deterministic manifest hash becomes `build_version`, and only then a journaled swap updates KB and public live snapshots. Fault injection before either swap or between swaps restores both old snapshots; the failed staging is retained/quarantined only in the private transaction directory with a safe manifest.
+- [ ] **GREEN — builder ownership seam.** Extract `buildKnowledgeBaseToStaging(options)` and `buildPublicSiteToStaging(options)` as library exports that create and validate staging artifacts but never swap a live target. `build-organization-snapshot.mjs` is the sole dual-output swap owner. Each builder’s existing direct CLI calls the same library export and then its existing single-output publish helper, preserving backward-compatible manual rebuild behavior without nesting a second transaction inside the coordinator.
+- [ ] **GREEN — central finalizer.** Replace per-board `rebuild_knowledge_base()` + `publish_after_board()` completion with `maybe_finalize_organization(batch, curation_runner, snapshot_builder, publisher)`. Intermediate boards atomically save catalog/checkpoint and advance. The last board requires `curation_runner` to return `ready_for_safe_build` or `failed`; `ready_for_safe_build` includes a fully validated pipeline whose per-note aggregate may still be `pending_review`, so the builders can emit accepted content plus safe metadata fallbacks. An absent/failed runner fails closed without formal build or publish. Task 4 tests inject a `ready_for_safe_build` fake; Task 5 wires the real deterministic runner. `local_only` single-note runs never publish.
+- [ ] **GREEN — bounded CLI adapters.** Add the exact CLI stdout envelopes and Bridge parsers from `Bridge ↔ Node subprocess boundary`; invoke both Node programs only through `run_bounded_subprocess()` with fixed paths/cwd/environment/limits. Keep filesystem transaction details private and expose only safe outcome/count/build-version fields to the phase reducer.
+- [ ] **GREEN — idempotency.** Persist a run-level finalization claim and `published_build_version`; duplicate acknowledgements and thread races return the prior result without a second build/publish.
+- [ ] **REFACTOR/VERIFY.** Keep existing KB and public rollback helpers; delete dead `--summaries` argument rather than adding a second source. Run all bridge race/safety/publish tests.
+- [ ] **COMMIT.** `fix: publish one finalized organization snapshot`.
+
+### Task 5: Close the deterministic candidate/evidence/audit pipeline
+
+**Dependencies:** Tasks 2–4 content/state/finalizer contracts. **Risk:** High — atomic multi-file state must preserve accepted history on any failure. **Outcome:** no-Agent runs always produce candidate/audit/build-ready state or an exact pending reason.
+
+**Files:**
+- Create: `skills/xhs-favorites-organizer/scripts/generate-curation-candidates.mjs`
+- Create: `skills/xhs-favorites-organizer/scripts/normalize-evidence.mjs`
+- Create: `skills/xhs-favorites-organizer/scripts/run-curation-pipeline.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/prepare-curation-scope.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/prepare-curation-review.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/initialize-curation-audit.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/merge-curation-results.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/validate-curation.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/bridge-server.py`
+- Modify: `skills/xhs-favorites-organizer/tests/test_curation_standard.mjs`
+- Modify: `skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`
+
+**Covers:** Spec §4, §5.5–§5.6, §8 BUG-01/02/03/15, §9.1–§9.2, §10 Step 4, AC-01/02/15.
+
+- [ ] **RED — complete no-Agent run.** Build a synthetic scope with one current point record, one metadata-only record, and one existing accepted record. Assert the pipeline creates candidates, normalized evidence, pending audit, preserves current accepted work, validates, and returns safe counts without an Agent.
+- [ ] **RED — candidate honesty.** Assert missing evidence yields `pending_review` with `evidence_missing`; generated summary/action never invent tools; no missing candidate file stops the chain; repeat run produces identical semantic JSON and no duplicates.
+- [ ] **RED — audit bootstrap and status-aware merge.** With no prior review file, assert audit initialization occurs before candidate generation, creates one pending placeholder per scoped ID, and preserves a current accepted record. Then assert pending/rejected incomplete candidates can merge as private state without satisfying accepted candidate requirements, while `accepted` with the same missing fields fails validation and cannot enter formal curation.
+- [ ] **RED — Task 7 resource seam.** Run Task 5 without the later GitHub verifier. Assert explicit existing complete registry IDs may be preserved, ambiguous/incomplete/new Skill resources become `resource_pending` and `candidateKind=Skill`, and no incomplete item is promoted. Injecting a verifier result uses the same typed assessment contract; search-like or extra fields fail closed.
+- [ ] **Run RED.** Run `node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`; expected failure because candidate producer/orchestrator are absent.
+- [ ] **GREEN — audit bootstrap.** Split `initialize-curation-audit.mjs` so `initializeAuditForScope({ scope, catalog, existingAudit, curation })` runs before candidates/review: it preserves only accepted records whose curation/content revisions are still current and creates hash-bound pending placeholders for every other scoped ID. Evidence-derived methods, blockers and acceptance are added only by the later merge step; initialization never claims that comments/evidence were checked.
+- [ ] **GREEN — candidate generator.** Export `generateCandidates({ catalog, scope, profile, priorCandidates })`. Reuse accepted/current candidates unchanged; metadata creates a conservative pending skeleton with empty `tools`; every candidate carries `content_sha256`, `candidate_revision` and initial blockers but does not consume raw/normalized evidence before the approved attach stage.
+- [ ] **GREEN — normalized evidence and attach.** Export `normalizeEvidencePacket()` with only method names, sanitized derived text, hashes, supported claim markers and unresolved facts, plus `attachEvidenceToCandidates({ candidates, evidencePackets })`. A current-hash point summary may seed summary/action only during this attach step; raw media/comments remain private inputs and never enter public output/report.
+- [ ] **GREEN — complete review set.** Build exactly one merge item per sealed scope ID. Current accepted/hash-matching IDs receive an unchanged accepted passthrough item; an optional human/Agent review may supply explicit results only for the remaining IDs and must match those IDs exactly; when it is absent, the orchestrator synthesizes pending items from attached evidence/resource blockers without claiming semantic review. Duplicate, omitted, extra or out-of-scope IDs fail before merge.
+- [ ] **GREEN — status-aware merge.** Refactor `mergeResults()` to validate the audit status before candidate strictness. `accepted` still requires the complete candidate/resource/claims contract and writes formal curation; `pending`/`rejected` may retain a bounded private skeleton plus exact blockers/reason but always delete that ID from formal curation. Reuse the same validator in the final quality gate so a later review cannot bypass it.
+- [ ] **GREEN — resource assessment seam.** Define one closed assessment shape `{ status: verified|candidate|ambiguous|missing|stale, resource_id, reason_code }`. Task 5’s default adapter is registry-only and fail-closed: it may preserve an already complete/current explicit stable resource ID, but marks new/incomplete/ambiguous Skill entities pending. Task 7 supplies the official GitHub verifier through this seam; Task 5 never imports a future file or weakens validation to simulate verification.
+- [ ] **GREEN — atomic orchestrator.** `run-curation-pipeline.mjs` creates a private transaction directory beneath `.xhs-favorites` and executes the approved order exactly: prepare scope → initialize audit placeholders → generate candidates → attach normalized evidence → assess entity/resources → load optional review results → status-aware merge → validate. It then atomically replaces live private state. Any failure leaves old live files untouched and moves the failed transaction to a private quarantine location with only a sanitized manifest exposed through status; it never deletes diagnostic staging or copies it into public/report paths.
+- [ ] **GREEN — Bridge integration.** Invoke the orchestrator exactly once from the run-level finalizer through the approved CLI envelope and parser. After staging validation, return Task 4’s typed `ready_for_safe_build` result even when aggregate curation is `pending_review`; map accepted/pending/rejected/resource counts to phase state. No Agent or review result is a valid `organization_partial`, not a failure and not full success, and builders may emit only accepted content plus safe metadata fallback.
+- [ ] **REFACTOR/VERIFY.** Remove `--summaries` dead contract; use imports rather than copying quality logic. Run curation tests twice against same fixture and compare semantic outputs excluding timestamps.
+- [ ] **COMMIT.** `feat: orchestrate deterministic curation candidates`.
+
+### Task 6: Add safe fallback dispatch and resumable per-note semantics
+
+**Dependencies:** Tasks 3 and 5 note state/evidence packet. **Risk:** High — fallback must never become a safety-limit bypass. **Outcome:** only safe cached offline evidence is attempted, and resume selects exactly needed notes.
+
+**Files:**
+- Create: `skills/xhs-favorites-organizer/scripts/extract-pending-image-text.py`
+- Modify: `skills/xhs-favorites-organizer/scripts/bridge-server.py`
+- Modify: `skills/xhs-favorites-organizer/scripts/download-pending-media.py`
+- Modify: `skills/xhs-favorites-organizer/scripts/transcribe-pending-videos.py`
+- Modify: `skills/xhs-favorites-organizer/scripts/run-video-analysis.ps1`
+- Modify: `skills/xhs-favorites-organizer/scripts/prepare-curation-review.mjs`
+- Modify: `config/xhs-favorites.example.json`
+- Modify: `skills/xhs-favorites-organizer/tests/test_media_queue.py`
+- Modify: `skills/xhs-favorites-organizer/tests/test_transcription_pipeline.py`
+- Create: `skills/xhs-favorites-organizer/tests/test_image_ocr.py`
+- Modify: `skills/xhs-favorites-organizer/tests/test_organization_pipeline.py`
+
+**Covers:** Spec §5.5, UX-04/12/13, BUG-07/08, AC-07/08/12/15.
+
+- [ ] **RED — dispatcher table.** Test exact cases: safe point transport failure + cached video → audio; cached image + configured local OCR → OCR; missing tools → `evidence_status=missing`, `curation_status=pending_review`, `reason_code=ocr_unavailable|evidence_missing`; safety signal → no fallback; remaining notes → `batch_aborted`; rerun → only failed/aborted/stale.
+- [ ] **RED — OCR producer.** With a fake local OCR executable and private JPEG fixture, assert `image-ocr.json` is written atomically with method/hash/text metadata; assert stdout/status never contains OCR text or paths. Missing executable returns a safe machine reason without partial file.
+- [ ] **Run RED.** Run `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_media_queue.py"`, `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_transcription_pipeline.py"`, `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_image_ocr.py"`, and `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_organization_pipeline.py"`; expected only the new requirement assertions fail.
+- [ ] **GREEN — fallback dispatcher.** Add `dispatch_evidence_fallback(note_id, reason)` to Bridge. It never retries point/platform. It first records public text/comment availability, then invokes offline transcript or local OCR only when the media is already cached and the corresponding private config is enabled. Dense frames remain manual/conditional.
+- [ ] **GREEN — local OCR adapter.** Accept an explicit private `image_analysis.ocr_executable`; invoke it once per cached image with timeout/output bounds and no shell. Write only private JSON; classify engine missing/timeout/invalid output precisely.
+- [ ] **GREEN — resume plan.** Generate summary/evidence plans from current note states and content hashes. Skip current captured/accepted, resume `failed`, `batch_aborted`, `stale` or explicitly selected notes; preserve successes across later failure.
+- [ ] **REFACTOR/VERIFY.** Run safety tests proving no fallback, media request or retry after the first safety signal. Run all Python tests.
+- [ ] **COMMIT.** `feat: resume organization with safe evidence fallbacks`.
+
+### Task 7: Enforce confirmed Skill ↔ verified resource as one invariant
+
+**Dependencies:** Task 5 candidate/resource queue. **Risk:** High — entity ambiguity can produce a credible but wrong repository. **Outcome:** confirmed Skill is impossible without exactly one complete, fresh, official resource.
+
+**Files:**
+- Create: `skills/xhs-favorites-organizer/scripts/resource-quality.mjs`
+- Create: `skills/xhs-favorites-organizer/scripts/verify-github-resources.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/validate-curation.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/prepare-curation-review.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/generate-curation-candidates.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/build-public-site.mjs`
+- Modify: `config/domain-profiles/software.json`
+- Modify: `skills/xhs-favorites-organizer/references/software-resources.json`
+- Modify: `skills/xhs-favorites-organizer/tests/test_curation_standard.mjs`
+- Modify: `skills/xhs-favorites-organizer/tests/test_public_site.mjs`
+- Modify: `skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`
+
+**Covers:** Spec §5.7, UX-08/09, BUG-04/05/14/16, AC-04/05.
+
+- [ ] **RED — schema matrix.** Assert confirmed Skill rejects zero resources, multiple resources, aliases without stable ID, non-GitHub canonical repo, missing ZIP/release, license, manifest, verified date, stars or compatibility, and expired verification. Assert other resource kinds continue using their domain rules.
+- [ ] **RED — no keyword confirmation.** Replace the current test that expects “三个 Codex 神级 Skill” metadata to produce `kind=Skill`. New expectation: confirmed `kind` is the neutral domain fallback, `candidateKind="Skill"`, `resources=[]`.
+- [ ] **RED — network-isolated verifier.** Inject fake GitHub API responses and assert only an evidence-supplied canonical owner/repo is queried; no search endpoint, credential, retry or similar-name substitution is used. 403/429 maps to pending/stale, not verified.
+- [ ] **Run RED.** Run `node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs` and `npm.cmd run test:site`; current fallback and resource projection must fail the new requirement assertions.
+- [ ] **GREEN — shared resource quality.** Export `normalizeResourceId`, `validateVerifiedResource`, `resourceFreshness`, and `confirmedSkillResource`. Use this module in validation and both builders; require exactly one stable resource ID for a confirmed Skill.
+- [ ] **GREEN — official verification adapter.** Implement Task 5’s closed resource-assessment seam: parse only explicit GitHub repo URLs from evidence/registry, call repository/license/tree endpoints once with an abort timeout, derive default-branch ZIP, verify a `SKILL.md` path, and return only the allowed assessment plus safe snapshot fields. Compatibility remains pending unless explicit official evidence is present; malformed/extra response data cannot be interpreted as verified.
+- [ ] **GREEN — migrate public registry shape.** Add stable IDs/status fields to entries that can be proven from existing official fields; mark incomplete/old entries `stale` or `candidate` instead of fabricating data. The builder may still list non-Skill resources, but never confirm an incomplete Skill.
+- [ ] **GREEN — candidate kind.** `fallbackEntry()` returns neutral `kind` plus optional `candidateKind`; filters and labels come from profile metadata. Accepted curated kind remains authoritative only after resource validation.
+- [ ] **REFACTOR/VERIFY.** Assert public data contains no confirmed Skill without exactly one verified resource and two required safe actions. Run privacy scan.
+- [ ] **COMMIT.** `fix: require verified resources for public skills`.
+
+### Task 8: Show every safe action and a loopback-only pending evidence overlay
+
+**Dependencies:** Tasks 3 and 7 state/resource projections. **Risk:** High — the overlay is private and must not cross the public boundary. **Outcome:** local users see pending evidence safely, public users see only safe state, and all verified actions are accessible.
+
+**Files:**
+- Modify: `skills/xhs-favorites-organizer/scripts/bridge-server.py`
+- Modify: `site/local-bridge-utils.mjs`
+- Modify: `site/app.js`
+- Modify: `site/styles.css`
+- Modify: `site/index.html`
+- Modify: `skills/xhs-favorites-organizer/tests/test_bridge.py`
+- Modify: `skills/xhs-favorites-organizer/tests/test_public_site.mjs`
+- Modify: `site/e2e/organization-recovery.spec.mjs`
+
+**Covers:** Spec §5.8, §7 UX-05/06/07/08/09, BUG-06/13, AC-03/06/10.
+
+- [ ] **RED — local overlay boundary.** Test authenticated manager-origin `GET /notes/organization-status?note_id=...` returns only note state, captured point summary, evidence method labels and blockers. Unauthorized/public origin, invalid ID or oversized record returns no evidence. Raw comments/OCR/media paths never appear.
+- [ ] **RED — all actions.** Mount detail with one verified resource containing repo, ZIP and documentation actions. Assert all safe actions render in deterministic order, unsafe URLs are omitted, each link is keyboard-focusable and has an accessible label.
+- [ ] **RED — public/private separation.** Playwright opens the same pending note from public origin and local workbench. Public shows safe fallback + exact pending reason only; local shows a clearly labeled “待审核证据” section. Accepted point shows source, reviewed date and evidence label.
+- [ ] **Run RED.** Run `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_bridge.py"`, `npm.cmd run test:site`, and `npm.cmd run test:e2e`; current `.find()` and absent overlay must fail.
+- [ ] **GREEN — endpoint.** Implement `local_note_overlay(note_id)` and the authenticated loopback route. Build response from current note state and validated private point record; sanitize all diagnostics and cap all strings/counts.
+- [ ] **GREEN — frontend state arc.** Add `state.noteOverlays`, `refreshNoteOverlay(noteId)` and overlay rendering in `openNote()`/`renderDetail()`. Use `aria-live` for loading/result and keep accepted formal summary visually separate.
+- [ ] **GREEN — action renderer.** Replace `.find()` with a shared `safeResourceActions(resource)` mapping used by resource cards and detail. Render every action after URL validation with `target=_blank` and `rel=noreferrer`.
+- [ ] **REFACTOR/VERIFY.** Run `npm.cmd run lint:a11y`, `npm.cmd run test:e2e`, and existing dialog scroll/focus tests through `npm.cmd run test:site`.
+- [ ] **COMMIT.** `fix: display complete resources and review status`.
+
+### Task 9: Unify formal private KB and public acceptance, including Skill outcomes
+
+**Dependencies:** Tasks 2, 4, 5, 7 and 8 shared contracts/dual-output transaction. **Risk:** High — two builders must not diverge inside the already journaled swap. **Outcome:** both formal outputs use one trust decision and accepted Skills receive complete outcome artifacts.
+
+**Files:**
+- Modify: `skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/build-public-site.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/curation-quality.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/resource-quality.mjs`
+- Modify: `skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs`
+- Modify: `skills/xhs-favorites-organizer/tests/test_public_site.mjs`
+- Modify: `skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`
+
+**Covers:** Spec §5.8–§5.9, BUG-01/03/12/15, AC-01/02/04/05/11/13.
+
+- [ ] **RED — cross-builder parity.** Feed current accepted, pending point, stale point and metadata-only fixtures into both builders. Assert formal summary source/eligibility agree for every ID; pending raw point never appears in Markdown or public JSON.
+- [ ] **RED — Skill outcome.** For an accepted confirmed Skill, assert the KB card and `knowledge-base/05-Skills成果/GitHub-Skills核验清单.md` include official name/type/repo/ZIP/stars/date/license/manifest/compatibility/status. For candidate Skill, assert it appears only as pending/candidate and has no guessed link.
+- [ ] **RED — transactional build regression.** Reuse Task 4’s fault-injection coordinator while adding accepted/pending fixtures. Force the second builder and each swap boundary to fail; assert previous KB and public JSON bytes remain unchanged, `build.status=failed`, `build.artifact_status=held_previous`, and publisher is not called.
+- [ ] **Run RED.** `npm.cmd run test:knowledge` plus focused public/contract tests; current KB raw point behavior and missing Skill outcome file must fail.
+- [ ] **GREEN — one acceptance projection.** Extend `curation-quality.mjs` to return a structured `formalCurationDecision` with `accepted`, `reason_code`, `summary_source`, `content_sha256`, `resource_ids`. Both builders consume it; neither calls `loadDiandianSummary()` as an independent acceptance path.
+- [ ] **GREEN — KB formal output.** Raw point remains private outside formal KB. Generate the Skill outcome file from accepted confirmed Skills and add a “Skill 核验” block to corresponding cards. Preserve user-authored non-generated files through the existing staging/backup/live transaction.
+- [ ] **GREEN — public output.** Emit `summaryStatus`, `summaryReason`, `candidateKind`, `reviewedAt`, safe evidence labels, unique resource IDs and `buildVersion`; scan before atomic replace.
+- [ ] **REFACTOR/VERIFY.** Run both builders twice and compare semantic output; force failure and verify exact prior bytes. Run public sensitive-data scan.
+- [ ] **COMMIT.** `fix: unify trusted summaries across formal outputs`.
+
+### Task 10: Add dry-run-first migration and recoverable backfill
+
+**Dependencies:** Tasks 2, 3, 7 and 9 target schemas. **Risk:** High — legacy facts are incomplete and live data must not be guessed or lost. **Outcome:** synthetic migration proves conservation/rollback; real migration stays explicitly user-triggered.
+
+**Files:**
+- Create: `skills/xhs-favorites-organizer/scripts/migrate-organization-state.mjs`
+- Create: `skills/xhs-favorites-organizer/test-fixtures/organization-migration-v1.json`
+- Modify: `skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`
+- Modify: `skills/xhs-favorites-organizer/scripts/public-tree-policy.mjs`
+- Modify: `skills/xhs-favorites-organizer/references/curation-standard.md`
+
+**Covers:** Spec §5.10, §10 Step 9, §13.1, UX-12/14, AC-08/11/14.
+
+- [ ] **RED — migration conservation.** Use only the synthetic fixture: current accepted, valid legacy point, invalid point, old unresolved, false Skill candidate, duplicate stable ID. Assert dry-run writes no live files; report contains counts only; total input IDs equal migrated+unchanged+pending/rejected; duplicates do not increase.
+- [ ] **RED — rollback.** Force failure between staging and swap. Assert live private/public snapshots remain byte-identical and backup manifest contains no private values.
+- [ ] **Run RED.** Run `node --test skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs`; expected the migration contract tests fail because `migrate-organization-state.mjs` is absent.
+- [ ] **GREEN — dry-run default.** Implement `planMigration()` and CLI. Resolve stable IDs, calculate content hashes, bind valid records, map indeterminate historical failures to `unknown_legacy`, retain current accepted curation only if hashes match, and report incomplete resources as candidate/stale. Never infer an attempted failure from a batch-wide old reason.
+- [ ] **GREEN — guarded apply.** `--apply` additionally requires `--confirm <dry-run-id>` matching a fresh report. Create private backup and staging directories, validate counts/privacy/schema, atomically swap, and emit a safe rollback manifest. Do not fetch platform or GitHub during migration.
+- [ ] **GREEN — public policy.** Add migration report/backups to private-tree exclusions; tests prove none can enter `site/` or Git tracking.
+- [ ] **REFACTOR/VERIFY.** Run dry-run twice for identical count plan; run fault-injection rollback. Do not execute `--apply` against the user’s real `.xhs-favorites/` during this pipeline.
+- [ ] **COMMIT.** `feat: add recoverable organization state migration`.
+
+### Task 11: Documentation and pre-review verification
+
+**Dependencies:** Tasks 0–10 green. **Risk:** Medium — documentation can drift from the final code. **Outcome:** project docs and automated pre-review commands match the implementation, ready for the pipeline’s separate Review/QA/Audit/Brief agents.
+
+**Files:**
+- Modify: `skills/xhs-favorites-organizer/SKILL.md`
+- Modify: `skills/xhs-favorites-organizer/references/automatic-workflow.md`
+- Modify: `skills/xhs-favorites-organizer/references/curation-standard.md`
+- Modify: `skills/xhs-favorites-organizer/references/organization-schema.md`
+- Modify: `README.md`
+- Modify: `CONTRIBUTING.md`
+- Modify: `docs/ARCHITECTURE.md`
+- Modify: `docs/PUBLISHING.md`
+- Modify: `package.json`
+- Modify: `.github/workflows/ci.yml`
+- Modify: `skills/xhs-favorites-organizer/tests/test_curation_standard.mjs`
+- Modify: `skills/xhs-favorites-organizer/tests/test_public_site.mjs`
+
+**Covers:** Spec §3–§15 documentation plus the code-stage automated subset of `VC-AUTO-*`; downstream agents close Review/QA/Audit/Brief items after this task.
+
+- [ ] **RED — documentation contracts.** Add assertions that the project Skill and workflow reference name one final publish after curation; distinguish captured/pending/accepted; require candidate Skill vs confirmed Skill; document `failed` vs `batch_aborted`; and link the governance flow. This paired fixture is mandatory because the project Skill body changes.
+- [ ] **GREEN — update docs.** Remove the obsolete claim that formal KB directly displays any valid raw point and that publication can happen after each last board before summary planning. Document exact user-triggered entry, no-model core, local overlay, dry-run migration, reason codes, rollback, and human PR gate.
+- [ ] **VERIFY — static and unit.** Run `npm.cmd run check:syntax`, `node --test scripts/test-verify-development-lifecycle.mjs scripts/test-check-syntax.mjs`, `npm.cmd run lint:a11y`, `npm.cmd run release:check`, and `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_*.py"`. Expected: every command exits 0; syntax runner reports every tracked JS/MJS checked; focused and full suites retain the same behavioral assertions.
+- [ ] **VERIFY — browser.** Run `npm.cmd run test:e2e`. The test drives both configured Chromium projects through keyboard-only navigation, local overlay isolation, all resource actions, and success/partial/build-failed/publish-failed/safety-stopped arcs. Expected: exit 0 with no unexpected console error or failed request.
+- [ ] **VERIFY — Windows safety contracts.** Register `npm.cmd run test:windows-contracts` as the four explicit `powershell.exe -NoProfile -ExecutionPolicy Bypass -File` invocations for `test_setup_browser_profile.ps1`, `test_setup_transaction.ps1`, `test_setup_xhs_downloader.ps1`, and `test_start_autosync.ps1`, then run that command in the Windows CI job. It must exit 0; no test may start a second profile, read credentials or create a scheduled/startup task.
+- [ ] **VERIFY — fault and privacy.** Re-run build failure rollback, publish failure, safety stop, migration dry-run, tracked-private-path scanner and public tree scan. Expected exact prior snapshots retained and zero sensitive findings.
+- [ ] **COMMIT.** `docs: align organizer workflow with verified lifecycle` after paired tests are green.
+
+---
+
+## Post-implementation `/dev-pipeline` gates
+
+These are pipeline stages after all Task 0–11 CODE commits; they are not delegated back into Task 11 and cannot be claimed by the implementation agent.
+
+1. **Step 5 — REVIEW.** An isolated Review Agent reads the branch diff, governing Spec, Plan and checklist, writes the canonical `docs/reports/reviews/*-review.md`, fixes authorized findings, and reruns every impacted focused test. P0/P1 must be zero before QA.
+2. **Step 6 — QA.** An isolated QA Agent uses `npm.cmd run preview:qa-fixture` and the real rendered site to execute `VC-QA-01..15`, including both automated Entry → Action → Expected Result journeys and the two correctly tagged manual-only judgments. It writes `docs/reports/qa/*-qa-report.md`; it never accesses the real platform or private user data.
+3. **Step 7 — AUDIT.** An isolated coverage/audit Agent reconciles Spec §3–§15, BUG-01..16, UX-01..14, AC-01..15 and every stable checklist ID against tests, review and QA evidence; it writes `docs/reports/test-outcomes/*-test-outcome.md` and reruns the complete release/privacy gates. No P0/P1 or unassigned functional item may remain.
+4. **Step 8 — BRIEF.** An isolated Brief Agent writes `docs/reports/briefs/*-brief.md` with exact branch/base, commits, RED/GREEN evidence, commands/exit codes, rollback, remaining P2/P3, and the fact that real migration apply, PR, push, merge and deploy have not occurred. The pipeline stops for user validation.
+5. **Human/PR boundary.** Only after the user approves that brief may a PR be created. The PR lifecycle gate then resolves the linked canonical artifacts; real Ubuntu/Windows CI must pass before any later merge/deploy discussion.
+
+---
+
+## Test Plan Artifact
+
+| Test ID | Layer | Automated command / entry | Contract and expected result | Spec / checklist mapping |
+|---|---|---|---|---|
+| TP-001 | Governance unit | `node --test scripts/test-verify-development-lifecycle.mjs` | Missing APPROVED Spec/Plan/TDD/Review/QA/Brief/rollback fails with exact gate IDs; complete PR passes | §14, VC-GOV-01..08 |
+| TP-002 | Python state unit | `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_organization_pipeline.py"` | Full note/run transitions, legacy mapping, failed vs batch_aborted, truthful completion | §6, UX-02/04/10/11/12/14, AC-07/08/10 |
+| TP-003 | Point revision unit | `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_bridge.py"`; `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_organization_pipeline.py"`; `python -m unittest discover -s ".\skills\xhs-diandian-summarize-note\tests" -p "test_save_summary.py"` | Captured v2 record binds trusted current content/prompt hashes without changing external saver API 1; payload cannot forge them; commit failure preserves old bytes; content change becomes stale | §5.4, UX-03/14, AC-02/08 |
+| TP-004 | Curation contract | `node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs` | Audit placeholders precede candidates without false evidence claims; saved point reaches candidate/evidence/status-aware merge/build; missing facts/resources remain pending; no Agent or future verifier dependency | §5.5–§5.6, BUG-01/02/03/15, AC-01/02/15 |
+| TP-005 | Resource contract | `node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs` | Confirmed Skill has exactly one fresh verified resource with repo/ZIP/license/manifest/date/stars/compatibility; candidate has no guessed link | §5.7, UX-08/09, AC-04/05 |
+| TP-006 | Public builder | `npm.cmd run test:site` | Metadata cannot confirm Skill; exact summary status/reason; accepted point only; all resource actions present in data | UX-06/07/08/09, BUG-04/05/13/16 |
+| TP-007 | KB builder | `npm.cmd run test:knowledge` | Formal KB uses same acceptance decision as public; Skill result file complete; failure restores old tree | §5.8–§5.9, AC-02/04/05/11 |
+| TP-008 | Bridge integration | `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_bridge.py"`; `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_organization_pipeline.py"`; `node --test skills/xhs-favorites-organizer/tests/test_organization_snapshot.mjs` | Two-stage frozen scope, strict bounded subprocess envelopes, no pre-gate publish, one final publish, one dual-output swap owner/rollback, finalizer/publisher failure states, loopback overlay access controls | §5.1/5.2/5.9, UX-01/05/10/11/13, AC-03/09/10/11/12 |
+| TP-009 | Media fallback | `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_media_queue.py"`; `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_transcription_pipeline.py"`; `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_image_ocr.py"` | Safe failure uses cached offline evidence when available; safety signal prevents fallback/retry; unavailable tools yield `evidence_status=missing` plus an exact reason | §5.5, BUG-08, AC-08/12/15 |
+| TP-010 | Migration | `node --test skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs` | Synthetic migration fixture proves dry-run no writes, count conservation, unknown legacy, stale, guarded apply and fault rollback | §10 Step 9, §13.1, AC-14 |
+| TP-011 | Privacy | `npm.cmd run verify` | No private path tracked; public tree excludes overlay/evidence/migration/media/IDs/tokens | §3.3, §12, AC-13 |
+| TP-012 | Syntax/lint/a11y | `npm.cmd run check:syntax`; `npm.cmd run lint:a11y` | Every tracked JS/MJS parses; accessible names/live regions/links meet lint rules | UX-02..11, VC-UI-* |
+| TP-013 | Browser E2E | `npm.cmd run test:e2e` | Real rendered Entry → Action → Result for success, partial, failures, overlay boundary, repo+ZIP and keyboard on desktop/mobile | UX-01..14, AC-03/06/10 |
+| TP-014 | Full release | `npm.cmd run release:check` | Entire Node, both Python Skill suites and release/privacy contracts pass | §10 Step 10, §15 |
+| TP-015 | Manual local QA | Start `npm.cmd run preview:qa-fixture`; open only the printed local fixture URL | Desktop/mobile readable, focus order and exact recovery guidance are understandable; harness performs no real platform/network access | UX-01..14, VC-QA-* |
+| TP-016 | No-model process | `node --test skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs` with a synthetic fixture whose model/Agent configuration keys are absent | Core, candidate state, build and safe pending result complete without Codex/Claude/Gemini | §3.1/3.3/5.6, AC-15 |
+| TP-017 | Windows setup safety | `npm.cmd run test:windows-contracts` on the Windows CI job | SOP browser ownership, setup rollback, downloader setup and no-startup-task contracts stay green | §3.3/5.1, VC-SAFE-02/05, AC-12/13 |
+
+### RED/GREEN evidence rules
+
+- Every behavior task first runs its named focused test and records the exact requirement failure.
+- GREEN is accepted only when the same test passes without changing the requirement assertion.
+- REFACTOR reruns the focused suite plus adjacent safety/privacy tests.
+- State-transition tests start before the transition, trigger the action, then assert the final visible/persisted state.
+- `.todo()`, untagged manual-only, existence-only and implementation-output assertions do not count.
+- The only manual-only items in this plan are tagged `[manual-only: visual-polish]` or `[manual-only: subjective-ux]`; all functional UI behavior has Playwright coverage.
+
+---
+
+## Spec Coverage Matrix
+
+| Spec scope | Implementation owner | Verification owner | Status |
+|---|---|---|---|
+| §3 goals/non-goals/invariants | Tasks 0, 2–11 | TP-011/014/016; VC-SAFE/GOV | ASSIGNED |
+| §4 terms/trust hierarchy | Tasks 2, 5, 9 | TP-003/004/007 | ASSIGNED |
+| §5.1 startup/safety | Tasks 3, 4, 8 | TP-008/013 | ASSIGNED |
+| §5.2 frozen scope/scan | Tasks 3–5 | TP-002/004/008 | ASSIGNED |
+| §5.3 core transaction | Tasks 2, 4, 9 | TP-003/007/008 | ASSIGNED |
+| §5.4 summary plan/atomic save | Tasks 2–4 | TP-002/003/008 | ASSIGNED |
+| §5.5 fallback/evidence | Tasks 5–6 | TP-004/009 | ASSIGNED |
+| §5.6 candidate/audit | Task 5 | TP-004/016 | ASSIGNED |
+| §5.7 Skill/resource | Task 7 | TP-005/006 | ASSIGNED |
+| §5.8 outputs/overlay | Tasks 8–9 | TP-006/007/008/013 | ASSIGNED |
+| §5.9 final build/publish | Tasks 4, 9 | TP-007/008/013 | ASSIGNED |
+| §5.10 finish/retry | Tasks 3, 6, 10 | TP-002/009/010 | ASSIGNED |
+| §6 orthogonal states | Task 3 | TP-002/013 | ASSIGNED |
+| §7 UX-01..UX-14 | Tasks 3, 4, 6, 8, 9 | TP-002/006/008/009/013; VC-UX-01..14 | ASSIGNED |
+| §8 BUG-01..BUG-16 | Tasks 2–9 | BUG matrix below | ASSIGNED |
+| §8.1 protections to preserve | Tasks 2–11 | TP-007/008/009/011/014 | ASSIGNED |
+| §9 root causes | Tasks 4–5, 7, 9 | TP-004/005/007/008 | ASSIGNED |
+| §10 Step 0..10 | Tasks 0–11 | TP-001..017 | ASSIGNED |
+| §11 AC-01..AC-15 | Tasks 2–11 | AC matrix below | ASSIGNED |
+| §12 observability/log safety | Tasks 3, 5, 6, 8 | TP-002/008/009/011 | ASSIGNED |
+| §13 rollback/release | Tasks 4, 9, 10, 11 | TP-007/008/010/014 | ASSIGNED |
+| §14 permanent workflow | Tasks 0, 11 + Post-implementation Steps 5–8/Human gate | TP-001/014; VC-GOV | ASSIGNED |
+| §15 Definition of Done | Tasks 0–11 + Post-implementation Steps 5–8/Human gate | Full checklist | ASSIGNED |
+
+### Bug coverage
+
+| Bug | Fix task(s) | RED/GREEN proof |
+|---|---|---|
+| BUG-01 | 2, 5, 9 | TP-003/004/007 |
+| BUG-02 | 5 | TP-004 candidate producer |
+| BUG-03 | 4, 5, 9 | TP-004/007 dead argument removed |
+| BUG-04 | 7 | TP-005/006 no keyword confirmation |
+| BUG-05 | 7 | TP-005 explicit canonical resource verification |
+| BUG-06 | 8 | TP-013 all safe detail actions |
+| BUG-07 | 3, 6 | TP-002/009 failed vs batch_aborted |
+| BUG-08 | 6 | TP-009 safe fallback dispatcher |
+| BUG-09 | 4 | TP-008 zero-before/one-after ordering |
+| BUG-10 | 3, 4 | TP-002/008/013 build/finalizer truth |
+| BUG-11 | 3, 4 | TP-002/008/013 publish truth |
+| BUG-12 | 2, 9 | TP-003/007 cross-builder parity |
+| BUG-13 | 3, 8 | TP-006/013 reason-driven UI |
+| BUG-14 | 7 | TP-005 full/fresh resource schema |
+| BUG-15 | 1, 5, 9, 11 | TP-004/007/008/013/014 |
+| BUG-16 | 7 | TP-006 `candidateKind` contract |
+
+### UX coverage
+
+| UX | Task(s) | Checklist / test |
+|---|---|---|
+| UX-01 | 3, 4 | VC-UX-01; TP-008/013 |
+| UX-02 | 3, 4 | VC-UX-02; TP-002/013 |
+| UX-03 | 2, 3 | VC-UX-03; TP-003/008 |
+| UX-04 | 3, 6 | VC-UX-04; TP-002/009 |
+| UX-05 | 8 | VC-UX-05; TP-008/013 |
+| UX-06 | 3, 8, 9 | VC-UX-06; TP-006/013 |
+| UX-07 | 8, 9 | VC-UX-07; TP-006/013 |
+| UX-08 | 7, 8 | VC-UX-08; TP-005/013 |
+| UX-09 | 7, 8 | VC-UX-09; TP-005/013 |
+| UX-10 | 3, 4, 9 | VC-UX-10; TP-007/008/013 |
+| UX-11 | 3, 4 | VC-UX-11; TP-008/013 |
+| UX-12 | 2, 3, 6, 10 | VC-UX-12; TP-002/003/009/010 |
+| UX-13 | 3, 4, 6 | VC-UX-13; TP-008/009/013 |
+| UX-14 | 2, 3, 10 | VC-UX-14; TP-002/003/010 |
+
+### Acceptance coverage
+
+| AC | Task(s) | Proof |
+|---|---|---|
+| AC-01 | 5, 9 | TP-004/007 |
+| AC-02 | 2, 5, 9 | TP-003/004/007 |
+| AC-03 | 8 | TP-008/013 |
+| AC-04 | 7, 9 | TP-005/007 |
+| AC-05 | 7, 9 | TP-005/007 |
+| AC-06 | 8 | TP-013 |
+| AC-07 | 3, 6 | TP-002/009 |
+| AC-08 | 2, 3, 6, 10 | TP-002/003/009/010 |
+| AC-09 | 4 | TP-008 |
+| AC-10 | 3, 4, 8 | TP-002/008/013 |
+| AC-11 | 4, 9, 10 | TP-007/008/010 |
+| AC-12 | 3, 4, 6 | TP-008/009/013 |
+| AC-13 | 0, 8–11 | TP-001/011/014 |
+| AC-14 | 10 | TP-010 |
+| AC-15 | 5, 6, 11 | TP-004/009/016 |
+
+No Spec section, BUG, UX contract or AC is deferred or unassigned.
+
+---
+
+## Risks and mitigations
+
+- **Risk: Bridge 已超过 4,700 行，继续堆叠会扩大竞态。** Mitigation: 状态 reducer 抽到 `organization_state.py`，Node 数据逻辑保持独立模块；Bridge 只负责编排和 I/O。
+- **Risk: 资源自动核验误配相似仓库。** Mitigation: 只接受证据中明确 canonical `owner/repo` 或既有稳定 resource ID；不使用 GitHub 搜索、不按名称猜测。
+- **Risk: 新严格门使旧“Skill”数量下降。** Mitigation: 这是批准 Spec 的正确语义；保留 `candidateKind` 与资源待核验原因，不删除收藏，不伪造链接。
+- **Risk: Playwright 增加依赖和 CI 时间。** Mitigation: 只安装 Chromium，固定单 worker、fixture route、无真实平台访问；保留 Node mounted tests作快速反馈。
+- **Risk: OCR/转写工具不可用。** Mitigation: 显式配置、本地离线、一次调用；无工具时使用 `evidence_status=missing`、`curation_status=pending_review` 和精确 reason code，不通过联网或平台重试补偿。
+- **Risk: 多看板/点点线程重复最终化。** Mitigation: 持久 run-level claim + build version 幂等键；竞态测试覆盖 halt、duplicate ack、finalizer、publisher。
+- **Risk: 真实旧数据不可判定 attempted/aborted。** Mitigation: 一律 `unknown_legacy`，不猜；迁移默认 dry-run 且只输出安全计数。
+- **Risk: 文档与行为再次漂移。** Mitigation: 项目 Skill/参考文档的契约测试和 PR lifecycle gate同时检查。
+
+## NOT-in-scope
+
+- 修改、修补、复制或重写 `/dev-pipeline` Skill、dev-methodology 规则、hooks 或安装镜像。
+- 自动合并、推送、创建 PR、发布 Hugging Face 或执行真实数据迁移。
+- 绕过小红书或点点的验证码、频控、登录、安全页或访问限制。
+- 新建浏览器 profile、读取/复制 Cookie/Storage、持久化签名链接、使用主浏览器替代 SOP 浏览器。
+- 创建每日、开机、常驻后台整理任务。
+- 让 Codex/Claude/Gemini 成为一键整理、候选生成或构建必需依赖。
+- 猜测或搜索相似 GitHub 项目以填满链接；无法唯一确认就保持候选/待核验。
+- 在公开目录、日志、测试报告或对话中输出个人主页、收藏夹 ID、原始评论、OCR 全文、媒体或私有路径。
+- 改变收藏夹优先分类、只读采集、安全即停、公开最小化和旧快照可用等批准不变量。
+- 未经新的 Spec 审批扩展到其他采集平台、自动安装 Skill、自动执行下载内容或改变现有用户收藏。
+
+## Success criteria
+
+- [ ] 所有 BUG-01..BUG-16 有直接 RED/GREEN 回归证明，所有 P1 关闭。
+- [ ] 所有 UX-01..UX-14 在真实渲染入口有自动化覆盖，人工只复核视觉/主观体验。
+- [ ] 所有 AC-01..AC-15 对应测试、QA 或审计证据齐全。
+- [ ] 正式 KB 与公开站对 accepted/current/resource 判断完全一致。
+- [ ] 每个公开 confirmed Skill 恰有一个 verified resource，并同时显示 repo 和 ZIP。
+- [ ] 任一失败都显示真实阶段结果；旧快照和已成功核心/逐条结果保留。
+- [ ] 安全信号无重试、无回退绕过、无发布。
+- [ ] `npm.cmd run release:check`、Python discovery、ESLint、Playwright、隐私扫描全部通过。
+- [ ] review brief 交给用户验收，且尚未自动 PR、push、merge 或 deploy。
