@@ -4533,6 +4533,17 @@ class Bridge:
                     "method": "diandian_summary", "provider": point["provider"],
                     "version": point["prompt_version"], "result_sha256": point["summary_sha256"],
                 })
+            for filename, method_name in (("transcription.json", "audio_transcript"), ("visual-ocr.json", "local_image_ocr")):
+                evidence_path = self.state_dir / "video-analysis" / note_id / filename
+                try:
+                    local_evidence = json.loads(evidence_path.read_text(encoding="utf-8-sig"))
+                except (OSError, json.JSONDecodeError):
+                    continue
+                result_sha256 = local_evidence.get("result_sha256")
+                version = str(local_evidence.get("tool_version") or local_evidence.get("model") or "").strip()
+                provider = str(local_evidence.get("provider") or "configured-local-tool").strip()
+                if isinstance(result_sha256, str) and re.fullmatch(r"[a-f0-9]{64}", result_sha256) and version and provider:
+                    methods.append({"method": method_name, "provider": provider, "version": version, "result_sha256": result_sha256})
             evidence.append({
                 "note_id": note_id, "content_sha256": note.get("content_sha256"),
                 "public_text": public_text, "comments": [], "comments_checked": note.get("comment_evidence_checked") is True,

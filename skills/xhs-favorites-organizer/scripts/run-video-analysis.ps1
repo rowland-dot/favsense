@@ -65,6 +65,29 @@ $statusFile = Join-Path $workspacePath '.xhs-favorites\video-analysis-status.jso
     --status-file $statusFile
 if ($LASTEXITCODE -ne 0) { throw 'Audio-first transcription failed.' }
 
+$manualStatePath = Join-Path $workspacePath '.xhs-favorites\manual-sync.json'
+$ocr = $configObject.image_ocr
+if ($ocr -and $ocr.enabled -eq $true -and (Test-Path -LiteralPath $manualStatePath -PathType Leaf)) {
+    $manualState = Get-Content -Raw -Encoding UTF8 -LiteralPath $manualStatePath | ConvertFrom-Json
+    if ($manualState.state -notin @('safety-stopped', 'safety_stopped')) {
+        $ocrEngine = [System.IO.Path]::GetFullPath((Join-Path $workspacePath ([string]$ocr.engine)))
+        if (Test-Path -LiteralPath $ocrEngine -PathType Leaf) {
+            $ocrArguments = @(
+                (Join-Path $PSScriptRoot 'extract-pending-image-text.py'),
+                '--media-dir', $mediaDirectory,
+                '--analysis-dir', $analysisDirectory,
+                '--engine', $ocrEngine,
+                '--report', (Join-Path $workspacePath '.xhs-favorites\image-ocr-status.json')
+            )
+            foreach ($noteId in @($manualState.frozen_scope.note_ids)) {
+                if ([string]$noteId -match '^[a-f0-9]{24}$') { $ocrArguments += @('--note-id', [string]$noteId) }
+            }
+            & $python @ocrArguments
+            if ($LASTEXITCODE -ne 0) { throw 'Local image OCR failed.' }
+        }
+    }
+}
+
 if ($PrepareVisualEvidence) {
     & $python (Join-Path $PSScriptRoot 'extract-pending-frames.py') `
         --media-dir $mediaDirectory `
