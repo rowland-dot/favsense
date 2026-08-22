@@ -511,6 +511,28 @@ def parse_snapshot_build_result(source: str) -> dict:
     return value
 
 
+def parse_curation_pipeline_result(source: str) -> dict:
+    if not isinstance(source, str) or len(source.encode("utf-8")) > 16 * 1024:
+        raise ValueError("curation result is unavailable")
+    try:
+        value = json.loads(source)
+    except json.JSONDecodeError as error:
+        raise ValueError("curation result is not valid JSON") from error
+    if not isinstance(value, dict) or set(value) != {"schema_version", "ok", "outcome", "counts"}:
+        raise ValueError("curation result contract is invalid")
+    counts = value.get("counts")
+    if (
+        value.get("schema_version") != 1
+        or value.get("ok") is not True
+        or value.get("outcome") != "ready_for_safe_build"
+        or not isinstance(counts, dict)
+        or set(counts) != {"accepted", "pending", "rejected", "resource_pending"}
+        or any(not isinstance(item, int) or isinstance(item, bool) or item < 0 or item > 10_000_000 for item in counts.values())
+    ):
+        raise ValueError("curation result contract is invalid")
+    return value
+
+
 def safe_diandian_fallback_reason(value: str) -> str:
     normalized = normalize_sensitive_scan(value).strip()
     if not normalized:
@@ -1889,6 +1911,7 @@ class Bridge:
         self.builder = self.skill_dir / "scripts" / "build-knowledge-base.mjs"
         self.public_builder = self.skill_dir / "scripts" / "build-public-site.mjs"
         self.snapshot_builder = self.skill_dir / "scripts" / "build-organization-snapshot.mjs"
+        self.curation_pipeline = self.skill_dir / "scripts" / "run-curation-pipeline.mjs"
         self.publisher = self.skill_dir / "scripts" / "publish-huggingface.mjs"
         self.publish_config = normalize_publish_config(config)
         self.curation = resolve_workspace_path(self.workspace, str(config.get("curation_file", "skills/xhs-favorites-organizer/references/skills-board-curation.json")), "curation_file")
@@ -1963,6 +1986,7 @@ class Bridge:
             self.builder,
             self.public_builder,
             self.snapshot_builder,
+            self.curation_pipeline,
             self.curation,
             self.profile,
             self.userscript_template,
@@ -3031,6 +3055,7 @@ class Bridge:
                     if result.get("next_board_id"):
                         self.complete_manual_after_diandian(run_id, board_id, result, None, "")
                         return
+                    result["curation"] = self.run_curation_pipeline()
                     snapshot = self.build_organization_snapshot()
                     result["build_version"] = snapshot["build_version"]
                 else:
@@ -4482,6 +4507,55 @@ class Bridge:
         if completed.returncode != 0:
             raise RuntimeError(f"organization snapshot failed: {sanitize_error(completed.stderr)}")
         return parse_snapshot_build_result(completed.stdout)
+
+    def run_curation_pipeline(self) -> dict:
+        manual = self.read_manual_sync()
+        frozen_scope = manual.get("frozen_scope") if isinstance(manual.get("frozen_scope"), dict) else {}
+        note_ids = frozen_scope.get("note_ids") if isinstance(frozen_scope.get("note_ids"), list) else []
+        catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
+        notes = catalog.get("notes") if isinstance(catalog.get("notes"), dict) else {}
+        scoped = []
+        evidence = []
+        for note_id in sorted(set(note_ids)):
+            note = notes.get(note_id)
+            if not isinstance(note, dict) or not NOTE_ID.fullmatch(note_id):
+                raise ValueError("sealed curation scope is unavailable")
+            scoped.append({"id": note_id, **note})
+            methods = []
+            public_text = str(note.get("description") or "").strip()
+            methods.append({
+                "method": "public_text", "provider": "favsense", "version": "1",
+                "result_sha256": hashlib.sha256(public_text.encode("utf-8")).hexdigest(),
+            })
+            point = self.saved_diandian_record(note_id)
+            if point is not None:
+                methods.append({
+                    "method": "diandian_summary", "provider": point["provider"],
+                    "version": point["prompt_version"], "result_sha256": point["summary_sha256"],
+                })
+            evidence.append({
+                "note_id": note_id, "content_sha256": note.get("content_sha256"),
+                "public_text": public_text, "comments": [], "comments_checked": note.get("comment_evidence_checked") is True,
+                "methods": methods,
+            })
+        transaction_root = self.state_dir / "organization-transactions"
+        transaction_root.mkdir(parents=True, exist_ok=True)
+        if path_is_reparse_point(transaction_root):
+            raise ValueError("curation transaction root is unsafe")
+        batch = str(manual.get("batch") or "manual")
+        input_path = transaction_root / f"{batch}-curation-input.json"
+        output_path = transaction_root / f"{batch}-curation-bundle.json"
+        atomic_json(input_path, {
+            "catalog": scoped, "scope": {"note_ids": sorted(set(note_ids))},
+            "profile": json.loads(self.profile.read_text(encoding="utf-8-sig")), "evidence": evidence,
+        })
+        completed = run_bounded_subprocess(
+            ["node", str(self.curation_pipeline), "--input", str(input_path), "--output", str(output_path)],
+            cwd=self.workspace, timeout=120, stdout_limit=16 * 1024, stderr_limit=16 * 1024,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(f"curation pipeline failed: {sanitize_error(completed.stderr)}")
+        return parse_curation_pipeline_result(completed.stdout)
 
     def process_import(self, run_id: str, board_id: str, unique: dict[str, str]) -> None:
         started_at = datetime.now().astimezone().isoformat()

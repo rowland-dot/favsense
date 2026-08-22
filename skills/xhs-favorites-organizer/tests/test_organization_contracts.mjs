@@ -58,6 +58,20 @@ test("normalized evidence binds exact dependencies and final candidate sealing",
   assert.equal(sealed.evidence_sha256, packet.evidence_sha256);
 });
 
+test("curation pipeline seals evidence and resource state before review", async () => {
+  const { runCurationPipeline } = await import("../scripts/run-curation-pipeline.mjs");
+  const events = [];
+  const result = await runCurationPipeline({
+    catalog: [{ id: "note-a", title: "Synthetic Skill", description: "safe facts", content_sha256: hex("a") }],
+    scope: { note_ids: ["note-a"] }, profile: { classification: { default: "Other" } },
+    evidence: [{ note_id: "note-a", content_sha256: hex("a"), public_text: "safe facts", comments: [], comments_checked: true, methods: [{ method: "public_text", provider: "favsense", version: "1", result_sha256: hex("b") }] }],
+  }, { onStage: (stage) => events.push(stage) });
+  assert.deepEqual(events, ["scope", "audit_placeholders", "candidate_seed", "evidence", "resource_assessment", "candidate_seal", "review", "merge", "validate"]);
+  assert.equal(result.outcome, "ready_for_safe_build");
+  assert.equal(result.counts.pending, 1);
+  assert.match(result.candidates[0].candidate_revision, /^[a-f0-9]{64}$/);
+});
+
 test("confirmed Skill requires exactly one complete fresh verified resource", async () => {
   const { validateVerifiedResource, confirmedSkillResource } = await import("../scripts/resource-quality.mjs");
   const resource = {
