@@ -1,7 +1,9 @@
 # FavSense 收藏整理端到端闭环验证清单
 
-> 状态：由 APPROVED Spec 派生，供 `/dev-pipeline` TDD、Review、QA、Audit 和 review brief 共同引用。  
-> Governing Spec：`docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`  
+> 状态：由 APPROVED Spec 派生，供 `/dev-pipeline` TDD、Review、QA、Audit 和 review brief 共同引用。
+>
+> Governing Spec：`docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`
+>
 > Implementation Plan：`docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md`
 
 ## 使用规则
@@ -42,16 +44,16 @@
 
 - [ ] **VC-CORE-01 — Atomic catalog update**：详情/匿名评论写入 staging 后原子交换；异常恢复原 catalog 字节。`AC-11`, `TP-008`。
 - [ ] **VC-CORE-02 — Existing success preserved**：后续详情或构建失败不删除已成功核心记录、已保存点点或先前 accepted curation。
-- [ ] **VC-CORE-03 — Content hash determinism**：相同规范化正文/匿名评论产生同一 `content_sha256`；时间、计数、来源 ID 或 URL 变化不改变；可信正文变化会改变。
+- [ ] **VC-CORE-03 — Revision-boundary determinism**：相同规范化正文事实产生同一 `content_sha256`；匿名评论、评论检查状态和证据方法不进入该哈希，时间、计数、来源 ID 或 URL 变化也不改变；可信正文变化会改变。规范化评论和实际方法结果连同当前正文哈希产生独立 `evidence_sha256`，等价排列稳定；每个方法依赖精确绑定 `{method, provider, version, result_sha256}`，评论/方法/版本/结果变化只改变证据与审核状态，不改变正文哈希。
 - [ ] **VC-CORE-04 — No private hash input in public**：content hash 可以公开作为版本标识时只输出 hash，不输出其原始私有输入；默认公共 JSON 不暴露私有 ID/评论。
 - [ ] **VC-CORE-05 — Anonymous comment contract**：核心记录最多保存 30 条匿名评论，去除昵称/账号并标注“未经核实的补充线索”；原始评论文本不得进入 public JSON。
 - [ ] **VC-UX-02 — Core completion copy**：Entry 运行面板；Action 核心事务完成但总结/审核未结束；Expected 显示“核心收藏已保存”，不声称总结、知识库、网页或发布全部完成。`UX-02`, `TP-002/013`。
 
 ## D. 点点计划、逐条保存和恢复
 
-- [ ] **VC-SUM-01 — Current record skip**：正文哈希、provider、prompt version 和记录格式均匹配时计划跳过该条。`AC-08`, `TP-003`。
-- [ ] **VC-SUM-02 — Stale record reschedule**：正文哈希变化或旧记录无可证明哈希时进入 `stale` 并重新纳入计划；旧文件保留为历史证据。`UX-14`, `TP-003`。
-- [ ] **VC-SUM-03 — Atomic single-note save**：外部 saver API 1 只写私有 transaction-shaped staging；Bridge 从 current catalog 和已验证 Skill 合同派生 `content_sha256`/`prompt_version`，组装完整 v2 后才单次原子替换 live 并改为 `captured`。Payload 不能提供这两字段；任一失败保留旧 live 字节。
+- [ ] **VC-SUM-01 — Current record skip**：正文哈希、provider、prompt version、清理后 reply 的 `summary_sha256` 和记录格式均匹配时计划跳过该条；`request_sha256` 只用于保存请求幂等，不替代总结结果哈希。`AC-08`, `TP-003`。
+- [ ] **VC-SUM-02 — Stale record reschedule**：正文专用哈希、provider、prompt version 或总结结果变化，或旧记录无可证明正文/总结哈希时进入 `stale` 并重新纳入点点计划；仅评论或其他非点点方法证据变化不得重抓点点，只使 curation stale 并重审；旧文件保留为历史证据。`UX-14`, `TP-003/004`。
+- [ ] **VC-SUM-03 — Atomic single-note save**：外部 saver API 1 只写私有 transaction-shaped staging；Bridge 从 current catalog 和已验证 Skill 合同派生 `content_sha256`/provider/`prompt_version`，从清理后实际持久化 reply 计算 `summary_sha256`，组装完整 v2 后才单次原子替换 live 并改为 `captured`。Payload 不能提供这些 revision 字段；任一失败保留旧 live 字节。
 - [ ] **VC-UX-03 — Immediate captured visibility**：Entry 总结进度；Action 一篇成功；Expected 该篇立即显示 `captured`，后续条目失败不回滚。`UX-03`, `TP-003/008`。
 - [ ] **VC-UX-04 — Failed vs batch_aborted**：Entry 三条计划；Action 第二条 transport failure；Expected 第二条 `failed`，第三条 `batch_aborted`，二者 reason/status 可区分。`UX-04`, `AC-07`, `TP-002/009`。
 - [ ] **VC-SUM-04 — One link/one prompt**：每篇临时签名链接只提交一次，固定提示词只发送一次，只读取本轮新完成助手消息。
@@ -60,7 +62,7 @@
 
 ## E. 安全回退与证据归一化
 
-- [ ] **VC-EVD-01 — Public text/comments evidence**：实际存在的公开文字和匿名评论检查状态进入 evidence packet；未检查不能写成 checked。
+- [ ] **VC-EVD-01 — Public text/comments evidence**：实际存在的公开文字和匿名评论检查状态进入 evidence packet；未检查不能写成 checked；packet 同时绑定当前 `content_sha256`、由规范化评论/实际方法结果计算的 `evidence_sha256`，以及每种实际方法的精确 `{method, provider, version, result_sha256}` 依赖；缺 key、多余 key 或版本/结果不匹配均 fail closed。
 - [ ] **VC-EVD-02 — Cached video audio first**：只有已缓存、已启用且无安全信号的视频才调用本地转写；先音频、按缺失事实决定视觉升级。
 - [ ] **VC-EVD-03 — Image OCR producer**：只有已缓存图片和显式配置的本地 OCR 引擎才生成私有 `image-ocr.json`；无工具时 `evidence_status=missing`、`curation_status=pending_review`、`reason_code=ocr_unavailable|evidence_missing`。
 - [ ] **VC-EVD-04 — No automatic dense frames**：未列出 missing facts 不抽帧；稀疏证据已补齐即停止；密集帧仅限短相关窗口。
@@ -74,22 +76,22 @@
 - [ ] **VC-CUR-02 — Deterministic repeat**：同输入重复运行候选/证据/审核编排，除允许时间字段外语义相同，ID 和数量不增加。
 - [ ] **VC-CUR-03 — No-Agent core**：删除/禁用所有模型和 Agent 配置后，scope、candidate、pending audit、build 和安全状态仍可完成。`AC-15`, `TP-016`。
 - [ ] **VC-CUR-04 — Pending is not accepted**：缺评论、正文、实体、资源、hash、claims 或 unresolved facts 任一项时不进入正式 curation/KB/public。
-- [ ] **VC-CUR-05 — Accepted current hash**：只有 accepted audit、当前 curation revision、当前 content hash、点点 hash（若使用）全部匹配才正式采用。`AC-02`。
-- [ ] **VC-CUR-06 — Existing accepted preservation**：正文/curation/点点 hash 未变化的 existing accepted 保留；任一变化只使其 stale，不删除历史。
-- [ ] **VC-CUR-07 — Ordered atomic pipeline state**：严格执行 scope → initialize hash-bound audit placeholders → candidate → attach normalized evidence → closed resource assessment → optional review → status-aware merge → validate。初始化不预先声称证据/评论已检查；merge 前必须形成与 sealed scope 精确一对一的 review set：当前 accepted 仅作原样 passthrough，可选复核只覆盖其余精确 ID，缺少复核时只生成 pending，任何重复/遗漏/越界都失败。pending/rejected 可保留有界私有 skeleton 但不能进入 formal curation；accepted 仍强制完整契约。全部 staging 验证后整体切换；中途失败保留 live，并只在私有 quarantine 保留失败事务和安全 manifest。
+- [ ] **VC-CUR-05 — Accepted current hash**：只有 accepted audit、当前 curation revision、当前 content/evidence hash、证据方法依赖和最终 sealed `candidate_revision` 全部匹配才正式采用；使用点点时还必须匹配 provider/prompt/`summary_sha256`，声明资源时还必须匹配稳定 ID/`resource_identity_sha256`，不适用的依赖不得伪造。`AC-02`。
+- [ ] **VC-CUR-06 — Existing accepted preservation**：正文、evidence、最终 candidate、curation 和所有适用依赖匹配的 existing accepted 才保留；正文或点点 provider/prompt/结果变化使点点与审核 stale，其他证据变化只使审核 stale。资源 identity 变化使审核 stale；stars/date/default-branch 的同 identity snapshot 刷新可恢复原 accepted，但第 31 个 UTC 日历日起刷新成功前不能满足 confirmed Skill 门。所有情况都保留历史。
+- [ ] **VC-CUR-07 — Ordered crash-recoverable pipeline state**：严格执行 scope → initialize hash-bound audit placeholders → candidate seed → attach normalized evidence → closed resource assessment → seal final candidate revision → configured review（未配置时生成 pending）→ status-aware merge → validate。初始化不预先声称证据/评论已检查，accepted 不能从 placeholder 或 seed 恢复；merge 前必须形成与 sealed scope 精确一对一的 review set：当前 accepted 仅在 final seal 与全部适用依赖匹配后原样 passthrough；配置了 review adapter 时仅覆盖其余精确 ID，未配置时只生成 pending；任何重复/遗漏/越界都失败。pending/rejected 可保留有界私有 skeleton 但不能进入 formal curation；accepted 仍强制完整契约。全部 staging 验证后通过 participant-aware 持久 journal 同代切换 candidates、私有 resource assessments、formal resource registry、audit 和 curation，对每个 participant backup/swap 边界做 fault injection；进程崩溃后先恢复为完整旧代或新代才能构建，不暴露混合代。失败事务只在私有 quarantine 保留安全 manifest。
 - [ ] **VC-CUR-08 — Dead summary input removed**：Bridge 不再传入构建器未消费的 `--summaries`；正式来源有唯一可测试契约。`BUG-03`。
 - [ ] **VC-CUR-09 — Versioned subprocess result**：Bridge 只接受 curation/snapshot CLI 的单一、精确白名单 JSON envelope；非法 JSON、多余 key、超限输出、超时、非 0 exit、路径或私密值均 fail closed，且不调用下一阶段。`TP-004/008`。
 
 ## G. Skill 与 GitHub 资源
 
-- [ ] **VC-RES-01 — Candidate is not confirmed**：未 accepted 或资源不完整时 confirmed `kind` 使用领域安全默认，可能输出 `candidateKind=Skill`，但不能公开标记 Skill。`BUG-04/16`, `TP-005/006`。
+- [ ] **VC-RES-01 — Candidate is not confirmed**：未 accepted 或资源不完整时 confirmed `kind` 使用领域安全默认（无匹配时为 `Other`）；仅当确定性候选分类器返回 `Skill` 但公开 Skill 门未满足时才输出 `candidateKind=Skill`，否则省略该字段，且不能公开标记 Skill。`BUG-04/16`, `TP-005/006`。
 - [ ] **VC-RES-02 — Exactly one resource**：每个公开 confirmed Skill 恰好关联一个稳定 verified resource ID；0 或 >1 都不合格。`AC-04`。
 - [ ] **VC-RES-03 — Canonical repo**：resource 含唯一规范化 `owner/repo` 和匹配的官方 HTTPS repo；相似名称不能替代。
 - [ ] **VC-RES-04 — Safe download**：resource 含默认分支 ZIP 或核验 release 下载；URL 与 canonical repo 同 owner/repo，HTTPS 且通过安全 URL 过滤。
-- [ ] **VC-RES-05 — Complete metadata**：confirmed Skill resource 具有 license、Skill manifest path、verified date、stars snapshot 和 explicit compatibility。`AC-05`。
-- [ ] **VC-RES-06 — Freshness**：过期/变化资源进入 `stale` 并从 confirmed Skill 资格中移除，不能静默沿用。
+- [ ] **VC-RES-05 — Complete metadata**：confirmed Skill resource 具有 license、唯一 Skill manifest path、verified date、stars snapshot、explicit compatibility、官方 compatibility evidence locator、`resource_identity_sha256` 和 `verification_snapshot_sha256`；assessment 使用精确 key schema，缺失/多余 key 均 fail closed。`AC-05`。
+- [ ] **VC-RES-06 — Freshness**：`resource_index.verification_max_age_days=30`；严格解析真实 `YYYY-MM-DD` 并以注入 UTC 日期做 Gregorian 日历日运算，合法 `verified_at` 年龄 0..30 天（含第 30 天）为 fresh，第 31 天、非法日期或未来日期为 `stale`，并从 confirmed Skill 资格中移除；跨月/年/闰日和非 UTC 进程时区结果一致。验证器、双构建器和迁移共用同一函数/配置，不能静默沿用或另设默认值；同 identity refresh 只更新 snapshot revision，identity 变化必须重审。
 - [ ] **VC-RES-07 — No GitHub search guessing**：自动核验只请求证据中明确 canonical repo 的官方端点；不调用搜索、不尝试相似 owner/repo、不自动重试 403/429。
-- [ ] **VC-RES-08 — Registry migration honesty**：无法补齐的旧条目标记 candidate/stale；不伪造 license、manifest、stars 或 compatibility。
+- [ ] **VC-RES-08 — Registry migration honesty**：无法补齐的旧条目标记 candidate/stale；不伪造 license、manifest、stars、compatibility 或 revision。pending/stale assessment 只持久化在私有资源状态；完整 verified snapshot 才进入 formal registry，且与 candidates/audit/curation 同一事务代。
 - [ ] **VC-UX-08 — Public Skill resource access**：Entry 公开 Skill 卡；Action 打开详情；Expected 存在唯一 verified resource；无资源卡不显示为 Skill。`UX-08`, `TP-005/013`。
 - [ ] **VC-UX-09 — Repo and ZIP both visible**：Entry confirmed Skill 详情；Action 查看相关资源；Expected 官方仓库、ZIP 及其他安全动作全部显示，不只第一个。`UX-09`, `AC-06`, `TP-013`。
 
@@ -113,8 +115,8 @@
 ## I. 构建、发布与状态真实性
 
 - [ ] **VC-BLD-01 — No early formal build/publish**：最后一块 core 后在 summary/curation gate 未确定前，formal build/publish 计数均为 0。`AC-09`。
-- [ ] **VC-BLD-02 — One build version**：一次 run 的 KB/public/publish 使用同一 build version；重复回调不创建第二版。
-- [ ] **VC-BLD-03 — At most one publish**：最终 accepted snapshot 构建成功后可选 publish 最多 1 次；local-only run 为 0。`AC-09`。
+- [ ] **VC-BLD-02 — One build version**：在渲染前对 sealed scope、完整 curation generation、公开安全配置和双 builder schema version 的 canonical preimage 计算唯一 build version；preimage 排除生成字节、时间戳和嵌入的 `buildVersion`，避免自引用。一次 run 的 KB/public/publish 嵌入同一值；重复回调不创建第二版。
+- [ ] **VC-BLD-03 — At most one publish**：最终 accepted snapshot 构建成功后，仅当本轮配置显式启用发布且不是 `local_only` 时 publish 最多 1 次；否则为 0。`AC-09`。
 - [ ] **VC-BLD-04 — Build rollback**：构建任一阶段失败恢复同版本旧 KB/public snapshot，publish 不调用，状态 `build.status=failed`、`build.artifact_status=held_previous`、`reason_code=build_failed`。`AC-11`。
 - [ ] **VC-BLD-05 — Publish rollback**：publish 失败保留本地新 build 和远端旧版，状态 `publish.status=failed`、`publish.artifact_status=held_previous`、`reason_code=publish_failed`，不 force push。`AC-11`。
 - [ ] **VC-UX-10 — Build failure copy**：Entry 运行结果；Action final build fixture 失败；Expected 显示构建失败和旧快照保留，绝不显示“网页已经更新”。`UX-10`, `AC-10`, `TP-007/008/013`。
@@ -125,12 +127,12 @@
 
 ## J. 精确状态和迁移
 
-- [ ] **VC-STATE-01 — Allowed note enums**：六个 note status 维度只接受 Spec §6.1 枚举，未知值 fail closed。
+- [ ] **VC-STATE-01 — Allowed note enums**：六个 note status 维度只接受 Spec §6.1 枚举，包括 resource=`candidate`、public=`not_eligible`；不允许实现自创 `pending`/`metadata_only`/`blocked` 等替代状态，未知值 fail closed。
 - [ ] **VC-STATE-02 — Allowed run enums**：run overall state 只由 phase reducer 产生 Spec §6.2 枚举，调用者不能直接声明 full success。
-- [ ] **VC-STATE-03 — Safe reason codes**：状态 API 只输出批准 reason code、安全说明、计数、时间、schema/build version；错误字符串经过清理。
+- [ ] **VC-STATE-03 — Safe reason codes**：`site/organization-status-contract.json` 是 Python、Node、browser 共读的唯一版本化公开安全枚举/reason/copy 契约；任一层的手写副本、未知版本或读取失败都 fail closed。状态 API 只输出批准 reason code、安全说明、计数、时间、schema/build version；错误字符串经过清理。
 - [ ] **VC-STATE-04 — Legacy mapping**：旧 run `completed` 映射为允许的 `completed_with_warnings` 并附 `reason_code=unknown_legacy`；旧 point/批量 unresolved 映射为允许的 `stale`/安全聚合状态并附该 reason，不把 `unknown_legacy` 发明为状态，也不伪造 confirmed success 或逐条 attempted failure。
-- [ ] **VC-STATE-05 — Closed phase enums and reducer priority**：core/summary/evidence/curation/build/publish 只接受计划 `Phase-state v2` 枚举；安全停止优先，双输出事务失败为 failed，任何已报告非完整项保持 organization_partial，只有其余阶段完整而发布失败时才为 completed_with_warnings；调用者不能用自由文本覆盖 reducer。
-- [ ] **VC-UX-14 — Stale visible**：Entry 已审核笔记；Action fixture 修改正文；Expected 旧总结/审核显示 stale，formal output 回到上个合法状态或安全元数据。`UX-14`, `TP-002/003/010`。
+- [ ] **VC-STATE-05 — Closed phase enums and reducer priority**：core/summary/evidence/curation/build/publish 只接受计划 `Phase-state v2` 枚举；summary/evidence 的 run-phase `safety_stopped` 与 Spec §6.1 逐笔状态分层，当前笔记仍用允许的 failed/safety reason，剩余未尝试项为 batch_aborted。安全停止优先，双输出事务失败为 failed，任何已报告非完整项保持 organization_partial，只有其余阶段完整而发布失败时才为 completed_with_warnings；调用者不能用自由文本覆盖 reducer。
+- [ ] **VC-UX-14 — Stale visible**：Entry 已审核笔记；Action fixture 分别修改正文与只修改评论/方法证据；Expected 前者使旧总结/审核显示“正文已变化，等待重新审核”，后者保留 captured 总结但使审核显示“证据已变化，等待重新审核”；formal output 均回到上个合法状态或安全元数据。`UX-14`, `TP-002/003/004/010`。
 - [ ] **VC-MIG-01 — Dry-run default**：迁移不带 `--apply` 时不写 live/backup/public，只生成安全 count plan。
 - [ ] **VC-MIG-02 — Conservation**：输入稳定 ID 总数 = unchanged + migrated + pending/rejected；重复项不增加。`AC-14`。
 - [ ] **VC-MIG-03 — Guarded apply**：apply 需要匹配 fresh dry-run ID 的显式 confirm；不匹配拒绝且零写入。
@@ -146,8 +148,8 @@
 - [ ] **VC-AUTO-05 — Bridge/full Python**：`python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_*.py"` exit 0。
 - [ ] **VC-AUTO-06 — Point Skill Python**：release check 中另一套 `xhs-diandian-summarize-note` Python tests exit 0。
 - [ ] **VC-AUTO-07 — Syntax**：`npm.cmd run check:syntax` 对全部 Git 跟踪 `.js/.mjs` 执行当前 Node 语法检查并 exit 0；Python import/compile tests exit 0。`TP-012`。
-- [ ] **VC-AUTO-08 — ESLint/a11y**：`npm.cmd run lint:a11y` exit 0。`TP-012`。
-- [ ] **VC-AUTO-09 — Playwright**：`npm.cmd run test:e2e` 对 `chromium` 与 `mobile-chromium` 项目 exit 0，无意外 console/network errors。`TP-013`。
+- [ ] **VC-AUTO-08 — ESLint/a11y**：`npm.cmd run lint:a11y` 对作者编写的浏览器 JS exit 0；命令不得被声称为 imperative `innerHTML` 的行为证明，可访问功能仍由 mounted DOM/Playwright 断言关闭。`TP-012/013`。
+- [ ] **VC-AUTO-09 — Playwright**：`npm.cmd run test:e2e` 由单一 Playwright `webServer` 进程执行，每个用例先通过 fixture-only 封闭控制面重置并选择 success/partial/build-failed/publish-failed/safety-stopped，再对 `chromium` 与 `mobile-chromium` 项目运行真实 UI 动作；exit 0 且无意外 console/network errors。`TP-013`。
 - [ ] **VC-AUTO-10 — Release check**：`npm.cmd run release:check` exit 0。`TP-014`。
 - [ ] **VC-AUTO-11 — Explicit project Python command**：按 AGENTS.md 运行 `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_*.py"` exit 0。
 - [ ] **VC-AUTO-12 — Privacy/public tree**：`npm.cmd run verify` exit 0；staged diff 人工检查无私有路径/值。
@@ -167,7 +169,7 @@
 - [ ] **VC-QA-08 — Skill candidate**：打开关键词像 Skill 但未核验笔记；Expected candidate label/pending reason, not confirmed Skill, no guessed GitHub link。
 - [ ] **VC-QA-09 — Build failure**：final builder fault；Expected old local snapshots byte-preserved, no publish, truthful UI。
 - [ ] **VC-QA-10 — Publish failure**：publisher fault；Expected local build success, remote-held-previous, truthful UI。
-- [ ] **VC-QA-11 — Stale content**：accepted fixture正文变化；Expected stale/pending, old evidence retained, no formal misuse。
+- [ ] **VC-QA-11 — Stale revisions**：accepted fixture 分别发生正文变化与 evidence-only 变化；Expected 精确 stale/pending reason、旧证据保留、正文变化才重排点点、无 formal misuse。
 - [ ] **VC-QA-12 — Migration dry-run**：synthetic old state；Expected safe counts, conservation, no write; fault rollback verified。
 - [ ] **VC-QA-13 — Keyboard/accessibility**：keyboard-only run panel/detail/resource actions/close; Expected visible focus, accessible names, live announcements and restored focus。
 - [ ] **VC-QA-14 — Responsive readability** `[manual-only: visual-polish]`：desktop/mobile viewport；Expected status, overlay and multi-action layout have no overlap/truncation/hidden required action。Functional presence remains Playwright-automated。`TP-015`。

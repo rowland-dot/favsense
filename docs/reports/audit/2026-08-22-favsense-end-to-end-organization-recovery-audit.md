@@ -12,7 +12,7 @@ Skill: /writing-plans (audit mode)
 
 ### Pass 1
 
-**Issues fixed (8)**
+**Issues fixed (9)**
 - **Critical** — Lifecycle verifier required the APPROVED Spec and Plan to be changed in the same PR, contradicting the approved pre-PR Spec/Plan flow and encouraging meaningless artifact edits.
   → Changed the contract to resolve canonical repository-relative links, validate APPROVED status/slug/cross-reference, reject external/traversing links, and accept already committed approved artifacts.
   Completeness: 10/10  Confidence: 10/10
@@ -40,9 +40,61 @@ Skill: /writing-plans (audit mode)
 
 No auto-accept decisions.
 
+---
+
+## Step 3 — PLAN (reviewed plan audit)
+
+Artifact: docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md
+Skill: /autoplan (audit mode)
+
+### Pass 1
+
+**Issues fixed (10)**
+- **Critical** — The reviewed note-state example and state diagram introduced `resource=pending` and `public=metadata_only|blocked`, even though the approved Spec §6.1 and `VC-STATE-01` allow only `candidate` and `not_eligible|ready|published|held_previous`; the empty-scope row also assigned `not_required` to phases whose closed enums do not allow it.
+  → Replaced every invented note status with the exact approved enum, expanded the diagram to all six complete Spec dimensions, and made the empty-scope terminal tuple explicit as summary=`not_required`, evidence=`ready`, curation=`validated` with zero counts.
+  Completeness: 10/10  Confidence: 10/10
+- **Critical** — The reducer claimed any phase safety stop had highest priority, but only `core` allowed `safety_stopped`; a point or cached-media safety signal therefore could not be represented without violating the closed phase contract or corrupting the already-complete core phase.
+  → Added run-phase `safety_stopped` to summary/evidence only, kept per-note values inside Spec §6.1 (`failed` for the attempted item and `batch_aborted` for unattempted peers), and synchronized `VC-STATE-05`.
+  Completeness: 10/10  Confidence: 10/10
+- **Critical** — Task 5 promised an atomic candidates/audit/curation replacement and unchanged live files on failure, but only described sequential replaces; a process death after the first rename could expose a mixed generation to the snapshot builder.
+  → Added one concrete `journaled-transaction.mjs` extraction from the existing KB journal, durable participant boundaries, fsync/recovery requirements, curation boundary fault injection, and mandatory reuse by snapshot, curation, and migration.
+  Completeness: 10/10  Confidence: 10/10
+- **Medium** — The plan called for a single cross-language enum/reason/copy registry but named no artifact, leaving Python, Node and browser implementers to create three drifting constant tables.
+  → Added `site/organization-status-contract.json` as the single public-safe registry, assigned exact consumers/startup behavior, prohibited handwritten duplicates, and added unreadable/version-drift contract tests plus checklist enforcement.
+  Completeness: 10/10  Confidence: 10/10
+- **Medium** — One Playwright `webServer` process was simultaneously required to start with one fixed `--scenario` and prove five scenarios; no executable transition mechanism existed, so later tests would either spawn unmanaged servers or silently test one state.
+  → Kept Playwright as sole process owner and specified fixture-only reset/scenario endpoints with a closed enum, synthetic header, before-each ordering, and zero production-code exposure.
+  Completeness: 10/10  Confidence: 9/10
+- **Medium** — Task 0 required a cross-platform `test:organization` Node wrapper and Python 3.12 consistency, but neither wrapper nor existing Python selector/test appeared in the owned file list; the current selector still accepts Python 3.11.
+  → Added exact wrapper/test files, exact child command order and exit propagation, and explicit updates/tests that align the local selector with the reviewed Python 3.12 CI/docs baseline.
+  Completeness: 10/10  Confidence: 10/10
+- **Medium** — Task 7 required manifest and compatibility proof while saying only that an explicit `SKILL.md` would be verified; it did not define how a manifest is found, what happens with multiple matches, or which official source can substantiate compatibility.
+  → Defined exact/bounded GitHub metadata, contents and tree seams, one-unambiguous-manifest behavior, locally derived archive URLs, and compatibility evidence restricted to official manifest/README text or a current registry field with an official evidence locator.
+  Completeness: 10/10  Confidence: 9/10
+- **Medium** — The fallback task said it would run after a point transport failure but did not preserve the configured point Skill's stronger failure-page and stop-batch contract; an implementer could close the failed page or treat offline evidence as a resumed/successful point attempt.
+  → Made the ordering explicit: retain the failed point page, terminate the point browser batch, then run a separate cached/offline evidence phase that never closes/retries/resumes point or reports point success.
+  Completeness: 10/10  Confidence: 10/10
+- **Medium** — `lint:a11y` was described as proving accessible imperative DOM behavior even though the installed `jsx-a11y` rules cannot validate dynamically assembled `innerHTML`; this could let an evidence report overclaim coverage.
+  → Limited the lint claim to its real static scope and made mounted DOM plus Playwright the explicit owners for accessible names, live regions, focus, links, reflow and target behavior.
+  Completeness: 10/10  Confidence: 10/10
+- **Low** — Residual `may`/`可能`/`可选` wording in executable task clauses blurred mandatory conditions, explicit permissions and prohibitions; in particular, the `candidateKind="Skill"` emission rule remained discretionary.
+  → Replaced ambiguous occurrences with exact conditions or rules (`only when`, `when present`, `is permitted`, or `must not`), made `candidateKind="Skill"` conditional solely on the deterministic classifier returning Skill while the public gate is unmet, and re-scanned the reviewed plan/checklist for unresolved decision language.
+  Completeness: 10/10  Confidence: 10/10
+
+**Auto-accept decisions (3)**
+- The shared status contract needed one location consumable by both deployed static UI and local backends.
+  → Auto-accepted: `site/organization-status-contract.json` — it is public-safe, same-origin fetchable by the static browser, and workspace-resolvable by Python/Node without a generated duplicate.
+  Completeness: 10/10  Confidence: 9/10
+- Multi-scenario E2E needed to preserve the reviewed single-`webServer` ownership rule.
+  → Auto-accepted: fixture-only reset/scenario controls — one bounded synthetic process covers every state while production Bridge/app code remains untouched.
+  Completeness: 10/10  Confidence: 9/10
+- GitHub compatibility evidence could come from several official repository documents.
+  → Auto-accepted: accept only fetched official manifest/README evidence or a current registry field with an official evidence locator — missing or ambiguous proof stays pending instead of being guessed.
+  Completeness: 10/10  Confidence: 9/10
+
 ### Pass 2
 
-**Issues fixed (7)**
+**Issues fixed (9)**
 - **Critical** — Task 2 proposed adding revision metadata to the point saver without accounting for the external Skill's mechanically enforced API 1 signature. That plan would make Bridge reject the configured saver or require an unplanned cross-package release migration.
   → Kept external saver API 1 unchanged; specified a private transaction-shaped staging adapter in Bridge, trusted catalog/contract derivation of `content_sha256`/`prompt_version`, one final v2 atomic replace, legacy-v1 stale mapping, and byte-preservation tests for every pre-commit failure.
   Completeness: 10/10  Confidence: 10/10
@@ -53,7 +105,7 @@ No auto-accept decisions.
   → Split scope freezing into an immutable requested-board/config stage in Task 3 and an atomic all-board stable-note seal in Task 4; all downstream stages now consume only the sealed set, with mutation and unavailable-board tests.
   Completeness: 10/10  Confidence: 10/10
 - **Critical** — The approved order initializes audit before candidates/evidence, while the existing initializer requires a prepared review that itself requires candidates. The plan repeated the target order without defining the required redesign, so implementation would deadlock or silently reorder the Spec.
-  → Defined hash-bound audit placeholders that preserve only current accepted records and make no evidence claims; later evidence/resource results enter through a complete, status-aware review/merge set.
+  → Defined hash-bound pending audit placeholders that make no evidence/acceptance claims and carry prior accepted revision hashes only as revalidation inputs; later evidence/resource results and any accepted passthrough enter through a complete, status-aware review/merge set.
   Completeness: 10/10  Confidence: 10/10
 - **High** — Existing `mergeResults()` validates full candidate content before reading audit status, so honest pending skeletons from the no-Agent path could not be merged; absent optional review also had no exact one-item-per-scope behavior.
   → Added status-first validation, accepted-only strict/formal writes, bounded private pending/rejected skeletons, exact sealed-scope coverage, accepted passthrough, pending synthesis when optional review is absent, and duplicate/omission/out-of-scope rejection.
@@ -64,7 +116,47 @@ No auto-accept decisions.
 - **Medium** — The E2E fixture and dual-builder library seam were underspecified: a test could write a real `.local` descriptor/mock final DOM, and nested builder transactions could compete with the coordinator's journal; status copy also remained implementation-defined.
   → Required in-memory two-listener loopback QA with virtual bridge descriptor and network deny, real `localBridgeRequest()` transitions, staging-only builder exports with one swap owner, and an exact state/reason → visible-copy table.
   Completeness: 10/10  Confidence: 9/10
+- **High** — The plan put anonymous comments/check state into `content_sha256`, even though the approved Spec defines that hash as the current body revision used to decide whether point capture can be skipped. A new comment would therefore reschedule platform point automation, while accepted audit had no independent way to detect changed evidence.
+  → Split the contract into body-only `content_sha256` and normalized `evidence_sha256`; point v2 and resume consume only the former, while candidate/audit/formal acceptance bind both. Added exact evidence-only stale semantics, visible copy, migration behavior and tests proving comment/method changes require re-review without point recapture.
+  Completeness: 10/10  Confidence: 10/10
+- **Medium** — BUG-14 required an expiration policy, but “fresh/expired” had no duration, clock, timezone or boundary contract. Validation, builders and migration could independently choose incompatible answers for the same verified resource.
+  → Fixed `resource_index.verification_max_age_days=30`, UTC date-only comparison with an injected clock, inclusive day-30/exclusive day-31 behavior, invalid/future-date rejection, one shared function/config across all consumers and boundary tests.
+  Completeness: 10/10  Confidence: 10/10
 
-**Result: PASS** — full re-audit found no remaining Critical, High or Medium plan defect. Spec-testability precheck exits 0; all BUG-01..16, UX-01..14 and AC-01..15 remain assigned; the checklist has 176 unique definitions, zero duplicate definitions and zero undefined references; `git diff --check` is clean.
+**Result: ISSUES_FOUND** — the full Pass 2 re-audit found and repaired one High and one Medium contract defect beyond the seven earlier Pass 2 findings. A clean Pass 3 is required before PLAN can pass.
 
-No auto-accept decisions.
+**Auto-accept decisions (1)**
+- BUG-14 required a concrete verification age but the approved Spec intentionally left the duration to the implementation plan.
+  → Auto-accepted: 30 UTC calendar days, inclusive at day 30 and stale at day 31. The threshold is explicit profile policy rather than a hidden code default, so it remains reviewable and testable without weakening fail-closed behavior.
+  Completeness: 10/10  Confidence: 9/10
+
+### Pass 3
+
+**Issues fixed (4)**
+- **Critical** — The candidate skeleton received `candidate_revision` before normalized evidence and resource assessment were attached, so an existing accepted record could be restored against a pre-attachment candidate that was not the review-visible object the reviewer accepted.
+  → Split `candidate_seed_revision` from the final revision, prohibited accepted restoration from placeholders/seeds, ordered evidence attach and resource assessment before `sealCandidateRevision()`, and required accepted passthrough to compare the final sealed candidate plus all applicable dependencies.
+  Completeness: 10/10  Confidence: 10/10
+- **High** — Point evidence used `request_sha256`, which is transport/save idempotency rather than a hash of the cleaned persisted summary, and evidence dependencies omitted provider/prompt/tool versions. Provider or prompt changes could therefore preserve a stale accepted audit even when the generated result no longer met the reviewed method contract.
+  → Added cleaned-reply `summary_sha256`, kept `request_sha256` idempotency-only, defined the exact `{method, provider, version, result_sha256}` dependency tuple, made point provider/prompt changes stale both summary and audit, and kept comment/other-method changes limited to curation re-review.
+  Completeness: 10/10  Confidence: 10/10
+- **High** — The resource seam named only status/ID/reason while later verification required an unspecified complete snapshot; resource assessment and the formal registry were also outside the curation transaction. This permitted extra-key drift, non-durable verification, or candidates/audit/curation observing different resource generations.
+  → Closed the assessment schema, required a complete bounded resource or null, split stable semantic identity from verification snapshot currentness, persisted private assessments and formal verified resources with candidates/audit/curation in one participant-aware journal generation, and specified strict Gregorian UTC calendar-day tests across month/year/leap boundaries and non-UTC process zones.
+  Completeness: 10/10  Confidence: 10/10
+- **Medium** — `build_version` was described as a manifest/output hash while both outputs embed that same version, leaving a self-referential or implementation-dependent derivation.
+  → Defined one canonical pre-render preimage over sealed scope, complete curation generation, public-safe config and both builder schema versions; excluded generated bytes, timestamps and embedded version fields, then required both builders and publication to carry that fixed hash.
+  Completeness: 10/10  Confidence: 10/10
+
+**Result: ISSUES_FOUND** — Pass 3 found and repaired Critical 1, High 2 and Medium 1. Remaining after authorized document repair: Critical 0, High 0, Medium 0, Low 0. The audit-loop verdict remains `ISSUES_FOUND` because this pass discovered severity-bearing defects; the three-pass limit is exhausted and the orchestrator must record the required `AUDIT-INCOMPLETE` warning rather than treating this as a clean pass. Deferrals/TODOs created: 0. Spec/checklist items unassigned: 0.
+
+**Auto-accept decisions (3)**
+- Candidate skeleton idempotency and review identity required different lifecycle points.
+  → Auto-accepted: `candidate_seed_revision` is non-authoritative and only the post-evidence/resource sealed `candidate_revision` can restore accepted state.
+  Completeness: 10/10  Confidence: 10/10
+- Resource currentness changes more frequently than semantic identity, while day-31 eligibility must remain fail-closed.
+  → Auto-accepted: bind acceptance to `resource_identity_sha256` and track freshness/default-branch/stars/date in `verification_snapshot_sha256`; a same-identity refresh may preserve acceptance, but identity change requires review.
+  Completeness: 10/10  Confidence: 9/10
+- A deterministic output version cannot safely hash bytes that embed the version being derived.
+  → Auto-accepted: derive `build_version` from the closed canonical pre-render input manifest and require both outputs to embed the resulting fixed value.
+  Completeness: 10/10  Confidence: 10/10
+
+Final verdict: AUDIT-INCOMPLETE — Step 3 — PLAN (reviewed plan audit), 3-pass cap exhausted
