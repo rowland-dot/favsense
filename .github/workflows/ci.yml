@@ -32,6 +32,14 @@ jobs:
       - name: Install locked Node dependencies
         run: npm ci
 
+      - name: Install Chromium on Ubuntu
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Chromium on Windows
+        if: runner.os == 'Windows'
+        run: npx.cmd playwright install chromium
+
       - name: Check JavaScript syntax
         run: |
           node --check site/app.js
