@@ -7,6 +7,42 @@ function clean(value) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
+const REVISION_KEYS = ["content_sha256", "evidence_sha256", "candidate_revision", "curation_revision"];
+const HASH = /^[a-f0-9]{64}$/;
+
+function canonicalDependencies(value) {
+  if (!Array.isArray(value)) return null;
+  const normalized = value.map((dependency) => {
+    if (!dependency || typeof dependency !== "object" || Array.isArray(dependency)) return null;
+    if (Object.keys(dependency).sort().join(",") !== "method,provider,result_sha256,version") return null;
+    const result = Object.fromEntries(Object.entries(dependency).map(([key, item]) => [key, clean(item)]));
+    if (!result.method || !result.provider || !result.version || !HASH.test(result.result_sha256)) return null;
+    return result;
+  });
+  if (normalized.includes(null)) return null;
+  return normalized.sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+}
+
+export function acceptedRevisionsCurrent(auditEntry, current = {}) {
+  if (!auditEntry || auditEntry.status !== "accepted") return false;
+  if (!REVISION_KEYS.every((key) => HASH.test(clean(auditEntry[key])) && auditEntry[key] === current[key])) return false;
+  const auditedDependencies = canonicalDependencies(auditEntry.evidence_dependencies);
+  const currentDependencies = canonicalDependencies(current.evidence_dependencies);
+  if (!auditedDependencies || !currentDependencies || JSON.stringify(auditedDependencies) !== JSON.stringify(currentDependencies)) return false;
+  if (current.resource_required === true) {
+    return Boolean(
+      clean(auditEntry.resource_id) === clean(current.resource_id)
+      && clean(current.resource_id)
+      && HASH.test(clean(auditEntry.resource_identity_sha256))
+      && auditEntry.resource_identity_sha256 === current.resource_identity_sha256
+      && HASH.test(clean(auditEntry.verification_snapshot_sha256))
+      && auditEntry.verification_snapshot_sha256 === current.verification_snapshot_sha256
+      && current.resource_fresh === true
+    );
+  }
+  return true;
+}
+
 export function loadCurationAudit(workspace, config) {
   const policy = config.curation_quality || {};
   if (policy.publish_only_accepted !== true) {
@@ -38,6 +74,7 @@ export function loadCurationAudit(workspace, config) {
 
 export function hasCompleteAcceptedAudit(noteId, note, entry, audit, context = {}) {
   if (!entry || !context.config || !context.resources) return false;
+  if (context.currentRevisions && !acceptedRevisionsCurrent(audit?.notes?.[noteId], context.currentRevisions)) return false;
   const result = auditCuration({
     catalog: { notes: { [noteId]: note } },
     config: context.config,

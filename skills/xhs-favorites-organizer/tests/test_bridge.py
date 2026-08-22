@@ -52,6 +52,37 @@ def upgrade_test_diandian_skill_to_cdp(path: Path, transport_source: str) -> Non
     release_path.write_text(json.dumps(release), encoding="utf-8")
 
 
+def configure_point_v2(bridge, root: Path, note_ids) -> None:
+    bridge.diandian_release = {"version": "1.2.0"}
+    bridge.diandian_browser_contract = {"enabled": True, "version": 1}
+    if not isinstance(getattr(bridge, "catalog_path", None), Path):
+        bridge.catalog_path = root / ".xhs-favorites" / "catalog.json"
+    try:
+        catalog = json.loads(bridge.catalog_path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError):
+        catalog = {"notes": {}}
+    catalog.setdefault("notes", {})
+    for note_id in note_ids:
+        catalog["notes"].setdefault(note_id, {})["content_sha256"] = "a" * 64
+    BRIDGE.atomic_json(bridge.catalog_path, catalog)
+
+
+def write_point_v2_record(bridge, note_id: str, title: str, summary: str) -> None:
+    BRIDGE.atomic_json(bridge.diandian_dir / f"{note_id}.json", {
+        "version": 2,
+        "provider": "xiaohongshu-diandian",
+        "prompt": "总结",
+        "prompt_version": BRIDGE.diandian_prompt_version(bridge.diandian_release, bridge.diandian_browser_contract),
+        "note_id": note_id,
+        "title": title,
+        "summary": summary,
+        "content_sha256": "a" * 64,
+        "request_sha256": BRIDGE.diandian_result_digest(title, summary),
+        "summary_sha256": BRIDGE.hashlib.sha256(summary.strip().encode("utf-8")).hexdigest(),
+        "captured_at": "2026-08-23T00:00:00+00:00",
+    })
+
+
 class BridgeHelpersTest(unittest.TestCase):
     def test_permanent_userscript_endpoint_never_discloses_the_bridge_token(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -957,7 +988,7 @@ class BridgeHelpersTest(unittest.TestCase):
 
             self.assertFalse((scripts / "__pycache__").exists())
 
-    def test_diandian_plan_is_note_scoped_and_skips_saved_summaries(self):
+    def test_diandian_plan_is_note_scoped_and_reschedules_legacy_summaries(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             existing_id = "a" * 24
@@ -990,16 +1021,12 @@ class BridgeHelpersTest(unittest.TestCase):
             })
 
             self.assertTrue(plan["enabled"])
-            self.assertEqual(plan["note_ids"], [pending_id])
-            self.assertEqual(bridge.summary_plans[run_id], {pending_id})
-            with self.assertRaisesRegex(ValueError, "planned"):
-                bridge.save_diandian_result({
-                    "run_id": run_id,
-                    "board_id": "board",
-                    "note_id": existing_id,
-                    "title": "不应写入",
-                    "summary": "这不是本轮计划中的结果，因此不应覆盖已经存在的有效记录。",
-                })
+            self.assertEqual(plan["note_ids"], [existing_id, pending_id])
+            self.assertEqual(bridge.summary_plans[run_id], {existing_id, pending_id})
+            self.assertEqual(
+                json.loads((bridge.diandian_dir / f"{existing_id}.json").read_text(encoding="utf-8"))["version"],
+                1,
+            )
 
     def test_diandian_plan_reschedules_records_rejected_by_the_builders(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1390,6 +1417,7 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.summary_plans = {"manual_board": {note_id}}
             bridge.boards = {"board": "出海电商"}
             bridge.board_order = ["board"]
+            configure_point_v2(bridge, root, [note_id])
             bridge.diandian_save_record = lambda destination, title, summary_text, current_id: BRIDGE.atomic_json(destination, {
                 "version": 1,
                 "provider": "xiaohongshu-diandian",
@@ -1457,6 +1485,33 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertEqual(bridge.rebuild_knowledge_base.call_count, 1)
             self.assertEqual(bridge.publish_after_board.call_count, 1)
 
+    def test_saved_summary_requires_current_content_and_prompt_revisions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            note_id = "v" * 24
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.diandian_dir = root / "diandian-summaries"
+            bridge.diandian_dir.mkdir()
+            bridge.catalog_path = root / "catalog.json"
+            bridge.diandian_release = {"version": "1.2.0"}
+            bridge.diandian_browser_contract = {"enabled": True, "version": 1}
+            BRIDGE.atomic_json(bridge.catalog_path, {"notes": {note_id: {"content_sha256": "a" * 64}}})
+            summary = "这是一个只包含合成文字并用于验证修订绑定的点点总结。"
+            BRIDGE.atomic_json(bridge.diandian_dir / f"{note_id}.json", {
+                "version": 2,
+                "provider": "xiaohongshu-diandian",
+                "prompt": "总结",
+                "prompt_version": BRIDGE.diandian_prompt_version(bridge.diandian_release, bridge.diandian_browser_contract),
+                "note_id": note_id,
+                "title": "合成标题",
+                "summary": summary,
+                "content_sha256": "b" * 64,
+                "request_sha256": "c" * 64,
+                "summary_sha256": BRIDGE.hashlib.sha256(summary.encode("utf-8")).hexdigest(),
+                "captured_at": "2026-08-23T00:00:00+00:00",
+            })
+            self.assertIsNone(bridge.saved_diandian_record(note_id))
+
     def test_diandian_result_uses_private_keyed_store_without_urls(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -1467,6 +1522,7 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.summary_plans = {"manual_board": {note_id}}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
+            configure_point_v2(bridge, root, [note_id])
             bridge.diandian_save_record = lambda destination, title, summary_text, note_id: BRIDGE.atomic_json(destination, {
                 "version": 1,
                 "provider": "xiaohongshu-diandian",
@@ -1546,6 +1602,7 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.summary_plans = {"manual_board": {note_id}}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
+            configure_point_v2(bridge, root, [note_id])
             bridge.diandian_save_record = BRIDGE.load_diandian_save_record(
                 DIANDIAN_SKILL_SOURCE / "scripts" / "save_diandian_summary.py"
             )
@@ -1647,6 +1704,7 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.diandian_save_record = BRIDGE.load_diandian_save_record(
                 DIANDIAN_SKILL_SOURCE / "scripts" / "save_diandian_summary.py"
             )
+            configure_point_v2(bridge, root, [first_id, second_id])
             bridge.summary_plans = {run_id: {first_id, second_id}}
             bridge.summary_locks = {}
             bridge.summary_locks_guard = threading.Lock()
@@ -2566,6 +2624,7 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.diandian_save_record = BRIDGE.load_diandian_save_record(
                 DIANDIAN_SKILL_SOURCE / "scripts" / "save_diandian_summary.py"
             )
+            configure_point_v2(bridge, root, [note_id])
             bridge.summary_plans = {run_id: {note_id}}
             bridge.summary_locks = {}
             bridge.summary_locks_guard = threading.Lock()
@@ -3325,6 +3384,7 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.processing_lock = BRIDGE.threading.Lock()
             bridge.boards = {"board": "出海电商"}
             bridge.board_order = ["board"]
+            configure_point_v2(bridge, root, [first_id, second_id])
             batch = "manual"
             run_id = bridge.manual_run_id(batch, "board")
             bridge.diandian_save_record = lambda destination, title, summary_text, note_id: BRIDGE.atomic_json(destination, {
@@ -3865,14 +3925,8 @@ class BridgeHelpersTest(unittest.TestCase):
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
                 note_id: {"note_id": note_id, "source_board_ids": ["disabled", "eligible"]},
             }})
-            BRIDGE.atomic_json(bridge.diandian_dir / f"{note_id}.json", {
-                "version": 1,
-                "provider": "xiaohongshu-diandian",
-                "prompt": "总结",
-                "note_id": note_id,
-                "title": "Existing title",
-                "summary": "Existing valid summary that must not block a forced rerun.",
-            })
+            configure_point_v2(bridge, root, [note_id])
+            write_point_v2_record(bridge, note_id, "Existing title", "Existing valid summary that must not block a forced rerun.")
             self.assertIsNotNone(bridge.saved_diandian_record(note_id))
 
             with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
@@ -3924,14 +3978,8 @@ class BridgeHelpersTest(unittest.TestCase):
                 note_id: {"note_id": note_id, "source_board_ids": [board_id]},
                 other_id: {"note_id": other_id, "source_board_ids": [board_id]},
             }})
-            BRIDGE.atomic_json(bridge.diandian_dir / f"{note_id}.json", {
-                "version": 1,
-                "provider": "xiaohongshu-diandian",
-                "prompt": "总结",
-                "note_id": note_id,
-                "title": "Old title",
-                "summary": "Old valid summary before an explicit local rerun.",
-            })
+            configure_point_v2(bridge, root, [note_id, other_id])
+            write_point_v2_record(bridge, note_id, "Old title", "Old valid summary before an explicit local rerun.")
             self.assertIsNotNone(bridge.saved_diandian_record(note_id))
             self.assertEqual(bridge.single_note_run_target(note_id), (note_id, board_id))
             BRIDGE.atomic_json(bridge.manual_sync_path, {

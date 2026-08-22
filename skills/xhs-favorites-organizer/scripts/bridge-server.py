@@ -420,6 +420,34 @@ def contains_diandian_credential_shape(value: object) -> bool:
 
 
 def valid_diandian_record(value: object, note_id: str) -> bool:
+    if isinstance(value, dict) and value.get("version") == 2:
+        return bool(
+            set(value) == {
+                "version", "provider", "prompt", "prompt_version", "note_id", "title",
+                "summary", "content_sha256", "request_sha256", "summary_sha256", "captured_at",
+            }
+            and value.get("provider") == "xiaohongshu-diandian"
+            and value.get("prompt") == "总结"
+            and value.get("note_id") == note_id
+            and isinstance(value.get("title"), str)
+            and value["title"].strip()
+            and isinstance(value.get("summary"), str)
+            and value["summary"].strip()
+            and len(value["summary"]) <= 200_000
+            and isinstance(value.get("prompt_version"), str)
+            and re.fullmatch(r"[a-f0-9]{64}", value["prompt_version"])
+            and all(
+                isinstance(value.get(key), str)
+                and re.fullmatch(r"[a-f0-9]{64}", value[key])
+                for key in ("content_sha256", "request_sha256", "summary_sha256")
+            )
+            and isinstance(value.get("captured_at"), str)
+            and not contains_diandian_credential_shape(value)
+            and hmac.compare_digest(
+                value["summary_sha256"],
+                hashlib.sha256(value["summary"].strip().encode("utf-8")).hexdigest(),
+            )
+        )
     return bool(
         isinstance(value, dict)
         and isinstance(value.get("version"), (int, float))
@@ -435,6 +463,14 @@ def valid_diandian_record(value: object, note_id: str) -> bool:
         and len(value["summary"]) <= 200_000
         and not contains_diandian_credential_shape(value)
     )
+
+
+def diandian_prompt_version(release: dict, browser_contract: dict) -> str:
+    release_version = str(release.get("version", "")).strip()
+    if not release_version:
+        raise ValueError("DianDian release version is unavailable")
+    contract = json.dumps(browser_contract, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(f"{release_version}\0{contract}".encode("utf-8")).hexdigest()
 
 
 def diandian_result_digest(title: str, summary: str) -> str:
@@ -2641,15 +2677,79 @@ class Bridge:
             atomic_json(self.summary_report_path(), report)
 
     def saved_diandian_record(self, note_id: str) -> dict | None:
+        if not isinstance(note_id, str) or not NOTE_ID.fullmatch(note_id):
+            return None
         path = self.diandian_dir / f"{note_id}.json"
         try:
+            if path_is_reparse_point(self.diandian_dir) or path_is_reparse_point(path):
+                return None
             metadata = path.stat()
             if not path.is_file() or metadata.st_size > DIANDIAN_RECORD_MAX_BYTES:
                 return None
             value = json.loads(path.read_text(encoding="utf-8"))
-            return value if valid_diandian_record(value, note_id) else None
-        except (OSError, json.JSONDecodeError, RecursionError):
+            if not valid_diandian_record(value, note_id) or value.get("version") != 2:
+                return None
+            expected_content = self.trusted_content_sha256(note_id)
+            expected_prompt = diandian_prompt_version(self.diandian_release, self.diandian_browser_contract)
+            if not hmac.compare_digest(value["content_sha256"], expected_content):
+                return None
+            if not hmac.compare_digest(value["prompt_version"], expected_prompt):
+                return None
+            return value
+        except (OSError, ValueError, TypeError, json.JSONDecodeError, RecursionError):
             return None
+
+    def trusted_content_sha256(self, note_id: str) -> str:
+        catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
+        notes = catalog.get("notes") if isinstance(catalog, dict) else None
+        note = notes.get(note_id) if isinstance(notes, dict) else None
+        content_sha256 = note.get("content_sha256") if isinstance(note, dict) else None
+        if not isinstance(content_sha256, str) or re.fullmatch(r"[a-f0-9]{64}", content_sha256) is None:
+            raise ValueError("Current catalog content revision is unavailable")
+        return content_sha256
+
+    def persist_diandian_v2(self, note_id: str, title: str, summary: str) -> dict:
+        if not NOTE_ID.fullmatch(note_id):
+            raise ValueError("DianDian result note_id is invalid")
+        if self.diandian_save_record is None:
+            raise RuntimeError("DianDian summary saver is unavailable")
+        self.diandian_dir.mkdir(parents=True, exist_ok=True)
+        if path_is_reparse_point(self.diandian_dir):
+            raise ValueError("DianDian summary root is unsafe")
+        staging_parent = self.diandian_dir.parent / ".diandian-transactions"
+        staging_parent.mkdir(parents=True, exist_ok=True)
+        if path_is_reparse_point(staging_parent):
+            raise ValueError("DianDian transaction root is unsafe")
+        with tempfile.TemporaryDirectory(prefix="point-v2-", dir=staging_parent) as temporary:
+            staging_root = Path(temporary) / ".xhs-favorites" / "diandian-summaries"
+            staging_root.mkdir(parents=True)
+            destination = staging_root / f"{note_id}.json"
+            self.diandian_save_record(destination, title, summary, note_id)
+            try:
+                staged = json.loads(destination.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as error:
+                raise RuntimeError("DianDian summary saver did not persist expected record") from error
+            if not valid_diandian_record(staged, note_id) or staged.get("version") != 1:
+                raise RuntimeError("DianDian summary saver did not persist expected staging record")
+            cleaned_summary = staged["summary"].strip()
+            complete = {
+                "version": 2,
+                "provider": "xiaohongshu-diandian",
+                "prompt": "总结",
+                "prompt_version": diandian_prompt_version(self.diandian_release, self.diandian_browser_contract),
+                "note_id": note_id,
+                "title": staged["title"].strip(),
+                "summary": cleaned_summary,
+                "content_sha256": self.trusted_content_sha256(note_id),
+                "request_sha256": diandian_result_digest(title, summary),
+                "summary_sha256": hashlib.sha256(cleaned_summary.encode("utf-8")).hexdigest(),
+                "captured_at": datetime.now(timezone.utc).isoformat(),
+            }
+            if not valid_diandian_record(complete, note_id):
+                raise RuntimeError("DianDian v2 record validation failed")
+            destination = self.diandian_dir / f"{note_id}.json"
+            atomic_json(destination, complete)
+            return complete
 
     def update_diandian_progress(
         self,
@@ -3508,10 +3608,7 @@ class Bridge:
                         )
                         return {"saved": True, **completion}
                     raise ValueError("note_id was not planned for DianDian summarization")
-                if getattr(self, "diandian_save_record", None) is None:
-                    raise RuntimeError("DianDian summary saver is unavailable")
-                destination = self.diandian_dir / f"{note_id}.json"
-                self.diandian_save_record(destination, title, summary, note_id)
+                self.persist_diandian_v2(note_id, title, summary)
                 saved = self.saved_diandian_record(note_id)
                 expected_digest = diandian_result_digest(title, summary)
                 saved_digest = saved.get("request_sha256") if saved is not None else None

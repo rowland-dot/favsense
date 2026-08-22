@@ -47,6 +47,23 @@ class OrganizationPipelineTests(unittest.TestCase):
         statuses = {"a": "captured", "b": "failed", "c": "batch_aborted", "d": "stale", "e": "not_started"}
         self.assertEqual(state.resume_note_ids(statuses), ["b", "c", "d"])
 
+    def test_revision_changes_stale_only_the_dependent_dimensions(self):
+        state = load_state_module()
+        body_change = state.revision_transitions(
+            content_changed=True, evidence_changed=True, point_contract_changed=False
+        )
+        self.assertEqual(body_change, {"summary": ("stale", "content_changed"), "curation": ("stale", "content_changed"), "resource": ("stale", "content_changed")})
+        evidence_change = state.revision_transitions(
+            content_changed=False, evidence_changed=True, point_contract_changed=False
+        )
+        self.assertNotIn("summary", evidence_change)
+        self.assertEqual(evidence_change["curation"], ("stale", "evidence_changed"))
+        point_change = state.revision_transitions(
+            content_changed=False, evidence_changed=False, point_contract_changed=True
+        )
+        self.assertEqual(point_change["summary"], ("stale", "provider_changed"))
+        self.assertEqual(point_change["curation"], ("stale", "evidence_changed"))
+
 
 if __name__ == "__main__":
     unittest.main()

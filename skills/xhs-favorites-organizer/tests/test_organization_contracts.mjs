@@ -8,8 +8,8 @@ const hex = (character) => character.repeat(64);
 
 test("content revision changes only when body facts change", async () => {
   const { contentRevision } = await import("../scripts/content-revision.mjs");
-  const base = { title: "Ａ Skill", description: "line  one", tags: ["b", "a"], media_type: "note", comments: ["one"], board_ids: ["private"] };
-  assert.equal(contentRevision(base), contentRevision({ ...base, title: "A Skill", description: "line one", comments: ["changed"], board_ids: ["other"] }));
+  const base = { title: "Cafe\u0301 Skill", description: "line  one", tags: ["b", "a"], media_type: "note", comments: ["one"], board_ids: ["private"] };
+  assert.equal(contentRevision(base), contentRevision({ ...base, title: "Café Skill", description: "line one", comments: ["changed"], board_ids: ["other"] }));
   assert.notEqual(contentRevision(base), contentRevision({ ...base, description: "different body" }));
 });
 test("comment and method changes update evidence not content revision", async () => {
@@ -20,6 +20,20 @@ test("comment and method changes update evidence not content revision", async ()
   const permuted = evidenceRevision({ contentSha256: content, comments: ["clue", "clue"], commentsChecked: true, methods: [{ method: "public_text", provider: "favsense", version: "1", result_sha256: hex("a") }] });
   assert.equal(first, permuted);
   assert.notEqual(first, evidenceRevision({ contentSha256: content, comments: ["new clue"], commentsChecked: true, methods: [{ method: "public_text", provider: "favsense", version: "1", result_sha256: hex("a") }] }));
+});
+
+test("accepted restoration requires final current revisions and conditional dependencies", async () => {
+  const { acceptedRevisionsCurrent } = await import("../scripts/curation-quality.mjs");
+  const current = {
+    content_sha256: hex("a"), evidence_sha256: hex("b"), candidate_revision: hex("c"),
+    curation_revision: hex("d"), evidence_dependencies: [{ method: "public_text", provider: "favsense", version: "1", result_sha256: hex("e") }],
+  };
+  const audit = { status: "accepted", ...current };
+  assert.equal(acceptedRevisionsCurrent(audit, current), true);
+  assert.equal(acceptedRevisionsCurrent({ ...audit, candidate_revision: "" }, current), false);
+  assert.equal(acceptedRevisionsCurrent({ ...audit, evidence_sha256: hex("f") }, current), false);
+  assert.equal(acceptedRevisionsCurrent(audit, { ...current, resource_required: false }), true);
+  assert.equal(acceptedRevisionsCurrent(audit, { ...current, resource_required: true }), false);
 });
 
 test("candidate generation is deterministic and honest when evidence is missing", async () => {
