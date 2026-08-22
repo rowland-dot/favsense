@@ -8,8 +8,13 @@ permissions:
   contents: read
 
 jobs:
-  static-site:
-    runs-on: ubuntu-latest
+  release-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -17,7 +22,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Check JavaScript syntax
         run: |
@@ -26,14 +36,9 @@ jobs:
           node --check site/local-bridge-utils.mjs
           node --check scripts/serve-site.mjs
           node --check scripts/verify-release.mjs
+          node --check scripts/run-python-tests.mjs
           node --check skills/xhs-favorites-organizer/scripts/build-public-site.mjs
           node --check skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs
 
-      - name: Test public site and deterministic builders
-        run: npm test
-
-      - name: Test local bridge contracts
-        run: python3 skills/xhs-favorites-organizer/tests/test_bridge.py
-
-      - name: Verify open-source release boundary
-        run: npm run verify
+      - name: Run the complete release gate
+        run: npm run release:check

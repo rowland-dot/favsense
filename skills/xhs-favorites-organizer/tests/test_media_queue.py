@@ -1,5 +1,7 @@
 import importlib.util
+import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -61,10 +63,24 @@ class PendingMediaQueueTests(unittest.TestCase):
         self.assertEqual([item["note_id"] for item in queue], ["a" * 24])
 
     def test_safety_limit_detection_covers_platform_stop_signals(self):
-        for message in ["300031", "请完成验证码", "访问频繁，请稍后再试", "安全限制"]:
+        for message in [
+            "300031",
+            "请完成验证码",
+            "滑块验证",
+            "请完成验证",
+            "访问频繁，请稍后再试",
+            "操作频繁",
+            "请求频繁",
+            "安全验证",
+            "安全限制",
+            "HTTP 429",
+        ]:
             with self.subTest(message=message):
                 self.assertTrue(self.module.contains_safety_limit(message))
         self.assertFalse(self.module.contains_safety_limit("detail unavailable"))
+        self.assertFalse(self.module.contains_safety_limit("这篇内容有 429 个赞"))
+        self.assertFalse(self.module.contains_safety_limit("episode 429"))
+        self.assertFalse(self.module.safety_limit_detected("验证码识别教程", None))
 
     def test_safety_limit_in_exception_stops_the_batch(self):
         self.assertTrue(
@@ -89,12 +105,15 @@ class PendingMediaQueueTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             lock = Path(temporary) / "media.lock"
             lock.write_text('{"pid": 999999999, "created_at": "2026-01-01T00:00:00Z"}', encoding="utf-8")
-            with mock.patch.object(self.module, "process_is_alive", return_value=False):
-                handle = self.module.acquire_single_flight(lock)
+            handle = self.module.acquire_single_flight(lock)
             try:
-                self.assertEqual(self.module.process_is_alive(int(__import__("os").getpid())), True)
+                self.assertFalse(handle.closed)
             finally:
                 handle.close()
+                self.assertEqual(
+                    __import__("json").loads(lock.read_text(encoding="utf-8"))["pid"],
+                    __import__("os").getpid(),
+                )
                 lock.unlink()
 
     def test_signed_queue_accepts_only_xiaohongshu_note_urls(self):
@@ -114,6 +133,117 @@ class PendingMediaQueueTests(unittest.TestCase):
         self.assertEqual(self.module.classify_error(RuntimeError("client has been closed xsec_token=secret")), "client-closed")
         self.assertEqual(self.module.classify_error(TimeoutError("https://example.invalid/private")), "timeout")
         self.assertEqual(self.module.classify_error(RuntimeError("unexpected private text")), "runtimeerror")
+
+
+class MediaSafetySentinelTests(unittest.IsolatedAsyncioTestCase):
+    @classmethod
+    def setUpClass(cls):
+        spec = importlib.util.spec_from_file_location("pending_media_sentinel", SCRIPT)
+        cls.module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.module)
+
+    async def test_worker_checks_external_safety_stop_before_requests_and_after_delay(self):
+        module = self.module
+        source = types.ModuleType("source")
+
+        class FakeXHS:
+            instances = []
+
+            def __init__(self, **_kwargs):
+                self.calls = []
+                self.__class__.instances.append(self)
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *_args):
+                return None
+
+            async def extract(self, url, *, download, data):
+                self.calls.append((url, download, data))
+
+        source.XHS = FakeXHS
+        queue = [
+            {"note_id": "a" * 24, "url": "first", "media_type": "unknown"},
+            {"note_id": "b" * 24, "url": "second", "media_type": "unknown"},
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media_dir = root / "media"
+            media_dir.mkdir()
+            safety_stop = root / "media-download-safety-stop.json"
+            safety_stop.write_text("{}", encoding="utf-8")
+            with (
+                mock.patch.dict(sys.modules, {"source": source}),
+                mock.patch.object(module, "replace_insecure_clients", new=mock.AsyncMock()),
+            ):
+                stopped_before_first = await module.download_queue(
+                    queue, root, media_dir, 0, safety_stop
+                )
+            self.assertTrue(stopped_before_first["safety_stopped"])
+            self.assertEqual(stopped_before_first["results"], [])
+            self.assertEqual(FakeXHS.instances[-1].calls, [])
+
+            safety_stop.unlink()
+
+            async def create_stop_after_delay(_delay):
+                safety_stop.write_text("{}", encoding="utf-8")
+
+            with (
+                mock.patch.dict(sys.modules, {"source": source}),
+                mock.patch.object(module, "replace_insecure_clients", new=mock.AsyncMock()),
+                mock.patch.object(module.asyncio, "sleep", side_effect=create_stop_after_delay),
+            ):
+                stopped_after_delay = await module.download_queue(
+                    queue, root, media_dir, 1, safety_stop
+                )
+            self.assertTrue(stopped_after_delay["safety_stopped"])
+            self.assertEqual(
+                [call[0] for call in FakeXHS.instances[-1].calls],
+                ["first"],
+            )
+
+    async def test_worker_publishes_safety_stop_before_releasing_platform_lock(self):
+        module = self.module
+        source = types.ModuleType("source")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media_dir = root / "media"
+            media_dir.mkdir()
+            safety_stop = root / "media-download-safety-stop.json"
+
+            class FakeXHS:
+                def __init__(self, **_kwargs):
+                    pass
+
+                async def __aenter__(self):
+                    return self
+
+                async def __aexit__(self, *_args):
+                    if not safety_stop.is_file():
+                        raise AssertionError("safety sentinel was delayed until after client shutdown")
+
+                @staticmethod
+                async def extract(_url, *, download, data):
+                    self.assertTrue(download)
+                    self.assertFalse(data)
+                    print("status_code=429")
+
+            source.XHS = FakeXHS
+            with (
+                mock.patch.dict(sys.modules, {"source": source}),
+                mock.patch.object(module, "replace_insecure_clients", new=mock.AsyncMock()),
+            ):
+                outcome = await module.download_queue(
+                    [{"note_id": "a" * 24, "url": "first", "media_type": "unknown"}],
+                    root,
+                    media_dir,
+                    0,
+                    safety_stop,
+                )
+
+            self.assertTrue(outcome["safety_stopped"])
+            self.assertEqual(outcome["results"][0]["status"], "safety-stop")
 
 
 class SecureClientReplacementTests(unittest.IsolatedAsyncioTestCase):

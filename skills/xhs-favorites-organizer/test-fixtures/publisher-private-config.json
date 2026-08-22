@@ -1,0 +1,11 @@
+{
+  "legacy_source_board_id": "private-legacy-board-fixture-2026",
+  "profile_url": "https://www.xiaohongshu.com/user/profile/private-profile-fixture-2026",
+  "boards": [
+    {
+      "id": "private-board-fixture-2026",
+      "name": "Fixture board",
+      "enabled": true
+    }
+  ]
+}

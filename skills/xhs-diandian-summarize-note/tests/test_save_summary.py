@@ -1,0 +1,191 @@
+import importlib.util
+import json
+import tempfile
+import unittest
+from pathlib import Path
+from urllib.parse import quote
+
+
+SKILL_ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_PATH = SKILL_ROOT / "scripts" / "save_diandian_summary.py"
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "diandian-with-footer.txt"
+
+
+def load_module():
+    spec = importlib.util.spec_from_file_location("save_diandian_summary", SCRIPT_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class SaveDiandianSummaryTests(unittest.TestCase):
+    def test_cli_destination_is_derived_from_private_root_and_note_id(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            private_root = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries"
+            self.assertEqual(
+                module.private_destination(private_root, "a" * 24),
+                private_root.resolve() / f"{'a' * 24}.json",
+            )
+            with self.assertRaisesRegex(ValueError, "private root"):
+                module.private_destination(Path(temp_dir) / "site", "a" * 24)
+
+    def test_removes_only_recognized_trailing_footer(self):
+        module = load_module()
+        source = FIXTURE_PATH.read_text(encoding="utf-8")
+
+        cleaned, removed = module.clean_summary(source)
+
+        self.assertEqual(
+            cleaned,
+            "核心总结\n\n这是一段应当完整保留的总结正文。\n\n"
+            "下一步\n\n如果需要继续执行，就先验证输入是否完整。",
+        )
+        self.assertEqual(removed, ["以上内容由AI生成，仅供参考。"])
+
+    def test_preserves_relevant_final_paragraph(self):
+        module = load_module()
+        source = "核心总结\n\n如果输入不完整，就先补齐证据。"
+
+        cleaned, removed = module.clean_summary(source)
+
+        self.assertEqual(cleaned, source)
+        self.assertEqual(removed, [])
+
+    def test_writes_clean_private_record_without_source_url(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            destination = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries" / f"{'a' * 24}.json"
+            module.save_record(
+                destination=destination,
+                title="示例笔记",
+                summary_text="正文\n\n本回答由AI生成，仅供参考。",
+                note_id="a" * 24,
+            )
+
+            record = json.loads(destination.read_text(encoding="utf-8"))
+
+        self.assertEqual(record["title"], "示例笔记")
+        self.assertEqual(record["summary"], "正文")
+        self.assertEqual(record["provider"], "xiaohongshu-diandian")
+        self.assertEqual(record["note_id"], "a" * 24)
+        self.assertNotIn("source_url", record)
+        self.assertNotIn("removed_tail", record)
+
+    def test_rejects_unsafe_note_id(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with self.assertRaisesRegex(ValueError, "note_id"):
+                module.save_record(
+                    destination=Path(temp_dir) / ".xhs-favorites" / "diandian-summaries" / "unsafe.json",
+                    title="示例笔记",
+                    summary_text="正文",
+                    note_id="../outside",
+                )
+
+    def test_save_record_rejects_a_destination_outside_the_private_keyed_store(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            destination = Path(temp_dir) / "site" / "data" / "summary.json"
+            with self.assertRaisesRegex(ValueError, "private root"):
+                module.save_record(
+                    destination=destination,
+                    title="示例笔记",
+                    summary_text="正文",
+                    note_id="a" * 24,
+                )
+            self.assertFalse(destination.exists())
+
+    def test_rejects_signed_xhs_tokens_before_writing(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            destination = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries" / f"{'a' * 24}.json"
+            with self.assertRaisesRegex(ValueError, "sensitive"):
+                module.save_record(
+                    destination=destination,
+                    title="示例笔记",
+                    summary_text=(
+                        "正文 https://www.xiaohongshu.com/explore/example"
+                        "?xsec_token=secret"
+                    ),
+                    note_id="a" * 24,
+                )
+            self.assertFalse(destination.exists())
+
+    def test_rejects_sensitive_source_data_in_title_before_writing(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            destination = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries" / f"{'b' * 24}.json"
+            with self.assertRaisesRegex(ValueError, "sensitive"):
+                module.save_record(
+                    destination=destination,
+                    title="笔记 xsec_token=secret",
+                    summary_text="这是一段可以正常保存的点点总结正文。",
+                    note_id="b" * 24,
+                )
+            self.assertFalse(destination.exists())
+
+    def test_rejects_encoded_or_invisible_sensitive_source_data(self):
+        module = load_module()
+        deeply_encoded_source = "https://www.xiaohongshu.com/board/private"
+        for _ in range(6):
+            deeply_encoded_source = quote(deeply_encoded_source, safe="")
+        unsafe_replies = [
+            "正文 %78%73%65%63%5f%74%6f%6b%65%6e%3dsecret",
+            "正文 xsec_\u200btoken=secret",
+            "正文 https&#58;&#47;&#47;www.xiaohongshu.com&#47;discovery&#47;item&#47;example",
+            "正文 %78%73%65%63%5f%E2%80%8B%74%6f%6b%65%6e%3dsecret",
+            "正文 https%26%23%35%38%3B%26%23%34%37%3B%26%23%34%37%3Bwww%26period%3Bxiaohongshu%26period%3Bcom%26sol%3Bboard%26sol%3Bprivate",
+            f"正文 {deeply_encoded_source}",
+        ]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for index, reply in enumerate(unsafe_replies):
+                note_id = f"c{index}" * 12
+                destination = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries" / f"{note_id}.json"
+                with self.subTest(reply=reply), self.assertRaisesRegex(ValueError, "sensitive"):
+                    module.save_record(
+                        destination=destination,
+                        title="示例笔记",
+                        summary_text=reply,
+                        note_id=note_id,
+                    )
+                self.assertFalse(destination.exists())
+
+    def test_rejects_the_same_credential_shapes_as_the_consumers(self):
+        module = load_module()
+        unsafe_replies = [
+            "Authorization: Bearer abcdefghijklmnop",
+            "access_token: abcdefghijklmnop",
+            "password=not-for-storage",
+            "Bearer abcdefghijklmnop",
+        ]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for index, reply in enumerate(unsafe_replies):
+                note_id = f"d{index}" * 12
+                destination = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries" / f"{note_id}.json"
+                with self.subTest(reply=reply), self.assertRaisesRegex(ValueError, "sensitive"):
+                    module.save_record(
+                        destination=destination,
+                        title="示例笔记",
+                        summary_text=reply,
+                        note_id=note_id,
+                    )
+                self.assertFalse(destination.exists())
+
+    def test_rejects_an_empty_title_instead_of_fabricating_one(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            note_id = "e" * 24
+            destination = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries" / f"{note_id}.json"
+            with self.assertRaisesRegex(ValueError, "title"):
+                module.save_record(
+                    destination=destination,
+                    title="   ",
+                    summary_text="这是一段完整且安全的点点总结正文。",
+                    note_id=note_id,
+                )
+            self.assertFalse(destination.exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

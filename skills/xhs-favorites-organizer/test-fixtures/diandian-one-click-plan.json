@@ -1,0 +1,6 @@
+{
+  "description": "A board import cannot rebuild while its optional DianDian plan still has unresolved note IDs.",
+  "batch": "manual-fixture",
+  "board_id": "board-fixture",
+  "note_ids": ["aaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbb"]
+}

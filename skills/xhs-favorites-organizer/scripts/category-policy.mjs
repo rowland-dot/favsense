@@ -2,28 +2,34 @@ function clean(value) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
+function cleanBoardName(value) {
+  return clean(value).replace(/\s*笔记\s*[・·]\s*\d+(?:\.\d+)?[万千]?$/u, "").trim();
+}
+
 function unique(values) {
   return [...new Set(values.map(clean).filter(Boolean))];
 }
 
 export function sourceBoardNames(note, config) {
-  const explicitNames = Array.isArray(note?.source_boards) ? unique(note.source_boards) : [];
+  const explicitNames = Array.isArray(note?.source_boards)
+    ? unique(note.source_boards.map(cleanBoardName))
+    : [];
   if (explicitNames.length) return explicitNames;
 
   const boards = Array.isArray(config?.boards) ? config.boards : [];
-  const namesById = new Map(boards.map((board) => [clean(board.id), clean(board.name)]));
+  const namesById = new Map(boards.map((board) => [clean(board.id), cleanBoardName(board.name)]));
   const ids = Array.isArray(note?.source_board_ids) ? unique(note.source_board_ids) : [];
   const mappedNames = unique(ids.map((id) => namesById.get(id)));
   if (mappedNames.length) return mappedNames;
 
   const fallback = boards.find((board) => clean(board.id) === clean(config?.legacy_source_board_id))
     || boards.find((board) => board.enabled);
-  return fallback?.name ? [clean(fallback.name)] : [];
+  return fallback?.name ? [cleanBoardName(fallback.name)] : [];
 }
 
 function preferredBoard(sourceBoards, config) {
   const configured = Array.isArray(config?.boards) ? config.boards : [];
-  const byName = new Map(configured.map((board, index) => [clean(board.name), { board, index }]));
+  const byName = new Map(configured.map((board, index) => [cleanBoardName(board.name), { board, index }]));
   return sourceBoards
     .map((name, sourceIndex) => {
       const configuredBoard = byName.get(name);

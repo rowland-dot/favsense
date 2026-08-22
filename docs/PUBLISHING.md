@@ -158,7 +158,7 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
 
 1. 运行 `.\favsense.ps1 preview` 打开本地工作台；
 2. 在“同步设置”选择收藏夹并点击“开始整理”；
-3. FavSense 才会打开普通 Chrome，Tampermonkey 依次同步已启用的收藏夹；
+3. FavSense 才会通过 SOP 动态 CDP 通道在现有扫描浏览器中打开业务标签，Tampermonkey 依次同步已启用的收藏夹；
 4. 本机更新 `.xhs-favorites/` 和 `knowledge-base/`；
 5. 构建器重建 `site/data/knowledge.json`；
 6. 最后一个收藏夹完成后，发布器把 `site/` 镜像到 Space、排除 `site/.local/`，并确保 Space 使用 `header: mini`；
@@ -181,7 +181,7 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
 
 ## 6. 为什么默认不使用 Docker
 
-Static Space 已能完整承载当前网页，而且没有容器休眠、临时磁盘和服务维护成本。需要跨设备保存的少量个人状态通过 HF OAuth 写入私有 Dataset，不需要为了一个 JSON 文件持续运行付费容器。小红书采集依赖普通 Chrome 中的扫码登录态，本机运行最稳定，也更符合最小暴露原则。
+Static Space 已能完整承载当前网页，而且没有容器休眠、临时磁盘和服务维护成本。需要跨设备保存的少量个人状态通过 HF OAuth 写入私有 Dataset，不需要为了一个 JSON 文件持续运行付费容器。小红书采集依赖 SOP 扫描浏览器中的扫码登录态；SOP 是唯一 profile 与 Chrome 进程所有者，FavSense 只消费其私有动态 CDP 通道，不与主浏览器共享，也不再创建第二个 profile。
 
 只有在需要以下能力时才考虑 Docker Space：
 
@@ -204,7 +204,7 @@ Hugging Face 官方 `huggingface/hub-sync` Action 可以在 GitHub `main` 更新
 - 手动发布提示认证失败：重新登录 Hugging Face Git 凭据，并确认 Token 对目标 Space 有写权限。
 - 本地有新卡片但公网没变化：查看 `.xhs-favorites/runs/` 最新状态中的 `publish` 字段。
 - “开始整理”没有出现：请确认当前地址是 `http://127.0.0.1:8766`，并通过 `.\favsense.ps1 preview` 启动本地工作台。
-- 点击后没有打开 Chrome：确认普通 Chrome 已安装且小红书登录有效，然后查看设置页显示的本机错误信息。
+- 点击后没有在 SOP 扫描浏览器出现标签：先运行 SOP 的 `启动扫描浏览器.bat`，确认该窗口保持开启；首次运行先在该窗口安装 Tampermonkey、登录小红书，再运行一次 `setup` 完成用户脚本安装。不要改用主浏览器或另建 profile。
 - 网页更新了但数据不对：先执行 `npm.cmd run release:check`，再检查 `site/data/knowledge.json`。
 
 官方参考：[Static HTML Spaces](https://huggingface.co/docs/hub/spaces-sdks-static)、[Space OAuth](https://huggingface.co/docs/hub/spaces-oauth)、[Hugging Face JavaScript Hub API](https://huggingface.co/docs/huggingface.js/en/hub/README)、[Spaces 配置](https://huggingface.co/docs/hub/spaces-config-reference)、[GitHub Actions 同步](https://huggingface.co/docs/hub/repositories-github-actions)。

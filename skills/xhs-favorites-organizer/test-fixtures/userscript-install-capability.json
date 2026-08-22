@@ -1,0 +1,9 @@
+{
+  "capability": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "path_template": "/install/{capability}/xhs-favorites.user.js",
+  "install_content_type": "application/javascript",
+  "permanent_content_type": "text/plain",
+  "max_lifetime_seconds": 600,
+  "reusable_before_completion": true,
+  "invalid_after_completion": true
+}

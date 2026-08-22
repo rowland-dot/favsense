@@ -1,11 +1,21 @@
 #!/usr/bin/env node
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
+import { containsCredentialShape, normalizeSensitiveText } from "./sensitive-data.mjs";
 import { collectVideoEvidenceStats } from "./evidence-stats.mjs";
 import { resolveCategoryPolicy } from "./category-policy.mjs";
+import { curationRevision } from "./curation-revision.mjs";
+import {
+  hasCompleteAcceptedAudit,
+  isPublishableCuration,
+  loadCurationAudit,
+  publicEvidenceStatus
+} from "./curation-quality.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
+import { atomicWriteTextFile } from "./public-tree-policy.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const workspace = resolve(scriptDir, "../../..");
@@ -53,7 +63,7 @@ const paths = {
   profile: profilePath,
   resources: arg("resources", configuredPath(resourceIndex.registry_file, "skills/xhs-favorites-organizer/references/software-resources.json")),
   videoAnalysis: arg("video-analysis", resolve(workspace, ".xhs-favorites/video-analysis")),
-  summaries: arg("summaries", resolve(workspace, "knowledge-base/05-Skills成果/Skills面板逐篇总结与总汇.md")),
+  diandian: arg("diandian-dir", resolve(workspace, ".xhs-favorites/diandian-summaries")),
   output: arg("output", resolve(workspace, "site/data/knowledge.json"))
 };
 
@@ -61,24 +71,15 @@ const [catalog, curation] = await Promise.all([
   parseJson(paths.catalog),
   parseJson(paths.curation)
 ]);
+const {
+  policy: curationQuality,
+  audit: curationAudit,
+  baselineIds: curationBaselineIds,
+  baselineRevisions: curationBaselineRevisions
+} = loadCurationAudit(workspace, config);
 const resourceRegistry = profile.features?.resource_index
   ? await parseJson(paths.resources)
   : { verified_at: "", resources: [] };
-
-let summaryMarkdown = "";
-try {
-  summaryMarkdown = await readFile(paths.summaries, "utf8");
-} catch {
-  // The public repository ships generated data. A private Markdown vault is optional.
-}
-
-function plainText(markdown) {
-  return markdown
-    .replace(/\[([^\]]+)]\([^\)]+\)/g, "$1")
-    .replace(/[*_`>#]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function titleFromText(value) {
   const normalized = String(value || "").replace(/\s+/g, " ").trim();
@@ -94,14 +95,62 @@ function titleFromText(value) {
   return title.length > 52 ? `${title.slice(0, 51)}…` : title;
 }
 
-function displayTitle(raw, entry, deepSummary, noteId) {
-  const candidates = [raw.title, deepSummary?.heading, entry.tools?.[0], raw.description, entry.summary];
+function displayTitle(raw, entry, noteId) {
+  const candidates = [raw.title, entry.tools?.[0], raw.description, entry.summary];
   for (const candidate of candidates) {
     const title = titleFromText(candidate);
     if (title) return title;
   }
   const author = titleFromText(raw.author);
   return author ? `${author}的收藏` : `收藏条目 · ${noteId.slice(-6)}`;
+}
+
+const STABLE_NOTE_ID = /^[A-Za-z0-9_-]{1,128}$/;
+
+async function loadDiandianSummary(directory, noteId) {
+  if (!STABLE_NOTE_ID.test(noteId)) return null;
+  const base = resolve(directory);
+  const target = resolve(base, `${noteId}.json`);
+  if (dirname(target) !== base) return null;
+  try {
+    const metadata = await stat(target);
+    if (!metadata.isFile() || metadata.size > 512 * 1024) return null;
+    const record = JSON.parse(await readFile(target, "utf8"));
+    if (
+      !record
+      || typeof record !== "object"
+      || Array.isArray(record)
+      || record.version !== 1
+      || record.provider !== "xiaohongshu-diandian"
+      || record.prompt !== "总结"
+      || record.note_id !== noteId
+      || containsCredentialShape(record)
+    ) return null;
+    const summary = String(record.summary || "").replace(/\r\n?/g, "\n").trim();
+    if (!summary || summary.length > 200_000) return null;
+    return {
+      summary,
+      sha256: createHash("sha256").update(summary, "utf8").digest("hex")
+    };
+  } catch {
+    return null;
+  }
+}
+
+function acceptsDiandianEvidence(review, summary, curationEntry) {
+  const methods = Array.isArray(review?.evidence_methods) ? review.evidence_methods : [];
+  const tools = Array.isArray(curationEntry?.tools) ? curationEntry.tools : [];
+  return String(review?.status || "").trim() === "accepted"
+    && /^\d{4}-\d{2}-\d{2}$/.test(String(review?.reviewed_at || "").trim().slice(0, 10))
+    && review?.comments_checked === true
+    && review?.claims_supported === true
+    && Array.isArray(review?.unresolved_facts)
+    && review.unresolved_facts.length === 0
+    && methods.includes("comments")
+    && methods.includes("diandian_summary")
+    && (tools.length ? review.resource_status === "verified" : ["not_applicable", "unresolved"].includes(review?.resource_status))
+    && /^[a-f0-9]{64}$/.test(String(review?.diandian_summary_sha256 || ""))
+    && review.diandian_summary_sha256 === summary?.sha256;
 }
 
 function publicSourceUrl(title, author) {
@@ -112,20 +161,6 @@ function publicSourceUrl(title, author) {
   return `https://www.xiaohongshu.com/search_result?${params.toString()}`;
 }
 
-function extractDeepSummaries(markdown) {
-  const sections = [];
-  const pattern = /^## (\d{2})\.\s+([^\n]+)\n+([\s\S]*?)(?=^## \d{2}\.|^---$|^## 总汇：|(?![\s\S]))/gm;
-  for (const match of markdown.matchAll(pattern)) {
-    sections.push({ number: Number(match[1]), heading: plainText(match[2]), text: plainText(match[3]) });
-  }
-  return sections;
-}
-
-const deepSummaries = extractDeepSummaries(summaryMarkdown);
-const curatedIds = Object.keys(curation);
-const deepSummaryById = new Map(
-  curatedIds.map((noteId, index) => [noteId, deepSummaries[index] || null])
-);
 const field = (value, path) => String(path || "").split(".").filter(Boolean).reduce((current, key) => current?.[key], value);
 const rawResources = resourceRegistry[resourceIndex.collection || "resources"] || [];
 const resources = rawResources.map((raw, index) => {
@@ -226,13 +261,35 @@ function fallbackEntry(raw) {
   };
 }
 
-const rawNotes = catalog.notes || {};
+const rawNotes = Object.fromEntries(
+  Object.entries(catalog.notes || {})
+);
+const diandianById = new Map((await Promise.all(
+  Object.keys(rawNotes).map(async (noteId) => [noteId, await loadDiandianSummary(paths.diandian, noteId)])
+)).filter(([, summary]) => summary));
 const evidenceStats = await collectVideoEvidenceStats(paths.videoAnalysis, config.public_stats, Object.keys(rawNotes));
 const frameVerifiedNoteIds = new Set(evidenceStats.verifiedNoteIds);
 const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
-  const isCurated = Object.hasOwn(curation, noteId);
+  const isCurated = Object.hasOwn(curation, noteId)
+    && isPublishableCuration(
+      noteId,
+      raw,
+      curation,
+      curationQuality,
+      curationAudit,
+      curationBaselineIds,
+      curationBaselineRevisions,
+      { config, resources: resourceRegistry }
+    );
   const isFrameVerified = frameVerifiedNoteIds.has(noteId);
   const entry = isCurated ? curation[noteId] : fallbackEntry(raw);
+  const acceptedAuditIsCurrent = isCurated && hasCompleteAcceptedAudit(
+    noteId,
+    raw,
+    entry,
+    curationAudit,
+    { config, resources: resourceRegistry }
+  );
   const categoryPolicy = resolveCategoryPolicy({
     entry,
     note: raw,
@@ -243,7 +300,11 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const matchedResources = [...new Map(
     (entry.tools || []).map(resourceForTool).filter(Boolean).map((resource) => [resource.name, resource])
   ).values()];
-  const title = displayTitle(raw, entry, deepSummaryById.get(noteId), noteId);
+  const title = displayTitle(raw, entry, noteId);
+  const diandian = diandianById.get(noteId);
+  const auditEntry = curationAudit?.notes?.[noteId];
+  const aiEvidenceAccepted = acceptsDiandianEvidence(auditEntry, diandian, entry);
+  const publicDiandian = isCurated && aiEvidenceAccepted ? diandian : null;
 
   return {
     id: noteId,
@@ -262,17 +323,14 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     sourceBoards: categoryPolicy.sourceBoards,
     themes: categoryPolicy.themes,
     summary: entry.summary,
-    deepSummary: deepSummaryById.get(noteId)?.text || entry.summary,
+    deepSummary: publicDiandian?.summary || entry.summary,
+    deepSummarySource: publicDiandian ? "xiaohongshu-diandian" : (isCurated ? "curation" : "source-metadata"),
+    curationRevision: isCurated ? curationRevision(entry) : "",
     action: String(entry.action || "").trim(),
     tools: entry.tools || [],
     kind: classify(entry, matchedResources),
     resources: matchedResources.map((resource) => resource.name),
-    evidence: {
-      method: isFrameVerified
-        ? "已结合本地视频证据核验内容"
-        : "目前依据原帖公开文字整理，视频内容尚未完整解读",
-      locallyAvailable: isFrameVerified
-    }
+    evidence: publicEvidenceStatus(noteId, curationAudit, isFrameVerified, acceptedAuditIsCurrent)
   };
 });
 
@@ -280,7 +338,7 @@ const categories = [...new Set(notes.map((note) => note.category))].map((name) =
   name,
   count: notes.filter((note) => note.category === name).length
 }));
-const sourceBoards = [...new Set(notes.flatMap((note) => rawNotes[note.id]?.source_boards || []))];
+const sourceBoards = [...new Set(notes.flatMap((note) => note.sourceBoards || []))];
 const fallbackBoard = config.boards.find((board) => board.id === config.legacy_source_board_id)
   || config.boards.find((board) => board.enabled);
 const visibleBoards = sourceBoards.length ? sourceBoards : [fallbackBoard?.name].filter(Boolean);
@@ -317,6 +375,7 @@ const output = {
 };
 
 const serialized = `${JSON.stringify(output, null, 2)}\n`;
+const normalizedSerialized = normalizeSensitiveText(serialized);
 const forbidden = [
   /xsec_token\s*=/i,
   /\/user\/profile\//i,
@@ -324,9 +383,24 @@ const forbidden = [
   /["']?(?:cookie|cookies)["']?\s*[:=]\s*["'][^"']+/i
 ];
 for (const pattern of forbidden) {
-  if (pattern.test(serialized)) throw new Error(`Public data safety check failed: ${pattern}`);
+  if (pattern.test(normalizedSerialized)) throw new Error(`Public data safety check failed: ${pattern}`);
 }
 
-await mkdir(dirname(paths.output), { recursive: true });
-await writeFile(paths.output, serialized, "utf8");
+const privateIdentifiers = new Set([
+  config.legacy_source_board_id,
+  ...(config.boards || []).map((board) => board?.id),
+]);
+try {
+  const profileUrl = new URL(String(config.profile_url || ""));
+  const profileId = profileUrl.pathname.match(/^\/user\/profile\/([^/]+)$/)?.[1];
+  if (profileId) privateIdentifiers.add(profileId);
+} catch { /* an invalid profile URL is validated by the collection workflow */ }
+for (const identifier of privateIdentifiers) {
+  const privateValue = String(identifier || "").trim();
+  if (privateValue && normalizedSerialized.includes(normalizeSensitiveText(privateValue))) {
+    throw new Error("Public data safety check failed: private source identifier");
+  }
+}
+
+await atomicWriteTextFile(paths.output, serialized);
 console.log(JSON.stringify({ ok: true, notes: notes.length, resources: resources.length, output: paths.output }, null, 2));

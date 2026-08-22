@@ -1,71 +1,1160 @@
 {
-  "6a5cbbee000000000f00afaf": { "category": "信息采集与搜索", "themes": ["Crawl4AI", "网页转Markdown", "LLM数据"], "summary": "视频展示 Crawl4AI：输入网址后抓取正文并自动生成适合 LLM/RAG 使用的 Markdown，还支持深度爬取、代理切换、自定义 JavaScript 与 Docker 一键部署。", "action": "用 10 个含动态内容的页面对比 Crawl4AI 与当前采集器的正文完整度、Markdown 质量和失败率。", "tools": ["Crawl4AI"] },
-  "6a5d5d1b000000001c010d2d": { "category": "信息采集与搜索", "themes": ["Wigolo", "本地搜索", "MCP"], "summary": "视频介绍 Wigolo：一个本地优先的网页搜索、抓取、爬取和研究 MCP，使用本地基础设施工作，不要求额外搜索 API Key。", "action": "在隔离环境测试 Wigolo 的索引来源、搜索新鲜度、引用可追溯性及本地资源占用。", "tools": ["Wigolo"] },
-  "6a5cb781000000000a03a154": { "category": "开发部署与Vibe Coding", "themes": ["Archify", "架构图", "流程图"], "summary": "视频展示 Archify：把自然语言系统描述转换为架构图、流程图、时序图和数据库图，并可导出 PNG/SVG；当前画面未显示公开 GitHub 仓库。", "action": "找到 Archify 官网并用本项目描述生成图，逐项检查组件、数据流和安全边界。", "tools": ["Archify"] },
-  "6a5dbb1e000000000f00bcf8": { "category": "Skills与工作流", "themes": ["AnySearch", "联网搜索", "Claude与Codex"], "summary": "完整演示 AnySearch Skill：同一搜索层覆盖网页、代码、学术、安全与商业信息，可在 Claude、Codex 中生成带来源的研究结果，并提供 MCP/API 接入。", "action": "审查 AnySearch 的数据源、远程请求和凭据处理，用固定研究问题与原生搜索做引用准确率对照。", "tools": ["AnySearch Skill"] },
-  "6a5b9ac6000000000a0391f1": { "category": "Agent与自动化", "themes": ["GitHub周榜", "多Agent", "内容生产"], "summary": "长视频逐项讲解本周五个项目：OpenCut 视频编辑器、hallmark 设计工作流、Vibe-Trading 多 Agent 交易研究、orca 并行 Agent 编排和 OfficeCLI 文档自动化。", "action": "把五个项目拆成独立实验卡；优先验证 OpenCut、orca 和 OfficeCLI 的本地可运行性。", "tools": ["OpenCut", "hallmark", "Vibe-Trading", "orca", "OfficeCLI"] },
-  "6a5a3a29000000001c00d15b": { "category": "开发部署与Vibe Coding", "themes": ["Grok Build", "Agent框架", "开源"], "summary": "视频系统介绍 Grok Build 的全量开源：以 Agent 为核心、Rust 工具链、Apache-2.0、可扩展模型与工具、SpaceXAI 集成，并讨论从需求到部署的完整开发循环。", "action": "核实官方仓库当前代码与许可证，用同一小应用对比现有 coding agent 的可测试性和可维护性。", "tools": ["Grok Build"] },
-  "6a58cb21000000001101b30c": { "category": "Agent与自动化", "themes": ["Record and Replay", "Codex Skill", "RPA"], "summary": "短视频提出 Record & Replay 工作流：人工演示一次点击、填写与提交，Codex 将步骤固化成可复用 Skill，用于批量接管重复岗位流程；画面没有给出独立仓库名。", "action": "将其视为工作流模式而非已核实插件，只在虚拟测试表单上验证录制、参数化、重放和失败回滚。", "tools": ["Record & Replay"] },
-  "6a581de1000000000f006b3a": { "category": "垂直工具与数据", "themes": ["FinanceDatabase", "Python", "金融标的"], "summary": "视频实际演示 FinanceDatabase 的 Python API：按国家、行业和市值筛选股票、ETF、基金、指数、货币与加密资产，并可衔接 Finance Toolkit。它是标的元数据，不是实时行情源。", "action": "抽查澳洲与美国市场的字段和更新时间，验证筛选结果后再决定是否作为金融知识库基础层。", "tools": ["FinanceDatabase", "Finance Toolkit"] },
-  "6a56e91c000000000803ce3f": { "category": "Skills与工作流", "themes": ["Graphify", "知识图谱", "代码理解"], "summary": "视频中的 Skill 是 Graphify：把代码、SQL schema、脚本、文档、论文、图片和视频转换为可查询知识图谱，支持 Claude Code、Codex、Cursor、Gemini CLI 等宿主，并可追踪代码节点路径。", "action": "在本仓库的小型副本运行 Graphify，检查图谱是否准确表达采集、构建和知识卡片之间的依赖。", "tools": ["Graphify"] },
-  "6a5420d500000000060310a2": { "category": "信息采集与搜索", "themes": ["MediaCrawler", "社媒采集", "浏览器登录态"], "summary": "视频明确展示 MediaCrawler 可抓取小红书、抖音、快手、B站、微博、贴吧、知乎的公开内容与评论，并通过浏览器登录态签名而不是逆向 JavaScript。", "action": "仅对自有账号和获授权内容做只读测试，记录平台风控、登录态安全和可维护成本。", "tools": ["MediaCrawler"] },
-  "6a53c47800000000150268e6": { "category": "本地模型与成本", "themes": ["Headroom", "Token压缩", "Claude Code"], "summary": "视频介绍 Headroom：在工具输出、日志、文件、数据库转储与 RAG 片段进入模型前做压缩；示例把约 17,765 token 降到 1,408，并提供库、代理与 MCP 接入。", "action": "用固定代码排错任务实测 token、答案正确率、延迟和遗漏；不能直接采用视频宣称的 92% 作为结论。", "tools": ["Headroom"] },
-  "6a52740f000000001503fec2": { "category": "内容增长与商业", "themes": ["ScrapeGraphAI", "出海获客", "公开线索"], "summary": "视频以 ScrapeGraphAI 演示用 Python 抓取目标网站并让模型抽取公司、联系人和资源字段，随后把结构化线索用于出海客户研究。", "action": "先定义合法公开字段和禁止采集项，再对 20 条公开公司资料验证准确率与人工复核成本。", "tools": ["ScrapeGraphAI"] },
-  "6a50c4a7000000001101e847": { "category": "Skills与工作流", "themes": ["last30days", "社媒研究", "时效检索"], "summary": "视频实际展示 last30days Skill，而不是浏览器：输入主题后检索最近 30 天 Reddit、X、YouTube、TikTok、HN、GitHub 与网页讨论，最后生成带来源的趋势和观点报告。", "action": "检查每个数据源所需 Cookie/API 权限，并用一个已知话题验证日期范围、引用和观点覆盖。", "tools": ["last30days Skill"] },
-  "6a506c6a000000002100b1a5": { "category": "Agent与自动化", "themes": ["Mano-P", "GUI-VLA", "本地推理"], "summary": "视频演示 Mano-P 在本地视觉模型下理解屏幕、玩麻将和执行跨应用 GUI 任务；它强调端侧隐私，但硬件要求集中在 M4/32GB 以上 Apple Silicon 或专用算力棒。", "action": "当前 Windows 机器先做资料评估，不直接安装；重点核实模型与 SDK 实际开放程度、硬件和误操作防护。", "tools": ["Mano-P"] },
-  "6a4e1432000000001603daf9": { "category": "开发部署与Vibe Coding", "themes": ["awesome-selfhosted", "自托管", "项目目录"], "summary": "视频明确推荐 awesome-selfhosted：按 140 多个类别整理约 1,400 个可在自有服务器部署的应用与源码，覆盖网盘、自动化、游戏、邮件和博客。", "action": "把它当发现索引而非安装清单，只挑与知识库采集、搜索和备份直接相关的项目继续审查。", "tools": ["awesome-selfhosted"] },
-  "6a4cc27e000000000803c3c9": { "category": "开发部署与Vibe Coding", "themes": ["awesome-selfhosted", "开源目录", "自托管"], "summary": "视频同样展示 awesome-selfhosted：GitHub 上的大型自托管项目目录，画面列出约 143 个分类和 1,497 个项目，并强调每项可查看源码与部署方式。", "action": "与另一篇重复收藏合并来源，不重复建能力；仅保留目录入口和筛选规则。", "tools": ["awesome-selfhosted"] },
-  "6a4c8cb2000000001603ed97": { "category": "知识管理与记忆", "themes": ["Scritty", "多Agent记忆", "MCP"], "summary": "视频完整展示 Scritty：把 Claude Code、Codex、Copilot CLI、Antigravity、Aider 与 Ollama 放进同一终端，自动捕获每次对话，建立本地可搜索记忆，并通过 MCP/CLI 供 Agent 回读。", "action": "注意其产品闭源且收费；先审查本地存储、加密、遥测、导出和删除，再与纯 Markdown 方案对比。", "tools": ["Scritty"] },
-  "6a4afd18000000001101092b": { "category": "开发部署与Vibe Coding", "themes": ["EdgeOne Pages", "Agent部署", "定时任务"], "summary": "长视频从本地代码演示 EdgeOne Pages：导入项目后自动构建与部署，配置域名、环境变量、数据处理、定时任务、DDoS 防护、全球节点和身份认证。", "action": "用无敏感数据 Demo 验证构建日志、环境变量、域名、回滚和费用边界。", "tools": ["EdgeOne Pages"] },
-  "6a4b71cd000000000f006747": { "category": "知识管理与记忆", "themes": ["Meetily", "会议转写", "本地隐私"], "summary": "视频项目是 Meetily（仓库 Zackriya-Solutions/meetily）：本地录音、实时转写和会议摘要，可用 Ollama 本地模型，也可选 Claude 等服务；重点是会议数据不必上传云端。", "action": "测试中文转写、系统音频采集和 Markdown 导出，并在录音前建立参与者授权规则。", "tools": ["Meetily"] },
-  "6a49ec170000000020038350": { "category": "Skills与工作流", "themes": ["Agent-Reach", "跨平台检索", "CLI"], "summary": "视频项目是 Agent-Reach：为 Agent 选择并配置网页、X、Reddit、YouTube、GitHub、B站与小红书等上游读取工具，提供安装、诊断和路由层；部分平台仍依赖登录态。", "action": "先用 dry-run/safe 模式审查它将安装的依赖和凭据路径，主账号不启用小红书写操作。", "tools": ["Agent-Reach"] },
-  "6a43955b0000000015027d45": { "category": "内容增长与商业", "themes": ["Postiz", "社媒运营", "自动排期"], "summary": "长视频以 Postiz 解释零员工社媒运营：集中管理账号、内容日历、AI 生成、评论互动和多平台发布，也展示与 Cursor/ChatGPT 等 AI 工具联动。", "action": "只启用草稿和人工审核；核实各平台官方 OAuth、权限撤销和失败重试后再考虑发布。", "tools": ["Postiz"] },
-  "6a4305de0000000017008217": { "category": "本地模型与成本", "themes": ["whichllm", "本地大模型", "硬件评估"], "summary": "视频画面显示的项目是 Andyyyy64/whichllm：读取 GPU、CPU 和内存配置，从 Hugging Face 模型中推荐适合本机的模型与量化规格。", "action": "使用只读硬件检测运行 whichllm，并以实际显存占用、生成速度和任务质量复核推荐结果。", "tools": ["whichllm"] },
-  "6a40ee50000000001502518f": { "category": "知识管理与记忆", "themes": ["Cognee", "知识图谱", "长期记忆"], "summary": "短视频展示 Cognee 把句子与文档转成可推理的记忆图谱，并支持 OpenClaw、Claude Code 等 Agent 共享、检索和持久化知识。", "action": "用 32 篇收藏做隔离数据集，测试 remember/recall/forget、更新冲突、导出和删除。", "tools": ["Cognee"] },
-  "6a3fdfbf000000001101ca6f": { "category": "知识管理与记忆", "themes": ["CocoIndex", "增量索引", "AST"], "summary": "视频项目是 CocoIndex：用 AST 语义索引替代把整仓库全文塞给模型，只向 Agent 提供相关结构与路径；示例强调约 70% token 节省和更低检索延迟。", "action": "用同一代码问答任务对比全文 RAG 与 CocoIndex 的 token、召回率、延迟和索引更新成本。", "tools": ["CocoIndex"] },
-  "6a376f5a0000000022015195": { "category": "Skills与工作流", "themes": ["GitHub合集", "Skill", "开发工具"], "summary": "视频逐项列出六个项目：mattpocock/skills、Pake、Palmier Pro、Headroom、codebase-memory-mcp 和 SmsForwarder；分别覆盖 Skill 集合、网页打包、AI 视频编辑、上下文压缩、代码记忆和短信转发。", "action": "保留六个独立项目记录；优先审查 skills 与 codebase-memory-mcp，其他按平台需求归档。", "tools": ["mattpocock/skills", "Pake", "Palmier Pro", "Headroom", "codebase-memory-mcp", "SmsForwarder"] },
-  "6a36a67b0000000015027543": { "category": "本地模型与成本", "themes": ["Headroom", "Token压缩", "成本"], "summary": "7 秒信息图明确指向 Headroom，宣传对结构化工具输出可减少 60–95% token，并兼容 Claude、Cursor、MCP 与 API；它与另一篇长视频是重复来源。", "action": "与长视频合并到同一 Headroom 项目卡，只保留第二来源，不重复测试。", "tools": ["Headroom"] },
-  "6a33fe4e000000001003ec3a": { "category": "Skills与工作流", "themes": ["符号链接", "Claude", "Codex"], "summary": "长教程在 macOS 用 ln -s 让 Claude Code 与 Codex 共享同一 Skills 源目录，避免复制和版本漂移；核心是单一真源，不是一个独立 Skill。", "action": "本项目维持单一源目录；Windows 使用项目内适配层或受控目录联接，并加入失效检测。", "tools": ["符号链接"] },
-  "6a316666000000001c024e6f": { "category": "Skills与工作流", "themes": ["社区Skill", "工作流设计", "联网"], "summary": "长视频依次讲解五个社区项目：andrej-karpathy-skills、PPT Master、dot-skill、PUA/PIP 和 web-access，并明确讨论编码约束、演示文稿、人格蒸馏、持续调试与联网能力的差异和风险。", "action": "优先测试编码约束与 PPT；web-access 仅隔离浏览器；dot-skill 不处理未授权真人资料。", "tools": ["andrej-karpathy-skills", "PPT Master", "dot-skill", "PUA", "web-access"] },
-  "6a2ffe49000000001503c4f2": { "category": "内容增长与商业", "themes": ["Omnify AI", "一人公司", "多Agent团队"], "summary": "视频产品是 Omnify AI：通过智能 HR 招募脚本、角色、分镜、视频生成和质检等 Agent，自动拆解短剧任务并协作产出成片；属于托管产品，不是已核实 GitHub Skill。", "action": "只做产品研究，先核实定价、素材版权、模型来源和数据出口，再判断是否值得试用。", "tools": ["Omnify AI"] },
-  "6a2e130d0000000007011c4a": { "category": "Skills与工作流", "themes": ["Loop Engineering", "Claude Code", "验证循环"], "summary": "视频展示一个含 40 个可复制 Loop 的网站，覆盖构建至绿、覆盖率、性能、Bug、文档与安全等场景；关键结构是步骤、检查命令、退出条件和护栏，而不是单次提示词。", "action": "从中选研究、实现、测试、复盘四类，改写为不绑定 Claude 的跨 Agent 模板。", "tools": ["Loop Engineering"] },
-  "6a2a81d1000000001702d3de": { "category": "Skills与工作流", "themes": ["last30days", "社媒研究", "趋势"], "summary": "视频中的 GitHub 热门项目是 last30days Skill：聚合最近 30 天 Reddit、X、TikTok、Instagram、YouTube 等讨论，输出近期共识、争议、来源和研究简报。", "action": "与另一篇重复来源合并；安装前检查浏览器 Cookie、可选 API Key、保存路径和引用质量。", "tools": ["last30days Skill"] },
-  "6a275d1d000000001702f817": { "category": "信息采集与搜索", "themes": ["MarkItDown", "文档转换", "Token优化"], "summary": "视频明确讲解 Microsoft MarkItDown：大 PDF 直接交给 Claude 会消耗大量 token，先转换成保留标题、列表、表格和链接的 Markdown 可明显降低上下文成本，并可通过 MCP 接入。", "action": "用同一份 PDF 对比直接上传与 MarkItDown 的 token、表格保真、OCR 缺失和回答准确率。", "tools": ["Microsoft MarkItDown"] },
-  "6a26d979000000003502fb50": { "category": "开发部署与Vibe Coding", "themes": ["Cloud Mail", "Cloudflare", "自托管邮件"], "summary": "完整视频展示 maillab/cloud-mail：在 Cloudflare 上为自有域名建立多邮箱收件服务，支持邮件与附件、用户管理、转发、API 和 Resend 集成。它更适合低成本收件与自动化，不应直接等同于完整企业邮件套件。", "action": "先用测试域名部署隔离实例，检查 DNS、转发、附件保存、访问控制、垃圾邮件与数据保留，再决定是否接入正式域名。", "tools": ["Cloud Mail"] },
-  "6a25baca000000000803d0c8": { "category": "内容增长与商业", "themes": ["AiToEarn", "一人公司", "内容自动化"], "summary": "逐帧确认项目为 yikart/AiToEarn：围绕创建、发布、互动和变现组织一人公司的内容工作流，可按平台生成标题、封面与标签、辅助回复，并提供 Docker 和 MCP/SSE 接入。", "action": "用一个无商业敏感信息的测试账号验证草稿生成、平台适配、人工审核和失败回滚；不直接开放自动发布权限。", "tools": ["AiToEarn"] },
-  "6a26ddbb0000000017008a8b": { "category": "Skills与工作流", "themes": ["Claude", "提示模式", "写作与决策"], "summary": "视频讲解五类可复用提示模式：降低机器腔、补充文件上下文、用 OODA 组织决策、指定专家深度，以及切换回答风格；画面还展示一份 Claude Code 提示词清单。这些是作者自定义提示约定，不是已经核实的 Claude 内置命令。", "action": "把有效模式改写成跨 Agent 的提示模板，并用同一写作或研究任务做盲测；不要把 /ghost 等自定义写法宣传成官方命令。", "tools": ["Claude 提示模式"] },
-  "6a29439c000000002202cf7d": { "category": "Skills与工作流", "themes": ["阿里云百炼", "多模态生成", "AIGC工作流"], "summary": "长视频完整演示阿里云百炼 CLI 为 Agent 提供图片、语音和视频生成能力，并展示 aliang2052/aliang-skills 的六个创作 Skill，覆盖短剧、电商图、儿童故事、有声绘本、播客和语音合成。", "action": "先安装 CLI 并只测试低成本步骤；逐个审查 Skill 的 API Key、素材版权、付费调用和人工确认点，图生视频必须显式确认后才执行。", "tools": ["阿里云百炼 CLI", "aliang-skills"] },
-  "6a2953790000000006033b61": { "category": "Agent与自动化", "themes": ["AutoResearch", "自主实验", "评估循环"], "summary": "视频解释 karpathy/autoresearch 的自主实验循环：Agent 修改训练代码、运行固定时长实验、按指标保留或丢弃结果；核心由 program.md、prepare.py 和 train.py 组成。视频还演示把这套结构迁移到交易、营销和开发实验，但迁移效果取决于可量化目标和约束。", "action": "先在无资金、无生产写权限的沙盒中定义单一指标、固定预算和停止条件，并人工检查是否出现指标投机，再考虑迁移到真实业务。", "tools": ["AutoResearch"] },
-  "6a2bb8db000000001603de2d": { "category": "Skills与工作流", "themes": ["GitHub周榜", "Agent Skills", "开源工具"], "summary": "逐帧整理出视频榜单的五个主项目：last30days-skill、pm-skills、hermes-agent、Agent-Reach 和 open-notebook；补充项目包括 Impeccable、Open-LLM-VTuber、Harness 与 Taste Skill。它们分别覆盖近期研究、产品管理、成长型 Agent、跨平台读取、NotebookLM 替代、界面设计、Agent 团队生成和设计规范。", "action": "不要整包安装；按研究、产品、Agent、知识库和设计五类分别建立最小实验，先核对权限、许可证、外部服务和数据出口。", "tools": ["last30days Skill", "pm-skills", "Hermes Agent", "Agent-Reach", "Open Notebook", "Impeccable", "Open-LLM-VTuber", "Harness", "Taste Skill"] },
-  "6a2bde9300000000160268de": { "category": "开发部署与Vibe Coding", "themes": ["Build Your Own X", "计算机基础", "项目式学习"], "summary": "视频指向 codecrafters-io/build-your-own-x：按技术类别汇总从零实现数据库、浏览器、Docker、操作系统、AI 等系统的分步教程。它是学习资源索引，不是可直接安装的 Skill。", "action": "按当前学习目标只选择一个项目，先写出要理解的三个机制和验收标准，再完成教程并记录与生产级实现的差距。", "tools": ["Build Your Own X"] },
-  "69d0771d000000001a027404": { "category": "AI设计与多媒体", "themes": ["AiWind", "电商图片", "提示词库"], "summary": "视频展示 AiWind 的 AI 提示词库：以效果图配合可复制提示词，重点收录 1,000 多条 Nano Banana Pro 案例，也覆盖商品摄影、服装模特、海报和多种视觉风格；网站无需登录即可浏览。它是提示词与案例资源，不是生成模型本身。", "action": "从真实商品中选一个低风险样例，复制三组提示词到同一模型，比较构图稳定性、商品一致性与商用素材版权；不要把示例效果直接当成可保证结果。", "tools": ["AiWind"] },
-  "6a621f16000000001303e77b": { "category": "内容增长与商业", "themes": ["独立站", "竞争情报", "商业隐私"], "summary": "视频解释独立站卖家不愿公开网址的现实原因：站点会暴露选品、流量入口、广告素材、定价和供应链线索，竞争者可据此快速复制。它不是“藏网址就安全”的建议，而是在提醒商业信息具有可被拼接的情报价值。", "action": "建立公开信息边界：品牌内容可分享，供应链、广告账户、未验证选品和精确利润只留内部；对外案例使用脱敏截图，并定期检查网站、广告库和社媒是否意外暴露关键线索。", "tools": [] },
-  "69febd02000000003700c629": { "category": "内容增长与商业", "themes": ["CRMEB", "电商系统", "私域运营"], "summary": "视频展示 crmeb/CRMEB：一套覆盖商城、会员、营销活动、订单与后台运营的开源电商系统，可作为私域电商或二次开发底座。画面中的“副业神器”是营销表达；真正需要评估的是部署复杂度、支付与用户数据安全、升级迁移和持续运维。", "action": "先用隔离测试环境完成商品、下单、支付沙盒、退款和权限审计；确认许可证、备份恢复、升级路径与隐私合规后，再决定是否承载真实交易。", "tools": ["CRMEB"] },
-  "6a017b900000000036033c00": { "category": "AI设计与多媒体", "themes": ["Higgsfield", "视频预测", "内容评估"], "summary": "视频演示 Higgsfield Virality Predictor：在发布前上传视频，由模型从开场、节奏、镜头与传播信号给出爆款概率和改进方向。逐帧核验到官方开源仓库 higgsfield-ai/skills 与 higgsfield-ai/cli；预测结果只能作为创作假设，不能当成真实平台流量保证。", "action": "用已发布且表现已知的 20 条自有视频做盲测，比较预测与真实完播、互动和转化；上传前确认素材权利与隐私，并把建议转成 A/B 版本而不是直接改掉原片。", "tools": ["Higgsfield Skills", "Higgsfield CLI"] },
-  "69ff34730000000023017de6": { "category": "内容增长与商业", "themes": ["营销团队", "Agent Skills", "内容工作流"], "summary": "视频把五类营销能力组成一个 AI 营销团队：文案、广告创意、SEO/AEO、邮件序列和落地页 CRO。核心仓库是 coreyhaines31/marketingskills；画面中的 seo-geo-claude-skills 已迁移，当前对应 aaron-he-zhu/aaron-marketing-skills。价值不在一次生成，而在共享产品背景、角色分工和质量门槛。", "action": "先建立一份产品营销上下文，再只启用文案、SEO 和 CRO 三个角色跑同一落地页；用事实核对、品牌语气、合规声明和人工发布作为统一质量门。", "tools": ["Marketing Skills", "Aaron Marketing Skills"] },
-  "69fe986a000000003501ea35": { "category": "信息采集与搜索", "themes": ["AI HOT", "热点扫描", "中文信源"], "summary": "长视频完整展示 AI HOT：从中文 AI 信源读取 24 小时、7 天、当前热榜与日报，并用快照差异识别新出现或持续升温的主题。官方 Skill 位于 KKKKhazix/khazix-skills 的 aihot 目录，支持 Claude、Codex、Gemini 等 Agent；读取端无需 API Key，但结论仍需回到原始链接核实。", "action": "把它接入每日只读研究流程：先读趋势变化，再挑 3 条与当前内容方向相关的原始来源核验；保留来源与日期，不把热度排名直接当成事实或选题质量。", "tools": ["AI HOT", "Khazix Skills"] },
-  "69fb2924000000003700e5c8": { "category": "Skills与工作流", "themes": ["内容创作", "Agent Skills", "多媒体"], "summary": "逐帧确认视频列出的七项：Agent-Reach、OpenCLI、PleasePrompto/notebooklm-skill、ListenHub Skills、google-labs-code/stitch-skills 中的 Remotion Skill、Humanizer-zh 和 baoyu-skills。它们分别解决跨平台取材、网页命令化、资料问答、播客/音视频生成、产品演示视频、中文改写和图文内容生产；并非都适合整包安装。", "action": "按内容链路分批试用：先只读取材与资料问答，再测试草稿与视频生成；涉及浏览器登录、Google 会话、ListenHub API、外部素材和自动发布时必须单独授权，默认保留人工审核。", "tools": ["Agent-Reach", "OpenCLI", "NotebookLM Skill", "ListenHub Skills", "Stitch Remotion Skill", "Humanizer-zh", "baoyu-skills"] },
-  "6a0fb1430000000013020401": { "category": "内容增长与商业", "themes": ["Meta Ads", "Claude Connector", "广告投放"], "summary": "视频展示用 Claude 自定义 Connector/MCP 串联 Meta Ads 与 Higgsfield：先生成产品创意，再把素材送入广告管理流程并分析投放结果。画面没有提供可唯一核验的公开 Connector 仓库，因此不把它冒充开源 Skill；这是一个需要广告账户权限和真实预算的工作流示例。", "action": "只在测试广告账户建立草稿链路，限制为读取报表和创建未发布草稿；设置固定日预算、素材权利检查、受众合规和人工发布门，不允许 Agent 直接改预算或启动广告。", "tools": ["Claude Custom Connector", "Meta Ads", "Higgsfield"] },
-  "6a058b540000000038034851": { "category": "开发部署与Vibe Coding", "themes": ["FreeDomain", "免费子域名", "DNS"], "summary": "视频介绍 DigitalPlatDev/FreeDomain：通过社区项目申请免费子域名，并可把 DNS 托管到 Cloudflare、FreeDNS 或 Hostry。它提供的是子域名而非自有顶级域名；服务连续性、滥用政策、续期和域名控制权都需要在正式使用前确认。", "action": "先把它用于演示或临时项目，测试 DNS、HTTPS、迁移和失效恢复；品牌官网、邮箱和长期业务仍优先使用自己持有的域名。", "tools": ["FreeDomain"] },
-  "69abfa18000000001600b3e1": { "category": "内容增长与商业", "themes": ["Marketing Skills", "用户增长", "产品上下文"], "summary": "视频讲解 coreyhaines31/marketingskills：把文案、营销点子和增长场景拆成可调用 Skill，并让各模块共享同一份产品、人群、卖点与竞品上下文。价值在于把营销 know-how 结构化，而不是让 AI 无背景地批量输出。", "action": "先建立可核实的产品营销上下文，只试 copywriting 与 marketing-ideas 两项；用品牌语气、事实准确、渠道合规和人工发布作为验收门。", "tools": ["Marketing Skills"] },
-  "69c3acb9000000001a028e64": { "category": "Skills与工作流", "themes": ["OpenClaw", "学习资源", "Skill目录"], "summary": "口播推荐三个 OpenClaw 学习入口：一套分阶段教程、一个面向中文用户的 Skill 集合和一个中文社区，分别解决学习路径、技能发现与安装说明。音频中的网站名称存在识别歧义，尚不能唯一绑定官方网址。", "action": "从原帖或画面只补齐三个准确域名后立即停止视频检查；逐一确认运营主体、安装来源和是否要求上传凭据，再加入资源索引。", "tools": [] },
-  "69c54ab8000000002103bcd1": { "category": "AI设计与多媒体", "themes": ["Design Skills", "前端审美", "对照测评"], "summary": "设计师用同一提示词各跑三次，对比 Anthropic Frontend Design、UI/UX Pro Max、Impeccable、Taste 与 UI Skills。前五项中 Impeccable 的风格与细节最稳定；Anthropic 适合作为简洁基线；UI Skills 的 baseline-ui 更偏纠错；其余结果随场景波动。", "action": "用同一真实页面做盲测，固定模型和提示词，分别评价层级、排版、可访问性、响应式与品牌适配；不要仅凭一次视觉偏好整包安装。", "tools": ["Anthropic Frontend Design", "UI/UX Pro Max", "Impeccable", "Taste Skill", "UI Skills"] },
-  "69cc7661000000001f004053": { "category": "Agent与自动化", "themes": ["Claude Code", "未发布功能", "信息核验"], "summary": "帖子声称从打包产物中发现 Claude Code 的定时触发、持续会话、记忆整理、隐藏模式与多 Agent 协同等实现线索。它把逆向观察、推测和营销化解读混在一起，不能据此认定 Claude Code 已开源或这些功能会正式发布。", "action": "把每项主张拆成可核验清单，只接受 Anthropic 官方文档、版本说明或可复现实验；不要下载来历不明的所谓源码包。", "tools": ["Claude Code"] },
-  "69d8f3eb000000002202aaef": { "category": "Skills与工作流", "themes": ["知识蒸馏", "数字分身", "隐私伦理"], "summary": "视频讨论把名人或同事的资料蒸馏成思维/工作 Skill，并延伸到“反蒸馏”自保。口播称源头为“女娲 Skill”，但尚未唯一核验官方仓库；核心问题是授权、人格冒用、公司知识产权和个人资料边界，而不是技术炫技。", "action": "只处理本人资料或明确授权内容；建立资料来源、删除机制和禁止冒充规则。找到唯一官方仓库前不安装，也不把相似项目当成同一 Skill。", "tools": [] },
-  "69dde9bb000000002202b8ac": { "category": "知识管理与记忆", "themes": ["LLM Wiki", "Obsidian", "Agent Skills"], "summary": "视频用 Claude Code 与 Obsidian 实现三层 LLM Wiki：Raw 原始资料、Wiki 知识页与项目规范，并把 ingest、query、lint 做成三个 Skill，让资料摄取、持续学习和双链/空白巡检形成闭环。", "action": "先用少量公开资料搭建 Raw/Wiki/Assets，逐项定义写入权限、来源引用和 lint 规则；确认能回溯原文后再扩大规模。", "tools": ["Claude Code", "Obsidian"] },
-  "69e0b576000000002003a92e": { "category": "内容增长与商业", "themes": ["小红书KOS", "企业专业号", "账号矩阵"], "summary": "视频介绍由企业专业号绑定多个个人销售账号的 KOS 获客模式，强调私信/联系方式、聚光加热和个人化沟通。内容带有明显招商与流量券推广，开通资格、数量、功能和合规边界必须以小红书当前官方规则为准。", "action": "先向官方渠道核对 KOS 资格、绑定关系、留资规则、广告标识和离职解绑；用单账号小规模测试，不因视频承诺批量认证。", "tools": [] },
-  "69e37c0b0000000021004a1d": { "category": "AI设计与多媒体", "themes": ["OpenPencil", "MCP", "设计自动化"], "summary": "视频展示 OpenPencil 的 MCP 与 Agent Skill：让 Codex、Claude Code 等 Agent 读取和修改设计文档，作为可脚本化、开源的 Figma 替代。官方仓库同时提供设计编辑器、CLI、MCP 和跨 Agent Skill。", "action": "在测试目录安装 MCP，并用 OPENPENCIL_MCP_ROOT 限制文件范围；先验证读取、创建、导出和回滚，再允许 Agent 修改真实设计文件。", "tools": ["OpenPencil"] },
-  "69e45146000000002003b31b": { "category": "AI设计与多媒体", "themes": ["Design Lab", "设计语言", "提示词"], "summary": "作者自建 Design Lab，把 60 多种设计风格拆成原理、色彩、组件与层级，并配真实产品案例、可复制提示词和按产品类型推荐风格的功能。它更像设计语言学习与检索工具，而不是自动保证审美质量的生成器。", "action": "选择一个已有页面，用站内三种风格分别生成提示词和改版草案；比较品牌一致性、可读性与组件可实现性，再保留可复用规则。", "tools": ["Design Lab"] },
-  "69e6a77f000000002102d67c": { "category": "信息采集与搜索", "themes": ["last30days", "趋势研究", "信息到行动"], "summary": "视频讲解 mvanhorn/last30days-skill：并行搜索 Reddit、X、YouTube、Hacker News、Polymarket 与网页，把近 30 天讨论按互动、相关性与新鲜度聚合为带来源的研究简报。真正优势是缩短验证周期，而不是制造永久信息差。", "action": "用一个已知主题做对照研究，检查来源覆盖、引用可追溯、重复聚类和缺失平台；涉及登录或第三方 API 时使用最小权限。", "tools": ["last30days Skill"] },
-  "69e6ddb8000000001f00413c": { "category": "AI设计与多媒体", "themes": ["video-use", "自然语言剪辑", "音频优先"], "summary": "视频介绍 browser-use/video-use：让编码 Agent 先读取带词级时间戳的音频转写，按需查看局部视觉证据，再生成剪辑计划、切除停顿、调色、加字幕与动画，并在交付前检查切点。其核心方法正是文本优先、视觉按需，而不是把整段视频逐帧交给模型。", "action": "先用一段无敏感内容的短素材验证转写、剪辑计划、字幕与回滚；注意官方方案需要 ElevenLabs Scribe API，若重视本地隐私应替换为离线 ASR。", "tools": ["video-use", "FFmpeg"] },
-  "69eb71750000000035033611": { "category": "本地模型与成本", "themes": ["MiniMind", "从零训练LLM", "教学项目"], "summary": "视频介绍 jingyaogong/minimind：用原生 PyTorch 提供从预训练、SFT、LoRA 到强化学习和工具调用的完整小模型链路。官方说明中的“两小时”特指单张 RTX 3090 上完成一次 SFT epoch，不代表任意电脑都能在两小时训练出生产级大模型。", "action": "把它作为理解 LLM 训练流程的教学实验；先按官方 mini 数据跑通最小配置并记录显存、时间和效果，不用宣传数字代替硬件与任务验证。", "tools": ["MiniMind"] },
-  "69f14f480000000022028c14": { "category": "Agent与自动化", "themes": ["Browser Harness", "CDP", "浏览器安全"], "summary": "视频解析 browser-use/browser-harness：以很薄的可编辑层通过 CDP 连接 Chrome，让 Agent 在缺少动作时扩展 helper，而不是受固定 click/type 工具表限制。自由度同时扩大了财务操作、提示注入、静默写操作和自修改代码的风险。", "action": "只用隔离浏览器和测试账号验证读取、导航与文件上传；默认禁用支付、发布和账号设置写操作，并记录每次浏览器动作供人工复核。", "tools": ["Browser Harness"] },
-  "69f48092000000001b0233d9": { "category": "本地模型与成本", "themes": ["RTK", "终端输出压缩", "Token优化"], "summary": "视频介绍 rtk-ai/rtk：在 Agent 与终端命令之间压缩常见开发命令的冗余输出，只保留错误、变更与关键上下文，并统计节省量。官方仓库宣传常见命令可减少 60–90% token；实际收益取决于命令和任务，不能把视频中的约 80% 当成固定结果。", "action": "用一组固定的测试、Git diff 和日志排错任务做 A/B 对照，同时记录 token、答案正确率与被过滤的关键行；发现信息损失就为该命令关闭压缩。", "tools": ["RTK"] },
-  "69f71d0400000000360033cc": { "category": "本地模型与成本", "themes": ["Hugging Face", "开源模型", "任务检索"], "summary": "视频主张不要只看 Hugging Face 热榜，而应按任务寻找可解决真实成本问题的模型，并举时间序列、Text-to-SQL、文档理解、目标检测、深度估计和分割为例。关键纠正是：托管在 Hugging Face 不等于永久免费、可商用或可完全拥有，必须逐个核对许可证、模型卡、依赖与运行成本。", "action": "从一个明确业务问题出发，先筛任务标签，再为候选模型建立许可证、数据来源、硬件、基准和退出方案清单；未经核验不进入生产。", "tools": ["Hugging Face"] },
-  "69fe1512000000001e00ea0c": { "category": "Skills与工作流", "themes": ["Agent能力栈", "工程化", "内容创作"], "summary": "长视频把 Agent Skill 分成四层：用 Skill Creator 与 Find Skills 扩展能力；用 Superpowers、gstack 等约束工程开发；用前端设计 Skill 改善界面；用内容 Skill 处理创作。真正可迁移的原则是按任务补能力、用验收门约束输出，而不是把大量 Skill 整包安装。", "action": "先为研究、开发、设计和内容各选一项最小 Skill；逐项检查权限、触发条件、验收标准和重复能力，只有对照任务确实提升质量才保留。", "tools": ["Skill Creator", "Find Skills", "Superpowers", "gstack"] },
-  "69ff2cb6000000003601fe11": { "category": "信息采集与搜索", "themes": ["AI HOT", "Follow Builders", "Builder Plus"], "summary": "视频把三个开源信息源组合成分层研究系统：AI HOT 扫描筛选过的 AI 新闻源并生成日报；Follow Builders 跟踪一线研究者、创始人与官方博客；Builder Plus 从 Hacker News、GitHub、Reddit 等信号中提炼独立开发方向。价值在来源分工与交叉验证，不是更多信息堆积。", "action": "分别核对三个项目的当前官方仓库和数据源，再用同一天主题比较重合、遗漏与原文可追溯性；名称未唯一核验的项目先不自动安装。", "tools": ["AI HOT", "Follow Builders", "Builder Plus"] },
-  "6a0064a40000000006035187": { "category": "AI设计与多媒体", "themes": ["Seedance 2.0", "数字人口播", "图片转视频"], "summary": "视频演示用一张角色图片、9:16 比例、15 秒时长和包含角色、动作、表情、台词的结构化提示词生成数字人口播；台词过长时拆成多段。它能降低拍摄与初剪成本，但人物授权、AI 标识、连续性和语音真实性仍需人工负责。", "action": "只使用本人或已授权形象做 15 秒测试，固定角色设定并比较三次生成的一致性；发布前标注 AI 生成并检查口型、台词、肖像与声音授权。", "tools": ["Seedance 2.0"] },
-  "6a0549190000000007013d23": { "category": "信息采集与搜索", "themes": ["Scrapling", "自适应选择器", "网页采集"], "summary": "视频介绍 D4Vinci/Scrapling：自适应网页采集框架，选择器可在页面结构变化后重新定位元素，并提供请求、浏览器、Spider、代理轮换、CLI 与 MCP。视频把“绕过任何屏蔽”说得过满；官方能力不构成绕过平台条款、验证码或访问限制的授权。", "action": "仅在自有或明确允许的网站测试选择器恢复、并发、暂停续跑和 MCP；遇到验证码、频控或安全限制立即停止，不尝试绕过。", "tools": ["Scrapling"] },
-  "6a05d372000000000803127c": { "category": "内容增长与商业", "themes": ["小红书搜索", "长尾词", "内容结构"], "summary": "视频给出小红书搜索内容方法：新账号避开竞争激烈的大词，从搜索下拉、同行评论与官方话题中找具体长尾需求；在标题前部、开头、正文和标签自然表达主题，并把同一需求拆成系列内容。视频中的转化率、搜索比例和标签数量是作者主张，不应当作平台固定规则。", "action": "为一个真实主题收集 20 个长尾问题，按搜索意图做 4 周内容实验；以搜索曝光、收藏和实际转化复盘，不使用刷评论或关键词堆砌。", "tools": [] },
-  "6a603e4e000000001d00c0a0": { "category": "AI设计与多媒体", "kind": "Product", "themes": ["VividDub", "视频翻译", "多语言配音"], "summary": "视频介绍 VividDub 的一站式视频本地化流程：接收 YouTube、TikTok、Google Drive 链接或本地文件，完成语音识别、翻译、声音克隆、配音、时间轴字幕、硬字幕移除与重新压制。视频开头清楚展示官方 GitHub 仓库 VividDub/VividDub；该公开仓库目前主要提供产品说明和仓库治理文件，尚未看到应用源码或开源许可证，因此应记录为 GitHub 上的产品项目，而不是 Agent Skill 或已确认的开源源码项目。", "action": "先阅读官方 GitHub 仓库与产品说明，再用一段本人拥有版权的短视频测试一种目标语言；核对翻译、说话人授权、口型与字幕时间轴，并在提交敏感素材前确认隐私、保存期限、删除方式与计费。", "tools": ["VividDub"] }
+  "6a5d5d1b000000001c010d2d": {
+    "category": "信息采集与搜索",
+    "themes": [
+      "Wigolo",
+      "本地搜索",
+      "MCP"
+    ],
+    "summary": "视频介绍 Wigolo：一个本地优先的网页搜索、抓取、爬取和研究 MCP，使用本地基础设施工作，不要求额外搜索 API Key。",
+    "action": "在隔离环境测试 Wigolo 的索引来源、搜索新鲜度、引用可追溯性及本地资源占用。",
+    "tools": [
+      "Wigolo"
+    ]
+  },
+  "6a5cb781000000000a03a154": {
+    "category": "开发部署与Vibe Coding",
+    "themes": [
+      "Archify",
+      "架构图",
+      "流程图"
+    ],
+    "summary": "视频展示 Archify：把自然语言系统描述转换为架构图、流程图、时序图和数据库图，并可导出 PNG/SVG；当前画面未显示公开 GitHub 仓库。",
+    "action": "找到 Archify 官网并用本项目描述生成图，逐项检查组件、数据流和安全边界。",
+    "tools": [
+      "Archify"
+    ]
+  },
+  "6a5dbb1e000000000f00bcf8": {
+    "category": "Skills与工作流",
+    "themes": [
+      "AnySearch",
+      "联网搜索",
+      "Claude与Codex"
+    ],
+    "summary": "完整演示 AnySearch Skill：同一搜索层覆盖网页、代码、学术、安全与商业信息，可在 Claude、Codex 中生成带来源的研究结果，并提供 MCP/API 接入。",
+    "action": "审查 AnySearch 的数据源、远程请求和凭据处理，用固定研究问题与原生搜索做引用准确率对照。",
+    "tools": [
+      "AnySearch Skill"
+    ]
+  },
+  "6a5b9ac6000000000a0391f1": {
+    "category": "Agent与自动化",
+    "themes": [
+      "GitHub周榜",
+      "多Agent",
+      "内容生产"
+    ],
+    "summary": "长视频逐项讲解本周五个项目：OpenCut 视频编辑器、hallmark 设计工作流、Vibe-Trading 多 Agent 交易研究、orca 并行 Agent 编排和 OfficeCLI 文档自动化。",
+    "action": "把五个项目拆成独立实验卡；优先验证 OpenCut、orca 和 OfficeCLI 的本地可运行性。",
+    "tools": [
+      "OpenCut",
+      "hallmark",
+      "Vibe-Trading",
+      "orca",
+      "OfficeCLI"
+    ]
+  },
+  "6a5a3a29000000001c00d15b": {
+    "category": "开发部署与Vibe Coding",
+    "themes": [
+      "Grok Build",
+      "Agent框架",
+      "开源"
+    ],
+    "summary": "视频系统介绍 Grok Build 的全量开源：以 Agent 为核心、Rust 工具链、Apache-2.0、可扩展模型与工具、SpaceXAI 集成，并讨论从需求到部署的完整开发循环。",
+    "action": "核实官方仓库当前代码与许可证，用同一小应用对比现有 coding agent 的可测试性和可维护性。",
+    "tools": [
+      "Grok Build"
+    ]
+  },
+  "6a58cb21000000001101b30c": {
+    "category": "Agent与自动化",
+    "themes": [
+      "Record and Replay",
+      "Codex Skill",
+      "RPA"
+    ],
+    "summary": "短视频提出 Record & Replay 工作流：人工演示一次点击、填写与提交，Codex 将步骤固化成可复用 Skill，用于批量接管重复岗位流程；画面没有给出独立仓库名。",
+    "action": "将其视为工作流模式而非已核实插件，只在虚拟测试表单上验证录制、参数化、重放和失败回滚。",
+    "tools": [
+      "Record & Replay"
+    ]
+  },
+  "6a581de1000000000f006b3a": {
+    "category": "垂直工具与数据",
+    "themes": [
+      "FinanceDatabase",
+      "Python",
+      "金融标的"
+    ],
+    "summary": "视频实际演示 FinanceDatabase 的 Python API：按国家、行业和市值筛选股票、ETF、基金、指数、货币与加密资产，并可衔接 Finance Toolkit。它是标的元数据，不是实时行情源。",
+    "action": "抽查澳洲与美国市场的字段和更新时间，验证筛选结果后再决定是否作为金融知识库基础层。",
+    "tools": [
+      "FinanceDatabase",
+      "Finance Toolkit"
+    ]
+  },
+  "6a56e91c000000000803ce3f": {
+    "category": "Skills与工作流",
+    "themes": [
+      "Graphify",
+      "知识图谱",
+      "代码理解"
+    ],
+    "summary": "视频中的 Skill 是 Graphify：把代码、SQL schema、脚本、文档、论文、图片和视频转换为可查询知识图谱，支持 Claude Code、Codex、Cursor、Gemini CLI 等宿主，并可追踪代码节点路径。",
+    "action": "在本仓库的小型副本运行 Graphify，检查图谱是否准确表达采集、构建和知识卡片之间的依赖。",
+    "tools": [
+      "Graphify"
+    ]
+  },
+  "6a5420d500000000060310a2": {
+    "category": "信息采集与搜索",
+    "themes": [
+      "MediaCrawler",
+      "社媒采集",
+      "浏览器登录态"
+    ],
+    "summary": "视频明确展示 MediaCrawler 可抓取小红书、抖音、快手、B站、微博、贴吧、知乎的公开内容与评论，并通过浏览器登录态签名而不是逆向 JavaScript。",
+    "action": "仅对自有账号和获授权内容做只读测试，记录平台风控、登录态安全和可维护成本。",
+    "tools": [
+      "MediaCrawler"
+    ]
+  },
+  "6a53c47800000000150268e6": {
+    "category": "本地模型与成本",
+    "themes": [
+      "Headroom",
+      "Token压缩",
+      "Claude Code"
+    ],
+    "summary": "视频介绍 Headroom：在工具输出、日志、文件、数据库转储与 RAG 片段进入模型前做压缩；示例把约 17,765 token 降到 1,408，并提供库、代理与 MCP 接入。",
+    "action": "用固定代码排错任务实测 token、答案正确率、延迟和遗漏；不能直接采用视频宣称的 92% 作为结论。",
+    "tools": [
+      "Headroom"
+    ]
+  },
+  "6a52740f000000001503fec2": {
+    "category": "内容增长与商业",
+    "themes": [
+      "ScrapeGraphAI",
+      "出海获客",
+      "公开线索"
+    ],
+    "summary": "视频以 ScrapeGraphAI 演示用 Python 抓取目标网站并让模型抽取公司、联系人和资源字段，随后把结构化线索用于出海客户研究。",
+    "action": "先定义合法公开字段和禁止采集项，再对 20 条公开公司资料验证准确率与人工复核成本。",
+    "tools": [
+      "ScrapeGraphAI"
+    ]
+  },
+  "6a50c4a7000000001101e847": {
+    "category": "Skills与工作流",
+    "themes": [
+      "last30days",
+      "社媒研究",
+      "时效检索"
+    ],
+    "summary": "视频实际展示 last30days Skill，而不是浏览器：输入主题后检索最近 30 天 Reddit、X、YouTube、TikTok、HN、GitHub 与网页讨论，最后生成带来源的趋势和观点报告。",
+    "action": "检查每个数据源所需 Cookie/API 权限，并用一个已知话题验证日期范围、引用和观点覆盖。",
+    "tools": [
+      "last30days Skill"
+    ]
+  },
+  "6a506c6a000000002100b1a5": {
+    "category": "Agent与自动化",
+    "themes": [
+      "Mano-P",
+      "GUI-VLA",
+      "本地推理"
+    ],
+    "summary": "视频演示 Mano-P 在本地视觉模型下理解屏幕、玩麻将和执行跨应用 GUI 任务；它强调端侧隐私，但硬件要求集中在 M4/32GB 以上 Apple Silicon 或专用算力棒。",
+    "action": "当前 Windows 机器先做资料评估，不直接安装；重点核实模型与 SDK 实际开放程度、硬件和误操作防护。",
+    "tools": [
+      "Mano-P"
+    ]
+  },
+  "6a4e1432000000001603daf9": {
+    "category": "开发部署与Vibe Coding",
+    "themes": [
+      "awesome-selfhosted",
+      "自托管",
+      "项目目录"
+    ],
+    "summary": "视频明确推荐 awesome-selfhosted：按 140 多个类别整理约 1,400 个可在自有服务器部署的应用与源码，覆盖网盘、自动化、游戏、邮件和博客。",
+    "action": "把它当发现索引而非安装清单，只挑与知识库采集、搜索和备份直接相关的项目继续审查。",
+    "tools": [
+      "awesome-selfhosted"
+    ]
+  },
+  "6a4cc27e000000000803c3c9": {
+    "category": "开发部署与Vibe Coding",
+    "themes": [
+      "awesome-selfhosted",
+      "开源目录",
+      "自托管"
+    ],
+    "summary": "视频同样展示 awesome-selfhosted：GitHub 上的大型自托管项目目录，画面列出约 143 个分类和 1,497 个项目，并强调每项可查看源码与部署方式。",
+    "action": "与另一篇重复收藏合并来源，不重复建能力；仅保留目录入口和筛选规则。",
+    "tools": [
+      "awesome-selfhosted"
+    ]
+  },
+  "6a4c8cb2000000001603ed97": {
+    "category": "知识管理与记忆",
+    "themes": [
+      "Scritty",
+      "多Agent记忆",
+      "MCP"
+    ],
+    "summary": "视频完整展示 Scritty：把 Claude Code、Codex、Copilot CLI、Antigravity、Aider 与 Ollama 放进同一终端，自动捕获每次对话，建立本地可搜索记忆，并通过 MCP/CLI 供 Agent 回读。",
+    "action": "注意其产品闭源且收费；先审查本地存储、加密、遥测、导出和删除，再与纯 Markdown 方案对比。",
+    "tools": [
+      "Scritty"
+    ]
+  },
+  "6a4afd18000000001101092b": {
+    "category": "开发部署与Vibe Coding",
+    "themes": [
+      "EdgeOne Pages",
+      "Agent部署",
+      "定时任务"
+    ],
+    "summary": "长视频从本地代码演示 EdgeOne Pages：导入项目后自动构建与部署，配置域名、环境变量、数据处理、定时任务、DDoS 防护、全球节点和身份认证。",
+    "action": "用无敏感数据 Demo 验证构建日志、环境变量、域名、回滚和费用边界。",
+    "tools": [
+      "EdgeOne Pages"
+    ]
+  },
+  "6a4b71cd000000000f006747": {
+    "category": "知识管理与记忆",
+    "themes": [
+      "Meetily",
+      "会议转写",
+      "本地隐私"
+    ],
+    "summary": "视频项目是 Meetily（仓库 Zackriya-Solutions/meetily）：本地录音、实时转写和会议摘要，可用 Ollama 本地模型，也可选 Claude 等服务；重点是会议数据不必上传云端。",
+    "action": "测试中文转写、系统音频采集和 Markdown 导出，并在录音前建立参与者授权规则。",
+    "tools": [
+      "Meetily"
+    ]
+  },
+  "6a49ec170000000020038350": {
+    "category": "Skills与工作流",
+    "themes": [
+      "Agent-Reach",
+      "跨平台检索",
+      "CLI"
+    ],
+    "summary": "视频项目是 Agent-Reach：为 Agent 选择并配置网页、X、Reddit、YouTube、GitHub、B站与小红书等上游读取工具，提供安装、诊断和路由层；部分平台仍依赖登录态。",
+    "action": "先用 dry-run/safe 模式审查它将安装的依赖和凭据路径，主账号不启用小红书写操作。",
+    "tools": [
+      "Agent-Reach"
+    ]
+  },
+  "6a43955b0000000015027d45": {
+    "category": "内容增长与商业",
+    "themes": [
+      "Postiz",
+      "社媒运营",
+      "自动排期"
+    ],
+    "summary": "长视频以 Postiz 解释零员工社媒运营：集中管理账号、内容日历、AI 生成、评论互动和多平台发布，也展示与 Cursor/ChatGPT 等 AI 工具联动。",
+    "action": "只启用草稿和人工审核；核实各平台官方 OAuth、权限撤销和失败重试后再考虑发布。",
+    "tools": [
+      "Postiz"
+    ]
+  },
+  "6a4305de0000000017008217": {
+    "category": "本地模型与成本",
+    "themes": [
+      "whichllm",
+      "本地大模型",
+      "硬件评估"
+    ],
+    "summary": "视频画面显示的项目是 Andyyyy64/whichllm：读取 GPU、CPU 和内存配置，从 Hugging Face 模型中推荐适合本机的模型与量化规格。",
+    "action": "使用只读硬件检测运行 whichllm，并以实际显存占用、生成速度和任务质量复核推荐结果。",
+    "tools": [
+      "whichllm"
+    ]
+  },
+  "6a40ee50000000001502518f": {
+    "category": "知识管理与记忆",
+    "themes": [
+      "Cognee",
+      "知识图谱",
+      "长期记忆"
+    ],
+    "summary": "短视频展示 Cognee 把句子与文档转成可推理的记忆图谱，并支持 OpenClaw、Claude Code 等 Agent 共享、检索和持久化知识。",
+    "action": "用 32 篇收藏做隔离数据集，测试 remember/recall/forget、更新冲突、导出和删除。",
+    "tools": [
+      "Cognee"
+    ]
+  },
+  "6a3fdfbf000000001101ca6f": {
+    "category": "知识管理与记忆",
+    "themes": [
+      "CocoIndex",
+      "增量索引",
+      "AST"
+    ],
+    "summary": "视频项目是 CocoIndex：用 AST 语义索引替代把整仓库全文塞给模型，只向 Agent 提供相关结构与路径；示例强调约 70% token 节省和更低检索延迟。",
+    "action": "用同一代码问答任务对比全文 RAG 与 CocoIndex 的 token、召回率、延迟和索引更新成本。",
+    "tools": [
+      "CocoIndex"
+    ]
+  },
+  "6a376f5a0000000022015195": {
+    "category": "Skills与工作流",
+    "themes": [
+      "GitHub合集",
+      "Skill",
+      "开发工具"
+    ],
+    "summary": "视频逐项列出六个项目：mattpocock/skills、Pake、Palmier Pro、Headroom、codebase-memory-mcp 和 SmsForwarder；分别覆盖 Skill 集合、网页打包、AI 视频编辑、上下文压缩、代码记忆和短信转发。",
+    "action": "保留六个独立项目记录；优先审查 skills 与 codebase-memory-mcp，其他按平台需求归档。",
+    "tools": [
+      "mattpocock/skills",
+      "Pake",
+      "Palmier Pro",
+      "Headroom",
+      "codebase-memory-mcp",
+      "SmsForwarder"
+    ]
+  },
+  "6a36a67b0000000015027543": {
+    "category": "本地模型与成本",
+    "themes": [
+      "Headroom",
+      "Token压缩",
+      "成本"
+    ],
+    "summary": "7 秒信息图明确指向 Headroom，宣传对结构化工具输出可减少 60–95% token，并兼容 Claude、Cursor、MCP 与 API；它与另一篇长视频是重复来源。",
+    "action": "与长视频合并到同一 Headroom 项目卡，只保留第二来源，不重复测试。",
+    "tools": [
+      "Headroom"
+    ]
+  },
+  "6a33fe4e000000001003ec3a": {
+    "category": "Skills与工作流",
+    "themes": [
+      "符号链接",
+      "Claude",
+      "Codex"
+    ],
+    "summary": "长教程在 macOS 用 ln -s 让 Claude Code 与 Codex 共享同一 Skills 源目录，避免复制和版本漂移；核心是单一真源，不是一个独立 Skill。",
+    "action": "本项目维持单一源目录；Windows 使用项目内适配层或受控目录联接，并加入失效检测。",
+    "tools": [
+      "符号链接"
+    ]
+  },
+  "6a316666000000001c024e6f": {
+    "category": "Skills与工作流",
+    "themes": [
+      "社区Skill",
+      "工作流设计",
+      "联网"
+    ],
+    "summary": "长视频依次讲解五个社区项目：andrej-karpathy-skills、PPT Master、dot-skill、PUA/PIP 和 web-access，并明确讨论编码约束、演示文稿、人格蒸馏、持续调试与联网能力的差异和风险。",
+    "action": "优先测试编码约束与 PPT；web-access 仅隔离浏览器；dot-skill 不处理未授权真人资料。",
+    "tools": [
+      "andrej-karpathy-skills",
+      "PPT Master",
+      "dot-skill",
+      "PUA",
+      "web-access"
+    ]
+  },
+  "6a2ffe49000000001503c4f2": {
+    "category": "内容增长与商业",
+    "themes": [
+      "Omnify AI",
+      "一人公司",
+      "多Agent团队"
+    ],
+    "summary": "视频产品是 Omnify AI：通过智能 HR 招募脚本、角色、分镜、视频生成和质检等 Agent，自动拆解短剧任务并协作产出成片；属于托管产品，不是已核实 GitHub Skill。",
+    "action": "只做产品研究，先核实定价、素材版权、模型来源和数据出口，再判断是否值得试用。",
+    "tools": [
+      "Omnify AI"
+    ]
+  },
+  "6a2e130d0000000007011c4a": {
+    "category": "Skills与工作流",
+    "themes": [
+      "Loop Engineering",
+      "Claude Code",
+      "验证循环"
+    ],
+    "summary": "视频展示一个含 40 个可复制 Loop 的网站，覆盖构建至绿、覆盖率、性能、Bug、文档与安全等场景；关键结构是步骤、检查命令、退出条件和护栏，而不是单次提示词。",
+    "action": "从中选研究、实现、测试、复盘四类，改写为不绑定 Claude 的跨 Agent 模板。",
+    "tools": [
+      "Loop Engineering"
+    ]
+  },
+  "6a2a81d1000000001702d3de": {
+    "category": "Skills与工作流",
+    "themes": [
+      "last30days",
+      "社媒研究",
+      "趋势"
+    ],
+    "summary": "视频中的 GitHub 热门项目是 last30days Skill：聚合最近 30 天 Reddit、X、TikTok、Instagram、YouTube 等讨论，输出近期共识、争议、来源和研究简报。",
+    "action": "与另一篇重复来源合并；安装前检查浏览器 Cookie、可选 API Key、保存路径和引用质量。",
+    "tools": [
+      "last30days Skill"
+    ]
+  },
+  "6a275d1d000000001702f817": {
+    "category": "信息采集与搜索",
+    "themes": [
+      "MarkItDown",
+      "文档转换",
+      "Token优化"
+    ],
+    "summary": "视频明确讲解 Microsoft MarkItDown：大 PDF 直接交给 Claude 会消耗大量 token，先转换成保留标题、列表、表格和链接的 Markdown 可明显降低上下文成本，并可通过 MCP 接入。",
+    "action": "用同一份 PDF 对比直接上传与 MarkItDown 的 token、表格保真、OCR 缺失和回答准确率。",
+    "tools": [
+      "Microsoft MarkItDown"
+    ]
+  },
+  "6a26d979000000003502fb50": {
+    "category": "开发部署与Vibe Coding",
+    "themes": [
+      "Cloud Mail",
+      "Cloudflare",
+      "自托管邮件"
+    ],
+    "summary": "完整视频展示 maillab/cloud-mail：在 Cloudflare 上为自有域名建立多邮箱收件服务，支持邮件与附件、用户管理、转发、API 和 Resend 集成。它更适合低成本收件与自动化，不应直接等同于完整企业邮件套件。",
+    "action": "先用测试域名部署隔离实例，检查 DNS、转发、附件保存、访问控制、垃圾邮件与数据保留，再决定是否接入正式域名。",
+    "tools": [
+      "Cloud Mail"
+    ]
+  },
+  "6a25baca000000000803d0c8": {
+    "category": "内容增长与商业",
+    "themes": [
+      "AiToEarn",
+      "一人公司",
+      "内容自动化"
+    ],
+    "summary": "逐帧确认项目为 yikart/AiToEarn：围绕创建、发布、互动和变现组织一人公司的内容工作流，可按平台生成标题、封面与标签、辅助回复，并提供 Docker 和 MCP/SSE 接入。",
+    "action": "用一个无商业敏感信息的测试账号验证草稿生成、平台适配、人工审核和失败回滚；不直接开放自动发布权限。",
+    "tools": [
+      "AiToEarn"
+    ]
+  },
+  "6a26ddbb0000000017008a8b": {
+    "category": "Skills与工作流",
+    "themes": [
+      "Claude",
+      "提示模式",
+      "写作与决策"
+    ],
+    "summary": "视频讲解五类可复用提示模式：降低机器腔、补充文件上下文、用 OODA 组织决策、指定专家深度，以及切换回答风格；画面还展示一份 Claude Code 提示词清单。这些是作者自定义提示约定，不是已经核实的 Claude 内置命令。",
+    "action": "把有效模式改写成跨 Agent 的提示模板，并用同一写作或研究任务做盲测；不要把 /ghost 等自定义写法宣传成官方命令。",
+    "tools": [
+      "Claude 提示模式"
+    ]
+  },
+  "6a29439c000000002202cf7d": {
+    "category": "Skills与工作流",
+    "themes": [
+      "阿里云百炼",
+      "多模态生成",
+      "AIGC工作流"
+    ],
+    "summary": "长视频完整演示阿里云百炼 CLI 为 Agent 提供图片、语音和视频生成能力，并展示 aliang2052/aliang-skills 的六个创作 Skill，覆盖短剧、电商图、儿童故事、有声绘本、播客和语音合成。",
+    "action": "先安装 CLI 并只测试低成本步骤；逐个审查 Skill 的 API Key、素材版权、付费调用和人工确认点，图生视频必须显式确认后才执行。",
+    "tools": [
+      "阿里云百炼 CLI",
+      "aliang-skills"
+    ]
+  },
+  "6a2953790000000006033b61": {
+    "category": "Agent与自动化",
+    "themes": [
+      "AutoResearch",
+      "自主实验",
+      "评估循环"
+    ],
+    "summary": "视频解释 karpathy/autoresearch 的自主实验循环：Agent 修改训练代码、运行固定时长实验、按指标保留或丢弃结果；核心由 program.md、prepare.py 和 train.py 组成。视频还演示把这套结构迁移到交易、营销和开发实验，但迁移效果取决于可量化目标和约束。",
+    "action": "先在无资金、无生产写权限的沙盒中定义单一指标、固定预算和停止条件，并人工检查是否出现指标投机，再考虑迁移到真实业务。",
+    "tools": [
+      "AutoResearch"
+    ]
+  },
+  "6a2bb8db000000001603de2d": {
+    "category": "Skills与工作流",
+    "themes": [
+      "GitHub周榜",
+      "Agent Skills",
+      "开源工具"
+    ],
+    "summary": "逐帧整理出视频榜单的五个主项目：last30days-skill、pm-skills、hermes-agent、Agent-Reach 和 open-notebook；补充项目包括 Impeccable、Open-LLM-VTuber、Harness 与 Taste Skill。它们分别覆盖近期研究、产品管理、成长型 Agent、跨平台读取、NotebookLM 替代、界面设计、Agent 团队生成和设计规范。",
+    "action": "不要整包安装；按研究、产品、Agent、知识库和设计五类分别建立最小实验，先核对权限、许可证、外部服务和数据出口。",
+    "tools": [
+      "last30days Skill",
+      "pm-skills",
+      "Hermes Agent",
+      "Agent-Reach",
+      "Open Notebook",
+      "Impeccable",
+      "Open-LLM-VTuber",
+      "Harness",
+      "Taste Skill"
+    ]
+  },
+  "6a2bde9300000000160268de": {
+    "category": "开发部署与Vibe Coding",
+    "themes": [
+      "Build Your Own X",
+      "计算机基础",
+      "项目式学习"
+    ],
+    "summary": "视频指向 codecrafters-io/build-your-own-x：按技术类别汇总从零实现数据库、浏览器、Docker、操作系统、AI 等系统的分步教程。它是学习资源索引，不是可直接安装的 Skill。",
+    "action": "按当前学习目标只选择一个项目，先写出要理解的三个机制和验收标准，再完成教程并记录与生产级实现的差距。",
+    "tools": [
+      "Build Your Own X"
+    ]
+  },
+  "69d0771d000000001a027404": {
+    "category": "AI设计与多媒体",
+    "themes": [
+      "AiWind",
+      "电商图片",
+      "提示词库"
+    ],
+    "summary": "视频展示 AiWind 的 AI 提示词库：以效果图配合可复制提示词，重点收录 1,000 多条 Nano Banana Pro 案例，也覆盖商品摄影、服装模特、海报和多种视觉风格；网站无需登录即可浏览。它是提示词与案例资源，不是生成模型本身。",
+    "action": "从真实商品中选一个低风险样例，复制三组提示词到同一模型，比较构图稳定性、商品一致性与商用素材版权；不要把示例效果直接当成可保证结果。",
+    "tools": [
+      "AiWind"
+    ]
+  },
+  "69febd02000000003700c629": {
+    "category": "内容增长与商业",
+    "themes": [
+      "CRMEB",
+      "电商系统",
+      "私域运营"
+    ],
+    "summary": "视频展示 crmeb/CRMEB：一套覆盖商城、会员、营销活动、订单与后台运营的开源电商系统，可作为私域电商或二次开发底座。画面中的“副业神器”是营销表达；真正需要评估的是部署复杂度、支付与用户数据安全、升级迁移和持续运维。",
+    "action": "先用隔离测试环境完成商品、下单、支付沙盒、退款和权限审计；确认许可证、备份恢复、升级路径与隐私合规后，再决定是否承载真实交易。",
+    "tools": [
+      "CRMEB"
+    ]
+  },
+  "6a017b900000000036033c00": {
+    "category": "AI设计与多媒体",
+    "themes": [
+      "Higgsfield",
+      "视频预测",
+      "内容评估"
+    ],
+    "summary": "视频演示 Higgsfield Virality Predictor：在发布前上传视频，由模型从开场、节奏、镜头与传播信号给出爆款概率和改进方向。逐帧核验到官方开源仓库 higgsfield-ai/skills 与 higgsfield-ai/cli；预测结果只能作为创作假设，不能当成真实平台流量保证。",
+    "action": "用已发布且表现已知的 20 条自有视频做盲测，比较预测与真实完播、互动和转化；上传前确认素材权利与隐私，并把建议转成 A/B 版本而不是直接改掉原片。",
+    "tools": [
+      "Higgsfield Skills",
+      "Higgsfield CLI"
+    ]
+  },
+  "69ff34730000000023017de6": {
+    "category": "内容增长与商业",
+    "themes": [
+      "营销团队",
+      "Agent Skills",
+      "内容工作流"
+    ],
+    "summary": "视频把五类营销能力组成一个 AI 营销团队：文案、广告创意、SEO/AEO、邮件序列和落地页 CRO。核心仓库是 coreyhaines31/marketingskills；画面中的 seo-geo-claude-skills 已迁移，当前对应 aaron-he-zhu/aaron-marketing-skills。价值不在一次生成，而在共享产品背景、角色分工和质量门槛。",
+    "action": "先建立一份产品营销上下文，再只启用文案、SEO 和 CRO 三个角色跑同一落地页；用事实核对、品牌语气、合规声明和人工发布作为统一质量门。",
+    "tools": [
+      "Marketing Skills",
+      "Aaron Marketing Skills"
+    ]
+  },
+  "69fe986a000000003501ea35": {
+    "category": "信息采集与搜索",
+    "themes": [
+      "AI HOT",
+      "热点扫描",
+      "中文信源"
+    ],
+    "summary": "长视频完整展示 AI HOT：从中文 AI 信源读取 24 小时、7 天、当前热榜与日报，并用快照差异识别新出现或持续升温的主题。官方 Skill 位于 KKKKhazix/khazix-skills 的 aihot 目录，支持 Claude、Codex、Gemini 等 Agent；读取端无需 API Key，但结论仍需回到原始链接核实。",
+    "action": "把它接入每日只读研究流程：先读趋势变化，再挑 3 条与当前内容方向相关的原始来源核验；保留来源与日期，不把热度排名直接当成事实或选题质量。",
+    "tools": [
+      "AI HOT",
+      "Khazix Skills"
+    ]
+  },
+  "69fb2924000000003700e5c8": {
+    "category": "Skills与工作流",
+    "themes": [
+      "内容创作",
+      "Agent Skills",
+      "多媒体"
+    ],
+    "summary": "逐帧确认视频列出的七项：Agent-Reach、OpenCLI、PleasePrompto/notebooklm-skill、ListenHub Skills、google-labs-code/stitch-skills 中的 Remotion Skill、Humanizer-zh 和 baoyu-skills。它们分别解决跨平台取材、网页命令化、资料问答、播客/音视频生成、产品演示视频、中文改写和图文内容生产；并非都适合整包安装。",
+    "action": "按内容链路分批试用：先只读取材与资料问答，再测试草稿与视频生成；涉及浏览器登录、Google 会话、ListenHub API、外部素材和自动发布时必须单独授权，默认保留人工审核。",
+    "tools": [
+      "Agent-Reach",
+      "OpenCLI",
+      "NotebookLM Skill",
+      "ListenHub Skills",
+      "Stitch Remotion Skill",
+      "Humanizer-zh",
+      "baoyu-skills"
+    ]
+  },
+  "6a0fb1430000000013020401": {
+    "category": "内容增长与商业",
+    "themes": [
+      "Meta Ads",
+      "Claude Connector",
+      "广告投放"
+    ],
+    "summary": "视频展示用 Claude 自定义 Connector/MCP 串联 Meta Ads 与 Higgsfield：先生成产品创意，再把素材送入广告管理流程并分析投放结果。画面没有提供可唯一核验的公开 Connector 仓库，因此不把它冒充开源 Skill；这是一个需要广告账户权限和真实预算的工作流示例。",
+    "action": "只在测试广告账户建立草稿链路，限制为读取报表和创建未发布草稿；设置固定日预算、素材权利检查、受众合规和人工发布门，不允许 Agent 直接改预算或启动广告。",
+    "tools": [
+      "Claude Custom Connector",
+      "Meta Ads",
+      "Higgsfield"
+    ]
+  },
+  "6a058b540000000038034851": {
+    "category": "开发部署与Vibe Coding",
+    "themes": [
+      "FreeDomain",
+      "免费子域名",
+      "DNS"
+    ],
+    "summary": "视频介绍 DigitalPlatDev/FreeDomain：通过社区项目申请免费子域名，并可把 DNS 托管到 Cloudflare、FreeDNS 或 Hostry。它提供的是子域名而非自有顶级域名；服务连续性、滥用政策、续期和域名控制权都需要在正式使用前确认。",
+    "action": "先把它用于演示或临时项目，测试 DNS、HTTPS、迁移和失效恢复；品牌官网、邮箱和长期业务仍优先使用自己持有的域名。",
+    "tools": [
+      "FreeDomain"
+    ]
+  },
+  "69abfa18000000001600b3e1": {
+    "category": "内容增长与商业",
+    "themes": [
+      "Marketing Skills",
+      "用户增长",
+      "产品上下文"
+    ],
+    "summary": "视频讲解 coreyhaines31/marketingskills：把文案、营销点子和增长场景拆成可调用 Skill，并让各模块共享同一份产品、人群、卖点与竞品上下文。价值在于把营销 know-how 结构化，而不是让 AI 无背景地批量输出。",
+    "action": "先建立可核实的产品营销上下文，只试 copywriting 与 marketing-ideas 两项；用品牌语气、事实准确、渠道合规和人工发布作为验收门。",
+    "tools": [
+      "Marketing Skills"
+    ]
+  },
+  "69c3acb9000000001a028e64": {
+    "category": "Skills与工作流",
+    "themes": [
+      "OpenClaw",
+      "学习资源",
+      "Skill目录"
+    ],
+    "summary": "口播推荐三个 OpenClaw 学习入口：一套分阶段教程、一个面向中文用户的 Skill 集合和一个中文社区，分别解决学习路径、技能发现与安装说明。音频中的网站名称存在识别歧义，尚不能唯一绑定官方网址。",
+    "action": "从原帖或画面只补齐三个准确域名后立即停止视频检查；逐一确认运营主体、安装来源和是否要求上传凭据，再加入资源索引。",
+    "tools": []
+  },
+  "69c54ab8000000002103bcd1": {
+    "category": "AI设计与多媒体",
+    "themes": [
+      "Design Skills",
+      "前端审美",
+      "对照测评"
+    ],
+    "summary": "设计师用同一提示词各跑三次，对比 Anthropic Frontend Design、UI/UX Pro Max、Impeccable、Taste 与 UI Skills。前五项中 Impeccable 的风格与细节最稳定；Anthropic 适合作为简洁基线；UI Skills 的 baseline-ui 更偏纠错；其余结果随场景波动。",
+    "action": "用同一真实页面做盲测，固定模型和提示词，分别评价层级、排版、可访问性、响应式与品牌适配；不要仅凭一次视觉偏好整包安装。",
+    "tools": [
+      "Anthropic Frontend Design",
+      "UI/UX Pro Max",
+      "Impeccable",
+      "Taste Skill",
+      "UI Skills"
+    ]
+  },
+  "69cc7661000000001f004053": {
+    "category": "Agent与自动化",
+    "themes": [
+      "Claude Code",
+      "未发布功能",
+      "信息核验"
+    ],
+    "summary": "帖子声称从打包产物中发现 Claude Code 的定时触发、持续会话、记忆整理、隐藏模式与多 Agent 协同等实现线索。它把逆向观察、推测和营销化解读混在一起，不能据此认定 Claude Code 已开源或这些功能会正式发布。",
+    "action": "把每项主张拆成可核验清单，只接受 Anthropic 官方文档、版本说明或可复现实验；不要下载来历不明的所谓源码包。",
+    "tools": [
+      "Claude Code"
+    ]
+  },
+  "69d8f3eb000000002202aaef": {
+    "category": "Skills与工作流",
+    "themes": [
+      "知识蒸馏",
+      "数字分身",
+      "隐私伦理"
+    ],
+    "summary": "视频讨论把名人或同事的资料蒸馏成思维/工作 Skill，并延伸到“反蒸馏”自保。口播称源头为“女娲 Skill”，但尚未唯一核验官方仓库；核心问题是授权、人格冒用、公司知识产权和个人资料边界，而不是技术炫技。",
+    "action": "只处理本人资料或明确授权内容；建立资料来源、删除机制和禁止冒充规则。找到唯一官方仓库前不安装，也不把相似项目当成同一 Skill。",
+    "tools": []
+  },
+  "69dde9bb000000002202b8ac": {
+    "category": "知识管理与记忆",
+    "themes": [
+      "LLM Wiki",
+      "Obsidian",
+      "Agent Skills"
+    ],
+    "summary": "视频用 Claude Code 与 Obsidian 实现三层 LLM Wiki：Raw 原始资料、Wiki 知识页与项目规范，并把 ingest、query、lint 做成三个 Skill，让资料摄取、持续学习和双链/空白巡检形成闭环。",
+    "action": "先用少量公开资料搭建 Raw/Wiki/Assets，逐项定义写入权限、来源引用和 lint 规则；确认能回溯原文后再扩大规模。",
+    "tools": [
+      "Claude Code",
+      "Obsidian"
+    ]
+  },
+  "69e0b576000000002003a92e": {
+    "category": "内容增长与商业",
+    "themes": [
+      "小红书KOS",
+      "企业专业号",
+      "账号矩阵"
+    ],
+    "summary": "视频介绍由企业专业号绑定多个个人销售账号的 KOS 获客模式，强调私信/联系方式、聚光加热和个人化沟通。内容带有明显招商与流量券推广，开通资格、数量、功能和合规边界必须以小红书当前官方规则为准。",
+    "action": "先向官方渠道核对 KOS 资格、绑定关系、留资规则、广告标识和离职解绑；用单账号小规模测试，不因视频承诺批量认证。",
+    "tools": []
+  },
+  "69e37c0b0000000021004a1d": {
+    "category": "AI设计与多媒体",
+    "themes": [
+      "OpenPencil",
+      "MCP",
+      "设计自动化"
+    ],
+    "summary": "视频展示 OpenPencil 的 MCP 与 Agent Skill：让 Codex、Claude Code 等 Agent 读取和修改设计文档，作为可脚本化、开源的 Figma 替代。官方仓库同时提供设计编辑器、CLI、MCP 和跨 Agent Skill。",
+    "action": "在测试目录安装 MCP，并用 OPENPENCIL_MCP_ROOT 限制文件范围；先验证读取、创建、导出和回滚，再允许 Agent 修改真实设计文件。",
+    "tools": [
+      "OpenPencil"
+    ]
+  },
+  "69e45146000000002003b31b": {
+    "category": "AI设计与多媒体",
+    "themes": [
+      "Design Lab",
+      "设计语言",
+      "提示词"
+    ],
+    "summary": "作者自建 Design Lab，把 60 多种设计风格拆成原理、色彩、组件与层级，并配真实产品案例、可复制提示词和按产品类型推荐风格的功能。它更像设计语言学习与检索工具，而不是自动保证审美质量的生成器。",
+    "action": "选择一个已有页面，用站内三种风格分别生成提示词和改版草案；比较品牌一致性、可读性与组件可实现性，再保留可复用规则。",
+    "tools": [
+      "Design Lab"
+    ]
+  },
+  "69e6a77f000000002102d67c": {
+    "category": "信息采集与搜索",
+    "themes": [
+      "last30days",
+      "趋势研究",
+      "信息到行动"
+    ],
+    "summary": "视频讲解 mvanhorn/last30days-skill：并行搜索 Reddit、X、YouTube、Hacker News、Polymarket 与网页，把近 30 天讨论按互动、相关性与新鲜度聚合为带来源的研究简报。真正优势是缩短验证周期，而不是制造永久信息差。",
+    "action": "用一个已知主题做对照研究，检查来源覆盖、引用可追溯、重复聚类和缺失平台；涉及登录或第三方 API 时使用最小权限。",
+    "tools": [
+      "last30days Skill"
+    ]
+  },
+  "69e6ddb8000000001f00413c": {
+    "category": "AI设计与多媒体",
+    "themes": [
+      "video-use",
+      "自然语言剪辑",
+      "音频优先"
+    ],
+    "summary": "视频介绍 browser-use/video-use：让编码 Agent 先读取带词级时间戳的音频转写，按需查看局部视觉证据，再生成剪辑计划、切除停顿、调色、加字幕与动画，并在交付前检查切点。其核心方法正是文本优先、视觉按需，而不是把整段视频逐帧交给模型。",
+    "action": "先用一段无敏感内容的短素材验证转写、剪辑计划、字幕与回滚；注意官方方案需要 ElevenLabs Scribe API，若重视本地隐私应替换为离线 ASR。",
+    "tools": [
+      "video-use",
+      "FFmpeg"
+    ]
+  },
+  "69eb71750000000035033611": {
+    "category": "本地模型与成本",
+    "themes": [
+      "MiniMind",
+      "从零训练LLM",
+      "教学项目"
+    ],
+    "summary": "视频介绍 jingyaogong/minimind：用原生 PyTorch 提供从预训练、SFT、LoRA 到强化学习和工具调用的完整小模型链路。官方说明中的“两小时”特指单张 RTX 3090 上完成一次 SFT epoch，不代表任意电脑都能在两小时训练出生产级大模型。",
+    "action": "把它作为理解 LLM 训练流程的教学实验；先按官方 mini 数据跑通最小配置并记录显存、时间和效果，不用宣传数字代替硬件与任务验证。",
+    "tools": [
+      "MiniMind"
+    ]
+  },
+  "69f14f480000000022028c14": {
+    "category": "Agent与自动化",
+    "themes": [
+      "Browser Harness",
+      "CDP",
+      "浏览器安全"
+    ],
+    "summary": "视频解析 browser-use/browser-harness：以很薄的可编辑层通过 CDP 连接 Chrome，让 Agent 在缺少动作时扩展 helper，而不是受固定 click/type 工具表限制。自由度同时扩大了财务操作、提示注入、静默写操作和自修改代码的风险。",
+    "action": "只用隔离浏览器和测试账号验证读取、导航与文件上传；默认禁用支付、发布和账号设置写操作，并记录每次浏览器动作供人工复核。",
+    "tools": [
+      "Browser Harness"
+    ]
+  },
+  "69f48092000000001b0233d9": {
+    "category": "本地模型与成本",
+    "themes": [
+      "RTK",
+      "终端输出压缩",
+      "Token优化"
+    ],
+    "summary": "视频介绍 rtk-ai/rtk：在 Agent 与终端命令之间压缩常见开发命令的冗余输出，只保留错误、变更与关键上下文，并统计节省量。官方仓库宣传常见命令可减少 60–90% token；实际收益取决于命令和任务，不能把视频中的约 80% 当成固定结果。",
+    "action": "用一组固定的测试、Git diff 和日志排错任务做 A/B 对照，同时记录 token、答案正确率与被过滤的关键行；发现信息损失就为该命令关闭压缩。",
+    "tools": [
+      "RTK"
+    ]
+  },
+  "69f71d0400000000360033cc": {
+    "category": "本地模型与成本",
+    "themes": [
+      "Hugging Face",
+      "开源模型",
+      "任务检索"
+    ],
+    "summary": "视频主张不要只看 Hugging Face 热榜，而应按任务寻找可解决真实成本问题的模型，并举时间序列、Text-to-SQL、文档理解、目标检测、深度估计和分割为例。关键纠正是：托管在 Hugging Face 不等于永久免费、可商用或可完全拥有，必须逐个核对许可证、模型卡、依赖与运行成本。",
+    "action": "从一个明确业务问题出发，先筛任务标签，再为候选模型建立许可证、数据来源、硬件、基准和退出方案清单；未经核验不进入生产。",
+    "tools": [
+      "Hugging Face"
+    ]
+  },
+  "69fe1512000000001e00ea0c": {
+    "category": "Skills与工作流",
+    "themes": [
+      "Agent能力栈",
+      "工程化",
+      "内容创作"
+    ],
+    "summary": "长视频把 Agent Skill 分成四层：用 Skill Creator 与 Find Skills 扩展能力；用 Superpowers、gstack 等约束工程开发；用前端设计 Skill 改善界面；用内容 Skill 处理创作。真正可迁移的原则是按任务补能力、用验收门约束输出，而不是把大量 Skill 整包安装。",
+    "action": "先为研究、开发、设计和内容各选一项最小 Skill；逐项检查权限、触发条件、验收标准和重复能力，只有对照任务确实提升质量才保留。",
+    "tools": [
+      "Skill Creator",
+      "Find Skills",
+      "Superpowers",
+      "gstack"
+    ]
+  },
+  "69ff2cb6000000003601fe11": {
+    "category": "信息采集与搜索",
+    "themes": [
+      "AI HOT",
+      "Follow Builders",
+      "Builder Plus"
+    ],
+    "summary": "视频把三个开源信息源组合成分层研究系统：AI HOT 扫描筛选过的 AI 新闻源并生成日报；Follow Builders 跟踪一线研究者、创始人与官方博客；Builder Plus 从 Hacker News、GitHub、Reddit 等信号中提炼独立开发方向。价值在来源分工与交叉验证，不是更多信息堆积。",
+    "action": "分别核对三个项目的当前官方仓库和数据源，再用同一天主题比较重合、遗漏与原文可追溯性；名称未唯一核验的项目先不自动安装。",
+    "tools": [
+      "AI HOT",
+      "Follow Builders",
+      "Builder Plus"
+    ]
+  },
+  "6a0064a40000000006035187": {
+    "category": "AI设计与多媒体",
+    "themes": [
+      "Seedance 2.0",
+      "数字人口播",
+      "图片转视频"
+    ],
+    "summary": "视频演示用一张角色图片、9:16 比例、15 秒时长和包含角色、动作、表情、台词的结构化提示词生成数字人口播；台词过长时拆成多段。它能降低拍摄与初剪成本，但人物授权、AI 标识、连续性和语音真实性仍需人工负责。",
+    "action": "只使用本人或已授权形象做 15 秒测试，固定角色设定并比较三次生成的一致性；发布前标注 AI 生成并检查口型、台词、肖像与声音授权。",
+    "tools": [
+      "Seedance 2.0"
+    ]
+  },
+  "6a0549190000000007013d23": {
+    "category": "信息采集与搜索",
+    "themes": [
+      "Scrapling",
+      "自适应选择器",
+      "网页采集"
+    ],
+    "summary": "视频介绍 D4Vinci/Scrapling：自适应网页采集框架，选择器可在页面结构变化后重新定位元素，并提供请求、浏览器、Spider、代理轮换、CLI 与 MCP。视频把“绕过任何屏蔽”说得过满；官方能力不构成绕过平台条款、验证码或访问限制的授权。",
+    "action": "仅在自有或明确允许的网站测试选择器恢复、并发、暂停续跑和 MCP；遇到验证码、频控或安全限制立即停止，不尝试绕过。",
+    "tools": [
+      "Scrapling"
+    ]
+  },
+  "6a05d372000000000803127c": {
+    "category": "内容增长与商业",
+    "themes": [
+      "小红书搜索",
+      "长尾词",
+      "内容结构"
+    ],
+    "summary": "视频给出小红书搜索内容方法：新账号避开竞争激烈的大词，从搜索下拉、同行评论与官方话题中找具体长尾需求；在标题前部、开头、正文和标签自然表达主题，并把同一需求拆成系列内容。视频中的转化率、搜索比例和标签数量是作者主张，不应当作平台固定规则。",
+    "action": "为一个真实主题收集 20 个长尾问题，按搜索意图做 4 周内容实验；以搜索曝光、收藏和实际转化复盘，不使用刷评论或关键词堆砌。",
+    "tools": []
+  },
+  "6a603e4e000000001d00c0a0": {
+    "title": "VividDub：把视频翻译、配音与字幕处理放进同一流程",
+    "category": "AI视频生成",
+    "themes": [
+      "VividDub",
+      "视频本地化",
+      "多语言配音"
+    ],
+    "summary": "视频展示 VividDub 的一站式本地化流程：接收视频链接或本地文件，执行语音识别、翻译、声音克隆、目标语言配音、时间轴字幕与字幕处理。官方 GitHub 仓库已确认，但当前仓库主要是产品说明与治理文件，未观察到应用源码或明确开源许可证，不能把它描述成已开源的视频翻译 Skill。",
+    "action": "先用一段本人拥有版权的 30 秒口播测试目标语言、音色授权、字幕时间轴与删除机制，再核对计费和素材保存期限。",
+    "tools": [
+      "VividDub"
+    ],
+    "kind": "Product"
+  },
+  "6a603229000000001303c1b4": {
+    "title": "WorkBuddy 亚马逊十项能力：从选品到订单与政策",
+    "category": "电商运营",
+    "themes": [
+      "WorkBuddy",
+      "亚马逊运营",
+      "店铺数据"
+    ],
+    "summary": "图文把 WorkBuddy 的亚马逊能力按运营链路拆为十项：前端商品搜索、商品详情、评论分析、店铺定价、店铺目录、Listing 管理、店铺数据上传、订单、广告管理与最新政策资讯。它们用于接住查询和整理等重复动作，选品、调价、广告去留与合规判断仍需运营者结合利润、库存和风险做决定。",
+    "action": "选一个 ASIN 依次跑商品搜索、详情和评论三步，检查字段完整性与来源，再决定是否接入店铺订单或广告权限。",
+    "tools": [
+      "WorkBuddy"
+    ],
+    "kind": "Product"
+  },
+  "6a60b20d000000001101b25e": {
+    "title": "独立站 Agent 运营框架：模型、MCP、执行层与业务角色",
+    "category": "AI电商",
+    "themes": [
+      "独立站运营",
+      "Agent 架构",
+      "业务闭环"
+    ],
+    "summary": "图文提出一套独立站 AI Agent 落地框架：大模型负责分析但不直接执行，MCP 连接价格、竞品、库存和广告等外部数据，Agent 把判断变成动作；稳定运行层由服务器、调度引擎和运营入口组成。业务侧再以商品、关键词、Listing、广告、SKU 诊断和客服等角色形成从数据到判断再到动作的闭环。",
+    "action": "先挑一个低风险闭环，例如关键词分层到页面改写，明确数据源、允许的写操作、人工确认点和回滚方式后再扩展角色。",
+    "tools": [],
+    "kind": "Workflow"
+  },
+  "6a621f16000000001303e77b": {
+    "title": "独立站网址为何被保护：竞品情报、反抄袭与欺诈订单",
+    "category": "AI电商",
+    "themes": [
+      "独立站安全",
+      "竞品情报",
+      "订单风控"
+    ],
+    "summary": "视频解释卖家隐藏网址的商业原因：同行可能从流量来源、测试订单、发货仓库、物流和邮件模板反推运营链路。作者给出的防护思路包括保留图片版权证据并压缩素材、用防火墙规则拦截异常访问，以及启用欺诈订单预警；这些建议需要按真实客群验证，不能用语言或地区规则误伤正常顾客。",
+    "action": "先审计一周访问与拒付日志，再逐条模拟图片盗用投诉、异常浏览和测试订单；只上线能解释、能回滚且误伤率可接受的规则。",
+    "tools": [],
+    "kind": "Workflow"
+  },
+  "6a634fae0000000001031fe8": {
+    "title": "AI SEO 全流程：从关键词证据到页面草稿与人工质检",
+    "category": "SEO",
+    "themes": [
+      "关键词研究",
+      "页面集群",
+      "人工审核"
+    ],
+    "summary": "视频演示以关键词调研为起点，补充竞争对手、搜索量证据、B2B 客户画像和买家痛点，再让 AI 生成站点架构、页面意图、中文与英文草稿、排版和配图。关键控制点不是批量铺页，而是把行业经验、内容标准与排查手册写入审核流程，防止 AI 沿着错误方向放大。",
+    "action": "用一个核心词建立证据表和页面意图，人工核对搜索需求、事实与转化路径；通过后只发布一个页面并观察索引和询盘质量。",
+    "tools": [],
+    "kind": "Workflow"
+  },
+  "6a672d9f000000001102d3ae": {
+    "title": "Comet Q：绕过操作系统依赖的 USB-C 远程 KVM",
+    "category": "AI操作系统",
+    "themes": [
+      "Comet Q",
+      "远程控制",
+      "硬件 KVM"
+    ],
+    "summary": "视频介绍 GL.iNet Comet Q 的硬件远控思路：通过 USB-C 视频与硬件控制通道工作，不依赖目标设备上的远控客户端，因此在锁屏、睡眠或系统异常场景下仍可保持控制链路。官方资料确认其面向支持 DP Alt Mode 的手机、平板和电脑，并提供浏览器、GLKVM、Tailscale 与 ZeroTier 等访问方式；具体兼容性以设备清单为准。",
+    "action": "先核对目标设备是否支持 USB-C DP Alt Mode，再在隔离网络测试锁屏、重启、远程认证和断网恢复，确认安全设置后才接入主力设备。",
+    "tools": [
+      "Comet Q"
+    ],
+    "kind": "Product"
+  },
+  "6a68583a000000000f014c4f": {
+    "title": "SparkX 的亚马逊广告闭环：诊断、结构、托管与复盘",
+    "category": "电商运营",
+    "themes": [
+      "SparkX",
+      "亚马逊广告",
+      "投放复盘"
+    ],
+    "summary": "视频把亚马逊广告优化拆成诊断、创建、托管和复盘：先定位预算浪费与结构问题，再搭建广告结构，持续调整竞价、预算、加词与否词，最后按店铺、产品线或活动生成分析报告。官方 SparkX 将其定位为覆盖策略、广告优化和数据洞察的多智能体营销平台；平台建议不能替代利润、库存和品牌目标判断。",
+    "action": "选一个广告组合做两周对照，预先固定预算、转化和 TACoS 指标，并保留人工审批；比较自动建议与原流程的增量收益和误操作。",
+    "tools": [
+      "SparkX"
+    ],
+    "kind": "Product"
+  },
+  "6a697c3d000000000e03f400": {
+    "title": "淘宝运营检查表：从选款到标题、直通车与复购",
+    "category": "电商运营",
+    "themes": [
+      "淘宝运营",
+      "店铺诊断",
+      "增长清单"
+    ],
+    "summary": "图文把淘宝运营整理为十六个检查方向：选款、产品监控、测图测款、SKU 优化、人群标签、电商工具表、删差评、一件代发、低价引流、竞品分析、新品起款、智能计划、达摩盘玩法、标题制作、直通车玩法和改销量步骤。它更适合作为诊断目录，而不是不分店铺阶段全部执行的操作清单。",
+    "action": "按流量、点击、转化、毛利和复购五个指标找出当前最大瓶颈，只从清单选择一个对应实验并记录前后数据。",
+    "tools": [],
+    "kind": "Workflow"
+  },
+  "6a6a035f000000000e03f400": {
+    "title": "直通车优化矩阵：用展现、出价、点击率和转化率决策",
+    "category": "电商运营",
+    "themes": [
+      "直通车",
+      "关键词优化",
+      "投放决策"
+    ],
+    "summary": "图文用展现量、出价、点击率和转化率四个信号组合判断关键词动作：展现低先判断出价和创意，点击低检查图片与词意，转化低回看流量质量、价格和页面；展现与转化都高的词应稳定投放而非盲目降价。口诀只能作为排查顺序，最终仍需结合 ROI、利润和样本量。",
+    "action": "导出近 14 天关键词数据，先排除样本不足项，再按四指标矩阵分组；每组只改一个变量并记录 ROI 与转化变化。",
+    "tools": [],
+    "kind": "Workflow"
+  },
+  "6a6aa7d70000000011010130": {
+    "title": "Codex 项目组织指南：工作区、线程、计划与可复用 Skill",
+    "category": "Vibe Coding",
+    "themes": [
+      "Codex",
+      "任务线程",
+      "Agent 工作规范"
+    ],
+    "summary": "视频把 Codex 的组织方式拆成两个维度：文件夹或工作区承载共享代码，线程承载相互独立的任务。复杂工作应先规划再执行，项目级与全局 AGENTS.md 分别记录专属约束和通用习惯；MCP 只在需要外部系统时引入，反复出现的操作才封装成可执行 Skill，避免所有需求堆在一个长对话里造成上下文混乱。",
+    "action": "选一个现有项目，把登录页、支付和部署拆成独立线程，并补一份项目 AGENTS.md；完成后用代码审查验证跨线程修改没有互相覆盖。",
+    "tools": [],
+    "kind": "Workflow"
+  },
+  "6a6a1736000000000f02871e": {
+    "title": "Flova × Codex：用分镜确认和 Skills 复用视频生产流程",
+    "category": "AI视频生成",
+    "themes": [
+      "Flova",
+      "Codex",
+      "视频工作流"
+    ],
+    "summary": "视频演示通过 Codex 调用 Flova：输入产品图和自然语言需求后先生成分镜供确认，再逐镜生成素材、组装成片，并把脚本、分镜和素材沉淀到故事板。Flova 官方文档确认 Agent 接入和 Skills 机制；Skill 在这里是可复用的视频生产手册，适合系列内容和稳定流程，不等同于 GitHub Agent Skill。",
+    "action": "用一个 15 秒产品短片验证授权、分镜确认、素材回滚和导出质量；流程稳定后再保存为 Flova Skill，避免把一次性提示误当模板。",
+    "tools": [
+      "Flova"
+    ],
+    "kind": "Product"
+  },
+  "6a6b29800000000006005817": {
+    "title": "Aixcut：把可重复的剪辑流程保存为可调用 Skill",
+    "category": "AI视频生成",
+    "themes": [
+      "Aixcut",
+      "AI剪辑",
+      "流程复用"
+    ],
+    "summary": "视频展示 Aixcut 对多段素材和脚本进行内容分析，组织开场、推进与结尾，再添加字幕和背景音乐；用户保留时间线上的人工调整权。确认后的剪辑顺序、字幕和音乐规则可以保存为产品内 Skill，下次同类素材直接复用。官方定位是以内容分析驱动的视频编辑产品，这里的 Skill 是产品内工作流，不是 GitHub 可安装 Agent Skill。",
+    "action": "用同一组素材分别执行手工流程和已保存 Skill，比较初稿耗时、故事线错误、字幕修改量和最终返工次数，再决定复用范围。",
+    "tools": [
+      "Aixcut"
+    ],
+    "kind": "Product"
+  },
+  "6a5e0064000000001d02067d": {
+    "title": "亚马逊精铺选品：用感官训练优化主图与卖点",
+    "summary": "点点总结把这套方法概括为“刷手机、感受、记录”的感官训练：观察第一眼吸引物、继续停留时关注的细节，以及最终促使点击的卖点，再把这些反应转成主图、材质质感、促销和使用场景的优化线索。总结中的眉笔与厨房置物架案例都用于说明，数据能显示什么在卖，而主动记录消费者视角可以补充为什么会点击。",
+    "action": "连续一周每天抽取固定数量的同类商品，分别记录第一眼、第二眼和点击原因；把重复出现的视觉与卖点线索形成检查表，再用主图小范围测试验证点击变化，不能用感受替代市场需求与竞争数据。",
+    "themes": [
+      "出海电商",
+      "亚马逊选品",
+      "消费者感知",
+      "主图与卖点"
+    ],
+    "tools": [],
+    "kind": "Workflow"
+  },
+  "693657fc000000001e038601": {
+    "title": "选品训练法：刷手机、感受、记录",
+    "summary": "点点总结提供了一套消费者视角训练：浏览电商商品时记录第一眼被什么吸引、停留后关注哪些外观或材质细节，以及什么实用卖点促使点击。它用眉笔和厨房置物架案例说明，主图中的视觉效果、促销理由和本地家庭常见使用场景会影响代入感；这套方法更适合补充选品和卖点提炼，而不是代替需求与竞争数据。",
+    "action": "选择一个熟悉品类，按第一眼、第二眼、点击理由三栏记录一周样本；把高频线索转成主图或卖点假设，并通过固定受众的小范围测试验证。面对不熟悉的品类，先补充真实使用场景和当地消费者资料。",
+    "themes": [
+      "出海电商",
+      "选品训练",
+      "产品卖点",
+      "消费者视角"
+    ],
+    "tools": [],
+    "kind": "Workflow"
+  },
+  "6a61f811000000001d021f36": {
+    "title": "把亚马逊选品 SOP 封装为 Codex Skill",
+    "summary": "图文提出把亚马逊选品 SOP 封装为 Codex 自定义 Skill，以减少结论和团队口径不一致。可见结构包括说明文件、代理配置、脚本、参考资料和资产；建议标准化市场站点、关键词或商品线索、目标、价格、采购与物流成本、尺寸重量、起订量、广告预算和目标利润等输入。工作流分全流程、单品或关键词诊断、创意扩展三种模式；全流程从类目、关键词、店铺和关联购买四路发现候选，把候选限制在 3 至 5 个，再按市场容量、竞争、利润、供应链和风险做红黄绿 Go/No-Go 判断，并按“结论、证据、机制、下一步”输出。",
+    "action": "在私有环境实现结构化输入契约，把确定性利润计算放入脚本，为红黄绿决策写明阈值，并用历史案例建立金标测试；缺少关键数据时只列待补项，不输出选品结论。",
+    "themes": [
+      "出海电商",
+      "亚马逊选品",
+      "SOP 结构化",
+      "决策门禁"
+    ],
+    "tools": [
+      "Codex"
+    ],
+    "kind": "Workflow"
+  },
+  "69d50977000000002301f67a": {
+    "title": "跨境电商全链路 SOP 的 17 个能力模块",
+    "summary": "图文把跨境电商 SOP 拆成 17 个能力模块和 13 个步骤，核心链路是市场评估、机会判断、竞品价格、1688 采购、平台费用、Listing、广告测试和净利润复盘；扩展链路覆盖多平台同步、供应链、国际物流、代发和持续复盘。该材料适合作为能力地图，但图片并未证明这些名称来自同一套可安装、可运行的 Skill 包。",
+    "action": "先把核心八步定义为带输入输出的数据契约，再按模块逐个核对来源、许可、所需数据和权限；只在单模块通过隔离测试后接入下一步，扩展链路留到核心链路能够复现利润结果之后。",
+    "themes": [
+      "出海电商",
+      "全链路 SOP",
+      "供应链与物流",
+      "广告与利润复盘"
+    ],
+    "tools": [],
+    "kind": "Workflow"
+  },
+  "6a5e0769000000000f01f367": {
+    "title": "Nexscope Amazon Skills 能力审计",
+    "summary": "图文评测 Nexscope Amazon Skills。官方材料可确认该开源包包含 53 个兼容多种代理环境的 Amazon Skills，并明确不提供实时市场数据；图文也指出多数内容是方法与指令，只有少数目录带可执行脚本。评测重点覆盖产品、关键词、竞品、FBA 费用和 PPC 五类能力，结论是价值主要在于把已有数据和分析方法结构化，而不是自动获得搜索量、点击成本、排名、转化或实时商品数据。图中的 FBA 计算示例使用旧费率假设，不能直接用于当前决策。",
+    "action": "先隔离测试产品、关键词、竞品、FBA 和 PPC 五项：缺数据时必须明确询问，所有结论记录来源，所有计算保留可复现公式；更新费用表后再与 Seller Central 当前结果对照，其他 Skills 通过同一门禁后再采用。",
+    "themes": [
+      "出海电商",
+      "Amazon Skills",
+      "能力审计",
+      "数据新鲜度"
+    ],
+    "tools": [
+      "Nexscope Amazon Skills"
+    ],
+    "kind": "Skill"
+  },
+  "6a3cc206000000000f014ff4": {
+    "title": "跨境电商常用 Skill 能力清单",
+    "summary": "图文列出 9 个面向 Amazon、TikTok、Reddit、浏览器自动化、市场研究和价格监控的 Skill 名称，并把它们归纳为市场验证、商品与关键词数据、采集制表、评论洞察、内容趋势、浏览器操作和价格跟踪等用途。图片没有提供唯一作者、仓库、许可或安装证据，这些通用名称可能对应多个不同实现；涉及采集和浏览器自动化的能力还需要单独评估平台条款、凭证和权限风险。",
+    "action": "先按业务问题选择一种能力，再为候选 Skill 核对唯一官方来源、维护状态、许可、依赖和最小权限；所有采集与浏览器操作只在只读隔离环境测试，无法确认合规边界的候选直接淘汰。",
+    "themes": [
+      "出海电商",
+      "Skill 清单",
+      "市场与评论研究",
+      "自动化风险"
+    ],
+    "tools": [],
+    "kind": "Note"
+  },
+  "6a5626a70000000006031d80": {
+    "title": "53 份 Amazon AI 运营指令模板",
+    "summary": "图文宣传一套覆盖八类 Amazon 运营工作的 53 份 AI Skills，并明确其本质是操作说明模板和提示文件，而不是自动化软件。图片能看到若干与 Amazon 运营职能对应的文件夹，但没有足够信息确认作者、来源、许可、版本或是否包含脚本，因此不能把兼容性和自动化效果当作已验证能力。",
+    "action": "采用前索取完整来源清单、许可、版本标识和文件完整性证明，并与已验证的公开 Skill 包做去重；在无凭证的隔离环境逐文件审计指令、脚本、网络和文件权限，通过后才允许导入私有工作区。",
+    "themes": [
+      "出海电商",
+      "Amazon 运营",
+      "提示模板产品",
+      "供应链安全"
+    ],
+    "tools": [],
+    "kind": "Product"
+  }
 }

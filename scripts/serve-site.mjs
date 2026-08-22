@@ -3,9 +3,10 @@
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
-import { extname, resolve, sep } from "node:path";
+import { dirname, extname, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = resolve(import.meta.dirname, "../site");
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../site");
 const host = "127.0.0.1";
 const requestedPort = Number.parseInt(process.env.PORT || "8766", 10);
 if (!Number.isInteger(requestedPort) || requestedPort < 1024 || requestedPort > 65535) {

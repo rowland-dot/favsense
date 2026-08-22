@@ -1,0 +1,7 @@
+{
+  "description": "The current DianDian page can keep the canonical shared-note URL in the visible conversation textarea instead of rendering an attachment card. The worker must submit that exact URL followed by one space and the fixed prompt.",
+  "mode": "inline-link",
+  "canonical_share_url": "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=fixture-token&xsec_source=pc_share",
+  "expected_prompt": "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=fixture-token&xsec_source=pc_share 总结",
+  "tampered_value": "https://www.xiaohongshu.com/discovery/item/note-b?xsec_token=fixture-token&xsec_source=pc_share"
+}

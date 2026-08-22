@@ -1,0 +1,6 @@
+{
+  "description": "A selected-note card and a retained or changed URL in the visible textarea is an ambiguous mixed context. It must never be submitted or saved for the current note.",
+  "mode": "hybrid",
+  "retained_value": "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=fixture-token&xsec_source=pc_share",
+  "tampered_value": "https://www.xiaohongshu.com/discovery/item/note-b?xsec_token=fixture-token&xsec_source=pc_share"
+}

@@ -1,0 +1,23 @@
+{
+  "configured_boards": [
+    { "id": "boardalpha", "name": "Alpha", "enabled": true, "available": true },
+    { "id": "boardbeta", "name": "Beta", "enabled": true, "available": true },
+    { "id": "boarddisabled", "name": "Disabled", "enabled": false, "available": true }
+  ],
+  "target_request": {
+    "board_ids": ["boardalpha"],
+    "mode": "history"
+  },
+  "expected_target_scope": ["boardalpha"],
+  "expected_mode": "history",
+  "invalid_requests": [
+    { "board_ids": ["boardmissing"], "mode": "history" },
+    { "board_ids": ["boarddisabled"], "mode": "history" },
+    { "board_ids": ["boardalpha", "boardalpha"], "mode": "history" },
+    { "board_ids": [], "mode": "history" },
+    { "board_ids": ["boardalpha"], "mode": [] },
+    { "board_ids": ["boardalpha"], "mode": {} },
+    { "board_ids": ["boardalpha"], "mode": "unsupported" },
+    { "board_ids": ["boardalpha"], "mode": "history", "persist": true }
+  ]
+}

@@ -8,8 +8,8 @@
 
 ## 如何验证
 
-- [ ] `npm test`
-- [ ] `npm run verify`
+- [ ] `npm run release:check`（Node、两套 Python 测试与公开发布边界均通过）
+- [ ] 涉及 Windows 安装/启动脚本时，Windows CI 契约已通过
 - [ ] 如有界面变化，已检查桌面、移动端、键盘操作并附截图
 - [ ] 如有采集变化，已确认仍为只读且遇到风控立即停止
 

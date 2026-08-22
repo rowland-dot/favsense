@@ -5,7 +5,7 @@ FavSense · 拾光台把“使用者的私有采集环境”和“可以公开�
 ```mermaid
 flowchart LR
   CLICK["本地设置页：开始整理"] --> PROFILE["刷新收藏夹清单与名称"]
-  PROFILE --> XHS["普通 Chrome 中的已启用收藏夹"]
+  PROFILE --> XHS["SOP 扫描浏览器中的已启用收藏夹"]
   XHS --> TM["Tampermonkey 只读脚本"]
   TM -->|"回环地址 + token"| BRIDGE["本机 Bridge"]
   BRIDGE --> CATALOG["私有 Catalog"]
@@ -20,9 +20,9 @@ flowchart LR
 
 ### 本地私有层
 
-包含个人收藏夹配置、随机 bridge token、去重 catalog、原始媒体、视频分析画面和本地工具。它们都在 `.gitignore` 中，服务只监听 `127.0.0.1`。
+包含个人收藏夹配置、随机 bridge token、去重 catalog、原始媒体、视频分析画面与本地工具。它们都在 `.gitignore` 中，服务只监听 `127.0.0.1`。浏览器登录态唯一保存在相邻 `SOP - 小红书` 项目的私有扫描 profile 中：SOP 拥有 Chrome 进程、profile 与动态端口登记，FavSense 只消费该 CDP 通道并管理自己创建的临时标签；它不读取 Cookie、不创建第二个 profile，也不回退到主浏览器。
 
-“同步设置”页的 `.local/bridge.json` 只保存回环服务地址。只有固定工作台 Origin `http://127.0.0.1:8766` 能从回环服务取得本机凭据、修改收藏夹范围并触发整理；公共托管没有该文件，因此既不显示触发按钮，也不具备本机控制能力。
+“同步设置”页的 `.local/bridge.json` 只保存回环服务地址。Bridge 只接受固定工作台 Origin `http://127.0.0.1:8766` 的浏览器请求；公共托管没有该文件，因此既不显示触发按钮，也不具备本机控制能力。这里的 Origin 检查是浏览器边界，不是操作系统用户身份认证：回环端口对同机进程可见，当前本地控制面只支持由同一位受信任用户独占的工作站，不应在多用户共享主机或不受信任的本机进程环境中运行。启动页与 Bridge 返回的数据仍必须经过严格 schema 校验，不能把回环响应当成可信 HTML。
 
 ### 公开展示层
 

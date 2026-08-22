@@ -11,6 +11,46 @@ function knownIdSet(validNoteIds) {
   return validNoteIds instanceof Set ? validNoteIds : new Set(validNoteIds || []);
 }
 
+function isRecord(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+export function validatePersonalDataPayload(value) {
+  if (!isRecord(value) || value.version !== PERSONAL_DATA_VERSION) {
+    throw new Error("个人数据备份版本或顶层结构无效");
+  }
+  if (!Array.isArray(value.bookmarks) || !isRecord(value.bookmarkStates) || !isRecord(value.descriptionOverrides)) {
+    throw new Error("个人数据备份结构不完整");
+  }
+  if (
+    value.bookmarks.length > 10_000
+    || Object.keys(value.bookmarkStates).length > 10_000
+    || Object.keys(value.descriptionOverrides).length > 10_000
+  ) {
+    throw new Error("个人数据备份条目过多");
+  }
+  if (!value.bookmarks.every((id) => typeof id === "string")) {
+    throw new Error("个人数据书签结构无效");
+  }
+  for (const [id, entry] of Object.entries(value.bookmarkStates)) {
+    if (typeof id !== "string" || !isRecord(entry) || typeof entry.bookmarked !== "boolean" || typeof entry.updatedAt !== "string") {
+      throw new Error("个人数据书签状态无效");
+    }
+  }
+  for (const [id, entry] of Object.entries(value.descriptionOverrides)) {
+    if (
+      typeof id !== "string"
+      || !isRecord(entry)
+      || typeof entry.description !== "string"
+      || typeof entry.deleted !== "boolean"
+      || typeof entry.updatedAt !== "string"
+    ) {
+      throw new Error("个人数据修订结构无效");
+    }
+  }
+  return value;
+}
+
 function normalizeDescription(value) {
   return typeof value === "string" ? value.trim().slice(0, MAX_DESCRIPTION_LENGTH) : "";
 }
@@ -72,19 +112,19 @@ export function normalizePersonalData(value, validNoteIds = []) {
 
 export function loadPersonalData(storage, validNoteIds = []) {
   const knownIds = knownIdSet(validNoteIds);
-  try {
-    const current = storage.getItem(PERSONAL_STORE_KEY);
-    if (current) return normalizePersonalData(JSON.parse(current), knownIds);
+  const current = storage.getItem(PERSONAL_STORE_KEY);
+  if (current) return normalizePersonalData(validatePersonalDataPayload(JSON.parse(current)), knownIds);
 
-    const legacy = storage.getItem(LEGACY_BOOKMARK_KEY);
-    if (!legacy) return emptyPersonalData();
-    const migrated = normalizePersonalData({ bookmarks: JSON.parse(legacy) }, knownIds);
-    storage.setItem(PERSONAL_STORE_KEY, JSON.stringify(migrated));
-    storage.removeItem(LEGACY_BOOKMARK_KEY);
-    return migrated;
-  } catch {
-    return emptyPersonalData();
+  const legacy = storage.getItem(LEGACY_BOOKMARK_KEY);
+  if (!legacy) return emptyPersonalData();
+  const legacyBookmarks = JSON.parse(legacy);
+  if (!Array.isArray(legacyBookmarks) || !legacyBookmarks.every((id) => typeof id === "string")) {
+    throw new Error("旧版书签数据结构无效");
   }
+  const migrated = normalizePersonalData({ bookmarks: legacyBookmarks }, knownIds);
+  storage.setItem(PERSONAL_STORE_KEY, JSON.stringify(migrated));
+  storage.removeItem(LEGACY_BOOKMARK_KEY);
+  return migrated;
 }
 
 export function savePersonalData(storage, data, validNoteIds = []) {

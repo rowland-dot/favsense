@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-import { cp, lstat, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { validatePublicTree } from "./public-tree-policy.mjs";
 
 function readOption(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
@@ -41,25 +42,51 @@ function validateRepository(value) {
   }
 }
 
-async function validatePublicTree(directory, relative = "") {
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    if (!relative && entry.name === ".local") continue;
-    const entryPath = path.join(directory, entry.name);
-    const entryRelative = path.join(relative, entry.name);
-    const lowerName = entry.name.toLowerCase();
-    if (
-      entry.isFile() &&
-      (lowerName === ".env" || lowerName.startsWith(".env.") ||
-        ["credentials.json", "secrets.json", "id_rsa"].includes(lowerName) ||
-        [".pem", ".p12", ".pfx", ".key"].some((extension) => lowerName.endsWith(extension)))
-    ) {
-      throw new Error(`secret-like public file is not allowed: ${entryRelative}`);
+function profileIdentifier(profileUrl) {
+  if (typeof profileUrl !== "string" || !profileUrl.trim()) return "";
+  try {
+    const url = new URL(profileUrl);
+    if (!/^(?:www\.)?xiaohongshu\.com$/i.test(url.hostname)) return "";
+    const match = url.pathname.match(/^\/user\/profile\/([^/]+)\/?$/i);
+    if (!match) return "";
+    try {
+      return decodeURIComponent(match[1]).trim();
+    } catch {
+      return match[1].trim();
     }
-    const metadata = await lstat(entryPath);
-    if (metadata.isSymbolicLink()) {
-      throw new Error(`public site must not contain symbolic links: ${entryRelative}`);
+  } catch {
+    return "";
+  }
+}
+
+function privateIdentifiersFromConfig(config) {
+  if (!config || typeof config !== "object" || Array.isArray(config)) return [];
+  const identifiers = [
+    config.legacy_source_board_id,
+    profileIdentifier(config.profile_url),
+    ...(Array.isArray(config.boards) ? config.boards.map((board) => board?.id) : []),
+  ]
+    .map((value) => String(value ?? "").trim())
+    .filter(Boolean);
+  return [...new Set(identifiers)];
+}
+
+async function loadPrivateIdentifiers(configPath) {
+  let source;
+  try {
+    source = await readFile(configPath, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw new Error("private publisher config could not be read");
+  }
+
+  try {
+    return privateIdentifiersFromConfig(JSON.parse(source));
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error("private publisher config must contain valid JSON");
     }
-    if (entry.isDirectory()) await validatePublicTree(entryPath, entryRelative);
+    throw error;
   }
 }
 
@@ -99,6 +126,10 @@ async function ensureMiniHeader(readmePath) {
 
 async function main() {
   const workspace = path.resolve(readOption("workspace", process.cwd()));
+  const configOption = readOption("config", path.join("config", "xhs-favorites.json"));
+  const configPath = path.isAbsolute(configOption)
+    ? configOption
+    : path.resolve(workspace, configOption);
   const repository = readOption("repository");
   const branch = readOption("branch", "main");
   if (!repository) throw new Error("--repository is required");
@@ -110,21 +141,33 @@ async function main() {
   const publicSite = path.join(workspace, "site");
   const indexMetadata = await lstat(path.join(publicSite, "index.html"));
   if (!indexMetadata.isFile()) throw new Error("site/index.html was not found");
-  await validatePublicTree(publicSite);
+  const privateIdentifiers = await loadPrivateIdentifiers(configPath);
+  await validatePublicTree(publicSite, { privateIdentifiers });
 
   const temporary = await mkdtemp(path.join(tmpdir(), "favsense-hf-publish-"));
   const checkout = path.join(temporary, "space");
   try {
     runGit(["clone", "--depth", "1", "--branch", branch, repository, checkout], workspace);
+    await validatePublicTree(checkout, {
+      privateIdentifiers,
+      excludedRootNames: [".git"],
+      allowedRootTextNames: [".gitattributes", ".gitignore", "LICENSE"],
+    });
     const targetSite = path.join(checkout, "site");
     await rm(targetSite, { recursive: true, force: true });
     await cp(publicSite, targetSite, {
       recursive: true,
       filter(source) {
-        return path.relative(publicSite, source).split(path.sep)[0] !== ".local";
+        return path.relative(publicSite, source).split(path.sep)[0].toLowerCase() !== ".local";
       },
     });
+    await validatePublicTree(targetSite, { privateIdentifiers });
     await ensureMiniHeader(path.join(checkout, "README.md"));
+    await validatePublicTree(checkout, {
+      privateIdentifiers,
+      excludedRootNames: [".git"],
+      allowedRootTextNames: [".gitattributes", ".gitignore", "LICENSE"],
+    });
 
     runGit(["add", "-A", "--", "site", "README.md"], checkout);
     const diff = runGit(["diff", "--cached", "--quiet"], checkout, [0, 1]);

@@ -7,11 +7,12 @@ import {
   oauthLoginUrl,
   uploadFile
 } from "https://cdn.jsdelivr.net/npm/@huggingface/hub@2.14.2/+esm";
-import { emptyPersonalData, mergePersonalData } from "./personal-store.mjs";
+import { emptyPersonalData, mergePersonalData, validatePersonalDataPayload } from "./personal-store.mjs";
 import { assertPrivateDataset, repositoryIsMissing, repositoryWriteConflict } from "./hf-sync-guard.mjs";
 
 const OAUTH_STORAGE_KEY = "favsense-hf-oauth-v1";
 const DATA_FILE = "personal.json";
+const MAX_PERSONAL_DATA_BYTES = 256 * 1024;
 
 function readStoredOAuth() {
   try {
@@ -76,6 +77,36 @@ function personalNoteIds(...items) {
   ]));
 }
 
+async function readLimitedResponseText(response) {
+  const declaredLength = Number(response.headers?.get?.("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_PERSONAL_DATA_BYTES) {
+    throw new Error("Hugging Face personal data exceeds the supported size");
+  }
+  const reader = response.body?.getReader?.();
+  if (!reader) {
+    const source = await response.text();
+    if (new TextEncoder().encode(source).byteLength > MAX_PERSONAL_DATA_BYTES) {
+      throw new Error("Hugging Face personal data exceeds the supported size");
+    }
+    return source;
+  }
+  const decoder = new TextDecoder();
+  let source = "";
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
+    received += chunk.byteLength;
+    if (received > MAX_PERSONAL_DATA_BYTES) {
+      try { await reader.cancel(); } catch { /* The size error remains authoritative. */ }
+      throw new Error("Hugging Face personal data exceeds the supported size");
+    }
+    source += decoder.decode(chunk, { stream: true });
+  }
+  return source + decoder.decode();
+}
+
 async function downloadPersonalData(repo, oauth, revision) {
   const response = await downloadFile({
     repo,
@@ -83,7 +114,9 @@ async function downloadPersonalData(repo, oauth, revision) {
     revision,
     accessToken: oauth.accessToken
   });
-  return response ? JSON.parse(await response.text()) : null;
+  if (!response) return null;
+  const source = await readLimitedResponseText(response);
+  return validatePersonalDataPayload(JSON.parse(source));
 }
 
 export async function initializeHfPersonalSync() {

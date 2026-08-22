@@ -117,7 +117,7 @@ switch ($Command) {
                     Stop-Process -Id $siteProcess.Id -Force -ErrorAction SilentlyContinue
                 }
                 Remove-Item -LiteralPath $sitePidPath -Force -ErrorAction SilentlyContinue
-                & (Join-Path $skillScripts 'stop-autosync.ps1')
+                & (Join-Path $skillScripts 'stop-autosync.ps1') -Workspace $workspacePath
             }
         } finally {
             if ($ownsPreview) {
@@ -129,8 +129,8 @@ switch ($Command) {
     'stop' {
         Stop-ManagedSitePreview
         Stop-LegacySitePreview
-        & (Join-Path $skillScripts 'stop-autosync.ps1')
+        & (Join-Path $skillScripts 'stop-autosync.ps1') -Workspace $workspacePath
     }
-    'test' { & npm.cmd test }
+    'test' { & npm.cmd run release:check }
     'verify' { & npm.cmd run release:check }
 }

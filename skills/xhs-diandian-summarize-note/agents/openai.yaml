@@ -1,0 +1,4 @@
+interface:
+  display_name: "点点 AI 笔记总结"
+  short_description: "用小红书点点 AI 完整总结并保存单篇图文或视频收藏笔记"
+  default_prompt: "使用 $xhs-diandian-summarize-note 总结一篇小红书收藏并保存结果。"

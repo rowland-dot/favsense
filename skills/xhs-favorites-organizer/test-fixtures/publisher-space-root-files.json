@@ -1,0 +1,17 @@
+{
+  "allowed": {
+    ".gitattributes": "*.bin filter=lfs diff=lfs merge=lfs -text\n"
+  },
+  "forbidden": [
+    {
+      "name": "credentials.json",
+      "content": "{}",
+      "error": "secret-like public file"
+    },
+    {
+      "name": "debug.md",
+      "content": "token: fixture-publication-credential-value",
+      "error": "sensitive public content"
+    }
+  ]
+}

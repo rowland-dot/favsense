@@ -1,0 +1,21 @@
+{
+  "description": "The current DianDian page keeps a hidden legacy textarea while exposing a new visible conversation textarea. The note URL must enter through one native-shaped paste event; a second full-link input event duplicates what the page already handled.",
+  "inputs": [
+    {
+      "id": "legacy-hidden",
+      "placeholder": "搜索或者输入任何问题",
+      "visible": false
+    },
+    {
+      "id": "current-visible",
+      "placeholder": "与点点对话，获取更丰富的信息",
+      "visible": true
+    }
+  ],
+  "expected_input_id": "current-visible",
+  "required_link_event": "paste",
+  "forbidden_duplicate_link_event": {
+    "type": "input",
+    "input_type": "insertFromPaste"
+  }
+}

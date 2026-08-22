@@ -33,8 +33,12 @@
     "test:site": "node --test skills/xhs-favorites-organizer/tests/test_public_site.mjs",
     "test:publish": "node --test skills/xhs-favorites-organizer/tests/test_huggingface_publish.mjs",
     "test:knowledge": "node skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs",
-    "test": "npm run test:site && npm run test:publish && npm run test:knowledge",
+    "test:curation": "node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs",
+    "test:skill-sync": "node --test scripts/test-sync-diandian-skill.mjs",
+    "test:release-contracts": "node --test scripts/test-run-python-tests.mjs scripts/test-verify-release.mjs",
+    "test:python": "node scripts/run-python-tests.mjs",
+    "test": "npm run test:site && npm run test:publish && npm run test:knowledge && npm run test:curation && npm run test:skill-sync && npm run test:release-contracts",
     "verify": "node scripts/verify-release.mjs",
-    "release:check": "npm test && npm run verify"
+    "release:check": "npm test && npm run test:python && npm run verify"
   }
 }

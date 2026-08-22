@@ -1,25 +1,44 @@
 // ==UserScript==
 // @name         小红书收藏知识库按需整理
 // @namespace    local.xhs-favorites-organizer
-// @version      2.3.0
-// @description  用户主动触发后，先刷新收藏夹清单，再把已登录 Chrome 中的收藏整理到本地知识库
+// @version      3.0.2
+// @description  用户主动触发后，刷新收藏夹、按需调用点点 AI 深度总结，再整理到本地知识库
 // @match        https://www.xiaohongshu.com/board/*
 // @match        https://www.xiaohongshu.com/user/profile/*
+__DIANDIAN_MATCH_LINE__
+// @match        https://www.xiaohongshu.com/explore
+// @match        https://www.xiaohongshu.com/explore/*
+// @match        https://www.xiaohongshu.com/discovery/item/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
+// @grant        GM_openInTab
 // @connect      127.0.0.1
 // @run-at       document-idle
-// @updateURL    http://127.0.0.1:__PORT__/xhs-favorites.user.js
-// @downloadURL  http://127.0.0.1:__PORT__/xhs-favorites.user.js
+// @updateURL    none
+// @downloadURL  none
 // ==/UserScript==
 
 (() => {
   "use strict";
+  if (location.origin !== "https://www.xiaohongshu.com") return;
   const PORT = __PORT__;
   const TOKEN = "__TOKEN__";
+  const INSTALL_CAPABILITY = "__INSTALL_CAPABILITY__";
   const INSTALLED_BOARDS = __BOARDS__;
+  const DIANDIAN = Object.freeze(__DIANDIAN_CONTRACT__);
   const boardId = location.pathname.match(/^\/board\/([a-z0-9]{1,80})$/)?.[1];
   const onProfile = /^\/user\/profile\/[a-z0-9]{1,128}$/.test(location.pathname);
+  const onAiChat = DIANDIAN.enabled
+    && DIANDIAN.cdp_enabled !== true
+    && location.pathname === new URL(DIANDIAN.ai_chat_url).pathname;
+  const notePageId = location.pathname.match(/^\/(?:explore|discovery\/item)\/([A-Za-z0-9_-]{1,128})$/)?.[1];
+  const transientNoteWorkerUrl = notePageId && new URLSearchParams(location.search).get("xhs_kb_share_worker")
+    ? location.href
+    : "";
+  if (transientNoteWorkerUrl) history.replaceState(history.state, "", location.pathname);
+  const SIGNED_FIELDS = ["type", "job_id", "worker_id", "batch", "run_id", "board_id", "note_id", "title", "url", "summary", "error"];
+  let signingKeyPromise;
+  let channelNamePromise;
 
   function show(message, error = false) {
     let box = document.getElementById("xhs-kb-sync-status");
@@ -34,11 +53,124 @@
   }
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const diandianTiming = (name) => DIANDIAN.enabled ? DIANDIAN.timings_ms[name] : 0;
+  const PAGE_DOM_STABLE_MS = diandianTiming("page_dom_stable");
+  const NOTE_CONTEXT_STABLE_MS = diandianTiming("note_context_stable");
+  const PROMPT_STABLE_MS = diandianTiming("prompt_stable");
+  const REPLY_TEXT_STABLE_MS = diandianTiming("reply_text_stable");
+  const SUCCESS_DWELL_MS = diandianTiming("success_dwell");
+  const BETWEEN_NOTES_MS = diandianTiming("between_notes");
+
+  function canonicalMessage(message) {
+    return SIGNED_FIELDS.map((field) => {
+      const value = String(message[field] ?? "");
+      return `${field.length}:${field}:${value.length}:${value}`;
+    }).join("|");
+  }
+
+  function signingKey() {
+    signingKeyPromise ||= crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(TOKEN),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign", "verify"],
+    );
+    return signingKeyPromise;
+  }
+
+  function diandianChannelName() {
+    channelNamePromise ||= crypto.subtle.digest("SHA-256", new TextEncoder().encode(TOKEN))
+      .then((digest) => `favsense-xhs-diandian-${hex(digest)}`);
+    return channelNamePromise;
+  }
+
+  function hex(bytes) {
+    return [...new Uint8Array(bytes)].map((value) => value.toString(16).padStart(2, "0")).join("");
+  }
+
+  function unhex(value) {
+    if (!/^[a-f0-9]{64}$/.test(String(value || ""))) return null;
+    return new Uint8Array(String(value).match(/.{2}/g).map((part) => Number.parseInt(part, 16)));
+  }
+
+  async function manualRunId(batch, boardIdForRun) {
+    const value = `${batch}_${boardIdForRun}`.replace(/[^A-Za-z0-9_-]/g, "");
+    if (value.length <= 80) return value;
+    const digest = hex(await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(`${batch}\0${boardIdForRun}`),
+    )).slice(0, 16);
+    return `${value.slice(0, 63)}_${digest}`;
+  }
+
+  async function signedMessage(message) {
+    const signature = await crypto.subtle.sign(
+      "HMAC",
+      await signingKey(),
+      new TextEncoder().encode(canonicalMessage(message)),
+    );
+    return { ...message, signature: hex(signature) };
+  }
+
+  async function validMessage(message) {
+    const signature = unhex(message?.signature);
+    if (!signature) return false;
+    return crypto.subtle.verify(
+      "HMAC",
+      await signingKey(),
+      signature,
+      new TextEncoder().encode(canonicalMessage(message)),
+    );
+  }
+
+  async function waitUntil(predicate, timeout, failureMessage, interval = 250) {
+    const deadline = Date.now() + timeout;
+    while (Date.now() < deadline) {
+      assertSafePage();
+      const value = predicate();
+      if (value) return value;
+      await sleep(interval);
+    }
+    throw new Error(failureMessage);
+  }
+
+  const SAFETY_SHELL_MESSAGE = /(?:^|\n)\s*(?:(?:请|需要)(?:先)?完成(?:验证码|滑块验证|安全验证|人机验证|验证)(?:[，,。！!\s]|$)|(?:访问|操作|请求)频繁(?:\s*300031)?(?:\s*$|[，,\s]+(?:请)?(?:稍后|过一会儿)(?:再试|重试))|(?:页面|账号|请求).{0,16}(?:触发|存在)(?:风控|安全限制)|(?:验证码|滑块验证|安全验证|安全限制|captcha)\s*$|(?:300031|(?:错误码|状态码|error[_ -]?code|status[_ -]?code)\s*[:=：]?\s*300031)\s*(?:$|[，,\s]+(?:请稍后|访问频繁|操作频繁|请求频繁)))/imu;
+  const SAFETY_CHALLENGE_SELECTOR = [
+    '[class*="captcha" i]', '[id*="captcha" i]',
+    '[class*="geetest" i]', '[id*="geetest" i]',
+    '[data-testid*="captcha" i]', '[data-testid*="verify" i]',
+    'iframe[src*="captcha" i]'
+  ].join(",");
+  const SAFETY_MESSAGE_SELECTOR = [
+    '[role="alert"]', '[role="dialog"]', '[aria-modal="true"]'
+  ].join(",");
+  const STRUCTURED_SAFETY_CODE = /["'](?:error[_-]?code|status[_-]?code|code|status)["']\s*[:=]\s*["']?300031\b/i;
+
+  function visibleControl(element) {
+    if (!element || element.hidden || element.getAttribute?.("aria-hidden") === "true") return false;
+    const rectangles = element.getClientRects?.();
+    if (rectangles && rectangles.length === 0) return false;
+    const style = typeof getComputedStyle === "function" ? getComputedStyle(element) : null;
+    return !style || (style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0");
+  }
 
   function assertSafePage() {
-    const bodyText = document.body?.innerText || "";
-    if (/300031|安全限制|访问频繁|验证码/.test(bodyText)) {
-      throw new Error("页面触发安全限制，已停止且不会重试");
+    let challengeVisible = false;
+    let messageVisible = false;
+    let structuredSafetyCode = false;
+    try {
+      challengeVisible = [...document.querySelectorAll(SAFETY_CHALLENGE_SELECTOR)].some(visibleControl);
+      messageVisible = [...document.querySelectorAll(SAFETY_MESSAGE_SELECTOR)]
+        .filter(visibleControl)
+        .some((element) => SAFETY_SHELL_MESSAGE.test(element.innerText || element.textContent || ""));
+      structuredSafetyCode = [...document.querySelectorAll('script[type="application/json"], script#__INITIAL_STATE__')]
+        .some((element) => STRUCTURED_SAFETY_CODE.test(element.textContent || ""));
+    } catch {
+      // Invalid or unsupported selectors must not broaden detection to untrusted page content.
+    }
+    if (challengeVisible || messageVisible || structuredSafetyCode) {
+      throw workflowError("xhs-safety-stop", "页面触发安全限制，已停止且不会重试");
     }
   }
 
@@ -63,6 +195,7 @@
 
   const post = (path, payload, timeout) => request("POST", path, payload, timeout);
   const get = (path, timeout) => request("GET", path, undefined, timeout);
+  post("/install/complete", { capability: INSTALL_CAPABILITY }, 5000).catch(() => {});
 
   function cleanBoardName(anchor) {
     const values = [
@@ -75,7 +208,10 @@
       const lines = String(value || "").split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim());
       const candidate = lines.find((line) => line && line.length <= 100 && !/^\d+(?:\.\d+)?[万千]?$/.test(line) && !/^(?:收藏夹|公开|私密)$/.test(line));
       if (candidate) {
-        const withoutCount = candidate.replace(/(?:\s+\d+(?:\.\d+)?[万千]?|\d+(?:\.\d+)?[万千]?\s*(?:篇|条))$/, "").trim();
+        const withoutCount = candidate
+          .replace(/\s*笔记\s*[・·]\s*\d+(?:\.\d+)?[万千]?\s*$/, "")
+          .replace(/(?:\s+\d+(?:\.\d+)?[万千]?|\d+(?:\.\d+)?[万千]?\s*(?:篇|条))$/, "")
+          .trim();
         return withoutCount || candidate;
       }
     }
@@ -119,6 +255,26 @@
     return [...collected.values()];
   }
 
+  function cleanNoteTitle(anchor, noteId) {
+    const container = anchor.closest('section, li, [class*="note-item"], [class*="card"]') || anchor;
+    const values = [
+      anchor.getAttribute("title"),
+      anchor.getAttribute("aria-label"),
+      container.querySelector('[class*="title"]')?.textContent,
+      container.querySelector('img[alt]')?.getAttribute("alt"),
+      container.textContent,
+    ];
+    for (const value of values) {
+      const lines = String(value || "").split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim());
+      const candidate = lines.find((line) => line
+        && line.length <= 200
+        && !/^\d+(?:\.\d+)?[万千]?$/.test(line)
+        && !/^(?:赞|收藏|评论|分享|复制链接|打开)$/.test(line));
+      if (candidate) return candidate;
+    }
+    return `小红书收藏 ${noteId.slice(-8)}`;
+  }
+
   function collectNotes(currentBoardId) {
     const found = new Map();
     for (const anchor of document.querySelectorAll("a[href]")) {
@@ -130,23 +286,30 @@
         const target = new URL(`https://www.xiaohongshu.com/discovery/item/${match[1]}`);
         target.searchParams.set("xsec_token", token);
         target.searchParams.set("xsec_source", url.searchParams.get("xsec_source") || "pc_share");
-        found.set(match[1], target.href);
+        found.set(match[1], {
+          id: match[1],
+          title: cleanNoteTitle(anchor, match[1]),
+          source_url: target.href,
+        });
       } catch { /* ignore malformed page links */ }
     }
     return found;
   }
 
-  async function scan(board, mode) {
-    const history = mode === "history";
+  async function scan(board, mode, targetNoteId = "") {
+    const history = mode === "history" || Boolean(targetNoteId);
     const collected = new Map();
     let stable = 0;
     const deadline = Date.now() + (history ? 300000 : 30000);
     while (Date.now() < deadline) {
       assertSafePage();
       const before = collected.size;
-      for (const [id, url] of collectNotes(board.id)) collected.set(id, url);
+      for (const [id, note] of collectNotes(board.id)) collected.set(id, note);
+      if (targetNoteId && collected.has(targetNoteId)) return [collected.get(targetNoteId)];
       stable = collected.size === before ? stable + 1 : 0;
-      show(`正在扫描 ${board.name}：${collected.size}${board.advertised_count ? ` / ${board.advertised_count}` : ""} 篇`);
+      show(targetNoteId
+        ? `正在 ${board.name} 中定位指定收藏：已检查 ${collected.size} 篇`
+        : `正在扫描 ${board.name}：${collected.size}${board.advertised_count ? ` / ${board.advertised_count}` : ""} 篇`);
       if (!history && collected.size > 0 && stable >= 2) break;
       if (history && (collected.size >= Math.min(board.advertised_count || 200, 200) || stable >= 20)) break;
       if (history) {
@@ -155,8 +318,876 @@
       }
       await sleep(history ? 2200 : 1300);
     }
+    if (targetNoteId) {
+      throw workflowError("target-note-not-on-board", "当前收藏夹中没有找到指定收藏；本轮没有导入或打开其他笔记");
+    }
     if (!collected.size) throw new Error("没有找到可同步的收藏链接；请确认登录状态");
     return [...collected.values()].slice(0, history ? 200 : 60);
+  }
+
+  function channelMessageWait(channel, predicate, timeout, failureMessage) {
+    let settled = false;
+    let resolveCanceled;
+    let onMessage;
+    let timer;
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      channel.removeEventListener("message", onMessage);
+    };
+    const promise = new Promise((resolve, reject) => {
+      resolveCanceled = resolve;
+      timer = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(new Error(failureMessage));
+      }, timeout);
+      onMessage = async (event) => {
+        try {
+          if (settled || !await validMessage(event.data) || !predicate(event.data)) return;
+          settled = true;
+          cleanup();
+          resolve(event.data);
+        } catch { /* ignore unauthenticated or malformed channel messages */ }
+      };
+      channel.addEventListener("message", onMessage);
+    });
+    return {
+      promise,
+      cancel() {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolveCanceled(null);
+      },
+    };
+  }
+
+  function waitForChannelMessage(channel, predicate, timeout, failureMessage) {
+    return channelMessageWait(channel, predicate, timeout, failureMessage).promise;
+  }
+
+  async function broadcast(channel, message) {
+    channel.postMessage(await signedMessage(message));
+  }
+
+  async function waitForAiWorker(channel, context) {
+    const readyPromise = waitForChannelMessage(
+      channel,
+      (message) => message.type === "ready"
+        && message.job_id === context.job_id
+        && message.worker_id === context.worker_id,
+      diandianTiming("ai_worker_wait"),
+      "点点 AI 页面没有响应；已停止本轮整理",
+    );
+    const probe = () => broadcast(channel, { type: "probe", ...context }).catch(() => {});
+    await probe();
+    const timer = window.setInterval(probe, diandianTiming("worker_probe_interval"));
+    try {
+      return await readyPromise;
+    } finally {
+      window.clearInterval(timer);
+    }
+  }
+
+  function workflowError(code, message) {
+    const error = new Error(message);
+    error.code = code;
+    return error;
+  }
+
+  function failureReason(error, fallback = "diandian-note-failed") {
+    const candidate = String(error?.code || error?.message || "").trim();
+    return /^[a-z][a-z0-9-]{2,79}$/.test(candidate) ? candidate : fallback;
+  }
+
+  const DIANDIAN_CDP_HALT_REASONS = new Set([
+    "diandian-channel-unavailable",
+    "duplicate-submit",
+    "invalid-summary",
+    "login-required",
+    "note-context-mismatch",
+    "note-not-on-board",
+    "page-not-ready",
+    "run-halted",
+    "share-link-failed",
+    "share-link-invalid",
+    "share-link-unavailable",
+    "share-worker-not-ready",
+    "single-note-timeout",
+    "stale-reply",
+    "stale-target",
+    "submit-unconfirmed",
+    "transport-failed",
+    "unexpected-page",
+    "unstable-reply",
+  ]);
+
+  function diandianCdpHaltReason(error) {
+    if (isSafetyFailure(error)) return "xhs-safety-stop";
+    const reason = failureReason(error, "transport-failed");
+    return DIANDIAN_CDP_HALT_REASONS.has(reason) ? reason : "transport-failed";
+  }
+
+  function isSafetyFailure(error) {
+    const code = String(error?.code || "").trim();
+    return ["xhs-safety-stop", "safety-stop", "safety-halt-unconfirmed"].includes(code);
+  }
+
+  function isVisible(element) {
+    if (!element || !element.getClientRects?.().length) return false;
+    const style = getComputedStyle(element);
+    return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
+  }
+
+  function elementLabel(element) {
+    return `${element?.textContent || ""} ${element?.getAttribute?.("aria-label") || ""} ${element?.getAttribute?.("title") || ""}`
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function hasExactElementLabel(element, expected) {
+    return [element?.textContent, element?.getAttribute?.("aria-label"), element?.getAttribute?.("title")]
+      .some((value) => String(value || "").replace(/\s+/g, " ").trim() === expected);
+  }
+
+  function visibleShareButton() {
+    for (const selector of DIANDIAN.selectors.share_controls) {
+      const visible = skillQueryAll([selector]).filter(isVisible);
+      const labeled = visible.find((element) =>
+        elementLabel(element).split(/\s+/).includes(DIANDIAN.selectors.share_action_text)
+      );
+      if (labeled) return labeled;
+      if (DIANDIAN.selectors.unlabeled_share_controls.includes(selector) && visible[0]) {
+        return visible[0];
+      }
+    }
+    return null;
+  }
+
+  async function waitForStableSharePage() {
+    let stableElement = null;
+    let stableSince = 0;
+    return waitUntil(() => {
+      const current = visibleShareButton();
+      if (!current) {
+        stableElement = null;
+        stableSince = 0;
+        return null;
+      }
+      const now = Date.now();
+      if (current !== stableElement) {
+        stableElement = current;
+        stableSince = now;
+        return null;
+      }
+      return now - stableSince >= PAGE_DOM_STABLE_MS ? current : null;
+    }, diandianTiming("share_control_wait"), "笔记页面的分享控件没有稳定显示", 100);
+  }
+
+  function normalizeSharedNoteUrl(value, noteId) {
+    const matches = String(value || "").match(/https:\/\/www\.xiaohongshu\.com\/[^\s<>"']+/g) || [];
+    for (const match of matches) {
+      try {
+        const source = new URL(match.replace(/[）】》。，！!、]+$/u, ""));
+        const pathId = source.pathname.match(/^\/(?:explore|discovery\/item)\/([A-Za-z0-9_-]{1,128})$/)?.[1];
+        if (source.origin !== "https://www.xiaohongshu.com" || pathId !== noteId || !source.searchParams.get("xsec_token")) continue;
+        source.pathname = `/discovery/item/${noteId}`;
+        source.searchParams.delete("xhs_kb_share_worker");
+        source.searchParams.delete("xhs_kb_opened");
+        return source.href;
+      } catch { /* keep looking for the exact copied note link */ }
+    }
+    return "";
+  }
+
+  async function copyVisibleShareLink(noteId) {
+    assertSafePage();
+    const shareButton = await waitForStableSharePage();
+    shareButton.click();
+
+    const copyButton = await waitUntil(() => skillQueryAll(
+      DIANDIAN.selectors.share_menu_items,
+    ).find((element) => isVisible(element) && hasExactElementLabel(
+      element,
+      DIANDIAN.selectors.copy_action_text,
+    )), diandianTiming("share_menu_wait"), "分享菜单中没有找到复制链接");
+    copyButton.click();
+
+    const attributeCandidates = [
+      copyButton.dataset?.clipboardText,
+      copyButton.dataset?.link,
+      copyButton.getAttribute?.("data-clipboard-text"),
+      copyButton.getAttribute?.("data-link"),
+    ];
+    let copiedUrl = "";
+    for (const candidate of attributeCandidates) {
+      copiedUrl = normalizeSharedNoteUrl(candidate, noteId);
+      if (copiedUrl) break;
+    }
+
+    if (!copiedUrl) {
+      const deadline = Date.now() + diandianTiming("clipboard_read_wait");
+      while (Date.now() < deadline) {
+        assertSafePage();
+        try {
+          copiedUrl = normalizeSharedNoteUrl(await navigator.clipboard.readText(), noteId);
+          if (copiedUrl) break;
+        } catch {
+          copiedUrl = normalizeSharedNoteUrl(transientNoteWorkerUrl || location.href, noteId);
+          break;
+        }
+        await sleep(150);
+      }
+    }
+    copiedUrl ||= normalizeSharedNoteUrl(transientNoteWorkerUrl || location.href, noteId);
+    if (!copiedUrl) throw workflowError("share-link-unavailable", "已点击复制链接，但浏览器没有返回这篇笔记的临时分享链接");
+    await sleep(PAGE_DOM_STABLE_MS);
+    assertSafePage();
+    return copiedUrl;
+  }
+
+  async function waitForShareWorker(channel, context) {
+    const readyPromise = waitForChannelMessage(
+      channel,
+      (message) => ["share-ready", "share-failed"].includes(message.type)
+        && message.job_id === context.job_id
+        && message.worker_id === context.worker_id
+        && message.note_id === context.note_id,
+      diandianTiming("share_worker_wait"),
+      "笔记页面没有响应分享请求",
+    );
+    const probe = () => broadcast(channel, { type: "share-probe", ...context }).catch(() => {});
+    await probe();
+    const timer = window.setInterval(probe, diandianTiming("worker_probe_interval"));
+    try {
+      const result = await readyPromise;
+      if (result.type === "share-failed") {
+        throw workflowError(failureReason({ code: result.error }, "share-worker-not-ready"), "笔记页面未能稳定进入可复制状态");
+      }
+      return result;
+    } finally {
+      window.clearInterval(timer);
+    }
+  }
+
+  async function acquireSharedNoteUrl(channel, context, note) {
+    const shareWorkerId = crypto.randomUUID();
+    const shareContext = {
+      ...context,
+      worker_id: shareWorkerId,
+      note_id: note.id,
+      title: note.title,
+    };
+    const noteUrl = new URL(note.source_url);
+    noteUrl.searchParams.set("xhs_kb_share_worker", shareWorkerId);
+    const noteTab = GM_openInTab(noteUrl.href, { active: true, insert: true, setParent: true });
+    let resultWait = null;
+    let copied = false;
+    try {
+      await waitForShareWorker(channel, shareContext);
+      resultWait = channelMessageWait(
+        channel,
+        (message) => message.job_id === context.job_id
+          && message.worker_id === shareWorkerId
+          && message.note_id === note.id
+          && ["share-link", "share-failed"].includes(message.type),
+        diandianTiming("share_result_wait"),
+        "复制笔记分享链接超时",
+      );
+      await broadcast(channel, { type: "copy-link", ...shareContext });
+      const result = await resultWait.promise;
+      if (result.type === "share-failed") {
+        throw workflowError(failureReason({ code: result.error }, "share-link-failed"), "笔记分享链接复制失败");
+      }
+      const copiedUrl = normalizeSharedNoteUrl(result.url, note.id);
+      if (!copiedUrl) throw workflowError("share-link-invalid", "复制到的笔记分享链接无效");
+      copied = true;
+      return DIANDIAN.cdp_enabled === true ? { url: copiedUrl, noteTab } : copiedUrl;
+    } finally {
+      resultWait?.cancel();
+      if (copied && DIANDIAN.cdp_enabled !== true) noteTab?.close?.();
+    }
+  }
+
+  async function reportDiandianSkip(runId, boardIdForRun, noteId, reason) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        return await post("/sync/diandian-skip", {
+          run_id: runId,
+          board_id: boardIdForRun,
+          note_id: noteId,
+          reason,
+        }, 10000);
+      } catch {
+        if (attempt === 0) await sleep(250);
+      }
+    }
+    throw workflowError("diandian-skip-unconfirmed", "本地服务没有确认点点回退状态；已停止继续整理");
+  }
+
+  async function reportDiandianHalt(runId, boardIdForRun, reason = "xhs-safety-stop") {
+    try {
+      return await post("/sync/diandian-halt", {
+        run_id: runId,
+        board_id: boardIdForRun,
+        reason,
+      }, 10000);
+    } catch {
+      if (reason === "xhs-safety-stop") {
+        throw workflowError("safety-halt-unconfirmed", "小红书安全限制已触发，但本地服务没有确认停止状态");
+      }
+      throw workflowError("diandian-halt-unconfirmed", "点点 AI 已停止，但本地服务没有确认失败状态");
+    }
+  }
+
+  async function runShareLinkWorker(currentNoteId, requestedWorkerId) {
+    if (!/^[a-f0-9-]{36}$/i.test(requestedWorkerId || "")) return;
+    const channel = new BroadcastChannel(await diandianChannelName());
+    let processing = false;
+    let readySent = false;
+    let readyPromise = null;
+    channel.addEventListener("message", async (event) => {
+      const message = event.data;
+      if (!await validMessage(message) || message.worker_id !== requestedWorkerId || message.note_id !== currentNoteId) return;
+      if (message.type === "share-probe") {
+        if (readySent) return;
+        readyPromise ||= waitForStableSharePage();
+        try {
+          await readyPromise;
+          if (readySent) return;
+          readySent = true;
+          await broadcast(channel, { ...message, type: "share-ready", signature: undefined });
+        } catch (error) {
+          await broadcast(channel, {
+            ...message,
+            type: "share-failed",
+            error: isSafetyFailure(error) ? "xhs-safety-stop" : failureReason(error, "share-worker-not-ready"),
+            signature: undefined,
+          });
+        }
+        return;
+      }
+      if (message.type !== "copy-link" || processing) return;
+      processing = true;
+      try {
+        const url = await copyVisibleShareLink(currentNoteId);
+        await broadcast(channel, { ...message, type: "share-link", url, signature: undefined });
+      } catch (error) {
+        await broadcast(channel, {
+          ...message,
+          type: "share-failed",
+          error: isSafetyFailure(error) ? "xhs-safety-stop" : failureReason(error, "share-link-failed"),
+          signature: undefined,
+        });
+      } finally {
+        history.replaceState(history.state, "", location.pathname);
+        processing = false;
+        channel.close();
+      }
+    });
+  }
+
+  async function createSummaryPlan(notes, board, runId) {
+    return post("/sync/summary-plan", {
+      run_id: runId,
+      board_id: board.id,
+      note_ids: notes.map((note) => note.id),
+    }, 30000);
+  }
+
+  async function abandonSummaryPlan(board, runId) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const result = await createSummaryPlan([], board, runId);
+        if (result.enabled !== false || result.abandoned !== true || result.note_ids?.length) {
+          throw new Error("本地服务没有确认空的点点计划");
+        }
+        return result;
+      } catch {
+        if (attempt === 0) await sleep(250);
+      }
+    }
+    throw workflowError("diandian-plan-abandon-unconfirmed", "核心入库已保留，但本地服务没有确认结束点点计划；已停止继续整理");
+  }
+
+  async function summarizeOneNote(channel, note, board, batch, runId) {
+    const workerId = crypto.randomUUID();
+    const context = {
+      job_id: `${runId}-${crypto.randomUUID()}`,
+      worker_id: workerId,
+      batch,
+      run_id: runId,
+      board_id: board.id,
+    };
+    const shared = await acquireSharedNoteUrl(channel, context, note);
+    const sharedUrl = typeof shared === "string" ? shared : shared.url;
+    if (DIANDIAN.cdp_enabled === true) {
+      const result = await post("/sync/diandian-cdp", {
+        run_id: runId,
+        board_id: board.id,
+        note_id: note.id,
+        title: note.title,
+        url: sharedUrl,
+      }, diandianTiming("single_note_wait"));
+      if (result.saved !== true || result.halted === true) {
+        const error = workflowError(
+          failureReason({ code: result.reason }, "transport-failed"),
+          "点点 AI 总结未完成；本轮已停止",
+        );
+        error.bridgeHalted = result.halted === true;
+        throw error;
+      }
+      shared.noteTab?.close?.();
+      return;
+    }
+    const aiUrl = new URL(DIANDIAN.ai_chat_url);
+    aiUrl.searchParams.set("xhs_kb_worker", workerId);
+    const aiTab = GM_openInTab(aiUrl.href, { active: true, insert: true, setParent: true });
+    let workerReady = false;
+    let saved = false;
+    let resultWait = null;
+    try {
+      await waitForAiWorker(channel, context);
+      workerReady = true;
+      await sleep(PAGE_DOM_STABLE_MS);
+      assertSafePage();
+      const task = {
+        type: "summarize",
+        ...context,
+        note_id: note.id,
+        title: note.title,
+        url: sharedUrl,
+      };
+      resultWait = channelMessageWait(
+        channel,
+        (message) => message.job_id === context.job_id
+          && message.worker_id === workerId
+          && message.note_id === note.id
+          && ["saved", "failed"].includes(message.type),
+        diandianTiming("single_note_wait"),
+        `点点 AI 总结「${note.title}」超时`,
+      );
+      await broadcast(channel, task);
+      const result = await resultWait.promise;
+      if (result?.type !== "saved") {
+        throw workflowError(failureReason({ code: result?.error }, "diandian-ai-failed"), `点点 AI 无法总结「${note.title}」`);
+      }
+      saved = true;
+    } finally {
+      resultWait?.cancel();
+      if (workerReady && saved) {
+        await broadcast(channel, { type: "finish", ...context }).catch(() => {});
+        aiTab?.close?.();
+      } else if (workerReady) {
+        await broadcast(channel, { type: "cancel", ...context }).catch(() => {});
+      }
+    }
+  }
+
+  async function summarizePlannedNotes(notes, board, batch, runId, plan) {
+    if (!plan.enabled || !plan.note_ids.length) return { saved: 0, skipped: 0, halted: false };
+
+    const notesById = new Map(notes.map((note) => [note.id, note]));
+    const planned = plan.note_ids.map((noteId) => notesById.get(noteId) || { id: noteId, title: "", missing: true });
+    let channel;
+    try {
+      channel = new BroadcastChannel(await diandianChannelName());
+    } catch {
+      if (DIANDIAN.cdp_enabled === true) {
+        const reason = "diandian-channel-unavailable";
+        await reportDiandianHalt(runId, board.id, reason);
+        return { saved: 0, skipped: 0, halted: true, reason };
+      }
+      const first = planned[0];
+      if (!first) return { saved: 0, skipped: 0, halted: false };
+      const reason = "diandian-channel-unavailable";
+      const outcome = await reportDiandianSkip(runId, board.id, first.id, reason);
+      if (outcome.saved === true && outcome.plan_complete === true) return { saved: 1, skipped: 0, halted: false };
+      await abandonSummaryPlan(board, runId);
+      return {
+        saved: outcome.saved === true ? 1 : 0,
+        skipped: outcome.saved === true ? 0 : 1,
+        halted: true,
+        reason,
+      };
+    }
+
+    let saved = 0;
+    let skipped = 0;
+    try {
+      for (let index = 0; index < planned.length; index += 1) {
+        const note = planned[index];
+        show(`点点 AI 正在总结 ${board.name}：${index + 1} / ${planned.length}`);
+        try {
+          if (note.missing) throw workflowError("note-not-on-board", "计划中的笔记不在当前收藏夹页面");
+          await summarizeOneNote(channel, note, board, batch, runId);
+          saved += 1;
+          if (index < planned.length - 1) await sleep(BETWEEN_NOTES_MS);
+        } catch (error) {
+          if (DIANDIAN.cdp_enabled === true) {
+            const reason = diandianCdpHaltReason(error);
+            if (error?.bridgeHalted !== true) {
+              await reportDiandianHalt(runId, board.id, reason);
+            }
+            return { saved, skipped, halted: true, reason };
+          }
+          if (isSafetyFailure(error)) {
+            await reportDiandianHalt(runId, board.id);
+            return { saved, skipped, halted: true, reason: "xhs-safety-stop" };
+          }
+          const reason = failureReason(error);
+          const outcome = await reportDiandianSkip(runId, board.id, note.id, reason);
+          if (outcome.saved === true) {
+            saved += 1;
+            if (index < planned.length - 1 || outcome.plan_complete !== true) await abandonSummaryPlan(board, runId);
+            return { saved, skipped, halted: true, reason };
+          }
+          skipped += 1;
+          await abandonSummaryPlan(board, runId);
+          return { saved, skipped, halted: true, reason };
+        }
+      }
+      return { saved, skipped, halted: false };
+    } finally {
+      channel.close();
+    }
+  }
+
+  async function openRequestedNote(noteId) {
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(noteId)) throw new Error("原帖标识无效");
+    let stable = 0;
+    let knownCount = 0;
+    const deadline = Date.now() + 5 * 60 * 1000;
+    while (Date.now() < deadline) {
+      assertSafePage();
+      const visible = collectNotes(boardId);
+      const note = visible.get(noteId);
+      if (note) {
+        const target = new URL(note.source_url);
+        target.searchParams.set("xhs_kb_opened", "1");
+        location.replace(target.href);
+        return;
+      }
+      stable = visible.size === knownCount ? stable + 1 : 0;
+      knownCount = Math.max(knownCount, visible.size);
+      show("正在收藏夹中定位原帖…");
+      if (stable > 0 && stable % 10 === 0) window.scrollBy({ top: -Math.round(innerHeight * 0.7), behavior: "instant" });
+      else window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+      await sleep(1800);
+    }
+    throw new Error("当前收藏夹中没有找到原帖；可能已被删除或暂时不可见");
+  }
+
+  function setAiInput(input, value) {
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+    if (!setter) throw new Error("点点 AI 输入框不可用");
+    setter.call(input, value);
+    input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: value }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  async function pasteAiLink(input, value) {
+    if (typeof DataTransfer !== "function" || typeof ClipboardEvent !== "function") {
+      throw new Error("点点 AI 的链接粘贴接口不可用");
+    }
+    const clipboardData = new DataTransfer();
+    clipboardData.setData("text/plain", value);
+    input.focus();
+    const pasteEvent = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+      clipboardData,
+    });
+    const pasteNotCanceled = input.dispatchEvent(pasteEvent);
+    if (!pasteNotCanceled || pasteEvent.defaultPrevented) return;
+    const pasteHandled = await waitForConditionWithoutSafety(
+      () => input.value !== "" || selectedNoteCount() !== 0,
+      diandianTiming("paste_acceptance_wait"),
+      100,
+    );
+    if (pasteHandled || input.value !== "" || selectedNoteCount() !== 0) return;
+    throw workflowError("ai-paste-not-handled", "点点 AI 没有接收这次链接粘贴；为避免重复粘贴，已停止本轮整理");
+  }
+
+  async function waitForConditionWithoutSafety(predicate, timeout, interval = 100) {
+    const deadline = Date.now() + timeout;
+    while (Date.now() < deadline) {
+      assertSafePage();
+      if (predicate()) return true;
+      await sleep(interval);
+    }
+    return Boolean(predicate());
+  }
+
+  function appendAiPrompt(input, suffix) {
+    if (typeof input.setRangeText !== "function") {
+      throw workflowError("ai-prompt-append-unavailable", "点点 AI 输入框不支持安全追加提示词");
+    }
+    const start = input.value.length;
+    input.focus();
+    input.setRangeText(suffix, start, start, "end");
+    input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: suffix }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function visibleAiInput(input) {
+    if (!input || input.disabled || input.hidden || input.getAttribute("aria-hidden") === "true") return false;
+    const style = window.getComputedStyle?.(input);
+    if (style && (style.display === "none" || style.visibility === "hidden")) return false;
+    return typeof input.getClientRects !== "function" || input.getClientRects().length > 0;
+  }
+
+  function skillQueryAll(selectors) {
+    const results = [];
+    for (const selector of selectors) {
+      try {
+        results.push(...document.querySelectorAll(selector));
+      } catch {
+        throw workflowError("invalid-skill-selector", "点点 Skill 包含无效的浏览器选择器");
+      }
+    }
+    return [...new Set(results)];
+  }
+
+  function aiInput() {
+    const visible = skillQueryAll(DIANDIAN.selectors.input_controls).filter(visibleAiInput);
+    return DIANDIAN.selectors.input_placeholders
+      .map((placeholder) => visible.find((input) => input.getAttribute("placeholder") === placeholder))
+      .find(Boolean)
+      || visible[0]
+      || null;
+  }
+
+  function selectedNoteCount() {
+    return skillQueryAll([DIANDIAN.selectors.selected_note_card]).length;
+  }
+
+  function selectedNoteTitle(fallback) {
+    const card = skillQueryAll([DIANDIAN.selectors.selected_note_card]).at(-1);
+    const title = String(card?.innerText || "").split(/\r?\n/)
+      .map((line) => line.replace(/\s+/g, " ").trim())
+      .find((line) => line && line.length <= 200 && !/^(?:笔记|已选择|移除)$/.test(line));
+    return title || fallback;
+  }
+
+  function retainedCanonicalAiLink(input, canonicalUrl) {
+    return selectedNoteCount() === 0
+      && aiInput() === input
+      && visibleAiInput(input)
+      && input.value === canonicalUrl;
+  }
+
+  function attachedAiNote(input) {
+    return selectedNoteCount() === 1
+      && aiInput() === input
+      && visibleAiInput(input)
+      && input.value === "";
+  }
+
+  async function resolveAiNoteContext(input, canonicalUrl) {
+    let stableMode = "";
+    let stableSince = 0;
+    try {
+      return await waitUntil(() => {
+        const mode = attachedAiNote(input)
+          ? "attachment"
+          : retainedCanonicalAiLink(input, canonicalUrl)
+            ? "inline-link"
+            : "";
+        if (!mode) {
+          stableMode = "";
+          stableSince = 0;
+          return null;
+        }
+        const now = Date.now();
+        if (stableMode !== mode) {
+          stableMode = mode;
+          stableSince = now;
+          return null;
+        }
+        return now - stableSince >= NOTE_CONTEXT_STABLE_MS ? mode : null;
+      }, diandianTiming("context_wait"), "点点 AI 没有识别或完整保留这篇笔记链接", 100);
+    } catch (error) {
+      if (isSafetyFailure(error)) throw error;
+      throw workflowError("link-not-recognized", "点点 AI 既没有创建笔记附件，也没有完整保留笔记链接");
+    }
+  }
+
+  function aiMessages() {
+    return skillQueryAll([DIANDIAN.selectors.assistant_message]);
+  }
+
+  async function submitAiPrompt(input, messageCount) {
+    input.focus();
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true, cancelable: true }));
+    input.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter", code: "Enter", bubbles: true, cancelable: true }));
+    try {
+      await waitUntil(
+        () => input.value === "" || aiMessages().length > messageCount,
+        diandianTiming("submit_acceptance_wait"),
+        "点点 AI 没有确认本次提交",
+        100,
+      );
+    } catch (error) {
+      if (isSafetyFailure(error)) throw error;
+      throw workflowError("diandian-submit-not-accepted", "点点 AI 没有确认本次提交；为避免重复发送，已停止本轮整理");
+    }
+  }
+
+  async function summarizeInAi(message, canceled) {
+    const source = new URL(message.url);
+    if (
+      source.origin !== "https://www.xiaohongshu.com"
+      || source.pathname !== `/discovery/item/${message.note_id}`
+      || !source.searchParams.get("xsec_token")
+    ) throw new Error("笔记链接不是当前收藏夹中的有效临时链接");
+
+    const currentRun = await get(
+      `/sync/board-context?batch=${encodeURIComponent(message.batch)}&board_id=${encodeURIComponent(message.board_id)}`,
+      10000,
+    );
+    if (currentRun.board.id !== message.board_id || message.run_id !== await manualRunId(message.batch, message.board_id)) {
+      throw new Error("点点 AI 收到的整理批次已经失效");
+    }
+
+    const input = await waitUntil(aiInput, diandianTiming("input_wait"), "没有找到点点 AI 输入框");
+    const selectedBefore = selectedNoteCount();
+    if (selectedBefore !== 0 || input.value !== "") {
+      throw workflowError("ai-context-not-clean", "点点 AI 页面存在上一条未完成的笔记附件或输入内容");
+    }
+    await pasteAiLink(input, message.url);
+    const noteContext = await resolveAiNoteContext(input, message.url);
+    const title = selectedNoteTitle(message.title);
+    if (canceled.has(message.job_id)) throw new Error("本轮点点 AI 整理已取消");
+
+    const messageCount = aiMessages().length;
+    const prompt = noteContext === "attachment"
+      ? DIANDIAN.prompt
+      : `${message.url} ${DIANDIAN.prompt}`;
+    const contextStillValid = noteContext === "attachment"
+      ? attachedAiNote(input)
+      : retainedCanonicalAiLink(input, message.url);
+    if (!contextStillValid) throw workflowError("link-not-recognized", "点点 AI 提交前的笔记上下文已变化");
+    if (noteContext === "attachment") setAiInput(input, prompt);
+    else appendAiPrompt(input, ` ${DIANDIAN.prompt}`);
+    try {
+      await waitUntil(() => input.value === prompt, PROMPT_STABLE_MS + 1000, "点点 AI 提示词没有稳定写入", 100);
+      await sleep(PROMPT_STABLE_MS);
+      if (input.value !== prompt) throw new Error("点点 AI 提示词在提交前发生变化");
+    } catch (error) {
+      if (isSafetyFailure(error)) throw error;
+      throw workflowError("ai-prompt-not-stable", "点点 AI 提示词没有稳定保留；为避免错误提交，已停止本轮整理");
+    }
+    const promptIsValid = noteContext === "attachment"
+      ? input.value === DIANDIAN.prompt && selectedNoteCount() === 1
+      : input.value === prompt && selectedNoteCount() === 0 && aiInput() === input && visibleAiInput(input);
+    if (!promptIsValid) throw workflowError("link-not-recognized", "点点 AI 提交前的笔记链接或提示词校验失败");
+    assertSafePage();
+    await submitAiPrompt(input, messageCount);
+    try {
+      await waitUntil(() => {
+        const messages = aiMessages();
+        if (messages.length <= messageCount) return null;
+        const last = messages.at(-1);
+        return last.classList.contains(DIANDIAN.selectors.finished_message_class) ? last : null;
+      }, diandianTiming("response_wait"), "点点 AI 没有在时限内完成总结", 500);
+    } catch (error) {
+      if (isSafetyFailure(error)) throw error;
+      throw workflowError("diandian-response-timeout", "点点 AI 没有在时限内完成总结");
+    }
+    if (canceled.has(message.job_id)) throw new Error("本轮点点 AI 整理已取消");
+    let stableNode = null;
+    let stableSummary = "";
+    let stableSince = 0;
+    await waitUntil(() => {
+      const messages = aiMessages();
+      if (messages.length <= messageCount) return null;
+      const currentNode = messages.at(-1);
+      if (!currentNode?.classList.contains(DIANDIAN.selectors.finished_message_class)) {
+        stableNode = null;
+        stableSummary = "";
+        stableSince = 0;
+        return null;
+      }
+      const current = String(currentNode.innerText || "").trim();
+      if (!current || currentNode !== stableNode || current !== stableSummary) {
+        stableNode = currentNode;
+        stableSummary = current;
+        stableSince = Date.now();
+        return null;
+      }
+      return Date.now() - stableSince >= REPLY_TEXT_STABLE_MS ? current : null;
+    }, diandianTiming("reply_settle_wait"), "点点 AI 已显示完成，但回复正文仍在变化", 200);
+    const summary = stableSummary;
+    if (summary.length < DIANDIAN.minimum_summary_chars) throw new Error("点点 AI 返回的总结为空或过短");
+    await post("/sync/diandian-result", {
+      run_id: message.run_id,
+      board_id: message.board_id,
+      note_id: message.note_id,
+      title,
+      summary,
+    }, diandianTiming("save_ack_wait"));
+    await sleep(SUCCESS_DWELL_MS);
+    assertSafePage();
+  }
+
+  async function runAiChatWorker() {
+    const channel = new BroadcastChannel(await diandianChannelName());
+    const requestedWorkerId = new URLSearchParams(location.search).get("xhs_kb_worker");
+    const workerId = /^[a-f0-9-]{36}$/i.test(requestedWorkerId || "") ? requestedWorkerId : crypto.randomUUID();
+    const seen = new Set();
+    const canceled = new Set();
+    let processing = false;
+    channel.addEventListener("message", async (event) => {
+      const message = event.data;
+      if (!await validMessage(message)) return;
+      if (message.type === "probe") {
+        if (message.worker_id !== workerId) return;
+        await broadcast(channel, { ...message, type: "ready", worker_id: workerId, signature: undefined });
+        return;
+      }
+      if (message.worker_id !== workerId) return;
+      if (message.type === "cancel") {
+        canceled.add(message.job_id);
+        channel.close();
+        return;
+      }
+      if (message.type === "finish") {
+        channel.close();
+        return;
+      }
+      if (message.type !== "summarize" || processing) return;
+      const taskKey = `${message.job_id}:${message.note_id}`;
+      if (seen.has(taskKey)) return;
+      seen.add(taskKey);
+      processing = true;
+      try {
+        await summarizeInAi(message, canceled);
+        await broadcast(channel, {
+          type: "saved",
+          job_id: message.job_id,
+          worker_id: workerId,
+          batch: message.batch,
+          run_id: message.run_id,
+          board_id: message.board_id,
+          note_id: message.note_id,
+        });
+      } catch (error) {
+        await broadcast(channel, {
+          type: "failed",
+          job_id: message.job_id,
+          worker_id: workerId,
+          batch: message.batch,
+          run_id: message.run_id,
+          board_id: message.board_id,
+          note_id: message.note_id,
+          error: isSafetyFailure(error) ? "xhs-safety-stop" : failureReason(error, "diandian-ai-failed"),
+        });
+      } finally {
+        processing = false;
+      }
+    });
   }
 
   function goToBoard(id, batch, mode) {
@@ -178,35 +1209,119 @@
     } catch (error) {
       const message = error.message || String(error);
       show(message, true);
-      await post("/sync/failure", { run_id: batch, error: message }, 10000).catch(() => {});
+      await post("/sync/failure", {
+        run_id: batch,
+        error: isSafetyFailure(error) ? "xhs-safety-stop" : message,
+      }, 10000).catch(() => {});
     }
   }
 
   async function runBoard(mode, batch) {
     let runId = batch;
+    let coreResult = null;
+    let activeBoard = null;
+    let summaryPlan = null;
+    let summaryResolved = false;
     try {
       const context = await get(`/sync/board-context?batch=${encodeURIComponent(batch)}&board_id=${encodeURIComponent(boardId)}`, 10000);
       const board = context.board;
-      runId = `${batch}_${board.id}`.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
-      show(`准备扫描 ${board.name}`);
-      const urls = await scan(board, mode);
-      show(`正在入库 ${board.name} 的 ${urls.length} 篇（含可用评论区线索）`);
+      const targetNoteId = board.target_note_id === undefined ? "" : String(board.target_note_id || "");
+      if (targetNoteId && !/^[A-Za-z0-9_-]{1,128}$/.test(targetNoteId)) {
+        throw workflowError("target-note-invalid", "本地服务返回的指定收藏无效；本轮已停止");
+      }
+      const targetMode = Boolean(targetNoteId);
+      activeBoard = board;
+      runId = await manualRunId(batch, board.id);
+      show(targetMode ? `准备在 ${board.name} 中校验一张指定卡片` : `准备扫描 ${board.name}`);
+      const notes = await scan(board, targetMode ? "history" : mode, targetNoteId);
+      if (targetMode && (notes.length !== 1 || notes[0]?.id !== targetNoteId)) {
+        throw workflowError("target-note-selection-invalid", "没有安全选中指定收藏；本轮已停止");
+      }
+      const urls = notes.map((note) => note.source_url);
+      show(targetMode
+        ? `正在本机校验 ${board.name} 中的指定卡片`
+        : `正在入库 ${board.name} 的 ${urls.length} 篇（含可用评论区线索）`);
       const timeout = mode === "history" ? 80 * 60 * 1000 : 30 * 60 * 1000;
-      const result = await post("/import-sync", { run_id: runId, board_id: board.id, urls }, timeout);
-      show(`${board.name} 完成：扫描 ${result.scanned}，新增 ${result.new}`);
-      if (result.next_board_id) {
+      coreResult = await post("/import-sync", { run_id: runId, board_id: board.id, urls }, timeout);
+      try {
+        summaryPlan = await createSummaryPlan(notes, board, runId);
+        if (targetMode && (
+          summaryPlan.enabled !== true
+          || !Array.isArray(summaryPlan.note_ids)
+          || summaryPlan.note_ids.length !== 1
+          || summaryPlan.note_ids[0] !== targetNoteId
+        )) {
+          throw workflowError("target-summary-plan-invalid", "本地服务没有确认单篇点点计划；本轮已停止");
+        }
+      } catch (error) {
+        try {
+          await abandonSummaryPlan(board, runId);
+        } catch (abandonError) {
+          show(abandonError.message || String(abandonError), true);
+          return;
+        }
+        show(`${board.name} 核心入库已完成；点点计划暂不可用，将在下次整理补充`, true);
+        if (!targetMode && coreResult.next_board_id) {
+          await sleep(1200);
+          goToBoard(coreResult.next_board_id, batch, mode);
+        }
+        return;
+      }
+      const summary = await summarizePlannedNotes(notes, board, batch, runId, summaryPlan);
+      summaryResolved = true;
+      if (summary.halted) {
+        const safetyStopped = summary.reason === "xhs-safety-stop";
+        show(safetyStopped
+          ? "小红书触发安全限制，核心入库已保留；本轮已停止且不会继续重试"
+          : "点点页面流程未完整完成，核心入库已保留；已停止剩余笔记并保留失败页面", true);
+        return;
+      }
+      const fallback = summary.skipped ? `，${summary.skipped} 篇等待下次补充` : "";
+      show(`${board.name} 完成：扫描 ${coreResult.scanned}，新增 ${coreResult.new}${fallback}`);
+      if (!targetMode && coreResult.next_board_id) {
         await sleep(1200);
-        goToBoard(result.next_board_id, batch, mode);
+        goToBoard(coreResult.next_board_id, batch, mode);
       }
     } catch (error) {
       const message = error.message || String(error);
       show(message, true);
-      await post("/sync/failure", { run_id: runId, board_id: boardId, error: message }, 10000).catch(() => {});
+      if (!coreResult) {
+        await post("/sync/failure", {
+          run_id: runId,
+          board_id: boardId,
+          error: isSafetyFailure(error) ? "xhs-safety-stop" : message,
+        }, 10000).catch(() => {});
+      } else {
+        if (summaryResolved) return;
+        if (isSafetyFailure(error)) {
+          await reportDiandianHalt(runId, activeBoard?.id || boardId).catch(() => {});
+          return;
+        }
+        return;
+      }
     }
   }
 
   GM_registerMenuCommand("打开拾光台后开始整理", () => show("请在本地拾光台的“同步与设置”页面点击“开始整理”"));
   const query = new URLSearchParams(location.search);
+  if (notePageId) {
+    const shareWorkerId = query.get("xhs_kb_share_worker");
+    if (shareWorkerId) {
+      runShareLinkWorker(notePageId, shareWorkerId).catch((error) => show(error.message || String(error), true));
+    } else if (query.get("xhs_kb_opened") === "1") {
+      history.replaceState(history.state, "", location.pathname);
+    }
+    return;
+  }
+  if (onAiChat) {
+    runAiChatWorker().catch((error) => show(error.message || String(error), true));
+    return;
+  }
+  const requestedNoteId = query.get("xhs_kb_open_note");
+  if (boardId && requestedNoteId) {
+    openRequestedNote(requestedNoteId).catch((error) => show(error.message || String(error), true));
+    return;
+  }
   if (query.get("xhs_kb_sync") !== "1") return;
   const mode = query.get("xhs_kb_mode") === "history" ? "history" : "incremental";
   const batch = (query.get("xhs_kb_batch") || String(Date.now())).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
