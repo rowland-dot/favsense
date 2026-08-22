@@ -39,6 +39,7 @@
     "test:release-contracts": "node --test scripts/test-run-python-tests.mjs scripts/test-verify-release.mjs",
     "test:lifecycle": "node --test scripts/test-verify-development-lifecycle.mjs scripts/test-check-syntax.mjs scripts/test-run-organization-tests.mjs",
     "test:organization": "node scripts/run-organization-tests.mjs",
+    "verify:github-resources": "node skills/xhs-favorites-organizer/scripts/verify-github-resources.mjs",
     "test:e2e": "playwright test",
     "lint:a11y": "eslint site/app.js site/local-bridge-utils.mjs site/resource-utils.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
