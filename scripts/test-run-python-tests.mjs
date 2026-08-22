@@ -24,7 +24,7 @@ test("an explicit Python runtime is tried before platform fallbacks", () => {
   assert.ok(candidates.some((candidate) => candidate.command === "python"));
 });
 
-test("Python selection rejects versions older than 3.11 and uses the next valid candidate", () => {
+test("Python selection rejects versions older than 3.12 and uses the next valid candidate", () => {
   const calls = [];
   const selected = selectPython([
     { command: "python-old", prefixArgs: [], label: "old" },
@@ -33,7 +33,7 @@ test("Python selection rejects versions older than 3.11 and uses the next valid 
     spawn(command, args) {
       calls.push([command, args]);
       return command === "python-old"
-        ? { status: 0, stdout: "3.10\n", stderr: "" }
+        ? { status: 0, stdout: "3.11\n", stderr: "" }
         : { status: 0, stdout: "3.12\n", stderr: "" };
     },
   });

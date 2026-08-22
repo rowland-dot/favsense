@@ -8,6 +8,20 @@
 
 ## 如何验证
 
+Spec: <!-- docs/specs/...-spec.md -->
+Plan: <!-- docs/plans/...-plan.md -->
+RED/GREEN evidence: <!-- docs/reports/code/...-code.md -->
+Review: <!-- docs/reports/reviews/...-review.md -->
+QA: <!-- docs/reports/qa/...-qa-report.md -->
+Audit: <!-- docs/reports/test-outcomes/...-test-outcome.md -->
+Review brief: <!-- docs/reports/briefs/...-brief.md -->
+Rollback: <!-- exact revert/snapshot rollback statement -->
+
+- [ ] Rollback reviewed
+- [ ] Spec is APPROVED and the plan cites it
+- [ ] Privacy/public-tree checks pass
+- [ ] User approved PR creation after the review brief
+
 - [ ] `npm run release:check`（Node、两套 Python 测试与公开发布边界均通过）
 - [ ] 涉及 Windows 安装/启动脚本时，Windows CI 契约已通过
 - [ ] 如有界面变化，已检查桌面、移动端、键盘操作并附截图

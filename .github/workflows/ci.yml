@@ -29,6 +29,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install locked Node dependencies
+        run: npm ci
+
       - name: Check JavaScript syntax
         run: |
           node --check site/app.js
@@ -42,3 +45,7 @@ jobs:
 
       - name: Run the complete release gate
         run: npm run release:check
+
+      - name: Verify PR development lifecycle
+        if: github.event_name == 'pull_request'
+        run: node scripts/verify-development-lifecycle.mjs

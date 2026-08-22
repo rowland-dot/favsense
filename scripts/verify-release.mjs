@@ -19,7 +19,7 @@ const requiredFiles = [
   "skills/xhs-diandian-summarize-note/SKILL.md",
   "skills/xhs-diandian-summarize-note/scripts/save_diandian_summary.py",
   "skills/xhs-diandian-summarize-note/scripts/save_diandian_batch.py",
-  "favsense.ps1", "scripts/run-python-tests.mjs", "site/index.html", "site/app.js", "site/resource-utils.mjs", "site/personal-store.mjs", "site/hf-personal-sync.mjs", "site/hf-sync-guard.mjs", "site/data/knowledge.json",
+  "favsense.ps1", "scripts/run-python-tests.mjs", "scripts/run-organization-tests.mjs", "scripts/check-syntax.mjs", "scripts/verify-development-lifecycle.mjs", "site/index.html", "site/app.js", "site/resource-utils.mjs", "site/personal-store.mjs", "site/hf-personal-sync.mjs", "site/hf-sync-guard.mjs", "site/data/knowledge.json",
   "skills/xhs-favorites-organizer/scripts/build-public-site.mjs", "skills/xhs-favorites-organizer/scripts/evidence-stats.mjs",
   "skills/xhs-favorites-organizer/scripts/curation-quality.mjs",
   "skills/xhs-favorites-organizer/scripts/public-tree-policy.mjs",

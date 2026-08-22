@@ -16,10 +16,10 @@
 npm run release:check
 ```
 
-该命令统一运行 Node.js 测试、收藏整理器与点点 Skill 的 Python `unittest`，并检查公开发布边界。需要 Python 3.11+；若解释器不在 PATH，可把 `FAVSENSE_PYTHON` 指向准确的 Python 可执行文件。
+该命令统一运行 Node.js 测试、收藏整理器与点点 Skill 的 Python `unittest`，并检查公开发布边界。需要 Node.js 20+ 与 Python 3.12+；若解释器不在 PATH，可把 `FAVSENSE_PYTHON` 指向准确的 Python 可执行文件。Windows PowerShell 使用 `npm.cmd run release:check`；POSIX/CI 使用 `npm run release:check`。收藏整理闭环的快速回归入口是 `npm.cmd run test:organization`。
 
 使用 `npm run preview` 预览网页；服务只绑定 `127.0.0.1`。至少检查桌面、窄屏、键盘焦点和减少动态效果设置。
 
 ## Pull Request
 
-PR 描述应说明：问题、解决方式、验证证据、安全/隐私影响，以及界面变化截图。避免在同一个 PR 中混合无关重构。
+PR 描述必须链接 APPROVED Spec、canonical Plan、RED/GREEN、Review、QA、Audit、Review brief 与回滚说明。行为修改严格遵守 Spec → Plan → TDD → Review → QA → Audit → Brief → 用户批准 → PR；避免在同一个 PR 中混合无关重构。

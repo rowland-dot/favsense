@@ -36,10 +36,13 @@
     "test:curation": "node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs",
     "test:skill-sync": "node --test scripts/test-sync-diandian-skill.mjs",
     "test:release-contracts": "node --test scripts/test-run-python-tests.mjs scripts/test-verify-release.mjs",
+    "test:lifecycle": "node --test scripts/test-verify-development-lifecycle.mjs scripts/test-check-syntax.mjs scripts/test-run-organization-tests.mjs",
+    "test:organization": "node scripts/run-organization-tests.mjs",
+    "check:syntax": "node scripts/check-syntax.mjs",
     "test:python": "node scripts/run-python-tests.mjs",
-    "test": "npm run test:site && npm run test:publish && npm run test:knowledge && npm run test:curation && npm run test:skill-sync && npm run test:release-contracts",
+    "test": "npm run test:site && npm run test:publish && npm run test:knowledge && npm run test:curation && npm run test:skill-sync && npm run test:release-contracts && npm run test:lifecycle",
     "verify": "node scripts/verify-release.mjs",
-    "release:check": "npm test && npm run test:python && npm run verify"
+    "release:check": "npm run check:syntax && npm test && npm run test:python && npm run verify"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

@@ -59,11 +59,11 @@ export function selectPython(candidates, { spawn = spawnSync } = {}) {
     if (!match) continue;
     const major = Number.parseInt(match[1], 10);
     const minor = Number.parseInt(match[2], 10);
-    if (major > 3 || (major === 3 && minor >= 11)) {
+    if (major > 3 || (major === 3 && minor >= 12)) {
       return { ...candidate, version: `${major}.${minor}` };
     }
   }
-  throw new Error("Python 3.11 or newer was not found. Set FAVSENSE_PYTHON to an exact interpreter path.");
+  throw new Error("Python 3.12 or newer was not found. Set FAVSENSE_PYTHON to an exact interpreter path.");
 }
 
 export function runPythonTestSuites(interpreter, {
