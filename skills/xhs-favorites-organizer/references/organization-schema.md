@@ -19,7 +19,7 @@
 
 系统处理全部合法收藏，不要求用户为每篇笔记维护等级、处理状态、用户决策或证据状态。可靠性信息以具体来源和核验说明呈现，不压缩成单个字母或状态标签。
 
-内容形态默认根据已核验项目类型和摘要语义自动判断。对于尚未进入策展 JSON 的收藏，构建器先使用领域配置的 `fallback.kind_rules` 对标题、简介和标签进行保守的初步判断，而不是统一标成 `Note`。`Note` 只表示观点、资讯或一般知识说明，不代表“尚未处理”。自动判断错误时，在对应策展记录中写入 `"kind": "Workflow"` 等值即可稳定覆盖；重新运行构建器后，网页与知识库使用人工值。静态公开网页只负责浏览和筛选，不直接回写项目源文件。
+内容形态默认根据已核验项目类型和摘要语义自动判断。对于尚未进入策展 JSON 的收藏，构建器先使用领域配置的 `fallback.kind_rules` 做保守候选判断，而不是统一标成 `Note`。`Note` 只表示观点、资讯或一般知识说明，不代表“尚未处理”。规则判断为 Skill 但未满足 accepted/current/resource 门时，正式 `kind` 使用领域中性 fallback，并额外输出 `candidateKind="Skill"`；只有 accepted 且恰好关联一个 fresh verified resource 时才是 `confirmed Skill`。自动判断错误时，在对应策展记录中写入 `"kind": "Workflow"` 等值即可稳定覆盖；重新运行构建器后，网页与知识库使用当前合法值。静态公开网页只负责浏览和筛选，不直接回写项目源文件。
 
 不同领域拥有不同的 `content_kinds`，网页筛选器必须从当前构建结果动态读取，不能假设所有知识库都有 Tool、Skill 或 Workflow。领域模板应同时声明标签说明、默认类型和匹配规则；构建时若规则引用了本领域未声明的类型，必须直接失败。
 
@@ -52,8 +52,12 @@
 - `github_stars`：核验时 GitHub 显示的 Star 数；
 - `stars_verified_at`：核验日期；
 - `compatibility`：明确支持的 Agent 宿主；
+- `resource_identity_sha256`：绑定 canonical repo、官方名称/类型、license、manifest、compatibility 与官方证据位置；
+- `verification_snapshot_sha256`：绑定 identity、默认分支、下载地址、Star 与核验日期；
 
 这些信息同时写入对应知识卡片和 `knowledge-base/05-Skills成果/GitHub-Skills核验清单.md`。官方仓库不能唯一确认时，`skill_type` 写 `unknown`，其余不可确认字段留空并说明缺失原因。不得照抄帖子里的 Star 数，也不得仅凭 Star 数推荐安装。
+
+confirmed Skill 的资源动作必须至少包含名称可区分的“官方仓库”和“下载 ZIP”；详情页遍历全部安全动作，不只取第一项。0 个或多个 verified resource、过期 snapshot、identity 变化或字段缺失都会使条目回到候选/待审核状态，且不得生成猜测链接。
 
 ## software 示例主题
 

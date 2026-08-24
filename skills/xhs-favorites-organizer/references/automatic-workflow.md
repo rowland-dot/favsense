@@ -9,14 +9,16 @@
   -> 服务按 config 顺序让同一标签页依次访问其余面板
   -> catalog 以 note ID 全局去重、保留来源面板
   -> 固定版本 XHS-Downloader 只读取新增详情
-  -> build-knowledge-base.mjs 生成 Obsidian 知识库
-  -> build-public-site.mjs 生成脱敏网页数据
+  -> 最后一个面板完成后只保存核心 checkpoint，并封存本轮稳定 note ID 范围
   -> 若 diandian.enabled 且 v1.2 CDP 可用：Tampermonkey 每篇分享/复制一次，Bridge 新建 fresh about:blank 目标并把无查询 plain URL 交给外部 Skill ask
   -> 外部 Skill 负责真实鼠标与原生输入；Bridge 负责导航、安全/登录检查、严格新回复稳定性、保存确认与成功关页
-  -> 无法附着：记录待补证，转音频/OCR/评论证据回退，不伪造成功
-  -> 点点回复更新后重新构建；公开输出仍受完整审计与回复哈希质量门约束
-  -> 最后一个已启用面板完成后，可选发布 site/ 到 Hugging Face Static Space
-  -> 本地设置页显示完成结果并刷新知识库
+  -> 每篇成功原子保存为 captured；真实失败为 failed，未尝试剩余项为 batch_aborted
+  -> 无法附着且未触发安全限制：只使用已有缓存进入音频/OCR/评论证据回退，不伪造成功
+  -> 确定性编排 candidate -> evidence -> resource -> audit；缺证据保持 pending，只有完整当前记录进入 accepted
+  -> 关键词候选只输出 candidateKind；confirmed Skill 必须恰好关联一个 verified resource
+  -> build-organization-snapshot.mjs 生成同一 build_version 的正式知识库与脱敏网页快照
+  -> 两份 staging 全部验证并交换成功后，按配置最多发布一次到 Hugging Face Static Space
+  -> 本地设置页显示真实阶段结果；captured/pending 证据只在鉴权待审核 overlay 显示
 ```
 
 视频分析使用独立的离线工作任务，不阻塞收藏同步：
@@ -35,7 +37,7 @@
 
 首次启用离线转写时运行 `scripts/setup-transcription.ps1`；模型下载完成后，日常处理不依赖云端模型 API。`scripts/run-video-analysis.ps1` 默认按文件体积从小到大处理并逐条输出进度。默认只转写；确认缺失事实后才使用 `-PrepareVisualEvidence`，每次仅生成一个条目的一个短窗口。找到技能名、仓库或缺失事实后立即结束该条，不再读取后续音频或画面；没有找到才从记录的下一时间点继续。若内容声称来自 GitHub、开源项目或代码仓库，产品名与仓库身份必须分开核验：只有获得可唯一定位的 `owner/repo` 才能停止仓库视觉检查，之后仍需从官方仓库独立检查源码、许可证和项目类型。
 
-核心同步、去重与构建链路不调用 Codex App、Claude 或云端模型 API，也不创建每日或 Windows 开机整理任务。点点增强仅在用户显式开启时由同一个按钮继续执行，复用 SOP 扫描浏览器的登录态；临时签名链接只在 Tampermonkey→Bridge 请求和内存校验中存在，传给外部 transport 前必须 canonicalize 为无查询 plain URL。它不是核心构建依赖，失败不得撤销已经完成的 catalog、Obsidian 或网页结果。
+核心同步、去重、候选生成与本地构建不调用 Codex App、Claude 或云端模型 API，也不创建每日或 Windows 开机整理任务。点点增强仅在用户显式开启时由同一个按钮继续执行，复用 SOP 扫描浏览器的登录态；临时签名链接只在 Tampermonkey→Bridge 请求和内存校验中存在，传给外部 transport 前必须 canonicalize 为无查询 plain URL。它不是核心数据依赖，失败不得撤销已经完成的 catalog；正式输出只在最终 curation 门后构建一次。
 
 首次 setup 固定检查 SOP 扫描 profile 内是否已安装 Tampermonkey。SOP 通道已活时不得重新启动浏览器；通道未启动时只允许调用 SOP 的 `启动扫描浏览器.bat` 一次。未安装扩展时，通过该动态 CDP 通道打开官方扩展商店与小红书登录页，停止并提示用户完成后重跑；此时不启动 Bridge、不轮换凭据，也不发放会过期的用户脚本安装能力。检测到扩展后，setup 才启动 Bridge 并在同一个 SOP 浏览器中打开一次性安装源。不得复制主浏览器的 profile、Cookie 或扩展目录，也不得创建 FavSense 第二 profile。
 
@@ -72,8 +74,12 @@
 - `.xhs-favorites/runs/*.json`：每个面板的运行状态；不含临时链接。
 - `.xhs-favorites/diandian-summaries/<note-id>.json`：可选点点回复；只含稳定 ID、标题和清理后的正文，不含来源链接或登录凭据。
 - `.xhs-favorites/diandian-rerun-report.json`：本轮点点覆盖统计和待补证 ID；不含临时链接。
+- `.xhs-favorites/organization-state/`：正交 run/note 状态和恢复依据；状态使用 `captured`、`failed`、`batch_aborted`、`pending_review`、`accepted` 等封闭枚举。
+- `.xhs-favorites/resource-assessments.json`：候选、歧义、缺失或过期资源的私有评估；只有完整 verified 快照进入正式资源注册表。
 - `xhs-favorites/YYYY-MM-DD.md`：同步日报。
 - `knowledge-base/`：Obsidian 可直接打开的知识体系。
+
+`captured` 只表示点点回复已按当前正文版本安全保存；`pending` 表示还缺审核、证据或资源；`accepted` 才能进入正式知识库和公开页面。`candidateKind="Skill"` 是候选提示，不是 `confirmed Skill`。本地待审核 overlay 只经鉴权 loopback 返回清理后的摘要、证据方法和 blocker；公共 Origin 不请求也不渲染该区域。
 
 ## 可移植性
 

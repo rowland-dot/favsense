@@ -2,13 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { curationRevision } from "../scripts/curation-revision.mjs";
+import { expectedResourceRevisions } from "../scripts/resource-quality.mjs";
 
-const root = resolve(import.meta.dirname, "../../..");
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const hex = (character) => character.repeat(64);
+const sealResource = (resource) => Object.assign(resource, expectedResourceRevisions(resource));
 
 test("accepted confirmed Skill produces the same safe formal outcome in KB and public JSON", async () => {
   const work = await mkdtemp(join(tmpdir(), "favsense-formal-output-"));
@@ -18,15 +21,14 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
   const pointSummarySha256 = createHash("sha256").update(pointSummary, "utf8").digest("hex");
   const verifiedAt = new Date().toISOString().slice(0, 10);
   const promptVersion = hex("9");
-  const resource = {
+  const resource = sealResource({
     id: "github-owner-repo", name: "Official synthetic Skill", aliases: [], type: "Agent Skill",
     canonical_repo: "owner/repo", repo: "https://github.com/owner/repo",
     download: "https://github.com/owner/repo/archive/refs/heads/main.zip", stars: "4", stars_numeric: 4,
     license: "MIT", skill_manifest: "SKILL.md", compatibility: ["Codex"], compatibility_evidence: ["README.md"],
-    verified_at: verifiedAt, status: "verified", resource_identity_sha256: hex("a"),
-    verification_snapshot_sha256: hex("b"), usage_note: "Synthetic verified fixture."
-  };
-  const staleResource = {
+    verified_at: verifiedAt, status: "verified", usage_note: "Synthetic verified fixture."
+  });
+  const staleResource = sealResource({
     ...resource,
     id: "github-old-repo",
     name: "Stale synthetic Skill",
@@ -34,9 +36,7 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
     repo: "https://github.com/old/repo",
     download: "https://github.com/old/repo/archive/refs/heads/main.zip",
     verified_at: "2020-01-01",
-    resource_identity_sha256: hex("2"),
-    verification_snapshot_sha256: hex("3"),
-  };
+  });
   const profile = JSON.parse(await readFile(join(root, "config/domain-profiles/software.json"), "utf8"));
   const paths = Object.fromEntries(["catalog", "config", "curation", "audit", "profile", "resources", "public"].map((name) => [name, join(work, `${name}.json`)]));
   const curationEntry = {
@@ -121,14 +121,13 @@ test("unverified Skill stays a pending candidate without a guessed resource or l
   const profile = JSON.parse(await readFile(join(root, "config/domain-profiles/software.json"), "utf8"));
   profile.classification.default = "Skill";
   const paths = Object.fromEntries(["catalog", "config", "curation", "audit", "baseline", "profile", "resources", "public"].map((name) => [name, join(work, `${name}.json`)]));
-  const staleResource = {
+  const staleResource = sealResource({
     id: "github-stale-repo", name: "Stale candidate Skill", aliases: [], type: "Agent Skill",
     canonical_repo: "stale/repo", repo: "https://github.com/stale/repo",
     download: "https://github.com/stale/repo/archive/refs/heads/main.zip", stars: "1", stars_numeric: 1,
     license: "MIT", skill_manifest: "SKILL.md", compatibility: ["Codex"], compatibility_evidence: ["README.md"],
-    verified_at: "2020-01-01", status: "verified", resource_identity_sha256: hex("6"),
-    verification_snapshot_sha256: hex("7"), usage_note: "Synthetic stale fixture."
-  };
+    verified_at: "2020-01-01", status: "verified", usage_note: "Synthetic stale fixture."
+  });
   const candidateEntry = {
     category: "Synthetic", themes: ["testing"], summary: "Candidate summary without verified evidence.",
     action: "Wait for an official source before installation.", tools: [staleResource.name], kind: "Skill"

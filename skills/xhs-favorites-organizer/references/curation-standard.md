@@ -37,6 +37,8 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 4. 每份私有点点记录必须按稳定笔记 ID 保存，并在审计中记录该回复正文的 SHA-256。重新生成或覆盖回复后，旧审计立即失效并回到 `pending`。
 5. 只有正式 curation 可发布、审计完整为 `accepted`、且审计哈希与当前回复完全一致时，点点正文才可进入公开页面。
 
+点点记录成功原子保存后为 `captured`，不等于 `accepted`。当前真实尝试失败为 `failed`；因停批而未尝试的其余项为 `batch_aborted`。重跑跳过当前哈希、provider、prompt version 和 `summary_sha256` 全部匹配的 captured 项，只恢复 failed、batch_aborted、stale 或用户显式选择项。
+
 ### 视频
 
 1. 先离线转写完整音频；长视频按窗口继续，不能把截断转写标成完整。
@@ -72,7 +74,7 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 1. 主分类默认采用来源收藏夹或其领域映射。
 2. 内容明显不属于原收藏夹时可设置 `category_override: true`，并填写具体 `category_reason`。
 3. `kind` 只描述内容形态，不表示处理状态。软件领域可用 `Note / Tool / Skill / Workflow / Product`，其他领域使用自己的 domain profile。
-4. 不能因为标题含有 Skill、GitHub、Agent 等词就判为 `Skill`。
+4. 不能因为标题含有 Skill、GitHub、Agent 等词就判为 `Skill`。确定性分类只能留下 `candidateKind="Skill"`；公开 `confirmed Skill` 还必须通过 accepted/current/resource 门。
 
 ## 5. 资源与 GitHub 核验
 
@@ -81,8 +83,9 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 1. 从内容证据识别精确名称，不用相似名称替代。
 2. 打开官方网站或官方 GitHub 仓库核对归属。
 3. GitHub 资源记录 canonical `owner/repo`、仓库链接、默认分支 ZIP、许可证、核验日期和当日 Star。
-4. `Skill` 还必须确认仓库中确有可安装的 Skill 结构或 `SKILL.md`，并记录 manifest 路径；普通代码库、插件、提示词或托管产品不能标为 `Skill`。
+4. `Skill` 还必须确认仓库中确有可安装的 Skill 结构或 `SKILL.md`，并记录 manifest 路径、compatibility、compatibility evidence、`resource_identity_sha256` 和 `verification_snapshot_sha256`；普通代码库、插件、提示词或托管产品不能标为 `Skill`。
 5. 找不到唯一官方来源时保留 `pending`，不创建猜测链接。
+6. confirmed Skill 必须恰好关联一个 fresh verified resource，并同时提供“官方仓库”和“下载 ZIP”等全部安全动作；第 31 个 UTC 日历日起刷新成功前按 stale 处理。
 
 ## 6. 私有审计记录
 
@@ -166,6 +169,7 @@ node ".\skills\xhs-favorites-organizer\scripts\validate-curation.mjs" `
 
 1. 先运行质量门并阅读报告。
 2. 只把 `accepted` 条目写入正式 curation；`pending` 只留在私有审计。所有已同步收藏仍以安全 fallback 显示，质量门只控制深度策展字段，不删除收藏。
-3. 构建 Obsidian 与网页，检查新增卡片数等于本轮 `accepted` 数。
+3. 使用双输出协调器构建同一 `build_version` 的 Obsidian 与网页 staging；检查正式摘要都来自 accepted/current curation，Skill 卡片都满足 confirmed Skill 资源门。
 4. 检查公开 JSON 不含原始评论、Cookie、Token、个人主页、收藏夹 ID、视频或帧路径。
-5. 运行项目测试与发布检查；失败时保留上一个可用站点，不发布半成品。
+5. 两份输出全部验证后才交换 live；失败时恢复同一上一版，不发布半成品。
+6. 运行项目测试与发布检查；只有最终快照成功后才允许最多发布一次。发布失败保留本地新快照和远端上一版。

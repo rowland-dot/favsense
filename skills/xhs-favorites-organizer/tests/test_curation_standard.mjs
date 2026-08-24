@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { auditCuration } from "../scripts/validate-curation.mjs";
 import { prepareReview } from "../scripts/prepare-curation-review.mjs";
 import { isPublishableCuration, publicEvidenceStatus } from "../scripts/curation-quality.mjs";
@@ -10,6 +11,53 @@ import { prepareScope } from "../scripts/prepare-curation-scope.mjs";
 import { initializeAudit } from "../scripts/initialize-curation-audit.mjs";
 import { mergeResults } from "../scripts/merge-curation-results.mjs";
 import { curationRevision } from "../scripts/curation-revision.mjs";
+
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+
+function assertDocumentContract(relativePath, contract) {
+  const document = fs.readFileSync(path.join(repositoryRoot, relativePath), "utf8");
+  for (const phrase of contract.required_phrases) {
+    assert.equal(document.includes(phrase), true, `${relativePath} must document: ${phrase}`);
+  }
+  for (const phrase of contract.forbidden_phrases || []) {
+    assert.equal(document.includes(phrase), false, `${relativePath} must not claim: ${phrase}`);
+  }
+}
+
+test("Task 11 documentation states the verified organization lifecycle", () => {
+  const fixturePath = path.join(
+    repositoryRoot,
+    "skills/xhs-favorites-organizer/test-fixtures/task-11-documentation-contract.json"
+  );
+  const contract = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+  for (const [relativePath, documentContract] of Object.entries(contract.product_contracts)) {
+    assertDocumentContract(relativePath, documentContract);
+  }
+});
+
+test("Task 11 contributor and CI commands match executable package contracts", () => {
+  const fixturePath = path.join(
+    repositoryRoot,
+    "skills/xhs-favorites-organizer/test-fixtures/task-11-documentation-contract.json"
+  );
+  const contract = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+  for (const [relativePath, documentContract] of Object.entries(contract.developer_contracts)) {
+    assertDocumentContract(relativePath, documentContract);
+  }
+
+  const packageJson = JSON.parse(fs.readFileSync(path.join(repositoryRoot, "package.json"), "utf8"));
+  assert.equal(packageJson.engines.node, ">=20");
+  for (const command of contract.package_script_contracts.windows_contract_fragments) {
+    assert.equal(packageJson.scripts["test:windows-contracts"].includes(command), true);
+  }
+  for (const command of contract.package_script_contracts.release_gate_commands) {
+    assert.equal(packageJson.scripts["release:check"].includes(command), true);
+  }
+
+  const ci = fs.readFileSync(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
+  assert.match(ci, /- name: Run the complete release gate\s+run: npm run release:check/);
+  assert.match(ci, /- name: Run Windows setup safety contracts\s+if: runner\.os == 'Windows'\s+run: npm\.cmd run test:windows-contracts/);
+});
 
 function fixture({ type = "视频", kind = "Tool", tools = [] } = {}) {
   const id = "note-current";

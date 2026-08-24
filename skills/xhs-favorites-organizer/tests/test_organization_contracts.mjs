@@ -169,18 +169,48 @@ test("curation pipeline seals evidence and resource state before review", async 
 });
 
 test("confirmed Skill requires exactly one complete fresh verified resource", async () => {
-  const { validateVerifiedResource, confirmedSkillResource } = await import("../scripts/resource-quality.mjs");
+  const { validateVerifiedResource, confirmedSkillResource, expectedResourceRevisions } = await import("../scripts/resource-quality.mjs");
   const resource = {
     id: "github-owner-repo", name: "Official", type: "Agent Skill", canonical_repo: "owner/repo",
     repo: "https://github.com/owner/repo", download: "https://github.com/owner/repo/archive/refs/heads/main.zip",
     license: "MIT", skill_manifest: "skills/demo/SKILL.md", verified_at: "2026-07-24", stars_numeric: 10,
-    compatibility: ["Codex"], compatibility_evidence: ["README.md"], resource_identity_sha256: hex("a"),
-    verification_snapshot_sha256: hex("b"), status: "verified",
+    compatibility: ["Codex"], compatibility_evidence: ["README.md"], status: "verified",
   };
+  Object.assign(resource, expectedResourceRevisions(resource));
   assert.deepEqual(validateVerifiedResource(resource, { today: "2026-08-23", maxAgeDays: 30 }), []);
   assert.equal(confirmedSkillResource([resource], { today: "2026-08-23", maxAgeDays: 30 }).id, resource.id);
   assert.equal(confirmedSkillResource([], { today: "2026-08-23", maxAgeDays: 30 }), null);
   assert.equal(confirmedSkillResource([resource, resource], { today: "2026-08-23", maxAgeDays: 30 }), null);
+
+  const mismatchedDownload = {
+    ...resource,
+    download: "https://github.com/attacker/other/archive/refs/heads/main.zip",
+  };
+  assert.ok(validateVerifiedResource(mismatchedDownload, {
+    today: "2026-08-23", maxAgeDays: 30,
+  }).includes("download_url_invalid"));
+  assert.equal(confirmedSkillResource([mismatchedDownload], {
+    today: "2026-08-23", maxAgeDays: 30,
+  }), null);
+
+  const mutations = [
+    [{ canonical_repo: "owner/renamed", id: "github-owner-renamed", repo: "https://github.com/owner/renamed", download: "https://github.com/owner/renamed/archive/refs/heads/main.zip" }, "identity_revision_invalid"],
+    [{ name: "Renamed official Skill" }, "identity_revision_invalid"],
+    [{ type: "Tool" }, "identity_revision_invalid"],
+    [{ download: "https://github.com/owner/repo/archive/refs/heads/develop.zip" }, "snapshot_revision_invalid"],
+    [{ license: "Apache-2.0" }, "identity_revision_invalid"],
+    [{ skill_manifest: "skills/other/SKILL.md" }, "identity_revision_invalid"],
+    [{ compatibility: ["Claude"] }, "identity_revision_invalid"],
+    [{ compatibility_evidence: ["COMPATIBILITY.md"] }, "identity_revision_invalid"],
+    [{ stars_numeric: 11 }, "snapshot_revision_invalid"],
+    [{ verified_at: "2026-07-25" }, "snapshot_revision_invalid"],
+  ];
+  for (const [change, expectedError] of mutations) {
+    const errors = validateVerifiedResource({ ...resource, ...change }, {
+      today: "2026-08-23", maxAgeDays: 30,
+    });
+    assert.ok(errors.includes(expectedError), `${JSON.stringify(change)} must invalidate ${expectedError}`);
+  }
 });
 
 test("resource freshness is day-30 inclusive and day-31 stale", async () => {
@@ -194,17 +224,173 @@ test("resource freshness is day-30 inclusive and day-31 stale", async () => {
 test("GitHub verifier requests only the supplied canonical repository and never searches", async () => {
   const { verifyGitHubResource } = await import("../scripts/verify-github-resources.mjs");
   const urls = [];
-  const result = await verifyGitHubResource({ canonical_repo: "owner/repo", manifest_path: "SKILL.md", compatibility: ["Codex"], compatibility_evidence: ["README.md"] }, {
+  const accepts = [];
+  const repository = { full_name: "owner/repo", name: "repo", default_branch: "main", stargazers_count: 4, license: { spdx_id: "MIT" } };
+  const candidate = { canonical_repo: "owner/repo", name: "Forged display name", manifest_path: "SKILL.md", compatibility: ["Codex"], compatibility_evidence: ["README.md"] };
+  const officialFiles = {
+    "SKILL.md": "---\nname: demo\ndescription: Official synthetic Skill fixture\n---\n",
+    "README.md": "Compatibility: Codex",
+  };
+  const result = await verifyGitHubResource(candidate, {
     today: "2026-08-23",
-    fetch: async (url) => {
+    fetch: async (url, options) => {
       urls.push(String(url));
-      if (String(url).endsWith("/repos/owner/repo")) return new Response(JSON.stringify({ full_name: "owner/repo", default_branch: "main", stargazers_count: 4, license: { spdx_id: "MIT" } }), { status: 200 });
-      return new Response("name: demo", { status: 200 });
+      accepts.push(options.headers.Accept);
+      if (String(url).endsWith("/repos/owner/repo")) return new Response(JSON.stringify(repository), { status: 200 });
+      const file = Object.keys(officialFiles).find((name) => String(url).includes(`/contents/${name}?`));
+      if (!file) return new Response("", { status: 404 });
+      return options.headers.Accept === "application/vnd.github.raw+json"
+        ? new Response(officialFiles[file], { status: 200, headers: { "content-type": "application/vnd.github.raw+json" } })
+        : new Response(JSON.stringify({ type: "file", encoding: "base64", content: btoa(officialFiles[file]) }), {
+          status: 200,
+          headers: { "content-type": "application/vnd.github+json" },
+        });
     },
   });
   assert.equal(result.status, "verified");
+  assert.equal(result.name, "repo");
+  assert.equal(result.stars_numeric, 4);
+  assert.deepEqual(result.compatibility_evidence, ["README.md"]);
   assert.ok(urls.every((url) => !url.includes("/search/")));
   assert.ok(urls.every((url) => url.startsWith("https://api.github.com/repos/owner/repo")));
+  assert.equal(accepts[0], "application/vnd.github+json");
+  assert.ok(accepts.slice(1).every((accept) => accept === "application/vnd.github.raw+json"));
+
+  for (const invalidRepository of [
+    { ...repository, name: "" },
+    { ...repository, name: "other" },
+    { ...repository, stargazers_count: undefined },
+    { ...repository, stargazers_count: "4" },
+    { ...repository, stargazers_count: -1 },
+  ]) {
+    await assert.rejects(
+      verifyGitHubResource(candidate, {
+        today: "2026-08-23",
+        fetch: async (url) => String(url).endsWith("/repos/owner/repo")
+          ? new Response(JSON.stringify(invalidRepository), { status: 200 })
+          : new Response(officialFiles["SKILL.md"], { status: 200 }),
+      }),
+      /RESOURCE_REPOSITORY_METADATA_INVALID/,
+    );
+  }
+
+  await assert.rejects(
+    verifyGitHubResource(candidate, {
+      today: "2026-08-23",
+      fetch: async (url) => String(url).endsWith("/repos/owner/repo")
+        ? new Response(JSON.stringify(repository), { status: 200 })
+        : new Response("not a Skill manifest", { status: 200 }),
+    }),
+    /RESOURCE_MANIFEST_INVALID/,
+  );
+  await assert.rejects(
+    verifyGitHubResource(candidate, {
+      today: "2026-08-23",
+      fetch: async (url) => String(url).endsWith("/repos/owner/repo")
+        ? new Response(JSON.stringify(repository), { status: 200 })
+        : new Response(String(url).includes("/contents/SKILL.md?") ? officialFiles["SKILL.md"] : "No supported runtime listed.", { status: 200 }),
+    }),
+    /RESOURCE_COMPATIBILITY_UNCONFIRMED/,
+  );
+  for (const explicitDenial of [
+    "This project does not support Codex.",
+    "This project isn’t compatible with Codex.",
+    "This project cannot support Codex.",
+  ]) {
+    await assert.rejects(
+      verifyGitHubResource(candidate, {
+        today: "2026-08-23",
+        fetch: async (url) => {
+          if (String(url).endsWith("/repos/owner/repo")) return new Response(JSON.stringify(repository), { status: 200 });
+          return new Response(String(url).includes("/contents/SKILL.md?")
+            ? "---\nname: demo\ndescription: Official synthetic Skill fixture\ncompatibility: Codex\n---\n"
+            : explicitDenial, { status: 200 });
+        },
+      }),
+      /RESOURCE_COMPATIBILITY_CONFLICT/,
+    );
+  }
+  for (const deniedCompatibility of [
+    "Compatibility: incompatible with Codex",
+    "Compatibility: all except Codex",
+    "Compatibility: works with Codex",
+  ]) {
+    await assert.rejects(
+      verifyGitHubResource(candidate, {
+        today: "2026-08-23",
+        fetch: async (url) => String(url).endsWith("/repos/owner/repo")
+          ? new Response(JSON.stringify(repository), { status: 200 })
+          : new Response(String(url).includes("/contents/SKILL.md?")
+            ? officialFiles["SKILL.md"]
+            : deniedCompatibility, { status: 200 }),
+      }),
+      /RESOURCE_COMPATIBILITY_(?:CONFLICT|UNCONFIRMED)/,
+    );
+  }
+  const manifestEvidence = await verifyGitHubResource(
+    { ...candidate, compatibility_evidence: ["NOTICE.md"] },
+    {
+      today: "2026-08-23",
+      fetch: async (url) => {
+        if (String(url).endsWith("/repos/owner/repo")) return new Response(JSON.stringify(repository), { status: 200 });
+        return new Response(String(url).includes("/contents/SKILL.md?")
+          ? "---\nname: demo\ndescription: Official synthetic Skill fixture\ncompatibility: Codex\n---\n"
+          : "License notice only.", { status: 200 });
+      },
+    },
+  );
+  assert.deepEqual(manifestEvidence.compatibility_evidence, ["SKILL.md"]);
+  await assert.rejects(
+    verifyGitHubResource(candidate, {
+      today: "2026-08-23",
+      fetch: async (url) => String(url).endsWith("/repos/owner/repo")
+        ? new Response(JSON.stringify(repository), { status: 200 })
+        : new Response(String(url).includes("/contents/SKILL.md?")
+          ? officialFiles["SKILL.md"]
+          : "This project does not support Codex.", { status: 200 }),
+    }),
+    /RESOURCE_COMPATIBILITY_CONFLICT/,
+  );
+  await assert.rejects(
+    verifyGitHubResource(candidate, {
+      today: "2026-08-23",
+      fetch: async (url) => String(url).endsWith("/repos/owner/repo")
+        ? new Response("{}", { status: 200, headers: { "content-length": String(256 * 1024 + 1) } })
+        : new Response(officialFiles["SKILL.md"], { status: 200 }),
+    }),
+    /RESOURCE_RESPONSE_TOO_LARGE/,
+  );
+  await assert.rejects(
+    verifyGitHubResource(candidate, {
+      today: "2026-08-23",
+      fetch: async (url) => {
+        if (String(url).endsWith("/repos/owner/repo")) return new Response(JSON.stringify(repository), { status: 200 });
+        return new Response(new ReadableStream({
+          start(controller) {
+            controller.enqueue(new Uint8Array(1024 * 1024 + 1));
+            controller.close();
+          },
+        }), { status: 200 });
+      },
+    }),
+    /RESOURCE_RESPONSE_TOO_LARGE/,
+  );
+  await assert.rejects(
+    verifyGitHubResource(candidate, {
+      today: "2026-08-23",
+      timeoutMs: 5,
+      fetch: async () => new Promise(() => {}),
+    }),
+    /RESOURCE_FETCH_TIMEOUT/,
+  );
+  await assert.rejects(
+    verifyGitHubResource(candidate, {
+      today: "2026-08-23",
+      deadlineAt: Date.now() - 1,
+      fetch: async () => new Response("unused", { status: 200 }),
+    }),
+    /RESOURCE_STAGE_TIMEOUT/,
+  );
 });
 
 test("journaled transaction restores every participant to one generation", async () => {
@@ -411,6 +597,7 @@ test("migration apply requires the matching unexpired dry-run confirmation", asy
 
 test("migration apply maps legacy uncertainty honestly and keeps unverified Skill private", async () => {
   const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { expectedResourceRevisions } = await import("../scripts/resource-quality.mjs");
   const fixture = await loadMigrationFixture();
   const root = await mkdtemp(join(tmpdir(), "favsense-migration-apply-"));
   try {
@@ -419,9 +606,7 @@ test("migration apply maps legacy uncertainty honestly and keeps unverified Skil
     await writeFile(join(initialTargets.point_records, "note-point.json"), '{"version":1}');
     await writeFile(join(initialTargets.point_records, "unrelated.json"), '{"safe":"preserved"}');
     await mkdir(dirname(initialTargets.formal_resources), { recursive: true });
-    await writeFile(initialTargets.formal_resources, JSON.stringify({
-      verified_at: "2026-08-01",
-      resources: [{
+    const retainedResource = {
         id: "github-unrelated-safe",
         name: "Preserved safe registry entry",
         type: "Agent Skill",
@@ -434,10 +619,12 @@ test("migration apply maps legacy uncertainty honestly and keeps unverified Skil
         stars_numeric: 1,
         compatibility: ["Codex"],
         compatibility_evidence: ["README.md"],
-        resource_identity_sha256: hex("d"),
-        verification_snapshot_sha256: hex("e"),
         status: "verified",
-      }],
+    };
+    Object.assign(retainedResource, expectedResourceRevisions(retainedResource));
+    await writeFile(initialTargets.formal_resources, JSON.stringify({
+      verified_at: "2026-08-01",
+      resources: [retainedResource],
     }));
     const report = planMigration(fixture, { now: "2026-08-23T00:00:00.000Z", root });
     const result = await applyMigration(fixture, {

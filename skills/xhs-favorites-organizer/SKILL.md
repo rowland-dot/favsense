@@ -9,7 +9,9 @@ description: 复用 SOP 小红书扫描浏览器、Tampermonkey 和本地脚本�
 
 Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成为主动同步、去重或知识库生成的运行依赖。
 
-当私有配置显式启用 `diandian.enabled` 且加载 v1.2 CDP transport 时，同一个“开始整理”按钮会在核心 catalog、知识库和网页已经成功更新之后，继续尝试点点 AI 深度总结。Tampermonkey 每篇只负责打开真实笔记、分享并复制一次临时签名链接，再把精确的 transient payload 交给 Bridge；Bridge 校验后只把同一稳定 ID 的无查询 plain URL 传给外部 Skill `ask(session, note_url, spec=...)`。外部 Skill 独占真实鼠标聚焦和原生输入实现；Bridge 独占 fresh `about:blank` 目标、点点导航、登录与安全页检查、严格新回复和稳定性证明、保存确认、成功驻留及关页。每篇必须是一个原子事务：链接只输入一次、提示词只提交一次、本轮新回复完成且稳定、私有保存获确认后，才允许关闭页面并进入下一篇。任一失败都必须放弃当前及剩余点点计划、保留失败页面并停止。点点阶段是可选增强，不得阻断或回滚已完成的核心同步。
+当私有配置显式启用 `diandian.enabled` 且加载 v1.2 CDP transport 时，同一个“开始整理”按钮会先保存核心 catalog checkpoint，再尝试点点 AI 深度总结，最后从同一已验证快照生成知识库和网页。Tampermonkey 每篇只负责打开真实笔记、分享并复制一次临时签名链接，再把精确的 transient payload 交给 Bridge；Bridge 校验后只把同一稳定 ID 的无查询 plain URL 传给外部 Skill `ask(session, note_url, spec=...)`。外部 Skill 独占真实鼠标聚焦和原生输入实现；Bridge 独占 fresh `about:blank` 目标、点点导航、登录与安全页检查、严格新回复和稳定性证明、保存确认、成功驻留及关页。每篇必须是一个原子事务：链接只输入一次、提示词只提交一次、本轮新回复完成且稳定、私有保存获确认后，才允许关闭页面并进入下一篇。任一失败都必须放弃当前及剩余点点计划、保留失败页面并停止。点点阶段是可选增强，不得阻断或回滚已完成的核心同步。
+
+整理状态必须区分可信层级：点点原子保存后是 `captured`，证据或资源不完整时是 `pending`，只有当前正文/证据 revision 与完整审计相符时才是 `accepted`。真正尝试失败的当前笔记写 `failed`，尚未尝试的剩余笔记写 `batch_aborted`；二者不得共用失败语义。关键词只能产生 `candidateKind="Skill"`；公开 `confirmed Skill` 必须是 accepted，并且恰好关联一个当前、完整、已核验的官方资源，同时提供官方仓库和下载 ZIP 等全部安全动作。
 
 单篇浏览器完成条件、固定提示词、回复容器和私有保存规则由私有配置 `diandian.skill_path` 指向的 `xhs-diandian-summarize-note` Skill 定义；启用点点时必须显式填写该路径。批量链路必须逐篇满足该 Skill 的同一完成条件。Skill 路径必须包含名称匹配的 `SKILL.md`、版本绑定的 `release.json`、声明式 `runtime/browser-contract.json` 和 API 1 `scripts/save_diandian_summary.py`；v1.2 还必须精确声明、包含并导出合法的 `scripts/cdp_transport.py` / `ask(session, note_url, spec=None, tries=60, sleep=...)`。organizer 不复制 Skill 的鼠标或输入逻辑，也不使用 Cookie/Storage CDP 命令；v1.1 仅保留兼容加载，不暴露 CDP 能力。
 
@@ -99,7 +101,7 @@ node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs" `
   --diandian-dir ".\.xhs-favorites\diandian-summaries"
 ```
 
-当私有配置中的 `publish.enabled` 为 `true` 时，最后一个已启用收藏夹处理完成后，桥接服务调用 `publish-huggingface.mjs`，把 `site/` 镜像到指定 Hugging Face Static Space 并排除 `site/.local/`；同时仅把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，保留其余元数据与正文。发布凭据必须来自系统 Git 凭据管理器，不能写入配置、脚本或仓库；发布失败只记录在运行状态中，不得撤销或破坏本地 catalog、Obsidian 知识库和网页构建结果。
+当私有配置中的 `publish.enabled` 为 `true` 时，最后一个收藏夹完成只形成核心 checkpoint；Bridge 必须等待冻结范围内的总结、证据、候选、资源与 curation 状态确定，再为正式知识库和公开数据构建一个共享 `build_version` 的最终快照。两个 staging 输出全部验证并原子交换成功后，才允许调用 `publish-huggingface.mjs`，同一运行最多发布一次。发布会排除 `site/.local/`，并仅把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，保留其余元数据与正文。发布凭据必须来自系统 Git 凭据管理器，不能写入配置、脚本或仓库；构建失败保留上一对本地快照，发布失败保留本地新快照与远端上一版。
 
 本地预览：
 
@@ -159,6 +161,8 @@ python -m http.server 8000 --directory site
 - 页面无链接：检查 Tampermonkey 是否启用及页面是否为白名单面板。
 - 详情失败：本次不写新增详情，保留现有 catalog 和知识库；不循环请求。
 
-逐篇深度整理必须执行 [curation-standard.md](references/curation-standard.md) 的证据、分类、资源与发布质量门；不得把“已抓取”当成“已整理”。每轮先冻结明确日期范围，为范围内每篇建立私有审计记录，再运行 `scripts/validate-curation.mjs`。只有 `accepted` 条目可以写入正式 curation 与公开站点；`pending` 必须说明缺失证据且不得发布，不能为了凑齐数量而降级标准。
+逐篇深度整理必须执行 [curation-standard.md](references/curation-standard.md) 的证据、分类、资源与发布质量门；不得把“已抓取”或 `captured` 当成“已整理”。每轮冻结请求看板后封存稳定笔记集合，为范围内每篇建立私有审计记录，再运行确定性的 candidate → evidence → resource → audit → validate 链。只有 `accepted` 条目可以写入正式 curation 与公开站点；`pending` 必须说明缺失证据且不得发布，不能为了凑齐数量而降级标准。本机可通过鉴权的待审核 overlay 查看清理后的 captured 证据；公开站和正式知识库都不得直接消费 raw 点点记录。
 
 完整链路见 [automatic-workflow.md](references/automatic-workflow.md)，知识卡片规则见 [organization-schema.md](references/organization-schema.md)。
+
+项目行为修改遵守 [贡献指南](../../CONTRIBUTING.md) 的 `Spec → Plan → TDD → Review → QA → Audit → Brief → 用户批准 → PR`；该流程不授权自动 push、PR、merge、deploy 或真实数据迁移。

@@ -8,10 +8,13 @@ flowchart LR
   PROFILE --> XHS["SOP 扫描浏览器中的已启用收藏夹"]
   XHS --> TM["Tampermonkey 只读脚本"]
   TM -->|"回环地址 + token"| BRIDGE["本机 Bridge"]
-  BRIDGE --> CATALOG["私有 Catalog"]
-  CATALOG --> KB["Obsidian 知识库"]
-  CATALOG --> BUILD["确定性公开数据构建器"]
-  BUILD --> SITE["纯静态 FavSense · 拾光台网页"]
+  BRIDGE --> CATALOG["私有 Catalog + content revision"]
+  CATALOG --> SUMMARY["captured summary / cached evidence"]
+  SUMMARY --> CANDIDATE["candidate + resource assessment"]
+  CANDIDATE --> AUDIT["audit：pending / accepted"]
+  AUDIT --> BUILD["双输出 snapshot coordinator"]
+  BUILD -->|"同一 build_version"| KB["正式 Obsidian 知识库"]
+  BUILD -->|"同一 build_version"| SITE["纯静态 FavSense · 拾光台网页"]
   SITE --> GH["GitHub Pages"]
   SITE --> HF["Hugging Face Static Space"]
 ```
@@ -26,7 +29,7 @@ flowchart LR
 
 ### 公开展示层
 
-`site/` 只包含原创摘要、公开原帖链接、必要元数据和经过核验的资源信息。它不需要后端、数据库、GPU 或构建框架，可以直接由任意静态托管服务发布。
+`site/` 只包含 accepted/current 的原创摘要、安全原帖入口、必要元数据和经过核验的资源信息。captured 但 pending 的证据只经鉴权 loopback 的“待审核” overlay 在本地显示；公共部署没有 descriptor、请求或私有 DOM 区域。静态站不需要后端、数据库、GPU 或构建框架，可以直接由任意静态托管服务发布。
 
 ## 数据流
 
@@ -34,8 +37,11 @@ flowchart LR
 2. 详情适配器在同一次只读页面请求中提取正文与页面初始评论；评论去除用户身份后作为未经核实的补充线索保存，原始评论不进入公开网页。
 3. Bridge 校验 Host、token、面板 ID、请求大小和小红书 URL。
 4. 新笔记按 ID 增量去重；失败条目单独记录，不循环重试。
-5. 构建器从私有 catalog 生成 Markdown 与脱敏 `site/data/knowledge.json`。
-6. 网页在浏览器中完成搜索、筛选、排序和详情展示。
+5. 点点或离线证据先形成 candidate；资源评估与 audit 明确产生 pending/rejected/accepted，不配置 Agent 时也能确定性完成到诚实状态。
+6. 两个正式构建器共用同一 acceptance decision，在 staging 中生成相同 `build_version` 的 Markdown 与脱敏 `site/data/knowledge.json`。
+7. 双输出 journal 只在两份 staging 全部验证后交换 live；失败恢复为同一上一版。
+8. 发布只在最终快照成功后按配置执行，单个 run 最多一次；`publish_failed` 保留本地新快照与远端上一版。
+9. 网页在浏览器中完成搜索、筛选、排序和详情展示。
 
 ## 领域层与资源索引
 
@@ -46,4 +52,6 @@ flowchart LR
 - 纯静态公开站点：部署轻、成本低，也缩小了公开攻击面。
 - 确定性构建器：相同输入产生相同结构，不把每日运行绑定到某个模型供应商。
 - 原始证据留在本机：公开知识可以分享，账号登录态和版权材料不随之发布。
+- 候选不冒充结论：`candidateKind=Skill` 只有在 accepted 且恰好一个 fresh verified resource 时才提升为 confirmed Skill。
+- 同代正式输出：知识库与网页通过 journal、恢复和共享 build version 获得一致性，不声称跨目录原子 rename。
 - 收藏夹优先建立主分类：默认直接反映用户自己的收藏体系；内容识别负责主题关联和纠偏建议，只有带依据的显式覆盖才跨收藏夹归档。

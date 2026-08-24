@@ -54,6 +54,10 @@ jobs:
       - name: Run the complete release gate
         run: npm run release:check
 
+      - name: Run Windows setup safety contracts
+        if: runner.os == 'Windows'
+        run: npm.cmd run test:windows-contracts
+
       - name: Verify PR development lifecycle
         if: github.event_name == 'pull_request'
         run: node scripts/verify-development-lifecycle.mjs
