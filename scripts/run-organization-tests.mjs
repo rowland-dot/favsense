@@ -11,7 +11,14 @@ const root = resolve(dirname(scriptPath), "..");
 export function organizationCommands(interpreter) {
   return [
     { command: interpreter.command, args: [...interpreter.prefixArgs, "-W", "error", "-m", "unittest", "discover", "-s", "skills/xhs-favorites-organizer/tests", "-p", "test_organization_pipeline.py"] },
-    { command: process.execPath, args: ["--test", "skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs"] },
+    {
+      command: process.execPath,
+      args: [
+        "--test",
+        "skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs",
+        "skills/xhs-favorites-organizer/tests/test_formal_outputs.mjs",
+      ],
+    },
   ];
 }
 
@@ -32,4 +39,3 @@ if (process.argv[1] && resolve(process.argv[1]) === scriptPath) {
     process.exitCode = 1;
   }
 }
-

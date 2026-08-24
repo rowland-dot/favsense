@@ -6,8 +6,15 @@ import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { resolveCategoryPolicy } from "./category-policy.mjs";
-import { isPublishableCuration, loadCurationAudit } from "./curation-quality.mjs";
-import { containsCredentialShape } from "./sensitive-data.mjs";
+import {
+  currentFormalRevisions,
+  formalCurationDecision,
+  formalContentKind,
+  isPublishableCuration,
+  loadCurationAudit,
+  loadFormalPointSummary,
+} from "./curation-quality.mjs";
+import { confirmedSkillResource } from "./resource-quality.mjs";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const workspace = path.resolve(path.dirname(scriptPath), "../../..");
@@ -364,6 +371,7 @@ const GENERATED_KNOWLEDGE_FILES = new Set([
   "03-工具雷达/工具索引.md",
   "04-行动与实验/行动清单.md",
   "04-行动与实验/使用建议.md",
+  "05-Skills成果/GitHub-Skills核验清单.md",
   "90-来源索引/小红书面板.md",
   "99-模板/收藏卡片模板.md",
 ]);
@@ -467,32 +475,6 @@ export function publishStagedDirectory(
 }
 
 function clean(value) { return String(value ?? "").replace(/\s+/g, " ").trim(); }
-const STABLE_NOTE_ID = /^[A-Za-z0-9_-]{1,128}$/;
-function loadDiandianSummary(directory, noteId) {
-  if (!STABLE_NOTE_ID.test(noteId)) return null;
-  const base = path.resolve(directory);
-  const target = path.resolve(base, `${noteId}.json`);
-  if (path.dirname(target) !== base || !fs.existsSync(target)) return null;
-  try {
-    const metadata = fs.statSync(target);
-    if (!metadata.isFile() || metadata.size > 512 * 1024) return null;
-    const record = JSON.parse(fs.readFileSync(target, "utf8").replace(/^\uFEFF/, ""));
-    if (
-      !record
-      || typeof record !== "object"
-      || Array.isArray(record)
-      || record.version !== 1
-      || record.provider !== "xiaohongshu-diandian"
-      || record.prompt !== "总结"
-      || record.note_id !== noteId
-      || containsCredentialShape(record)
-    ) return null;
-    const summary = String(record.summary || "").replace(/\r\n?/g, "\n").trim();
-    return summary && summary.length <= 200_000 ? summary : null;
-  } catch {
-    return null;
-  }
-}
 function normalizedDate(value, label) {
   const date = clean(value).slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
@@ -600,6 +582,20 @@ ${item.deepSummary ? `## 点点 AI 深度总结
 
 ${mdBody(item.deepSummary)}
 
+` : ""}${item.skillResource ? `## Skill 核验
+
+- 资源 ID：${md(item.skillResource.id)}
+- 官方名称：${md(item.skillResource.name)}
+- 类型：${md(item.skillResource.type)}
+- 官方仓库：${md(item.skillResource.repo)}
+- 下载 ZIP：${md(item.skillResource.download)}
+- Stars：${md(item.skillResource.stars ?? item.skillResource.stars_numeric)}
+- 核验日期：${md(item.skillResource.verified_at)}
+- 许可证：${md(item.skillResource.license)}
+- Skill manifest：${md(item.skillResource.skill_manifest)}
+- 兼容性：${md((item.skillResource.compatibility || []).join("、"))}
+- 核验状态：${md(item.skillResource.status)}
+
 ` : ""}## 为什么值得看
 
 - 主题：${c.themes.map((v) => `#${md(v)}`).join(" ")}
@@ -647,14 +643,25 @@ function main() {
   const profile = readJson(profilePath, "domain profile");
   const resourceRegistry = profile.features?.resource_index
     ? readJson(
-      path.resolve(workspace, profile.resource_index?.registry_file
-        || "skills/xhs-favorites-organizer/references/software-resources.json"),
+      options.resources
+        ? path.resolve(options.resources)
+        : path.resolve(workspace, profile.resource_index?.registry_file
+          || "skills/xhs-favorites-organizer/references/software-resources.json"),
       "resource registry"
     )
     : { resources: [] };
   const diandianDirectory = options["diandian-dir"]
     ? path.resolve(options["diandian-dir"])
     : path.resolve(workspace, ".xhs-favorites/diandian-summaries");
+  const buildVersion = String(options["build-version"] || "");
+  if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) throw new Error("--build-version must be a 64-character lowercase SHA-256");
+  const rawResources = resourceRegistry[profile.resource_index?.collection || "resources"] || [];
+  const resourceByAlias = new Map();
+  for (const resource of rawResources) {
+    for (const alias of [resource.name, ...(resource.aliases || [])]) {
+      resourceByAlias.set(clean(alias).toLocaleLowerCase("zh-CN"), resource);
+    }
+  }
   const {
     policy: curationQuality,
     audit: curationAudit,
@@ -665,7 +672,16 @@ function main() {
     ? normalizedDate(config.published_since, "published_since")
     : "";
   const notes = Object.entries(catalog.notes ?? {}).map(([id, note]) => {
-    const isCurated = Object.hasOwn(curated, id)
+    const hasCuration = Object.hasOwn(curated, id);
+    const candidateEntry = hasCuration ? curated[id] : fallback(note, profile);
+    const candidateKind = clean(candidateEntry.kind || profile.fallback?.default_kind || profile.classification?.default || "Note");
+    const matchingResources = (candidateEntry.tools || [])
+      .map((tool) => resourceByAlias.get(clean(tool).toLocaleLowerCase("zh-CN"))).filter(Boolean);
+    const skillResource = candidateKind === "Skill"
+      ? confirmedSkillResource(matchingResources, { today: new Date().toISOString().slice(0, 10), maxAgeDays: 30 })
+      : null;
+    const currentRevisions = currentFormalRevisions(note, candidateEntry, skillResource);
+    const isCurated = hasCuration
       && isPublishableCuration(
         id,
         note,
@@ -674,7 +690,7 @@ function main() {
         curationAudit,
         curationBaselineIds,
         curationBaselineRevisions,
-        { config, resources: resourceRegistry }
+        { config, resources: resourceRegistry, ...(currentRevisions ? { currentRevisions } : {}) }
       );
     const entry = { ...fallback(note, profile), ...(isCurated ? curated[id] : {}) };
     const categoryPolicy = resolveCategoryPolicy({
@@ -692,13 +708,32 @@ function main() {
       categoryReason: categoryPolicy.categoryReason,
       themes: categoryPolicy.themes
     };
+    const point = loadFormalPointSummary(diandianDirectory, id);
+    const formalDecision = formalCurationDecision({
+      publishable: isCurated,
+      auditEntry: curationAudit?.notes?.[id],
+      currentRevisions,
+      point,
+      kind: candidateKind,
+      resource: skillResource,
+    });
+    const projectedCuration = candidateKind === "Skill"
+      ? {
+          ...curation,
+          kind: formalContentKind(profile, candidateKind, formalDecision.accepted && Boolean(skillResource)),
+          tools: formalDecision.accepted && skillResource ? [skillResource.name] : [],
+        }
+      : curation;
     return {
       id,
       note,
       title: entry.title || inferredTitle(note),
-      curation,
+      curation: projectedCuration,
       sourceBoards: categoryPolicy.sourceBoards,
-      deepSummary: loadDiandianSummary(diandianDirectory, id)
+      deepSummary: formalDecision.summary_source === "point" ? point?.summary || null : null,
+      formalDecision,
+      candidateKind,
+      skillResource: formalDecision.accepted ? skillResource : null,
     };
   }).sort((a, b) => (a.curation.category + a.title).localeCompare(b.curation.category + b.title, "zh-CN"));
   const safeNoteIds = new Map(notes.map((item) => [item.id, safeFileSegment(item.id, "note id")]));
@@ -770,6 +805,13 @@ function main() {
     .map(([category, items]) => `## ${md(category)}\n\n${items.map((item) => `- ${md(item.curation.action)} — [[02-知识卡片/${item.id}|${md(item.title)}]]`).join("\n")}`)
     .join("\n\n");
   atomicWrite(path.join(output, "04-行动与实验", "使用建议.md"), `# 使用建议\n\n> 系统从收藏中自动提取的应用方式，不是需要逐项完成的任务。需要时查阅即可。\n\n${suggestions}\n`);
+
+  const confirmedSkills = notes.filter((item) => item.formalDecision.accepted && item.skillResource);
+  const skillRows = confirmedSkills.map((item) => {
+    const resource = item.skillResource;
+    return `| ${md(resource.name)} | ${md(resource.type)} | ${md(resource.repo)} | ${md(resource.download)} | ${md(resource.stars ?? resource.stars_numeric)} | ${md(resource.verified_at)} | ${md(resource.license)} | ${md(resource.skill_manifest)} | ${md((resource.compatibility || []).join("、"))} | ${md(resource.status)} |`;
+  }).join("\n");
+  atomicWrite(path.join(output, "05-Skills成果", "GitHub-Skills核验清单.md"), `# GitHub Skills 核验清单\n\n> 仅列出已审核、当前且具有唯一新鲜官方资源证据的 Skill。候选项不会生成猜测链接。\n\n| 名称 | 类型 | 官方仓库 | 下载 ZIP | Stars | 核验日期 | 许可证 | Skill manifest | 兼容性 | 状态 |\n|---|---|---|---|---:|---|---|---|---|---|\n${skillRows || "| 暂无已确认 Skill | - | - | - | - | - | - | - | - | pending |"}\n`);
 
   const boards = config.boards.map((board) => {
     const state = board.enabled ? "纳入同步" : `排除（${board.reason ?? "未启用"}）`;

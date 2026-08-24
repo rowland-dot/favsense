@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { curationRevision } from "./curation-revision.mjs";
+import { containsCredentialShape } from "./sensitive-data.mjs";
 import { auditCuration } from "./validate-curation.mjs";
 
 function clean(value) {
@@ -101,6 +103,143 @@ export function isPublishableCuration(
   const entry = curation[noteId];
   if (baselineIds.has(noteId) && baselineRevisions.get(noteId) === curationRevision(entry)) return true;
   return hasCompleteAcceptedAudit(noteId, note, entry, audit, context);
+}
+
+export function loadFormalPointSummary(directory, noteId) {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(String(noteId || ""))) return null;
+  const base = path.resolve(directory);
+  const target = path.resolve(base, `${noteId}.json`);
+  if (path.dirname(target) !== base) return null;
+  try {
+    const metadata = fs.statSync(target);
+    if (!metadata.isFile() || metadata.size > 512 * 1024) return null;
+    const record = JSON.parse(fs.readFileSync(target, "utf8").replace(/^\uFEFF/, ""));
+    const expectedKeys = [
+      "captured_at",
+      "content_sha256",
+      "note_id",
+      "prompt",
+      "prompt_version",
+      "provider",
+      "request_sha256",
+      "summary",
+      "summary_sha256",
+      "title",
+      "version",
+    ];
+    if (
+      !record || typeof record !== "object" || Array.isArray(record)
+      || Object.keys(record).sort().join(",") !== expectedKeys.join(",")
+      || record.version !== 2
+      || record.provider !== "xiaohongshu-diandian"
+      || record.prompt !== "总结"
+      || record.note_id !== noteId
+      || typeof record.title !== "string"
+      || typeof record.summary !== "string"
+      || typeof record.captured_at !== "string"
+      || typeof record.prompt_version !== "string"
+      || typeof record.content_sha256 !== "string"
+      || typeof record.request_sha256 !== "string"
+      || typeof record.summary_sha256 !== "string"
+      || !clean(record.title)
+      || !HASH.test(record.prompt_version)
+      || !HASH.test(record.content_sha256)
+      || !HASH.test(record.request_sha256)
+      || !HASH.test(record.summary_sha256)
+      || !clean(record.captured_at)
+      || containsCredentialShape(record)
+    ) return null;
+    const summary = record.summary.replace(/\r\n?/g, "\n").trim();
+    if (!summary || summary.length > 200_000) return null;
+    const summarySha256 = createHash("sha256").update(summary, "utf8").digest("hex");
+    if (record.summary_sha256 !== summarySha256) return null;
+    return {
+      version: record.version,
+      provider: record.provider,
+      prompt_version: record.prompt_version,
+      summary,
+      summary_sha256: summarySha256,
+      content_sha256: record.content_sha256
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function currentFormalRevisions(note, entry, resource = null) {
+  const candidate = {
+    content_sha256: clean(note?.content_sha256),
+    evidence_sha256: clean(entry?.evidence_sha256),
+    candidate_revision: clean(entry?.candidate_revision),
+    curation_revision: entry ? curationRevision(entry) : "",
+    evidence_dependencies: entry?.evidence_dependencies,
+    resource_required: clean(entry?.kind) === "Skill",
+    resource_id: clean(resource?.id),
+    resource_identity_sha256: clean(resource?.resource_identity_sha256),
+    verification_snapshot_sha256: clean(resource?.verification_snapshot_sha256),
+    resource_fresh: resource !== null,
+  };
+  return REVISION_KEYS.every((key) => HASH.test(candidate[key])) && canonicalDependencies(candidate.evidence_dependencies)
+    ? candidate
+    : null;
+}
+
+export function formalContentKind(profile, candidateKind, accepted = false) {
+  const kind = clean(candidateKind);
+  if (kind !== "Skill" || accepted) return kind;
+  const defaultKind = clean(profile?.classification?.default);
+  if (defaultKind !== "Skill" && Object.hasOwn(profile?.content_kinds || {}, defaultKind)) return defaultKind;
+  if (Object.hasOwn(profile?.content_kinds || {}, "Note")) return "Note";
+  throw new Error("Skill candidates require a declared non-Skill neutral content kind");
+}
+
+function revisionReason(auditEntry, current) {
+  if (!auditEntry || auditEntry.status !== "accepted") return "audit_pending";
+  if (auditEntry.content_sha256 !== current?.content_sha256) return "content_changed";
+  if (auditEntry.evidence_sha256 !== current?.evidence_sha256) return "evidence_changed";
+  return "audit_pending";
+}
+
+export function formalCurationDecision({
+  publishable = false,
+  auditEntry = null,
+  currentRevisions = null,
+  point = null,
+  kind = "",
+  resource = null,
+} = {}) {
+  const base = {
+    accepted: false,
+    reason_code: "audit_pending",
+    summary_source: "metadata",
+    content_sha256: clean(currentRevisions?.content_sha256),
+    evidence_sha256: clean(currentRevisions?.evidence_sha256),
+    resource_ids: [],
+  };
+  if (!publishable) return base;
+  if (clean(kind) === "Skill" && !clean(resource?.id)) return { ...base, reason_code: "resource_stale" };
+  if (!auditEntry || !currentRevisions || !acceptedRevisionsCurrent(auditEntry, currentRevisions)) {
+    return { ...base, reason_code: revisionReason(auditEntry, currentRevisions) };
+  }
+  const pointDependencyCurrent = Boolean(
+    point?.version === 2
+    && HASH.test(clean(point.prompt_version))
+    && point.content_sha256 === currentRevisions.content_sha256
+    && currentRevisions.evidence_dependencies.some((dependency) => (
+      dependency.method === "diandian_summary"
+      && dependency.provider === point.provider
+      && dependency.version === point.prompt_version
+      && dependency.result_sha256 === point.summary_sha256
+    ))
+  );
+  return {
+    accepted: true,
+    reason_code: "",
+    summary_source: pointDependencyCurrent ? "point" : "curation",
+    content_sha256: clean(currentRevisions?.content_sha256),
+    evidence_sha256: clean(currentRevisions?.evidence_sha256),
+    resource_ids: clean(resource?.id) ? [resource.id] : [],
+  };
 }
 
 export function publicEvidenceStatus(noteId, audit, isFrameVerified = false, acceptedAuditIsCurrent = false) {

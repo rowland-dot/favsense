@@ -33,7 +33,7 @@
     "preview:qa-fixture": "node scripts/serve-qa-fixture.mjs",
     "test:site": "node --test skills/xhs-favorites-organizer/tests/test_public_site.mjs",
     "test:publish": "node --test skills/xhs-favorites-organizer/tests/test_huggingface_publish.mjs",
-    "test:knowledge": "node skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs",
+    "test:knowledge": "node skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs && node --test skills/xhs-favorites-organizer/tests/test_formal_outputs.mjs",
     "test:curation": "node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs",
     "test:skill-sync": "node --test scripts/test-sync-diandian-skill.mjs",
     "test:release-contracts": "node --test scripts/test-run-python-tests.mjs scripts/test-verify-release.mjs",

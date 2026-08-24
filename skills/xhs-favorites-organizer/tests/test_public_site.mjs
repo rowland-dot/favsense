@@ -299,9 +299,40 @@ async function buildProfileFixture(profileFile, options = {}) {
       tools: [], kind: "Note"
     }
   });
-  const diandianFixtureRecord = options.diandianRecord || (options.diandianSummary ? {
-    summary: options.diandianSummary
-  } : null);
+  const promptVersion = "9".repeat(64);
+  const contentSha256 = "c".repeat(64);
+  const diandianFixtureRecord = options.diandianRecord || (options.diandianSummary ? (() => {
+    const summary = String(options.diandianSummary).replace(/\r\n?/g, "\n").trim();
+    return {
+      version: 2,
+      provider: "xiaohongshu-diandian",
+      prompt: "总结",
+      prompt_version: promptVersion,
+      note_id: noteId,
+      title: "Fixture note",
+      summary,
+      content_sha256: contentSha256,
+      request_sha256: "8".repeat(64),
+      summary_sha256: createHash("sha256").update(summary, "utf8").digest("hex"),
+      captured_at: "2026-08-23T00:00:00.000Z"
+    };
+  })() : null);
+  const catalogNote = {
+    ...(options.note || { title: "Fixture note", description: "Fixture description", source_boards: ["Fixture"] }),
+    ...(options.diandianSummary ? { content_sha256: contentSha256 } : {})
+  };
+  if (options.auditStatus === "accepted" && options.diandianSummary && fixtureCuration[noteId]) {
+    Object.assign(fixtureCuration[noteId], {
+      evidence_sha256: "e".repeat(64),
+      candidate_revision: "f".repeat(64),
+      evidence_dependencies: [{
+        method: "diandian_summary",
+        provider: "xiaohongshu-diandian",
+        version: promptVersion,
+        result_sha256: diandianFixtureRecord.summary_sha256
+      }]
+    });
+  }
   const qualityPolicy = options.curationQuality
     ? {
         ...options.curationQuality,
@@ -322,9 +353,7 @@ async function buildProfileFixture(profileFile, options = {}) {
       ...(options.publishedSince ? { published_since: options.publishedSince } : {}),
       boards: options.boards || [{ id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "Fixture", enabled: true }]
     })),
-    writeFile(catalogPath, JSON.stringify({ notes: {
-      [noteId]: options.note || { title: "Fixture note", description: "Fixture description", source_boards: ["Fixture"] }
-    } })),
+    writeFile(catalogPath, JSON.stringify({ notes: { [noteId]: catalogNote } })),
     writeFile(curationPath, JSON.stringify(fixtureCuration))
   ]);
   if (qualityPolicy) {
@@ -347,6 +376,18 @@ async function buildProfileFixture(profileFile, options = {}) {
     if (auditRecord && options.auditStatus === "accepted" && fixtureCuration[noteId]) {
       auditRecord.curation_sha256 = options.auditCurationHash
         || curationRevision(fixtureCuration[noteId]);
+      if (options.diandianSummary) {
+        Object.assign(auditRecord, {
+          content_sha256: contentSha256,
+          evidence_sha256: fixtureCuration[noteId].evidence_sha256,
+          candidate_revision: fixtureCuration[noteId].candidate_revision,
+          curation_revision: options.auditCurationHash || curationRevision(fixtureCuration[noteId]),
+          evidence_dependencies: [{
+            ...fixtureCuration[noteId].evidence_dependencies[0],
+            result_sha256: options.auditSummaryHash || diandianFixtureRecord.summary_sha256
+          }]
+        });
+      }
     }
     await writeFile(auditPath, JSON.stringify({
       version: 1,
@@ -364,14 +405,7 @@ async function buildProfileFixture(profileFile, options = {}) {
   }
   if (options.diandianSummary || options.diandianRecord) {
     await mkdir(diandianPath, { recursive: true });
-    await writeFile(resolve(diandianPath, `${noteId}.json`), JSON.stringify(options.diandianRecord || {
-      version: 1,
-      provider: "xiaohongshu-diandian",
-      prompt: "总结",
-      note_id: noteId,
-      title: "Fixture note",
-      summary: options.diandianSummary
-    }));
+    await writeFile(resolve(diandianPath, `${noteId}.json`), JSON.stringify(diandianFixtureRecord));
   }
   const args = [
     resolve(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"),
@@ -1298,7 +1332,7 @@ test("content kind supports an explicit curated override", async () => {
   assert.match(schema, /不要求用户为每篇笔记维护等级/);
 });
 
-test("uncurated software notes infer content kind from public metadata", async () => {
+test("uncurated software notes infer candidates while unverified Skill stays neutral", async () => {
   const work = await mkdtemp(resolve(root, ".fallback-kind-test-"));
   const configPath = resolve(work, "config.json");
   const catalogPath = resolve(work, "catalog.json");
@@ -1336,10 +1370,12 @@ test("uncurated software notes infer content kind from public metadata", async (
     ], { cwd: root, encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const data = JSON.parse(await readFile(outputPath, "utf8"));
-    assert.deepEqual(
-      Object.fromEntries(data.notes.map((note) => [note.id, note.kind])),
-      Object.fromEntries(Object.entries(cases).map(([id, values]) => [id, values[2]]))
-    );
+    const kinds = Object.fromEntries(data.notes.map((note) => [note.id, note.kind]));
+    assert.deepEqual(kinds, {
+      "aaaaaaaaaaaaaaaaaaaaaaaa": "Tool",
+      ...Object.fromEntries(Object.entries(cases).slice(1).map(([id, values]) => [id, values[2]]))
+    });
+    assert.equal(data.notes.find((note) => note.id === "aaaaaaaaaaaaaaaaaaaaaaaa").candidateKind, "Skill");
   } finally {
     await rm(work, { recursive: true, force: true });
   }

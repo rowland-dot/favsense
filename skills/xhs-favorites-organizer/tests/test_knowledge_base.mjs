@@ -110,8 +110,7 @@ try {
   assert.doesNotMatch(noteB, /- \[ \]/);
   assert.match(noteB, /https:\/\/www\.xiaohongshu\.com\/search_result\?keyword=Beta\+B&source=web_search_result_notes/);
   assert.doesNotMatch(noteB, /\/explore\/|\/discovery\/item\//);
-  assert.match(noteB, /## 点点 AI 深度总结/);
-  assert.match(noteB, /点点 AI 已完整读取这篇笔记/);
+  assert.doesNotMatch(noteB, /## 点点 AI 深度总结|点点 AI 已完整读取这篇笔记/);
   const noteA = fs.readFileSync(path.join(output, "02-知识卡片", "note_a.md"), "utf8");
   assert.doesNotMatch(noteA, /## 点点 AI 深度总结|稳定笔记 ID 不匹配|credential-shaped-value/);
   assert.equal(fs.existsSync(path.join(output, "04-行动与实验", "行动清单.md")), false);

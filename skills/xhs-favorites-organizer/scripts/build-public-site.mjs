@@ -1,19 +1,22 @@
 #!/usr/bin/env node
 
-import { readFile, stat } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createHash } from "node:crypto";
-import { containsCredentialShape, normalizeSensitiveText } from "./sensitive-data.mjs";
+import { normalizeSensitiveText } from "./sensitive-data.mjs";
 import { collectVideoEvidenceStats } from "./evidence-stats.mjs";
 import { resolveCategoryPolicy } from "./category-policy.mjs";
 import { curationRevision } from "./curation-revision.mjs";
 import {
-  hasCompleteAcceptedAudit,
+  currentFormalRevisions,
+  formalCurationDecision,
+  formalContentKind,
   isPublishableCuration,
+  loadFormalPointSummary,
   loadCurationAudit,
   publicEvidenceStatus
 } from "./curation-quality.mjs";
+import { confirmedSkillResource } from "./resource-quality.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
 import { atomicWriteTextFile } from "./public-tree-policy.mjs";
 
@@ -108,54 +111,6 @@ function displayTitle(raw, entry, noteId) {
   return author ? `${author}的收藏` : `收藏条目 · ${noteId.slice(-6)}`;
 }
 
-const STABLE_NOTE_ID = /^[A-Za-z0-9_-]{1,128}$/;
-
-async function loadDiandianSummary(directory, noteId) {
-  if (!STABLE_NOTE_ID.test(noteId)) return null;
-  const base = resolve(directory);
-  const target = resolve(base, `${noteId}.json`);
-  if (dirname(target) !== base) return null;
-  try {
-    const metadata = await stat(target);
-    if (!metadata.isFile() || metadata.size > 512 * 1024) return null;
-    const record = JSON.parse(await readFile(target, "utf8"));
-    if (
-      !record
-      || typeof record !== "object"
-      || Array.isArray(record)
-      || record.version !== 1
-      || record.provider !== "xiaohongshu-diandian"
-      || record.prompt !== "总结"
-      || record.note_id !== noteId
-      || containsCredentialShape(record)
-    ) return null;
-    const summary = String(record.summary || "").replace(/\r\n?/g, "\n").trim();
-    if (!summary || summary.length > 200_000) return null;
-    return {
-      summary,
-      sha256: createHash("sha256").update(summary, "utf8").digest("hex")
-    };
-  } catch {
-    return null;
-  }
-}
-
-function acceptsDiandianEvidence(review, summary, curationEntry) {
-  const methods = Array.isArray(review?.evidence_methods) ? review.evidence_methods : [];
-  const tools = Array.isArray(curationEntry?.tools) ? curationEntry.tools : [];
-  return String(review?.status || "").trim() === "accepted"
-    && /^\d{4}-\d{2}-\d{2}$/.test(String(review?.reviewed_at || "").trim().slice(0, 10))
-    && review?.comments_checked === true
-    && review?.claims_supported === true
-    && Array.isArray(review?.unresolved_facts)
-    && review.unresolved_facts.length === 0
-    && methods.includes("comments")
-    && methods.includes("diandian_summary")
-    && (tools.length ? review.resource_status === "verified" : ["not_applicable", "unresolved"].includes(review?.resource_status))
-    && /^[a-f0-9]{64}$/.test(String(review?.diandian_summary_sha256 || ""))
-    && review.diandian_summary_sha256 === summary?.sha256;
-}
-
 function publicSourceUrl(title, author) {
   const params = new URLSearchParams({
     keyword: [title, author].filter(Boolean).join(" "),
@@ -186,7 +141,7 @@ const resources = rawResources.map((raw, index) => {
     ? Number(rawMetricNumeric)
     : null;
   return {
-    id: `resource-${index + 1}`,
+    id: String(raw.id || `resource-${index + 1}`),
     name,
     aliases: field(raw, mapping.aliases || "aliases") || [],
     type: String(field(raw, mapping.type || "type") || "未分类"),
@@ -199,9 +154,12 @@ const resources = rawResources.map((raw, index) => {
   };
 });
 const resourceByAlias = new Map();
-for (const resource of resources) {
+const rawResourceByAlias = new Map();
+for (const [index, resource] of resources.entries()) {
+  const raw = rawResources[index];
   for (const alias of [resource.name, ...(resource.aliases || [])]) {
     resourceByAlias.set(String(alias).toLocaleLowerCase("zh-CN"), resource);
+    rawResourceByAlias.set(String(alias).toLocaleLowerCase("zh-CN"), raw);
   }
 }
 
@@ -267,13 +225,24 @@ function fallbackEntry(raw) {
 const rawNotes = Object.fromEntries(
   Object.entries(catalog.notes || {})
 );
-const diandianById = new Map((await Promise.all(
-  Object.keys(rawNotes).map(async (noteId) => [noteId, await loadDiandianSummary(paths.diandian, noteId)])
-)).filter(([, summary]) => summary));
+const diandianById = new Map(Object.keys(rawNotes)
+  .map((noteId) => [noteId, loadFormalPointSummary(paths.diandian, noteId)])
+  .filter(([, summary]) => summary));
 const evidenceStats = await collectVideoEvidenceStats(paths.videoAnalysis, config.public_stats, Object.keys(rawNotes));
 const frameVerifiedNoteIds = new Set(evidenceStats.verifiedNoteIds);
 const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
-  const isCurated = Object.hasOwn(curation, noteId)
+  const hasCuration = Object.hasOwn(curation, noteId);
+  const candidateEntry = hasCuration ? curation[noteId] : fallbackEntry(raw);
+  const candidateResources = [...new Map((candidateEntry.tools || [])
+    .map(resourceForTool).filter(Boolean).map((resource) => [resource.id, resource])).values()];
+  const candidateKind = classify(candidateEntry, candidateResources);
+  const rawCandidateResources = (candidateEntry.tools || [])
+    .map((tool) => rawResourceByAlias.get(String(tool).toLocaleLowerCase("zh-CN"))).filter(Boolean);
+  const confirmedResource = candidateKind === "Skill"
+    ? confirmedSkillResource(rawCandidateResources, { today: new Date().toISOString().slice(0, 10), maxAgeDays: 30 })
+    : null;
+  const currentRevisions = currentFormalRevisions(raw, candidateEntry, confirmedResource);
+  const isCurated = hasCuration
     && isPublishableCuration(
       noteId,
       raw,
@@ -282,17 +251,10 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
       curationAudit,
       curationBaselineIds,
       curationBaselineRevisions,
-      { config, resources: resourceRegistry }
+      { config, resources: resourceRegistry, ...(currentRevisions ? { currentRevisions } : {}) }
     );
   const isFrameVerified = frameVerifiedNoteIds.has(noteId);
   const entry = isCurated ? curation[noteId] : fallbackEntry(raw);
-  const acceptedAuditIsCurrent = isCurated && hasCompleteAcceptedAudit(
-    noteId,
-    raw,
-    entry,
-    curationAudit,
-    { config, resources: resourceRegistry }
-  );
   const categoryPolicy = resolveCategoryPolicy({
     entry,
     note: raw,
@@ -306,8 +268,26 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const title = displayTitle(raw, entry, noteId);
   const diandian = diandianById.get(noteId);
   const auditEntry = curationAudit?.notes?.[noteId];
-  const aiEvidenceAccepted = acceptsDiandianEvidence(auditEntry, diandian, entry);
-  const publicDiandian = isCurated && aiEvidenceAccepted ? diandian : null;
+  const formalDecision = formalCurationDecision({
+    publishable: isCurated,
+    auditEntry,
+    currentRevisions,
+    point: diandian,
+    kind: candidateKind,
+    resource: confirmedResource,
+  });
+  const publicDiandian = formalDecision.summary_source === "point" ? diandian : null;
+  const projectedKind = formalContentKind(
+    profile,
+    candidateKind === "Skill" ? candidateKind : classify(entry, matchedResources),
+    formalDecision.accepted && Boolean(confirmedResource)
+  );
+  const projectedResources = candidateKind === "Skill"
+    ? matchedResources.filter((resource) => formalDecision.resource_ids.includes(resource.id))
+    : matchedResources;
+  const projectedTools = candidateKind === "Skill"
+    ? projectedResources.map((resource) => resource.name)
+    : entry.tools || [];
 
   return {
     id: noteId,
@@ -329,11 +309,16 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     deepSummary: publicDiandian?.summary || entry.summary,
     deepSummarySource: publicDiandian ? "xiaohongshu-diandian" : (isCurated ? "curation" : "source-metadata"),
     curationRevision: isCurated ? curationRevision(entry) : "",
+    summaryStatus: formalDecision.accepted ? "accepted" : "pending_review",
+    summaryReason: formalDecision.reason_code,
+    ...(candidateKind === "Skill" && projectedKind !== "Skill" ? { candidateKind } : {}),
+    reviewedAt: formalDecision.accepted ? String(auditEntry?.reviewed_at || "") : "",
     action: String(entry.action || "").trim(),
-    tools: entry.tools || [],
-    kind: classify(entry, matchedResources),
-    resources: matchedResources.map((resource) => resource.name),
-    evidence: publicEvidenceStatus(noteId, curationAudit, isFrameVerified, acceptedAuditIsCurrent)
+    tools: projectedTools,
+    kind: projectedKind,
+    resources: projectedResources.map((resource) => resource.name),
+    resourceIds: formalDecision.resource_ids,
+    evidence: publicEvidenceStatus(noteId, curationAudit, isFrameVerified, formalDecision.accepted)
   };
 });
 

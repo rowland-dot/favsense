@@ -10,6 +10,11 @@ test("runs the Python organization suite before Node contracts", () => {
     spawn(command, args) { calls.push([command, args]); return { status: 0 }; },
   });
   assert.deepEqual(calls, organizationCommands({ command: "python", prefixArgs: [] }).map(({ command, args }) => [command, args]));
+  assert.deepEqual(calls[1], [process.execPath, [
+    "--test",
+    "skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs",
+    "skills/xhs-favorites-organizer/tests/test_formal_outputs.mjs",
+  ]]);
 });
 
 test("stops and propagates the first non-zero exit", () => {
@@ -21,4 +26,3 @@ test("stops and propagates the first non-zero exit", () => {
   assert.equal(status, 9);
   assert.equal(calls, 1);
 });
-
