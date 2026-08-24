@@ -24,6 +24,7 @@ const PUBLIC_FORBIDDEN = [
   /ChromeUserData|AppData\\Local/i
 ];
 const STRUCTURED_CREDENTIAL_KEY = /^(?:api_key|client_secret|cookie|cookies|xsec_token|token|access_token|refresh_token|authorization|password|secret)$/i;
+const MIGRATION_ARTIFACT = /^(?:migration-reports|migration-backups|organization-migration|rollback-manifest(?:\.json)?|dry-run-report\.json|migration-v2\.json|.*\.backup|\.organization-tx-)/i;
 
 function containsStructuredCredentialKey(value) {
   if (Array.isArray(value)) return value.some(containsStructuredCredentialKey);
@@ -98,6 +99,9 @@ export async function validatePublicTree(directory, options = {}, relative = "")
       throw new Error(`public tree paths must use printable ASCII: ${path.join(relative, entry.name)}`);
     }
     if (!relative && excludedRootNames.has(entry.name.toLowerCase())) continue;
+    if (MIGRATION_ARTIFACT.test(entry.name)) {
+      throw new Error(`migration artifact is not allowed in the public site: ${path.join(relative, entry.name)}`);
+    }
     const entryPath = path.join(root, entry.name);
     const entryRelative = path.join(relative, entry.name);
     const metadata = await lstat(entryPath);

@@ -139,7 +139,15 @@ node ".\skills\xhs-favorites-organizer\scripts\merge-curation-results.mjs" `
   --expected-count 12
 ```
 
-## 7. 运行质量门
+## 7. 旧组织状态迁移
+
+- 迁移默认 dry-run，只生成不含笔记 ID、标题或绝对路径的计数报告；报告 15 分钟后失效。
+- apply 必须同时提供与最新 dry-run 完全匹配的确认 ID。确认不匹配或过期时，必须重新运行 dry-run，且不得写入正式状态。
+- dry-run 报告、备份和回滚 manifest 都是私有迁移制品，不得进入公开站点或知识库。
+- 本流水线只允许 synthetic fixture、dry-run 与故障注入；不得对真实收藏数据执行 `--apply`。
+- 迁移不访问平台或 GitHub，不把未核验 Skill 或猜测的下载链接写入正式输出。
+
+## 8. 运行质量门
 
 ```powershell
 node ".\skills\xhs-favorites-organizer\scripts\validate-curation.mjs" `
@@ -154,7 +162,7 @@ node ".\skills\xhs-favorites-organizer\scripts\validate-curation.mjs" `
 
 质量门检查范围完整性、证据方法、评论检查、摘要与具体用法、分类覆盖理由、资源关联，以及 Skill 的仓库/许可证/manifest。`pending` 可以存在，但不会进入发布结果；任何伪造、缺审计却写入策展、或不合格的 `accepted` 都会使命令失败。
 
-## 8. 构建与验收顺序
+## 9. 构建与验收顺序
 
 1. 先运行质量门并阅读报告。
 2. 只把 `accepted` 条目写入正式 curation；`pending` 只留在私有审计。所有已同步收藏仍以安全 fallback 显示，质量门只控制深度策展字段，不删除收藏。
