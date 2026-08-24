@@ -626,12 +626,13 @@ __DIANDIAN_MATCH_LINE__
     throw workflowError("diandian-skip-unconfirmed", "本地服务没有确认点点回退状态；已停止继续整理");
   }
 
-  async function reportDiandianHalt(runId, boardIdForRun, reason = "xhs-safety-stop") {
+  async function reportDiandianHalt(runId, boardIdForRun, reason = "xhs-safety-stop", noteId = "") {
     try {
       return await post("/sync/diandian-halt", {
         run_id: runId,
         board_id: boardIdForRun,
         reason,
+        ...(noteId ? { note_id: noteId } : {}),
       }, 10000);
     } catch {
       if (reason === "xhs-safety-stop") {
@@ -828,12 +829,12 @@ __DIANDIAN_MATCH_LINE__
           if (DIANDIAN.cdp_enabled === true) {
             const reason = diandianCdpHaltReason(error);
             if (error?.bridgeHalted !== true) {
-              await reportDiandianHalt(runId, board.id, reason);
+              await reportDiandianHalt(runId, board.id, reason, note.id);
             }
             return { saved, skipped, halted: true, reason };
           }
           if (isSafetyFailure(error)) {
-            await reportDiandianHalt(runId, board.id);
+            await reportDiandianHalt(runId, board.id, "xhs-safety-stop", note.id);
             return { saved, skipped, halted: true, reason: "xhs-safety-stop" };
           }
           const reason = failureReason(error);

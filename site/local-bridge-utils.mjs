@@ -73,7 +73,7 @@ export function validateLocalBridgeBoards(value) {
 const SYNC_STATES = new Set(["idle", "starting", "running", "completed", "failed", "safety-stopped"]);
 const SYNC_NUMBERS = new Set([
   "board_count", "processed_boards", "scanned", "new", "summarized",
-  "summary_total", "summary_pending", "summary_failed"
+  "summary_total", "summary_pending", "summary_failed", "summary_batch_aborted"
 ]);
 const SYNC_BOOLEANS = new Set([
   "summary_plan_pending", "summary_finalizing", "core_completed"

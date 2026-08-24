@@ -19,6 +19,9 @@
   },
   "reason_codes": ["", "unknown_legacy", "auth_failed", "bridge_unavailable", "scope_invalid", "safety_signal", "transport_failed", "contract_invalid", "batch_aborted", "evidence_missing", "ocr_unavailable", "audit_pending", "resource_not_applicable", "resource_ambiguous", "resource_stale", "content_changed", "evidence_changed", "provider_changed", "prompt_changed", "summary_changed", "build_failed", "publish_failed"],
   "copy": {
+    "core_not_started": "核心收藏尚未保存",
+    "core_running": "正在保存核心收藏",
+    "core_failed": "核心收藏未保存，本轮可重试",
     "core_completed": "核心收藏已保存",
     "summary_not_started": "尚未开始深度整理",
     "summary_captured": "总结已捕获，等待审核",

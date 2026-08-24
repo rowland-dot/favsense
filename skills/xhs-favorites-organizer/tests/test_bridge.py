@@ -1298,6 +1298,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "note_id": first_id,
                 "status": "unresolved",
                 "reason": "attachment-not-supported",
+                "summary_status": "failed",
             }])
             serialized = json.dumps(report, ensure_ascii=False).lower()
             self.assertNotIn("board", serialized)
@@ -1342,6 +1343,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "run_id": "manual_board",
                 "board_id": "board",
                 "reason": "xhs-safety-stop",
+                "note_id": first_id,
             }
 
             first = bridge.halt_diandian_run(payload)
@@ -1357,7 +1359,8 @@ class BridgeHelpersTest(unittest.TestCase):
             status = bridge.manual_sync_status()
             self.assertEqual(status["state"], "safety-stopped")
             self.assertIs(status["core_completed"], True)
-            self.assertEqual(status["summary_failed"], 2)
+            self.assertEqual(status["summary_failed"], 1)
+            self.assertEqual(status["summary_batch_aborted"], 1)
             self.assertEqual(status["summary_pending"], 0)
             self.assertFalse(status["summary_finalizing"])
             self.assertNotIn("manual_board", bridge.summary_plans)
@@ -1367,8 +1370,14 @@ class BridgeHelpersTest(unittest.TestCase):
                 {first_id, second_id},
             )
             self.assertEqual(
-                {entry["reason"] for entry in report["unresolved"]},
-                {"safety-halt"},
+                {
+                    entry["note_id"]: (entry["reason"], entry["summary_status"])
+                    for entry in report["unresolved"]
+                },
+                {
+                    first_id: ("safety-halt", "failed"),
+                    second_id: ("batch-aborted", "batch_aborted"),
+                },
             )
 
             generic_duplicate = bridge.halt_diandian_run({
@@ -1380,11 +1389,12 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertEqual(generic_duplicate["reason"], "xhs-safety-stop")
             after_generic = bridge.manual_sync_status()
             self.assertEqual(after_generic["state"], "safety-stopped")
-            self.assertEqual(after_generic["summary_failed"], 2)
+            self.assertEqual(after_generic["summary_failed"], 1)
+            self.assertEqual(after_generic["summary_batch_aborted"], 1)
             report = json.loads(bridge.diandian_report_path.read_text(encoding="utf-8"))
             self.assertEqual(
                 {entry["reason"] for entry in report["unresolved"]},
-                {"safety-halt"},
+                {"safety-halt", "batch-aborted"},
             )
 
     def test_diandian_report_round_trips_success_and_unresolved_ids_into_run_scope(self):
@@ -1527,6 +1537,68 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertEqual(bridge.manual_sync_status()["state"], "completed")
             self.assertEqual(bridge.rebuild_knowledge_base.call_count, 1)
             self.assertEqual(bridge.publish_after_board.call_count, 1)
+
+    def test_v2_finalizer_projects_curation_build_and_publish_failures_truthfully(self):
+        for failure_phase in ("curation", "build", "publish"):
+            with self.subTest(failure_phase=failure_phase), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+                bridge.state_dir = root / ".xhs-favorites"
+                bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+                bridge.processing_lock = threading.Lock()
+                bridge.boards = {"board": "Board"}
+                bridge.board_order = ["board"]
+                bridge.organization_status_v2_enabled = True
+                bridge.summary_plans = {"manual_board": set()}
+                bridge.summary_locks = {}
+                bridge.summary_locks_guard = threading.Lock()
+                bridge.summary_finalizing = {"manual_board"}
+                bridge.summary_finalized = set()
+                bridge.summary_halted = set()
+                bridge.run_curation_pipeline = mock.Mock(return_value={
+                    "counts": {"accepted": 1, "pending": 0},
+                })
+                bridge.build_organization_snapshot = mock.Mock(
+                    return_value={"build_version": "a" * 64}
+                )
+                bridge.publish_after_board = mock.Mock(
+                    return_value={"ok": False, "status": "failed"}
+                    if failure_phase == "publish" else None
+                )
+                bridge.write_status = mock.Mock()
+                if failure_phase == "curation":
+                    bridge.run_curation_pipeline.side_effect = AttributeError("synthetic curation failure")
+                elif failure_phase == "build":
+                    bridge.build_organization_snapshot.return_value = {}
+                BRIDGE.atomic_json(bridge.state_dir / "runs" / "manual_board.json", {
+                    "run_id": "manual_board",
+                    "state": "completed",
+                    "next_board_id": None,
+                })
+                BRIDGE.atomic_json(bridge.manual_sync_path, {
+                    "batch": "manual",
+                    "state": "running",
+                    "run_board_ids": ["board"],
+                    "core_completed": True,
+                    "summary_finalizing": True,
+                    "summarized": 1,
+                })
+
+                bridge.run_diandian_finalization("manual_board", "board")
+
+                persisted = bridge.read_manual_sync()
+                status = bridge.manual_sync_status()
+                if failure_phase == "publish":
+                    self.assertEqual(persisted["state"], "completed")
+                    self.assertEqual(status["state"], "completed_with_warnings")
+                    self.assertEqual(status["phases"]["publish"]["status"], "failed")
+                    self.assertEqual(status["phases"]["publish"]["artifact_status"], "held_previous")
+                else:
+                    self.assertEqual(persisted["state"], "failed")
+                    self.assertEqual(persisted["finalize_failed_phase"], failure_phase)
+                    self.assertEqual(status["phases"][failure_phase]["status"], "failed")
+                    self.assertEqual(status["state"], "organization_partial" if failure_phase == "curation" else "failed")
+                self.assertFalse(persisted["summary_finalizing"])
 
     def test_saved_summary_requires_current_content_and_prompt_revisions(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1968,6 +2040,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "run_id": "manual_board",
                 "board_id": "board",
                 "reason": "share-link-unavailable",
+                "note_id": note_id,
             })
             status = bridge.manual_sync_status()
 
@@ -1982,6 +2055,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "note_id": note_id,
                 "status": "unresolved",
                 "reason": "share-link-unavailable",
+                "summary_status": "failed",
             }])
 
             with self.assertRaisesRegex(ValueError, "halt reason"):
@@ -4856,10 +4930,13 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.boards = {"first": "First"}
             bridge.workspace = root
             bridge.state_dir = root / ".xhs-favorites"
+            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
             bridge.config_path = root / "config.json"
             bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
             bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
+            pending_ids = {"t" * 24, "u" * 24}
+            bridge.summary_plans = {"manual-stale_first": set(pending_ids)}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual-stale",
                 "state": "running",
@@ -4867,12 +4944,26 @@ class BridgeHelpersTest(unittest.TestCase):
                 "processed_run_ids": ["manual-stale_first"],
                 "board_count": 2,
                 "processed_boards": 1,
+                "summary_pending": 2,
             })
 
             expired = bridge.manual_sync_status()
 
             self.assertEqual(expired["state"], "failed")
             self.assertIn("重新点击", expired["error"])
+            self.assertEqual(expired["summary_batch_aborted"], 2)
+            report = json.loads(bridge.diandian_report_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                {
+                    entry["note_id"]: entry["summary_status"]
+                    for entry in report["unresolved"]
+                },
+                {note_id: "batch_aborted" for note_id in pending_ids},
+            )
+            bridge.organization_status_v2_enabled = True
+            projected = bridge.manual_sync_status()
+            self.assertEqual(projected["phases"]["summary"]["status"], "batch_aborted")
+            bridge.organization_status_v2_enabled = False
             with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
                 restarted = bridge.trigger_manual_sync()
 

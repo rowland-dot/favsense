@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFile } from "node:fs/promises";
+import { open, readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizeSensitiveText } from "./sensitive-data.mjs";
@@ -67,6 +67,7 @@ const paths = {
   resources: arg("resources", configuredPath(resourceIndex.registry_file, "skills/xhs-favorites-organizer/references/software-resources.json")),
   videoAnalysis: arg("video-analysis", resolve(workspace, ".xhs-favorites/video-analysis")),
   diandian: arg("diandian-dir", resolve(workspace, ".xhs-favorites/diandian-summaries")),
+  diandianReport: arg("diandian-report", resolve(workspace, ".xhs-favorites/diandian-rerun-report.json")),
   output: arg("output", resolve(workspace, "site/data/knowledge.json"))
 };
 const buildVersionIndex = process.argv.indexOf("--build-version");
@@ -225,6 +226,59 @@ function fallbackEntry(raw) {
 const rawNotes = Object.fromEntries(
   Object.entries(catalog.notes || {})
 );
+async function loadDiandianRunStates(path, noteIds) {
+  let handle;
+  try {
+    handle = await open(path, "r");
+    const metadata = await handle.stat();
+    if (metadata.size > 512 * 1024) throw new Error("DianDian rerun report is too large");
+    const buffer = Buffer.alloc(metadata.size + 1);
+    let bytesRead = 0;
+    while (bytesRead < buffer.length) {
+      const chunk = await handle.read(buffer, bytesRead, buffer.length - bytesRead, bytesRead);
+      if (!chunk.bytesRead) break;
+      bytesRead += chunk.bytesRead;
+    }
+    if (bytesRead > metadata.size) throw new Error("DianDian rerun report changed while reading");
+    const report = JSON.parse(buffer.subarray(0, bytesRead).toString("utf8").replace(/^\uFEFF/, ""));
+    const unresolved = Array.isArray(report?.unresolved)
+      ? report.unresolved
+      : Object.entries(report?.unresolved || {}).map(([note_id, entry]) => ({ ...entry, note_id }));
+    if (unresolved.length > 5000) throw new Error("DianDian rerun report contains too many entries");
+    const states = new Map();
+    for (const entry of unresolved) {
+      const noteId = String(entry?.note_id || "");
+      if (!/^[a-f0-9]{24}$/.test(noteId) || !noteIds.has(noteId)) continue;
+      const reason = String(entry?.reason || "");
+      const summaryState = entry?.summary_status === "batch_aborted"
+        || (!entry?.summary_status && ["batch-aborted", "summary-plan-abandoned"].includes(reason))
+        ? "batch_aborted"
+        : entry?.summary_status === "failed"
+          ? "failed"
+          : entry?.status === "unresolved"
+            ? "stale"
+            : "";
+      if (!summaryState) continue;
+      const summaryReasonCode = summaryState === "batch_aborted"
+        ? "batch_aborted"
+        : summaryState === "stale"
+          ? "unknown_legacy"
+        : reason === "transport-failed"
+          ? "transport_failed"
+          : reason === "safety-halt"
+            ? "safety_signal"
+            : "contract_invalid";
+      states.set(noteId, { summaryState, summaryReasonCode });
+    }
+    return states;
+  } catch (error) {
+    if (error?.code === "ENOENT") return new Map();
+    throw error;
+  } finally {
+    await handle?.close();
+  }
+}
+const diandianRunStateById = await loadDiandianRunStates(paths.diandianReport, new Set(Object.keys(rawNotes)));
 const diandianById = new Map(Object.keys(rawNotes)
   .map((noteId) => [noteId, loadFormalPointSummary(paths.diandian, noteId)])
   .filter(([, summary]) => summary));
@@ -277,6 +331,14 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     resource: confirmedResource,
   });
   const publicDiandian = formalDecision.summary_source === "point" ? diandian : null;
+  const formalSummaryReasonCode = String(formalDecision.reason_code || "");
+  const runState = diandianRunStateById.get(noteId);
+  const summaryState = runState?.summaryState || (diandian
+    ? (["content_changed", "provider_changed", "prompt_changed", "summary_changed"].includes(formalSummaryReasonCode)
+        ? "stale"
+        : "captured")
+    : "not_started");
+  const summaryReasonCode = runState?.summaryReasonCode || formalSummaryReasonCode;
   const projectedKind = formalContentKind(
     profile,
     candidateKind === "Skill" ? candidateKind : classify(entry, matchedResources),
@@ -311,6 +373,8 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     curationRevision: isCurated ? curationRevision(entry) : "",
     summaryStatus: formalDecision.accepted ? "accepted" : "pending_review",
     summaryReason: formalDecision.reason_code,
+    summaryState,
+    summaryReasonCode,
     ...(candidateKind === "Skill" && projectedKind !== "Skill" ? { candidateKind } : {}),
     reviewedAt: formalDecision.accepted ? String(auditEntry?.reviewed_at || "") : "",
     action: String(entry.action || "").trim(),

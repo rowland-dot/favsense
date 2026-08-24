@@ -2214,10 +2214,15 @@ class Bridge:
         for run_id in sorted(run_ids):
             if run_id not in halted_runs:
                 halted_runs.append(run_id)
-        pending = sum(
-            len(getattr(self, "summary_plans", {}).get(run_id, set()))
+        pending_by_run = {
+            run_id: set(getattr(self, "summary_plans", {}).get(run_id, set()))
             for run_id in run_ids
-        )
+        }
+        for note_ids in pending_by_run.values():
+            self.record_diandian_unresolved_batch(
+                note_ids, "batch-aborted", "batch_aborted"
+            )
+        pending = sum(len(note_ids) for note_ids in pending_by_run.values())
         state.update({
             "state": "failed",
             "completed_at": datetime.now().astimezone().isoformat(),
@@ -2228,7 +2233,9 @@ class Bridge:
             "summary_halted_run_ids": halted_runs,
         })
         if pending:
-            state["summary_failed"] = int(state.get("summary_failed", 0) or 0) + pending
+            state["summary_batch_aborted"] = (
+                int(state.get("summary_batch_aborted", 0) or 0) + pending
+            )
         guard = getattr(self, "summary_locks_guard", None)
         if guard is None:
             guard = threading.Lock()
@@ -2282,6 +2289,7 @@ class Bridge:
             "state", "started_at", "completed_at", "board_count", "processed_boards",
             "current_board", "scanned", "new", "error", "publish_status",
             "summarized", "summary_total", "summary_pending", "summary_failed",
+            "summary_batch_aborted",
             "summary_plan_pending", "summary_finalizing", "summary_finalize_error",
             "core_completed", "summary_halt_reason",
         }
@@ -2313,10 +2321,7 @@ class Bridge:
             except ValueError:
                 public.pop("summary_halt_reason")
         if getattr(self, "organization_status_v2_enabled", False) and value.get("state") != "idle":
-            projection = ORGANIZATION_STATE.project_legacy_manual_state(value)
-            if value.get("state") == "completed":
-                projection["state"] = "completed_with_warnings"
-            return projection
+            return ORGANIZATION_STATE.project_legacy_manual_state(value)
         return public
 
     def open_sop_browser_page(self, url: str, *, activate: bool = True) -> dict:
@@ -2375,6 +2380,7 @@ class Bridge:
                 "summary_total": 0,
                 "summary_pending": 0,
                 "summary_failed": 0,
+                "summary_batch_aborted": 0,
                 "summary_plan_pending": False,
                 "summary_finalizing": False,
                 "processed_run_ids": [],
@@ -2666,6 +2672,11 @@ class Bridge:
                     "note_id": note_id,
                     "status": "unresolved",
                     "reason": safe_diandian_fallback_reason(reason),
+                    **(
+                        {"summary_status": entry["summary_status"]}
+                        if entry.get("summary_status") in {"failed", "batch_aborted"}
+                        else {}
+                    ),
                 }
         succeeded_note_ids = [
             note_id for note_id in succeeded_note_ids
@@ -2708,14 +2719,20 @@ class Bridge:
             report["updated_at"] = datetime.now().astimezone().isoformat()
             atomic_json(self.summary_report_path(), report)
 
-    def record_diandian_unresolved(self, note_id: str, reason: str) -> None:
-        self.record_diandian_unresolved_batch({note_id}, reason)
+    def record_diandian_unresolved(
+        self, note_id: str, reason: str, summary_status: str | None = None
+    ) -> None:
+        self.record_diandian_unresolved_batch({note_id}, reason, summary_status)
 
-    def record_diandian_unresolved_batch(self, note_ids: set[str], reason: str) -> None:
+    def record_diandian_unresolved_batch(
+        self, note_ids: set[str], reason: str, summary_status: str | None = None
+    ) -> None:
         if not note_ids:
             return
         if not all(NOTE_ID.fullmatch(note_id) for note_id in note_ids):
             raise ValueError("DianDian report note_id is invalid")
+        if summary_status not in {None, "failed", "batch_aborted"}:
+            raise ValueError("DianDian report summary status is invalid")
         with self.get_summary_report_lock():
             report = self.read_diandian_report()
             now = datetime.now().astimezone().isoformat()
@@ -2733,6 +2750,7 @@ class Bridge:
                     "note_id": note_id,
                     "status": "unresolved",
                     "reason": safe_reason,
+                    **({"summary_status": summary_status} if summary_status else {}),
                 }
             report["unresolved"] = list(unresolved_by_id.values())
             atomic_json(self.summary_report_path(), report)
@@ -2999,9 +3017,25 @@ class Bridge:
                 state["summary_plan_pending"] = False
                 if error:
                     state["summary_finalize_error"] = error
+                    state["finalize_failed_phase"] = str(
+                        result.get("_finalize_failed_phase") or "build"
+                    )
+                    state.update({
+                        "state": "failed",
+                        "completed_at": datetime.now().astimezone().isoformat(),
+                        "current_board": "",
+                    })
                 else:
                     state.pop("summary_finalize_error", None)
-                if result.get("state") == "completed":
+                    state.pop("finalize_failed_phase", None)
+                build_version = result.get("build_version")
+                if isinstance(build_version, str) and re.fullmatch(r"[a-f0-9]{64}", build_version):
+                    state["build_version"] = build_version
+                curation_counts = result.get("curation", {}).get("counts")
+                if isinstance(curation_counts, dict):
+                    state["curation_accepted"] = max(0, int(curation_counts.get("accepted", 0) or 0))
+                    state["curation_pending"] = max(0, int(curation_counts.get("pending", 0) or 0))
+                if not error and result.get("state") == "completed":
                     next_board_id = str(result.get("next_board_id") or "")
                     if not next_board_id:
                         state.update({
@@ -3043,25 +3077,28 @@ class Bridge:
         result: dict = {}
         publish = None
         error_message = ""
+        failure_phase = "build"
         try:
             with self.processing_lock:
                 if self.diandian_is_halted(run_id):
                     return
-                status_path = self.state_dir / "runs" / f"{run_id}.json"
-                result = json.loads(status_path.read_text(encoding="utf-8-sig"))
+                result = self.read_completed_core_result(run_id)
                 if self.diandian_is_halted(run_id):
                     return
                 if getattr(self, "organization_status_v2_enabled", False):
                     if result.get("next_board_id"):
                         self.complete_manual_after_diandian(run_id, board_id, result, None, "")
                         return
+                    failure_phase = "curation"
                     result["curation"] = self.run_curation_pipeline()
+                    failure_phase = "build"
                     snapshot = self.build_organization_snapshot()
                     result["build_version"] = snapshot["build_version"]
                 else:
                     self.rebuild_knowledge_base()
                 if self.diandian_is_halted(run_id):
                     return
+                failure_phase = "publish"
                 publish = self.publish_after_board(
                     board_id,
                     run_id,
@@ -3072,8 +3109,9 @@ class Bridge:
                     self.write_status(result)
                 if not self.diandian_is_halted(run_id):
                     self.complete_manual_after_diandian(run_id, board_id, result, publish, "")
-        except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
+        except Exception as error:
             error_message = sanitize_error(str(error))
+            result["_finalize_failed_phase"] = failure_phase
             self.complete_manual_after_diandian(run_id, board_id, result, None, error_message)
         finally:
             with self.summary_run_lock(run_id):
@@ -3119,9 +3157,11 @@ class Bridge:
             state, "summary_plan_abandoned_run_ids", run_id
         ) if abandoned else False
         if abandoned and pending and not already_abandoned:
-            self.record_diandian_unresolved_batch(pending, "summary-plan-abandoned")
-            state["summary_failed"] = (
-                int(state.get("summary_failed", 0) or 0) + len(pending)
+            self.record_diandian_unresolved_batch(
+                pending, "summary-plan-abandoned", "batch_aborted"
+            )
+            state["summary_batch_aborted"] = (
+                int(state.get("summary_batch_aborted", 0) or 0) + len(pending)
             )
         self.append_unique_state_value(state, "summary_plan_resolved_run_ids", run_id)
         state.update({
@@ -3265,6 +3305,7 @@ class Bridge:
         *,
         reason: str,
         safety: bool,
+        failed_note_id: str | None = None,
     ) -> dict:
         if not safety:
             reason = normalize_diandian_halt_reason(reason)
@@ -3311,11 +3352,28 @@ class Bridge:
                     }
                 pending = set(self.summary_plans.get(run_id, set()))
                 report_reason = "safety-halt" if effective_safety else reason
-                self.record_diandian_unresolved_batch(pending, report_reason)
+                attempted = (
+                    {failed_note_id}
+                    if isinstance(failed_note_id, str)
+                    and failed_note_id in pending
+                    and NOTE_ID.fullmatch(failed_note_id)
+                    else set()
+                )
+                remaining = pending - attempted
+                self.record_diandian_unresolved_batch(
+                    attempted, report_reason, "failed"
+                )
+                self.record_diandian_unresolved_batch(
+                    remaining, "batch-aborted", "batch_aborted"
+                )
                 if run_id not in halted_runs:
                     halted_runs.append(run_id)
                     state["summary_failed"] = (
-                        int(state.get("summary_failed", 0) or 0) + len(pending)
+                        int(state.get("summary_failed", 0) or 0) + len(attempted)
+                    )
+                    state["summary_batch_aborted"] = (
+                        int(state.get("summary_batch_aborted", 0) or 0)
+                        + len(remaining)
                     )
                 state.update({
                     "state": "safety-stopped" if effective_safety else "failed",
@@ -3591,6 +3649,7 @@ class Bridge:
                 board_id,
                 reason=error.reason,
                 safety=error.safety,
+                failed_note_id=None if saved_committed else note_id,
             )
             if saved_committed:
                 result["saved"] = True
@@ -3603,6 +3662,7 @@ class Bridge:
                 board_id,
                 reason="transport-failed",
                 safety=False,
+                failed_note_id=None if saved_committed else note_id,
             )
             if saved_committed:
                 result["saved"] = True
@@ -3617,6 +3677,7 @@ class Bridge:
                 board_id,
                 reason="invalid-summary",
                 safety=False,
+                failed_note_id=None if saved_committed else note_id,
             )
             if saved_committed:
                 result["saved"] = True
@@ -3631,6 +3692,7 @@ class Bridge:
                 board_id,
                 reason="transport-failed",
                 safety=False,
+                failed_note_id=None if saved_committed else note_id,
             )
             if saved_committed:
                 result["saved"] = True
@@ -3751,7 +3813,7 @@ class Bridge:
                     if self.saved_diandian_record(note_id) is not None:
                         return {"skipped": False, "saved": True, **self.diandian_completion_state(run_id, board_id)}
                     raise ValueError("note_id was not planned for DianDian summarization")
-                self.record_diandian_unresolved(note_id, safe_reason)
+                self.record_diandian_unresolved(note_id, safe_reason, "failed")
                 pending.remove(note_id)
                 try:
                     self.update_diandian_progress(run_id, board_id, failed_delta=1)
@@ -3761,13 +3823,21 @@ class Bridge:
                 return {"skipped": True, **self.diandian_completion_state(run_id, board_id)}
 
     def halt_diandian_run(self, payload: dict) -> dict:
-        if set(payload) != {"run_id", "board_id", "reason"}:
-            raise ValueError("DianDian halt must contain run_id, board_id and reason")
+        if set(payload) not in (
+            {"run_id", "board_id", "reason"},
+            {"run_id", "board_id", "reason", "note_id"},
+        ):
+            raise ValueError("DianDian halt must contain supported fields")
         run_id = payload.get("run_id")
         board_id = payload.get("board_id")
         reason = payload.get("reason")
+        note_id = payload.get("note_id")
         if not all(isinstance(value, str) for value in (run_id, board_id, reason)):
             raise ValueError("DianDian halt fields must be strings")
+        if note_id is not None and (
+            not isinstance(note_id, str) or not NOTE_ID.fullmatch(note_id)
+        ):
+            raise ValueError("DianDian halt note_id is invalid")
         safety = reason == DIANDIAN_SAFETY_STOP_REASON
         if not safety:
             reason = normalize_diandian_halt_reason(reason)
@@ -3788,12 +3858,14 @@ class Bridge:
                 board_id,
                 reason=reason,
                 safety=False,
+                failed_note_id=note_id,
             )
         self.halt_diandian_cdp_run(
             run_id,
             board_id,
             reason=DIANDIAN_SAFETY_STOP_REASON,
             safety=True,
+            failed_note_id=note_id,
         )
         return {
             "halted": True,
@@ -3907,7 +3979,13 @@ class Bridge:
             })
             remaining = getattr(self, "summary_plans", {}).pop(run_id, set())
             if remaining:
-                state["summary_failed"] = int(state.get("summary_failed", 0) or 0) + len(remaining)
+                self.record_diandian_unresolved_batch(
+                    remaining, "batch-aborted", "batch_aborted"
+                )
+                state["summary_batch_aborted"] = (
+                    int(state.get("summary_batch_aborted", 0) or 0)
+                    + len(remaining)
+                )
                 state["summary_pending"] = 0
             atomic_json(self.manual_sync_path, state)
         return self.manual_sync_status()

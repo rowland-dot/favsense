@@ -289,6 +289,7 @@ async function buildProfileFixture(profileFile, options = {}) {
   const curationPath = resolve(work, "curation.json");
   const outputPath = resolve(work, "knowledge.json");
   const diandianPath = resolve(work, "diandian-summaries");
+  const diandianReportPath = resolve(work, "diandian-rerun-report.json");
   const auditPath = resolve(work, "curation-audit.json");
   const baselinePath = resolve(work, "curation-baseline.json");
   const fixtureCuration = options.curation ?? (options.uncurated ? {} : {
@@ -407,6 +408,9 @@ async function buildProfileFixture(profileFile, options = {}) {
     await mkdir(diandianPath, { recursive: true });
     await writeFile(resolve(diandianPath, `${noteId}.json`), JSON.stringify(diandianFixtureRecord));
   }
+  if (options.diandianReport) {
+    await writeFile(diandianReportPath, JSON.stringify(options.diandianReport));
+  }
   const args = [
     resolve(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"),
     "--config", configPath,
@@ -417,6 +421,7 @@ async function buildProfileFixture(profileFile, options = {}) {
     "--output", outputPath
   ];
   if (options.diandianSummary || options.diandianRecord) args.push("--diandian-dir", diandianPath);
+  if (options.diandianReport) args.push("--diandian-report", diandianReportPath);
   if (options.resources) args.push("--resources", options.resources);
   const result = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8" });
   try {
@@ -509,7 +514,73 @@ test("private DianDian summaries become keyed deep summaries without leaking sou
   });
   assert.equal(data.notes[0].deepSummary, "这是点点 AI 对图文或视频内容生成的完整深度总结。 ".trim());
   assert.equal(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
+  assert.equal(data.notes[0].summaryState, "captured");
+  assert.equal(data.notes[0].summaryReasonCode, "");
   assert.doesNotMatch(JSON.stringify(data), /xsec_token|source_url/i);
+});
+
+test("production knowledge build projects failed and batch-aborted summary states from the private run report", async () => {
+  const noteId = "aaaaaaaaaaaaaaaaaaaaaaaa";
+  const failed = await buildProfileFixture("software.json", {
+    uncurated: true,
+    diandianReport: {
+      version: 1,
+      unresolved: [{
+        note_id: noteId,
+        status: "unresolved",
+        reason: "transport-failed",
+        summary_status: "failed",
+      }],
+    },
+  });
+  assert.equal(failed.notes[0].summaryState, "failed");
+  assert.equal(failed.notes[0].summaryReasonCode, "transport_failed");
+
+  const aborted = await buildProfileFixture("software.json", {
+    uncurated: true,
+    diandianReport: {
+      version: 1,
+      unresolved: [{
+        note_id: noteId,
+        status: "unresolved",
+        reason: "summary-plan-abandoned",
+        summary_status: "batch_aborted",
+      }],
+    },
+  });
+  assert.equal(aborted.notes[0].summaryState, "batch_aborted");
+  assert.equal(aborted.notes[0].summaryReasonCode, "batch_aborted");
+  assert.doesNotMatch(JSON.stringify(aborted), /summary-plan-abandoned/);
+
+  const legacy = await buildProfileFixture("software.json", {
+    uncurated: true,
+    diandianReport: {
+      version: 1,
+      unresolved: [{
+        note_id: noteId,
+        status: "unresolved",
+        reason: "attachment-not-supported",
+      }],
+    },
+  });
+  assert.equal(legacy.notes[0].summaryState, "stale");
+  assert.equal(legacy.notes[0].summaryReasonCode, "unknown_legacy");
+
+  const retainedAccepted = await buildProfileFixture("software.json", {
+    diandianSummary: "这是已审核并保留的历史点点总结，用于验证后续失败不会被界面隐藏。",
+    auditStatus: "accepted",
+    diandianReport: {
+      version: 1,
+      unresolved: [{
+        note_id: noteId,
+        status: "unresolved",
+        reason: "transport-failed",
+        summary_status: "failed",
+      }],
+    },
+  });
+  assert.equal(retainedAccepted.notes[0].deepSummarySource, "xiaohongshu-diandian");
+  assert.equal(retainedAccepted.notes[0].summaryState, "failed");
 });
 
 test("knowledge cards disclose summary provenance and format DianDian structure safely", async () => {
@@ -523,22 +594,29 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
 
   const result = runInNewContext(`${helperSource}\n({
     dianDian: summarySourcePresentation({ deepSummarySource: "xiaohongshu-diandian" }),
+    retainedFailure: summarySourcePresentation({ deepSummarySource: "xiaohongshu-diandian", summaryState: "failed" }),
     curated: summarySourcePresentation({ deepSummarySource: "curation" }),
     metadata: summarySourcePresentation({ deepSummarySource: "source-metadata" }),
     failed: summarySourcePresentation({ summaryState: "failed" }),
     aborted: summarySourcePresentation({ summaryState: "batch_aborted" }),
+    captured: summarySourcePresentation({ summaryState: "captured" }),
     stale: summarySourcePresentation({ summaryState: "stale", summaryReasonCode: "content_changed" }),
+    legacyStale: summarySourcePresentation({ summaryState: "stale", summaryReasonCode: "unknown_legacy" }),
     formatted: formatSummaryHtml("执行步骤：\\n1，先找参考图\\n2，再洗素材\\n\\n**补充说明**\\n补充说明。<script>alert(1)</script>"),
     longPlainText: formatSummaryHtml("这是没有原始换行的长总结句子。".repeat(48)),
     pointStyle: formatSummaryHtml("核心逻辑 先判断需求。 三步实操方法 1. 收集证据 2. 验证结果 案例与价值 用真实数据复核。 补充提醒 不要把假设当结论。")
   })`);
 
   assert.equal(result.dianDian.label, "点点 AI 深度总结");
+  assert.equal(result.retainedFailure.label, "本篇总结失败，可在下次继续");
   assert.equal(result.curated.label, "使用其他证据整理");
   assert.equal(result.metadata.label, "尚未开始深度整理");
   assert.equal(result.failed.label, "本篇总结失败，可在下次继续");
   assert.equal(result.aborted.label, "本次未尝试，可继续整理");
+  assert.equal(result.captured.label, "总结已捕获，等待审核");
   assert.equal(result.stale.label, "正文已变化，等待重新审核");
+  assert.equal(result.legacyStale.label, "历史整理状态待确认，等待重新整理");
+  assert.equal(result.legacyStale.explanation, "核心收藏已保留；旧版记录无法确认是否曾完成总结。");
   assert.match(result.formatted, /<h4>执行步骤<\/h4>/);
   assert.match(result.formatted, /<h4>补充说明<\/h4>/);
   assert.match(result.formatted, /<ol[^>]*>\s*<li>先找参考图<\/li>\s*<li>再洗素材<\/li>\s*<\/ol>/);
@@ -2346,6 +2424,79 @@ test("a post-core safety stop refreshes preserved results without masking the sa
   assert.equal(result.startedHere, false);
 });
 
+test("v2 polling continues while any phase is still running", async () => {
+  const phase = (status) => ({ status, reason_code: "", updated_at: "2026-08-23T00:00:00Z" });
+  const result = await runCoreCompleteRefresh({
+    ok: true,
+    schema_version: 2,
+    state: "core_completed",
+    phases: {
+      core: phase("completed"),
+      summary: phase("running"),
+      evidence: phase("not_started"),
+      curation: phase("not_started"),
+      build: phase("not_started"),
+      publish: phase("not_started"),
+    },
+    counts: {},
+  });
+  assert.deepEqual(result.events, [["render", "core_completed", null]]);
+  assert.equal(result.startedHere, true);
+});
+
+test("v2 terminal outcomes show truthful refresh messages", async () => {
+  const phase = (status, reason_code = "", artifact_status = null) => ({
+    status,
+    reason_code,
+    updated_at: "2026-08-23T00:00:00Z",
+    ...(artifact_status ? { artifact_status } : {}),
+  });
+  const base = {
+    ok: true,
+    schema_version: 2,
+    run_id: "fixture-run",
+    state: "published",
+    build_version: "a".repeat(64),
+    phases: {
+      core: phase("completed"),
+      summary: phase("completed"),
+      evidence: phase("ready"),
+      curation: phase("validated"),
+      build: phase("succeeded"),
+      publish: phase("unchanged"),
+    },
+    counts: {},
+  };
+  for (const [patch, message] of [
+    [{
+      state: "failed",
+      phases: { ...base.phases, build: phase("failed", "build_failed", "held_previous"), publish: phase("not_started") },
+    }, "核心收藏已保存；构建失败，已保留上一版"],
+    [{
+      state: "completed_with_warnings",
+      phases: { ...base.phases, publish: phase("failed", "publish_failed", "held_previous") },
+    }, "本地整理已保留；发布失败，远端仍为上一版"],
+    [{
+      state: "organization_partial",
+      phases: { ...base.phases, summary: phase("failed", "transport_failed"), evidence: phase("missing", "evidence_missing"), curation: phase("pending_review", "audit_pending") },
+    }, "核心收藏已保存；部分整理未完成，正在刷新可用结果"],
+    [{
+      state: "safety_stopped",
+      phases: { ...base.phases, summary: phase("safety_stopped", "safety_signal"), evidence: phase("safety_stopped", "safety_signal"), build: phase("not_started"), publish: phase("not_started") },
+    }, "核心整理结果已保留；已因小红书安全限制停止，正在刷新知识库"],
+  ]) {
+    const result = await runCoreCompleteRefresh({ ...base, ...patch });
+    assert.deepEqual(result.events, [
+      ["render", patch.state, null],
+      ["clear", 42],
+      ["toast", message],
+      ["timeout", 900],
+      ["reload"],
+    ]);
+    assert.equal(result.startedHere, false);
+  }
+});
+
 test("one-click workflow imports first and stops the DianDian batch after one browser-contract failure", async () => {
   const [template, app] = await Promise.all([
     read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template"),
@@ -4095,7 +4246,7 @@ test("CDP mode keeps a failed source tab open and durably halts before posting a
   assert.equal(result.requests.some((request) => request.pathname === "/sync/diandian-cdp"), false);
   assert.deepEqual(
     result.requests.filter((request) => request.pathname === "/sync/diandian-halt").map((request) => request.body),
-    [{ run_id: "batch1_board1", board_id: "board1", reason: "share-link-unavailable" }]
+    [{ run_id: "batch1_board1", board_id: "board1", reason: "share-link-unavailable", note_id: "note-a" }]
   );
   assert.equal(result.openedTabs.length, 1, "the next source note must not open");
   assert.equal(result.openedTabs[0].closed, false, "the failed source tab must remain for diagnosis");
@@ -4266,7 +4417,8 @@ test("controller durably stops before the next note on safety or link-recognitio
   assert.deepEqual(requests.find((request) => request.pathname === "/sync/diandian-halt")?.body, {
     run_id: "batch1_board1",
     board_id: "board1",
-    reason: "xhs-safety-stop"
+    reason: "xhs-safety-stop",
+    note_id: "note-a"
   });
 
   failureCode = "diandian-ai-failed";

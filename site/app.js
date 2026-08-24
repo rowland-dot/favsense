@@ -448,18 +448,12 @@ function formatSummaryHtml(value) {
 }
 
 function summarySourcePresentation(note) {
-  if (note.deepSummarySource === "xiaohongshu-diandian") return {
-    label: "点点 AI 深度总结",
-    tone: "diandian",
-    explanation: "这份内容来自点点 AI 对原帖的总结，并已通过当前知识卡的整理检查。"
-  };
-  if (note.deepSummarySource === "curation") return {
-    label: "使用其他证据整理",
-    tone: "evidence",
-    explanation: "未获得可用于这张卡的点点总结；当前内容根据已记录的其他证据整理。"
-  };
-  const summaryStatus = String(note.summaryState || note.summary_state || "not_started");
-  const reason = String(note.summaryReasonCode || note.summary_reason_code || "");
+  const summaryStatus = String(
+    note.summaryState || note.summary_state || note.summaryStatus || note.summary_status || "not_started"
+  );
+  const reason = String(
+    note.summaryReasonCode || note.summary_reason_code || note.summaryReason || note.summary_reason || ""
+  );
   if (summaryStatus === "failed") return {
     label: "本篇总结失败，可在下次继续",
     tone: "warning",
@@ -470,10 +464,32 @@ function summarySourcePresentation(note) {
     tone: "warning",
     explanation: "核心收藏已保存；本轮在处理本篇前已经停止。"
   };
+  if (summaryStatus === "stale" && reason === "unknown_legacy") return {
+    label: "历史整理状态待确认，等待重新整理",
+    tone: "warning",
+    explanation: "核心收藏已保留；旧版记录无法确认是否曾完成总结。"
+  };
   if (summaryStatus === "stale") return {
-    label: reason === "evidence_changed" ? "证据已变化，等待重新审核" : "正文已变化，等待重新审核",
+    label: reason === "evidence_changed"
+        ? "证据已变化，等待重新审核"
+        : "正文已变化，等待重新审核",
     tone: "warning",
     explanation: "历史整理结果仍保留，但不会作为当前正式总结展示。"
+  };
+  if (note.deepSummarySource === "xiaohongshu-diandian") return {
+    label: "点点 AI 深度总结",
+    tone: "diandian",
+    explanation: "这份内容来自点点 AI 对原帖的总结，并已通过当前知识卡的整理检查。"
+  };
+  if (summaryStatus === "captured") return {
+    label: "总结已捕获，等待审核",
+    tone: "warning",
+    explanation: "点点总结已安全保存在本机；审核通过前不会替换当前公开内容。"
+  };
+  if (note.deepSummarySource === "curation") return {
+    label: "使用其他证据整理",
+    tone: "evidence",
+    explanation: "未获得可用于这张卡的点点总结；当前内容根据已记录的其他证据整理。"
   };
   return {
     label: "尚未开始深度整理",
@@ -600,7 +616,7 @@ function renderManualSync(status = state.manualSync) {
   const completed = v2
     ? ["organization_ready", "published"].includes(status.state)
     : status.state === "completed";
-  const failed = status.state === "failed";
+  const failed = status.state === "failed" && !active;
   const safetyStopped = ["safety-stopped", "safety_stopped"].includes(status.state);
   elements.manualSyncControl.classList.toggle("is-running", active);
   elements.manualSyncControl.classList.toggle("is-complete", completed);
@@ -617,6 +633,12 @@ function renderManualSync(status = state.manualSync) {
     const phases = status.phases;
     if (safetyStopped) {
       elements.manualSyncTitle.textContent = copy.safety_stopped;
+    } else if (phases.core.status === "running") {
+      elements.manualSyncTitle.textContent = copy.core_running;
+    } else if (phases.core.status === "not_started") {
+      elements.manualSyncTitle.textContent = copy.core_not_started;
+    } else if (phases.core.status === "failed") {
+      elements.manualSyncTitle.textContent = copy.core_failed;
     } else if (phases.build.status === "failed") {
       elements.manualSyncTitle.textContent = copy.build_failed;
     } else if (phases.publish.status === "failed") {
@@ -634,7 +656,9 @@ function renderManualSync(status = state.manualSync) {
     } else {
       elements.manualSyncTitle.textContent = copy.core_completed;
     }
-    elements.manualSyncDetail.textContent = `${copy.core_completed}；已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`;
+    elements.manualSyncDetail.textContent = phases.core.status === "completed"
+      ? `${copy.core_completed}；已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`
+      : `已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`;
   } else if (status.state === "starting") {
     elements.manualSyncTitle.textContent = "正在使用 SOP 小红书扫描浏览器";
     elements.manualSyncDetail.textContent = "请在 SOP 扫描浏览器中保持小红书登录；扫描与整理进度会自动回到这里。";
@@ -675,13 +699,26 @@ function renderManualSync(status = state.manualSync) {
 async function refreshManualSyncStatus() {
   const status = validateLocalBridgeSyncStatus(await localBridgeRequest("/sync/status"), state.statusContract);
   renderManualSync(status);
-  if (!["starting", "running"].includes(status.state)) {
+  const v2 = status.schema_version === 2 && status.phases;
+  const active = v2
+    ? Object.values(status.phases).some((phase) => phase.status === "running")
+    : ["starting", "running"].includes(status.state);
+  if (!active) {
     window.clearInterval(state.manualSyncPoll);
     state.manualSyncPoll = 0;
-    if ((status.state === "completed" || status.core_completed === true) && state.manualSyncStartedHere) {
+    const corePreserved = v2
+      ? status.phases.core.status === "completed"
+      : (status.state === "completed" || status.core_completed === true);
+    if (corePreserved && state.manualSyncStartedHere) {
       state.manualSyncStartedHere = false;
-      const refreshMessage = status.state === "safety-stopped"
+      const refreshMessage = ["safety-stopped", "safety_stopped"].includes(status.state)
         ? "核心整理结果已保留；已因小红书安全限制停止，正在刷新知识库"
+        : v2 && status.phases.build.status === "failed"
+          ? "核心收藏已保存；构建失败，已保留上一版"
+          : v2 && status.phases.publish.status === "failed"
+            ? "本地整理已保留；发布失败，远端仍为上一版"
+            : v2 && status.state === "organization_partial"
+              ? "核心收藏已保存；部分整理未完成，正在刷新可用结果"
         : status.core_completed === true && status.state !== "completed"
           ? "核心整理完成，点点增强未完成；正在刷新知识库"
           : "整理完成，正在刷新知识库";

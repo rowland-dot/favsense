@@ -14,11 +14,74 @@ def load_state_module():
 
 
 class OrganizationPipelineTests(unittest.TestCase):
+    def test_core_not_started_and_running_are_not_reported_as_completed(self):
+        state = load_state_module()
+        run = state.new_run_state("fixture-run")
+        self.assertEqual(run["state"], "failed")
+        self.assertEqual(state.visible_copy(run), "核心收藏尚未保存")
+        run = state.transition_phase(run, "core", "running")
+        self.assertEqual(run["state"], "failed")
+        self.assertEqual(state.visible_copy(run), "正在保存核心收藏")
+        run = state.transition_phase(run, "summary", "failed", "transport_failed")
+        self.assertEqual(run["state"], "failed")
+        self.assertNotEqual(state.visible_copy(run), "核心收藏已保存")
+
+    def test_legacy_finalization_projects_a_running_phase_until_build_finishes(self):
+        state = load_state_module()
+        projected = state.project_legacy_manual_state({
+            "batch": "fixture-run", "state": "completed", "core_completed": True,
+            "summary_finalizing": True, "summarized": 1,
+        })
+        self.assertEqual(projected["phases"]["summary"]["status"], "running")
+        self.assertEqual(projected["state"], "core_completed")
+
+    def test_aborted_only_and_partially_captured_batches_remain_visible(self):
+        state = load_state_module()
+        aborted = state.project_legacy_manual_state({
+            "batch": "fixture-run", "state": "failed", "core_completed": True,
+            "summary_batch_aborted": 2,
+        })
+        self.assertEqual(aborted["phases"]["summary"]["status"], "batch_aborted")
+        self.assertEqual(aborted["phases"]["summary"]["reason_code"], "batch_aborted")
+
+        partial = state.project_legacy_manual_state({
+            "batch": "fixture-run", "state": "failed", "core_completed": True,
+            "summarized": 1, "summary_batch_aborted": 2,
+        })
+        self.assertEqual(partial["phases"]["summary"]["status"], "partial")
+        self.assertEqual(partial["counts"]["summary_captured"], 1)
+
     def test_legacy_completed_is_not_full_success(self):
         state = load_state_module()
         projected = state.normalize_run_state({"state": "completed"})
         self.assertEqual(projected["state"], "completed_with_warnings")
         self.assertEqual(projected["reason_code"], "unknown_legacy")
+
+    def test_finalizer_build_and_publish_outcomes_are_projected_truthfully(self):
+        state = load_state_module()
+        build_failed = state.project_legacy_manual_state({
+            "batch": "fixture-run", "state": "failed", "core_completed": True,
+            "summary_finalize_error": "synthetic failure", "finalize_failed_phase": "build",
+        })
+        self.assertEqual(build_failed["state"], "failed")
+        self.assertEqual(build_failed["phases"]["build"]["status"], "failed")
+        self.assertEqual(build_failed["phases"]["build"]["artifact_status"], "held_previous")
+
+        publish_failed = state.project_legacy_manual_state({
+            "batch": "fixture-run", "state": "failed", "core_completed": True,
+            "build_version": "a" * 64, "summary_finalize_error": "synthetic failure",
+            "finalize_failed_phase": "publish",
+        })
+        self.assertEqual(publish_failed["state"], "completed_with_warnings")
+        self.assertEqual(publish_failed["phases"]["build"]["status"], "succeeded")
+        self.assertEqual(publish_failed["phases"]["publish"]["status"], "failed")
+
+        unchanged = state.project_legacy_manual_state({
+            "batch": "fixture-run", "state": "completed", "core_completed": True,
+            "build_version": "b" * 64, "publish_status": "unchanged",
+        })
+        self.assertEqual(unchanged["state"], "published")
+        self.assertEqual(unchanged["phases"]["publish"]["status"], "unchanged")
 
     def test_build_failure_prevents_complete_success_copy(self):
         state = load_state_module()

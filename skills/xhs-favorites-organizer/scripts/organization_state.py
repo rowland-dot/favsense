@@ -71,7 +71,7 @@ def derive_overall_state(run):
     if statuses.get("core") == "failed" or statuses.get("build") == "failed":
         return "failed"
     if statuses.get("core") != "completed":
-        return "core_completed"
+        return "failed"
     incomplete = {
         "summary": {"partial", "failed", "batch_aborted", "stale"},
         "evidence": {"missing", "partial", "blocked"},
@@ -104,14 +104,27 @@ def project_legacy_manual_state(value):
     run = transition_phase(run, "core", "completed" if core_completed else ("running" if legacy_state in {"starting", "running"} else "failed"), "" if core_completed or legacy_state in {"starting", "running"} else "contract_invalid")
     captured = max(0, int(value.get("summarized", 0) or 0))
     failed = max(0, int(value.get("summary_failed", 0) or 0))
-    aborted = max(0, int(value.get("summary_pending", 0) or 0)) if failed else 0
+    aborted = max(0, int(value.get("summary_batch_aborted", 0) or 0))
+    if not aborted and failed:
+        aborted = max(0, int(value.get("summary_pending", 0) or 0))
     if legacy_state == "safety-stopped":
         run = transition_phase(run, "summary", "safety_stopped", "safety_signal")
-    elif failed:
+    elif failed or (
+        legacy_state == "failed"
+        and core_completed
+        and value.get("summary_halt_reason")
+    ):
         reason = "transport_failed" if value.get("summary_halt_reason") in {"transport-failed", "transport_failed"} else "contract_invalid"
         run = transition_phase(run, "summary", "failed", reason)
-    elif value.get("summary_plan_pending") is True or value.get("summary_pending", 0):
+    elif value.get("summary_finalizing") is True or value.get("summary_plan_pending") is True or value.get("summary_pending", 0):
         run = transition_phase(run, "summary", "running")
+    elif aborted:
+        run = transition_phase(
+            run,
+            "summary",
+            "partial" if captured else "batch_aborted",
+            "batch_aborted",
+        )
     elif core_completed:
         run = transition_phase(run, "summary", "completed" if captured else "not_required")
     run["counts"].update({
@@ -120,11 +133,37 @@ def project_legacy_manual_state(value):
         "summary_captured": captured,
         "summary_failed": failed,
         "summary_batch_aborted": aborted,
+        "curation_accepted": max(0, int(value.get("curation_accepted", 0) or 0)),
+        "curation_pending": max(0, int(value.get("curation_pending", 0) or 0)),
     })
     if core_completed:
         evidence_status = "missing" if failed or aborted else "ready"
         run = transition_phase(run, "evidence", evidence_status, "evidence_missing" if evidence_status == "missing" else "")
-        run = transition_phase(run, "curation", "pending_review", "audit_pending")
+        failed_phase = value.get("finalize_failed_phase") if value.get("summary_finalize_error") else ""
+        run = transition_phase(
+            run, "curation",
+            "failed" if failed_phase == "curation" else (
+                "running" if value.get("summary_finalizing") is True else (
+                    "validated" if value.get("build_version") and not run["counts"]["curation_pending"] else "pending_review"
+                )
+            ),
+            "contract_invalid" if failed_phase == "curation" else (
+                "" if value.get("summary_finalizing") is True or (
+                    value.get("build_version") and not run["counts"]["curation_pending"]
+                ) else "audit_pending"
+            ),
+        )
+        build_version = value.get("build_version")
+        if isinstance(build_version, str) and HASH.fullmatch(build_version):
+            run["build_version"] = build_version
+            run = transition_phase(run, "build", "succeeded")
+        elif failed_phase == "build":
+            run = transition_phase(run, "build", "failed", "build_failed", "held_previous")
+        publish_status = value.get("publish_status")
+        if publish_status in {"published", "unchanged"}:
+            run = transition_phase(run, "publish", publish_status)
+        elif publish_status == "failed" or failed_phase == "publish":
+            run = transition_phase(run, "publish", "failed", "publish_failed", "held_previous")
     run["state"] = derive_overall_state(run)
     return safe_public_projection(run)
 
@@ -134,6 +173,12 @@ def visible_copy(run):
     phases = run.get("phases", {})
     if run.get("state") == "safety_stopped":
         return contract["safety_stopped"]
+    if phases.get("core", {}).get("status") == "not_started":
+        return contract["core_not_started"]
+    if phases.get("core", {}).get("status") == "running":
+        return contract["core_running"]
+    if phases.get("core", {}).get("status") == "failed":
+        return contract["core_failed"]
     if phases.get("build", {}).get("status") == "failed":
         return contract["build_failed"]
     if phases.get("publish", {}).get("status") == "failed":

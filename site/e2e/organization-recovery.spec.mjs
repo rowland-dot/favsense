@@ -25,6 +25,46 @@ test("build and publish failure transitions never claim full completion", async 
   await expect(organizationStatus).not.toContainText("本次整理完成，本地知识库与网页已经更新");
 });
 
+test("running phases keep polling until the terminal organization state", async ({ page }) => {
+  await scenario(page, "running-success");
+  const statusResponses = [];
+  page.on("response", (response) => {
+    if (response.url().includes("/sync/status")) statusResponses.push(response.status());
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "同步设置" }).click();
+  await page.getByRole("button", { name: "开始整理" }).click();
+  await expect(page.getByRole("button", { name: "整理中…" })).toBeDisabled();
+  await expect.poll(() => statusResponses.length, { timeout: 7000 }).toBeGreaterThanOrEqual(2);
+  await expect(page.getByRole("button", { name: "再次整理" })).toBeEnabled({ timeout: 8000 });
+});
+
+for (const [name, expected] of [
+  ["summary-failed", "本篇总结失败，可在下次继续"],
+  ["batch-aborted", "本次未尝试，可继续整理"],
+  ["stale", "正文已变化，等待重新审核"],
+]) {
+  test(`${name} exposes its distinct note recovery state`, async ({ page }) => {
+    await scenario(page, name);
+    await page.goto("/");
+    await page.getByRole("button", { name: "查看总结" }).nth(1).click();
+    await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
+  });
+}
+
+for (const [name, expected] of [
+  ["publish-failed", "发布失败，远端仍为上一版；本地结果已保留"],
+  ["safety-stopped", "安全限制已触发，本轮已停止"],
+]) {
+  test(`${name} remains a truthful terminal run state`, async ({ page }) => {
+    await scenario(page, name);
+    await page.goto("/");
+    await page.getByRole("button", { name: "同步设置" }).click();
+    await page.getByRole("button", { name: "开始整理" }).click();
+    await expect(page.locator("#manual-sync-control")).toContainText(expected);
+  });
+}
+
 test("local note detail shows captured summary as pending review without publishing it", async ({ page }) => {
   await scenario(page, "success");
   await page.goto("/");
