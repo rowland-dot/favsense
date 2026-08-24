@@ -865,6 +865,26 @@ test("migration rejects credential-shaped legacy material before planning", asyn
   }
 });
 
+test("migration rejects record ids that can mutate ordinary object prototypes", async () => {
+  const { planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const fixture = await loadMigrationFixture();
+  const root = await mkdtemp(join(tmpdir(), "favsense-migration-prototype-"));
+  try {
+    for (const id of ["__proto__", "constructor", "prototype"]) {
+      const unsafe = structuredClone(fixture);
+      unsafe.records[0].id = id;
+      assert.throws(
+        () => planMigration(unsafe, { now: "2026-08-23T00:00:00.000Z", root }),
+        /MIGRATION_RECORD_INVALID/,
+      );
+    }
+    assert.equal(Object.prototype.schema_version, undefined);
+    assert.deepEqual(await readdir(root), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("migration rejects malformed live participant JSON without replacing it", async () => {
   const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
   const fixture = await loadMigrationFixture();

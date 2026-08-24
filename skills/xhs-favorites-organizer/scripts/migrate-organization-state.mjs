@@ -19,6 +19,7 @@ import { containsCredentialShape } from "./sensitive-data.mjs";
 
 const HASH = /^[a-f0-9]{64}$/;
 const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/;
+const RESERVED_IDS = new Set(["__proto__", "constructor", "prototype"]);
 const REPORT_KEYS = ["apply_performed", "counts", "created_at", "dry_run_id", "expires_at", "next_command", "schema_version"];
 const PARTICIPANTS = [
   ["organization-state", "organization_state"],
@@ -95,7 +96,8 @@ function uniqueRecords(input) {
   let duplicates = 0;
   for (const record of input.records) {
     const id = clean(record?.id);
-    if (!SAFE_ID.test(id) || !record?.note || typeof record.note !== "object" || Array.isArray(record.note)) {
+    if (!SAFE_ID.test(id) || RESERVED_IDS.has(id)
+      || !record?.note || typeof record.note !== "object" || Array.isArray(record.note)) {
       throw new Error("MIGRATION_RECORD_INVALID");
     }
     if (!records.has(id)) records.set(id, structuredClone(record));
