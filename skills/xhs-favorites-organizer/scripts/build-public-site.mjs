@@ -73,6 +73,10 @@ const paths = {
 const buildVersionIndex = process.argv.indexOf("--build-version");
 const buildVersion = buildVersionIndex >= 0 ? String(process.argv[buildVersionIndex + 1] || "") : "";
 if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) throw new Error("--build-version must be a 64-character lowercase SHA-256");
+const effectiveDateIndex = process.argv.indexOf("--effective-date");
+const effectiveDate = effectiveDateIndex >= 0 ? String(process.argv[effectiveDateIndex + 1] || "") : new Date().toISOString().slice(0, 10);
+const effectiveDateValue = new Date(`${effectiveDate}T00:00:00.000Z`);
+if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate) || Number.isNaN(effectiveDateValue.getTime()) || effectiveDateValue.toISOString().slice(0, 10) !== effectiveDate) throw new Error("--effective-date must be a real YYYY-MM-DD");
 
 const [catalog, curation] = await Promise.all([
   parseJson(paths.catalog),
@@ -293,7 +297,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const rawCandidateResources = (candidateEntry.tools || [])
     .map((tool) => rawResourceByAlias.get(String(tool).toLocaleLowerCase("zh-CN"))).filter(Boolean);
   const confirmedResource = candidateKind === "Skill"
-    ? confirmedSkillResource(rawCandidateResources, { today: new Date().toISOString().slice(0, 10), maxAgeDays: 30 })
+    ? confirmedSkillResource(rawCandidateResources, { today: effectiveDate, maxAgeDays: 30 })
     : null;
   const currentRevisions = currentFormalRevisions(raw, candidateEntry, confirmedResource);
   const isCurated = hasCuration

@@ -4584,9 +4584,18 @@ class Bridge:
         if note_ids is None:
             catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
             note_ids = sorted(str(note_id) for note_id in catalog.get("notes", {}) if NOTE_ID.fullmatch(str(note_id)))
+        note_ids = sorted(set(note_ids))
         sealed_scope_digest = hashlib.sha256(json.dumps(sorted(set(note_ids)), separators=(",", ":")).encode("utf-8")).hexdigest()
-        curation_input_digest = hashlib.sha256(self.curation.read_bytes()).hexdigest()
-        config_digest = hashlib.sha256(self.config_path.read_bytes()).hexdigest()
+        batch = str(manual.get("batch") or "")
+        if not RUN_ID.fullmatch(batch):
+            raise ValueError("curation generation batch is unavailable")
+        curation_bundle = self.state_dir / "organization-transactions" / f"{batch}-curation-bundle.json"
+        if (
+            not curation_bundle.is_file()
+            or path_is_reparse_point(curation_bundle)
+            or curation_bundle.stat().st_size > 16 * 1024 * 1024
+        ):
+            raise ValueError("curation generation is unavailable")
         command = [
             "node", str(self.snapshot_builder),
             "--root", str(self.workspace),
@@ -4595,11 +4604,13 @@ class Bridge:
             "--catalog", str(self.catalog_path),
             "--config", str(self.config_path),
             "--curation", str(self.curation),
+            "--curation-bundle", str(curation_bundle),
             "--profile", str(self.profile),
             "--sealed-scope-digest", sealed_scope_digest,
-            "--curation-input-digest", curation_input_digest,
-            "--config-digest", config_digest,
             "--diandian-dir", str(self.diandian_dir),
+            "--diandian-report", str(self.diandian_report_path),
+            "--video-analysis", str(self.state_dir / "video-analysis"),
+            "--effective-date", datetime.now(timezone.utc).date().isoformat(),
         ]
         if self.resource_registry is not None:
             command.extend(["--resources", str(self.resource_registry)])
@@ -4662,9 +4673,38 @@ class Bridge:
         batch = str(manual.get("batch") or "manual")
         input_path = transaction_root / f"{batch}-curation-input.json"
         output_path = transaction_root / f"{batch}-curation-bundle.json"
+        current_curation = json.loads(self.curation.read_text(encoding="utf-8-sig"))
+        if not isinstance(current_curation, dict):
+            raise ValueError("current curation is unavailable")
+        config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
+        quality = config.get("curation_quality") if isinstance(config.get("curation_quality"), dict) else {}
+        audit_path = resolve_workspace_path(
+            self.workspace,
+            str(quality.get("audit_file") or ".xhs-favorites/curation-audit.json"),
+            "audit_file",
+        )
+        try:
+            current_audit = json.loads(audit_path.read_text(encoding="utf-8-sig"))
+        except FileNotFoundError:
+            current_audit = {"schema_version": 2, "notes": {}}
+        resources = (
+            json.loads(self.resource_registry.read_text(encoding="utf-8-sig"))
+            if self.resource_registry is not None
+            else {"resources": []}
+        )
         atomic_json(input_path, {
             "catalog": scoped, "scope": {"note_ids": sorted(set(note_ids))},
-            "profile": json.loads(self.profile.read_text(encoding="utf-8-sig")), "evidence": evidence,
+            "profile": json.loads(self.profile.read_text(encoding="utf-8-sig")),
+            "evidence": evidence,
+            "current_curation": current_curation,
+            "current_audit": current_audit,
+            "priorCandidates": [
+                {"id": note_id, **entry}
+                for note_id, entry in current_curation.items()
+                if isinstance(entry, dict) and note_id in note_ids
+            ],
+            "resources": resources,
+            "effective_date": datetime.now(timezone.utc).date().isoformat(),
         })
         completed = run_bounded_subprocess(
             ["node", str(self.curation_pipeline), "--input", str(input_path), "--output", str(output_path)],

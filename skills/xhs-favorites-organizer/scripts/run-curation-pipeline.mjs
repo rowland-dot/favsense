@@ -7,6 +7,51 @@ import { fileURLToPath } from "node:url";
 import { generateCandidates } from "./generate-curation-candidates.mjs";
 import { attachEvidenceToCandidates, normalizeEvidencePacket, sealCandidateRevision } from "./normalize-evidence.mjs";
 import { executeJournaledTransaction } from "./journaled-transaction.mjs";
+import { acceptedRevisionsCurrent } from "./curation-quality.mjs";
+import { curationRevision } from "./curation-revision.mjs";
+import { confirmedSkillResource } from "./resource-quality.mjs";
+
+const clean = (value) => String(value ?? "").normalize("NFC").trim();
+
+function registryAssessment(candidate, input) {
+  if (candidate.kind !== "Skill") return { status: "missing", resource_id: "", reason_code: "resource_not_applicable", resource_identity_sha256: "", verification_snapshot_sha256: "", resource: null };
+  const collection = clean(input.profile?.resource_index?.collection || "resources");
+  const resources = Array.isArray(input.resources?.[collection]) ? input.resources[collection] : [];
+  const aliases = new Set((candidate.tools || []).map((tool) => clean(tool).toLocaleLowerCase("zh-CN")));
+  const matches = resources.filter((resource) => [resource?.name, ...(resource?.aliases || [])].some((alias) => aliases.has(clean(alias).toLocaleLowerCase("zh-CN"))));
+  const verified = confirmedSkillResource(matches, { today: input.effective_date, maxAgeDays: input.profile?.resource_index?.verification_max_age_days });
+  return verified
+    ? { status: "verified", resource_id: verified.id, reason_code: "", resource_identity_sha256: verified.resource_identity_sha256, verification_snapshot_sha256: verified.verification_snapshot_sha256, resource: verified }
+    : { status: "missing", resource_id: "", reason_code: "resource_ambiguous", resource_identity_sha256: "", verification_snapshot_sha256: "", resource: null };
+}
+
+function exactReviewSet(review, candidates) {
+  if (!Array.isArray(review)) throw new Error("CURATION_REVIEW_INVALID");
+  const expected = candidates.map((candidate) => candidate.id).sort();
+  const actual = review.map((item) => clean(item?.id)).sort();
+  if (actual.length !== expected.length || new Set(actual).size !== actual.length || actual.join("\n") !== expected.join("\n")) throw new Error("CURATION_REVIEW_SCOPE_INVALID");
+  for (const item of review) {
+    if (!item || typeof item !== "object" || Array.isArray(item) || !["accepted", "pending", "rejected"].includes(item.status)) throw new Error("CURATION_REVIEW_INVALID");
+  }
+  return review;
+}
+
+function exactAssessment(value) {
+  const keys = ["reason_code", "resource", "resource_id", "resource_identity_sha256", "status", "verification_snapshot_sha256"];
+  if (
+    !value || typeof value !== "object" || Array.isArray(value)
+    || Object.keys(value).sort().join(",") !== keys.join(",")
+    || !["verified", "candidate", "ambiguous", "missing", "stale"].includes(value.status)
+  ) throw new Error("CURATION_RESOURCE_ASSESSMENT_INVALID");
+  const withSnapshot = ["verified", "stale"].includes(value.status);
+  if (
+    withSnapshot !== Boolean(value.resource && typeof value.resource === "object" && !Array.isArray(value.resource))
+    || withSnapshot !== Boolean(clean(value.resource_id))
+    || withSnapshot !== /^[a-f0-9]{64}$/.test(clean(value.resource_identity_sha256))
+    || withSnapshot !== /^[a-f0-9]{64}$/.test(clean(value.verification_snapshot_sha256))
+  ) throw new Error("CURATION_RESOURCE_ASSESSMENT_INVALID");
+  return value;
+}
 
 export async function runCurationPipeline(input = {}, hooks = {}) {
   const stage = (name) => hooks.onStage?.(name);
@@ -23,11 +68,37 @@ export async function runCurationPipeline(input = {}, hooks = {}) {
   stage("resource_assessment");
   const assessment = typeof hooks.assessResource === "function"
     ? await Promise.all(attached.map((candidate) => hooks.assessResource(candidate)))
-    : attached.map(() => ({ status: "missing", resource_id: "", reason_code: "resource_not_applicable", resource_identity_sha256: "", verification_snapshot_sha256: "", resource: null }));
+    : attached.map((candidate) => registryAssessment(candidate, input));
+  assessment.forEach(exactAssessment);
   stage("candidate_seal");
   const candidates = attached.map((candidate, index) => sealCandidateRevision(candidate, assessment[index]));
   stage("review");
-  const review = typeof hooks.review === "function" ? await hooks.review(candidates, packets) : candidates.map((candidate) => ({ id: candidate.id, status: "pending", reason_code: "audit_pending" }));
+  const currentCuration = input.current_curation && typeof input.current_curation === "object" && !Array.isArray(input.current_curation) ? input.current_curation : {};
+  const auditNotes = input.current_audit?.notes && typeof input.current_audit.notes === "object" && !Array.isArray(input.current_audit.notes) ? input.current_audit.notes : {};
+  const passthrough = [];
+  const remaining = [];
+  for (const [index, candidate] of candidates.entries()) {
+    const previous = currentCuration[candidate.id];
+    const resource = assessment[index];
+    const current = {
+      content_sha256: candidate.content_sha256,
+      evidence_sha256: candidate.evidence_sha256,
+      candidate_revision: candidate.candidate_revision,
+      curation_revision: previous ? curationRevision(previous) : "",
+      evidence_dependencies: candidate.evidence_dependencies,
+      resource_required: candidate.kind === "Skill",
+      resource_id: resource.resource_id,
+      resource_identity_sha256: resource.resource_identity_sha256,
+      verification_snapshot_sha256: resource.verification_snapshot_sha256,
+      resource_fresh: resource.status === "verified",
+    };
+    if (previous && acceptedRevisionsCurrent(auditNotes[candidate.id], current)) passthrough.push({ id: candidate.id, status: "accepted", reason_code: "" });
+    else remaining.push(candidate);
+  }
+  const supplied = typeof hooks.review === "function"
+    ? exactReviewSet(await hooks.review(remaining, packets), remaining)
+    : remaining.map((candidate) => ({ id: candidate.id, status: "pending", reason_code: "audit_pending" }));
+  const review = exactReviewSet([...passthrough, ...supplied], candidates);
   stage("merge");
   const curation = Object.fromEntries(candidates.map((candidate) => {
     const decision = review.find((item) => item.id === candidate.id) || { status: "pending", reason_code: "audit_pending" };
@@ -41,7 +112,7 @@ export async function runCurationPipeline(input = {}, hooks = {}) {
     else counts.pending += 1;
     if (entry.resource_assessment.status !== "verified" && entry.tools.length) counts.resource_pending += 1;
   }
-  return { schema_version: 1, ok: true, outcome: "ready_for_safe_build", counts, candidates, evidence: packets, audit, curation, resource_assessments: assessment };
+  return { schema_version: 1, ok: true, outcome: "ready_for_safe_build", scope: { note_ids: scopeIds }, counts, candidates, evidence: packets, audit, curation, resource_assessments: assessment };
 }
 
 async function runCli() {

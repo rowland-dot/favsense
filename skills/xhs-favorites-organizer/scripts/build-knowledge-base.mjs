@@ -655,6 +655,9 @@ function main() {
     : path.resolve(workspace, ".xhs-favorites/diandian-summaries");
   const buildVersion = String(options["build-version"] || "");
   if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) throw new Error("--build-version must be a 64-character lowercase SHA-256");
+  const effectiveDate = String(options["effective-date"] || new Date().toISOString().slice(0, 10));
+  const effectiveDateValue = new Date(`${effectiveDate}T00:00:00.000Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate) || Number.isNaN(effectiveDateValue.getTime()) || effectiveDateValue.toISOString().slice(0, 10) !== effectiveDate) throw new Error("--effective-date must be a real YYYY-MM-DD");
   const rawResources = resourceRegistry[profile.resource_index?.collection || "resources"] || [];
   const resourceByAlias = new Map();
   for (const resource of rawResources) {
@@ -678,7 +681,7 @@ function main() {
     const matchingResources = (candidateEntry.tools || [])
       .map((tool) => resourceByAlias.get(clean(tool).toLocaleLowerCase("zh-CN"))).filter(Boolean);
     const skillResource = candidateKind === "Skill"
-      ? confirmedSkillResource(matchingResources, { today: new Date().toISOString().slice(0, 10), maxAgeDays: 30 })
+      ? confirmedSkillResource(matchingResources, { today: effectiveDate, maxAgeDays: 30 })
       : null;
     const currentRevisions = currentFormalRevisions(note, candidateEntry, skillResource);
     const isCurated = hasCuration

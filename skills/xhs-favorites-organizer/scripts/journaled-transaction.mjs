@@ -56,22 +56,39 @@ function validateParticipants(root, participants) {
   });
 }
 
+function journalParticipants(root, entries) {
+  return entries.map(({ name, target, had_live, swapped }) => ({
+    name,
+    target: relative(root, target).split(sep).join("/"),
+    had_live,
+    swapped,
+  }));
+}
+
 export async function executeJournaledTransaction({
   root: rootValue,
+  transactionRoot: transactionRootValue,
   id,
   participants: rawParticipants,
   failAt = "",
   beforeParticipant = null,
 }) {
   const root = resolve(rootValue);
+  const transactionRoot = resolve(transactionRootValue || root);
   if (!SAFE_ID.test(id)) throw new Error("TRANSACTION_ID_INVALID");
   await requirePlainRoot(root);
+  if (transactionRoot !== root) {
+    if (!inside(root, transactionRoot)) throw new Error("TRANSACTION_STORAGE_ESCAPE");
+    await assertContainedPlainPath(root, transactionRoot);
+    await requirePlainRoot(transactionRoot);
+    await assertContainedPlainPath(root, transactionRoot);
+  }
   const participants = validateParticipants(root, rawParticipants);
   for (const participant of participants) {
     await assertContainedPlainPath(root, participant.target);
     if (participant.staging) await assertContainedPlainPath(root, resolve(participant.staging));
   }
-  const transaction = join(root, `.organization-tx-${id}`);
+  const transaction = join(transactionRoot, `.organization-tx-${id}`);
   if (await metadata(transaction)) throw new Error("TRANSACTION_ALREADY_EXISTS");
   await mkdir(transaction);
   const journal = join(transaction, "journal.json");
@@ -89,13 +106,13 @@ export async function executeJournaledTransaction({
       if (targetInfo?.isSymbolicLink()) throw new Error("TRANSACTION_TARGET_UNSAFE");
       entries.push({ name: participant.name, target: participant.target, staging, backup: join(transaction, `backup-${participant.name}`), had_live: Boolean(targetInfo), swapped: false });
     }
-    await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: "prepared", participants: entries.map(({ name, had_live }) => ({ name, had_live })) });
+    await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: "prepared", participants: journalParticipants(root, entries) });
     for (const entry of entries) {
       if (typeof beforeParticipant === "function") await beforeParticipant(entry.name);
       await assertContainedPlainPath(root, entry.target);
       await assertContainedPlainPath(root, entry.staging);
       if (entry.had_live) await rename(entry.target, entry.backup);
-      await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: `backup:${entry.name}`, participants: entries.map(({ name, had_live, swapped }) => ({ name, had_live, swapped })) });
+      await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: `backup:${entry.name}`, participants: journalParticipants(root, entries) });
       if (failAt === `crash:${entry.name}`) throw new Error(`SIMULATED_CRASH:${failAt}`);
       if (failAt === `swap:${entry.name}`) throw new Error(`FAULT_INJECTION:${failAt}`);
       await assertContainedPlainPath(root, entry.target);
@@ -103,9 +120,9 @@ export async function executeJournaledTransaction({
       await rename(entry.staging, entry.target);
       entry.swapped = true;
       if (failAt === `crash-after-swap:${entry.name}`) throw new Error(`SIMULATED_CRASH:${failAt}`);
-      await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: `swap:${entry.name}`, participants: entries.map(({ name, had_live, swapped }) => ({ name, had_live, swapped })) });
+      await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: `swap:${entry.name}`, participants: journalParticipants(root, entries) });
     }
-    await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: "committed", participants: entries.map(({ name, had_live, swapped }) => ({ name, had_live, swapped })) });
+    await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: "committed", participants: journalParticipants(root, entries) });
     await rm(transaction, { recursive: true, force: true });
     return { schema_version: 1, outcome: "committed", transaction_id: id };
   } catch (error) {
@@ -119,10 +136,18 @@ export async function executeJournaledTransaction({
   }
 }
 
-export async function recoverJournaledTransaction({ root: rootValue, id, participants: rawParticipants }) {
+export async function recoverJournaledTransaction({ root: rootValue, transactionRoot: transactionRootValue, id, participants: rawParticipants }) {
   const root = resolve(rootValue);
+  const transactionRoot = resolve(transactionRootValue || root);
   if (!SAFE_ID.test(id)) throw new Error("TRANSACTION_ID_INVALID");
-  const transaction = join(root, `.organization-tx-${id}`);
+  if (transactionRoot !== root && !inside(root, transactionRoot)) throw new Error("TRANSACTION_STORAGE_ESCAPE");
+  await requirePlainRoot(root);
+  if (transactionRoot !== root) {
+    await assertContainedPlainPath(root, transactionRoot);
+    await requirePlainRoot(transactionRoot);
+    await assertContainedPlainPath(root, transactionRoot);
+  }
+  const transaction = join(transactionRoot, `.organization-tx-${id}`);
   const info = await metadata(transaction);
   if (!info) return { outcome: "none" };
   if (!info.isDirectory() || info.isSymbolicLink()) throw new Error("TRANSACTION_RECOVERY_UNSAFE");
@@ -139,6 +164,7 @@ export async function recoverJournaledTransaction({ root: rootValue, id, partici
     || record.participants.some((entry) => (
       !entry || !byName.has(entry.name) || typeof entry.had_live !== "boolean"
       || (entry.swapped !== undefined && typeof entry.swapped !== "boolean")
+      || entry.target !== relative(root, byName.get(entry.name).target).split(sep).join("/")
     ))
   ) throw new Error("TRANSACTION_RECOVERY_PARTICIPANTS_INVALID");
   for (const entry of [...record.participants].reverse()) {

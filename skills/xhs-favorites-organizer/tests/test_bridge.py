@@ -358,6 +358,65 @@ class BridgeHelpersTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     BRIDGE.parse_snapshot_build_result(json.dumps(invalid))
 
+    def test_snapshot_command_delegates_complete_input_capture_to_the_coordinator(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            note_id = "a" * 24
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.workspace = root
+            bridge.state_dir = root / ".xhs-favorites"
+            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge.catalog_path = bridge.state_dir / "catalog.json"
+            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
+            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
+            bridge.config_path = root / "config.json"
+            bridge.profile = root / "profile.json"
+            bridge.curation = root / "curation.json"
+            bridge.resource_registry = None
+            bridge.knowledge_base = root / "knowledge-base"
+            bridge.snapshot_builder = root / "build-organization-snapshot.mjs"
+            bundle = bridge.state_dir / "organization-transactions" / "manual-curation-bundle.json"
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "manual",
+                "frozen_scope": {"note_ids": [note_id]},
+            })
+            BRIDGE.atomic_json(bridge.catalog_path, {
+                "notes": {note_id: {"description": "first"}},
+            })
+            BRIDGE.atomic_json(bridge.config_path, {"curation_quality": {}})
+            BRIDGE.atomic_json(bridge.profile, {"features": {}})
+            BRIDGE.atomic_json(bridge.curation, {})
+            BRIDGE.atomic_json(bundle, {
+                "schema_version": 1,
+                "outcome": "ready_for_safe_build",
+                "scope": {"note_ids": [note_id]},
+                "curation": {note_id: {"review_status": "pending"}},
+            })
+            result = {
+                "schema_version": 1,
+                "ok": True,
+                "outcome": "built",
+                "build_version": "b" * 64,
+                "counts": {"notes": 1, "categories": 1, "resources": 0},
+            }
+            commands = []
+
+            def run(command, **_kwargs):
+                commands.append(command)
+                return SimpleNamespace(returncode=0, stdout=json.dumps(result), stderr="")
+
+            with mock.patch.object(BRIDGE, "run_bounded_subprocess", side_effect=run):
+                bridge.build_organization_snapshot()
+
+            def option(command, name):
+                return command[command.index(name) + 1]
+
+            self.assertEqual(option(commands[0], "--curation-bundle"), str(bundle))
+            self.assertEqual(option(commands[0], "--diandian-report"), str(bridge.diandian_report_path))
+            self.assertEqual(option(commands[0], "--video-analysis"), str(bridge.state_dir / "video-analysis"))
+            self.assertRegex(option(commands[0], "--effective-date"), r"^\d{4}-\d{2}-\d{2}$")
+            self.assertNotIn("--input-revision-digest", commands[0])
+
     def test_curation_subprocess_result_is_an_exact_safe_envelope(self):
         valid = {"schema_version": 1, "ok": True, "outcome": "ready_for_safe_build", "counts": {"accepted": 1, "pending": 1, "rejected": 0, "resource_pending": 1}}
         self.assertEqual(BRIDGE.parse_curation_pipeline_result(json.dumps(valid)), valid)

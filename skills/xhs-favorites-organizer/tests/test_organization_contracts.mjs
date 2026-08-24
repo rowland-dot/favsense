@@ -164,8 +164,45 @@ test("curation pipeline seals evidence and resource state before review", async 
   }, { onStage: (stage) => events.push(stage) });
   assert.deepEqual(events, ["scope", "audit_placeholders", "candidate_seed", "evidence", "resource_assessment", "candidate_seal", "review", "merge", "validate"]);
   assert.equal(result.outcome, "ready_for_safe_build");
+  assert.deepEqual(result.scope, { note_ids: ["note-a"] });
   assert.equal(result.counts.pending, 1);
   assert.match(result.candidates[0].candidate_revision, /^[a-f0-9]{64}$/);
+});
+
+test("curation pipeline preserves only revision-current accepted work and requires an exact review set", async () => {
+  const { runCurationPipeline } = await import("../scripts/run-curation-pipeline.mjs");
+  const { curationRevision } = await import("../scripts/curation-revision.mjs");
+  const input = {
+    catalog: [{ id: "note-a", title: "Synthetic", description: "safe facts", content_sha256: hex("a") }],
+    scope: { note_ids: ["note-a"] },
+    profile: { classification: { default: "Other" } },
+    evidence: [{ note_id: "note-a", content_sha256: hex("a"), public_text: "safe facts", comments: [], comments_checked: true, methods: [{ method: "public_text", provider: "favsense", version: "1", result_sha256: hex("b") }] }],
+  };
+  const pending = await runCurationPipeline(input);
+  const current = pending.curation["note-a"];
+  const accepted = await runCurationPipeline({
+    ...input,
+    priorCandidates: [{ id: "note-a", ...current }],
+    current_curation: { "note-a": current },
+    current_audit: {
+      notes: {
+        "note-a": {
+          status: "accepted",
+          content_sha256: current.content_sha256,
+          evidence_sha256: current.evidence_sha256,
+          candidate_revision: current.candidate_revision,
+          curation_revision: curationRevision(current),
+          evidence_dependencies: current.evidence_dependencies,
+        },
+      },
+    },
+  });
+  assert.equal(accepted.curation["note-a"].review_status, "accepted");
+  assert.equal(curationRevision(accepted.curation["note-a"]), curationRevision(current));
+  await assert.rejects(
+    runCurationPipeline(input, { review: async () => [{ id: "outside", status: "accepted" }] }),
+    /CURATION_REVIEW_SCOPE_INVALID/,
+  );
 });
 
 test("confirmed Skill requires exactly one complete fresh verified resource", async () => {
