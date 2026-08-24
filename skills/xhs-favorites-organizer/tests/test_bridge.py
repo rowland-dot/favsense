@@ -1659,6 +1659,219 @@ class BridgeHelpersTest(unittest.TestCase):
                     self.assertEqual(status["state"], "organization_partial" if failure_phase == "curation" else "failed")
                 self.assertFalse(persisted["summary_finalizing"])
 
+    def test_publish_claim_is_durable_across_bridge_restart_for_one_build_version(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_dir = root / ".xhs-favorites"
+            manual_sync_path = state_dir / "manual-sync.json"
+            run_id = "manual_board"
+            build_version = "a" * 64
+            BRIDGE.atomic_json(manual_sync_path, {
+                "batch": "manual",
+                "state": "running",
+                "run_board_ids": ["board"],
+                "summary_finalizing": True,
+            })
+
+            def instance():
+                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+                bridge.state_dir = state_dir
+                bridge.manual_sync_path = manual_sync_path
+                bridge.boards = {"board": "Board"}
+                bridge.summary_plans = {run_id: set()}
+                bridge.summary_locks = {}
+                bridge.summary_locks_guard = threading.Lock()
+                bridge.summary_halted = set()
+                bridge.summary_publish_claimed = set()
+                bridge.publish_config = {"repository": "synthetic"}
+                bridge.next_board_id = mock.Mock(return_value=None)
+                bridge.publish_public_site = mock.Mock(return_value={"ok": True, "status": "published"})
+                return bridge
+
+            first = instance()
+            self.assertEqual(first.publish_after_board(
+                "board",
+                run_id,
+                require_finalization_claim=True,
+                build_version=build_version,
+            )["status"], "published")
+            restarted = instance()
+            self.assertIsNone(restarted.publish_after_board(
+                "board",
+                run_id,
+                require_finalization_claim=True,
+                build_version=build_version,
+            ))
+            restarted.publish_public_site.assert_not_called()
+            persisted = restarted.read_manual_sync()
+            self.assertEqual(persisted["published_build_version"], build_version)
+            self.assertEqual(persisted["publish_status"], "published")
+
+    def test_durable_publish_handles_unchanged_failed_unknown_and_stale_callbacks(self):
+        build_version = "c" * 64
+
+        def instance(state_dir, result):
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.state_dir = state_dir
+            bridge.manual_sync_path = state_dir / "manual-sync.json"
+            bridge.boards = {"board": "Board"}
+            bridge.summary_plans = {"manual_board": set()}
+            bridge.summary_locks = {}
+            bridge.summary_locks_guard = threading.Lock()
+            bridge.summary_halted = set()
+            bridge.summary_publish_claimed = set()
+            bridge.publish_config = {"repository": "synthetic"}
+            bridge.next_board_id = mock.Mock(return_value=None)
+            bridge.publish_public_site = mock.Mock(
+                side_effect=result if isinstance(result, Exception) else None,
+                return_value=None if isinstance(result, Exception) else result,
+            )
+            return bridge
+
+        for status in ("unchanged", "failed"):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as directory:
+                state_dir = Path(directory) / ".xhs-favorites"
+                BRIDGE.atomic_json(state_dir / "manual-sync.json", {
+                    "batch": "manual",
+                    "state": "running",
+                    "run_board_ids": ["board"],
+                    "summary_finalizing": True,
+                })
+                result = {"ok": status == "unchanged", "status": status}
+                if status == "failed":
+                    result["error"] = "synthetic publish failure"
+                bridge = instance(state_dir, result)
+                self.assertEqual(bridge.publish_after_board(
+                    "board",
+                    "manual_board",
+                    require_finalization_claim=True,
+                    build_version=build_version,
+                )["status"], status)
+                persisted = bridge.read_manual_sync()
+                self.assertEqual(persisted["publish_status"], status)
+                if status == "unchanged":
+                    self.assertEqual(persisted["published_build_version"], build_version)
+                else:
+                    self.assertNotIn("published_build_version", persisted)
+                restarted = instance(state_dir, result)
+                self.assertIsNone(restarted.publish_after_board(
+                    "board",
+                    "manual_board",
+                    require_finalization_claim=True,
+                    build_version=build_version,
+                ))
+                restarted.publish_public_site.assert_not_called()
+
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory) / ".xhs-favorites"
+            BRIDGE.atomic_json(state_dir / "manual-sync.json", {
+                "batch": "manual",
+                "state": "running",
+                "run_board_ids": ["board"],
+                "summary_finalizing": True,
+                "publish_claimed_build_version": build_version,
+                "publish_status": "running",
+            })
+            bridge = instance(state_dir, {"ok": True, "status": "published"})
+            self.assertIsNone(bridge.publish_after_board(
+                "board",
+                "manual_board",
+                require_finalization_claim=True,
+                build_version=build_version,
+            ))
+            bridge.publish_public_site.assert_not_called()
+            persisted = bridge.read_manual_sync()
+            self.assertEqual(persisted["publish_status"], "failed")
+            self.assertIn("automatic retry withheld", persisted["publish_error"])
+
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory) / ".xhs-favorites"
+            BRIDGE.atomic_json(state_dir / "manual-sync.json", {
+                "batch": "manual",
+                "state": "running",
+                "run_board_ids": ["board"],
+                "summary_finalizing": True,
+            })
+            bridge = instance(state_dir, RuntimeError("synthetic publisher exception"))
+            with self.assertRaisesRegex(RuntimeError, "synthetic publisher exception"):
+                bridge.publish_after_board(
+                    "board",
+                    "manual_board",
+                    require_finalization_claim=True,
+                    build_version=build_version,
+                )
+            self.assertEqual(bridge.read_manual_sync()["publish_status"], "failed")
+
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory) / ".xhs-favorites"
+            manual_path = state_dir / "manual-sync.json"
+            BRIDGE.atomic_json(manual_path, {
+                "batch": "manual",
+                "state": "running",
+                "run_board_ids": ["board"],
+                "summary_finalizing": True,
+                "publish_claimed_build_version": build_version,
+                "publish_status": "running",
+            })
+            bridge = instance(state_dir, {"ok": True, "status": "published"})
+            stale = bridge.read_manual_sync()
+            stale["batch"] = "replacement"
+            BRIDGE.atomic_json(manual_path, stale)
+            before = manual_path.read_bytes()
+            with self.assertRaisesRegex(ValueError, "no longer owns"):
+                bridge.record_diandian_publish(
+                    "manual_board",
+                    "board",
+                    build_version,
+                    {"ok": True, "status": "published"},
+                )
+            self.assertEqual(manual_path.read_bytes(), before)
+
+    def test_successful_publish_remains_terminal_when_bridge_status_write_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.state_dir = root / ".xhs-favorites"
+            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge.processing_lock = threading.Lock()
+            bridge.boards = {"board": "Board"}
+            bridge.board_order = ["board"]
+            bridge.organization_status_v2_enabled = True
+            bridge.summary_plans = {"manual_board": set()}
+            bridge.summary_locks = {}
+            bridge.summary_locks_guard = threading.Lock()
+            bridge.summary_finalizing = {"manual_board"}
+            bridge.summary_finalized = set()
+            bridge.summary_halted = set()
+            bridge.summary_publish_claimed = set()
+            bridge.publish_config = {"repository": "synthetic"}
+            bridge.next_board_id = mock.Mock(return_value=None)
+            bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 1, "pending": 0}})
+            bridge.build_organization_snapshot = mock.Mock(return_value={"build_version": "b" * 64})
+            bridge.publish_public_site = mock.Mock(return_value={"ok": True, "status": "published"})
+            bridge.write_status = mock.Mock(side_effect=OSError("synthetic status failure"))
+            BRIDGE.atomic_json(bridge.state_dir / "runs" / "manual_board.json", {
+                "run_id": "manual_board",
+                "state": "completed",
+                "next_board_id": None,
+            })
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "manual",
+                "state": "running",
+                "run_board_ids": ["board"],
+                "core_completed": True,
+                "summary_finalizing": True,
+                "summarized": 1,
+            })
+
+            bridge.run_diandian_finalization("manual_board", "board")
+
+            persisted = bridge.read_manual_sync()
+            self.assertEqual(persisted["state"], "completed")
+            self.assertEqual(persisted["publish_status"], "published")
+            self.assertEqual(persisted["published_build_version"], "b" * 64)
+            self.assertNotIn("summary_finalize_error", persisted)
+
     def test_saved_summary_requires_current_content_and_prompt_revisions(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -2881,8 +2881,15 @@ class Bridge:
         halted_runs = self.read_manual_sync().get("summary_halted_run_ids")
         return isinstance(halted_runs, list) and run_id in halted_runs
 
-    def claim_diandian_publish(self, run_id: str, board_id: str) -> bool:
+    def claim_diandian_publish(
+        self,
+        run_id: str,
+        board_id: str,
+        build_version: str | None = None,
+    ) -> bool:
         """Linearize the finalizer's publish start against a halt for the same run."""
+        if build_version is not None and not re.fullmatch(r"[a-f0-9]{64}", build_version):
+            return False
         with self.summary_run_lock(run_id):
             with self.get_manual_sync_lock():
                 state = self.read_manual_sync()
@@ -2894,6 +2901,19 @@ class Bridge:
                     or isinstance(halted_runs, list) and run_id in halted_runs
                 ):
                     return False
+                if build_version is not None:
+                    claimed_build = state.get("publish_claimed_build_version")
+                    published_build = state.get("published_build_version")
+                    if claimed_build not in {None, "", build_version} or published_build not in {None, "", build_version}:
+                        return False
+                    if published_build == build_version:
+                        return False
+                    if claimed_build == build_version:
+                        if state.get("publish_status") == "running":
+                            state["publish_status"] = "failed"
+                            state["publish_error"] = "previous publish outcome is unknown; automatic retry withheld"
+                            atomic_json(self.manual_sync_path, state)
+                        return False
                 guard = getattr(self, "summary_locks_guard", None)
                 if guard is None:
                     guard = threading.Lock()
@@ -2907,8 +2927,42 @@ class Bridge:
                         self.summary_publish_claimed = claimed
                     if run_id in claimed:
                         return False
+                    if build_version is not None:
+                        state["build_version"] = build_version
+                        state["publish_claimed_build_version"] = build_version
+                        state["publish_status"] = "running"
+                        state.pop("publish_error", None)
+                        atomic_json(self.manual_sync_path, state)
                     claimed.add(run_id)
                     return True
+
+    def record_diandian_publish(
+        self,
+        run_id: str,
+        board_id: str,
+        build_version: str,
+        publish: dict,
+    ) -> None:
+        if not re.fullmatch(r"[a-f0-9]{64}", build_version):
+            raise ValueError("publish build version is invalid")
+        status = str(publish.get("status") or "")
+        if status not in {"published", "unchanged", "failed"}:
+            raise ValueError("publish status is invalid")
+        with self.summary_run_lock(run_id):
+            with self.get_manual_sync_lock():
+                state = self.read_manual_sync()
+                if (
+                    not self.manual_state_owns_run(state, run_id, board_id)
+                    or state.get("publish_claimed_build_version") != build_version
+                ):
+                    raise ValueError("publish claim no longer owns this run")
+                state["publish_status"] = status
+                if status in {"published", "unchanged"}:
+                    state["published_build_version"] = build_version
+                    state.pop("publish_error", None)
+                else:
+                    state["publish_error"] = sanitize_error(str(publish.get("error") or "publish failed"))
+                atomic_json(self.manual_sync_path, state)
 
     def start_diandian_finalization(self, run_id: str, board_id: str) -> bool:
         with self.summary_run_lock(run_id):
@@ -3058,6 +3112,8 @@ class Bridge:
                             })
                 if publish:
                     state["publish_status"] = str(publish.get("status") or "")
+                    if publish.get("status_write_warning") == "bridge_status_write_failed":
+                        state["publish_status_warning"] = "bridge_status_write_failed"
                 if not self.manual_state_owns_run(state, run_id, board_id):
                     return
                 guard = getattr(self, "summary_locks_guard", None)
@@ -3103,10 +3159,15 @@ class Bridge:
                     board_id,
                     run_id,
                     require_finalization_claim=True,
+                    build_version=result.get("build_version"),
                 )
                 if publish is not None:
                     result["publish"] = publish
-                    self.write_status(result)
+                    try:
+                        self.write_status(result)
+                    except OSError:
+                        publish = {**publish, "status_write_warning": "bridge_status_write_failed"}
+                        result["publish"] = publish
                 if not self.diandian_is_halted(run_id):
                     self.complete_manual_after_diandian(run_id, board_id, result, publish, "")
         except Exception as error:
@@ -4483,6 +4544,7 @@ class Bridge:
         run_id: str | None = None,
         *,
         require_finalization_claim: bool = False,
+        build_version: str | None = None,
     ) -> dict | None:
         if run_id is not None:
             if self.summary_plans.get(run_id):
@@ -4498,11 +4560,23 @@ class Bridge:
         if self.publish_config is None or self.next_board_id(board_id, run_id) is not None:
             return None
         if require_finalization_claim:
-            if run_id is None or not self.claim_diandian_publish(run_id, board_id):
+            if run_id is None or not self.claim_diandian_publish(run_id, board_id, build_version):
                 return None
         # The per-run claim above is the short critical section. The external
         # publisher may take minutes, so it must execute after releasing run locks.
-        return self.publish_public_site()
+        try:
+            result = self.publish_public_site()
+        except Exception as error:
+            if run_id is not None and build_version is not None:
+                self.record_diandian_publish(run_id, board_id, build_version, {
+                    "ok": False,
+                    "status": "failed",
+                    "error": sanitize_error(str(error)),
+                })
+            raise
+        if run_id is not None and build_version is not None:
+            self.record_diandian_publish(run_id, board_id, build_version, result)
+        return result
 
     def tag_catalog_sources(self, board_id: str, note_ids: set[str]) -> None:
         if not self.catalog_path.exists():
