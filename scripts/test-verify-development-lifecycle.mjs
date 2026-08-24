@@ -101,3 +101,50 @@ test("accepts_complete_pull_request_lifecycle", async () => {
   assert.deepEqual(result, { ok: true, governed: true, failures: [] });
 });
 
+test("fails closed when GitHub reports only a changed-file count without diff SHAs", async () => {
+  const { root, files } = await fixture();
+  const event = completeEvent(files);
+  event.pull_request.changed_files = 1;
+  const result = await verifyDevelopmentLifecycle({ root, event });
+  assert.deepEqual(result, {
+    ok: false,
+    governed: true,
+    failures: [{ id: "LIFECYCLE_CHANGED_FILES_UNAVAILABLE" }],
+  });
+});
+
+test("uses the checked-out base and head diff for a real GitHub PR payload", async () => {
+  const { root, files } = await fixture();
+  const event = completeEvent(files);
+  event.pull_request.changed_files = 1;
+  event.pull_request.base = { sha: "a".repeat(40) };
+  event.pull_request.head = { sha: "b".repeat(40) };
+  const result = await verifyDevelopmentLifecycle({
+    root,
+    event,
+    diffFiles: async ({ base, head }) => {
+      assert.equal(base, "a".repeat(40));
+      assert.equal(head, "b".repeat(40));
+      return ["site/app.js"];
+    },
+  });
+  assert.deepEqual(result, { ok: true, governed: true, failures: [] });
+});
+
+test("includes governed file deletions when deriving the PR diff", async () => {
+  const { root, files } = await fixture();
+  const event = completeEvent(files);
+  event.pull_request.changed_files = 2;
+  event.pull_request.base = { sha: "a".repeat(40) };
+  event.pull_request.head = { sha: "b".repeat(40) };
+  const result = await verifyDevelopmentLifecycle({
+    root,
+    event,
+    diffFiles: async ({ args }) => {
+      assert.deepEqual(args, ["diff", "--name-only", `${"a".repeat(40)}...${"b".repeat(40)}`]);
+      return ["site/deleted-app.js", "docs/notes.md"];
+    },
+  });
+  assert.equal(result.governed, true);
+  assert.equal(result.ok, true);
+});

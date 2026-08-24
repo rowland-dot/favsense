@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 
 import { readFile, stat } from "node:fs/promises";
+import { execFile } from "node:child_process";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const root = resolve(dirname(scriptPath), "..");
+const execFileAsync = promisify(execFile);
 const governedPrefixes = ["skills/", "scripts/", "site/", "config/", ".github/workflows/"];
 const labels = {
   spec: ["Spec"], plan: ["Plan"], test: ["RED/GREEN evidence", "TDD"], review: ["Review"],
@@ -16,9 +19,30 @@ const failureIds = {
   qa: "LIFECYCLE_QA_MISSING", audit: "LIFECYCLE_AUDIT_MISSING", brief: "LIFECYCLE_BRIEF_MISSING",
 };
 
-function normalizeChanged(event) {
+async function normalizeChanged(event, workspace, diffFiles) {
   const raw = event?.pull_request?.changed_files;
-  return Array.isArray(raw) ? raw.map((value) => String(value).replaceAll("\\", "/")) : [];
+  if (Array.isArray(raw)) {
+    return { available: true, files: raw.map((value) => String(value).replaceAll("\\", "/")) };
+  }
+  if (!Number.isInteger(raw) || raw === 0) return { available: true, files: [] };
+  const base = event?.pull_request?.base?.sha;
+  const head = event?.pull_request?.head?.sha;
+  if (!/^[0-9a-f]{40}$/i.test(base || "") || !/^[0-9a-f]{40}$/i.test(head || "")) {
+    return { available: false, files: [] };
+  }
+  try {
+    const args = ["diff", "--name-only", `${base}...${head}`];
+    const files = diffFiles
+      ? await diffFiles({ workspace, base, head, args })
+      : (await execFileAsync("git", args, {
+          cwd: workspace,
+          encoding: "utf8",
+          windowsHide: true,
+        })).stdout.split(/\r?\n/).filter(Boolean);
+    return { available: files.length > 0, files: files.map((value) => String(value).replaceAll("\\", "/")) };
+  } catch {
+    return { available: false, files: [] };
+  }
 }
 
 function extract(body, names) {
@@ -37,8 +61,12 @@ async function validateEvidencePath(workspace, value) {
   try { return (await stat(target)).isFile(); } catch { return false; }
 }
 
-export async function verifyDevelopmentLifecycle({ root: workspace, event }) {
-  const changed = normalizeChanged(event);
+export async function verifyDevelopmentLifecycle({ root: workspace, event, diffFiles }) {
+  const changedResult = await normalizeChanged(event, workspace, diffFiles);
+  if (!changedResult.available) {
+    return { ok: false, governed: true, failures: [{ id: "LIFECYCLE_CHANGED_FILES_UNAVAILABLE" }] };
+  }
+  const changed = changedResult.files;
   const governed = changed.some((file) => governedPrefixes.some((prefix) => file.startsWith(prefix)));
   if (!governed) return { ok: true, governed: false, failures: [] };
   const body = String(event?.pull_request?.body || "");
@@ -82,4 +110,3 @@ if (process.argv[1] && resolve(process.argv[1]) === scriptPath) {
     process.exitCode = 1;
   }
 }
-
