@@ -13,6 +13,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import threading
 import time
 import unicodedata
@@ -297,33 +298,147 @@ def _process_is_active(pid: object) -> bool:
         return False
 
 
+def _directory_identity(path: Path) -> tuple[int, int]:
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError as error:
+        raise ValueError("organization mutation lock root is unsafe") from error
+    if (
+        path.is_symlink()
+        or getattr(metadata, "st_file_attributes", 0) & 0x400
+        or not stat.S_ISDIR(metadata.st_mode)
+    ):
+        raise ValueError("organization mutation lock root is unsafe")
+    return metadata.st_dev, metadata.st_ino
+
+
+def _validate_lock_directory(
+    path: Path,
+    *,
+    parent_identity: tuple[int, int],
+    expected_identity: tuple[int, int] | None = None,
+    allow_missing: bool = False,
+) -> tuple[int, int] | None:
+    if _directory_identity(path.parent) != parent_identity:
+        raise ValueError("organization mutation lock root is unsafe")
+    if not os.path.lexists(path):
+        if allow_missing:
+            return None
+        raise ValueError("organization mutation lock is unsafe")
+    identity = _directory_identity(path)
+    if expected_identity is not None and identity != expected_identity:
+        raise ValueError("organization mutation lock identity changed")
+    return identity
+
+
+def _rename_lock_directory(
+    source: Path,
+    destination: Path,
+    *,
+    lock_parent: Path,
+    lock_parent_identity: tuple[int, int],
+    source_identity: tuple[int, int],
+) -> tuple[int, int]:
+    _validate_lock_directory(
+        source,
+        parent_identity=lock_parent_identity,
+        expected_identity=source_identity,
+    )
+    _validate_lock_directory(
+        destination,
+        parent_identity=lock_parent_identity,
+        allow_missing=True,
+    )
+    source.rename(destination)
+    if _directory_identity(lock_parent) != lock_parent_identity:
+        raise ValueError("organization mutation lock root identity changed")
+    destination_identity = _validate_lock_directory(
+        destination,
+        parent_identity=lock_parent_identity,
+        expected_identity=source_identity,
+    )
+    assert destination_identity is not None
+    return destination_identity
+
+
+def _remove_lock_directory(
+    path: Path,
+    *,
+    lock_parent: Path,
+    lock_parent_identity: tuple[int, int],
+    expected_identity: tuple[int, int],
+) -> None:
+    _validate_lock_directory(
+        path,
+        parent_identity=lock_parent_identity,
+        expected_identity=expected_identity,
+    )
+    shutil.rmtree(path)
+    if _directory_identity(lock_parent) != lock_parent_identity or os.path.lexists(path):
+        raise ValueError("organization mutation lock cleanup is unsafe")
+
+
 @contextmanager
 def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
     lock_parent = resolved_root.parent / "organization-migration"
-    lock_parent.mkdir(parents=True, exist_ok=True)
-    if lock_parent.is_symlink() or not lock_parent.is_dir():
-        raise ValueError("organization mutation lock root is unsafe")
+    root_parent_identity = _directory_identity(resolved_root.parent)
+    if os.path.lexists(lock_parent):
+        lock_parent_identity = _validate_lock_directory(
+            lock_parent,
+            parent_identity=root_parent_identity,
+        )
+    else:
+        lock_parent.mkdir()
+        lock_parent_identity = _validate_lock_directory(
+            lock_parent,
+            parent_identity=root_parent_identity,
+        )
+    assert lock_parent_identity is not None
     lock_path = lock_parent / ".apply-lock"
     nonce = uuid4().hex
     candidate = lock_parent / f".apply-lock.candidate-{nonce}"
+    _validate_lock_directory(
+        candidate,
+        parent_identity=lock_parent_identity,
+        allow_missing=True,
+    )
     candidate.mkdir()
+    candidate_identity = _validate_lock_directory(
+        candidate,
+        parent_identity=lock_parent_identity,
+    )
+    assert candidate_identity is not None
     (candidate / "owner.json").write_text(
         json.dumps({"schema_version": 1, "pid": os.getpid(), "nonce": nonce}) + "\n",
         encoding="utf-8",
+    )
+    _validate_lock_directory(
+        candidate,
+        parent_identity=lock_parent_identity,
+        expected_identity=candidate_identity,
     )
     deadline = time.monotonic() + PRIVATE_STORE_LOCK_TIMEOUT_SECONDS
     acquired = False
     try:
         while not acquired:
             try:
-                candidate.rename(lock_path)
+                _rename_lock_directory(
+                    candidate,
+                    lock_path,
+                    lock_parent=lock_parent,
+                    lock_parent_identity=lock_parent_identity,
+                    source_identity=candidate_identity,
+                )
                 acquired = True
                 break
             except OSError as error:
-                if not lock_path.exists():
+                if not os.path.lexists(lock_path):
                     raise
-                if lock_path.is_symlink() or not lock_path.is_dir():
-                    raise ValueError("organization mutation lock is unsafe") from error
+                lock_identity = _validate_lock_directory(
+                    lock_path,
+                    parent_identity=lock_parent_identity,
+                )
+                assert lock_identity is not None
                 try:
                     owner = json.loads(
                         (lock_path / "owner.json").read_text(encoding="utf-8")
@@ -339,7 +454,13 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
                     continue
                 stale = lock_parent / f".apply-lock.stale-{uuid4().hex}"
                 try:
-                    lock_path.rename(stale)
+                    stale_identity = _rename_lock_directory(
+                        lock_path,
+                        stale,
+                        lock_parent=lock_parent,
+                        lock_parent_identity=lock_parent_identity,
+                        source_identity=lock_identity,
+                    )
                 except OSError:
                     if time.monotonic() >= deadline:
                         raise TimeoutError(
@@ -348,22 +469,49 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
                     time.sleep(0.05)
                     continue
                 try:
-                    candidate.rename(lock_path)
+                    _rename_lock_directory(
+                        candidate,
+                        lock_path,
+                        lock_parent=lock_parent,
+                        lock_parent_identity=lock_parent_identity,
+                        source_identity=candidate_identity,
+                    )
                     acquired = True
                 finally:
-                    shutil.rmtree(stale, ignore_errors=True)
+                    _remove_lock_directory(
+                        stale,
+                        lock_parent=lock_parent,
+                        lock_parent_identity=lock_parent_identity,
+                        expected_identity=stale_identity,
+                    )
         yield
     finally:
-        shutil.rmtree(candidate, ignore_errors=True)
+        if os.path.lexists(candidate):
+            _remove_lock_directory(
+                candidate,
+                lock_parent=lock_parent,
+                lock_parent_identity=lock_parent_identity,
+                expected_identity=candidate_identity,
+            )
         if acquired:
             try:
+                _validate_lock_directory(
+                    lock_path,
+                    parent_identity=lock_parent_identity,
+                    expected_identity=candidate_identity,
+                )
                 owner = json.loads(
                     (lock_path / "owner.json").read_text(encoding="utf-8")
                 )
             except (OSError, ValueError, TypeError, json.JSONDecodeError):
                 owner = {}
             if owner.get("nonce") == nonce:
-                shutil.rmtree(lock_path)
+                _remove_lock_directory(
+                    lock_path,
+                    lock_parent=lock_parent,
+                    lock_parent_identity=lock_parent_identity,
+                    expected_identity=candidate_identity,
+                )
 
 
 @contextmanager

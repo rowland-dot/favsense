@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -94,6 +95,45 @@ class SaveDiandianSummaryTests(unittest.TestCase):
                     summary_text="正文",
                     note_id="f" * 24,
                 )
+            self.assertFalse(destination.exists())
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_organization_lock_rejects_junction_without_deleting_outside_state(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            private_root = root / ".xhs-favorites" / "diandian-summaries"
+            private_root.mkdir(parents=True)
+            outside = root / "outside"
+            stale_lock = outside / ".apply-lock"
+            stale_lock.mkdir(parents=True)
+            sentinel = stale_lock / "outside-sentinel.txt"
+            sentinel.write_text("must survive", encoding="utf-8")
+            (stale_lock / "owner.json").write_text(json.dumps({
+                "schema_version": 1,
+                "pid": 999999999,
+                "nonce": "synthetic-stale-migration",
+            }), encoding="utf-8")
+            junction = private_root.parent / "organization-migration"
+            result = subprocess.run(
+                ["cmd.exe", "/d", "/c", "mklink", "/J", str(junction), str(outside)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                self.skipTest(f"junction fixture unavailable: {result.stderr.strip()}")
+
+            destination = private_root / f"{'e' * 24}.json"
+            with self.assertRaisesRegex(ValueError, "lock root is unsafe"):
+                module.save_record(
+                    destination=destination,
+                    title="示例笔记",
+                    summary_text="正文",
+                    note_id="e" * 24,
+                )
+
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "must survive")
             self.assertFalse(destination.exists())
 
     @unittest.skipUnless(os.name == "nt", "Windows console-control regression")
