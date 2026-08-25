@@ -94,7 +94,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
 }
 
 :focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--cobalt), transparent 35%);
+  outline: 3px solid var(--cobalt-dark);
   outline-offset: 3px;
 }
 
@@ -347,7 +347,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .manual-sync-copy small { margin-top: 6px; color: var(--ink-soft); font-size: 9px; line-height: 1.6; }
 .manual-sync-button { min-width: 108px; padding: 12px 17px; border: 1px solid var(--ink); border-radius: 999px; background: var(--ink); color: var(--surface); cursor: pointer; font-size: 11px; font-weight: 800; transition: transform .18s ease, opacity .18s ease; }
 .manual-sync-button:hover:not(:disabled) { transform: translateY(-1px); }
-.manual-sync-button:focus-visible { outline: 3px solid color-mix(in srgb, var(--cobalt), transparent 70%); outline-offset: 3px; }
+.manual-sync-button:focus-visible { outline: 3px solid var(--cobalt-dark); outline-offset: 3px; }
 .manual-sync-button:disabled { cursor: wait; opacity: .55; }
 @keyframes sync-pulse { 50% { transform: scale(.72); opacity: .6; } }
 @media (prefers-reduced-motion: reduce) { .manual-sync-control.is-running .manual-sync-label i { animation: none; } }
@@ -368,7 +368,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .board-toggle-track i { display: block; width: 16px; height: 16px; border-radius: 50%; background: var(--ink-soft); transition: transform .18s ease, background .18s ease; }
 .board-toggle input:checked + .board-toggle-track { border-color: var(--brand-red); background: var(--brand-red); }
 .board-toggle input:checked + .board-toggle-track i { background: #fff; transform: translateX(18px); }
-.board-toggle input:focus-visible + .board-toggle-track { outline: 3px solid color-mix(in srgb, var(--brand-red), transparent 72%); outline-offset: 3px; }
+.board-toggle input:focus-visible + .board-toggle-track { outline: 3px solid var(--brand-red); outline-offset: 3px; }
 .board-toggle input:disabled + .board-toggle-track { cursor: wait; opacity: .55; }
 .board-manager-status { margin: 0; padding: 14px 20px 16px; color: var(--ink-soft); font-size: 9px; line-height: 1.6; }
 
