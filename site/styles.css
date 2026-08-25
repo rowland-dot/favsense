@@ -224,11 +224,11 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .toolbar { display: flex; gap: 10px; align-items: center; }
 .search-box { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 200px; height: 48px; padding: 0 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 6px 25px rgba(34,34,34,.05); }
 .search-box svg { width: 18px; color: var(--ink-soft); }
-.search-box input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); }
+.search-box input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); }
 .search-box input::placeholder { color: color-mix(in srgb, var(--ink-soft), transparent 22%); }
 .search-box kbd { padding: 3px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-soft); color: var(--ink-soft); font-family: var(--mono); font-size: 10px; white-space: nowrap; }
 .sort-control { display: flex; align-items: center; gap: 7px; height: 48px; padding: 0 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink-soft); font-size: 11px; }
-.sort-control select { border: 0; outline: 0; background: transparent; color: var(--ink); font-weight: 650; }
+.sort-control select { border: 0; background: transparent; color: var(--ink); font-weight: 650; }
 .view-toggle { width: 48px; height: 48px; border-radius: 14px; }
 .results-heading { display: flex; align-items: center; justify-content: space-between; padding: 25px 2px 14px; color: var(--ink-soft); font-size: 11px; }
 .results-heading p { margin: 0; }
@@ -289,7 +289,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .resource-bookmark-filter.is-active { border-color: var(--brand-red); background: color-mix(in srgb, var(--brand-red), var(--surface) 92%); color: var(--ink); font-weight: 700; }
 .resource-bookmark-filter.is-active svg { color: var(--brand-red); fill: currentColor; }
 .resource-control { display: flex; align-items: center; gap: 7px; height: 48px; padding: 0 11px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink-soft); font-size: 10px; white-space: nowrap; }
-.resource-control select { min-width: 118px; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 10px; font-weight: 700; }
+.resource-control select { min-width: 118px; border: 0; background: transparent; color: var(--ink); font-size: 10px; font-weight: 700; }
 .resource-summary { display: flex; justify-content: space-between; gap: 16px; margin: 0 2px 18px; color: var(--ink-soft); font-family: var(--mono); font-size: 9px; }
 .resources-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .resource-empty { grid-column: 1 / -1; padding: 70px 22px; border: 1px dashed var(--line-strong); border-radius: var(--radius-md); background: color-mix(in srgb, var(--surface), transparent 8%); text-align: center; }
@@ -471,7 +471,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .personal-edit-label { display: inline-flex; margin-top: 12px; padding: 5px 8px; border-radius: 7px; background: color-mix(in srgb, var(--sun), var(--surface) 28%); color: var(--ink); font-size: 9px; }
 .description-editor { display: grid; gap: 11px; }
 .description-editor label { color: var(--ink-soft); font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
-.description-editor textarea { width: 100%; min-height: 190px; resize: vertical; padding: 15px; border: 1px solid var(--line-strong); border-radius: 13px; outline: 0; background: var(--surface-soft); color: var(--ink); font: 14px/1.8 var(--body); }
+.description-editor textarea { width: 100%; min-height: 190px; resize: vertical; padding: 15px; border: 1px solid var(--line-strong); border-radius: 13px; background: var(--surface-soft); color: var(--ink); font: 14px/1.8 var(--body); }
 .description-editor textarea:focus { border-color: var(--cobalt); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cobalt), transparent 76%); }
 .description-editor > p { color: var(--ink-soft); font-size: 10px; line-height: 1.6; }
 .description-editor-actions { display: flex; flex-wrap: wrap; gap: 8px; }
