@@ -87,6 +87,12 @@ button { color: inherit; }
 a { color: inherit; }
 svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
+:where(button, input, select) { min-width: 44px; min-height: 44px; }
+:where(.brand, .creator-space-link, .resource-actions a, .detail-resource-actions a) {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 :focus-visible {
   outline: 3px solid color-mix(in srgb, var(--cobalt), transparent 35%);
   outline-offset: 3px;
