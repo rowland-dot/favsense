@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { lstat, mkdir, open, readFile, realpath, rename, rm } from "node:fs/promises";
+import { lstat, mkdir, open, readFile, readdir, realpath, rename, rm } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const SAFE_NAME = /^[a-z][a-z0-9-]{0,63}$/;
@@ -183,6 +183,7 @@ export async function executeJournaledTransaction({
       await atomicJson(journal, journalRecord(root, id, `swap:${entry.name}`, entries));
     }
     await atomicJson(journal, journalRecord(root, id, "committed", entries));
+    if (failAt === "crash:committed") throw new Error(`SIMULATED_CRASH:${failAt}`);
     await durableRemove(transaction, { recursive: true, force: true });
     return { schema_version: 1, outcome: "committed", transaction_id: id };
   } catch (error) {
@@ -258,10 +259,32 @@ export async function recoverJournaledTransaction({ root: rootValue, transaction
     const backup = join(transaction, `backup-${entry.name}`);
     const backupInfo = await metadata(backup);
     if (backupInfo?.isSymbolicLink()) throw new Error("TRANSACTION_RECOVERY_UNSAFE");
+    const staging = participant.staging ? resolve(participant.staging) : join(transaction, `stage-${entry.name}`);
+    const stagingInfo = await metadata(staging);
+    if (stagingInfo?.isSymbolicLink()) throw new Error("TRANSACTION_RECOVERY_UNSAFE");
     if ((!entry.had_live && backupInfo) || (entry.had_live && !targetInfo && !backupInfo)) {
       throw new Error("TRANSACTION_JOURNAL_STATE_INVALID");
     }
-    recoveryEntries.push({ entry, participant, targetInfo, backup, backupInfo });
+    recoveryEntries.push({ entry, participant, targetInfo, backup, backupInfo, stagingInfo });
+  }
+  if (record.phase === "committed") {
+    const expectedTransactionFiles = new Set([
+      "journal.json",
+      ...record.participants.filter((entry) => entry.had_live).map((entry) => `backup-${entry.name}`),
+    ]);
+    const transactionFiles = await readdir(transaction);
+    if (
+      recoveryEntries.some(({ entry, targetInfo, backupInfo, stagingInfo }) => (
+        entry.swapped !== true
+        || !targetInfo
+        || Boolean(backupInfo) !== entry.had_live
+        || Boolean(stagingInfo)
+      ))
+      || transactionFiles.length !== expectedTransactionFiles.size
+      || transactionFiles.some((name) => !expectedTransactionFiles.has(name))
+    ) throw new Error("TRANSACTION_JOURNAL_STATE_INVALID");
+    await durableRemove(transaction, { recursive: true, force: true });
+    return { schema_version: 1, outcome: "committed", transaction_id: id };
   }
   for (const { entry, participant, targetInfo, backup, backupInfo } of recoveryEntries.reverse()) {
     if (entry.had_live) {

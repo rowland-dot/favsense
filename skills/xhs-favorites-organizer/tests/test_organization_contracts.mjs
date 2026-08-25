@@ -468,6 +468,37 @@ test("journaled transaction recovery rolls a simulated process crash back to one
   }
 });
 
+test("journaled recovery preserves a committed generation when cleanup was interrupted", async () => {
+  const { executeJournaledTransaction, recoverJournaledTransaction } = await import("../scripts/journaled-transaction.mjs");
+  const root = await mkdtemp(join(tmpdir(), "favsense-journal-committed-"));
+  const left = join(root, "left.txt");
+  const right = join(root, "right.txt");
+  const participants = [
+    { name: "left", target: left, content: "new-left" },
+    { name: "right", target: right, content: "new-right" },
+  ];
+  try {
+    await writeFile(left, "old-left");
+    await writeFile(right, "old-right");
+    await assert.rejects(
+      executeJournaledTransaction({ root, id: "tx-committed", participants, failAt: "crash:committed" }),
+      /SIMULATED_CRASH/,
+    );
+    assert.deepEqual(
+      await recoverJournaledTransaction({ root, id: "tx-committed", participants }),
+      { schema_version: 1, outcome: "committed", transaction_id: "tx-committed" },
+    );
+    assert.equal(await readFile(left, "utf8"), "new-left");
+    assert.equal(await readFile(right, "utf8"), "new-right");
+    await assert.rejects(
+      lstat(join(root, ".organization-tx-tx-committed")),
+      (error) => error?.code === "ENOENT",
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("journaled recovery removes a newly created target after rename-before-journal crash", async () => {
   const { executeJournaledTransaction, recoverJournaledTransaction } = await import("../scripts/journaled-transaction.mjs");
   const root = await mkdtemp(join(tmpdir(), "favsense-journal-new-crash-"));
