@@ -1480,13 +1480,15 @@ async function init() {
   document.querySelector("#resource-filter-label").textContent = radar.filter_label || "类型";
   const pageTitle = String(state.data.meta.title || "").trim() || "小红书收藏知识工作台";
   document.title = `FavSense · 拾光台 · ${pageTitle}`;
+  const pageDescription = String(state.data.meta.description || "").trim()
+    || "把小红书收藏整理成可搜索、可复核、可行动的知识库。";
   const description = document.querySelector('meta[name="description"]');
-  if (description) description.content = state.data.meta.description;
+  if (description) description.content = pageDescription;
   const sourceBoard = String(state.data.meta.sourceBoard || "").trim() || "收藏知识库";
   document.querySelector("#hero-eyebrow").textContent = state.data.meta.hero?.eyebrow || `本期片场 · ${sourceBoard}`;
   document.querySelector("#hero-from").textContent = state.data.meta.hero?.from || "收藏过";
   document.querySelector("#hero-to").textContent = state.data.meta.hero?.to || "判断过";
-  document.querySelector("#hero-intro").textContent = state.data.meta.hero?.intro || state.data.meta.description;
+  document.querySelector("#hero-intro").textContent = state.data.meta.hero?.intro || pageDescription;
   if (!state.data.meta.resourceIndexEnabled) {
     document.querySelector("#resources-nav").hidden = true;
     document.querySelector("#proof-resources-cell").hidden = true;
