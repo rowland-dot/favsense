@@ -1472,10 +1472,12 @@ async function init() {
   document.querySelector("#resource-description").textContent = radar.description || "集中查看资源的用途、适用条件与可靠来源。";
   elements.resourceSearch.placeholder = radar.search_placeholder || "搜索资源名称、类型或用途…";
   document.querySelector("#resource-filter-label").textContent = radar.filter_label || "类型";
-  document.title = `FavSense · 拾光台 · ${state.data.meta.title}`;
+  const pageTitle = String(state.data.meta.title || "").trim() || "小红书收藏知识工作台";
+  document.title = `FavSense · 拾光台 · ${pageTitle}`;
   const description = document.querySelector('meta[name="description"]');
   if (description) description.content = state.data.meta.description;
-  document.querySelector("#hero-eyebrow").textContent = state.data.meta.hero?.eyebrow || `本期片场 · ${state.data.meta.sourceBoard}`;
+  const sourceBoard = String(state.data.meta.sourceBoard || "").trim() || "收藏知识库";
+  document.querySelector("#hero-eyebrow").textContent = state.data.meta.hero?.eyebrow || `本期片场 · ${sourceBoard}`;
   document.querySelector("#hero-from").textContent = state.data.meta.hero?.from || "收藏过";
   document.querySelector("#hero-to").textContent = state.data.meta.hero?.to || "判断过";
   document.querySelector("#hero-intro").textContent = state.data.meta.hero?.intro || state.data.meta.description;
