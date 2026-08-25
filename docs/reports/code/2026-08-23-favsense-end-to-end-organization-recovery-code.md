@@ -122,9 +122,50 @@ No line/branch percentage tool is configured in this repository, so this report 
 - Real private-data migration apply, real platform access, remote publication, PR creation, push, merge and deploy have not occurred.
 - Therefore this branch may be declared `implementation_ready` after downstream gates, but the real private dataset must not be described as restored before a separately authorized dry-run/apply/rebuild validation.
 
+## Post-Brief live remediation — 2026-08-25
+
+The preceding Step 4 report is the historical implementation handoff. After Step 5–8 had produced a Brief, the user performed real acceptance and found that the single-note DianDian path still did not complete. Step 6 was reopened under Fix-First for one user-triggered, read-only note. No real migration apply, batch platform run, remote publication, push, PR, merge or deploy was authorized or performed.
+
+Atomic remediation commit:
+
+- `a5fdfc3d00c857c9b740832b3a04e6a2c0feacc5 fix: restore live DianDian summary flow`
+
+### Live RED → GREEN chain
+
+| Stage | RED evidence / root cause | GREEN evidence |
+|---|---|---|
+| Transient share worker | The XHS router cleared the temporary worker query before the `document-idle` userscript installed its listener, so the controller ended in transport failure. | `document-start` captures the transient context and starts only the worker immediately; ordinary bootstrap still waits for DOM readiness. Unsigned, wrong-worker and wrong-note probes cause no response or click. |
+| Mandatory share/copy | The real worker opened the note and clicked share/copy once, but `navigator.clipboard.readText()` remained pending indefinitely. A proposed direct scanned-URL shortcut was rejected because it violated the active Skill contract. | Clipboard read is bounded to one second and may then use only the already captured, signed, host/note-validated transient URL after mandatory share/copy. The direct bypass was removed. |
+| CDP navigation | A new target can still report exact `about:blank` after `Page.navigate` returns; a valid session can add one canonical `conversationId`. Strict immediate validation rejected both. | Only exact `about:blank` is tolerated during the existing initial readiness deadline. The final URL accepts only the expected scheme/host/path and either no query or one canonical UUID conversation key; all other URL variants fail closed. |
+| Current content revision | A hashless legacy note present in the fresh sealed scan could be excluded from fetch/pending and never receive the `content_sha256` required by point v2. | An isolated temporary catalog computes the canonical revision for scanned targets only; only validated hash/source-tag fields merge back. Unscanned records remain exactly equal, failures preserve live bytes and replay launches no second child. |
+| Formal child security | New Node calls could inherit `NODE_OPTIONS`, `NODE_PATH`, arbitrary `PATH` and secret-shaped environment. Removing `PATH` entirely then made the real snapshot builder fail because its child could not locate Git. | Absolute Node/Git executables are validated. Formal children receive only allowlisted OS/temp/locale variables; revision and curation receive no `PATH`, while snapshot receives only the validated Git directory. Backfill stdin/temp catalog project only `note_id` plus exact revision facts. |
+| Final live acceptance | Earlier real attempts terminated before a current formal record/final snapshot. | The mandatory open-note → share → copy → DianDian → save → finalization loop completed in 82 seconds: total 1, summarized 1, failed 0, batch-aborted 0, halt reason empty. No captcha, access-frequency, `300031` or other safety signal occurred. |
+
+### Post-Brief verification matrix
+
+| Verification | Result |
+|---|---|
+| Share/CDP focused JavaScript | 7/7 PASS |
+| Full public-site Node tests | 112/112 PASS |
+| Full Bridge Python tests | 174/174 PASS |
+| Security-focused formal child tests | 3/3 PASS |
+| Real mandatory single-note | `completed`; 1/1 summarized; 0 failed; 0 aborted |
+| Current v2 record | valid=true; current 64-hex content revision bound=true; recomputed 64-hex summary digest bound=true; provider/prompt version present=true |
+| Authenticated local overlay | available=true; current digest bound=true |
+| Organization status | schema v2=true; summary completed=true; captured=1; curation pending=1; accepted=0 |
+| Current real public Skill state | confirmed Skill=0; confirmed Skill with exactly one canonical repo plus matching ZIP action=0 |
+| Privacy/release verifier | `npm.cmd run verify` PASS |
+| Independent reviews | JavaScript, Python, security and final code gate PASS; unresolved findings=0 |
+
+The zero confirmed-Skill count is intentional truthful state evidence, not a failed assertion. Synthetic tests still prove the accepted-Skill UI and formal-output contract, but no candidate in the current real public projection is promoted without current audit and verified resource evidence.
+
+The remediation changed only the userscript template, Bridge implementation and their JavaScript/Python tests. Temporary diagnostic probes were removed, the generated public artifact was restored to the controlled version, the service and preview remained healthy, and the commit contained no private/generated paths or live credentials.
+
 ## Pipeline result
 
-Stage B Task 0–11 implementation is complete. No mockups or React components were introduced, so Stage C mockup/mount checks resolve to their documented no-mockup/no-component paths. Task 11 independent generic, JavaScript and security reviews each returned PASS with zero findings; Step 5 remains the separate full-range review. This CODE report supplies the complete implementation and command evidence for that handoff.
+Stage B Task 0–11 implementation is complete. No mockups or React components were introduced, so Stage C mockup/mount checks resolve to their documented no-mockup/no-component paths. Task 11 independent generic, JavaScript and security reviews each returned PASS with zero findings. The later Step 6 live remediation is recorded above and in the QA report; it does not rewrite Task 0–11 history or claim a real migration, publication or confirmed Skill. This CODE report supplies both the original implementation handoff and the post-Brief corrective evidence.
+
+Completeness: 10/10  Confidence: 9/10
 
 <!-- pipeline:json
 {
@@ -148,4 +189,3 @@ Stage B Task 0–11 implementation is complete. No mockups or React components w
   "findings": []
 }
 -->
-Completeness: 10/10  Confidence: 9/10

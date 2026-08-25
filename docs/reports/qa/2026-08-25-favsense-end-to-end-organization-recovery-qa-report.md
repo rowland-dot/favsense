@@ -3,18 +3,19 @@
 - 日期：2026-08-25
 - 分支：`codex/favsense-organization-recovery`
 - Step 6 起始提交：`b1abf258b0fb682b83352cd89f10152dfef585c4`
-- QA 修复提交：`84cc434`、`d14de43`、`911baef`、`645e6b2`
+- QA 修复提交：`84cc434`、`d14de43`、`911baef`、`645e6b2`；post-Brief live remediation：`a5fdfc3`
 - 范围：批准清单 `VC-QA-01..15`
-- 数据边界：仅使用 `serve-qa-fixture.mjs` 的 synthetic fixture；未访问平台、网络主机、凭据或真实私有数据；未执行真实 migration apply。
+- 脚本化 QA 数据边界：使用 `serve-qa-fixture.mjs` 的 synthetic fixture；未执行真实 migration apply。2026-08-25 的 post-Brief 修正另行执行了一次用户触发、只读、单篇真实验收；下文只记录安全聚合结果，不记录 ID、标题、总结正文、路径、URL、token、Cookie 或 `xsec_token`。
 - Mockup / trigger / callsite：批准计划没有 mockup，`MOCKUP_PATHS=[]`、`CALLSITE_LIST=[]`；因此没有 `data-mockup-state` 或 `data-mockup-trigger` 项。
 
 ## Outcome
 
-Step 6 PASS。发现 2 个 MEDIUM QA 缺陷，均已按 Fix-First 完成 RED → GREEN、原子提交和全门回归；未修复缺陷为零。
+Step 6 PASS。原始 synthetic QA 发现 2 个 MEDIUM 缺陷；post-Brief live acceptance 又发现 5 个真实链路缺陷。7 个缺陷均已按 Fix-First 完成 RED → GREEN、独立复审和原子提交；未修复缺陷为零。
 
 - Baseline Playwright：30/30 PASS（desktop Chromium + mobile Chromium）。
 - 修复后 Playwright：32/32 PASS（新增 QA-001 desktop/mobile 回归）。
 - Step 6 code gate：`npm.cmd run release:check` exit 0。
+- Post-Brief live gate：真实单篇必须经过“打开原帖 → 分享 → 复制链接”一次，最终 `completed`；`summary_total=1`、`summarized=1`、`summary_failed=0`、`summary_batch_aborted=0`。
 - 最终未修复严重度：CRITICAL=0 HIGH=0 MEDIUM=0 LOW=0。
 
 ## State coverage — pre-walk
@@ -81,6 +82,99 @@ Step 6 PASS。发现 2 个 MEDIUM QA 缺陷，均已按 Fix-First 完成 RED →
 - 提交：`645e6b2 fix(qa): QA-002 — validate typed metadata fields`
 - 回归：最终 `release:check` exit 0；独立 JavaScript 复审无剩余发现。
 
+## Post-Brief live acceptance correction — 2026-08-25
+
+原始 Step 6 报告证明了 synthetic 状态与浏览器交互，但不能替代真实单篇链路。Brief 生成后的用户验收暴露出“服务可启动但真实点点总结仍失败”的缺口，因此重新打开 Step 6 Fix-First，且只在用户触发的单篇只读范围内验证。没有批量访问、真实 migration apply、自动重试、绕过安全限制或远端发布。
+
+真实 RED → GREEN 顺序如下：
+
+1. 真实单篇首先以通用 transport failure 结束；安全 stage probe 将故障限定为临时分享 worker 未能在路由清理前建立监听。
+2. 提前建立 worker 后，真实页面已完成一次分享和一次复制，但 Clipboard API promise 不返回，单篇流程仍不能结束。
+3. 修复复制读取后，CDP 初始导航和合法会话 URL 暴露出严格校验时序缺口；随后用 fail-closed URL 矩阵修复。
+4. 正式 v2 保存又暴露 fresh scan 中 legacy 无 revision 的 backfill 缺口；隔离 backfill 修复后，安全复审进一步阻止 live catalog 扩散修改和敏感字段进入子进程。
+5. 子进程环境收紧后的真实 RED 在 snapshot builder 处失败，因为其受控 Node 子进程无法找到 Git；最终只给该 builder 注入已验证 Git 可执行文件所在目录。
+6. 最终真实单篇在 82 秒内 `completed`：`summary_total=1`、`summarized=1`、`summary_failed=0`、`summary_batch_aborted=0`、halt reason 为空。未出现验证码、访问频繁、`300031` 或其他安全信号。
+
+### QA-003 — 临时分享 worker 在站内路由清理后丢失
+
+- 严重度：HIGH
+- 状态：verified
+- 复现：真实单篇入口打开原帖后，站内路由先移除临时 worker query，`document-idle` userscript 才启动；controller 的 ready probe 最终只能得到通用 transport failure。
+- 根因：worker ID / URL 的捕获和 listener 安装都晚于站内路由清理；原测试先人工触发 `DOMContentLoaded`，没有覆盖真实时序。
+- 修复：userscript 改为 `document-start`，立即捕获瞬时 worker 上下文并只启动该 worker；普通 bootstrap 仍等待 `DOMContentLoaded`。新增路由清理回归和 unsigned、wrong worker ID、wrong note ID 均不响应/不点击的负向矩阵。
+- RED：`readyState=loading` 且不触发 `DOMContentLoaded` 时，合法 signed probe 得不到响应。
+- GREEN：同一时序下 listener 已存在；非法 probe 均无响应，合法 probe 才进入分享流程。
+- 提交：`a5fdfc3 fix: restore live DianDian summary flow`
+
+### QA-004 — 分享与复制完成后 Clipboard API 可无限 pending
+
+- 严重度：HIGH
+- 状态：verified
+- 复现：安全 stage probe 确认真实页面上的分享与复制各发生一次，但 clipboard read 一直 pending，controller 无法取得结果。
+- 根因：运行环境中的 `navigator.clipboard.readText()` 既不 resolve 也不 reject；原实现没有自身 deadline。
+- 修复：复制动作后对 clipboard read 设置 1 秒上限；超时后只回退到 userscript 在 `document-start` 已捕获且已通过签名/host/note 校验的瞬时 URL。该回退发生在强制分享与复制之后，不允许直接使用扫描输入绕过 Skill contract。
+- RED：真实单篇停留在复制后阶段，未形成 summary record。
+- GREEN：mandatory open/share/copy 仍各执行一次，worker 有界返回；真实单篇进入 CDP 总结。
+- 提交：`a5fdfc3 fix: restore live DianDian summary flow`
+
+### QA-005 — CDP 初始空白页与合法会话 URL 被误判
+
+- 严重度：HIGH
+- 状态：verified
+- 复现：新 CDP target 在 `Page.navigate` 命令返回后仍可能短暂报告 `about:blank`；点点会话页也可带一个合法 `conversationId`。旧校验把两者都当成 unexpected page。
+- 根因：命令完成不等于导航已 commit；URL contract 只接受无 query 的最终页，缺少严格但完整的合法会话矩阵。
+- 修复：仅在初始 readiness loop、既有 `input_wait` 上限内容忍精确 `about:blank`；此后继续严格校验。最终页只接受预期 scheme/host/path、无 credentials/port/fragment，以及空 query 或唯一 canonical UUID `conversationId`；其他 origin、path、额外/重复 key、空值和非 UUID 全部 fail closed。
+- RED：初始 `about:blank → expected page` 序列和合法单会话 query 被拒绝；恶意 query 矩阵用于锁定边界。
+- GREEN：合法有界导航通过，所有非精确 URL 仍拒绝；malformed IPv6 与非数字 port 被稳定映射为 `unexpected-page`。
+- 提交：`a5fdfc3 fix: restore live DianDian summary flow`
+
+### QA-006 — fresh scan 中 legacy 无 revision 条目无法形成 current v2
+
+- 严重度：HIGH
+- 状态：verified
+- 复现：目标已在 catalog 且本轮没有 detail fetch 时，缺失 `content_sha256` 的 legacy 条目被排除在 pending 之外，no-pending 分支也不运行 organizer；正式 v2 记录无法绑定 current content revision。
+- 根因：revision 生成只覆盖 fetched notes，没有覆盖本轮 sealed unique scan 已确认存在的 legacy hashless note。
+- 修复：只为本轮 fresh scan 命中的 hashless note 建立隔离临时 catalog/input，用现有 organizer 计算 canonical hash，再仅把通过校验的目标 hash/source tags 原子合并回原 catalog。输入投影仅含 `note_id` 与精确 content-revision 字段；未扫描条目保持 byte/equality 不变。
+- RED：scanned legacy 仍无 hash；runner nonzero/invalid hash 不能证明 live bytes 回滚；第二次同一扫描仍可能重复启动 child。
+- GREEN：目标得到 64-hex revision，unscanned 条目精确相等，无 detail fetch；失败保持原 bytes，重放为零 backfill child。
+- 提交：`a5fdfc3 fix: restore live DianDian summary flow`
+
+### QA-007 — 正式 Node 子进程环境边界与 snapshot Git 依赖不完整
+
+- 严重度：MEDIUM
+- 状态：verified
+- 复现：安全复审发现 revision/snapshot/curation 的新 Node 调用可继承 `NODE_OPTIONS`、`NODE_PATH` 和 secret-shaped 环境；全部移除 `PATH` 后，真实 finalization 又在 snapshot builder 处 RED。
+- 根因：正式子进程没有统一的绝对 runtime 与 allowlisted env contract；snapshot 的受控 child 仍需要 Git，但不应恢复继承的任意 `PATH`。
+- 修复：解析并验证绝对 Node/Git 可执行文件；正式 Node child 仅获得必需 OS/temp/locale 变量。revision 与 curation 不获得 `PATH`；snapshot 只获得已验证 Git 所在目录组成的受控 `PATH`。同时保证 backfill 临时输入不含 URL、token 或额外字段。
+- RED：hostile env 测试证明危险变量可进入 child；首次最小环境真实运行在 snapshot builder 失败。
+- GREEN：3/3 security-focused tests、Bridge 174/174、site 112/112 与 share/CDP focused 7/7 通过；最终真实单篇完整通过。
+- 提交：`a5fdfc3 fix: restore live DianDian summary flow`
+
+### Live data-state acceptance
+
+- 当前目标 v2 record valid：`true`。
+- `content_sha256` 为 64-hex 且绑定 current catalog revision：`true`。
+- `summary_sha256` 为 64-hex 且重算一致：`true`。
+- provider / prompt version present：`true / true`。
+- authenticated organization status v2：`true`；summary phase completed：`true`；`summary_captured=1`。
+- curation 当前为 pending review：`curation_pending=1`、`curation_accepted=0`。这不是 accepted formal output，也不得描述成已审核。
+- authenticated loopback pending overlay available/current：`true / true`。
+- 当前真实 public data 的 confirmed Skill：`0`；同时具备唯一 canonical GitHub repo action 与匹配 ZIP action 的 confirmed Skill：`0`。Synthetic fixture 的 accepted Skill 只证明 UI contract，不代表真实数据已有 confirmed Skill。
+
+### Final live remediation gates
+
+| Gate | Evidence |
+|---|---|
+| Share/CDP focused JS | 7/7 PASS |
+| Full public-site Node suite | 112/112 PASS |
+| Full Bridge Python suite | 174/174 PASS |
+| Security-focused formal child tests | 3/3 PASS |
+| Real mandatory single-note | 82 秒，`completed`；1/1 summarized，0 failed，0 aborted |
+| Authenticated local health | bridge=`true`；preview=`true` |
+| Public/privacy verifier | `npm.cmd run verify` PASS |
+| Independent review | JavaScript、Python、安全与最终 code gate 均 PASS；未解决发现为零 |
+| Hygiene | 临时 probe 已移除；generated public artifact 恢复到受控版本；`git diff --check` PASS |
+
 ## VC-QA-01..15 result matrix
 
 | ID | Result | Entry → Action → observed result / evidence |
@@ -141,6 +235,11 @@ _No regressions found._
 | `npm.cmd run test:knowledge` | 0 | knowledge script PASS + formal output 2/2 |
 | `node --test --test-name-pattern="migration" skills/xhs-favorites-organizer/tests/test_organization_contracts.mjs` | 0 | 17/17 PASS |
 | `npm.cmd run release:check` | 0 | syntax 64；site 112；publish 15 pass/1 documented Windows symlink skip；knowledge 2；curation 27；skill-sync 10；release-contracts 7；lifecycle 13；organization Python 11 + Node 39；Python 230 + DianDian 29；E2E 32；privacy verify PASS |
+| share/CDP focused Node suite（post-Brief） | 0 | 7/7 PASS |
+| `python .\skills\xhs-favorites-organizer\tests\test_bridge.py`（post-Brief） | 0 | 174/174 PASS |
+| security-focused formal child suite（post-Brief） | 0 | 3/3 PASS |
+| mandatory real single-note acceptance（post-Brief） | 0 | 82 秒；`completed`；total 1 / summarized 1 / failed 0 / aborted 0 |
+| `npm.cmd run verify`（post-Brief） | 0 | required files、privacy boundary、Git ignore/tracking boundary PASS |
 
 一次误用 Python dotted unittest class 名称产生 loader error；随后核对该文件没有 migration test，相关 migration contract 由上述 Node 17/17 目标测试与完整 release gate 覆盖。该 runner 输入错误不是产品失败。
 
@@ -148,17 +247,19 @@ _No regressions found._
 
 ## Privacy and safety observations
 
-- 仅出现 synthetic stable IDs 与 `https://github.com/owner/repo` 固定测试 URL。
-- 未读取或输出 Cookie、`xsec_token`、bridge token、个人主页、收藏夹 ID、原始视频、帧、完整 OCR 或真实评论。
-- 未访问小红书、GitHub API 或其他平台 host；浏览器只连接 `127.0.0.1:8766/8767`。
+- 原始浏览器 QA 只出现 synthetic stable IDs 与固定测试 URL；post-Brief 另执行一次用户触发的真实单篇只读验收。
+- 报告与命令证据未输出 Cookie、`xsec_token`、bridge token、个人主页、收藏夹 ID、note ID、标题、总结正文、原始视频、帧或完整 OCR。
+- Post-Brief 真实验收只使用既有 SOP 浏览器与本地 loopback；没有批量平台操作、点赞、评论、发布、取消收藏、GitHub API 查询或模型依赖的核心同步。
 - 未运行真实迁移 apply；未 push、创建 PR、merge 或 deploy。
 
 ## Final assessment
 
-- Bugs found: 2
-- Verified fixes: 2
+- Bugs found: 7
+- Verified fixes: 7
 - Best-effort/reverted/deferred: 0/0/0
 - Baseline → final browser suite: 30/30 → 32/32
+- Post-Brief real acceptance: 1/1 summarized；0 failed；0 aborted
+- Real public confirmed Skill / repo+ZIP complete: 0 / 0
 - Health score: 92 → 100
 - Step 6 code gate: PASS
 
