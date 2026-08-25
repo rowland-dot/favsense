@@ -69,6 +69,14 @@
     },
     "metric": { "label": "Star", "icon": "★", "missing": "暂无数据" },
     "fields": [],
+    "fields_by_type": {
+      "Agent Skill": [
+        { "field": "license", "label": "许可证" },
+        { "field": "skill_manifest", "label": "Skill manifest" },
+        { "field": "verified_at", "label": "核验日期" },
+        { "field": "compatibility", "label": "兼容性" }
+      ]
+    },
     "actions": [
       { "field": "repo", "label": "官方仓库" },
       { "field": "download", "label": "下载 ZIP" },

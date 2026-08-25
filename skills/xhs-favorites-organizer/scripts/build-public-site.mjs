@@ -135,12 +135,10 @@ const resources = rawResources.map((raw, index) => {
     label: action.label,
     url: String(field(raw, action.field) || "")
   })).filter((action) => action.url);
-  const attributes = [...(resourceIndex.fields || []), ...(/skill/i.test(type) ? [
-    { field: "license", label: "许可证" },
-    { field: "skill_manifest", label: "Skill manifest" },
-    { field: "verified_at", label: "核验日期" },
-    { field: "compatibility", label: "兼容性" }
-  ] : [])].map((attribute) => ({
+  const fieldsByType = resourceIndex.fields_by_type || {};
+  const typeFields = Object.hasOwn(fieldsByType, type) ? fieldsByType[type] : [];
+  if (!Array.isArray(typeFields)) throw new Error(`Resource fields for ${type} must be an array.`);
+  const attributes = [...(resourceIndex.fields || []), ...typeFields].map((attribute) => ({
     label: String(attribute.label || ""),
     value: String(field(raw, attribute.field) || "")
   })).filter((attribute) => attribute.label && attribute.value);

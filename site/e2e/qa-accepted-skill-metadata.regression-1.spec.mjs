@@ -12,17 +12,24 @@ test("confirmed Skill fixture exposes the complete review metadata", async ({ pa
     data: { scenario: "success" },
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "资源索引" }).click();
+  await page.getByRole("button", { name: "查看总结" }).first().click();
 
-  const resource = page.getByText("Official synthetic Skill", { exact: true }).last();
-  const card = resource.locator("xpath=ancestor::*[contains(@class, 'resource-card')]");
-  await expect(card).toContainText("许可证");
-  await expect(card).toContainText("MIT");
-  await expect(card).toContainText("Skill manifest");
-  await expect(card).toContainText("SKILL.md");
-  await expect(card).toContainText("核验日期");
-  await expect(card).toContainText("2026-08-23");
-  await expect(card).toContainText("4");
-  await expect(card).toContainText("兼容性");
-  await expect(card).toContainText("Codex");
+  const detail = page.getByRole("dialog");
+  for (const expected of [
+    "Official synthetic Skill",
+    "许可证",
+    "MIT",
+    "Skill manifest",
+    "SKILL.md",
+    "核验日期",
+    "2026-08-23",
+    "4",
+    "兼容性",
+    "Codex",
+  ]) {
+    await expect(detail).toContainText(expected);
+  }
+  await expect(detail.getByRole("link", { name: /Official synthetic Skill 官方仓库/ })).toBeVisible();
+  await expect(detail.getByRole("link", { name: /Official synthetic Skill 下载 ZIP/ })).toBeVisible();
+  await expect(detail.getByRole("link", { name: /Official synthetic Skill 文档/ })).toBeVisible();
 });

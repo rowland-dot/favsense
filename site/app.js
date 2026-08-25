@@ -998,7 +998,10 @@ function renderDetail(note) {
         const actions = resource.actions
           .map((action) => ({ ...action, url: safeUrl(action.url) }))
           .filter((action) => action.url !== "#");
-        return `<div class="detail-resource"><strong>${escapeHtml(resource.name)}</strong><span>${escapeHtml(resource.metricIcon || radar.metric?.icon || "◆")} ${escapeHtml(resource.metric || radar.metric?.missing || "暂无数据")}</span><div class="detail-resource-actions">${actions.map((action) => `<a href="${action.url}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(`${resource.name} ${action.label}`)}">${escapeHtml(action.label)}</a>`).join("")}</div></div>`;
+        const attributes = (resource.attributes || []).map((attribute) => `
+          <span><small>${escapeHtml(attribute.label)}</small>${escapeHtml(attribute.value)}</span>
+        `).join("");
+        return `<div class="detail-resource"><strong>${escapeHtml(resource.name)}</strong><span>${escapeHtml(resource.metricIcon || radar.metric?.icon || "◆")} ${escapeHtml(resource.metric || radar.metric?.missing || "暂无数据")}</span><div class="detail-resource-actions">${actions.map((action) => `<a href="${action.url}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(`${resource.name} ${action.label}`)}">${escapeHtml(action.label)}</a>`).join("")}</div>${attributes ? `<div class="resource-attributes detail-resource-attributes">${attributes}</div>` : ""}</div>`;
       }).join("")}
     </div></section>
   ` : "";
