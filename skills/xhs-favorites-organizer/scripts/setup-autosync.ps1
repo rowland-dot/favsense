@@ -507,7 +507,7 @@ function Invoke-SetupCredentialTransaction {
 $workspacePath = [System.IO.Path]::GetFullPath($Workspace)
 $configPath = [System.IO.Path]::GetFullPath($Config)
 $sopRuntimePath = if ([string]::IsNullOrWhiteSpace($SopRuntime)) {
-    Join-Path (Split-Path -Parent $workspacePath) 'SOP - 小红书\运行系统'
+    Join-Path (Split-Path -Parent $workspacePath) 'SOP - 小红书'
 } else {
     [System.IO.Path]::GetFullPath($SopRuntime)
 }

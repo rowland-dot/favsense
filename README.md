@@ -119,7 +119,7 @@ Copy-Item ".\config\xhs-favorites.example.json" ".\config\xhs-favorites.json"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
   ".\skills\xhs-favorites-organizer\scripts\setup-autosync.ps1" `
   -Workspace "." -Config ".\config\xhs-favorites.json" `
-  -SopRuntime "..\SOP - 小红书\运行系统"
+  -SopRuntime "..\SOP - 小红书"
 ```
 
 安装命令不会创建 Windows 每日任务或开机启动项；升级时会删除旧版 `FavSense-Daily` 任务。`-SopRuntime` 省略时会按上述相邻目录自动解析。setup 先复用已经运行的 SOP 扫描浏览器；若通道未启动，只允许调用 SOP 自己的 `启动扫描浏览器.bat` 一次。首次运行时，它在同一个 SOP 窗口中打开 Tampermonkey 官方商店页和小红书登录页。请在该窗口安装扩展并扫码登录，然后再次运行同一条 setup 命令。

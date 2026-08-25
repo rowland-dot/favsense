@@ -25,7 +25,7 @@ $healthUrl = "http://127.0.0.1:$Port/health"
 $userscriptTemplatePath = Join-Path (Split-Path -Parent $PSScriptRoot) 'assets\xhs-favorites.user.js.template'
 $stopScriptPath = Join-Path $PSScriptRoot 'stop-autosync.ps1'
 $sopRuntimePath = if ([string]::IsNullOrWhiteSpace($SopRuntime)) {
-    Join-Path (Split-Path -Parent $workspacePath) 'SOP - 小红书\运行系统'
+    Join-Path (Split-Path -Parent $workspacePath) 'SOP - 小红书'
 } else {
     [System.IO.Path]::GetFullPath($SopRuntime)
 }

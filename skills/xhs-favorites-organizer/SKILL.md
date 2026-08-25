@@ -61,10 +61,10 @@ Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成�
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
   ".\skills\xhs-favorites-organizer\scripts\setup-autosync.ps1" `
   -Workspace "." -Config ".\config\xhs-favorites.json" `
-  -SopRuntime "..\SOP - 小红书\运行系统"
+  -SopRuntime "..\SOP - 小红书"
 ```
 
-首次运行时，`setup-autosync.ps1` 解析 SOP runtime；省略 `-SopRuntime` 时只允许使用项目相邻的 `SOP - 小红书\运行系统`。若 SOP 动态 CDP 通道已存活，setup 必须直接复用；若未启动，只允许调用 SOP 的 `启动扫描浏览器.bat` 一次并有界等待，不能自己定位或启动 Chrome。若 SOP 扫描 profile 尚未安装 Tampermonkey，只在该同一窗口打开官方 Chrome Web Store 与小红书登录页，然后停止；完成扩展安装和扫码登录后，重新运行同一 setup 命令。此阶段不得启动 Bridge、轮换凭据或生成会过期的安装能力。
+首次运行时，`setup-autosync.ps1` 解析 SOP runtime；省略 `-SopRuntime` 时只允许使用项目相邻的 `SOP - 小红书`。若 SOP 动态 CDP 通道已存活，setup 必须直接复用；若未启动，只允许调用 SOP 的 `启动扫描浏览器.bat` 一次并有界等待，不能自己定位或启动 Chrome。若 SOP 扫描 profile 尚未安装 Tampermonkey，只在该同一窗口打开官方 Chrome Web Store 与小红书登录页，然后停止；完成扩展安装和扫码登录后，重新运行同一 setup 命令。此阶段不得启动 Bridge、轮换凭据或生成会过期的安装能力。
 
 检测到 SOP 扫描 profile 已安装 Tampermonkey 后，setup 才启动 Bridge，并通过同一个动态 CDP 通道打开一次性本机安装源；安装能力仅存活十分钟，并在新脚本首次运行后失效。不得保存、打印或分享该临时地址，也不得从主浏览器复制 profile、Cookie 或扩展。
 

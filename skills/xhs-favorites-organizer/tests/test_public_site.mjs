@@ -4692,7 +4692,15 @@ test("FavSense reuses the exact SOP scanner browser channel and remains user-tri
   assert.match(setup, /userscript-install-capability/);
   assert.doesNotMatch(setup, /tampermonkey\.net|script_installation\.php/);
   assert.match(setup, /\[string\]\$SopRuntime/);
-  assert.match(setup, /SOP - 小红书[\\/]运行系统/);
+  const sopRuntimeDefaults = [setup, start, daily];
+  for (const source of sopRuntimeDefaults) {
+    assert.match(source, /Join-Path \(Split-Path -Parent \$workspacePath\) 'SOP - 小红书'/);
+    assert.doesNotMatch(source, /SOP - 小红书[\\/]运行系统/);
+  }
+  for (const source of [readme, skill]) {
+    assert.match(source, /\.\.[\\/]SOP - 小红书"/);
+    assert.doesNotMatch(source, /SOP - 小红书[\\/]运行系统/);
+  }
   assert.match(setup, /\$secretsPath = Join-Path \$runtimeFullPath '\.secrets'/);
   assert.match(setup, /\$profilePath = Join-Path \$secretsPath 'browser-profiles[\\/]cdp-chrome'/);
   assert.match(setup, /\$portFilePath = Join-Path \$secretsPath 'cdp-port\.txt'/);
