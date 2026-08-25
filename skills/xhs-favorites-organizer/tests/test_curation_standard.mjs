@@ -202,6 +202,75 @@ test("review preparation carries a note-scoped human image review into the evide
   assert.equal(review.items[0].evidence_methods.includes("image_review"), true);
 });
 
+test("review preparation rejects unsafe scope IDs before reading outside evidence", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-review-containment-"));
+  const evidenceRoot = path.join(root, "evidence");
+  const outside = path.join(root, "outside");
+  fs.mkdirSync(evidenceRoot);
+  fs.mkdirSync(outside);
+  fs.writeFileSync(
+    path.join(outside, "transcription.json"),
+    JSON.stringify({ text: "outside evidence must not be read" }),
+    "utf8"
+  );
+  try {
+    assert.throws(() => prepareReview({
+      catalog: { notes: {} },
+      scope: { note_ids: ["../outside"] },
+      candidates: {},
+      resources: { resources: [] },
+      evidenceRoot,
+      diandianRoot: path.join(root, "diandian")
+    }), /note ID/i);
+    assert.throws(() => prepareReview({
+      catalog: { notes: {} },
+      scope: { note_ids: ["__proto__"] },
+      candidates: {},
+      resources: { resources: [] },
+      evidenceRoot,
+      diandianRoot: path.join(root, "diandian")
+    }), /note ID/i);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("review preparation rejects reparse-point evidence directories", (context) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-review-reparse-"));
+  const evidenceRoot = path.join(root, "evidence");
+  const outside = path.join(root, "outside");
+  const noteId = "safe-note";
+  fs.mkdirSync(evidenceRoot);
+  fs.mkdirSync(outside);
+  fs.writeFileSync(
+    path.join(outside, "transcription.json"),
+    JSON.stringify({ text: "outside evidence must not be read" }),
+    "utf8"
+  );
+  try {
+    try {
+      fs.symlinkSync(
+        outside,
+        path.join(evidenceRoot, noteId),
+        process.platform === "win32" ? "junction" : "dir"
+      );
+    } catch (error) {
+      context.skip(`reparse fixture unavailable: ${error.code || error.message}`);
+      return;
+    }
+    assert.throws(() => prepareReview({
+      catalog: { notes: { [noteId]: { note_id: noteId, type: "视频" } } },
+      scope: { note_ids: [noteId] },
+      candidates: { [noteId]: {} },
+      resources: { resources: [] },
+      evidenceRoot,
+      diandianRoot: path.join(root, "diandian")
+    }), /evidence path/i);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("pending notes require a reason and must not be in public curation", () => {
   const input = fixture();
   input.audit.notes[input.id] = { status: "pending", reviewed_at: "2026-08-04", evidence_methods: ["description", "comments"], comments_checked: true, reason: "缺少画面中的项目名" };

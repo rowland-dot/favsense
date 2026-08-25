@@ -31,15 +31,66 @@ function clean(value) {
 }
 
 const STABLE_NOTE_ID = /^[A-Za-z0-9_-]{1,128}$/;
+const UNSAFE_OBJECT_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function isStableNoteId(value) {
+  return typeof value === "string"
+    && STABLE_NOTE_ID.test(value)
+    && !UNSAFE_OBJECT_KEYS.has(value);
+}
+
+function containedEvidenceFile(root, noteId, filename, maxBytes, nested) {
+  if (!root) return null;
+  const base = path.resolve(root);
+  const parts = nested ? [noteId] : [];
+  let current = base;
+  try {
+    const rootMetadata = fs.lstatSync(base);
+    if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink()) {
+      throw new Error("unsafe root");
+    }
+    for (const part of parts) {
+      current = path.join(current, part);
+      if (!fs.existsSync(current)) return null;
+      const metadata = fs.lstatSync(current);
+      if (!metadata.isDirectory() || metadata.isSymbolicLink()) {
+        throw new Error("unsafe directory");
+      }
+    }
+    const target = path.join(current, filename);
+    const relativeTarget = path.relative(base, target);
+    if (
+      !relativeTarget
+      || path.isAbsolute(relativeTarget)
+      || relativeTarget === ".."
+      || relativeTarget.startsWith(`..${path.sep}`)
+      || !fs.existsSync(target)
+    ) return null;
+    const metadata = fs.lstatSync(target);
+    if (!metadata.isFile() || metadata.isSymbolicLink()) {
+      throw new Error("unsafe file");
+    }
+    if (metadata.size > maxBytes) return null;
+    const realBase = fs.realpathSync.native(base);
+    const realTarget = fs.realpathSync.native(target);
+    const relativeRealTarget = path.relative(realBase, realTarget);
+    if (
+      path.isAbsolute(relativeRealTarget)
+      || relativeRealTarget === ".."
+      || relativeRealTarget.startsWith(`..${path.sep}`)
+    ) throw new Error("outside root");
+    return target;
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw new Error("Curation evidence path is unsafe");
+  }
+}
 
 function readDiandianSummary(root, noteId) {
-  if (!root || !STABLE_NOTE_ID.test(noteId)) return "";
-  const base = path.resolve(root);
-  const target = path.resolve(base, `${noteId}.json`);
-  if (path.dirname(target) !== base || !fs.existsSync(target)) return "";
+  if (!root || !isStableNoteId(noteId)) return "";
+  const target = containedEvidenceFile(root, noteId, `${noteId}.json`, 512 * 1024, false);
+  if (!target) return "";
   try {
-    const metadata = fs.statSync(target);
-    if (!metadata.isFile() || metadata.size > 512 * 1024) return "";
     const record = readJson(target, "DianDian summary");
     if (
       !record
@@ -63,8 +114,8 @@ function normalized(value) {
 }
 
 function readEvidence(root, noteId, filename) {
-  const evidenceFile = path.join(root, noteId, filename);
-  if (!fs.existsSync(evidenceFile)) return null;
+  const evidenceFile = containedEvidenceFile(root, noteId, filename, 16 * 1024 * 1024, true);
+  if (!evidenceFile) return null;
   try {
     return readJson(evidenceFile, filename);
   } catch {
@@ -79,6 +130,12 @@ function aliasesFor(resource) {
 }
 
 export function prepareReview({ catalog, scope, candidates, resources, evidenceRoot, diandianRoot, supplementalReview = null }) {
+  if (
+    !scope
+    || !Array.isArray(scope.note_ids)
+    || scope.note_ids.some((noteId) => !isStableNoteId(noteId))
+    || new Set(scope.note_ids).size !== scope.note_ids.length
+  ) throw new Error("Review scope contains an invalid or duplicate note ID");
   const notes = catalog.notes || catalog;
   const resourceItems = Array.isArray(resources) ? resources : resources.resources || [];
   const resourceLookup = new Map();
@@ -86,13 +143,13 @@ export function prepareReview({ catalog, scope, candidates, resources, evidenceR
   const supplementalById = new Map(
     (Array.isArray(supplementalReview?.items) ? supplementalReview.items : [])
       .map((item) => [String(item?.note_id || ""), item])
-      .filter(([noteId]) => STABLE_NOTE_ID.test(noteId))
+      .filter(([noteId]) => isStableNoteId(noteId))
   );
 
   const items = [];
-  for (const noteId of scope.note_ids || []) {
-    const note = notes[noteId];
-    const candidate = candidates[noteId];
+  for (const noteId of scope.note_ids) {
+    const note = Object.hasOwn(notes, noteId) ? notes[noteId] : undefined;
+    const candidate = Object.hasOwn(candidates, noteId) ? candidates[noteId] : undefined;
     const supplemental = supplementalById.get(noteId);
     const supplementalMethods = Array.isArray(supplemental?.audit?.evidence_methods)
       ? supplemental.audit.evidence_methods
