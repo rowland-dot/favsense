@@ -485,6 +485,17 @@ __DIANDIAN_MATCH_LINE__
     }, diandianTiming("share_control_wait"), "笔记页面的分享控件没有稳定显示", 100);
   }
 
+  function clickVisibleAction(element) {
+    const bounds = element?.getBoundingClientRect?.();
+    const hit = bounds && bounds.width > 0 && bounds.height > 0 && document.elementFromPoint
+      ? document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2)
+      : null;
+    const target = hit && (hit === element || element.contains?.(hit)) && typeof hit.click === "function"
+      ? hit
+      : element;
+    target.click();
+  }
+
   function normalizeSharedNoteUrl(value, noteId) {
     const matches = String(value || "").match(/https:\/\/www\.xiaohongshu\.com\/[^\s<>"']+/g) || [];
     for (const match of matches) {
@@ -504,7 +515,7 @@ __DIANDIAN_MATCH_LINE__
   async function copyVisibleShareLink(noteId) {
     assertSafePage();
     const shareButton = await waitForStableSharePage();
-    shareButton.click();
+    clickVisibleAction(shareButton);
 
     const copyButton = await waitUntil(() => skillQueryAll(
       DIANDIAN.selectors.share_menu_items,
@@ -512,7 +523,7 @@ __DIANDIAN_MATCH_LINE__
       element,
       DIANDIAN.selectors.copy_action_text,
     )), diandianTiming("share_menu_wait"), "分享菜单中没有找到复制链接");
-    copyButton.click();
+    clickVisibleAction(copyButton);
 
     const attributeCandidates = [
       copyButton.dataset?.clipboardText,

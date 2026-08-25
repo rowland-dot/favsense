@@ -3177,16 +3177,23 @@ test("note-page share worker falls back to the transient current URL only after 
   }
   let shareClicks = 0;
   let copyClicks = 0;
+  let shareContainerClicks = 0;
+  let copyContainerClicks = 0;
   let cleanedLocation = "";
   const visibleElement = (text, click) => ({
     textContent: text,
     className: "",
     click,
-    getClientRects: () => [{}]
+    getClientRects: () => [{}],
+    getBoundingClientRect: () => ({ left: 10, top: 20, width: 24, height: 24 })
   });
-  const share = visibleElement("分享", () => { shareClicks += 1; });
+  const shareHit = { click() { shareClicks += 1; } };
+  const copyHit = { click() { copyClicks += 1; } };
+  const share = visibleElement("分享", () => { shareContainerClicks += 1; });
   share.className = "share-icon-container";
-  const copy = visibleElement("复制链接", () => { copyClicks += 1; });
+  share.contains = (element) => element === shareHit;
+  const copy = visibleElement("复制链接", () => { copyContainerClicks += 1; });
+  copy.contains = (element) => element === copyHit;
   let domReady;
   const document = {
     readyState: "loading",
@@ -3199,7 +3206,8 @@ test("note-page share worker falls back to the transient current URL only after 
       if (selector.includes(".share-icon-container")) return [share];
       if (shareClicks && selector.includes('[role="menuitem"]')) return [copy];
       return [];
-    }
+    },
+    elementFromPoint: () => shareClicks ? copyHit : shareHit
   };
   const workerId = "22222222-2222-4222-8222-222222222222";
   const location = {
@@ -3303,6 +3311,8 @@ test("note-page share worker falls back to the transient current URL only after 
 
   assert.equal(shareClicks, contract.expected_share_clicks);
   assert.equal(copyClicks, contract.expected_copy_clicks);
+  assert.equal(shareContainerClicks, 0);
+  assert.equal(copyContainerClicks, 0);
   assert.equal(result.url, "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=current-token");
   assert.equal(cleanedLocation, "/discovery/item/note-a");
 });
