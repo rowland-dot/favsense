@@ -1218,6 +1218,7 @@ function bindEvents() {
     const board = state.boards.find((item) => item.id === toggle.dataset.boardToggle);
     if (!board) return;
     const enabled = toggle.checked;
+    const restoreFocus = document.activeElement === toggle;
     state.boardUpdatePending = true;
     elements.boardList.querySelectorAll("[data-board-toggle]").forEach((input) => { input.disabled = true; });
     elements.boardManagerStatus.textContent = `正在更新「${board.name}」…`;
@@ -1244,6 +1245,11 @@ function bindEvents() {
     } finally {
       state.boardUpdatePending = false;
       renderBoardManager();
+      if (restoreFocus) {
+        [...elements.boardList.querySelectorAll("[data-board-toggle]")]
+          .find((input) => input.dataset.boardToggle === board.id)
+          ?.focus({ preventScroll: true });
+      }
     }
   });
   elements.sortSelect.addEventListener("change", () => { state.sort = elements.sortSelect.value; renderNotes(); });
