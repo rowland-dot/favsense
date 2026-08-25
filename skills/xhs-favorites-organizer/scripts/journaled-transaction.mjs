@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { lstat, mkdir, open, readFile, readdir, realpath, rename, rm } from "node:fs/promises";
+import { lstat, mkdir, open, readdir, realpath, rename, rm } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const SAFE_NAME = /^[a-z][a-z0-9-]{0,63}$/;
@@ -12,6 +12,55 @@ function inside(root, candidate) {
 
 async function metadata(path) {
   try { return await lstat(path); } catch (error) { if (error.code === "ENOENT") return null; throw error; }
+}
+
+function sameIdentity(left, right) {
+  return left?.dev === right?.dev && left?.ino === right?.ino;
+}
+
+async function boundMetadata(path) {
+  try { return await lstat(path, { bigint: true }); } catch (error) { if (error.code === "ENOENT") return null; throw error; }
+}
+
+async function readBoundTransactionJournal(transaction) {
+  const transactionBefore = await boundMetadata(transaction);
+  const journal = join(transaction, "journal.json");
+  const journalBefore = await boundMetadata(journal);
+  if (
+    !transactionBefore?.isDirectory()
+    || transactionBefore.isSymbolicLink()
+    || !journalBefore?.isFile()
+    || journalBefore.isSymbolicLink()
+    || journalBefore.nlink !== 1n
+  ) throw new Error("TRANSACTION_JOURNAL_UNSAFE");
+  let handle;
+  try {
+    handle = await open(journal, "r");
+    const opened = await handle.stat({ bigint: true });
+    if (
+      !opened.isFile()
+      || opened.nlink !== 1n
+      || !sameIdentity(opened, journalBefore)
+    ) throw new Error("TRANSACTION_JOURNAL_UNSAFE");
+    const content = await handle.readFile("utf8");
+    const journalAfter = await boundMetadata(journal);
+    const transactionAfter = await boundMetadata(transaction);
+    if (
+      !journalAfter?.isFile()
+      || journalAfter.isSymbolicLink()
+      || journalAfter.nlink !== 1n
+      || !sameIdentity(opened, journalAfter)
+      || !transactionAfter?.isDirectory()
+      || transactionAfter.isSymbolicLink()
+      || !sameIdentity(transactionBefore, transactionAfter)
+    ) throw new Error("TRANSACTION_JOURNAL_UNSAFE");
+    return content;
+  } catch (error) {
+    if (error?.message === "TRANSACTION_JOURNAL_UNSAFE") throw error;
+    throw new Error("TRANSACTION_JOURNAL_UNSAFE", { cause: error });
+  } finally {
+    await handle?.close();
+  }
 }
 
 async function requirePlainRoot(root) {
@@ -212,7 +261,7 @@ export async function recoverJournaledTransaction({ root: rootValue, transaction
   const info = await metadata(transaction);
   if (!info) return { outcome: "none" };
   if (!info.isDirectory() || info.isSymbolicLink()) throw new Error("TRANSACTION_RECOVERY_UNSAFE");
-  const record = JSON.parse(await readFile(join(transaction, "journal.json"), "utf8"));
+  const record = JSON.parse(await readBoundTransactionJournal(transaction));
   if (
     record.schema_version !== 1
     || record.transaction_id !== id

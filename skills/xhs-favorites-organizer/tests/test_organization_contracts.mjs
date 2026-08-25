@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { link, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -542,6 +542,53 @@ test("journaled recovery rejects a duplicate-name corrupted coordinator journal 
       /TRANSACTION_RECOVERY_PARTICIPANTS_INVALID/,
     );
     assert.equal(await readFile(left, "utf8"), "new-left");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("journaled recovery rejects a redirected journal before mutating live or backup data", async (context) => {
+  const { executeJournaledTransaction, recoverJournaledTransaction } = await import("../scripts/journaled-transaction.mjs");
+  const root = await mkdtemp(join(tmpdir(), "favsense-journal-redirect-"));
+  const target = join(root, "left.txt");
+  const participants = [{ name: "left", target, content: "new-left" }];
+  const transaction = join(root, ".organization-tx-tx-redirect");
+  const journalPath = join(transaction, "journal.json");
+  const backup = join(transaction, "backup-left");
+  try {
+    await writeFile(target, "old-left");
+    await assert.rejects(
+      executeJournaledTransaction({
+        root,
+        id: "tx-redirect",
+        participants,
+        failAt: "crash-after-swap:left",
+      }),
+      /SIMULATED_CRASH/,
+    );
+    const redirectedJournal = join(root, "outside-journal.json");
+    await writeFile(redirectedJournal, await readFile(journalPath));
+    await rm(journalPath);
+    try {
+      await symlink(redirectedJournal, journalPath, "file");
+    } catch (error) {
+      if (!["EPERM", "EACCES", "ENOTSUP"].includes(error?.code)) throw error;
+      try {
+        await link(redirectedJournal, journalPath);
+      } catch (linkError) {
+        context.skip(`redirected journal fixture unavailable: ${linkError.code}`);
+        return;
+      }
+    }
+
+    await assert.rejects(
+      recoverJournaledTransaction({ root, id: "tx-redirect", participants }),
+      /TRANSACTION_JOURNAL_UNSAFE/,
+    );
+    assert.equal(await readFile(target, "utf8"), "new-left");
+    assert.equal(await readFile(backup, "utf8"), "old-left");
+    const journalInfo = await lstat(journalPath);
+    assert.equal(journalInfo.isSymbolicLink() || journalInfo.nlink > 1, true);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
