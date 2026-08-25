@@ -271,6 +271,53 @@ test("review preparation rejects reparse-point evidence directories", (context) 
   }
 });
 
+test("review preparation rejects an evidence file swapped after validation", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-review-swap-"));
+  const evidenceRoot = path.join(root, "evidence");
+  const outside = path.join(root, "outside");
+  const noteId = "swap-note";
+  const noteDirectory = path.join(evidenceRoot, noteId);
+  const target = path.join(noteDirectory, "transcription.json");
+  const parkedTarget = `${target}.parked`;
+  const outsideTarget = path.join(outside, "transcription.json");
+  fs.mkdirSync(noteDirectory, { recursive: true });
+  fs.mkdirSync(outside);
+  fs.writeFileSync(target, JSON.stringify({ text: "inside evidence" }), "utf8");
+  fs.writeFileSync(
+    outsideTarget,
+    JSON.stringify({ text: "outside evidence must not be consumed" }),
+    "utf8"
+  );
+  const originalRealpath = fs.realpathSync.native;
+  let swapped = false;
+  fs.realpathSync.native = (filename) => {
+    const result = originalRealpath(filename);
+    if (!swapped && path.resolve(filename) === path.resolve(target)) {
+      fs.renameSync(target, parkedTarget);
+      fs.linkSync(outsideTarget, target);
+      swapped = true;
+    }
+    return result;
+  };
+  try {
+    assert.throws(() => prepareReview({
+      catalog: { notes: { [noteId]: { note_id: noteId, type: "视频" } } },
+      scope: { note_ids: [noteId] },
+      candidates: { [noteId]: {} },
+      resources: { resources: [] },
+      evidenceRoot,
+      diandianRoot: path.join(root, "diandian")
+    }), /evidence path/i);
+  } finally {
+    fs.realpathSync.native = originalRealpath;
+    if (swapped) {
+      fs.unlinkSync(target);
+      fs.renameSync(parkedTarget, target);
+    }
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("pending notes require a reason and must not be in public curation", () => {
   const input = fixture();
   input.audit.notes[input.id] = { status: "pending", reviewed_at: "2026-08-04", evidence_methods: ["description", "comments"], comments_checked: true, reason: "缺少画面中的项目名" };

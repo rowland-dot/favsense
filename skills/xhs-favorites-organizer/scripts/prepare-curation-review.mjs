@@ -39,6 +39,10 @@ function isStableNoteId(value) {
     && !UNSAFE_OBJECT_KEYS.has(value);
 }
 
+function sameFileIdentity(left, right) {
+  return left.dev === right.dev && left.ino === right.ino;
+}
+
 function containedEvidenceFile(root, noteId, filename, maxBytes, nested) {
   if (!root) return null;
   const base = path.resolve(root);
@@ -49,6 +53,7 @@ function containedEvidenceFile(root, noteId, filename, maxBytes, nested) {
     if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink()) {
       throw new Error("unsafe root");
     }
+    const bindings = [{ filename: base, metadata: rootMetadata, directory: true }];
     for (const part of parts) {
       current = path.join(current, part);
       if (!fs.existsSync(current)) return null;
@@ -56,6 +61,7 @@ function containedEvidenceFile(root, noteId, filename, maxBytes, nested) {
       if (!metadata.isDirectory() || metadata.isSymbolicLink()) {
         throw new Error("unsafe directory");
       }
+      bindings.push({ filename: current, metadata, directory: true });
     }
     const target = path.join(current, filename);
     const relativeTarget = path.relative(base, target);
@@ -71,6 +77,7 @@ function containedEvidenceFile(root, noteId, filename, maxBytes, nested) {
       throw new Error("unsafe file");
     }
     if (metadata.size > maxBytes) return null;
+    bindings.push({ filename: target, metadata, directory: false });
     const realBase = fs.realpathSync.native(base);
     const realTarget = fs.realpathSync.native(target);
     const relativeRealTarget = path.relative(realBase, realTarget);
@@ -79,19 +86,60 @@ function containedEvidenceFile(root, noteId, filename, maxBytes, nested) {
       || relativeRealTarget === ".."
       || relativeRealTarget.startsWith(`..${path.sep}`)
     ) throw new Error("outside root");
-    return target;
+    return { base, target, maxBytes, bindings };
   } catch (error) {
     if (error?.code === "ENOENT") return null;
     throw new Error("Curation evidence path is unsafe");
   }
 }
 
+function readContainedText(binding) {
+  if (!binding) return null;
+  let descriptor;
+  try {
+    const noFollow = process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW || 0);
+    descriptor = fs.openSync(binding.target, fs.constants.O_RDONLY | noFollow);
+    const opened = fs.fstatSync(descriptor);
+    const expectedTarget = binding.bindings.at(-1).metadata;
+    if (!opened.isFile() || !sameFileIdentity(opened, expectedTarget) || opened.size > binding.maxBytes) {
+      throw new Error("opened evidence identity changed");
+    }
+    const text = fs.readFileSync(descriptor, "utf8");
+    if (Buffer.byteLength(text, "utf8") > binding.maxBytes) return null;
+    for (const item of binding.bindings) {
+      const current = fs.lstatSync(item.filename);
+      if (
+        current.isSymbolicLink()
+        || (item.directory ? !current.isDirectory() : !current.isFile())
+        || !sameFileIdentity(current, item.metadata)
+      ) throw new Error("evidence identity changed");
+    }
+    const realBase = fs.realpathSync.native(binding.base);
+    const realTarget = fs.realpathSync.native(binding.target);
+    const relativeTarget = path.relative(realBase, realTarget);
+    if (
+      path.isAbsolute(relativeTarget)
+      || relativeTarget === ".."
+      || relativeTarget.startsWith(`..${path.sep}`)
+    ) throw new Error("evidence escaped root");
+    const after = fs.fstatSync(descriptor);
+    if (!sameFileIdentity(after, opened)) throw new Error("opened evidence identity changed");
+    return text;
+  } catch {
+    throw new Error("Curation evidence path is unsafe");
+  } finally {
+    if (descriptor !== undefined) fs.closeSync(descriptor);
+  }
+}
+
 function readDiandianSummary(root, noteId) {
   if (!root || !isStableNoteId(noteId)) return "";
-  const target = containedEvidenceFile(root, noteId, `${noteId}.json`, 512 * 1024, false);
-  if (!target) return "";
+  const source = readContainedText(
+    containedEvidenceFile(root, noteId, `${noteId}.json`, 512 * 1024, false)
+  );
+  if (!source) return "";
   try {
-    const record = readJson(target, "DianDian summary");
+    const record = JSON.parse(source.replace(/^\uFEFF/, ""));
     if (
       !record
       || typeof record !== "object"
@@ -114,10 +162,12 @@ function normalized(value) {
 }
 
 function readEvidence(root, noteId, filename) {
-  const evidenceFile = containedEvidenceFile(root, noteId, filename, 16 * 1024 * 1024, true);
-  if (!evidenceFile) return null;
+  const source = readContainedText(
+    containedEvidenceFile(root, noteId, filename, 16 * 1024 * 1024, true)
+  );
+  if (!source) return null;
   try {
-    return readJson(evidenceFile, filename);
+    return JSON.parse(source.replace(/^\uFEFF/, ""));
   } catch {
     return null;
   }
