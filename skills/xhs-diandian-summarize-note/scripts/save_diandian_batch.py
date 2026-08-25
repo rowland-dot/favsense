@@ -62,6 +62,7 @@ def _commit_records_locked(
                 "stage": temporary.name,
                 "backup": backup.name if destination.exists() else None,
                 "had_original": destination.exists(),
+                "installed": False,
             })
             staged.append((destination, temporary))
         _write_batch_journal(private_root, {
@@ -83,6 +84,13 @@ def _commit_records_locked(
                 backup = private_root / str(item["backup"])
                 destination.replace(backup)
             temporary.replace(destination)
+            item["installed"] = True
+            _write_batch_journal(private_root, {
+                "version": 1,
+                "transaction_id": transaction_id,
+                "status": "prepared",
+                "items": items,
+            })
         _write_batch_journal(private_root, {
             "version": 1,
             "transaction_id": transaction_id,

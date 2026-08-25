@@ -23,15 +23,18 @@ finally:
 
 class SaveDiandianBatchTests(unittest.TestCase):
     def _write_journal(self, private_root, transaction_id, status, items):
-        (private_root / BATCH.BATCH_JOURNAL_NAME).write_text(
-            json.dumps({
-                "version": 1,
-                "transaction_id": transaction_id,
-                "status": status,
-                "items": items,
-            }),
-            encoding="utf-8",
-        )
+        BATCH._write_batch_journal(private_root, {
+            "version": 1,
+            "transaction_id": transaction_id,
+            "status": status,
+            "items": [
+                {
+                    **item,
+                    "installed": item.get("installed", status == "committed"),
+                }
+                for item in items
+            ],
+        })
 
     def test_imports_keyed_records_only_under_private_root(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -384,6 +387,35 @@ class SaveDiandianBatchTests(unittest.TestCase):
 
             self.assertEqual(destination.read_text(encoding="utf-8"), "keep")
             self.assertEqual(stale_stage.read_text(encoding="utf-8"), "also keep")
+
+    def test_recovery_rejects_foreign_prepared_journal_without_deleting_victim(self):
+        with tempfile.TemporaryDirectory() as directory:
+            private_root = (
+                Path(directory) / ".xhs-favorites" / "diandian-summaries"
+            )
+            private_root.mkdir(parents=True)
+            transaction_id = "6" * 32
+            destination = private_root / f"{'o' * 24}.json"
+            destination.write_text("victim must survive", encoding="utf-8")
+            self._write_journal(
+                private_root,
+                transaction_id,
+                "prepared",
+                [{
+                    "destination": destination.name,
+                    "stage": f".{destination.name}.{transaction_id}.stage",
+                    "backup": None,
+                    "had_original": False,
+                    "installed": False,
+                }],
+            )
+
+            with self.assertRaisesRegex(ValueError, "journal state"):
+                with BATCH.private_store_lock(private_root):
+                    pass
+
+            self.assertEqual(destination.read_text(encoding="utf-8"), "victim must survive")
+            self.assertTrue((private_root / BATCH.BATCH_JOURNAL_NAME).exists())
 
     def test_recovery_rejects_parent_traversal_without_reading_outside_root(self):
         with tempfile.TemporaryDirectory() as directory:

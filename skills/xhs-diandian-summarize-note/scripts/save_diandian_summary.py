@@ -186,15 +186,16 @@ def _plain_file_or_missing(path: Path) -> bool:
 
 def _batch_transaction_paths(
     private_root: Path, transaction_id: str, item: object
-) -> tuple[Path, Path, Path | None, bool]:
+) -> tuple[Path, Path, Path | None, bool, bool]:
     if not isinstance(item, dict) or set(item) != {
-        "destination", "stage", "backup", "had_original"
+        "destination", "stage", "backup", "had_original", "installed"
     }:
         raise ValueError("DianDian batch journal item is invalid")
     destination_name = item["destination"]
     stage_name = item["stage"]
     backup_name = item["backup"]
     had_original = item["had_original"]
+    installed = item["installed"]
     if not isinstance(destination_name, str):
         raise ValueError("DianDian batch journal path is invalid")
     destination_match = re.fullmatch(
@@ -206,21 +207,51 @@ def _batch_transaction_paths(
         destination_match is None
         or stage_name != expected_stage
         or not isinstance(had_original, bool)
+        or not isinstance(installed, bool)
         or backup_name != (expected_backup if had_original else None)
     ):
         raise ValueError("DianDian batch journal path is invalid")
     destination = private_root / destination_name
     stage = private_root / expected_stage
     backup = private_root / expected_backup if had_original else None
-    return destination, stage, backup, had_original
+    return destination, stage, backup, had_original, installed
+
+
+def _batch_journal_immutable_sha256(journal: dict[str, object]) -> str:
+    items = journal.get("items")
+    immutable = [
+        {
+            "destination": item.get("destination"),
+            "stage": item.get("stage"),
+            "backup": item.get("backup"),
+            "had_original": item.get("had_original"),
+        } if isinstance(item, dict) else None
+        for item in items
+    ] if isinstance(items, list) else []
+    payload = {
+        "transaction_id": journal.get("transaction_id"),
+        "items": immutable,
+    }
+    return hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
 
 
 def _write_batch_journal(private_root: Path, journal: dict[str, object]) -> None:
     destination = private_root / BATCH_JOURNAL_NAME
     temporary = private_root / f"{BATCH_JOURNAL_NAME}.{uuid4().hex}.tmp"
+    record = {
+        **journal,
+        "immutable_state_sha256": _batch_journal_immutable_sha256(journal),
+    }
     try:
         with temporary.open("x", encoding="utf-8") as handle:
-            json.dump(journal, handle, ensure_ascii=False, separators=(",", ":"))
+            json.dump(record, handle, ensure_ascii=False, separators=(",", ":"))
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
@@ -241,7 +272,10 @@ def _recover_batch_transaction_unlocked(private_root: Path) -> None:
         raise ValueError("DianDian batch journal is invalid") from error
     if (
         not isinstance(journal, dict)
-        or set(journal) != {"version", "transaction_id", "status", "items"}
+        or set(journal) != {
+            "version", "transaction_id", "status", "items",
+            "immutable_state_sha256",
+        }
         or journal.get("version") != 1
         or not isinstance(journal.get("transaction_id"), str)
         or re.fullmatch(r"[a-f0-9]{32}", journal["transaction_id"]) is None
@@ -249,6 +283,8 @@ def _recover_batch_transaction_unlocked(private_root: Path) -> None:
         or not isinstance(journal.get("items"), list)
         or not journal["items"]
         or len(journal["items"]) > 500
+        or journal.get("immutable_state_sha256")
+        != _batch_journal_immutable_sha256(journal)
     ):
         raise ValueError("DianDian batch journal is invalid")
     paths = [
@@ -257,22 +293,57 @@ def _recover_batch_transaction_unlocked(private_root: Path) -> None:
     ]
     if len({destination for destination, *_rest in paths}) != len(paths):
         raise ValueError("DianDian batch journal contains duplicate destinations")
-    if journal["status"] == "prepared":
-        for destination, stage, backup, had_original in reversed(paths):
+    states = []
+    for destination, stage, backup, had_original, installed in paths:
+        destination_exists = _plain_file_or_missing(destination)
+        stage_exists = _plain_file_or_missing(stage)
+        backup_exists = (
+            _plain_file_or_missing(backup) if backup is not None else False
+        )
+        if journal["status"] == "prepared":
             if had_original:
-                if backup is not None and _plain_file_or_missing(backup):
-                    if _plain_file_or_missing(destination):
+                invalid = (
+                    (installed and (not backup_exists or not destination_exists))
+                    or (not backup_exists and not destination_exists)
+                )
+            else:
+                invalid = (
+                    (installed and (not destination_exists or stage_exists))
+                    or (not installed and destination_exists)
+                    or backup_exists
+                )
+        else:
+            invalid = (
+                not installed
+                or not destination_exists
+                or stage_exists
+                or (not had_original and backup_exists)
+            )
+        if invalid:
+            raise ValueError("DianDian batch journal state is inconsistent")
+        states.append((
+            destination, stage, backup, had_original, installed,
+            destination_exists, stage_exists, backup_exists,
+        ))
+    if journal["status"] == "prepared":
+        for (
+            destination, _stage, backup, had_original, installed,
+            destination_exists, _stage_exists, backup_exists,
+        ) in reversed(states):
+            if had_original:
+                if backup is not None and backup_exists:
+                    if destination_exists:
                         destination.unlink()
                     backup.replace(destination)
-                elif not _plain_file_or_missing(destination):
+                elif not destination_exists:
                     raise ValueError("DianDian batch rollback source is unavailable")
-            elif not _plain_file_or_missing(stage) and _plain_file_or_missing(destination):
+            elif installed:
                 destination.unlink()
     else:
-        for destination, _stage, _backup, _had_original in paths:
+        for destination, *_rest in states:
             if not _plain_file_or_missing(destination):
                 raise ValueError("DianDian committed batch record is unavailable")
-    for _destination, stage, backup, _had_original in paths:
+    for _destination, stage, backup, _had_original, _installed in paths:
         if _plain_file_or_missing(stage):
             stage.unlink()
         if backup is not None and _plain_file_or_missing(backup):
