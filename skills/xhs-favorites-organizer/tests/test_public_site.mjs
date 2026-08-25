@@ -3150,6 +3150,7 @@ test("note-page share worker falls back to the transient current URL only after 
     "skills/xhs-favorites-organizer/test-fixtures/diandian-single-note-state-arc.json"
   ));
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
+  const runAt = template.match(/^\/\/ @run-at\s+(\S+)$/m)?.[1];
   const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
   const userscript = renderUserscriptTemplate(template)
     .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { signedMessage, validMessage };\n${exportMarker}`);
@@ -3186,9 +3187,12 @@ test("note-page share worker falls back to the transient current URL only after 
   const share = visibleElement("分享", () => { shareClicks += 1; });
   share.className = "share-icon-container";
   const copy = visibleElement("复制链接", () => { copyClicks += 1; });
+  let domReady;
   const document = {
+    readyState: "loading",
     body: { innerText: "" },
     documentElement: { appendChild() {} },
+    addEventListener(type, listener) { if (type === "DOMContentLoaded") domReady = listener; },
     getElementById: () => null,
     createElement: () => ({ style: {}, textContent: "" }),
     querySelectorAll(selector) {
@@ -3198,19 +3202,24 @@ test("note-page share worker falls back to the transient current URL only after 
     }
   };
   const workerId = "22222222-2222-4222-8222-222222222222";
+  const location = {
+    origin: "https://www.xiaohongshu.com",
+    pathname: "/discovery/item/note-a",
+    search: `?xsec_token=current-token&xhs_kb_share_worker=${workerId}`,
+    hash: "",
+    href: `https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=current-token&xhs_kb_share_worker=${workerId}`
+  };
   const context = {
     globalThis: null,
-    location: {
-      origin: "https://www.xiaohongshu.com",
-      pathname: "/discovery/item/note-a",
-      search: `?xsec_token=current-token&xhs_kb_share_worker=${workerId}`,
-      hash: "",
-      href: `https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=current-token&xhs_kb_share_worker=${workerId}`
-    },
-    history: { state: null, replaceState(_state, _title, url) { cleanedLocation = url; } },
+    location,
+    history: { state: null, replaceState(_state, _title, url) {
+      cleanedLocation = url;
+      location.search = "";
+      location.href = `${location.origin}${url}`;
+    } },
     document,
     window: { setTimeout, clearTimeout },
-    navigator: { clipboard: { readText: async () => { throw new Error("clipboard denied"); } } },
+    navigator: { clipboard: { readText: () => new Promise(() => {}) } },
     getComputedStyle: () => ({ display: "block", visibility: "visible", opacity: "1" }),
     URL,
     URLSearchParams,
@@ -3224,6 +3233,19 @@ test("note-page share worker falls back to the transient current URL only after 
   };
   context.globalThis = context;
   runInNewContext(userscript, context);
+  assert.equal(runAt, "document-start");
+  assert.equal(cleanedLocation, "");
+  for (let attempt = 0; attempt < 50 && ![...SharedChannel.instances].some((channel) => channel.listeners.size); attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  }
+  assert.ok(
+    [...SharedChannel.instances].some((channel) => channel.listeners.size),
+    "the transient worker must listen before DOMContentLoaded"
+  );
+  location.search = "";
+  location.href = `${location.origin}${location.pathname}`;
+  document.readyState = "complete";
+  domReady();
   const hooks = context.__FAVSENSE_TEST_HOOKS__;
   assert.ok(hooks);
   for (let attempt = 0; attempt < 50 && ![...SharedChannel.instances].some((channel) => channel.listeners.size); attempt += 1) {
@@ -3249,6 +3271,28 @@ test("note-page share worker falls back to the transient current URL only after 
     note_id: "note-a",
     title: "Title note-a"
   };
+  const unexpectedResponses = [];
+  controller.addEventListener("message", (event) => {
+    if (["share-ready", "share-link", "share-failed"].includes(event.data?.type)) {
+      unexpectedResponses.push(event.data.type);
+    }
+  });
+  controller.postMessage({ type: "share-probe", ...base });
+  controller.postMessage(await hooks.signedMessage({
+    type: "share-probe",
+    ...base,
+    worker_id: "33333333-3333-4333-8333-333333333333"
+  }));
+  controller.postMessage(await hooks.signedMessage({
+    type: "share-probe",
+    ...base,
+    note_id: "note-b"
+  }));
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.deepEqual(unexpectedResponses, []);
+  assert.equal(shareClicks, 0);
+  assert.equal(copyClicks, 0);
+
   const ready = nextMessage("share-ready");
   controller.postMessage(await hooks.signedMessage({ type: "share-probe", ...base }));
   await ready;
@@ -4141,7 +4185,7 @@ async function runMountedCdpController({
 test("runBoard labels only an explicit safety reason as a Xiaohongshu safety stop", async () => {
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
   const runBoardStart = template.indexOf("  async function runBoard(mode, batch)");
-  const runBoardEnd = template.indexOf("\n  GM_registerMenuCommand", runBoardStart);
+  const runBoardEnd = template.indexOf("\n  function startUserscript", runBoardStart);
   const runBoardSource = template.slice(runBoardStart, runBoardEnd).trim();
   assert.ok(runBoardSource);
 
@@ -4595,6 +4639,7 @@ test("exact-note navigation replaces the signed history entry with a token-free 
       state: null,
       replaceState(_state, _title, url) { replacement = url; }
     },
+    document: { readyState: "complete" },
     URL,
     URLSearchParams,
     GM_registerMenuCommand() {}
@@ -4615,6 +4660,7 @@ test("exact-note navigation replaces the signed history entry with a token-free 
       state: null,
       replaceState(_state, _title, url) { replacement = url; }
     },
+    document: { readyState: "complete" },
     URL,
     URLSearchParams,
     GM_registerMenuCommand() {}

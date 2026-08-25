@@ -384,6 +384,10 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.resource_registry = None
             bridge.knowledge_base = root / "knowledge-base"
             bridge.snapshot_builder = root / "build-organization-snapshot.mjs"
+            bridge.node = BRIDGE.resolve_node_executable()
+            git_path = shutil.which("git")
+            self.assertIsNotNone(git_path)
+            bridge.git = Path(git_path)
             bundle = bridge.state_dir / "organization-transactions" / "manual-curation-bundle.json"
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -409,23 +413,43 @@ class BridgeHelpersTest(unittest.TestCase):
                 "site_manifest_sha256": "c" * 64,
                 "counts": {"notes": 1, "categories": 1, "resources": 0},
             }
-            commands = []
+            calls = []
 
-            def run(command, **_kwargs):
-                commands.append(command)
+            def run(command, **kwargs):
+                calls.append((command, kwargs))
                 return SimpleNamespace(returncode=0, stdout=json.dumps(result), stderr="")
 
-            with mock.patch.object(BRIDGE, "run_bounded_subprocess", side_effect=run):
+            with (
+                mock.patch.dict(os.environ, {
+                    "NODE_OPTIONS": "--require hostile.js",
+                    "NODE_PATH": "hostile-modules",
+                    "HF_TOKEN": "secret",
+                    "PATH": "C:\\hostile-path",
+                }),
+                mock.patch.object(
+                    BRIDGE, "run_bounded_subprocess", side_effect=run
+                ) as bounded,
+            ):
                 bridge.build_organization_snapshot()
 
             def option(command, name):
                 return command[command.index(name) + 1]
 
-            self.assertEqual(option(commands[0], "--curation-bundle"), str(bundle))
-            self.assertEqual(option(commands[0], "--diandian-report"), str(bridge.diandian_report_path))
-            self.assertEqual(option(commands[0], "--video-analysis"), str(bridge.state_dir / "video-analysis"))
-            self.assertRegex(option(commands[0], "--effective-date"), r"^\d{4}-\d{2}-\d{2}$")
-            self.assertNotIn("--input-revision-digest", commands[0])
+            command, options = calls[0]
+            self.assertEqual(option(command, "--curation-bundle"), str(bundle))
+            self.assertEqual(option(command, "--diandian-report"), str(bridge.diandian_report_path))
+            self.assertEqual(option(command, "--video-analysis"), str(bridge.state_dir / "video-analysis"))
+            self.assertRegex(option(command, "--effective-date"), r"^\d{4}-\d{2}-\d{2}$")
+            self.assertNotIn("--input-revision-digest", command)
+            self.assertTrue(Path(command[0]).is_absolute())
+            self.assertEqual(bounded.call_args.kwargs["input_text"], "")
+            self.assertIsInstance(options["env"], dict)
+            for hostile in ("NODE_OPTIONS", "NODE_PATH", "HF_TOKEN"):
+                self.assertNotIn(hostile, options["env"])
+            self.assertEqual(
+                options["env"]["PATH"],
+                str(BRIDGE.resolve_git_executable(bridge.git).parent),
+            )
 
     def test_curation_subprocess_result_is_an_exact_safe_envelope(self):
         valid = {"schema_version": 1, "ok": True, "outcome": "ready_for_safe_build", "counts": {"accepted": 1, "pending": 1, "rejected": 0, "resource_pending": 1}}
@@ -434,6 +458,77 @@ class BridgeHelpersTest(unittest.TestCase):
             with self.subTest(invalid=invalid):
                 with self.assertRaises(ValueError):
                     BRIDGE.parse_curation_pipeline_result(json.dumps(invalid))
+
+    def test_curation_pipeline_supplies_the_bounded_runner_contract(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            note_id = "s" * 24
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.workspace = root
+            bridge.state_dir = root / ".xhs-favorites"
+            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge.catalog_path = bridge.state_dir / "catalog.json"
+            bridge.curation = root / "curation.json"
+            bridge.profile = root / "profile.json"
+            bridge.config_path = root / "config.json"
+            bridge.resource_registry = None
+            bridge.curation_pipeline = root / "run-curation-pipeline.mjs"
+            bridge.node = BRIDGE.resolve_node_executable()
+            bridge.saved_diandian_record = mock.Mock(return_value=None)
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "manual",
+                "frozen_scope": {"note_ids": [note_id]},
+            })
+            BRIDGE.atomic_json(bridge.catalog_path, {
+                "notes": {
+                    note_id: {
+                        "note_id": note_id,
+                        "description": "Safe public text",
+                        "content_sha256": "a" * 64,
+                    },
+                },
+            })
+            BRIDGE.atomic_json(bridge.curation, {})
+            BRIDGE.atomic_json(bridge.profile, {"classification": {}})
+            BRIDGE.atomic_json(bridge.config_path, {"curation_quality": {}})
+            result = {
+                "schema_version": 1,
+                "ok": True,
+                "outcome": "ready_for_safe_build",
+                "counts": {
+                    "accepted": 0,
+                    "pending": 1,
+                    "rejected": 0,
+                    "resource_pending": 0,
+                },
+            }
+
+            with (
+                mock.patch.dict(os.environ, {
+                    "NODE_OPTIONS": "--require hostile.js",
+                    "NODE_PATH": "hostile-modules",
+                    "BRIDGE_TOKEN": "secret",
+                    "PATH": "C:\\hostile-path",
+                }),
+                mock.patch.object(
+                    BRIDGE,
+                    "run_bounded_subprocess",
+                    return_value=SimpleNamespace(
+                        returncode=0,
+                        stdout=json.dumps(result),
+                        stderr="",
+                    ),
+                ) as bounded,
+            ):
+                self.assertEqual(bridge.run_curation_pipeline(), result)
+
+            self.assertTrue(Path(bounded.call_args.args[0][0]).is_absolute())
+            self.assertEqual(bounded.call_args.kwargs["input_text"], "")
+            child_env = bounded.call_args.kwargs["env"]
+            self.assertIsInstance(child_env, dict)
+            for hostile in ("NODE_OPTIONS", "NODE_PATH", "BRIDGE_TOKEN"):
+                self.assertNotIn(hostile, child_env)
+            self.assertNotIn("PATH", child_env)
 
     def test_manual_failure_turns_encoded_blank_diagnostics_into_actionable_guidance(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -2660,7 +2755,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 self.assertNotIn(run_id, bridge.summary_plans)
                 self.assertEqual(bridge.manual_sync_status()["state"], "failed")
 
-    def test_cdp_waits_within_input_wait_for_a_visible_spa_composer(self):
+    def test_cdp_waits_within_input_wait_for_navigation_and_a_visible_spa_composer(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "q" * 24
@@ -2720,10 +2815,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 def evaluate(self, expression):
                     self.evaluations += 1
                     return json.dumps({
-                        "href": ai_url,
+                        "href": "about:blank" if self.evaluations == 1 else ai_url,
                         "body": "DianDian chat is ready",
                         "ready": "complete",
-                        "input_ready": self.evaluations >= 2,
+                        "input_ready": self.evaluations >= 3,
                         "cards": 0,
                         "msgs": 0,
                         "fin": 0,
@@ -2746,9 +2841,242 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
             self.assertEqual(result["reason"], "transport-failed")
             bridge.diandian_cdp_ask.assert_called_once()
-            self.assertGreaterEqual(session.evaluations, 3)
-            self.assertEqual(sleeps[:2], [0.5, 0.0])
+            self.assertGreaterEqual(session.evaluations, 4)
+            self.assertEqual(sleeps[:3], [0.5, 0.5, 0.0])
             target.close.assert_not_called()
+
+    def test_ai_page_validation_accepts_only_a_canonical_conversation_id_query(self):
+        ai_url = "https://www.xiaohongshu.com/ai_chat"
+        state = {"body": "DianDian chat is ready"}
+        conversation_id = "123e4567-e89b-42d3-a456-426614174000"
+
+        for href in (
+            ai_url,
+            f"{ai_url}?conversationId={conversation_id}",
+        ):
+            with self.subTest(accepted=href):
+                BRIDGE.validate_ai_page_state({"href": href, **state}, ai_url)
+
+        rejected = (
+            f"{ai_url}?conversationId=",
+            f"{ai_url}?conversationId=not-a-uuid",
+            f"{ai_url}?conversationid={conversation_id}",
+            f"{ai_url}?conversationId={conversation_id}&conversationId={conversation_id}",
+            f"{ai_url}?conversationId={conversation_id}&extra=1",
+            f"{ai_url}#fragment",
+            f"https://user@www.xiaohongshu.com/ai_chat?conversationId={conversation_id}",
+            f"https://www.xiaohongshu.com:444/ai_chat?conversationId={conversation_id}",
+            f"https://www.xiaohongshu.com:not-a-port/ai_chat?conversationId={conversation_id}",
+            "https://[invalid/ai_chat",
+            f"https://www.xiaohongshu.com/AI_CHAT?conversationId={conversation_id}",
+            f"https://example.com/ai_chat?conversationId={conversation_id}",
+        )
+        for href in rejected:
+            with self.subTest(rejected=href):
+                with self.assertRaisesRegex(BRIDGE.DiandianPageStop, "unexpected-page"):
+                    BRIDGE.validate_ai_page_state({"href": href, **state}, ai_url)
+
+    def test_tagging_a_scanned_legacy_note_backfills_its_content_revision(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            note_id = "r" * 24
+            unrelated_id = "u" * 24
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.workspace = root
+            bridge.catalog_path = root / ".xhs-favorites" / "catalog.json"
+            bridge.organizer = (
+                Path(__file__).parents[1] / "scripts" / "organize.mjs"
+            )
+            bridge.node = BRIDGE.resolve_node_executable()
+            bridge.boards = {"board": "Board"}
+            BRIDGE.atomic_json(bridge.catalog_path, {
+                "version": 1,
+                "notes": {
+                    note_id: {
+                        "note_id": note_id,
+                        "title": "Legacy note",
+                        "description": "Current trusted catalog content.",
+                        "url": "https://example.invalid/private-sentinel",
+                        "xsec_token": "target-secret-sentinel",
+                        "private_extra": "must-not-enter-formal-child",
+                    },
+                    unrelated_id: {
+                        "note_id": unrelated_id,
+                        "title": "Unscanned legacy note",
+                        "url": (
+                            "https://www.xiaohongshu.com/discovery/item/"
+                            f"{unrelated_id}?xsec_token=must-remain-byte-identical"
+                        ),
+                        "xsec_token": "unscanned-sentinel",
+                    },
+                },
+            })
+            unrelated_before = json.loads(
+                bridge.catalog_path.read_text(encoding="utf-8")
+            )["notes"][unrelated_id]
+            original_runner = BRIDGE.run_bounded_subprocess
+            captured = {}
+
+            def capture_runner(command, **kwargs):
+                captured["command"] = command
+                captured["env"] = kwargs["env"]
+                captured["stdin"] = json.loads(kwargs["input_text"])
+                temporary_catalog = Path(
+                    command[command.index("--catalog") + 1]
+                )
+                captured["catalog"] = json.loads(
+                    temporary_catalog.read_text(encoding="utf-8")
+                )
+                return original_runner(command, **kwargs)
+
+            with (
+                mock.patch.dict(os.environ, {
+                    "NODE_OPTIONS": "--require hostile.js",
+                    "NODE_PATH": "hostile-modules",
+                    "XSEC_TOKEN": "secret",
+                    "PATH": "C:\\hostile-path",
+                }),
+                mock.patch.object(
+                    BRIDGE,
+                    "run_bounded_subprocess",
+                    side_effect=capture_runner,
+                ),
+            ):
+                bridge.tag_catalog_sources("board", {note_id})
+
+            note = json.loads(
+                bridge.catalog_path.read_text(encoding="utf-8")
+            )["notes"][note_id]
+            self.assertRegex(note["content_sha256"], r"^[a-f0-9]{64}$")
+            self.assertEqual(note["source_board_ids"], ["board"])
+            self.assertEqual(note["source_boards"], ["Board"])
+            unrelated_after = json.loads(
+                bridge.catalog_path.read_text(encoding="utf-8")
+            )["notes"][unrelated_id]
+            self.assertEqual(unrelated_after, unrelated_before)
+            self.assertTrue(Path(captured["command"][0]).is_absolute())
+            for hostile in ("NODE_OPTIONS", "NODE_PATH", "XSEC_TOKEN"):
+                self.assertNotIn(hostile, captured["env"])
+            self.assertNotIn("PATH", captured["env"])
+            allowed = {
+                "note_id", "title", "display_title", "description", "desc",
+                "content", "tags", "tag_list", "media_type", "type",
+                "note_type",
+            }
+            projected_stdin = captured["stdin"]["notes"][0]
+            projected_catalog = captured["catalog"]["notes"][note_id]
+            self.assertLessEqual(set(projected_stdin), allowed)
+            self.assertLessEqual(set(projected_catalog), allowed)
+            projected_bytes = json.dumps(
+                [captured["stdin"], captured["catalog"]]
+            )
+            for sentinel in (
+                "example.invalid", "target-secret-sentinel",
+                "must-not-enter-formal-child", "unscanned-sentinel",
+            ):
+                self.assertNotIn(sentinel, projected_bytes)
+            with mock.patch.object(BRIDGE, "run_bounded_subprocess") as bounded:
+                bridge.tag_catalog_sources("board", {note_id})
+            bounded.assert_not_called()
+
+    def test_catalog_revision_backfill_failure_leaves_live_catalog_byte_identical(self):
+        for outcome in ("nonzero", "invalid-hash"):
+            with self.subTest(outcome=outcome), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                note_id = "t" * 24
+                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+                bridge.workspace = root
+                bridge.catalog_path = root / ".xhs-favorites" / "catalog.json"
+                bridge.organizer = Path(__file__).parents[1] / "scripts" / "organize.mjs"
+                bridge.boards = {"board": "Board"}
+                BRIDGE.atomic_json(bridge.catalog_path, {
+                    "version": 1,
+                    "notes": {
+                        note_id: {
+                            "note_id": note_id,
+                            "title": "Legacy note",
+                            "description": "Current trusted catalog content.",
+                        },
+                    },
+                })
+                before = bridge.catalog_path.read_bytes()
+
+                def run(command, **_kwargs):
+                    if outcome == "nonzero":
+                        return SimpleNamespace(returncode=1, stdout="", stderr="synthetic")
+                    temporary_catalog = Path(
+                        command[command.index("--catalog") + 1]
+                    )
+                    value = json.loads(temporary_catalog.read_text(encoding="utf-8"))
+                    value["notes"][note_id]["content_sha256"] = "invalid"
+                    BRIDGE.atomic_json(temporary_catalog, value)
+                    return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+                with mock.patch.object(
+                    BRIDGE, "run_bounded_subprocess", side_effect=run
+                ):
+                    with self.assertRaises(RuntimeError):
+                        bridge.tag_catalog_sources("board", {note_id})
+
+                self.assertEqual(bridge.catalog_path.read_bytes(), before)
+
+    def test_no_pending_import_rolls_back_exactly_when_revision_backfill_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            note_id = "v" * 24
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.workspace = root
+            bridge.state_dir = root / ".xhs-favorites"
+            bridge.status_path = bridge.state_dir / "bridge-status.json"
+            bridge.catalog_path = bridge.state_dir / "catalog.json"
+            bridge.organizer = Path(__file__).parents[1] / "scripts" / "organize.mjs"
+            bridge.boards = {"board": "Board"}
+            bridge.board_order = ["board"]
+            bridge.published_since = None
+            bridge.rebuild_knowledge_base = mock.Mock()
+            bridge.cache_missing_media = mock.Mock()
+            BRIDGE.atomic_json(bridge.catalog_path, {
+                "version": 1,
+                "notes": {
+                    note_id: {
+                        "note_id": note_id,
+                        "title": "Legacy note",
+                        "comment_evidence_checked": True,
+                    },
+                },
+            })
+            before = bridge.catalog_path.read_bytes()
+
+            with mock.patch.object(
+                BRIDGE,
+                "run_bounded_subprocess",
+                return_value=SimpleNamespace(
+                    returncode=1,
+                    stdout="",
+                    stderr="synthetic backfill failure",
+                ),
+            ) as bounded:
+                bridge.process_import(
+                    "manual_board",
+                    "board",
+                    {
+                        note_id: (
+                            "https://www.xiaohongshu.com/discovery/item/"
+                            f"{note_id}?xsec_token=transient"
+                        ),
+                    },
+                )
+
+            result = json.loads(
+                (
+                    bridge.state_dir / "runs" / "manual_board.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(result["state"], "failed")
+            self.assertEqual(bridge.catalog_path.read_bytes(), before)
+            bounded.assert_called_once()
+            bridge.rebuild_knowledge_base.assert_not_called()
+            bridge.cache_missing_media.assert_not_called()
 
     def test_cdp_waits_for_a_transient_card_and_retained_link_to_settle(self):
         note_url = "https://www.xiaohongshu.com/discovery/item/" + "x" * 24
@@ -5869,6 +6197,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
                     note_id: {
                         "note_id": note_id,
+                        "content_sha256": "a" * 64,
                         "comment_evidence_checked": True,
                         "source_board_ids": [],
                         "source_boards": [],

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Mapping
 import copy
 from contextlib import contextmanager, nullcontext
 from datetime import datetime, timedelta, timezone
@@ -19,6 +20,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import stat
 import subprocess
 import sys
@@ -1115,6 +1117,96 @@ def require_plain_file(path: Path, label: str) -> Path:
     return candidate
 
 
+FORMAL_NODE_ENVIRONMENT_KEYS = (
+    "SYSTEMROOT",
+    "WINDIR",
+    "COMSPEC",
+    "TEMP",
+    "TMP",
+    "TMPDIR",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TZ",
+)
+CONTENT_REVISION_NOTE_FIELDS = (
+    "title",
+    "display_title",
+    "description",
+    "desc",
+    "content",
+    "tags",
+    "tag_list",
+    "media_type",
+    "type",
+    "note_type",
+)
+
+
+def resolve_node_executable(candidate: Path | str | None = None) -> Path:
+    discovered = (
+        str(candidate)
+        if candidate is not None
+        else shutil.which("node.exe" if os.name == "nt" else "node")
+    )
+    if not discovered:
+        raise ValueError("Node.js runtime is unavailable")
+    raw = Path(os.path.abspath(discovered))
+    if raw.name.casefold() not in {"node", "node.exe"}:
+        raise ValueError("Node.js runtime executable is invalid")
+    try:
+        resolved = raw.resolve(strict=True)
+    except OSError as error:
+        raise ValueError("Node.js runtime is unavailable") from error
+    return require_plain_file(resolved, "Node.js runtime")
+
+
+def resolve_git_executable(candidate: Path | str | None = None) -> Path:
+    discovered = str(candidate) if candidate is not None else shutil.which("git")
+    if not discovered:
+        raise ValueError("Git runtime is unavailable")
+    raw = Path(os.path.abspath(discovered))
+    if raw.name.casefold() not in {"git", "git.exe"}:
+        raise ValueError("Git runtime executable is invalid")
+    try:
+        resolved = raw.resolve(strict=True)
+    except OSError as error:
+        raise ValueError("Git runtime is unavailable") from error
+    return require_plain_file(resolved, "Git runtime")
+
+
+def formal_node_environment(
+    source: Mapping[str, str] | None = None,
+    *,
+    path_entries: tuple[Path, ...] = (),
+) -> dict[str, str]:
+    values = os.environ if source is None else source
+    by_name = {
+        str(key).upper(): value
+        for key, value in values.items()
+        if isinstance(value, str) and value
+    }
+    environment = {
+        key: by_name[key]
+        for key in FORMAL_NODE_ENVIRONMENT_KEYS
+        if key in by_name
+    }
+    if path_entries:
+        environment["PATH"] = os.pathsep.join(
+            str(require_plain_directory(path, "formal child executable directory"))
+            for path in path_entries
+        )
+    return environment
+
+
+def content_revision_projection(note_id: str, note: dict) -> dict:
+    projected = {"note_id": note_id}
+    for key in CONTENT_REVISION_NOTE_FIELDS:
+        if key in note:
+            projected[key] = copy.deepcopy(note[key])
+    return projected
+
+
 def require_hex_secret(value: str, label: str) -> str:
     if not re.fullmatch(r"[a-f0-9]{64}", value):
         raise ValueError(f"{label} is missing or invalid; run setup-autosync.ps1")
@@ -1422,16 +1514,48 @@ class DiandianPageStop(RuntimeError):
 
 
 def validate_ai_page_state(value: dict, expected_url: str) -> None:
-    parsed = urlparse(value.get("href", ""))
-    expected = urlparse(expected_url)
+    try:
+        parsed = urlparse(value.get("href", ""))
+        expected = urlparse(expected_url)
+        parsed_hostname = parsed.hostname
+        expected_hostname = expected.hostname
+        parsed_username = parsed.username
+        parsed_password = parsed.password
+        parsed_port = parsed.port
+    except ValueError:
+        raise DiandianPageStop("unexpected-page") from None
+    query = {}
+    if parsed.query:
+        try:
+            query = parse_qs(
+                parsed.query,
+                keep_blank_values=True,
+                strict_parsing=True,
+            )
+        except ValueError:
+            raise DiandianPageStop("unexpected-page") from None
+    conversation_ids = query.get("conversationId", [])
+    valid_conversation_query = (
+        not query
+        or (
+            set(query) == {"conversationId"}
+            and len(conversation_ids) == 1
+            and re.fullmatch(
+                r"[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",
+                conversation_ids[0],
+            )
+        )
+    )
     if (
         parsed.scheme != expected.scheme
-        or parsed.hostname != expected.hostname
-        or parsed.port not in (None, 443)
+        or parsed_hostname != expected_hostname
+        or parsed_username is not None
+        or parsed_password is not None
+        or parsed_port is not None
         or parsed.path != expected.path
         or parsed.params
-        or parsed.query
         or parsed.fragment
+        or not valid_conversation_query
     ):
         raise DiandianPageStop("unexpected-page")
     body = normalize_sensitive_scan(value.get("body", ""))
@@ -2050,6 +2174,8 @@ class Bridge:
         self.diandian_report_path = self.state_dir / "diandian-rerun-report.json"
         self.xhs_dir = self.workspace / ".xhs-tools" / "XHS-Downloader"
         self.python = self.xhs_dir / ".venv" / "Scripts" / "python.exe"
+        self.node = resolve_node_executable()
+        self.git = resolve_git_executable()
         self.fetcher = self.skill_dir / "scripts" / "fetch-xhs-details.py"
         self.media_fetcher = self.skill_dir / "scripts" / "download-pending-media.py"
         self.media_dir = self.state_dir / "media"
@@ -2127,6 +2253,8 @@ class Bridge:
         )
         required_files = [
             self.python,
+            self.node,
+            self.git,
             self.fetcher,
             self.media_fetcher,
             self.organizer,
@@ -3779,6 +3907,10 @@ class Bridge:
             for attempt in range(ready_tries):
                 ensure_run_active()
                 ready_state = read_ai_page_state(session, state_expression)
+                if ready_state["href"] == "about:blank":
+                    if attempt + 1 < ready_tries:
+                        sleep(0.5)
+                    continue
                 validate_ai_page_state(ready_state, ai_url)
                 if ready_state["ready"] == "complete" and ready_state["input_ready"]:
                     break
@@ -4853,10 +4985,15 @@ class Bridge:
             return
         catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
         changed = False
+        missing_revisions: list[str] = []
         for note_id in note_ids:
             note = catalog.get("notes", {}).get(note_id)
             if not isinstance(note, dict):
                 continue
+            if not isinstance(note.get("content_sha256"), str) or re.fullmatch(
+                r"[a-f0-9]{64}", note["content_sha256"]
+            ) is None:
+                missing_revisions.append(note_id)
             ids = note.get("source_board_ids") if isinstance(note.get("source_board_ids"), list) else []
             names = note.get("source_boards") if isinstance(note.get("source_boards"), list) else []
             if board_id not in ids:
@@ -4868,6 +5005,64 @@ class Bridge:
                 changed = True
             note["source_board_ids"] = ids
             note["source_boards"] = names
+        if missing_revisions:
+            with tempfile.TemporaryDirectory(prefix="favsense-catalog-revision-") as temporary:
+                temporary_catalog = Path(temporary) / "catalog.json"
+                scoped_notes = {
+                    note_id: content_revision_projection(
+                        note_id,
+                        catalog["notes"][note_id],
+                    )
+                    for note_id in missing_revisions
+                }
+                atomic_json(temporary_catalog, {
+                    "version": catalog.get("version", 1),
+                    "notes": scoped_notes,
+                })
+                completed = run_bounded_subprocess(
+                    [
+                        str(resolve_node_executable(getattr(self, "node", None))),
+                        str(self.organizer),
+                        "--input", "-",
+                        "--catalog", str(temporary_catalog),
+                    ],
+                    input_text=json.dumps(
+                        {"notes": list(scoped_notes.values())},
+                        ensure_ascii=False,
+                    ),
+                    cwd=self.workspace,
+                    env=formal_node_environment(),
+                    timeout=120,
+                    stdout_limit=16 * 1024,
+                    stderr_limit=16 * 1024,
+                )
+                if completed.returncode != 0:
+                    raise RuntimeError(
+                        "catalog revision backfill failed: "
+                        f"{sanitize_error(completed.stderr)}"
+                    )
+                revised = json.loads(
+                    temporary_catalog.read_text(encoding="utf-8-sig")
+                )
+            revised_notes = revised.get("notes")
+            if not isinstance(revised_notes, dict):
+                raise RuntimeError(
+                    "catalog revision backfill did not produce trusted revisions"
+                )
+            for note_id in missing_revisions:
+                revision = (
+                    revised_notes.get(note_id, {}).get("content_sha256")
+                    if isinstance(revised_notes.get(note_id), dict)
+                    else None
+                )
+                if not isinstance(revision, str) or re.fullmatch(
+                    r"[a-f0-9]{64}", revision
+                ) is None:
+                    raise RuntimeError(
+                        "catalog revision backfill did not produce trusted revisions"
+                    )
+                catalog["notes"][note_id]["content_sha256"] = revision
+                changed = True
         if changed:
             atomic_json(self.catalog_path, catalog)
 
@@ -4941,7 +5136,8 @@ class Bridge:
         ):
             raise ValueError("curation generation is unavailable")
         command = [
-            "node", str(self.snapshot_builder),
+            str(resolve_node_executable(getattr(self, "node", None))),
+            str(self.snapshot_builder),
             "--root", str(self.workspace),
             "--kb-target", str(self.knowledge_base),
             "--public-target", str(self.workspace / "site" / "data" / "knowledge.json"),
@@ -4960,7 +5156,11 @@ class Bridge:
             command.extend(["--resources", str(self.resource_registry)])
         completed = run_bounded_subprocess(
             command,
+            input_text="",
             cwd=self.workspace,
+            env=formal_node_environment(path_entries=(
+                resolve_git_executable(getattr(self, "git", None)).parent,
+            )),
             timeout=180,
             stdout_limit=16 * 1024,
             stderr_limit=16 * 1024,
@@ -5051,8 +5251,14 @@ class Bridge:
             "effective_date": datetime.now(timezone.utc).date().isoformat(),
         })
         completed = run_bounded_subprocess(
-            ["node", str(self.curation_pipeline), "--input", str(input_path), "--output", str(output_path)],
-            cwd=self.workspace, timeout=120, stdout_limit=16 * 1024, stderr_limit=16 * 1024,
+            [
+                str(resolve_node_executable(getattr(self, "node", None))),
+                str(self.curation_pipeline),
+                "--input", str(input_path),
+                "--output", str(output_path),
+            ],
+            input_text="", cwd=self.workspace, env=formal_node_environment(), timeout=120,
+            stdout_limit=16 * 1024, stderr_limit=16 * 1024,
         )
         if completed.returncode != 0:
             raise RuntimeError(f"curation pipeline failed: {sanitize_error(completed.stderr)}")

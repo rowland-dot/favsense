@@ -13,7 +13,7 @@ __DIANDIAN_MATCH_LINE__
 // @grant        GM_registerMenuCommand
 // @grant        GM_openInTab
 // @connect      127.0.0.1
-// @run-at       document-idle
+// @run-at       document-start
 // @updateURL    none
 // @downloadURL  none
 // ==/UserScript==
@@ -32,10 +32,10 @@ __DIANDIAN_MATCH_LINE__
     && DIANDIAN.cdp_enabled !== true
     && location.pathname === new URL(DIANDIAN.ai_chat_url).pathname;
   const notePageId = location.pathname.match(/^\/(?:explore|discovery\/item)\/([A-Za-z0-9_-]{1,128})$/)?.[1];
-  const transientNoteWorkerUrl = notePageId && new URLSearchParams(location.search).get("xhs_kb_share_worker")
-    ? location.href
+  const transientNoteWorkerId = notePageId
+    ? new URLSearchParams(location.search).get("xhs_kb_share_worker") || ""
     : "";
-  if (transientNoteWorkerUrl) history.replaceState(history.state, "", location.pathname);
+  const transientNoteWorkerUrl = transientNoteWorkerId ? location.href : "";
   const SIGNED_FIELDS = ["type", "job_id", "worker_id", "batch", "run_id", "board_id", "note_id", "title", "url", "summary", "error"];
   let signingKeyPromise;
   let channelNamePromise;
@@ -531,7 +531,14 @@ __DIANDIAN_MATCH_LINE__
       while (Date.now() < deadline) {
         assertSafePage();
         try {
-          copiedUrl = normalizeSharedNoteUrl(await navigator.clipboard.readText(), noteId);
+          const readWait = Math.max(1, Math.min(1000, deadline - Date.now()));
+          const clipboardText = await Promise.race([
+            navigator.clipboard.readText(),
+            sleep(readWait).then(() => {
+              throw workflowError("clipboard-read-timeout", "浏览器剪贴板读取超时");
+            }),
+          ]);
+          copiedUrl = normalizeSharedNoteUrl(clipboardText, noteId);
           if (copiedUrl) break;
         } catch {
           copiedUrl = normalizeSharedNoteUrl(transientNoteWorkerUrl || location.href, noteId);
@@ -1303,29 +1310,38 @@ __DIANDIAN_MATCH_LINE__
     }
   }
 
-  GM_registerMenuCommand("打开拾光台后开始整理", () => show("请在本地拾光台的“同步与设置”页面点击“开始整理”"));
-  const query = new URLSearchParams(location.search);
-  if (notePageId) {
-    const shareWorkerId = query.get("xhs_kb_share_worker");
-    if (shareWorkerId) {
-      runShareLinkWorker(notePageId, shareWorkerId).catch((error) => show(error.message || String(error), true));
-    } else if (query.get("xhs_kb_opened") === "1") {
-      history.replaceState(history.state, "", location.pathname);
+  function startUserscript() {
+    if (transientNoteWorkerId) history.replaceState(history.state, "", location.pathname);
+    GM_registerMenuCommand("打开拾光台后开始整理", () => show("请在本地拾光台的“同步与设置”页面点击“开始整理”"));
+    const query = new URLSearchParams(location.search);
+    if (notePageId) {
+      if (!transientNoteWorkerId && query.get("xhs_kb_opened") === "1") {
+        history.replaceState(history.state, "", location.pathname);
+      }
+      return;
     }
-    return;
+    if (onAiChat) {
+      runAiChatWorker().catch((error) => show(error.message || String(error), true));
+      return;
+    }
+    const requestedNoteId = query.get("xhs_kb_open_note");
+    if (boardId && requestedNoteId) {
+      openRequestedNote(requestedNoteId).catch((error) => show(error.message || String(error), true));
+      return;
+    }
+    if (query.get("xhs_kb_sync") !== "1") return;
+    const mode = query.get("xhs_kb_mode") === "history" ? "history" : "incremental";
+    const batch = (query.get("xhs_kb_batch") || String(Date.now())).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
+    if (onProfile) runProfile(mode, batch);
+    else if (boardId) runBoard(mode, batch);
   }
-  if (onAiChat) {
-    runAiChatWorker().catch((error) => show(error.message || String(error), true));
-    return;
+
+  if (transientNoteWorkerId) {
+    runShareLinkWorker(notePageId, transientNoteWorkerId).catch((error) => show(error.message || String(error), true));
   }
-  const requestedNoteId = query.get("xhs_kb_open_note");
-  if (boardId && requestedNoteId) {
-    openRequestedNote(requestedNoteId).catch((error) => show(error.message || String(error), true));
-    return;
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", startUserscript, { once: true });
+  } else {
+    startUserscript();
   }
-  if (query.get("xhs_kb_sync") !== "1") return;
-  const mode = query.get("xhs_kb_mode") === "history" ? "history" : "incremental";
-  const batch = (query.get("xhs_kb_batch") || String(Date.now())).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
-  if (onProfile) runProfile(mode, batch);
-  else if (boardId) runBoard(mode, batch);
 })();
