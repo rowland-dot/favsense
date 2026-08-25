@@ -201,3 +201,33 @@ Skipped — approved Plan declares no authored mockups, pipeline index has `mock
 CODE_GATE_STATUS[Step 5 REVIEW]=PASS
 
 Final verdict: PASS (1 pass)
+
+---
+
+## Filter status — no filter (default run)
+
+## Step 6 — QA
+
+- Canonical report: `docs/reports/qa/2026-08-25-favsense-end-to-end-organization-recovery-qa-report.md`
+- Synthetic state coverage: 9/9; `VC-QA-01..15` PASS.
+- QA fixes: 2 MEDIUM found, 2 verified, 0 deferred; final independent review `CRITICAL=0 HIGH=0 MEDIUM=0 LOW=0`.
+- Browser baseline/final: 30/30 → 32/32 desktop/mobile Playwright journeys.
+- Step 6 code gate: `npm.cmd run release:check` PASS.
+- Safety: synthetic fixtures only; no real migration apply, platform access, private data, push, PR, merge or deploy.
+
+CODE_GATE_STATUS[Step 6 QA]=PASS
+
+## Step 7 — COVERAGE-FILL
+
+- Canonical report: `docs/reports/test-outcomes/2026-08-25-favsense-end-to-end-organization-recovery-test-outcome.md`
+- Stage A: 6/6 applicable layers and 9/9 approved states audited; one fixture-isolation gap closed with RED 0/2 → GREEN 2/2.
+- Stage B: Mount=`warn (no new components)`; parity-companion=`warn (no mockups)`.
+- Code gate: `npm.cmd run release:check` PASS with 34/34 desktop/mobile Playwright journeys; explicit Python discovery 230/230; `npm.cmd run verify` PASS; Windows contracts PASS.
+- Repeatability: two consecutive `npm.cmd run test:organization` executions each passed Python 11/11 and Node 39/39.
+- Stage C: required because the synthetic fixture and `.spec.mjs` files changed; focused post-gate user walk passed 24/24 desktop/mobile journeys.
+- Final independent review: `CRITICAL=0 HIGH=0 MEDIUM=0 LOW=0`.
+
+CODE_GATE_STATUS[Step 7 COVERAGE-FILL]=PASS
+USER_GATE_STATUS[Step 7 COVERAGE-FILL]=PASS
+
+Final verdict: PASS
