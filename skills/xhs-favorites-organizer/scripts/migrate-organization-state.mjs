@@ -21,6 +21,7 @@ import { containsCredentialShape } from "./sensitive-data.mjs";
 const HASH = /^[a-f0-9]{64}$/;
 const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/;
 const RESERVED_IDS = new Set(["__proto__", "constructor", "prototype"]);
+const WINDOWS_RESERVED_BASENAME = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 const REPORT_KEYS = ["apply_performed", "counts", "created_at", "dry_run_id", "expires_at", "next_command", "schema_version"];
 const PARTICIPANTS = [
   ["organization-state", "organization_state"],
@@ -93,6 +94,7 @@ function validateInput(input) {
 function uniqueRecords(input) {
   validateInput(input);
   const records = new Map();
+  const filenameIds = new Map();
   const conflicts = new Set();
   let duplicates = 0;
   for (const record of input.records) {
@@ -101,6 +103,14 @@ function uniqueRecords(input) {
       || !record?.note || typeof record.note !== "object" || Array.isArray(record.note)) {
       throw new Error("MIGRATION_RECORD_INVALID");
     }
+    if (WINDOWS_RESERVED_BASENAME.test(id)) {
+      throw new Error("MIGRATION_RECORD_FILENAME_RESERVED");
+    }
+    const filenameId = id.toLowerCase();
+    if (filenameIds.has(filenameId) && filenameIds.get(filenameId) !== id) {
+      throw new Error("MIGRATION_RECORD_FILENAME_ALIAS");
+    }
+    filenameIds.set(filenameId, id);
     if (!records.has(id)) records.set(id, structuredClone(record));
     else {
       duplicates += 1;

@@ -170,6 +170,32 @@ class SaveDiandianSummaryTests(unittest.TestCase):
                     note_id="../outside",
                 )
 
+    def test_rejects_existing_case_insensitive_filename_alias(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            private_root = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries"
+            private_root.mkdir(parents=True)
+            existing = private_root / "CASEID.json"
+            existing.write_text("keep", encoding="utf-8")
+            destination = private_root / "caseid.json"
+
+            with self.assertRaisesRegex(ValueError, "filename alias"):
+                module.save_record(
+                    destination=destination,
+                    title="示例笔记",
+                    summary_text="正文",
+                    note_id="caseid",
+                )
+
+            self.assertEqual(existing.read_text(encoding="utf-8"), "keep")
+
+    def test_rejects_windows_reserved_note_filename(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            private_root = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries"
+            with self.assertRaisesRegex(ValueError, "unsafe filename"):
+                module.private_destination(private_root, "CON")
+
     def test_save_record_rejects_a_destination_outside_the_private_keyed_store(self):
         module = load_module()
         with tempfile.TemporaryDirectory() as temp_dir:

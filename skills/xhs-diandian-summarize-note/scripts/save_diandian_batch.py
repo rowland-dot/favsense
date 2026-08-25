@@ -14,6 +14,8 @@ from save_diandian_summary import (
     MAX_SUMMARY_LENGTH,
     MAX_TITLE_LENGTH,
     _recover_batch_transaction_unlocked,
+    _note_filename_identity,
+    _reject_existing_filename_alias,
     _write_batch_journal,
     build_record,
     private_destination,
@@ -37,7 +39,14 @@ def _commit_records_locked(
     journal_path = private_root / BATCH_JOURNAL_NAME
     items: list[dict[str, object]] = []
     try:
+        filename_identities: set[str] = set()
         for destination, record in prepared:
+            note_id = str(record["note_id"])
+            filename_identity = _note_filename_identity(note_id)
+            if filename_identity in filename_identities:
+                raise ValueError("batch contains a case-insensitive filename alias")
+            filename_identities.add(filename_identity)
+            _reject_existing_filename_alias(private_root, destination)
             temporary = destination.with_name(
                 f".{destination.name}.{transaction_id}.stage"
             )
@@ -127,9 +136,10 @@ def import_batch(input_file: Path, private_root: Path) -> int:
         if not all(isinstance(item[key], str) for key in ("note_id", "title", "summary")):
             raise ValueError("batch note_id, title and summary must be strings")
         note_id = item["note_id"]
-        if note_id in seen:
-            raise ValueError("batch contains a duplicate note_id")
-        seen.add(note_id)
+        filename_identity = _note_filename_identity(note_id)
+        if filename_identity in seen:
+            raise ValueError("batch contains a duplicate note_id or filename alias")
+        seen.add(filename_identity)
         destination = private_destination(private_root, note_id)
         record = build_record(item["title"], item["summary"], note_id)
         prepared.append((destination, record))

@@ -69,6 +69,29 @@ class SaveDiandianBatchTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("duplicate note_id", result.stderr)
 
+    def test_rejects_case_insensitive_filename_aliases_before_writing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            private_root = root / ".xhs-favorites" / "diandian-summaries"
+            batch = root / "batch.json"
+            batch.write_text(json.dumps({
+                "succeeded": [
+                    {"note_id": "caseid", "title": "First", "summary": "A complete safe summary."},
+                    {"note_id": "CASEID", "title": "Second", "summary": "Another complete safe summary."},
+                ]
+            }), encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--input", str(batch), "--private-root", str(private_root)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("filename alias", result.stderr)
+            self.assertFalse(private_root.exists())
+
     def test_validates_every_item_before_writing_any_record(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -34,6 +34,9 @@ except ImportError:  # pragma: no cover - POSIX uses fcntl above.
 
 
 NOTE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+WINDOWS_RESERVED_BASENAME = re.compile(
+    r"(?i)^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$"
+)
 MAX_TITLE_LENGTH = 200
 MAX_SUMMARY_LENGTH = 200_000
 MAX_SUMMARY_INPUT_BYTES = MAX_SUMMARY_LENGTH * 4
@@ -145,6 +148,23 @@ def _write_record_unlocked(destination: Path, record: dict[str, str | int]) -> N
         temporary.replace(destination)
     finally:
         temporary.unlink(missing_ok=True)
+
+
+def _note_filename_identity(note_id: str) -> str:
+    normalized = note_id.strip()
+    if (
+        not NOTE_ID_PATTERN.fullmatch(normalized)
+        or WINDOWS_RESERVED_BASENAME.fullmatch(normalized)
+    ):
+        raise ValueError("note_id contains an unsafe filename")
+    return normalized.casefold()
+
+
+def _reject_existing_filename_alias(private_root: Path, destination: Path) -> None:
+    expected = destination.name.casefold()
+    for entry in private_root.iterdir():
+        if entry.name.casefold() == expected and entry.name != destination.name:
+            raise ValueError("DianDian note_id has a case-insensitive filename alias")
 
 
 def _resolved_private_root(private_root: Path) -> Path:
@@ -565,6 +585,7 @@ def private_store_lock(private_root: Path) -> Iterator[None]:
 
 def write_record(destination: Path, record: dict[str, str | int]) -> None:
     with private_store_lock(destination.parent):
+        _reject_existing_filename_alias(destination.parent, destination)
         _write_record_unlocked(destination, record)
 
 
@@ -584,8 +605,7 @@ def save_record(
 
 def private_destination(private_root: Path, note_id: str) -> Path:
     resolved_root = _resolved_private_root(private_root)
-    if not NOTE_ID_PATTERN.fullmatch(note_id.strip()):
-        raise ValueError("note_id contains unsupported characters")
+    _note_filename_identity(note_id)
     return resolved_root / f"{note_id.strip()}.json"
 
 

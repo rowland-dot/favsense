@@ -634,6 +634,44 @@ test("migration dry-run is deterministic, count-only, conservative, and writes n
   }
 });
 
+test("migration rejects Windows-alias and DOS-device IDs before dry-run or apply mutation", async () => {
+  const { applyMigration, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const fixture = await loadMigrationFixture();
+  const root = await mkdtemp(join(tmpdir(), "favsense-migration-id-alias-"));
+  const base = fixture.records[0];
+  const lower = { ...structuredClone(base), id: "caseid" };
+  const upper = { ...structuredClone(base), id: "CASEID" };
+  const aliases = { ...fixture, records: [lower, upper] };
+  const safeInput = { ...fixture, records: [lower] };
+  const createdAt = "2026-08-23T00:00:00.000Z";
+  try {
+    await writeFile(join(root, "sentinel.txt"), "unchanged");
+    assert.throws(
+      () => planMigration(aliases, { now: createdAt, root }),
+      /MIGRATION_RECORD_FILENAME_ALIAS/,
+    );
+    assert.throws(
+      () => planMigration({ ...fixture, records: [{ ...structuredClone(base), id: "CON" }] }, { now: createdAt, root }),
+      /MIGRATION_RECORD_FILENAME_RESERVED/,
+    );
+
+    const report = planMigration(safeInput, { now: createdAt, root });
+    await assert.rejects(
+      applyMigration(aliases, {
+        root,
+        report,
+        confirm: report.dry_run_id,
+        now: "2026-08-23T00:01:00.000Z",
+      }),
+      /MIGRATION_RECORD_FILENAME_ALIAS/,
+    );
+    assert.equal(await readFile(join(root, "sentinel.txt"), "utf8"), "unchanged");
+    assert.deepEqual(await readdir(root), ["sentinel.txt"]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("migration apply requires the matching unexpired dry-run confirmation", async () => {
   const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
   const fixture = await loadMigrationFixture();
