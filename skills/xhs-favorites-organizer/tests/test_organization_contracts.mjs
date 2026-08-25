@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -632,6 +632,76 @@ test("migration apply requires the matching unexpired dry-run confirmation", asy
   }
 });
 
+test("migration apply rejects a concurrent distinct plan before touching shared targets", async () => {
+  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const firstInput = await loadMigrationFixture();
+  const secondInput = structuredClone(firstInput);
+  secondInput.records[0].note.title = "Distinct synthetic migration plan";
+  const root = await mkdtemp(join(tmpdir(), "favsense-migration-concurrent-"));
+  try {
+    const firstReport = planMigration(firstInput, { now: "2026-08-23T00:00:00.000Z", root });
+    const secondReport = planMigration(secondInput, { now: "2026-08-23T00:00:00.000Z", root });
+    assert.notEqual(firstReport.dry_run_id, secondReport.dry_run_id);
+    const lock = join(root, ".xhs-favorites", "organization-migration", ".apply-lock");
+    await mkdir(lock, { recursive: true });
+    await writeFile(join(lock, "owner.json"), JSON.stringify({
+      schema_version: 1,
+      pid: process.pid,
+      nonce: "synthetic-active-owner",
+      dry_run_id: firstReport.dry_run_id,
+    }));
+
+    await assert.rejects(
+      applyMigration(secondInput, {
+        root,
+        report: secondReport,
+        confirm: secondReport.dry_run_id,
+        now: "2026-08-23T00:01:00.000Z",
+      }),
+      (error) => error?.code === "MIGRATION_ALREADY_RUNNING"
+        && error?.next_action === "rerun_dry_run",
+    );
+    for (const target of Object.values(migrationTargetPaths(root))) {
+      await assert.rejects(lstat(target), (error) => error?.code === "ENOENT");
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("migration mutation lock rejects a junction root without writing through it", async (context) => {
+  const { applyMigration, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const input = await loadMigrationFixture();
+  const parent = await mkdtemp(join(tmpdir(), "favsense-migration-junction-"));
+  const target = join(parent, "target");
+  const linkedRoot = join(parent, "linked-root");
+  await mkdir(target);
+  try {
+    try {
+      await symlink(target, linkedRoot, "junction");
+    } catch (error) {
+      if (["EPERM", "EACCES", "ENOSYS"].includes(error.code)) {
+        context.skip(`junction unavailable: ${error.code}`);
+        return;
+      }
+      throw error;
+    }
+    const report = planMigration(input, { now: "2026-08-23T00:00:00.000Z", root: linkedRoot });
+    await assert.rejects(
+      applyMigration(input, {
+        root: linkedRoot,
+        report,
+        confirm: report.dry_run_id,
+        now: "2026-08-23T00:01:00.000Z",
+      }),
+      /MIGRATION_(?:ROOT_UNSAFE|LOCK_INVALID)/,
+    );
+    assert.deepEqual(await readdir(target), []);
+  } finally {
+    await rm(parent, { recursive: true, force: true });
+  }
+});
+
 test("migration apply maps legacy uncertainty honestly and keeps unverified Skill private", async () => {
   const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
   const { expectedResourceRevisions } = await import("../scripts/resource-quality.mjs");
@@ -860,6 +930,59 @@ test("migration restart recovery rolls back crashes at every durable participant
     } finally {
       await rm(root, { recursive: true, force: true });
     }
+  }
+});
+
+test("snapshot capture fails closed while a crashed migration journal requires recovery", async () => {
+  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
+  const fixture = await loadMigrationFixture();
+  const root = await mkdtemp(join(tmpdir(), "favsense-migration-snapshot-block-"));
+  try {
+    const targets = migrationTargetPaths(root);
+    for (const [key, target] of Object.entries(targets)) {
+      if (key === "point_records") {
+        await mkdir(target, { recursive: true });
+        await writeFile(join(target, "old.json"), migrationOldBytes(key, "snapshot-block"));
+      } else {
+        await mkdir(dirname(target), { recursive: true });
+        await writeFile(target, migrationOldBytes(key, "snapshot-block"));
+      }
+    }
+    const report = planMigration(fixture, { now: "2026-08-23T00:00:00.000Z", root });
+    await assert.rejects(applyMigration(fixture, {
+      root,
+      report,
+      confirm: report.dry_run_id,
+      now: "2026-08-23T00:01:00.000Z",
+      failAt: "crash-after-swap:organization-state",
+    }), /SIMULATED_CRASH/);
+    const kbTarget = join(root, "published-kb");
+    const publicTarget = join(root, "published.json");
+    await mkdir(kbTarget);
+    await writeFile(join(kbTarget, "build.json"), '{"build_version":"old"}');
+    await writeFile(publicTarget, '{"meta":{"buildVersion":"old"}}');
+    const beforeState = await readFile(targets.organization_state, "utf8");
+    const calls = [];
+    await assert.rejects(buildOrganizationSnapshot({
+      root,
+      kbTarget,
+      publicTarget,
+      sealedScopeDigest: "a".repeat(64),
+      curationInputDigest: "b".repeat(64),
+      configDigest: "c".repeat(64),
+      inputRevisionDigest: "d".repeat(64),
+      effectiveDate: "2026-08-25",
+      prepareSnapshot: async () => { calls.push("capture"); return {}; },
+      buildKnowledgeBase: async () => { calls.push("kb"); },
+      buildPublicSite: async () => { calls.push("public"); },
+    }), /SNAPSHOT_MIGRATION_RECOVERY_REQUIRED/);
+    assert.deepEqual(calls, []);
+    assert.equal(await readFile(targets.organization_state, "utf8"), beforeState);
+    assert.equal(await readFile(join(kbTarget, "build.json"), "utf8"), '{"build_version":"old"}');
+    assert.equal(await readFile(publicTarget, "utf8"), '{"meta":{"buildVersion":"old"}}');
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });
 

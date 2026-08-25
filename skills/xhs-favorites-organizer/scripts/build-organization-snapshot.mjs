@@ -6,6 +6,7 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { executeJournaledTransaction, recoverJournaledTransaction } from "./journaled-transaction.mjs";
+import { acquireOrganizationMutationLock } from "./organization-mutation-lock.mjs";
 
 const HASH = /^[a-f0-9]{64}$/;
 const validDate = (value) => {
@@ -79,24 +80,35 @@ async function recoverPendingSnapshotTransactions(root, storageRoot, participant
   }
 }
 
+async function assertNoPendingMigrationTransaction(root) {
+  const pending = (await readdir(root)).filter((name) => name.startsWith(".organization-tx-migration-"));
+  if (pending.length) throw new Error("SNAPSHOT_MIGRATION_RECOVERY_REQUIRED");
+}
+
 export async function buildOrganizationSnapshot(options) {
   const root = resolve(options.root);
   const storageRoot = join(root, ".xhs-tools", "organization-snapshots");
-  await assertPlainPath(root, storageRoot);
-  await mkdir(storageRoot, { recursive: true });
-  await assertPlainPath(root, storageRoot);
-  const storageMetadata = await lstat(storageRoot);
-  if (!storageMetadata.isDirectory() || storageMetadata.isSymbolicLink()) throw new Error("SNAPSHOT_STORAGE_INVALID");
   const kbTarget = resolve(options.kbTarget);
   const publicTarget = resolve(options.publicTarget);
   if (!inside(root, kbTarget) || !inside(root, publicTarget)) throw new Error("SNAPSHOT_TARGET_INVALID");
-  const releaseLock = await acquireSnapshotLock(storageRoot);
+  const releaseMutationLock = await acquireOrganizationMutationLock(root, {
+    busyError: () => new Error("SNAPSHOT_ALREADY_RUNNING"),
+    invalidError: () => new Error("SNAPSHOT_LOCK_INVALID"),
+  });
+  let releaseLock = null;
   const participants = [
     { name: "knowledge-base", target: kbTarget },
     { name: "public", target: publicTarget },
   ];
   let stagingRoot = null;
   try {
+    await assertPlainPath(root, storageRoot);
+    await mkdir(storageRoot, { recursive: true });
+    await assertPlainPath(root, storageRoot);
+    const storageMetadata = await lstat(storageRoot);
+    if (!storageMetadata.isDirectory() || storageMetadata.isSymbolicLink()) throw new Error("SNAPSHOT_STORAGE_INVALID");
+    releaseLock = await acquireSnapshotLock(storageRoot);
+    await assertNoPendingMigrationTransaction(root);
     await recoverPendingSnapshotTransactions(root, storageRoot, participants);
     const prepared = typeof options.prepareSnapshot === "function" ? await options.prepareSnapshot() : {};
     const buildOptions = { ...options, ...prepared };
@@ -127,7 +139,8 @@ export async function buildOrganizationSnapshot(options) {
     if (stagingRoot) await rm(stagingRoot, { recursive: true, force: true });
     throw error;
   } finally {
-    await releaseLock();
+    await releaseLock?.();
+    await releaseMutationLock();
   }
 }
 

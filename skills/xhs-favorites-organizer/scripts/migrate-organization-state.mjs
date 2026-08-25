@@ -13,6 +13,7 @@ import { curationRevision, publicCurationProjection } from "./curation-revision.
 import { generateCandidates } from "./generate-curation-candidates.mjs";
 import { executeJournaledTransaction, recoverJournaledTransaction } from "./journaled-transaction.mjs";
 import { sealCandidateRevision } from "./normalize-evidence.mjs";
+import { acquireOrganizationMutationLock } from "./organization-mutation-lock.mjs";
 import { atomicWriteTextFile } from "./public-tree-policy.mjs";
 import { confirmedSkillResource, validateVerifiedResource } from "./resource-quality.mjs";
 import { containsCredentialShape } from "./sensitive-data.mjs";
@@ -434,10 +435,19 @@ export async function applyMigration(input, { root: rootValue, report, confirm, 
   ) {
     throw migrationError("MIGRATION_CONFIRMATION_EXPIRED");
   }
+  const transactionId = `migration-${report.dry_run_id.slice(0, 16)}`;
+  if (!await pathMetadata(join(root, `.organization-tx-${transactionId}`))) {
+    validateReport(report, planMigration(input, { now: report.created_at, root }));
+  }
   const targets = migrationTargetPaths(root);
   const privatePaths = migrationPrivatePaths(root, report.dry_run_id);
   for (const target of [...Object.values(targets), ...Object.values(privatePaths)]) await assertSafePath(root, target);
-  const transactionId = `migration-${report.dry_run_id.slice(0, 16)}`;
+  const releaseLock = await acquireOrganizationMutationLock(root, {
+    busyError: () => migrationError("MIGRATION_ALREADY_RUNNING"),
+    invalidError: () => new Error("MIGRATION_LOCK_INVALID"),
+  });
+  try {
+  for (const target of [...Object.values(targets), ...Object.values(privatePaths)]) await assertSafePath(root, target);
   const priorManifest = await readSafeJsonFile(privatePaths.rollback_manifest);
   const pendingTransaction = await pathMetadata(join(root, `.organization-tx-${transactionId}`));
   if (priorManifest || pendingTransaction) {
@@ -588,6 +598,9 @@ export async function applyMigration(input, { root: rootValue, report, confirm, 
     },
   });
   return { schema_version: 1, outcome: "applied", dry_run_id: report.dry_run_id, counts: report.counts };
+  } finally {
+    await releaseLock();
+  }
 }
 
 function parseArguments(argv) {

@@ -180,6 +180,31 @@ test("target-global lock rejects a concurrent snapshot before either transaction
   await first;
 });
 
+test("snapshot capture rejects an active migration mutation lock before reading inputs", async () => {
+  const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
+  const paths = await fixture();
+  const lock = join(paths.root, ".xhs-favorites", "organization-migration", ".apply-lock");
+  await mkdir(lock, { recursive: true });
+  await writeFile(join(lock, "owner.json"), JSON.stringify({
+    schema_version: 1,
+    pid: process.pid,
+    nonce: "synthetic-active-migration",
+  }));
+  const calls = [];
+  await assert.rejects(buildOrganizationSnapshot({
+    ...paths,
+    sealedScopeDigest: "a".repeat(64),
+    curationInputDigest: "b".repeat(64),
+    configDigest: "c".repeat(64),
+    inputRevisionDigest: "d".repeat(64),
+    effectiveDate: "2026-08-25",
+    prepareSnapshot: async () => { calls.push("capture"); return {}; },
+    buildKnowledgeBase: builder("kb", calls),
+    buildPublicSite: builder("public", calls),
+  }), /SNAPSHOT_ALREADY_RUNNING/);
+  assert.deepEqual(calls, []);
+});
+
 test("complete input revision changes the canonical build version", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const firstPaths = await fixture();
@@ -338,6 +363,40 @@ test("unsafe private-root links are rejected before any outside directory is cre
     buildPublicSite: builder("public", []),
   }), /SNAPSHOT_INPUT_PATH_INVALID/);
   assert.deepEqual(await readdir(outside), []);
+});
+
+test("snapshot rejects a junction root before creating private storage outside it", async (context) => {
+  const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
+  const parent = await mkdtemp(join(tmpdir(), "favsense-snapshot-root-link-"));
+  const outside = join(parent, "outside");
+  const linkedRoot = join(parent, "linked-root");
+  await mkdir(outside);
+  try {
+    try {
+      await symlink(outside, linkedRoot, process.platform === "win32" ? "junction" : "dir");
+    } catch (error) {
+      if (["EPERM", "EACCES", "ENOSYS"].includes(error.code)) {
+        context.skip(`directory link unavailable: ${error.code}`);
+        return;
+      }
+      throw error;
+    }
+    await assert.rejects(buildOrganizationSnapshot({
+      root: linkedRoot,
+      kbTarget: join(linkedRoot, "knowledge-base"),
+      publicTarget: join(linkedRoot, "knowledge.json"),
+      sealedScopeDigest: "a".repeat(64),
+      curationInputDigest: "b".repeat(64),
+      configDigest: "c".repeat(64),
+      inputRevisionDigest: "d".repeat(64),
+      effectiveDate: "2026-08-25",
+      buildKnowledgeBase: builder("kb", []),
+      buildPublicSite: builder("public", []),
+    }), /SNAPSHOT_LOCK_INVALID/);
+    assert.deepEqual(await readdir(outside), []);
+  } finally {
+    await rm(parent, { recursive: true, force: true });
+  }
 });
 
 test("effective snapshot curation removes pending scoped work and admits only explicit accepted entries", async () => {
