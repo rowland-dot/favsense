@@ -32,4 +32,11 @@ test("confirmed Skill fixture exposes the complete review metadata", async ({ pa
   await expect(detail.getByRole("link", { name: /Official synthetic Skill 官方仓库/ })).toBeVisible();
   await expect(detail.getByRole("link", { name: /Official synthetic Skill 下载 ZIP/ })).toBeVisible();
   await expect(detail.getByRole("link", { name: /Official synthetic Skill 文档/ })).toBeVisible();
+
+  const attributeRows = detail.locator(".detail-resource-attributes > span");
+  await expect(attributeRows).toHaveCount(4);
+  const boxes = await attributeRows.evaluateAll((rows) => rows.map((row) => row.getBoundingClientRect().toJSON()));
+  for (let index = 1; index < boxes.length; index += 1) {
+    expect(boxes[index - 1].bottom).toBeLessThanOrEqual(boxes[index].top);
+  }
 });
