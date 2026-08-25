@@ -4,7 +4,7 @@ import { execFile } from "node:child_process";
 import { lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 
 const hex = (character) => character.repeat(64);
@@ -511,6 +511,75 @@ test("journaled recovery rejects a duplicate-name corrupted coordinator journal 
       /TRANSACTION_RECOVERY_PARTICIPANTS_INVALID/,
     );
     assert.equal(await readFile(left, "utf8"), "new-left");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("journaled recovery fails closed when immutable participant state is corrupted", async () => {
+  const { executeJournaledTransaction, recoverJournaledTransaction } = await import("../scripts/journaled-transaction.mjs");
+  const root = await mkdtemp(join(tmpdir(), "favsense-journal-state-corrupt-"));
+  const target = join(root, "left.txt");
+  const participants = [{ name: "left", target, content: "new-left" }];
+  const transaction = join(root, ".organization-tx-tx-state-corrupt");
+  const backup = join(transaction, "backup-left");
+  try {
+    await writeFile(target, "old-left");
+    await assert.rejects(
+      executeJournaledTransaction({
+        root,
+        id: "tx-state-corrupt",
+        participants,
+        failAt: "crash-after-swap:left",
+      }),
+      /SIMULATED_CRASH/,
+    );
+    const journalPath = join(transaction, "journal.json");
+    const journal = JSON.parse(await readFile(journalPath, "utf8"));
+    journal.participants[0].had_live = false;
+    await writeFile(journalPath, JSON.stringify(journal));
+
+    await assert.rejects(
+      recoverJournaledTransaction({ root, id: "tx-state-corrupt", participants }),
+      /TRANSACTION_JOURNAL_STATE_INVALID/,
+    );
+    assert.equal(await readFile(target, "utf8"), "new-left");
+    assert.equal(await readFile(backup, "utf8"), "old-left");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("durable journal recovery survives an abrupt child exit at a phase boundary", async () => {
+  const { recoverJournaledTransaction } = await import("../scripts/journaled-transaction.mjs");
+  const root = await mkdtemp(join(tmpdir(), "favsense-journal-abrupt-exit-"));
+  const left = join(root, "left.txt");
+  const right = join(root, "right.txt");
+  const participants = [
+    { name: "left", target: left, content: "new-left" },
+    { name: "right", target: right, content: "new-right" },
+  ];
+  const moduleUrl = pathToFileURL(resolve(testRoot, "../scripts/journaled-transaction.mjs")).href;
+  try {
+    await writeFile(left, "old-left");
+    await writeFile(right, "old-right");
+    const child = `
+      const { executeJournaledTransaction } = await import(${JSON.stringify(moduleUrl)});
+      await executeJournaledTransaction({
+        root: ${JSON.stringify(root)},
+        id: "tx-abrupt-exit",
+        participants: ${JSON.stringify(participants)},
+        beforeParticipant: async (name) => { if (name === "right") process.exit(73); },
+      });
+    `;
+    await assert.rejects(
+      execFileAsync(process.execPath, ["--input-type=module", "-e", child]),
+      (error) => error?.code === 73,
+    );
+
+    await recoverJournaledTransaction({ root, id: "tx-abrupt-exit", participants });
+    assert.equal(await readFile(left, "utf8"), "old-left");
+    assert.equal(await readFile(right, "utf8"), "old-right");
   } finally {
     await rm(root, { recursive: true, force: true });
   }

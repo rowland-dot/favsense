@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { lstat, mkdir, readFile, realpath, rename, rm, writeFile } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import { lstat, mkdir, open, readFile, realpath, rename, rm } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const SAFE_NAME = /^[a-z][a-z0-9-]{0,63}$/;
@@ -37,10 +37,48 @@ async function assertContainedPlainPath(root, candidate) {
   }
 }
 
+async function syncDirectory(path) {
+  let handle;
+  try {
+    handle = await open(path, "r");
+    await handle.sync();
+  } catch (error) {
+    if (process.platform !== "win32" || !["EACCES", "EBADF", "EINVAL", "EPERM"].includes(error.code)) throw error;
+  } finally {
+    await handle?.close();
+  }
+}
+
+async function durableRename(source, destination) {
+  await rename(source, destination);
+  await syncDirectory(dirname(destination));
+  if (dirname(source) !== dirname(destination)) await syncDirectory(dirname(source));
+}
+
+async function durableRemove(path, options) {
+  await rm(path, options);
+  await syncDirectory(dirname(path));
+}
+
+async function durableWriteFile(path, content) {
+  const handle = await open(path, "wx");
+  try {
+    await handle.writeFile(content, "utf8");
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+  await syncDirectory(dirname(path));
+}
+
 async function atomicJson(path, value) {
   const temporary = `${path}.${process.pid}.${randomUUID()}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(value)}\n`, { encoding: "utf8", flag: "wx" });
-  await rename(temporary, path);
+  try {
+    await durableWriteFile(temporary, `${JSON.stringify(value)}\n`);
+    await durableRename(temporary, path);
+  } finally {
+    await rm(temporary, { force: true });
+  }
 }
 
 function validateParticipants(root, participants) {
@@ -63,6 +101,27 @@ function journalParticipants(root, entries) {
     had_live,
     swapped,
   }));
+}
+
+function immutableStateSha256(root, id, entries) {
+  const state = entries.map(({ name, target, had_live }) => ({
+    name,
+    target: relative(root, target).split(sep).join("/"),
+    had_live,
+  }));
+  return createHash("sha256")
+    .update(JSON.stringify({ transaction_id: id, participants: state }))
+    .digest("hex");
+}
+
+function journalRecord(root, id, phase, entries) {
+  return {
+    schema_version: 1,
+    transaction_id: id,
+    phase,
+    immutable_state_sha256: immutableStateSha256(root, id, entries),
+    participants: journalParticipants(root, entries),
+  };
 }
 
 export async function executeJournaledTransaction({
@@ -91,6 +150,7 @@ export async function executeJournaledTransaction({
   const transaction = join(transactionRoot, `.organization-tx-${id}`);
   if (await metadata(transaction)) throw new Error("TRANSACTION_ALREADY_EXISTS");
   await mkdir(transaction);
+  await syncDirectory(transactionRoot);
   const journal = join(transaction, "journal.json");
   const entries = [];
   try {
@@ -100,38 +160,38 @@ export async function executeJournaledTransaction({
       if (participant.staging) {
         if (!stagingInfo || stagingInfo.isSymbolicLink()) throw new Error("TRANSACTION_STAGING_INVALID");
       } else {
-        await writeFile(staging, String(participant.content ?? ""), { encoding: "utf8", flag: "wx" });
+        await durableWriteFile(staging, String(participant.content ?? ""));
       }
       const targetInfo = await metadata(participant.target);
       if (targetInfo?.isSymbolicLink()) throw new Error("TRANSACTION_TARGET_UNSAFE");
       entries.push({ name: participant.name, target: participant.target, staging, backup: join(transaction, `backup-${participant.name}`), had_live: Boolean(targetInfo), swapped: false });
     }
-    await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: "prepared", participants: journalParticipants(root, entries) });
+    await atomicJson(journal, journalRecord(root, id, "prepared", entries));
     for (const entry of entries) {
       if (typeof beforeParticipant === "function") await beforeParticipant(entry.name);
       await assertContainedPlainPath(root, entry.target);
       await assertContainedPlainPath(root, entry.staging);
-      if (entry.had_live) await rename(entry.target, entry.backup);
-      await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: `backup:${entry.name}`, participants: journalParticipants(root, entries) });
+      if (entry.had_live) await durableRename(entry.target, entry.backup);
+      await atomicJson(journal, journalRecord(root, id, `backup:${entry.name}`, entries));
       if (failAt === `crash:${entry.name}`) throw new Error(`SIMULATED_CRASH:${failAt}`);
       if (failAt === `swap:${entry.name}`) throw new Error(`FAULT_INJECTION:${failAt}`);
       await assertContainedPlainPath(root, entry.target);
       await assertContainedPlainPath(root, entry.staging);
-      await rename(entry.staging, entry.target);
+      await durableRename(entry.staging, entry.target);
       entry.swapped = true;
       if (failAt === `crash-after-swap:${entry.name}`) throw new Error(`SIMULATED_CRASH:${failAt}`);
-      await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: `swap:${entry.name}`, participants: journalParticipants(root, entries) });
+      await atomicJson(journal, journalRecord(root, id, `swap:${entry.name}`, entries));
     }
-    await atomicJson(journal, { schema_version: 1, transaction_id: id, phase: "committed", participants: journalParticipants(root, entries) });
-    await rm(transaction, { recursive: true, force: true });
+    await atomicJson(journal, journalRecord(root, id, "committed", entries));
+    await durableRemove(transaction, { recursive: true, force: true });
     return { schema_version: 1, outcome: "committed", transaction_id: id };
   } catch (error) {
     if (String(error?.message || "").startsWith("SIMULATED_CRASH:")) throw error;
     for (const entry of [...entries].reverse()) {
-      if (entry.swapped && await metadata(entry.target)) await rm(entry.target, { recursive: true, force: true });
-      if (entry.had_live && await metadata(entry.backup)) await rename(entry.backup, entry.target);
+      if (entry.swapped && await metadata(entry.target)) await durableRemove(entry.target, { recursive: true, force: true });
+      if (entry.had_live && await metadata(entry.backup)) await durableRename(entry.backup, entry.target);
     }
-    await rm(transaction, { recursive: true, force: true });
+    await durableRemove(transaction, { recursive: true, force: true });
     throw error;
   }
 }
@@ -152,7 +212,12 @@ export async function recoverJournaledTransaction({ root: rootValue, transaction
   if (!info) return { outcome: "none" };
   if (!info.isDirectory() || info.isSymbolicLink()) throw new Error("TRANSACTION_RECOVERY_UNSAFE");
   const record = JSON.parse(await readFile(join(transaction, "journal.json"), "utf8"));
-  if (record.schema_version !== 1 || record.transaction_id !== id || !Array.isArray(record.participants)) throw new Error("TRANSACTION_JOURNAL_INVALID");
+  if (
+    record.schema_version !== 1
+    || record.transaction_id !== id
+    || !Array.isArray(record.participants)
+    || !/^[a-f0-9]{64}$/.test(record.immutable_state_sha256 || "")
+  ) throw new Error("TRANSACTION_JOURNAL_INVALID");
   const participants = validateParticipants(root, rawParticipants);
   for (const participant of participants) await assertContainedPlainPath(root, participant.target);
   const byName = new Map(participants.map((participant) => [participant.name, participant]));
@@ -167,7 +232,25 @@ export async function recoverJournaledTransaction({ root: rootValue, transaction
       || entry.target !== relative(root, byName.get(entry.name).target).split(sep).join("/")
     ))
   ) throw new Error("TRANSACTION_RECOVERY_PARTICIPANTS_INVALID");
-  for (const entry of [...record.participants].reverse()) {
+  const validPhases = new Set([
+    "prepared",
+    "committed",
+    ...participants.flatMap(({ name }) => [`backup:${name}`, `swap:${name}`]),
+  ]);
+  if (
+    !validPhases.has(record.phase)
+    || record.immutable_state_sha256 !== immutableStateSha256(
+      root,
+      id,
+      record.participants.map((entry) => ({
+        name: entry.name,
+        target: byName.get(entry.name).target,
+        had_live: entry.had_live,
+      })),
+    )
+  ) throw new Error("TRANSACTION_JOURNAL_STATE_INVALID");
+  const recoveryEntries = [];
+  for (const entry of record.participants) {
     const participant = byName.get(entry.name);
     await assertContainedPlainPath(root, participant.target);
     const targetInfo = await metadata(participant.target);
@@ -175,17 +258,23 @@ export async function recoverJournaledTransaction({ root: rootValue, transaction
     const backup = join(transaction, `backup-${entry.name}`);
     const backupInfo = await metadata(backup);
     if (backupInfo?.isSymbolicLink()) throw new Error("TRANSACTION_RECOVERY_UNSAFE");
+    if ((!entry.had_live && backupInfo) || (entry.had_live && !targetInfo && !backupInfo)) {
+      throw new Error("TRANSACTION_JOURNAL_STATE_INVALID");
+    }
+    recoveryEntries.push({ entry, participant, targetInfo, backup, backupInfo });
+  }
+  for (const { entry, participant, targetInfo, backup, backupInfo } of recoveryEntries.reverse()) {
     if (entry.had_live) {
       if (backupInfo) {
-        if (targetInfo) await rm(participant.target, { recursive: true, force: true });
-        await rename(backup, participant.target);
+        if (targetInfo) await durableRemove(participant.target, { recursive: true, force: true });
+        await durableRename(backup, participant.target);
       } else if (!targetInfo) {
         throw new Error("TRANSACTION_RECOVERY_INCOMPLETE");
       }
     } else if (targetInfo) {
-      await rm(participant.target, { recursive: true, force: true });
+      await durableRemove(participant.target, { recursive: true, force: true });
     }
   }
-  await rm(transaction, { recursive: true, force: true });
+  await durableRemove(transaction, { recursive: true, force: true });
   return { schema_version: 1, outcome: "rolled_back", transaction_id: id };
 }
