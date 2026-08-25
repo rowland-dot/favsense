@@ -3,9 +3,17 @@ import { test, expect } from "@playwright/test";
 const headers = { "X-FavSense-Test": "favsense-synthetic-v1" };
 
 async function scenario(page, name) {
-  await page.request.post("http://127.0.0.1:8766/__test/reset");
+  await page.request.post("http://127.0.0.1:8766/__test/reset", { headers });
   await page.request.post("http://127.0.0.1:8766/__test/scenario", { headers, data: { scenario: name } });
 }
+
+test("synthetic fixture reset rejects requests without the test control header", async ({ request }) => {
+  const unauthorized = await request.post("http://127.0.0.1:8766/__test/reset");
+  expect(unauthorized.status()).toBe(403);
+
+  const authorized = await request.post("http://127.0.0.1:8766/__test/reset", { headers });
+  expect(authorized.status()).toBe(200);
+});
 
 test("confirmed Skill detail exposes repository and ZIP through the real mount", async ({ page }) => {
   await scenario(page, "success");

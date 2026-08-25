@@ -102,7 +102,11 @@ function staticServer({ manager }) {
   return createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
     if (url.pathname === "/__health") return sendJson(response, 200, { ok: true });
-    if (manager && url.pathname === "/__test/reset" && request.method === "POST") { scenario = "success"; hasStarted = false; statusReads = 0; return sendJson(response, 200, { ok: true }); }
+    if (manager && url.pathname === "/__test/reset" && request.method === "POST") {
+      if (request.headers["x-favsense-test"] !== testHeader) return sendJson(response, 403, { ok: false });
+      scenario = "success"; hasStarted = false; statusReads = 0;
+      return sendJson(response, 200, { ok: true });
+    }
     if (manager && url.pathname === "/__test/scenario" && request.method === "POST") {
       if (request.headers["x-favsense-test"] !== testHeader) return sendJson(response, 403, { ok: false });
       let raw = ""; for await (const chunk of request) raw += chunk;
