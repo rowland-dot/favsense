@@ -268,17 +268,75 @@ def atomic_json(path: Path, value: dict) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _plain_lock_path_identity(path: Path, *, directory: bool) -> tuple[int, int]:
+    try:
+        info = os.lstat(path)
+    except OSError as error:
+        raise ValueError("publish claim lock path is unavailable or unsafe") from error
+    if path_is_reparse_point(path):
+        raise ValueError("publish claim lock path is redirected or unsafe")
+    expected = stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode)
+    if not expected:
+        raise ValueError("publish claim lock path is unavailable or unsafe")
+    return info.st_dev, info.st_ino
+
+
+def _prepare_plain_lock_path(
+    root: Path,
+    path: Path,
+) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int] | None]:
+    root = Path(os.path.abspath(str(root)))
+    path = Path(os.path.abspath(str(path)))
+    if path.parent.parent != root:
+        raise ValueError("publish claim lock path escapes its state directory")
+    root_identity = _plain_lock_path_identity(root, directory=True)
+    try:
+        path.parent.mkdir()
+    except FileExistsError:
+        pass
+    if _plain_lock_path_identity(root, directory=True) != root_identity:
+        raise ValueError("publish claim lock state directory changed")
+    parent_identity = _plain_lock_path_identity(path.parent, directory=True)
+    try:
+        file_identity = _plain_lock_path_identity(path, directory=False)
+    except ValueError:
+        if path.exists() or path_is_reparse_point(path):
+            raise
+        file_identity = None
+    if (
+        _plain_lock_path_identity(root, directory=True) != root_identity
+        or _plain_lock_path_identity(path.parent, directory=True) != parent_identity
+    ):
+        raise ValueError("publish claim lock directory changed")
+    return root_identity, parent_identity, file_identity
+
+
+def _revalidate_plain_lock_path(
+    root: Path,
+    path: Path,
+    root_identity: tuple[int, int],
+    parent_identity: tuple[int, int],
+    file_identity: tuple[int, int] | None = None,
+) -> tuple[int, int]:
+    if (
+        _plain_lock_path_identity(root, directory=True) != root_identity
+        or _plain_lock_path_identity(path.parent, directory=True) != parent_identity
+    ):
+        raise ValueError("publish claim lock directory changed")
+    current_file_identity = _plain_lock_path_identity(path, directory=False)
+    if file_identity is not None and current_file_identity != file_identity:
+        raise ValueError("publish claim lock file changed")
+    return current_file_identity
+
+
 @contextmanager
-def exclusive_file_lock(path: Path):
-    path.parent.mkdir(parents=True, exist_ok=True)
+def exclusive_file_lock(path: Path, *, root: Path):
+    root = Path(os.path.abspath(str(root)))
+    path = Path(os.path.abspath(str(path)))
+    root_identity, parent_identity, file_identity = _prepare_plain_lock_path(root, path)
     if os.name == "nt":
         import ctypes
         from ctypes import wintypes
-        try:
-            path.touch(exist_ok=True)
-        except PermissionError:
-            if not path.exists():
-                raise
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         create_file = kernel32.CreateFileW
         create_file.argtypes = [
@@ -293,7 +351,15 @@ def exclusive_file_lock(path: Path):
         handle = invalid_handle
         deadline = time.monotonic() + 240
         while handle == invalid_handle:
-            handle = create_file(str(path), 0xC0000000, 0, None, 3, 0x80, None)
+            handle = create_file(
+                str(path),
+                0xC0000000,
+                0,
+                None,
+                4,
+                0x80 | 0x00200000,
+                None,
+            )
             if handle == invalid_handle:
                 error = ctypes.get_last_error()
                 if error != 32:
@@ -302,17 +368,43 @@ def exclusive_file_lock(path: Path):
                     raise TimeoutError("publish claim lock timed out")
                 time.sleep(0.01)
         try:
+            _revalidate_plain_lock_path(
+                root,
+                path,
+                root_identity,
+                parent_identity,
+                file_identity,
+            )
             yield
         finally:
             close_handle(handle)
         return
     import fcntl
-    with path.open("a+b", buffering=0) as handle:
+    flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags, 0o600)
+    with os.fdopen(descriptor, "a+b", buffering=0) as handle:
+        _revalidate_plain_lock_path(
+            root,
+            path,
+            root_identity,
+            parent_identity,
+            file_identity,
+        )
         fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
         try:
             yield
         finally:
             fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def publish_claim_lock(state_dir: Path, run_id: str):
+    if not isinstance(run_id, str) or RUN_ID.fullmatch(run_id) is None:
+        raise ValueError("publish claim run_id is invalid")
+    state_root = Path(os.path.abspath(str(state_dir)))
+    return exclusive_file_lock(
+        state_root / "publish-claims" / f"{run_id}.lock",
+        root=state_root,
+    )
 
 
 def restore_file_snapshot(path: Path, snapshot: bytes | None) -> None:
@@ -2960,9 +3052,7 @@ class Bridge:
         claim_lock = (
             nullcontext()
             if _claim_lock_held
-            else exclusive_file_lock(
-                self.state_dir / "publish-claims" / f"{run_id}.lock"
-            )
+            else publish_claim_lock(self.state_dir, run_id)
         )
         with self.summary_run_lock(run_id):
             with self.get_manual_sync_lock():
@@ -3033,7 +3123,9 @@ class Bridge:
         _claim_lock_held: bool = False,
     ) -> None:
         if (
-            re.fullmatch(r"[a-f0-9]{64}", build_version) is None
+            not isinstance(run_id, str)
+            or RUN_ID.fullmatch(run_id) is None
+            or re.fullmatch(r"[a-f0-9]{64}", build_version) is None
             or re.fullmatch(r"[a-f0-9]{64}", site_manifest_sha256) is None
         ):
             raise ValueError("publish snapshot identity is invalid")
@@ -3048,9 +3140,7 @@ class Bridge:
         claim_lock = (
             nullcontext()
             if _claim_lock_held
-            else exclusive_file_lock(
-                self.state_dir / "publish-claims" / f"{run_id}.lock"
-            )
+            else publish_claim_lock(self.state_dir, run_id)
         )
         with self.summary_run_lock(run_id):
             with self.get_manual_sync_lock():
@@ -4718,9 +4808,7 @@ class Bridge:
         ):
             raise ValueError("finalization publish requires a snapshot identity")
         publish_lock = (
-            exclusive_file_lock(
-                self.state_dir / "publish-claims" / f"{run_id}.lock"
-            )
+            publish_claim_lock(self.state_dir, run_id)
             if require_finalization_claim
             else nullcontext()
         )

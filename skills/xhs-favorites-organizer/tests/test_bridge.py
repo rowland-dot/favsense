@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 from contextlib import nullcontext
 from datetime import timedelta
 from pathlib import Path
@@ -1754,6 +1755,48 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertEqual(persisted["published_build_version"], build_version)
             self.assertEqual(persisted["published_site_manifest_sha256"], site_manifest_sha256)
             self.assertEqual(persisted["publish_status"], "published")
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_publish_claim_lock_rejects_a_junction_without_writing_outside_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_dir = root / ".xhs-favorites"
+            outside = root / "outside"
+            state_dir.mkdir()
+            outside.mkdir()
+            claims = state_dir / "publish-claims"
+            linked = subprocess.run(
+                ["cmd.exe", "/d", "/c", "mklink", "/J", str(claims), str(outside)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if linked.returncode != 0:
+                self.skipTest(f"junction unavailable: {linked.returncode}")
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.state_dir = state_dir
+            bridge.manual_sync_path = state_dir / "manual-sync.json"
+            bridge.boards = {"board": "Board"}
+            bridge.summary_plans = {"manual_board": set()}
+            bridge.summary_locks = {}
+            bridge.summary_locks_guard = threading.Lock()
+            bridge.summary_halted = set()
+            bridge.summary_publish_claimed = set()
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "manual",
+                "state": "running",
+                "run_board_ids": ["board"],
+                "summary_finalizing": True,
+            })
+
+            with self.assertRaisesRegex(ValueError, "redirected|unsafe"):
+                bridge.claim_diandian_publish(
+                    "manual_board",
+                    "board",
+                    "a" * 64,
+                    "b" * 64,
+                )
+            self.assertEqual(list(outside.iterdir()), [])
 
     def test_two_bridge_processes_publish_one_exact_snapshot_once(self):
         with tempfile.TemporaryDirectory() as directory:
