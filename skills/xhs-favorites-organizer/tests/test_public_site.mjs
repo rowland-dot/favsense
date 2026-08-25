@@ -1657,6 +1657,22 @@ test("resource index validation rejects broken type-sort contracts", () => {
     () => validateResourceIndex({ groups: [], default_group: "其他", sorts: [{ id: "metric", label: "指标", field: "metricNumeric", type: "number", direction: "desc", applies_to: "其他" }] }),
     /must be an array/
   );
+  assert.throws(
+    () => validateResourceIndex({
+      groups: [],
+      fields_by_type: "Agent Skill",
+      sorts: [{ id: "name", label: "名称", field: "name", type: "text", direction: "asc" }]
+    }),
+    /fields_by_type must be an object/
+  );
+  assert.throws(
+    () => validateResourceIndex({
+      groups: [],
+      fields_by_type: { "Agent Skill": [{}] },
+      sorts: [{ id: "name", label: "名称", field: "name", type: "text", direction: "asc" }]
+    }),
+    /field and label/
+  );
 });
 
 test("software, fitness and skincare profiles expose a complete resource-index contract", async () => {

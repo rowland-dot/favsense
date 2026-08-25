@@ -50,6 +50,36 @@ export function validateResourceIndex(radar) {
   if (radar.default_group !== undefined && (typeof radar.default_group !== "string" || !radar.default_group.trim())) {
     throw new Error("resource_index.default_group must be a non-empty string.");
   }
+  if (
+    radar.fields_by_type !== undefined
+    && (
+      !radar.fields_by_type
+      || typeof radar.fields_by_type !== "object"
+      || Array.isArray(radar.fields_by_type)
+      || Object.getPrototypeOf(radar.fields_by_type) !== Object.prototype
+    )
+  ) {
+    throw new Error("resource_index.fields_by_type must be an object.");
+  }
+  for (const [resourceType, fields] of Object.entries(radar.fields_by_type || {})) {
+    if (!resourceType.trim() || !Array.isArray(fields)) {
+      throw new Error("Every resource_index.fields_by_type entry requires a non-empty type and an array.");
+    }
+    for (const field of fields) {
+      if (
+        !field
+        || typeof field !== "object"
+        || Array.isArray(field)
+        || Object.getPrototypeOf(field) !== Object.prototype
+        || typeof field.field !== "string"
+        || !field.field.trim()
+        || typeof field.label !== "string"
+        || !field.label.trim()
+      ) {
+        throw new Error("Every resource_index.fields_by_type descriptor requires non-empty field and label strings.");
+      }
+    }
+  }
   for (const group of radar.groups || []) {
     if (
       !group
