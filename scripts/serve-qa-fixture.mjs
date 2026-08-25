@@ -24,7 +24,26 @@ const knowledge = {
     { id: "note-accepted", title: "Verified synthetic Skill", category: "Synthetic", kind: "Skill", publishedAt: "2026-08-23", summary: "Accepted synthetic summary.", summaryStatus: "accepted", summaryReason: "", themes: ["testing"], tools: ["Official synthetic Skill"], resources: ["Official synthetic Skill"], evidence: { method: "curation", label: "已审核" }, reviewedAt: "2026-08-23" },
     { id: "note-pending", title: "Pending synthetic note", category: "Synthetic", kind: "Other", candidateKind: "Skill", publishedAt: "2026-08-23", summary: "Safe metadata fallback.", summaryStatus: "pending_review", summaryReason: "audit_pending", summaryState: "captured", summaryReasonCode: "", themes: [], tools: [], resources: [], evidence: { method: "source-metadata", label: "待审核" } },
   ],
-  resources: [{ id: "github-owner-repo", name: "Official synthetic Skill", type: "Agent Skill", description: "Synthetic verified fixture.", aliases: [], actions: [{ label: "官方仓库", url: "https://github.com/owner/repo" }, { label: "下载 ZIP", url: "https://github.com/owner/repo/archive/refs/heads/main.zip" }, { label: "文档", url: "https://github.com/owner/repo/blob/main/README.md" }], attributes: [{ label: "许可证", value: "MIT" }] }],
+  resources: [{
+    id: "github-owner-repo",
+    name: "Official synthetic Skill",
+    type: "Agent Skill",
+    description: "Synthetic verified fixture.",
+    aliases: [],
+    metric: "4",
+    metricNumeric: 4,
+    actions: [
+      { label: "官方仓库", url: "https://github.com/owner/repo" },
+      { label: "下载 ZIP", url: "https://github.com/owner/repo/archive/refs/heads/main.zip" },
+      { label: "文档", url: "https://github.com/owner/repo/blob/main/README.md" }
+    ],
+    attributes: [
+      { label: "许可证", value: "MIT" },
+      { label: "Skill manifest", value: "SKILL.md" },
+      { label: "核验日期", value: "2026-08-23" },
+      { label: "兼容性", value: "Codex" }
+    ]
+  }],
 };
 
 function scenarioKnowledge() {

@@ -130,11 +130,17 @@ const resources = rawResources.map((raw, index) => {
   const mapping = resourceIndex.mapping || {};
   const name = String(field(raw, mapping.name || "name") || "").trim();
   if (!name) throw new Error(`Resource ${index + 1} is missing a name.`);
+  const type = String(field(raw, mapping.type || "type") || "未分类");
   const actions = (resourceIndex.actions || []).map((action) => ({
     label: action.label,
     url: String(field(raw, action.field) || "")
   })).filter((action) => action.url);
-  const attributes = (resourceIndex.fields || []).map((attribute) => ({
+  const attributes = [...(resourceIndex.fields || []), ...(/skill/i.test(type) ? [
+    { field: "license", label: "许可证" },
+    { field: "skill_manifest", label: "Skill manifest" },
+    { field: "verified_at", label: "核验日期" },
+    { field: "compatibility", label: "兼容性" }
+  ] : [])].map((attribute) => ({
     label: String(attribute.label || ""),
     value: String(field(raw, attribute.field) || "")
   })).filter((attribute) => attribute.label && attribute.value);
@@ -149,7 +155,7 @@ const resources = rawResources.map((raw, index) => {
     id: String(raw.id || `resource-${index + 1}`),
     name,
     aliases: field(raw, mapping.aliases || "aliases") || [],
-    type: String(field(raw, mapping.type || "type") || "未分类"),
+    type,
     description: String(field(raw, mapping.description || "description") || ""),
     metric: String(field(raw, mapping.metric || "metric") || ""),
     metricNumeric,
