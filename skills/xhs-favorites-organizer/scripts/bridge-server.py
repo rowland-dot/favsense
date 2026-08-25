@@ -4494,17 +4494,36 @@ class Bridge:
             context["target_note_id"] = target_note_id
         return context
 
-    def publish_public_site(self) -> dict:
+    def publish_public_site(self, build_version: str | None = None) -> dict:
         if self.publish_config is None:
             return {"ok": True, "status": "disabled"}
+        if build_version is not None and not re.fullmatch(r"[a-f0-9]{64}", build_version):
+            raise ValueError("publish build version is invalid")
+        frozen_site = (
+            self.workspace
+            / ".xhs-tools"
+            / "organization-snapshots"
+            / "publish"
+            / build_version
+            / "site"
+            if build_version is not None
+            else None
+        )
         try:
+            command = [
+                "node", str(self.publisher),
+                "--workspace", str(self.workspace),
+                "--repository", self.publish_config["repository"],
+                "--branch", self.publish_config["branch"],
+            ]
+            if frozen_site is not None:
+                command.extend([
+                    "--site-root", str(frozen_site),
+                    "--build-version", build_version,
+                    "--config", str(self.config_path),
+                ])
             published = run_bounded_subprocess(
-                [
-                    "node", str(self.publisher),
-                    "--workspace", str(self.workspace),
-                    "--repository", self.publish_config["repository"],
-                    "--branch", self.publish_config["branch"],
-                ],
+                command,
                 input_text="",
                 cwd=self.workspace,
                 env=None,
@@ -4544,6 +4563,12 @@ class Bridge:
                 "status": "failed",
                 "error": "publisher returned an unsupported result",
             }
+        if build_version is not None and result.get("build_version") != build_version:
+            return {
+                "ok": False,
+                "status": "failed",
+                "error": "publisher receipt did not match the claimed build version",
+            }
         return result
 
     def publish_after_board(
@@ -4568,12 +4593,18 @@ class Bridge:
         if self.publish_config is None or self.next_board_id(board_id, run_id) is not None:
             return None
         if require_finalization_claim:
+            if build_version is None:
+                raise ValueError("finalization publish requires a build version")
             if run_id is None or not self.claim_diandian_publish(run_id, board_id, build_version):
                 return None
         # The per-run claim above is the short critical section. The external
         # publisher may take minutes, so it must execute after releasing run locks.
         try:
-            result = self.publish_public_site()
+            result = (
+                self.publish_public_site(build_version)
+                if build_version is not None
+                else self.publish_public_site()
+            )
         except Exception as error:
             if run_id is not None and build_version is not None:
                 self.record_diandian_publish(run_id, board_id, build_version, {

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import test from "node:test";
 import { assertPublicTextSafe } from "../scripts/public-tree-policy.mjs";
 
@@ -94,6 +94,76 @@ test("publisher mirrors only the public site and enforces the mini Space header"
   );
   assert.equal(unchanged.status, 0, unchanged.stderr || unchanged.stdout);
   assert.equal(JSON.parse(unchanged.stdout).status, "unchanged");
+});
+
+test("publisher sends the claimed frozen build while the live site changes in another process", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "favsense-publish-frozen-"));
+  const workspace = path.join(root, "workspace");
+  const frozenSite = path.join(
+    workspace,
+    ".xhs-tools",
+    "organization-snapshots",
+    "publish",
+    "a".repeat(64),
+    "site"
+  );
+  const liveSite = path.join(workspace, "site");
+  const remote = await createRemoteFixture(root);
+  await mkdir(path.join(frozenSite, "data"), { recursive: true });
+  await mkdir(path.join(liveSite, "data"), { recursive: true });
+  await writeFile(path.join(frozenSite, "index.html"), "snapshot-A", "utf8");
+  await writeFile(
+    path.join(frozenSite, "data", "knowledge.json"),
+    JSON.stringify({ meta: { buildVersion: "a".repeat(64) }, marker: "A" }),
+    "utf8"
+  );
+  await writeFile(path.join(liveSite, "index.html"), "live-A", "utf8");
+  await writeFile(
+    path.join(liveSite, "data", "knowledge.json"),
+    JSON.stringify({ meta: { buildVersion: "a".repeat(64) }, marker: "live-A" }),
+    "utf8"
+  );
+
+  const child = spawn(
+    process.execPath,
+    [
+      publisher,
+      "--workspace", workspace,
+      "--site-root", frozenSite,
+      "--build-version", "a".repeat(64),
+      "--repository", remote,
+      "--branch", "main",
+    ],
+    {
+      env: { ...process.env, FAVSENSE_ALLOW_LOCAL_PUBLISH: "1" },
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  );
+  let stdout = "";
+  let stderr = "";
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk) => { stdout += chunk; });
+  child.stderr.on("data", (chunk) => { stderr += chunk; });
+
+  await writeFile(path.join(liveSite, "index.html"), "live-B", "utf8");
+  await writeFile(
+    path.join(liveSite, "data", "knowledge.json"),
+    JSON.stringify({ meta: { buildVersion: "b".repeat(64) }, marker: "B" }),
+    "utf8"
+  );
+  const status = await new Promise((resolveStatus) => child.on("close", resolveStatus));
+  assert.equal(status, 0, stderr || stdout);
+  const receipt = JSON.parse(stdout);
+  assert.equal(receipt.build_version, "a".repeat(64));
+
+  const checkout = path.join(root, "frozen-checkout");
+  git(["clone", remote, checkout], root);
+  assert.equal(await readFile(path.join(checkout, "site", "index.html"), "utf8"), "snapshot-A");
+  assert.deepEqual(
+    JSON.parse(await readFile(path.join(checkout, "site", "data", "knowledge.json"), "utf8")),
+    { meta: { buildVersion: "a".repeat(64) }, marker: "A" }
+  );
 });
 
 test("publisher rejects repositories outside Hugging Face Spaces", async () => {

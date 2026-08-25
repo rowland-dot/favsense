@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash, randomUUID } from "node:crypto";
-import { lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -133,6 +133,9 @@ export async function buildOrganizationSnapshot(options) {
         staging: participant.name === "knowledge-base" ? kbStaging : publicStaging,
       })),
     });
+    if (buildOptions.publishSite) {
+      await freezePublishSite(root, storageRoot, buildOptions.publishSite, buildVersion);
+    }
     await rm(stagingRoot, { recursive: true, force: true });
     return { schema_version: 1, ok: true, outcome: "built", build_version: buildVersion, counts: buildOptions.counts || { notes: 0, categories: 0, resources: 0 } };
   } catch (error) {
@@ -199,6 +202,61 @@ async function assertPlainPath(root, target) {
     if (!metadata) break;
     if (metadata.isSymbolicLink()) throw new Error("SNAPSHOT_INPUT_PATH_INVALID");
   }
+}
+
+async function assertPlainTree(root) {
+  const metadata = await lstat(root);
+  if (!metadata.isDirectory() || metadata.isSymbolicLink()) throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
+  async function visit(directory) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      if (entry.isSymbolicLink()) throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
+      if (entry.isDirectory()) await visit(join(directory, entry.name));
+    }
+  }
+  await visit(root);
+}
+
+async function validatePublishSite(root, site, buildVersion) {
+  await assertPlainPath(root, site);
+  await assertPlainTree(site);
+  let knowledge;
+  try {
+    knowledge = JSON.parse(await readFile(join(site, "data", "knowledge.json"), "utf8"));
+  } catch {
+    throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
+  }
+  if (knowledge?.meta?.buildVersion !== buildVersion) throw new Error("SNAPSHOT_BUILD_VERSION_MISMATCH");
+}
+
+async function freezePublishSite(root, storageRoot, site, buildVersion) {
+  const source = resolve(site);
+  await validatePublishSite(root, source, buildVersion);
+  const publishRoot = join(storageRoot, "publish");
+  await assertPlainPath(root, publishRoot);
+  await mkdir(publishRoot, { recursive: true });
+  await assertPlainPath(root, publishRoot);
+  const versionRoot = join(publishRoot, buildVersion);
+  const frozenSite = join(versionRoot, "site");
+  if (await exists(versionRoot)) {
+    await validatePublishSite(root, frozenSite, buildVersion);
+    return frozenSite;
+  }
+  const staging = join(publishRoot, `.publish-${buildVersion}-${randomUUID()}`);
+  try {
+    await mkdir(staging);
+    await cp(source, join(staging, "site"), {
+      recursive: true,
+      filter(candidate) {
+        const first = relative(source, candidate).split(/[\\/]/u)[0].toLowerCase();
+        return first !== ".local";
+      },
+    });
+    await validatePublishSite(root, join(staging, "site"), buildVersion);
+    await rename(staging, versionRoot);
+  } finally {
+    await rm(staging, { recursive: true, force: true });
+  }
+  return frozenSite;
 }
 
 async function boundedFile(root, target, label, { optional = false, maxBytes = 16 * 1024 * 1024 } = {}) {
@@ -441,6 +499,7 @@ async function runCli() {
   try {
     const result = await buildOrganizationSnapshot({
       root, kbTarget: resolve(options["kb-target"]), publicTarget: resolve(options["public-target"]),
+      publishSite: join(root, "site"),
       effectiveDate,
       prepareSnapshot: async () => {
         const captured = await captureBuilderInputs(captureOptions, effectiveDate);

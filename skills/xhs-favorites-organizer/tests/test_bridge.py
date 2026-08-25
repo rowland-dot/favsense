@@ -1,5 +1,6 @@
 import importlib.util
 import json
+from contextlib import nullcontext
 from datetime import timedelta
 from pathlib import Path
 import shutil
@@ -31,6 +32,11 @@ FETCH_SPEC.loader.exec_module(FETCHER)
 
 
 DIANDIAN_SKILL_SOURCE = Path(__file__).parents[2] / "xhs-diandian-summarize-note"
+
+
+def with_private_store_lock(saver):
+    saver.private_store_lock = lambda _root: nullcontext()
+    return saver
 
 
 def write_test_diandian_skill(path: Path, saver_source: str) -> None:
@@ -1565,6 +1571,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "summary": summary_text,
                 "request_sha256": BRIDGE.diandian_result_digest(title, summary_text),
             })
+            bridge.diandian_save_record = with_private_store_lock(bridge.diandian_save_record)
             run_path = bridge.state_dir / "runs" / "manual_board.json"
             BRIDGE.atomic_json(run_path, {
                 "run_id": "manual_board",
@@ -1945,6 +1952,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "summary": summary_text,
                 "request_sha256": BRIDGE.diandian_result_digest(title, summary_text),
             })
+            bridge.diandian_save_record = with_private_store_lock(bridge.diandian_save_record)
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
                 "state": "running",
@@ -3811,6 +3819,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "summary": summary_text,
                 "request_sha256": BRIDGE.diandian_result_digest(title, summary_text),
             })
+            bridge.diandian_save_record = with_private_store_lock(bridge.diandian_save_record)
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": batch, "state": "running", "summarized": 0,
             })
@@ -6202,6 +6211,46 @@ class BridgeHelpersTest(unittest.TestCase):
         bounded.assert_called_once()
         self.assertEqual(bounded.call_args.kwargs["input_text"], "")
         self.assertIsNone(bounded.call_args.kwargs["env"])
+
+    def test_publish_claim_uses_the_frozen_site_for_the_exact_build_version(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            build_version = "a" * 64
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.publisher = Path("publish-huggingface.mjs")
+            bridge.workspace = root
+            bridge.config_path = root / "config" / "xhs-favorites.json"
+            bridge.publish_config = {
+                "repository": "https://huggingface.co/spaces/example/favsense",
+                "branch": "main",
+            }
+            completed = subprocess.CompletedProcess(
+                ["node", "publisher"],
+                0,
+                stdout=json.dumps({
+                    "ok": True,
+                    "status": "published",
+                    "build_version": build_version,
+                }),
+                stderr="",
+            )
+            with mock.patch.object(
+                BRIDGE, "run_bounded_subprocess", return_value=completed
+            ) as bounded:
+                result = bridge.publish_public_site(build_version)
+
+            self.assertEqual(result["build_version"], build_version)
+            command = bounded.call_args.args[0]
+            frozen_site = (
+                root
+                / ".xhs-tools"
+                / "organization-snapshots"
+                / "publish"
+                / build_version
+                / "site"
+            )
+            self.assertEqual(command[command.index("--site-root") + 1], str(frozen_site))
+            self.assertEqual(command[command.index("--build-version") + 1], build_version)
 
 
 class DetailFetcherTest(unittest.IsolatedAsyncioTestCase):

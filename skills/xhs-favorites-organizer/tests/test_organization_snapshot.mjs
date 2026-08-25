@@ -55,6 +55,54 @@ test("one canonical version is embedded in both outputs", async () => {
   assert.equal((await readdir(join(paths.root, ".xhs-tools", "organization-snapshots"))).includes("snapshot-input-stale"), false);
 });
 
+test("successful build freezes a publish site under its canonical version", async () => {
+  const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
+  const root = await mkdtemp(join(tmpdir(), "favsense-publish-snapshot-"));
+  const kbTarget = join(root, "knowledge-base");
+  const publishSite = join(root, "site");
+  const publicTarget = join(publishSite, "data", "knowledge.json");
+  await mkdir(kbTarget);
+  await mkdir(join(publishSite, "data"), { recursive: true });
+  await writeFile(join(kbTarget, "build.json"), JSON.stringify({ build_version: "old" }));
+  await writeFile(join(publishSite, "index.html"), "site-A", "utf8");
+  await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" } }));
+  const result = await buildOrganizationSnapshot({
+    root,
+    kbTarget,
+    publicTarget,
+    publishSite,
+    sealedScopeDigest: "a".repeat(64),
+    curationInputDigest: "b".repeat(64),
+    configDigest: "c".repeat(64),
+    inputRevisionDigest: "d".repeat(64),
+    effectiveDate: "2026-08-25",
+    buildKnowledgeBase: builder("kb", []),
+    buildPublicSite: builder("public", []),
+  });
+  const frozenSite = join(
+    root,
+    ".xhs-tools",
+    "organization-snapshots",
+    "publish",
+    result.build_version,
+    "site"
+  );
+
+  await writeFile(join(publishSite, "index.html"), "site-B", "utf8");
+  await writeFile(
+    publicTarget,
+    JSON.stringify({ meta: { buildVersion: "b".repeat(64) } }),
+    "utf8"
+  );
+
+  assert.equal(await readFile(join(frozenSite, "index.html"), "utf8"), "site-A");
+  assert.equal(
+    JSON.parse(await readFile(join(frozenSite, "data", "knowledge.json"), "utf8"))
+      .meta.buildVersion,
+    result.build_version
+  );
+});
+
 test("same build version recovers an interrupted deterministic transaction before rebuilding", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const paths = await fixture();

@@ -126,6 +126,8 @@ async function ensureMiniHeader(readmePath) {
 
 async function main() {
   const workspace = path.resolve(readOption("workspace", process.cwd()));
+  const siteRootOption = readOption("site-root", "");
+  const buildVersion = readOption("build-version", "");
   const configOption = readOption("config", path.join("config", "xhs-favorites.json"));
   const configPath = path.isAbsolute(configOption)
     ? configOption
@@ -137,10 +139,35 @@ async function main() {
   if (!/^[A-Za-z0-9._/-]{1,100}$/.test(branch) || branch.includes("..")) {
     throw new Error("--branch contains unsupported characters");
   }
+  if (Boolean(siteRootOption) !== Boolean(buildVersion)) {
+    throw new Error("--site-root and --build-version must be provided together");
+  }
+  if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) {
+    throw new Error("--build-version must be a SHA-256 digest");
+  }
 
-  const publicSite = path.join(workspace, "site");
+  const publicSite = siteRootOption
+    ? path.resolve(siteRootOption)
+    : path.join(workspace, "site");
+  const siteMetadata = await lstat(publicSite);
+  if (!siteMetadata.isDirectory() || siteMetadata.isSymbolicLink()) {
+    throw new Error("public site root must be a plain directory");
+  }
   const indexMetadata = await lstat(path.join(publicSite, "index.html"));
   if (!indexMetadata.isFile()) throw new Error("site/index.html was not found");
+  if (buildVersion) {
+    let knowledge;
+    try {
+      knowledge = JSON.parse(
+        await readFile(path.join(publicSite, "data", "knowledge.json"), "utf8")
+      );
+    } catch {
+      throw new Error("frozen public snapshot knowledge data is invalid");
+    }
+    if (knowledge?.meta?.buildVersion !== buildVersion) {
+      throw new Error("frozen public snapshot does not match --build-version");
+    }
+  }
   const privateIdentifiers = await loadPrivateIdentifiers(configPath);
   await validatePublicTree(publicSite, { privateIdentifiers });
 
@@ -172,7 +199,13 @@ async function main() {
     runGit(["add", "-A", "--", "site", "README.md"], checkout);
     const diff = runGit(["diff", "--cached", "--quiet"], checkout, [0, 1]);
     if (diff.status === 0) {
-      process.stdout.write(`${JSON.stringify({ ok: true, status: "unchanged", repository, branch })}\n`);
+      process.stdout.write(`${JSON.stringify({
+        ok: true,
+        status: "unchanged",
+        repository,
+        branch,
+        ...(buildVersion ? { build_version: buildVersion } : {}),
+      })}\n`);
       return;
     }
 
@@ -182,7 +215,14 @@ async function main() {
     runGit(["commit", "-m", `data: publish FavSense knowledge ${date}`], checkout);
     runGit(["push", "origin", `HEAD:${branch}`], checkout);
     const commit = runGit(["rev-parse", "HEAD"], checkout).stdout.trim();
-    process.stdout.write(`${JSON.stringify({ ok: true, status: "published", repository, branch, commit })}\n`);
+    process.stdout.write(`${JSON.stringify({
+      ok: true,
+      status: "published",
+      repository,
+      branch,
+      commit,
+      ...(buildVersion ? { build_version: buildVersion } : {}),
+    })}\n`);
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
