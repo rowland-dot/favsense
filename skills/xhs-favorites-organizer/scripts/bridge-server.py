@@ -813,8 +813,11 @@ def load_diandian_save_record(path: Path):
     finally:
         sys.dont_write_bytecode = previous_bytecode_setting
     save_record = getattr(module, "save_record", None)
+    private_store_lock = getattr(module, "private_store_lock", None)
     if not callable(save_record):
         raise ValueError("DianDian summary saver must export a callable save_record")
+    if not callable(private_store_lock):
+        raise ValueError("DianDian summary saver must export a callable private_store_lock")
     signature = inspect.signature(save_record)
     parameters = list(signature.parameters.values())
     if (
@@ -832,6 +835,7 @@ def load_diandian_save_record(path: Path):
         raise ValueError(
             "DianDian saver API 1 requires save_record(destination, title, summary_text, note_id)"
         )
+    save_record.private_store_lock = private_store_lock
     return save_record
 
 
@@ -2846,7 +2850,11 @@ class Bridge:
             if not valid_diandian_record(complete, note_id):
                 raise RuntimeError("DianDian v2 record validation failed")
             destination = self.diandian_dir / f"{note_id}.json"
-            atomic_json(destination, complete)
+            store_lock = getattr(self.diandian_save_record, "private_store_lock", None)
+            if not callable(store_lock):
+                raise RuntimeError("DianDian summary saver lock is unavailable")
+            with store_lock(self.diandian_dir):
+                atomic_json(destination, complete)
             return complete
 
     def update_diandian_progress(

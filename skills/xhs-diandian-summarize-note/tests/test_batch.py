@@ -22,6 +22,17 @@ finally:
 
 
 class SaveDiandianBatchTests(unittest.TestCase):
+    def _write_journal(self, private_root, transaction_id, status, items):
+        (private_root / BATCH.BATCH_JOURNAL_NAME).write_text(
+            json.dumps({
+                "version": 1,
+                "transaction_id": transaction_id,
+                "status": status,
+                "items": items,
+            }),
+            encoding="utf-8",
+        )
+
     def test_imports_keyed_records_only_under_private_root(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -229,6 +240,153 @@ class SaveDiandianBatchTests(unittest.TestCase):
             concurrent = json.loads(first_destination.read_text(encoding="utf-8"))
             self.assertEqual(concurrent["title"], "Concurrent")
             self.assertFalse(second_destination.exists())
+
+    def test_next_writer_recovers_a_prepared_batch_interrupted_mid_install(self):
+        with tempfile.TemporaryDirectory() as directory:
+            private_root = (
+                Path(directory) / ".xhs-favorites" / "diandian-summaries"
+            )
+            private_root.mkdir(parents=True)
+            transaction_id = "1" * 32
+            old_id = "k" * 24
+            new_id = "l" * 24
+            old_destination = private_root / f"{old_id}.json"
+            new_destination = private_root / f"{new_id}.json"
+            old_backup = private_root / f".{old_id}.json.{transaction_id}.backup"
+            new_stage = private_root / f".{new_id}.json.{transaction_id}.stage"
+            original = BATCH.serialize_record(
+                BATCH.build_record("Original", "Original safe summary.", old_id)
+            )
+            installed = BATCH.serialize_record(
+                BATCH.build_record("Interrupted", "Interrupted safe summary.", old_id)
+            )
+            old_backup.write_text(original, encoding="utf-8")
+            old_destination.write_text(installed, encoding="utf-8")
+            new_stage.write_text(
+                BATCH.serialize_record(
+                    BATCH.build_record("Staged", "Staged safe summary.", new_id)
+                ),
+                encoding="utf-8",
+            )
+            self._write_journal(
+                private_root,
+                transaction_id,
+                "prepared",
+                [
+                    {
+                        "destination": old_destination.name,
+                        "stage": f".{old_destination.name}.{transaction_id}.stage",
+                        "backup": old_backup.name,
+                        "had_original": True,
+                    },
+                    {
+                        "destination": new_destination.name,
+                        "stage": new_stage.name,
+                        "backup": None,
+                        "had_original": False,
+                    },
+                ],
+            )
+
+            with BATCH.private_store_lock(private_root):
+                pass
+
+            self.assertEqual(old_destination.read_text(encoding="utf-8"), original)
+            self.assertFalse(new_destination.exists())
+            self.assertFalse(old_backup.exists())
+            self.assertFalse(new_stage.exists())
+            self.assertFalse((private_root / BATCH.BATCH_JOURNAL_NAME).exists())
+
+    def test_next_writer_finalizes_a_committed_batch_interrupted_before_cleanup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            private_root = (
+                Path(directory) / ".xhs-favorites" / "diandian-summaries"
+            )
+            private_root.mkdir(parents=True)
+            transaction_id = "2" * 32
+            note_id = "m" * 24
+            destination = private_root / f"{note_id}.json"
+            backup = private_root / f".{note_id}.json.{transaction_id}.backup"
+            installed = BATCH.serialize_record(
+                BATCH.build_record("Committed", "Committed safe summary.", note_id)
+            )
+            destination.write_text(installed, encoding="utf-8")
+            backup.write_text("old record", encoding="utf-8")
+            self._write_journal(
+                private_root,
+                transaction_id,
+                "committed",
+                [{
+                    "destination": destination.name,
+                    "stage": f".{destination.name}.{transaction_id}.stage",
+                    "backup": backup.name,
+                    "had_original": True,
+                }],
+            )
+
+            with BATCH.private_store_lock(private_root):
+                pass
+
+            self.assertEqual(destination.read_text(encoding="utf-8"), installed)
+            self.assertFalse(backup.exists())
+            self.assertFalse((private_root / BATCH.BATCH_JOURNAL_NAME).exists())
+
+    def test_recovery_rejects_stale_transaction_paths_without_touching_records(self):
+        with tempfile.TemporaryDirectory() as directory:
+            private_root = (
+                Path(directory) / ".xhs-favorites" / "diandian-summaries"
+            )
+            private_root.mkdir(parents=True)
+            transaction_id = "3" * 32
+            note_id = "n" * 24
+            destination = private_root / f"{note_id}.json"
+            destination.write_text("keep", encoding="utf-8")
+            stale_stage = private_root / f".{destination.name}.{'4' * 32}.stage"
+            stale_stage.write_text("also keep", encoding="utf-8")
+            self._write_journal(
+                private_root,
+                transaction_id,
+                "prepared",
+                [{
+                    "destination": destination.name,
+                    "stage": stale_stage.name,
+                    "backup": None,
+                    "had_original": False,
+                }],
+            )
+
+            with self.assertRaisesRegex(ValueError, "journal path"):
+                with BATCH.private_store_lock(private_root):
+                    pass
+
+            self.assertEqual(destination.read_text(encoding="utf-8"), "keep")
+            self.assertEqual(stale_stage.read_text(encoding="utf-8"), "also keep")
+
+    def test_recovery_rejects_parent_traversal_without_reading_outside_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            private_root = root / ".xhs-favorites" / "diandian-summaries"
+            private_root.mkdir(parents=True)
+            outside = private_root.parent / "outside.json"
+            outside.write_text("outside", encoding="utf-8")
+            transaction_id = "5" * 32
+            self._write_journal(
+                private_root,
+                transaction_id,
+                "prepared",
+                [{
+                    "destination": "../outside.json",
+                    "stage": f".outside.json.{transaction_id}.stage",
+                    "backup": None,
+                    "had_original": False,
+                }],
+            )
+
+            with self.assertRaisesRegex(ValueError, "journal path"):
+                with BATCH.private_store_lock(private_root):
+                    pass
+
+            self.assertEqual(outside.read_text(encoding="utf-8"), "outside")
 
 
 if __name__ == "__main__":

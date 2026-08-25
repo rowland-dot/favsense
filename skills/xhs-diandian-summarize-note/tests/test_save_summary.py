@@ -1,8 +1,10 @@
 import importlib.util
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 from urllib.parse import quote
 
 
@@ -71,6 +73,51 @@ class SaveDiandianSummaryTests(unittest.TestCase):
         self.assertEqual(record["note_id"], "a" * 24)
         self.assertNotIn("source_url", record)
         self.assertNotIn("removed_tail", record)
+
+    def test_live_writer_waits_for_the_shared_organization_mutation_lock(self):
+        module = load_module()
+        module.PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 0.05
+        with tempfile.TemporaryDirectory() as temp_dir:
+            private_root = Path(temp_dir) / ".xhs-favorites" / "diandian-summaries"
+            lock = private_root.parent / "organization-migration" / ".apply-lock"
+            lock.mkdir(parents=True)
+            (lock / "owner.json").write_text(json.dumps({
+                "schema_version": 1,
+                "pid": os.getpid(),
+                "nonce": "synthetic-active-migration",
+            }), encoding="utf-8")
+            destination = private_root / f"{'f' * 24}.json"
+            with self.assertRaisesRegex(TimeoutError, "organization mutation lock"):
+                module.save_record(
+                    destination=destination,
+                    title="示例笔记",
+                    summary_text="正文",
+                    note_id="f" * 24,
+                )
+            self.assertFalse(destination.exists())
+
+    @unittest.skipUnless(os.name == "nt", "Windows console-control regression")
+    def test_windows_process_probe_does_not_send_a_console_control_event(self):
+        module = load_module()
+        with mock.patch.object(
+            module.os,
+            "kill",
+            side_effect=AssertionError("os.kill(pid, 0) emits CTRL_C_EVENT on Windows"),
+        ) as kill:
+            self.assertTrue(module._process_is_active(os.getpid()))
+        kill.assert_not_called()
+
+    @unittest.skipUnless(os.name == "nt", "Windows process-query regression")
+    def test_windows_process_probe_treats_query_failure_as_active(self):
+        module = load_module()
+        with mock.patch("ctypes.WinDLL") as win_dll:
+            kernel32 = win_dll.return_value
+            kernel32.OpenProcess.return_value = 123
+            kernel32.GetExitCodeProcess.return_value = 0
+
+            self.assertTrue(module._process_is_active(os.getpid()))
+
+        kernel32.CloseHandle.assert_called_once_with(123)
 
     def test_rejects_unsafe_note_id(self):
         module = load_module()

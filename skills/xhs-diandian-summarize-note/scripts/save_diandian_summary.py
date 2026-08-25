@@ -12,9 +12,11 @@ import html
 import json
 import os
 import re
+import shutil
 import threading
 import time
 import unicodedata
+from uuid import uuid4
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import unquote
@@ -35,6 +37,7 @@ MAX_TITLE_LENGTH = 200
 MAX_SUMMARY_LENGTH = 200_000
 MAX_SUMMARY_INPUT_BYTES = MAX_SUMMARY_LENGTH * 4
 PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 30.0
+BATCH_JOURNAL_NAME = ".batch-journal.json"
 _PRIVATE_STORE_THREAD_LOCKS: dict[Path, threading.RLock] = {}
 _PRIVATE_STORE_THREAD_LOCKS_GUARD = threading.Lock()
 SENSITIVE_SOURCE_PATTERN = re.compile(
@@ -150,6 +153,219 @@ def _resolved_private_root(private_root: Path) -> Path:
     return resolved_root
 
 
+def _plain_file_or_missing(path: Path) -> bool:
+    if path.is_symlink():
+        raise ValueError("DianDian batch transaction path is unsafe")
+    if not path.exists():
+        return False
+    if not path.is_file():
+        raise ValueError("DianDian batch transaction path must be a regular file")
+    return True
+
+
+def _batch_transaction_paths(
+    private_root: Path, transaction_id: str, item: object
+) -> tuple[Path, Path, Path | None, bool]:
+    if not isinstance(item, dict) or set(item) != {
+        "destination", "stage", "backup", "had_original"
+    }:
+        raise ValueError("DianDian batch journal item is invalid")
+    destination_name = item["destination"]
+    stage_name = item["stage"]
+    backup_name = item["backup"]
+    had_original = item["had_original"]
+    if not isinstance(destination_name, str):
+        raise ValueError("DianDian batch journal path is invalid")
+    destination_match = re.fullmatch(
+        rf"({NOTE_ID_PATTERN.pattern[1:-1]})\.json", destination_name
+    )
+    expected_stage = f".{destination_name}.{transaction_id}.stage"
+    expected_backup = f".{destination_name}.{transaction_id}.backup"
+    if (
+        destination_match is None
+        or stage_name != expected_stage
+        or not isinstance(had_original, bool)
+        or backup_name != (expected_backup if had_original else None)
+    ):
+        raise ValueError("DianDian batch journal path is invalid")
+    destination = private_root / destination_name
+    stage = private_root / expected_stage
+    backup = private_root / expected_backup if had_original else None
+    return destination, stage, backup, had_original
+
+
+def _write_batch_journal(private_root: Path, journal: dict[str, object]) -> None:
+    destination = private_root / BATCH_JOURNAL_NAME
+    temporary = private_root / f"{BATCH_JOURNAL_NAME}.{uuid4().hex}.tmp"
+    try:
+        with temporary.open("x", encoding="utf-8") as handle:
+            json.dump(journal, handle, ensure_ascii=False, separators=(",", ":"))
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _recover_batch_transaction_unlocked(private_root: Path) -> None:
+    journal_path = private_root / BATCH_JOURNAL_NAME
+    if not _plain_file_or_missing(journal_path):
+        return
+    if journal_path.stat().st_size > 512 * 1024:
+        raise ValueError("DianDian batch journal is too large")
+    try:
+        journal = json.loads(journal_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError("DianDian batch journal is invalid") from error
+    if (
+        not isinstance(journal, dict)
+        or set(journal) != {"version", "transaction_id", "status", "items"}
+        or journal.get("version") != 1
+        or not isinstance(journal.get("transaction_id"), str)
+        or re.fullmatch(r"[a-f0-9]{32}", journal["transaction_id"]) is None
+        or journal.get("status") not in {"prepared", "committed"}
+        or not isinstance(journal.get("items"), list)
+        or not journal["items"]
+        or len(journal["items"]) > 500
+    ):
+        raise ValueError("DianDian batch journal is invalid")
+    paths = [
+        _batch_transaction_paths(private_root, journal["transaction_id"], item)
+        for item in journal["items"]
+    ]
+    if len({destination for destination, *_rest in paths}) != len(paths):
+        raise ValueError("DianDian batch journal contains duplicate destinations")
+    if journal["status"] == "prepared":
+        for destination, stage, backup, had_original in reversed(paths):
+            if had_original:
+                if backup is not None and _plain_file_or_missing(backup):
+                    if _plain_file_or_missing(destination):
+                        destination.unlink()
+                    backup.replace(destination)
+                elif not _plain_file_or_missing(destination):
+                    raise ValueError("DianDian batch rollback source is unavailable")
+            elif not _plain_file_or_missing(stage) and _plain_file_or_missing(destination):
+                destination.unlink()
+    else:
+        for destination, _stage, _backup, _had_original in paths:
+            if not _plain_file_or_missing(destination):
+                raise ValueError("DianDian committed batch record is unavailable")
+    for _destination, stage, backup, _had_original in paths:
+        if _plain_file_or_missing(stage):
+            stage.unlink()
+        if backup is not None and _plain_file_or_missing(backup):
+            backup.unlink()
+    journal_path.unlink()
+
+
+def _process_is_active(pid: object) -> bool:
+    if not isinstance(pid, int) or isinstance(pid, bool) or pid <= 0:
+        return False
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        open_process = kernel32.OpenProcess
+        open_process.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+        open_process.restype = wintypes.HANDLE
+        get_exit_code = kernel32.GetExitCodeProcess
+        get_exit_code.argtypes = (wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD))
+        get_exit_code.restype = wintypes.BOOL
+        close_handle = kernel32.CloseHandle
+        close_handle.argtypes = (wintypes.HANDLE,)
+        close_handle.restype = wintypes.BOOL
+
+        # os.kill(pid, 0) broadcasts CTRL_C_EVENT on Windows.
+        handle = open_process(0x1000, False, pid)
+        if not handle:
+            return ctypes.get_last_error() != 87
+        try:
+            exit_code = wintypes.DWORD()
+            if not get_exit_code(handle, ctypes.byref(exit_code)):
+                return True
+            return exit_code.value == 259
+        finally:
+            close_handle(handle)
+    try:
+        os.kill(pid, 0)
+        return True
+    except PermissionError:
+        return True
+    except ProcessLookupError:
+        return False
+
+
+@contextmanager
+def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
+    lock_parent = resolved_root.parent / "organization-migration"
+    lock_parent.mkdir(parents=True, exist_ok=True)
+    if lock_parent.is_symlink() or not lock_parent.is_dir():
+        raise ValueError("organization mutation lock root is unsafe")
+    lock_path = lock_parent / ".apply-lock"
+    nonce = uuid4().hex
+    candidate = lock_parent / f".apply-lock.candidate-{nonce}"
+    candidate.mkdir()
+    (candidate / "owner.json").write_text(
+        json.dumps({"schema_version": 1, "pid": os.getpid(), "nonce": nonce}) + "\n",
+        encoding="utf-8",
+    )
+    deadline = time.monotonic() + PRIVATE_STORE_LOCK_TIMEOUT_SECONDS
+    acquired = False
+    try:
+        while not acquired:
+            try:
+                candidate.rename(lock_path)
+                acquired = True
+                break
+            except OSError as error:
+                if not lock_path.exists():
+                    raise
+                if lock_path.is_symlink() or not lock_path.is_dir():
+                    raise ValueError("organization mutation lock is unsafe") from error
+                try:
+                    owner = json.loads(
+                        (lock_path / "owner.json").read_text(encoding="utf-8")
+                    )
+                except (OSError, ValueError, TypeError, json.JSONDecodeError) as owner_error:
+                    raise ValueError("organization mutation lock is invalid") from owner_error
+                if _process_is_active(owner.get("pid")):
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError(
+                            "timed out waiting for the organization mutation lock"
+                        ) from error
+                    time.sleep(0.05)
+                    continue
+                stale = lock_parent / f".apply-lock.stale-{uuid4().hex}"
+                try:
+                    lock_path.rename(stale)
+                except OSError:
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError(
+                            "timed out waiting for the organization mutation lock"
+                        ) from error
+                    time.sleep(0.05)
+                    continue
+                try:
+                    candidate.rename(lock_path)
+                    acquired = True
+                finally:
+                    shutil.rmtree(stale, ignore_errors=True)
+        yield
+    finally:
+        shutil.rmtree(candidate, ignore_errors=True)
+        if acquired:
+            try:
+                owner = json.loads(
+                    (lock_path / "owner.json").read_text(encoding="utf-8")
+                )
+            except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                owner = {}
+            if owner.get("nonce") == nonce:
+                shutil.rmtree(lock_path)
+
+
 @contextmanager
 def private_store_lock(private_root: Path) -> Iterator[None]:
     """Serialize all single and batch writers across threads and processes."""
@@ -160,41 +376,43 @@ def private_store_lock(private_root: Path) -> Iterator[None]:
             resolved_root, threading.RLock()
         )
     with thread_lock:
-        lock_path = resolved_root / ".writer.lock"
-        with lock_path.open("a+b") as lock_file:
-            lock_file.seek(0, os.SEEK_END)
-            if lock_file.tell() == 0:
-                lock_file.write(b"\0")
-                lock_file.flush()
-            deadline = time.monotonic() + PRIVATE_STORE_LOCK_TIMEOUT_SECONDS
-            while True:
+        with _organization_mutation_lock(resolved_root):
+            lock_path = resolved_root / ".writer.lock"
+            with lock_path.open("a+b") as lock_file:
+                lock_file.seek(0, os.SEEK_END)
+                if lock_file.tell() == 0:
+                    lock_file.write(b"\0")
+                    lock_file.flush()
+                deadline = time.monotonic() + PRIVATE_STORE_LOCK_TIMEOUT_SECONDS
+                while True:
+                    try:
+                        lock_file.seek(0)
+                        if msvcrt is not None:
+                            msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+                        elif fcntl is not None:
+                            fcntl.flock(
+                                lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB
+                            )
+                        else:  # pragma: no cover - all supported platforms provide one.
+                            raise RuntimeError("interprocess file locking is unavailable")
+                        break
+                    except OSError as error:
+                        if error.errno not in {errno.EACCES, errno.EAGAIN, errno.EDEADLK}:
+                            raise
+                        if time.monotonic() >= deadline:
+                            raise TimeoutError(
+                                "timed out waiting for the DianDian private store lock"
+                            ) from error
+                        time.sleep(0.05)
                 try:
+                    _recover_batch_transaction_unlocked(resolved_root)
+                    yield
+                finally:
                     lock_file.seek(0)
                     if msvcrt is not None:
-                        msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+                        msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
                     elif fcntl is not None:
-                        fcntl.flock(
-                            lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB
-                        )
-                    else:  # pragma: no cover - all supported platforms provide one.
-                        raise RuntimeError("interprocess file locking is unavailable")
-                    break
-                except OSError as error:
-                    if error.errno not in {errno.EACCES, errno.EAGAIN, errno.EDEADLK}:
-                        raise
-                    if time.monotonic() >= deadline:
-                        raise TimeoutError(
-                            "timed out waiting for the DianDian private store lock"
-                        ) from error
-                    time.sleep(0.05)
-            try:
-                yield
-            finally:
-                lock_file.seek(0)
-                if msvcrt is not None:
-                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
-                elif fcntl is not None:
-                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def write_record(destination: Path, record: dict[str, str | int]) -> None:

@@ -1039,6 +1039,9 @@ class BridgeHelpersTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             saver = Path(directory) / "save_diandian_summary.py"
             saver.write_text(
+                "from contextlib import nullcontext\n"
+                "def private_store_lock(private_root):\n"
+                "    return nullcontext()\n"
                 "def save_record(destination, title, summary_text, note_id):\n"
                 "    return {'destination': destination, 'title': title, 'summary': summary_text, 'note_id': note_id}\n",
                 encoding="utf-8",
@@ -1047,6 +1050,7 @@ class BridgeHelpersTest(unittest.TestCase):
             save_record = BRIDGE.load_diandian_save_record(saver)
 
             self.assertTrue(callable(save_record))
+            self.assertTrue(callable(save_record.private_store_lock))
             self.assertEqual(
                 save_record("path", "title", "summary", "note"),
                 {"destination": "path", "title": "title", "summary": "summary", "note_id": "note"},
@@ -1068,10 +1072,29 @@ class BridgeHelpersTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "callable save_record"):
                 BRIDGE.load_diandian_save_record(saver)
 
+    def test_diandian_saver_loader_requires_the_shared_private_store_lock(self):
+        with tempfile.TemporaryDirectory() as directory:
+            saver = Path(directory) / "save_diandian_summary.py"
+            saver.write_text(
+                "def save_record(destination, title, summary_text, note_id):\n"
+                "    return None\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "private_store_lock"):
+                BRIDGE.load_diandian_save_record(saver)
+
     def test_diandian_saver_loader_rejects_incompatible_api_signature(self):
         with tempfile.TemporaryDirectory() as directory:
             saver = Path(directory) / "save_diandian_summary.py"
-            saver.write_text("def save_record(value):\n    return value\n", encoding="utf-8")
+            saver.write_text(
+                "from contextlib import nullcontext\n"
+                "def private_store_lock(private_root):\n"
+                "    return nullcontext()\n"
+                "def save_record(value):\n"
+                "    return value\n",
+                encoding="utf-8",
+            )
 
             with self.assertRaisesRegex(ValueError, "API 1"):
                 BRIDGE.load_diandian_save_record(saver)
@@ -1082,6 +1105,9 @@ class BridgeHelpersTest(unittest.TestCase):
             scripts.mkdir()
             saver = scripts / "save_diandian_summary.py"
             saver.write_text(
+                "from contextlib import nullcontext\n"
+                "def private_store_lock(private_root):\n"
+                "    return nullcontext()\n"
                 "def save_record(destination, title, summary_text, note_id):\n    return None\n",
                 encoding="utf-8",
             )

@@ -7,12 +7,14 @@ import argparse
 import json
 import os
 from pathlib import Path
-import threading
 from uuid import uuid4
 
 from save_diandian_summary import (
+    BATCH_JOURNAL_NAME,
     MAX_SUMMARY_LENGTH,
     MAX_TITLE_LENGTH,
+    _recover_batch_transaction_unlocked,
+    _write_batch_journal,
     build_record,
     private_destination,
     private_store_lock,
@@ -30,49 +32,66 @@ def _commit_records_locked(
     prepared: list[tuple[Path, dict[str, str | int]]],
 ) -> None:
     staged: list[tuple[Path, Path]] = []
-    backups: list[tuple[Path, Path | None]] = []
-    rollback_failed = False
-    transaction_id = f"{os.getpid()}.{threading.get_ident()}.{uuid4().hex}"
+    transaction_id = uuid4().hex
+    private_root = prepared[0][0].parent
+    journal_path = private_root / BATCH_JOURNAL_NAME
+    items: list[dict[str, object]] = []
     try:
         for destination, record in prepared:
-            destination.parent.mkdir(parents=True, exist_ok=True)
             temporary = destination.with_name(
                 f".{destination.name}.{transaction_id}.stage"
             )
-            temporary.write_text(serialize_record(record), encoding="utf-8")
+            backup = destination.with_name(
+                f".{destination.name}.{transaction_id}.backup"
+            )
+            if destination.is_symlink() or (
+                destination.exists() and not destination.is_file()
+            ):
+                raise ValueError("DianDian destination must be a regular file")
+            items.append({
+                "destination": destination.name,
+                "stage": temporary.name,
+                "backup": backup.name if destination.exists() else None,
+                "had_original": destination.exists(),
+            })
             staged.append((destination, temporary))
+        _write_batch_journal(private_root, {
+            "version": 1,
+            "transaction_id": transaction_id,
+            "status": "prepared",
+            "items": items,
+        })
+        for (_destination, temporary), (_destination_again, record) in zip(
+            staged, prepared, strict=True
+        ):
+            with temporary.open("x", encoding="utf-8") as handle:
+                handle.write(serialize_record(record))
+                handle.flush()
+                os.fsync(handle.fileno())
 
-        for destination, temporary in staged:
-            backup = None
-            if destination.exists():
-                if not destination.is_file():
-                    raise ValueError("DianDian destination must be a regular file")
-                backup = destination.with_name(
-                    f".{destination.name}.{transaction_id}.backup"
-                )
+        for (destination, temporary), item in zip(staged, items, strict=True):
+            if item["had_original"]:
+                backup = private_root / str(item["backup"])
                 destination.replace(backup)
-            backups.append((destination, backup))
             temporary.replace(destination)
+        _write_batch_journal(private_root, {
+            "version": 1,
+            "transaction_id": transaction_id,
+            "status": "committed",
+            "items": items,
+        })
+        _recover_batch_transaction_unlocked(private_root)
     except Exception:
-        rollback_error = None
-        for destination, backup in reversed(backups):
+        if journal_path.exists():
             try:
-                destination.unlink(missing_ok=True)
-                if backup is not None and backup.exists():
-                    backup.replace(destination)
-            except OSError as error:
-                rollback_error = rollback_error or error
-        if rollback_error is not None:
-            rollback_failed = True
-            raise RuntimeError("DianDian batch rollback failed") from rollback_error
+                _recover_batch_transaction_unlocked(private_root)
+            except (OSError, ValueError) as rollback_error:
+                raise RuntimeError("DianDian batch rollback failed") from rollback_error
         raise
     finally:
-        for _destination, temporary in staged:
-            temporary.unlink(missing_ok=True)
-        if not rollback_failed:
-            for _destination, backup in backups:
-                if backup is not None:
-                    backup.unlink(missing_ok=True)
+        if not journal_path.exists():
+            for _destination, temporary in staged:
+                temporary.unlink(missing_ok=True)
 
 
 def commit_records(
