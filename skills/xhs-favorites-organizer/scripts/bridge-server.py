@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
@@ -267,6 +268,53 @@ def atomic_json(path: Path, value: dict) -> None:
         temporary.unlink(missing_ok=True)
 
 
+@contextmanager
+def exclusive_file_lock(path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+        try:
+            path.touch(exist_ok=True)
+        except PermissionError:
+            if not path.exists():
+                raise
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        create_file = kernel32.CreateFileW
+        create_file.argtypes = [
+            wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+            wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE,
+        ]
+        create_file.restype = wintypes.HANDLE
+        close_handle = kernel32.CloseHandle
+        close_handle.argtypes = [wintypes.HANDLE]
+        close_handle.restype = wintypes.BOOL
+        invalid_handle = wintypes.HANDLE(-1).value
+        handle = invalid_handle
+        deadline = time.monotonic() + 240
+        while handle == invalid_handle:
+            handle = create_file(str(path), 0xC0000000, 0, None, 3, 0x80, None)
+            if handle == invalid_handle:
+                error = ctypes.get_last_error()
+                if error != 32:
+                    raise OSError(error, "publish claim lock could not be acquired")
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("publish claim lock timed out")
+                time.sleep(0.01)
+        try:
+            yield
+        finally:
+            close_handle(handle)
+        return
+    import fcntl
+    with path.open("a+b", buffering=0) as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
 def restore_file_snapshot(path: Path, snapshot: bytes | None) -> None:
     if snapshot is None:
         path.unlink(missing_ok=True)
@@ -493,7 +541,8 @@ def parse_snapshot_build_result(source: str) -> dict:
     except json.JSONDecodeError as error:
         raise ValueError("snapshot result is not valid JSON") from error
     if not isinstance(value, dict) or set(value) != {
-        "schema_version", "ok", "outcome", "build_version", "counts"
+        "schema_version", "ok", "outcome", "build_version",
+        "site_manifest_sha256", "counts"
     }:
         raise ValueError("snapshot result contract is invalid")
     counts = value.get("counts")
@@ -503,6 +552,8 @@ def parse_snapshot_build_result(source: str) -> dict:
         or value.get("outcome") != "built"
         or not isinstance(value.get("build_version"), str)
         or re.fullmatch(r"[a-f0-9]{64}", value["build_version"]) is None
+        or not isinstance(value.get("site_manifest_sha256"), str)
+        or re.fullmatch(r"[a-f0-9]{64}", value["site_manifest_sha256"]) is None
         or not isinstance(counts, dict)
         or set(counts) != {"notes", "categories", "resources"}
         or any(not isinstance(item, int) or isinstance(item, bool) or item < 0 or item > 10_000_000 for item in counts.values())
@@ -2894,83 +2945,131 @@ class Bridge:
         run_id: str,
         board_id: str,
         build_version: str | None = None,
+        site_manifest_sha256: str | None = None,
+        *,
+        _claim_lock_held: bool = False,
     ) -> bool:
         """Linearize the finalizer's publish start against a halt for the same run."""
-        if build_version is not None and not re.fullmatch(r"[a-f0-9]{64}", build_version):
+        if (
+            not RUN_ID.fullmatch(run_id)
+            or build_version is not None and re.fullmatch(r"[a-f0-9]{64}", build_version) is None
+            or site_manifest_sha256 is not None and re.fullmatch(r"[a-f0-9]{64}", site_manifest_sha256) is None
+            or (build_version is None) != (site_manifest_sha256 is None)
+        ):
             return False
+        claim_lock = (
+            nullcontext()
+            if _claim_lock_held
+            else exclusive_file_lock(
+                self.state_dir / "publish-claims" / f"{run_id}.lock"
+            )
+        )
         with self.summary_run_lock(run_id):
             with self.get_manual_sync_lock():
-                state = self.read_manual_sync()
-                halted_runs = state.get("summary_halted_run_ids")
-                if (
-                    not self.manual_state_owns_run(state, run_id, board_id)
-                    or state.get("state") != "running"
-                    or state.get("summary_finalizing") is not True
-                    or isinstance(halted_runs, list) and run_id in halted_runs
-                ):
-                    return False
-                if build_version is not None:
-                    claimed_build = state.get("publish_claimed_build_version")
-                    published_build = state.get("published_build_version")
-                    if claimed_build not in {None, "", build_version} or published_build not in {None, "", build_version}:
-                        return False
-                    if published_build == build_version:
-                        return False
-                    if claimed_build == build_version:
-                        if state.get("publish_status") == "running":
-                            state["publish_status"] = "failed"
-                            state["publish_error"] = "previous publish outcome is unknown; automatic retry withheld"
-                            atomic_json(self.manual_sync_path, state)
-                        return False
-                guard = getattr(self, "summary_locks_guard", None)
-                if guard is None:
-                    guard = threading.Lock()
-                    self.summary_locks_guard = guard
-                with guard:
-                    if run_id in getattr(self, "summary_halted", set()):
-                        return False
-                    claimed = getattr(self, "summary_publish_claimed", None)
-                    if claimed is None:
-                        claimed = set()
-                        self.summary_publish_claimed = claimed
-                    if run_id in claimed:
+                with claim_lock:
+                    state = self.read_manual_sync()
+                    halted_runs = state.get("summary_halted_run_ids")
+                    if (
+                        not self.manual_state_owns_run(state, run_id, board_id)
+                        or state.get("state") != "running"
+                        or state.get("summary_finalizing") is not True
+                        or isinstance(halted_runs, list) and run_id in halted_runs
+                    ):
                         return False
                     if build_version is not None:
-                        state["build_version"] = build_version
-                        state["publish_claimed_build_version"] = build_version
-                        state["publish_status"] = "running"
-                        state.pop("publish_error", None)
-                        atomic_json(self.manual_sync_path, state)
-                    claimed.add(run_id)
-                    return True
+                        expected = (build_version, site_manifest_sha256)
+                        claimed = (
+                            state.get("publish_claimed_build_version"),
+                            state.get("publish_claimed_site_manifest_sha256"),
+                        )
+                        published = (
+                            state.get("published_build_version"),
+                            state.get("published_site_manifest_sha256"),
+                        )
+                        if claimed not in {(None, None), ("", ""), expected}:
+                            return False
+                        if published not in {(None, None), ("", ""), expected}:
+                            return False
+                        if published == expected:
+                            return False
+                        if claimed == expected:
+                            if state.get("publish_status") == "running":
+                                state["publish_status"] = "failed"
+                                state["publish_error"] = "previous publish outcome is unknown; automatic retry withheld"
+                                atomic_json(self.manual_sync_path, state)
+                            return False
+                    guard = getattr(self, "summary_locks_guard", None)
+                    if guard is None:
+                        guard = threading.Lock()
+                        self.summary_locks_guard = guard
+                    with guard:
+                        if run_id in getattr(self, "summary_halted", set()):
+                            return False
+                        memory_claims = getattr(self, "summary_publish_claimed", None)
+                        if memory_claims is None:
+                            memory_claims = set()
+                            self.summary_publish_claimed = memory_claims
+                        if run_id in memory_claims:
+                            return False
+                        if build_version is not None:
+                            state["build_version"] = build_version
+                            state["site_manifest_sha256"] = site_manifest_sha256
+                            state["publish_claimed_build_version"] = build_version
+                            state["publish_claimed_site_manifest_sha256"] = site_manifest_sha256
+                            state["publish_status"] = "running"
+                            state.pop("publish_error", None)
+                            atomic_json(self.manual_sync_path, state)
+                        memory_claims.add(run_id)
+                        return True
 
     def record_diandian_publish(
         self,
         run_id: str,
         board_id: str,
         build_version: str,
+        site_manifest_sha256: str,
         publish: dict,
+        *,
+        _claim_lock_held: bool = False,
     ) -> None:
-        if not re.fullmatch(r"[a-f0-9]{64}", build_version):
-            raise ValueError("publish build version is invalid")
+        if (
+            re.fullmatch(r"[a-f0-9]{64}", build_version) is None
+            or re.fullmatch(r"[a-f0-9]{64}", site_manifest_sha256) is None
+        ):
+            raise ValueError("publish snapshot identity is invalid")
         status = str(publish.get("status") or "")
         if status not in {"published", "unchanged", "failed"}:
             raise ValueError("publish status is invalid")
+        if status in {"published", "unchanged"} and (
+            publish.get("build_version") != build_version
+            or publish.get("site_manifest_sha256") != site_manifest_sha256
+        ):
+            raise ValueError("publisher receipt did not match the claimed snapshot")
+        claim_lock = (
+            nullcontext()
+            if _claim_lock_held
+            else exclusive_file_lock(
+                self.state_dir / "publish-claims" / f"{run_id}.lock"
+            )
+        )
         with self.summary_run_lock(run_id):
             with self.get_manual_sync_lock():
-                state = self.read_manual_sync()
-                if (
-                    not self.manual_state_owns_run(state, run_id, board_id)
-                    or state.get("publish_claimed_build_version") != build_version
-                ):
-                    raise ValueError("publish claim no longer owns this run")
-                state["publish_status"] = status
-                if status in {"published", "unchanged"}:
-                    state["published_build_version"] = build_version
-                    state.pop("publish_error", None)
-                else:
-                    state["publish_error"] = sanitize_error(str(publish.get("error") or "publish failed"))
-                atomic_json(self.manual_sync_path, state)
+                with claim_lock:
+                    state = self.read_manual_sync()
+                    if (
+                        not self.manual_state_owns_run(state, run_id, board_id)
+                        or state.get("publish_claimed_build_version") != build_version
+                        or state.get("publish_claimed_site_manifest_sha256") != site_manifest_sha256
+                    ):
+                        raise ValueError("publish claim no longer owns this run")
+                    state["publish_status"] = status
+                    if status in {"published", "unchanged"}:
+                        state["published_build_version"] = build_version
+                        state["published_site_manifest_sha256"] = site_manifest_sha256
+                        state.pop("publish_error", None)
+                    else:
+                        state["publish_error"] = sanitize_error(str(publish.get("error") or "publish failed"))
+                    atomic_json(self.manual_sync_path, state)
 
     def start_diandian_finalization(self, run_id: str, board_id: str) -> bool:
         with self.summary_run_lock(run_id):
@@ -3093,6 +3192,9 @@ class Bridge:
                 build_version = result.get("build_version")
                 if isinstance(build_version, str) and re.fullmatch(r"[a-f0-9]{64}", build_version):
                     state["build_version"] = build_version
+                site_manifest_sha256 = result.get("site_manifest_sha256")
+                if isinstance(site_manifest_sha256, str) and re.fullmatch(r"[a-f0-9]{64}", site_manifest_sha256):
+                    state["site_manifest_sha256"] = site_manifest_sha256
                 curation_counts = result.get("curation", {}).get("counts")
                 if isinstance(curation_counts, dict):
                     state["curation_accepted"] = max(0, int(curation_counts.get("accepted", 0) or 0))
@@ -3158,6 +3260,7 @@ class Bridge:
                     failure_phase = "build"
                     snapshot = self.build_organization_snapshot()
                     result["build_version"] = snapshot["build_version"]
+                    result["site_manifest_sha256"] = snapshot["site_manifest_sha256"]
                 else:
                     self.rebuild_knowledge_base()
                 if self.diandian_is_halted(run_id):
@@ -3168,6 +3271,7 @@ class Bridge:
                     run_id,
                     require_finalization_claim=True,
                     build_version=result.get("build_version"),
+                    site_manifest_sha256=result.get("site_manifest_sha256"),
                 )
                 if publish is not None:
                     result["publish"] = publish
@@ -4494,11 +4598,19 @@ class Bridge:
             context["target_note_id"] = target_note_id
         return context
 
-    def publish_public_site(self, build_version: str | None = None) -> dict:
+    def publish_public_site(
+        self,
+        build_version: str | None = None,
+        site_manifest_sha256: str | None = None,
+    ) -> dict:
         if self.publish_config is None:
             return {"ok": True, "status": "disabled"}
-        if build_version is not None and not re.fullmatch(r"[a-f0-9]{64}", build_version):
-            raise ValueError("publish build version is invalid")
+        if (
+            build_version is not None and re.fullmatch(r"[a-f0-9]{64}", build_version) is None
+            or site_manifest_sha256 is not None and re.fullmatch(r"[a-f0-9]{64}", site_manifest_sha256) is None
+            or (build_version is None) != (site_manifest_sha256 is None)
+        ):
+            raise ValueError("publish snapshot identity is invalid")
         frozen_site = (
             self.workspace
             / ".xhs-tools"
@@ -4520,6 +4632,7 @@ class Bridge:
                 command.extend([
                     "--site-root", str(frozen_site),
                     "--build-version", build_version,
+                    "--site-manifest-sha256", site_manifest_sha256,
                     "--config", str(self.config_path),
                 ])
             published = run_bounded_subprocess(
@@ -4563,11 +4676,14 @@ class Bridge:
                 "status": "failed",
                 "error": "publisher returned an unsupported result",
             }
-        if build_version is not None and result.get("build_version") != build_version:
+        if build_version is not None and (
+            result.get("build_version") != build_version
+            or result.get("site_manifest_sha256") != site_manifest_sha256
+        ):
             return {
                 "ok": False,
                 "status": "failed",
-                "error": "publisher receipt did not match the claimed build version",
+                "error": "publisher receipt did not match the claimed snapshot",
             }
         return result
 
@@ -4578,7 +4694,10 @@ class Bridge:
         *,
         require_finalization_claim: bool = False,
         build_version: str | None = None,
+        site_manifest_sha256: str | None = None,
     ) -> dict | None:
+        if (build_version is None) != (site_manifest_sha256 is None):
+            raise ValueError("publish snapshot identity is incomplete")
         if run_id is not None:
             if self.summary_plans.get(run_id):
                 return None
@@ -4592,30 +4711,54 @@ class Bridge:
                 return None
         if self.publish_config is None or self.next_board_id(board_id, run_id) is not None:
             return None
-        if require_finalization_claim:
-            if build_version is None:
-                raise ValueError("finalization publish requires a build version")
-            if run_id is None or not self.claim_diandian_publish(run_id, board_id, build_version):
-                return None
-        # The per-run claim above is the short critical section. The external
-        # publisher may take minutes, so it must execute after releasing run locks.
-        try:
-            result = (
-                self.publish_public_site(build_version)
-                if build_version is not None
-                else self.publish_public_site()
+        if require_finalization_claim and (
+            run_id is None
+            or build_version is None
+            or site_manifest_sha256 is None
+        ):
+            raise ValueError("finalization publish requires a snapshot identity")
+        publish_lock = (
+            exclusive_file_lock(
+                self.state_dir / "publish-claims" / f"{run_id}.lock"
             )
-        except Exception as error:
+            if require_finalization_claim
+            else nullcontext()
+        )
+        with publish_lock:
+            if require_finalization_claim and not self.claim_diandian_publish(
+                run_id,
+                board_id,
+                build_version,
+                site_manifest_sha256,
+                _claim_lock_held=True,
+            ):
+                return None
+            try:
+                result = (
+                    self.publish_public_site(build_version, site_manifest_sha256)
+                    if build_version is not None
+                    else self.publish_public_site()
+                )
+            except Exception as error:
+                if run_id is not None and build_version is not None:
+                    self.record_diandian_publish(
+                        run_id,
+                        board_id,
+                        build_version,
+                        site_manifest_sha256,
+                        {
+                            "ok": False,
+                            "status": "failed",
+                            "error": sanitize_error(str(error)),
+                        },
+                        _claim_lock_held=require_finalization_claim,
+                    )
+                raise
             if run_id is not None and build_version is not None:
-                self.record_diandian_publish(run_id, board_id, build_version, {
-                    "ok": False,
-                    "status": "failed",
-                    "error": sanitize_error(str(error)),
-                })
-            raise
-        if run_id is not None and build_version is not None:
-            self.record_diandian_publish(run_id, board_id, build_version, result)
-        return result
+                self.record_diandian_publish(run_id, board_id, build_version, site_manifest_sha256, {
+                    **result,
+                }, _claim_lock_held=require_finalization_claim)
+            return result
 
     def tag_catalog_sources(self, board_id: str, note_ids: set[str]) -> None:
         if not self.catalog_path.exists():

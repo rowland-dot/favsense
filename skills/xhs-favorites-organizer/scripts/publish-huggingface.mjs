@@ -4,6 +4,10 @@ import { cp, lstat, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import {
+  readFrozenSiteManifest,
+  siteTreeManifest,
+} from "./build-organization-snapshot.mjs";
 import { validatePublicTree } from "./public-tree-policy.mjs";
 
 function readOption(name, fallback) {
@@ -128,6 +132,7 @@ async function main() {
   const workspace = path.resolve(readOption("workspace", process.cwd()));
   const siteRootOption = readOption("site-root", "");
   const buildVersion = readOption("build-version", "");
+  const siteManifestSha256 = readOption("site-manifest-sha256", "");
   const configOption = readOption("config", path.join("config", "xhs-favorites.json"));
   const configPath = path.isAbsolute(configOption)
     ? configOption
@@ -139,11 +144,14 @@ async function main() {
   if (!/^[A-Za-z0-9._/-]{1,100}$/.test(branch) || branch.includes("..")) {
     throw new Error("--branch contains unsupported characters");
   }
-  if (Boolean(siteRootOption) !== Boolean(buildVersion)) {
-    throw new Error("--site-root and --build-version must be provided together");
+  if (new Set([siteRootOption, buildVersion, siteManifestSha256].map(Boolean)).size !== 1) {
+    throw new Error("--site-root, --build-version and --site-manifest-sha256 must be provided together");
   }
   if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) {
     throw new Error("--build-version must be a SHA-256 digest");
+  }
+  if (siteManifestSha256 && !/^[a-f0-9]{64}$/.test(siteManifestSha256)) {
+    throw new Error("--site-manifest-sha256 must be a SHA-256 digest");
   }
 
   const publicSite = siteRootOption
@@ -155,6 +163,7 @@ async function main() {
   }
   const indexMetadata = await lstat(path.join(publicSite, "index.html"));
   if (!indexMetadata.isFile()) throw new Error("site/index.html was not found");
+  let frozenManifest = null;
   if (buildVersion) {
     let knowledge;
     try {
@@ -166,6 +175,14 @@ async function main() {
     }
     if (knowledge?.meta?.buildVersion !== buildVersion) {
       throw new Error("frozen public snapshot does not match --build-version");
+    }
+    try {
+      frozenManifest = await readFrozenSiteManifest(publicSite, buildVersion);
+    } catch {
+      throw new Error("frozen public snapshot manifest does not match");
+    }
+    if (frozenManifest.tree_sha256 !== siteManifestSha256) {
+      throw new Error("frozen public snapshot manifest does not match");
     }
   }
   const privateIdentifiers = await loadPrivateIdentifiers(configPath);
@@ -188,6 +205,15 @@ async function main() {
         return path.relative(publicSite, source).split(path.sep)[0].toLowerCase() !== ".local";
       },
     });
+    if (frozenManifest) {
+      const copiedManifest = await siteTreeManifest(targetSite, buildVersion);
+      if (
+        copiedManifest.tree_sha256 !== frozenManifest.tree_sha256
+        || JSON.stringify(copiedManifest.entries) !== JSON.stringify(frozenManifest.entries)
+      ) {
+        throw new Error("frozen public snapshot changed while it was copied");
+      }
+    }
     await validatePublicTree(targetSite, { privateIdentifiers });
     await ensureMiniHeader(path.join(checkout, "README.md"));
     await validatePublicTree(checkout, {
@@ -205,6 +231,7 @@ async function main() {
         repository,
         branch,
         ...(buildVersion ? { build_version: buildVersion } : {}),
+        ...(frozenManifest ? { site_manifest_sha256: frozenManifest.tree_sha256 } : {}),
       })}\n`);
       return;
     }
@@ -222,6 +249,7 @@ async function main() {
       branch,
       commit,
       ...(buildVersion ? { build_version: buildVersion } : {}),
+      ...(frozenManifest ? { site_manifest_sha256: frozenManifest.tree_sha256 } : {}),
     })}\n`);
   } finally {
     await rm(temporary, { recursive: true, force: true });

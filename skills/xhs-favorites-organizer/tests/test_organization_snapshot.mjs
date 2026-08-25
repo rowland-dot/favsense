@@ -87,6 +87,7 @@ test("successful build freezes a publish site under its canonical version", asyn
     result.build_version,
     "site"
   );
+  const frozenManifest = JSON.parse(await readFile(join(frozenSite, "..", "manifest.json"), "utf8"));
 
   await writeFile(join(publishSite, "index.html"), "site-B", "utf8");
   await writeFile(
@@ -96,11 +97,95 @@ test("successful build freezes a publish site under its canonical version", asyn
   );
 
   assert.equal(await readFile(join(frozenSite, "index.html"), "utf8"), "site-A");
+  assert.equal(result.site_manifest_sha256, frozenManifest.tree_sha256);
   assert.equal(
     JSON.parse(await readFile(join(frozenSite, "data", "knowledge.json"), "utf8"))
       .meta.buildVersion,
     result.build_version
   );
+});
+
+test("publish freeze failure leaves both live outputs unchanged and writes nothing outside", async (context) => {
+  const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
+  const root = await mkdtemp(join(tmpdir(), "favsense-publish-freeze-failure-"));
+  const outside = await mkdtemp(join(tmpdir(), "favsense-publish-freeze-outside-"));
+  const kbTarget = join(root, "knowledge-base");
+  const publishSite = join(root, "site");
+  const publicTarget = join(publishSite, "data", "knowledge.json");
+  await mkdir(kbTarget);
+  await mkdir(join(publishSite, "data"), { recursive: true });
+  await writeFile(join(kbTarget, "build.json"), JSON.stringify({ build_version: "old" }));
+  await writeFile(join(publishSite, "index.html"), "old-site", "utf8");
+  await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" }, marker: "old" }));
+  try {
+    try {
+      await symlink(outside, join(publishSite, "unsafe"), process.platform === "win32" ? "junction" : "dir");
+    } catch (error) {
+      if (["EPERM", "EACCES", "ENOSYS"].includes(error.code)) {
+        context.skip(`directory link unavailable: ${error.code}`);
+        return;
+      }
+      throw error;
+    }
+    await assert.rejects(buildOrganizationSnapshot({
+      root,
+      kbTarget,
+      publicTarget,
+      publishSite,
+      sealedScopeDigest: "a".repeat(64),
+      curationInputDigest: "b".repeat(64),
+      configDigest: "c".repeat(64),
+      inputRevisionDigest: "d".repeat(64),
+      effectiveDate: "2026-08-25",
+      buildKnowledgeBase: builder("kb", []),
+      buildPublicSite: builder("public", []),
+    }), /SNAPSHOT_PUBLISH_SITE_INVALID/);
+    assert.equal(JSON.parse(await readFile(join(kbTarget, "build.json"), "utf8")).build_version, "old");
+    assert.deepEqual(JSON.parse(await readFile(publicTarget, "utf8")), {
+      meta: { buildVersion: "old" },
+      marker: "old",
+    });
+    assert.deepEqual(await readdir(outside), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
+  }
+});
+
+test("same build version rejects changed or tampered frozen site bytes", async () => {
+  const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
+  const root = await mkdtemp(join(tmpdir(), "favsense-publish-manifest-"));
+  const kbTarget = join(root, "knowledge-base");
+  const publishSite = join(root, "site");
+  const publicTarget = join(publishSite, "data", "knowledge.json");
+  await mkdir(kbTarget);
+  await mkdir(join(publishSite, "data"), { recursive: true });
+  await writeFile(join(kbTarget, "build.json"), JSON.stringify({ build_version: "old" }));
+  await writeFile(join(publishSite, "index.html"), "site-A", "utf8");
+  await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" } }));
+  const options = {
+    root,
+    kbTarget,
+    publicTarget,
+    publishSite,
+    sealedScopeDigest: "a".repeat(64),
+    curationInputDigest: "b".repeat(64),
+    configDigest: "c".repeat(64),
+    inputRevisionDigest: "d".repeat(64),
+    effectiveDate: "2026-08-25",
+    buildKnowledgeBase: builder("kb", []),
+    buildPublicSite: builder("public", []),
+  };
+  const first = await buildOrganizationSnapshot(options);
+  const frozenSite = join(root, ".xhs-tools", "organization-snapshots", "publish", first.build_version, "site");
+
+  await writeFile(join(publishSite, "index.html"), "site-B", "utf8");
+  await assert.rejects(buildOrganizationSnapshot(options), /SNAPSHOT_PUBLISH_MANIFEST_MISMATCH/);
+  assert.equal(await readFile(join(frozenSite, "index.html"), "utf8"), "site-A");
+
+  await writeFile(join(publishSite, "index.html"), "site-A", "utf8");
+  await writeFile(join(frozenSite, "index.html"), "tampered", "utf8");
+  await assert.rejects(buildOrganizationSnapshot(options), /SNAPSHOT_PUBLISH_MANIFEST_MISMATCH/);
 });
 
 test("same build version recovers an interrupted deterministic transaction before rebuilding", async () => {

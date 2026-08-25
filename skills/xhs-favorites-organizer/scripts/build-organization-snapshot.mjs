@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { createHash, randomUUID } from "node:crypto";
-import { cp, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
+import { lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -123,6 +124,16 @@ export async function buildOrganizationSnapshot(options) {
     await buildOptions.buildPublicSite({ target: publicStaging, buildVersion });
     await buildOptions.verifyInputs?.();
     await validateStagedVersions(kbStaging, publicStaging, buildVersion);
+    let publishManifest = null;
+    if (buildOptions.publishSite) {
+      publishManifest = await freezePublishSite(
+        root,
+        storageRoot,
+        buildOptions.publishSite,
+        publicStaging,
+        buildVersion,
+      );
+    }
     await executeJournaledTransaction({
       root,
       transactionRoot: storageRoot,
@@ -133,11 +144,15 @@ export async function buildOrganizationSnapshot(options) {
         staging: participant.name === "knowledge-base" ? kbStaging : publicStaging,
       })),
     });
-    if (buildOptions.publishSite) {
-      await freezePublishSite(root, storageRoot, buildOptions.publishSite, buildVersion);
-    }
     await rm(stagingRoot, { recursive: true, force: true });
-    return { schema_version: 1, ok: true, outcome: "built", build_version: buildVersion, counts: buildOptions.counts || { notes: 0, categories: 0, resources: 0 } };
+    return {
+      schema_version: 1,
+      ok: true,
+      outcome: "built",
+      build_version: buildVersion,
+      ...(publishManifest ? { site_manifest_sha256: publishManifest.tree_sha256 } : {}),
+      counts: buildOptions.counts || { notes: 0, categories: 0, resources: 0 },
+    };
   } catch (error) {
     if (stagingRoot) await rm(stagingRoot, { recursive: true, force: true });
     throw error;
@@ -228,35 +243,176 @@ async function validatePublishSite(root, site, buildVersion) {
   if (knowledge?.meta?.buildVersion !== buildVersion) throw new Error("SNAPSHOT_BUILD_VERSION_MISMATCH");
 }
 
-async function freezePublishSite(root, storageRoot, site, buildVersion) {
+async function scanSiteTree(site, buildVersion, {
+  captureFiles = false,
+  excludedRootNames = [],
+} = {}) {
+  if (!HASH.test(buildVersion)) throw new Error("SNAPSHOT_DIGEST_INVALID");
+  const treeRoot = resolve(site);
+  const rootMetadata = await lstat(treeRoot);
+  if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink()) throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
+  const canonicalRoot = await realpath(treeRoot);
+  const excluded = new Set(excludedRootNames.map((name) => name.toLowerCase()));
+  const entries = [];
+  const files = [];
+  let totalBytes = 0;
+  const sameIdentity = (left, right) => (
+    left.dev === right.dev
+    && left.ino === right.ino
+    && left.mode === right.mode
+    && left.size === right.size
+    && left.mtimeMs === right.mtimeMs
+  );
+  async function visit(directory, prefix = "") {
+    const directoryBefore = await lstat(directory);
+    const directoryRealBefore = await realpath(directory);
+    if (
+      !directoryBefore.isDirectory()
+      || directoryBefore.isSymbolicLink()
+      || !inside(canonicalRoot, directoryRealBefore)
+    ) throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
+    const children = (await readdir(directory, { withFileTypes: true }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+    for (const child of children) {
+      if (!prefix && excluded.has(child.name.toLowerCase())) continue;
+      const target = join(directory, child.name);
+      const relativePath = prefix ? `${prefix}/${child.name}` : child.name;
+      const before = await lstat(target);
+      if (before.isSymbolicLink()) throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
+      if (before.isDirectory()) {
+        entries.push({ kind: "directory", path: relativePath });
+        await visit(target, relativePath);
+      } else if (before.isFile()) {
+        const resolvedBefore = await realpath(target);
+        if (!inside(canonicalRoot, resolvedBefore)) throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
+        const handle = await open(
+          target,
+          fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW || 0),
+        );
+        try {
+          const opened = await handle.stat();
+          if (!opened.isFile() || !sameIdentity(before, opened)) {
+            throw new Error("SNAPSHOT_PUBLISH_SITE_CHANGED");
+          }
+          const source = await handle.readFile();
+          const openedAfter = await handle.stat();
+          const after = await lstat(target);
+          const resolvedAfter = await realpath(target);
+          if (
+            !sameIdentity(opened, openedAfter)
+            || !sameIdentity(before, after)
+            || resolvedAfter !== resolvedBefore
+            || !inside(canonicalRoot, resolvedAfter)
+          ) throw new Error("SNAPSHOT_PUBLISH_SITE_CHANGED");
+          totalBytes += source.byteLength;
+          if (totalBytes > 128 * 1024 * 1024) throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
+          entries.push({
+            kind: "file",
+            path: relativePath,
+            size: source.byteLength,
+            sha256: sha256(source),
+          });
+          if (captureFiles) files.push({ path: relativePath, source });
+        } finally {
+          await handle.close();
+        }
+      } else {
+        throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
+      }
+    }
+    const directoryAfter = await lstat(directory);
+    const directoryRealAfter = await realpath(directory);
+    if (
+      !sameIdentity(directoryBefore, directoryAfter)
+      || directoryRealAfter !== directoryRealBefore
+      || !inside(canonicalRoot, directoryRealAfter)
+    ) throw new Error("SNAPSHOT_PUBLISH_SITE_CHANGED");
+  }
+  await visit(treeRoot);
+  const treeSha256 = sha256(JSON.stringify({ schema_version: 1, entries }));
+  return {
+    manifest: {
+      schema_version: 1,
+      build_version: buildVersion,
+      tree_sha256: treeSha256,
+      entries,
+    },
+    files,
+  };
+}
+
+export async function siteTreeManifest(site, buildVersion) {
+  return (await scanSiteTree(site, buildVersion)).manifest;
+}
+
+function sameSiteManifest(left, right) {
+  return left?.schema_version === 1
+    && left?.build_version === right?.build_version
+    && left?.tree_sha256 === right?.tree_sha256
+    && JSON.stringify(left?.entries) === JSON.stringify(right?.entries);
+}
+
+export async function readFrozenSiteManifest(site, buildVersion) {
+  try {
+    const manifestPath = join(dirname(resolve(site)), "manifest.json");
+    const metadata = await lstat(manifestPath);
+    if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.size > 16 * 1024 * 1024) {
+      throw new Error("SNAPSHOT_PUBLISH_MANIFEST_MISMATCH");
+    }
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const current = await siteTreeManifest(site, buildVersion);
+    if (!sameSiteManifest(manifest, current)) throw new Error("SNAPSHOT_PUBLISH_MANIFEST_MISMATCH");
+    return current;
+  } catch {
+    throw new Error("SNAPSHOT_PUBLISH_MANIFEST_MISMATCH");
+  }
+}
+
+async function freezePublishSite(root, storageRoot, site, publicStaging, buildVersion) {
   const source = resolve(site);
-  await validatePublishSite(root, source, buildVersion);
+  await assertPlainPath(root, source);
+  await assertPlainTree(source);
   const publishRoot = join(storageRoot, "publish");
   await assertPlainPath(root, publishRoot);
   await mkdir(publishRoot, { recursive: true });
   await assertPlainPath(root, publishRoot);
   const versionRoot = join(publishRoot, buildVersion);
   const frozenSite = join(versionRoot, "site");
-  if (await exists(versionRoot)) {
-    await validatePublishSite(root, frozenSite, buildVersion);
-    return frozenSite;
-  }
   const staging = join(publishRoot, `.publish-${buildVersion}-${randomUUID()}`);
   try {
     await mkdir(staging);
-    await cp(source, join(staging, "site"), {
-      recursive: true,
-      filter(candidate) {
-        const first = relative(source, candidate).split(/[\\/]/u)[0].toLowerCase();
-        return first !== ".local";
-      },
+    const stagedSite = join(staging, "site");
+    const captured = await scanSiteTree(source, buildVersion, {
+      captureFiles: true,
+      excludedRootNames: [".local"],
     });
-    await validatePublishSite(root, join(staging, "site"), buildVersion);
+    await mkdir(stagedSite);
+    for (const entry of captured.manifest.entries) {
+      if (entry.kind === "directory") await mkdir(join(stagedSite, ...entry.path.split("/")));
+    }
+    for (const file of captured.files) {
+      await writeFile(join(stagedSite, ...file.path.split("/")), file.source, { flag: "wx" });
+    }
+    await mkdir(join(stagedSite, "data"), { recursive: true });
+    await writeFile(join(stagedSite, "data", "knowledge.json"), await readFile(publicStaging));
+    await validatePublishSite(root, stagedSite, buildVersion);
+    const candidateManifest = await siteTreeManifest(stagedSite, buildVersion);
+    await writeFile(join(staging, "manifest.json"), `${JSON.stringify(candidateManifest)}\n`, {
+      encoding: "utf8",
+      flag: "wx",
+    });
+    if (await exists(versionRoot)) {
+      const existingManifest = await readFrozenSiteManifest(frozenSite, buildVersion);
+      if (!sameSiteManifest(existingManifest, candidateManifest)) {
+        throw new Error("SNAPSHOT_PUBLISH_MANIFEST_MISMATCH");
+      }
+      return existingManifest;
+    }
     await rename(staging, versionRoot);
+    return await readFrozenSiteManifest(frozenSite, buildVersion);
   } finally {
     await rm(staging, { recursive: true, force: true });
   }
-  return frozenSite;
 }
 
 async function boundedFile(root, target, label, { optional = false, maxBytes = 16 * 1024 * 1024 } = {}) {

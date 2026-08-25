@@ -49,6 +49,17 @@ async function createRemoteFixture(root) {
   return remote;
 }
 
+async function writeFrozenManifest(frozenSite, buildVersion) {
+  const { siteTreeManifest } = await import("../scripts/build-organization-snapshot.mjs");
+  const manifest = await siteTreeManifest(frozenSite, buildVersion);
+  await writeFile(
+    path.join(path.dirname(frozenSite), "manifest.json"),
+    `${JSON.stringify(manifest)}\n`,
+    "utf8"
+  );
+  return manifest;
+}
+
 test("publisher mirrors only the public site and enforces the mini Space header", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "favsense-publish-test-"));
   const workspace = path.join(root, "workspace");
@@ -117,6 +128,7 @@ test("publisher sends the claimed frozen build while the live site changes in an
     JSON.stringify({ meta: { buildVersion: "a".repeat(64) }, marker: "A" }),
     "utf8"
   );
+  const manifest = await writeFrozenManifest(frozenSite, "a".repeat(64));
   await writeFile(path.join(liveSite, "index.html"), "live-A", "utf8");
   await writeFile(
     path.join(liveSite, "data", "knowledge.json"),
@@ -131,6 +143,7 @@ test("publisher sends the claimed frozen build while the live site changes in an
       "--workspace", workspace,
       "--site-root", frozenSite,
       "--build-version", "a".repeat(64),
+      "--site-manifest-sha256", manifest.tree_sha256,
       "--repository", remote,
       "--branch", "main",
     ],
@@ -156,6 +169,7 @@ test("publisher sends the claimed frozen build while the live site changes in an
   assert.equal(status, 0, stderr || stdout);
   const receipt = JSON.parse(stdout);
   assert.equal(receipt.build_version, "a".repeat(64));
+  assert.equal(receipt.site_manifest_sha256, manifest.tree_sha256);
 
   const checkout = path.join(root, "frozen-checkout");
   git(["clone", remote, checkout], root);
@@ -164,6 +178,47 @@ test("publisher sends the claimed frozen build while the live site changes in an
     JSON.parse(await readFile(path.join(checkout, "site", "data", "knowledge.json"), "utf8")),
     { meta: { buildVersion: "a".repeat(64) }, marker: "A" }
   );
+});
+
+test("publisher rejects a frozen site changed after its manifest was sealed", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "favsense-publish-tamper-"));
+  const workspace = path.join(root, "workspace");
+  const buildVersion = "a".repeat(64);
+  const frozenSite = path.join(
+    workspace,
+    ".xhs-tools",
+    "organization-snapshots",
+    "publish",
+    buildVersion,
+    "site"
+  );
+  await mkdir(path.join(frozenSite, "data"), { recursive: true });
+  await writeFile(path.join(frozenSite, "index.html"), "snapshot-A", "utf8");
+  await writeFile(
+    path.join(frozenSite, "data", "knowledge.json"),
+    JSON.stringify({ meta: { buildVersion } }),
+    "utf8"
+  );
+  const originalManifest = await writeFrozenManifest(frozenSite, buildVersion);
+  await writeFile(path.join(frozenSite, "index.html"), "tampered", "utf8");
+  await writeFrozenManifest(frozenSite, buildVersion);
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      publisher,
+      "--workspace", workspace,
+      "--site-root", frozenSite,
+      "--build-version", buildVersion,
+      "--site-manifest-sha256", originalManifest.tree_sha256,
+      "--repository", path.join(root, "unused.git"),
+      "--branch", "main",
+    ],
+    { encoding: "utf8", env: { ...process.env, FAVSENSE_ALLOW_LOCAL_PUBLISH: "1" } }
+  );
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /frozen public snapshot manifest does not match/i);
 });
 
 test("publisher rejects repositories outside Hugging Face Spaces", async () => {

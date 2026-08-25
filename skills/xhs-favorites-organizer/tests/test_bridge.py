@@ -351,12 +351,14 @@ class BridgeHelpersTest(unittest.TestCase):
             "ok": True,
             "outcome": "built",
             "build_version": "a" * 64,
+            "site_manifest_sha256": "b" * 64,
             "counts": {"notes": 2, "categories": 1, "resources": 1},
         }
         self.assertEqual(BRIDGE.parse_snapshot_build_result(json.dumps(valid)), valid)
         for invalid in [
             {**valid, "path": "private"},
             {**valid, "build_version": "short"},
+            {**valid, "site_manifest_sha256": "short"},
             {**valid, "counts": {"notes": -1, "categories": 1, "resources": 1}},
             {**valid, "outcome": "published"},
         ]:
@@ -403,6 +405,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "ok": True,
                 "outcome": "built",
                 "build_version": "b" * 64,
+                "site_manifest_sha256": "c" * 64,
                 "counts": {"notes": 1, "categories": 1, "resources": 0},
             }
             commands = []
@@ -1651,7 +1654,10 @@ class BridgeHelpersTest(unittest.TestCase):
                     "counts": {"accepted": 1, "pending": 0},
                 })
                 bridge.build_organization_snapshot = mock.Mock(
-                    return_value={"build_version": "a" * 64}
+                    return_value={
+                        "build_version": "a" * 64,
+                        "site_manifest_sha256": "b" * 64,
+                    }
                 )
                 bridge.publish_after_board = mock.Mock(
                     return_value={"ok": False, "status": "failed"}
@@ -1699,6 +1705,7 @@ class BridgeHelpersTest(unittest.TestCase):
             manual_sync_path = state_dir / "manual-sync.json"
             run_id = "manual_board"
             build_version = "a" * 64
+            site_manifest_sha256 = "b" * 64
             BRIDGE.atomic_json(manual_sync_path, {
                 "batch": "manual",
                 "state": "running",
@@ -1718,7 +1725,12 @@ class BridgeHelpersTest(unittest.TestCase):
                 bridge.summary_publish_claimed = set()
                 bridge.publish_config = {"repository": "synthetic"}
                 bridge.next_board_id = mock.Mock(return_value=None)
-                bridge.publish_public_site = mock.Mock(return_value={"ok": True, "status": "published"})
+                bridge.publish_public_site = mock.Mock(return_value={
+                    "ok": True,
+                    "status": "published",
+                    "build_version": build_version,
+                    "site_manifest_sha256": site_manifest_sha256,
+                })
                 return bridge
 
             first = instance()
@@ -1727,6 +1739,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 run_id,
                 require_finalization_claim=True,
                 build_version=build_version,
+                site_manifest_sha256=site_manifest_sha256,
             )["status"], "published")
             restarted = instance()
             self.assertIsNone(restarted.publish_after_board(
@@ -1734,14 +1747,122 @@ class BridgeHelpersTest(unittest.TestCase):
                 run_id,
                 require_finalization_claim=True,
                 build_version=build_version,
+                site_manifest_sha256=site_manifest_sha256,
             ))
             restarted.publish_public_site.assert_not_called()
             persisted = restarted.read_manual_sync()
             self.assertEqual(persisted["published_build_version"], build_version)
+            self.assertEqual(persisted["published_site_manifest_sha256"], site_manifest_sha256)
             self.assertEqual(persisted["publish_status"], "published")
+
+    def test_two_bridge_processes_publish_one_exact_snapshot_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_dir = root / ".xhs-favorites"
+            run_id = "manual_board"
+            build_version = "a" * 64
+            site_manifest_sha256 = "b" * 64
+            BRIDGE.atomic_json(state_dir / "manual-sync.json", {
+                "batch": "manual",
+                "state": "running",
+                "run_board_ids": ["board"],
+                "summary_finalizing": True,
+            })
+            go = root / "go"
+            published = root / "published"
+            published.mkdir()
+            worker = r"""
+import importlib.util
+import json
+import os
+from pathlib import Path
+import sys
+import threading
+import time
+
+module_path, state_path, ready_path, go_path, result_path, published_path = sys.argv[1:]
+spec = importlib.util.spec_from_file_location("bridge_race_worker", module_path)
+bridge_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(bridge_module)
+bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
+bridge.state_dir = Path(state_path)
+bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+bridge.boards = {"board": "Board"}
+bridge.summary_plans = {"manual_board": set()}
+bridge.summary_locks = {}
+bridge.summary_locks_guard = threading.Lock()
+bridge.summary_halted = set()
+bridge.summary_publish_claimed = set()
+bridge.publish_config = {"repository": "synthetic"}
+bridge.next_board_id = lambda *_args: None
+def publish(build_version, site_manifest_sha256):
+    (Path(published_path) / f"{os.getpid()}.json").write_text(
+        json.dumps({"build_version": build_version, "site_manifest_sha256": site_manifest_sha256}),
+        encoding="utf-8",
+    )
+    time.sleep(0.25)
+    return {
+        "ok": True,
+        "status": "published",
+        "build_version": build_version,
+        "site_manifest_sha256": site_manifest_sha256,
+    }
+bridge.publish_public_site = publish
+Path(ready_path).write_text("ready", encoding="utf-8")
+while not Path(go_path).exists():
+    time.sleep(0.01)
+result = bridge.publish_after_board(
+    "board",
+    "manual_board",
+    require_finalization_claim=True,
+    build_version="a" * 64,
+    site_manifest_sha256="b" * 64,
+)
+Path(result_path).write_text(json.dumps(result), encoding="utf-8")
+"""
+            processes = []
+            results = []
+            for index in range(2):
+                ready = root / f"ready-{index}"
+                result = root / f"result-{index}.json"
+                process = subprocess.Popen([
+                    sys.executable,
+                    "-c",
+                    worker,
+                    str(MODULE_PATH),
+                    str(state_dir),
+                    str(ready),
+                    str(go),
+                    str(result),
+                    str(published),
+                ])
+                processes.append((process, ready))
+                results.append(result)
+            deadline = time.monotonic() + 10
+            while (
+                not all(ready.exists() for _, ready in processes)
+                and time.monotonic() < deadline
+            ):
+                time.sleep(0.01)
+            self.assertTrue(all(ready.exists() for _, ready in processes))
+            go.write_text("go", encoding="utf-8")
+            try:
+                for process, _ in processes:
+                    self.assertEqual(process.wait(timeout=10), 0)
+            finally:
+                for process, _ in processes:
+                    if process.poll() is None:
+                        process.kill()
+            outcomes = [json.loads(path.read_text(encoding="utf-8")) for path in results]
+            self.assertEqual(sum(outcome is not None for outcome in outcomes), 1)
+            self.assertEqual(len(list(published.glob("*.json"))), 1)
+            state = json.loads((state_dir / "manual-sync.json").read_text(encoding="utf-8"))
+            self.assertEqual(state["published_build_version"], build_version)
+            self.assertEqual(state["published_site_manifest_sha256"], site_manifest_sha256)
 
     def test_durable_publish_handles_unchanged_failed_unknown_and_stale_callbacks(self):
         build_version = "c" * 64
+        site_manifest_sha256 = "d" * 64
 
         def instance(state_dir, result):
             bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
@@ -1771,6 +1892,11 @@ class BridgeHelpersTest(unittest.TestCase):
                     "summary_finalizing": True,
                 })
                 result = {"ok": status == "unchanged", "status": status}
+                if status == "unchanged":
+                    result.update({
+                        "build_version": build_version,
+                        "site_manifest_sha256": site_manifest_sha256,
+                    })
                 if status == "failed":
                     result["error"] = "synthetic publish failure"
                 bridge = instance(state_dir, result)
@@ -1779,11 +1905,13 @@ class BridgeHelpersTest(unittest.TestCase):
                     "manual_board",
                     require_finalization_claim=True,
                     build_version=build_version,
+                    site_manifest_sha256=site_manifest_sha256,
                 )["status"], status)
                 persisted = bridge.read_manual_sync()
                 self.assertEqual(persisted["publish_status"], status)
                 if status == "unchanged":
                     self.assertEqual(persisted["published_build_version"], build_version)
+                    self.assertEqual(persisted["published_site_manifest_sha256"], site_manifest_sha256)
                 else:
                     self.assertNotIn("published_build_version", persisted)
                 restarted = instance(state_dir, result)
@@ -1792,6 +1920,7 @@ class BridgeHelpersTest(unittest.TestCase):
                     "manual_board",
                     require_finalization_claim=True,
                     build_version=build_version,
+                    site_manifest_sha256=site_manifest_sha256,
                 ))
                 restarted.publish_public_site.assert_not_called()
 
@@ -1803,6 +1932,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "run_board_ids": ["board"],
                 "summary_finalizing": True,
                 "publish_claimed_build_version": build_version,
+                "publish_claimed_site_manifest_sha256": site_manifest_sha256,
                 "publish_status": "running",
             })
             bridge = instance(state_dir, {"ok": True, "status": "published"})
@@ -1811,6 +1941,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "manual_board",
                 require_finalization_claim=True,
                 build_version=build_version,
+                site_manifest_sha256=site_manifest_sha256,
             ))
             bridge.publish_public_site.assert_not_called()
             persisted = bridge.read_manual_sync()
@@ -1832,6 +1963,7 @@ class BridgeHelpersTest(unittest.TestCase):
                     "manual_board",
                     require_finalization_claim=True,
                     build_version=build_version,
+                    site_manifest_sha256=site_manifest_sha256,
                 )
             self.assertEqual(bridge.read_manual_sync()["publish_status"], "failed")
 
@@ -1844,6 +1976,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "run_board_ids": ["board"],
                 "summary_finalizing": True,
                 "publish_claimed_build_version": build_version,
+                "publish_claimed_site_manifest_sha256": site_manifest_sha256,
                 "publish_status": "running",
             })
             bridge = instance(state_dir, {"ok": True, "status": "published"})
@@ -1856,7 +1989,13 @@ class BridgeHelpersTest(unittest.TestCase):
                     "manual_board",
                     "board",
                     build_version,
-                    {"ok": True, "status": "published"},
+                    site_manifest_sha256,
+                    {
+                        "ok": True,
+                        "status": "published",
+                        "build_version": build_version,
+                        "site_manifest_sha256": site_manifest_sha256,
+                    },
                 )
             self.assertEqual(manual_path.read_bytes(), before)
 
@@ -1880,8 +2019,16 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.publish_config = {"repository": "synthetic"}
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 1, "pending": 0}})
-            bridge.build_organization_snapshot = mock.Mock(return_value={"build_version": "b" * 64})
-            bridge.publish_public_site = mock.Mock(return_value={"ok": True, "status": "published"})
+            bridge.build_organization_snapshot = mock.Mock(return_value={
+                "build_version": "b" * 64,
+                "site_manifest_sha256": "c" * 64,
+            })
+            bridge.publish_public_site = mock.Mock(return_value={
+                "ok": True,
+                "status": "published",
+                "build_version": "b" * 64,
+                "site_manifest_sha256": "c" * 64,
+            })
             bridge.write_status = mock.Mock(side_effect=OSError("synthetic status failure"))
             BRIDGE.atomic_json(bridge.state_dir / "runs" / "manual_board.json", {
                 "run_id": "manual_board",
@@ -1903,6 +2050,7 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertEqual(persisted["state"], "completed")
             self.assertEqual(persisted["publish_status"], "published")
             self.assertEqual(persisted["published_build_version"], "b" * 64)
+            self.assertEqual(persisted["published_site_manifest_sha256"], "c" * 64)
             self.assertNotIn("summary_finalize_error", persisted)
 
     def test_saved_summary_requires_current_content_and_prompt_revisions(self):
@@ -6216,6 +6364,7 @@ class BridgeHelpersTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             build_version = "a" * 64
+            site_manifest_sha256 = "b" * 64
             bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
             bridge.publisher = Path("publish-huggingface.mjs")
             bridge.workspace = root
@@ -6231,13 +6380,14 @@ class BridgeHelpersTest(unittest.TestCase):
                     "ok": True,
                     "status": "published",
                     "build_version": build_version,
+                    "site_manifest_sha256": site_manifest_sha256,
                 }),
                 stderr="",
             )
             with mock.patch.object(
                 BRIDGE, "run_bounded_subprocess", return_value=completed
             ) as bounded:
-                result = bridge.publish_public_site(build_version)
+                result = bridge.publish_public_site(build_version, site_manifest_sha256)
 
             self.assertEqual(result["build_version"], build_version)
             command = bounded.call_args.args[0]
@@ -6251,6 +6401,10 @@ class BridgeHelpersTest(unittest.TestCase):
             )
             self.assertEqual(command[command.index("--site-root") + 1], str(frozen_site))
             self.assertEqual(command[command.index("--build-version") + 1], build_version)
+            self.assertEqual(
+                command[command.index("--site-manifest-sha256") + 1],
+                site_manifest_sha256,
+            )
 
 
 class DetailFetcherTest(unittest.IsolatedAsyncioTestCase):
