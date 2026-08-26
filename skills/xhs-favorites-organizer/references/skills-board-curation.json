@@ -3795,5 +3795,417 @@
     "candidate_revision": "695367def73b22dca43bfe1e6795011f51ac153b43b5bfaf27ab947d949ba351",
     "review_status": "accepted",
     "review_reason_code": ""
+  },
+  "6a6af4d1000000000f031d45": {
+    "id": "6a6af4d1000000000f031d45",
+    "content_sha256": "a49f3723a37abbda229d5a7bc9bae80e4148de7dfc17895ab99c8bc061f78ff7",
+    "title": "为什么你的Agent需要一个自己的搜索层？",
+    "category": "本地模型与成本",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频总结降低 Claude 与 Codex 上下文成本的工作习惯：任务完成后清空会话、会话中途不换模型、大文件交给子任务提炼、少发截图、精简 MCP 与项目配置，并用进度文件跨会话恢复。",
+    "action": "在下一次长任务记录会话初始上下文、压缩次数和总用量，只采用能复现节省效果且不损失任务准确性的做法。",
+    "themes": [
+      "Token管理",
+      "上下文缓存",
+      "任务隔离"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "e81dc75e2db56e3880fa35d638b165af8402a0cd441320df8b7b5af1b4c7f884",
+    "evidence_sha256": "8d68220674fa911fae15cd27334394b36946e27f9d31654627c49bb1a2da51a2",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "60084327477706a9e4d29c1702784b294d39747a47ff3d24ad78e342f01889fa"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "3f59371bff69bca87bc16398e95080cc91167e7ad93a8f0aff97522282559bc4"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "64a7e9c33aef0617a56d243ece1e563fe5fc0205ecae8e7493e130434555da1a",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a6e9f0a0000000028003550": {
+    "id": "6a6e9f0a0000000028003550",
+    "content_sha256": "cb5a2e893e4cefd9bd868c6acf9db7493d9d4345544d7f2c92802f37c19afdf9",
+    "title": "AI 搜索不再需要付费",
+    "category": "AI设计与多媒体",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频展示一个尚未完全跑通的 AI 数字人口播原型：抓取选题素材、生成文案与配音，再用数字人批量合成视频；作者同时指出单次生成成本较高且自动发布仍是计划。",
+    "action": "只把它当作原型成本案例，先核算单条生成费用、素材授权、数字人标识和人工审核时间，不依据 Demo 直接采购或自动发布。",
+    "themes": [
+      "AI数字人",
+      "原型成本",
+      "口播视频"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "3864b87d5fc3c2a94ec4a876bc5b18382cdad5607951789c966edc280fc01e5e",
+    "evidence_sha256": "1eb59a25df7ac763d6438d42d77722f4b405d6c16a102a7efd996c05672b853a",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "808f83e59c0e57a1525d80802e6b4cb8b05f3a762a619e15e42dadb1b7c10f54"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "f4fa6e2776c77adabebce48d036fd3898806e05accb299a0fbdec9c3b3ee5e77"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "4504ab69049593e43b66ca3c76466fa4ca51c2ea3233df7885f662d917c28a8d",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a6c892b00000000350140f1": {
+    "id": "6a6c892b00000000350140f1",
+    "content_sha256": "b156281382ca6b5aeb6acc3623adf81e7fd9b7e29c8052478cd738429b7abe17",
+    "title": "AI虚拟朋友",
+    "category": "AI设计与多媒体",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频演示 Claude Design 的多种设计交互：生成线框图或高保真稿、抓取网页元素、把手绘草图转成设计、通过标注与滑块修改、加载设计系统，并生成演示文稿和动画。",
+    "action": "选一个现有页面，用同一设计系统分别测试草图导入、元素修改和演示稿输出，核对可编辑性、品牌一致性与导出格式。",
+    "themes": [
+      "Claude Design",
+      "UI原型",
+      "设计系统"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "4204deb58f56c65d6f9d1a17266975414f244dad7f507d5a1ca41f2a50c9950b",
+    "evidence_sha256": "f33f0f6970ffa0d575442867efc2f9e365ad4de3a2d0395cfcf9a141c1d394c6",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "71d3864eed32ce0d4fc7b1b4a11fba93c337805f5f5b0b5638d77f84082675f9"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "bd409a8c554f2f32e756ec9bd53e579aaa487b9d9bd6145740788bcbde062124"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "f793d660a2ff582ccba398b4cccdcd2eac48fa2d6dd05f4f572a57aca0f247b3",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a795b5a0000000022015f1b": {
+    "id": "6a795b5a0000000022015f1b",
+    "content_sha256": "2ccd2419bafb75387c6f4f067e211b698aea843a9a327ad2afb4cf81d8970b9a",
+    "title": "抱歉，我目前无法直接访问外部链接或抓取小红书笔记的详细内容。 如果你能​​把笔记的正文内容复制粘",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 MiniMind：用原生 PyTorch 覆盖预训练、监督微调、LoRA、强化学习和工具调用等小模型训练环节；“两小时”是特定硬件与训练阶段的示例，不代表任意电脑都能得到生产级模型。",
+    "action": "按官方最小数据和配置先跑教学实验，记录显存、时间和效果，再决定是否扩大训练规模，不用宣传数字替代验证。",
+    "themes": [
+      "AI自媒体"
+    ],
+    "tools": [],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "15234ceead6950e90cdd4509b66f275e388d22e4e767fbb691cd80ca3e91735c",
+    "evidence_sha256": "0e5dd5d56f33bc292d814183c4eb1e9edab0605e2e7d61e3412641967bed77ec",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "3af441ae21ecce336d6d28cd0fd2b502936f96cd56a44bed000a9e338fd648fe"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "11a7f6a87f0be7e9ea16fac4670d2c51f285ac119a80cc855b21f984c9fef3e4"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "49de9fa5015868ebdd1b7b3a1e98b847f632f09067ecc8e9ddc969814b2b69b1",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a7409e40000000028031daf": {
+    "id": "6a7409e40000000028031daf",
+    "content_sha256": "51131cbb028337867dae49f5327975a2505cb52ea1817bd43f28e9eb1263bf3c",
+    "title": "如何直接编辑GPT生成的图片？",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍小红书 KOS 账号模式：企业专业号可关联个人销售账号，用于个人化沟通、留资和推广；视频带有招商信息，资格、数量、功能与广告合规边界应以平台当前规则为准。",
+    "action": "仅通过小红书官方渠道核对资格、绑定关系、留资、广告标识和离职解绑规则，再用单账号小规模验证，不批量认证。",
+    "themes": [
+      "AI自媒体"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "f0d420cde8f3c1f671ec09e1b27b921781e4d7a1eca3f6d301fc244ee54b8a56",
+    "evidence_sha256": "04413d208b2c0c647197e9004274ab1a0cba737f6c0c3ebf06f7b8ace8b94b52",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "f938244443c591338d9ed3323cb909a5846acce72842dbff8071b2264014eb1c"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "197c69cc345a925fe34a78b917122a594c0af31d304c7e6f40ed9ad0004845ef"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "cc1405b94748e9e5379c07d6cab7e31ca72ad5770336ca3e7a99c60753ed8aa4",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a4cbee30000000017029e77": {
+    "id": "6a4cbee30000000017029e77",
+    "content_sha256": "8a97338dc969bd80bb47488b1afc971330ee48388de945b291f705db9e64f65e",
+    "title": "根据你分享的这篇小红书笔记，我来帮你总结一下核心内容： ​​笔记主题​​：分享两个 AI 工作流",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频给出小红书搜索内容方法：从搜索下拉、同行公开评论和官方话题中找具体长尾需求，在标题、开头、正文和标签自然表达主题，再把同一需求拆成系列内容。",
+    "action": "围绕一个真实主题收集 20 个长尾问题并做四周内容实验，以搜索曝光、收藏和实际转化复盘，不刷评论或堆砌关键词。",
+    "themes": [
+      "AI视频生成"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "a1e9a28dc225e19fc3345b74fd155c903457d2b95fe0fa2d4f9464c026e5c3ce",
+    "evidence_sha256": "65a74995bb6177ebddcc39f7afd55fb9f7833e65f68e28bb434ac1f7069d1083",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "ce50bd06266b10b880a7bf3fa476884942cbfd182e461b6230afd11021c585bc"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "77eef175194805d17a2d7ff8a21630d9b99b2cc564c3967895964d704f1a22dc"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "8cdeb4e31a2d912f7267873cee7e2e282cdc110e3dbcfa9a2b576b7a9969804d",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a6899470000000006012f4a": {
+    "id": "6a6899470000000006012f4a",
+    "content_sha256": "9c49a8547aeb01393ec30f03442a8a7e374c2347ad979ce485b8881e0bf91963",
+    "title": "电商专用Skill，上班终于可以不用写提示词",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "图文把外贸独立站运营拆成可执行的 Agent 流程：模型负责分析，MCP 连接数据，Agent 调度选品、关键词、Listing、广告、SKU 诊断与客服等任务，再以知识库和多 Agent 协作沉淀经验。",
+    "action": "先挑一个只读环节做最小流程，例如汇总公开关键词并生成待审报告；所有广告、客服和店铺写操作继续由人工确认。",
+    "themes": [
+      "Agent工作流",
+      "人工审核",
+      "独立站运营"
+    ],
+    "tools": [
+      "Codex"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "e7eed1499ae9e23e530d1fa58c8652e4a01360fba543553d0691f7881b4f4f19",
+    "evidence_sha256": "2c71815730d353d78f95d9621cadba06677100c4049d9acbd74fcff73e796c13",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "4f3aa9c0d02316df1fe664a6560e2d097016bc22711945f0d0757d5571e2d737"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "64e07c7fe3bd4f87cd94b7a0cdaf35928a555d23a7904b3eb0e54fc15756b9ca"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "0c26d8b386eb73ee81bfb3dd27b6f5d45bc2ed26a0448464f171ec5e966bdb15",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a704afc0000000008013dae": {
+    "id": "6a704afc0000000008013dae",
+    "content_sha256": "0458ff04cfeafb566b14affd7afa9bfb685dc7f1024950df23bde0b331407250",
+    "title": "Codex 调用 GPT Pro 保姆级教程",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "图文把小红书运营拆成十二个可复用环节，覆盖定位、痛点挖掘、选题、标题、结构、封面、语气、内容复用、评论回复、公开案例分析、排期和周复盘；这些是自建流程名称，不是已核验的官方 Skill。",
+    "action": "先把定位、选题和周复盘三个环节做成内部模板，用真实数据验证后再扩展；不把文中的自建名称当作可直接安装资源。",
+    "themes": [
+      "Codex",
+      "内容流程",
+      "小红书运营"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "99557fe77111c212a5478d6bfc026b808bf3c6151a8dfee0cb602c2f5ca47fc2",
+    "evidence_sha256": "1092749cf1e0dc89646e4c4a760644a07c1e3df986c7795277c2b53ecff65984",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "39910c79213d30fd34a80a9f3994f4f01b6b581c64a70010b5ff92aaab93fcc9"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "6e1e77053254e75b353ca1780a2e7f795546ece963aa64a3e9231db85e9a7604"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "1459ed825a29592b394d08e38c07ac9233cf9040b86fe1494db333086ea18a21",
+    "review_status": "accepted",
+    "review_reason_code": ""
   }
 }
