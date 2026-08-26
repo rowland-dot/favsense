@@ -18,7 +18,7 @@ import {
 import { prepareScope } from "../scripts/prepare-curation-scope.mjs";
 import { initializeAudit } from "../scripts/initialize-curation-audit.mjs";
 import { mergeResults } from "../scripts/merge-curation-results.mjs";
-import { curationRevision } from "../scripts/curation-revision.mjs";
+import { curationRevision, reviewPacketRevision } from "../scripts/curation-revision.mjs";
 import { executeJournaledTransaction } from "../scripts/journaled-transaction.mjs";
 import { expectedResourceRevisions } from "../scripts/resource-quality.mjs";
 
@@ -47,6 +47,18 @@ test("public Skill rebuild examples preserve the Bridge-frozen DianDian prompt c
   }
 });
 
+test("curation merge documentation requires the prepared evidence packet", () => {
+  const standard = fs.readFileSync(
+    path.join(repositoryRoot, "skills/xhs-favorites-organizer/references/curation-standard.md"),
+    "utf8"
+  );
+  const mergeExample = (standard.match(
+    /```powershell[\s\S]*?merge-curation-results\.mjs[\s\S]*?```/
+  ) || [""])[0];
+  assert.match(mergeExample, /--evidence-review ".+curation-review\.json"/);
+  assert.match(standard, /accepted` candidate 还必须保留该包的 `id` 与 `content_sha256`/);
+});
+
 function writeJson(filename, value) {
   fs.mkdirSync(path.dirname(filename), { recursive: true });
   fs.writeFileSync(filename, `${JSON.stringify(value, null, 2)}\n`, "utf8");
@@ -71,6 +83,7 @@ function mergeCliFixture(workspace) {
     config: path.join(workspace, "config.json"),
     scope: path.join(privateRoot, "curation-scope.json"),
     review: path.join(privateRoot, "curation-review.json"),
+    evidenceReview: path.join(privateRoot, "curation-evidence-review.json"),
     candidates: path.join(privateRoot, "curation-candidates.json"),
     resources: path.join(workspace, "resources.json"),
     audit: path.join(privateRoot, "curation-audit.json"),
@@ -97,8 +110,16 @@ function mergeCliFixture(workspace) {
   } });
   writeJson(paths.config, { boards: [{ name: "主题甲", category: "主题甲" }] });
   writeJson(paths.scope, { note_ids: ["current"] });
+  const evidencePacket = {
+    note_id: "current",
+    content_sha256: "a".repeat(64),
+    blockers: ["synthetic-rejection"]
+  };
+  evidencePacket.review_packet_sha256 = reviewPacketRevision(evidencePacket);
+  writeJson(paths.evidenceReview, { items: [evidencePacket] });
   writeJson(paths.review, { items: [{
     note_id: "current",
+    review_packet_sha256: evidencePacket.review_packet_sha256,
     candidate,
     audit: {
       status: "rejected",
@@ -126,6 +147,7 @@ function runMergeCli(workspace, paths, { nodeArgs = [], env = process.env } = {}
     "--config", paths.config,
     "--scope", paths.scope,
     "--review", paths.review,
+    "--evidence-review", paths.evidenceReview,
     "--candidates", paths.candidates,
     "--resources", paths.resources,
     "--audit", paths.audit,
@@ -485,6 +507,7 @@ test("producer evidence must be successful, revision-bound, and tool-versioned t
       evidenceReview,
       review: { items: [{
         note_id: noteId,
+        review_packet_sha256: evidenceReview.items[0].review_packet_sha256,
         candidate,
         audit: {
           status: "accepted",
@@ -622,6 +645,7 @@ test("successful revision-bound OCR evidence prepares and merges as image_ocr", 
       evidenceReview,
       review: { items: [{
         note_id: noteId,
+        review_packet_sha256: evidenceReview.items[0].review_packet_sha256,
         candidate,
         audit: {
           status: "accepted",
@@ -972,6 +996,102 @@ test("review merge publishes only accepted candidates and keeps pending work pri
   assert.equal(acceptedRevisionsCurrent(merged.audit.notes.accepted, current), true);
   assert.equal(merged.audit.notes.accepted.curation_sha256, curationRevision(merged.curation.accepted));
   assert.equal(Object.hasOwn(merged.candidates.pending, "content_sha256"), false);
+});
+
+test("production review merge requires a current packet and candidate identity binding", () => {
+  const noteId = "note-a";
+  const contentSha256 = "a".repeat(64);
+  const packet = {
+    note_id: noteId,
+    content_sha256: contentSha256,
+    blockers: []
+  };
+  packet.review_packet_sha256 = reviewPacketRevision(packet);
+  const candidate = {
+    id: noteId,
+    content_sha256: contentSha256,
+    title: "Bound candidate",
+    summary: "This review candidate is explicitly bound to the current note and evidence packet revision.",
+    action: "Verify the bounded evidence before publishing this synthetic candidate.",
+    themes: ["binding"],
+    tools: [],
+    kind: "Note"
+  };
+  const reviewItem = {
+    note_id: noteId,
+    review_packet_sha256: packet.review_packet_sha256,
+    candidate,
+    audit: {
+      status: "accepted",
+      reviewed_at: "2026-08-27",
+      evidence_methods: ["description", "comments"],
+      comments_checked: true,
+      claims_supported: true,
+      resource_status: "not_applicable",
+      unresolved_facts: []
+    }
+  };
+  const base = {
+    catalog: { notes: { [noteId]: { description: "A", content_sha256: contentSha256 } } },
+    config: { boards: [] },
+    resources: { resources: [] },
+    scope: { note_ids: [noteId] },
+    candidates: {},
+    audit: { notes: {} },
+    curation: {},
+    evidenceReview: { items: [packet] },
+    review: { items: [reviewItem] },
+    requirePacketBinding: true
+  };
+  assert.equal(mergeResults(base).counts.accepted, 1);
+  assert.throws(
+    () => mergeResults({ ...base, evidenceReview: null }),
+    /review packet/i
+  );
+  assert.throws(
+    () => mergeResults({
+      ...base,
+      evidenceReview: { items: [{ ...packet, review_packet_sha256: "" }] }
+    }),
+    /review packet/i
+  );
+  const extraPacket = {
+    note_id: "note-b",
+    content_sha256: "b".repeat(64),
+    blockers: []
+  };
+  extraPacket.review_packet_sha256 = reviewPacketRevision(extraPacket);
+  assert.throws(
+    () => mergeResults({
+      ...base,
+      evidenceReview: { items: [packet, extraPacket] }
+    }),
+    /out-of-scope/i
+  );
+  assert.throws(
+    () => mergeResults({
+      ...base,
+      review: { items: [{ ...reviewItem, review_packet_sha256: "b".repeat(64) }] }
+    }),
+    /review packet/i
+  );
+  assert.throws(
+    () => mergeResults({
+      ...base,
+      review: { items: [{
+        ...reviewItem,
+        candidate: { ...candidate, id: "note-b", content_sha256: "b".repeat(64) }
+      }] }
+    }),
+    /candidate.*binding/i
+  );
+  assert.throws(
+    () => mergeResults({
+      ...base,
+      catalog: { notes: { [noteId]: { description: "Changed", content_sha256: "b".repeat(64) } } }
+    }),
+    /review packet.*stale/i
+  );
 });
 
 test("review merge rejects stale or synthetic body evidence before formal acceptance", () => {

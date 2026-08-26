@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { parseFormalPointSummaryRecord } from "./curation-quality.mjs";
+import { reviewPacketRevision } from "./curation-revision.mjs";
 
 function parseArgs(argv) {
   const result = {};
@@ -300,7 +301,7 @@ export function prepareReview({
       if (!resource) blockers.push(`resource-not-indexed:${tool}`);
     }
 
-    items.push({
+    const item = {
       note_id: noteId,
       content_sha256: contentSha256,
       media_type: note?.type || "",
@@ -316,7 +317,9 @@ export function prepareReview({
       candidate: candidate || null,
       tool_checks: toolChecks,
       blockers: [...new Set(blockers)]
-    });
+    };
+    item.review_packet_sha256 = reviewPacketRevision(item);
+    items.push(item);
   }
   return {
     version: 1,

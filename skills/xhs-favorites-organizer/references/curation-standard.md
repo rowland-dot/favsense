@@ -128,7 +128,7 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-review.mjs" `
 
 该命令只准备证据包和 blocker，不会自动把候选标记为合格；禁止把结构检查等同于语义复核。
 
-逐篇语义复核完成后，用受约束的合并器写回候选、审计和正式 curation；它会拒绝重复、越界、私密来源数据和缺字段，并且只把 `accepted` 项写入公开策展源：
+逐篇语义复核完成后，每个 review item 必须原样回显对应证据包的 `review_packet_sha256`；`accepted` candidate 还必须保留该包的 `id` 与 `content_sha256`。用受约束的合并器写回候选、审计和正式 curation；它会拒绝 packet 缺失或错配、正文 revision 变化、candidate 身份错位、重复、越界、私密来源数据和缺字段，并且只把 `accepted` 项写入公开策展源：
 
 ```powershell
 node ".\skills\xhs-favorites-organizer\scripts\merge-curation-results.mjs" `
@@ -136,6 +136,7 @@ node ".\skills\xhs-favorites-organizer\scripts\merge-curation-results.mjs" `
   --config ".\config\xhs-favorites.json" `
   --scope ".\.xhs-favorites\curation-scope.json" `
   --review ".\.xhs-favorites\diandian-fallback-review.json" `
+  --evidence-review ".\.xhs-favorites\curation-review.json" `
   --candidates ".\.xhs-favorites\curation-candidates.json" `
   --resources ".\skills\xhs-favorites-organizer\references\software-resources.json" `
   --audit ".\.xhs-favorites\curation-audit.json" `

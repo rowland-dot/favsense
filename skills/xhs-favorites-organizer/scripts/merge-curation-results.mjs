@@ -4,7 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { lstat, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { containsCredentialShape } from "./sensitive-data.mjs";
-import { curationRevision } from "./curation-revision.mjs";
+import { curationRevision, reviewPacketRevision } from "./curation-revision.mjs";
 import { auditCuration } from "./validate-curation.mjs";
 import { currentFormalRevisions, loadFormalPointSummary } from "./curation-quality.mjs";
 import { generateCandidates } from "./generate-curation-candidates.mjs";
@@ -45,14 +45,24 @@ function parseArgs(argv) {
     if (!key?.startsWith("--") || value === undefined) throw new Error(`Invalid argument near ${key || "end"}`);
     result[key.slice(2)] = value;
   }
-  for (const required of ["catalog", "config", "scope", "review", "candidates", "resources", "audit", "curation"]) {
+  for (const required of [
+    "catalog", "config", "scope", "review", "candidates", "resources",
+    "audit", "curation", "evidence-review"
+  ]) {
     if (!result[required]) throw new Error(`--${required} is required`);
   }
   return result;
 }
 
-function validateCandidate(candidate) {
+function validateCandidate(candidate, { noteId = "", contentSha256 = "", requireBinding = false } = {}) {
   if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) throw new Error("candidate must be an object");
+  if (
+    requireBinding
+    && (
+      clean(candidate.id) !== noteId
+      || clean(candidate.content_sha256) !== contentSha256
+    )
+  ) throw new Error("candidate note binding is missing or stale");
   if (clean(candidate.title).length < 2) throw new Error("candidate title is too short");
   if (clean(candidate.summary).length < 32) throw new Error("candidate summary is too short");
   if (clean(candidate.action).length < 16) throw new Error("candidate action is too short");
@@ -266,6 +276,7 @@ export function mergeResults({
   catalog, config, scope, review, candidates, resources, audit, curation,
   evidenceReview = null, pointSummaries = null, expectedCount = null,
   expectedPromptVersion = "",
+  requirePacketBinding = false,
   today = new Date().toISOString().slice(0, 10)
 }) {
   if (expectedPromptVersion && !/^[a-f0-9]{64}$/.test(expectedPromptVersion)) {
@@ -275,18 +286,31 @@ export function mergeResults({
   if (!items) throw new Error("review.items must be an array");
   if (expectedCount !== null && items.length !== expectedCount) throw new Error(`review must contain exactly ${expectedCount} items`);
   const catalogIds = new Set(Object.keys(catalog.notes || catalog));
-  const scopeIds = new Set(scope.note_ids || []);
+  const scopeList = Array.isArray(scope?.note_ids) ? scope.note_ids.map(clean) : [];
+  const scopeIds = new Set(scopeList);
+  if (
+    scopeList.length !== scopeIds.size
+    || scopeList.some((noteId) => !NOTE_ID.test(noteId) || !catalogIds.has(noteId))
+  ) throw new Error("scope contains an unknown, invalid, or duplicate note ID");
   const seen = new Set();
   const nextCandidates = { ...(candidates || {}) };
   const nextAudit = { ...(audit || {}), notes: { ...(audit?.notes || {}) } };
   const nextCuration = { ...(curation || {}) };
   const evidenceById = new Map();
-  for (const item of evidenceReview?.items || []) {
+  const evidenceItems = Array.isArray(evidenceReview?.items) ? evidenceReview.items : [];
+  for (const item of evidenceItems) {
     const noteId = clean(item?.note_id);
+    if (!scopeIds.has(noteId)) {
+      if (requirePacketBinding) throw new Error("review packet set contains an out-of-scope note");
+      continue;
+    }
     if (!NOTE_ID.test(noteId) || evidenceById.has(noteId)) {
       throw new Error("evidence review contains an invalid or duplicate note ID");
     }
     evidenceById.set(noteId, item);
+  }
+  if (requirePacketBinding && evidenceById.size !== scopeIds.size) {
+    throw new Error("review packet set does not match the review scope");
   }
   const counts = { accepted: 0, pending: 0, rejected: 0 };
   for (const item of items) {
@@ -294,9 +318,28 @@ export function mergeResults({
     if (!NOTE_ID.test(noteId) || !catalogIds.has(noteId) || !scopeIds.has(noteId)) throw new Error("review contains an unknown, invalid, or out-of-scope note ID");
     if (seen.has(noteId)) throw new Error("review contains a duplicate note ID");
     seen.add(noteId);
+    const note = (catalog.notes || catalog)[noteId];
+    const evidenceItem = evidenceById.get(noteId);
+    const expectedReviewPacket = clean(evidenceItem?.review_packet_sha256);
+    if (
+      (requirePacketBinding || expectedReviewPacket)
+      && (
+        !/^[a-f0-9]{64}$/.test(expectedReviewPacket)
+        || reviewPacketRevision(evidenceItem) !== expectedReviewPacket
+        || clean(item?.review_packet_sha256) !== expectedReviewPacket
+      )
+    ) throw new Error("review packet binding is missing or stale");
+    if (
+      requirePacketBinding
+      && clean(evidenceItem?.content_sha256) !== clean(note?.content_sha256)
+    ) throw new Error("review packet content revision is stale");
     const auditEntry = validateAudit(item.audit);
     const candidate = auditEntry.status === "accepted"
-      ? validateCandidate(item.candidate)
+      ? validateCandidate(item.candidate, {
+          noteId,
+          contentSha256: clean(note?.content_sha256),
+          requireBinding: requirePacketBinding
+        })
       : boundedCandidateSkeleton(item.candidate);
     if (auditEntry.status === "accepted") {
       auditEntry.curation_sha256 = curationRevision(candidate);
@@ -312,12 +355,11 @@ export function mergeResults({
         throw new Error(`accepted audit failed quality validation: ${quality.fatal.join("; ")}`);
       }
     }
-    const note = (catalog.notes || catalog)[noteId];
     let storedCandidate = candidate;
     if (auditEntry.status === "accepted") {
       const point = pointSummaries?.[noteId] || null;
       const formal = formalCandidate(
-        noteId, note, candidate, auditEntry, resources, evidenceById.get(noteId), point, today
+        noteId, note, candidate, auditEntry, resources, evidenceItem, point, today
       );
       const formalEntry = formal.entry;
       const current = currentFormalRevisions(
@@ -362,6 +404,9 @@ export function mergeResults({
     nextCandidates[noteId] = storedCandidate;
     nextAudit.notes[noteId] = auditEntry;
     counts[auditEntry.status] += 1;
+  }
+  if (requirePacketBinding && seen.size !== scopeIds.size) {
+    throw new Error("review item set does not match the review scope");
   }
   return { candidates: nextCandidates, audit: nextAudit, curation: nextCuration, counts };
 }
@@ -479,6 +524,7 @@ async function main() {
             ]))
           : null,
         expectedPromptVersion,
+        requirePacketBinding: true,
         expectedCount: options["expected-count"] === undefined ? null : Number(options["expected-count"])
       });
     } catch (error) {
