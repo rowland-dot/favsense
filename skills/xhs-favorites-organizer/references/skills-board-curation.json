@@ -3382,21 +3382,21 @@
     "id": "6a4a2473000000002201b7a7",
     "content_sha256": "e565a214ae3fa618372cd212c8f41f7ed92e435ef4bc12a4e24a7a87cfd0ce77",
     "title": "Claude额度实在用不完，我用这9招省token",
-    "category": "AI工具",
+    "category": "本地模型与成本",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频介绍 Agent-Reach：为 Agent 配置并路由网页、X、Reddit、YouTube、GitHub、B站和小红书等上游读取能力，同时提供安装与诊断；部分平台仍依赖本地登录态。",
-    "action": "先用 safe 或 dry-run 方式审查将安装的依赖、凭据路径和平台权限，只启用只读检索，不给主账号任何写操作。",
+    "summary": "视频总结降低 Claude 与 Codex 上下文成本的工作习惯：任务完成后清空会话、会话中途不换模型、大文件交给子任务提炼、少发截图、精简 MCP 与项目配置，并用进度文件跨会话恢复。",
+    "action": "在下一次长任务记录会话初始上下文、压缩次数和总用量，只采用能复现节省效果且不损失任务准确性的做法。",
     "themes": [
-      "Claude",
       "Token管理",
-      "工作方法"
+      "上下文缓存",
+      "任务隔离"
     ],
     "tools": [],
-    "kind": "Tool",
+    "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "92b97cce2d2e253565c7cc4ed5c6fa8ecd47ab74ff88986044ce113c2178d2f9",
+    "candidate_seed_revision": "d9d8e3f3e864567d46306066e311b22d8a539e1d89ef956ec5355fd113e126db",
     "evidence_sha256": "2c675b6cd77a697112f33ab42a17fc80984262d978f2e8128c674b74ee1b59cc",
     "evidence_dependencies": [
       {
@@ -3426,7 +3426,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "9d858fdd2b9daf5844b3d4404d326bf87ace55ebba6aa8558a3aaa29cfecc3eb",
+    "candidate_revision": "2403f4bed15255b10dfa6f5327b1281082ce1fee8a8ad80c1f0469a935c16063",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -3434,21 +3434,21 @@
     "id": "69f81ca100000000380213c5",
     "content_sha256": "a5fd70cc51ca9c1c0bac4ee5c4dc94f535085bf3457d515d80e4bf5f1cfcc24a",
     "title": "就离谱，Claude Design还能这样用？",
-    "category": "AI设计工具",
+    "category": "AI设计与多媒体",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频介绍 Andyyyy64/whichllm：读取 GPU、CPU 和内存配置，并结合模型资料推荐本机可运行的模型及量化规格，降低本地模型选型门槛。",
-    "action": "使用只读硬件检测运行 whichllm，再以实际显存占用、生成速度和任务质量复核推荐结果，不直接下载超出预算的模型。",
+    "summary": "视频演示 Claude Design 的多种设计交互：生成线框图或高保真稿、抓取网页元素、把手绘草图转成设计、通过标注与滑块修改、加载设计系统，并生成演示文稿和动画。",
+    "action": "选一个现有页面，用同一设计系统分别测试草图导入、元素修改和演示稿输出，核对可编辑性、品牌一致性与导出格式。",
     "themes": [
-      "AI辅助",
-      "UI设计",
-      "原型工具"
+      "Claude Design",
+      "UI原型",
+      "设计系统"
     ],
     "tools": [],
-    "kind": "Tool",
+    "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "c8b6bebaed26a511cd84efd153335ae354e48bd958fd94aac9168e63be1dc617",
+    "candidate_seed_revision": "017e75966d1bfdc5863e184980610a4a9a5fb2e22a94167c61a5fbe13a4b4470",
     "evidence_sha256": "c97e4c307b36a87a48bf0e013b384f9ea3ec1e62934eacf9a76923826c46ae4e",
     "evidence_dependencies": [
       {
@@ -3478,7 +3478,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "3eb2d78ad48d68b88ec3de909f4772c4cd72c2965ba5e1981a2a6c5411bbe984",
+    "candidate_revision": "6492b99161a46939a35192a41887dc6fae10318e4dc30c312adebb9450aee129",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -3489,8 +3489,8 @@
     "category": "本地模型与成本",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频解释独立站卖家谨慎公开网址的原因：站点可能暴露选品、流量入口、广告素材、定价和供应链线索，竞争者可将这些公开信息拼接成商业情报。",
-    "action": "建立公开信息边界，对外案例使用脱敏截图，并定期检查网站、广告库和社媒是否意外暴露供应链、利润或未验证选品。",
+    "summary": "视频介绍 MiniMind：用原生 PyTorch 覆盖预训练、监督微调、LoRA、强化学习和工具调用等小模型训练环节；“两小时”是特定硬件与训练阶段的示例，不代表任意电脑都能得到生产级模型。",
+    "action": "按官方最小数据和配置先跑教学实验，记录显存、时间和效果，再决定是否扩大训练规模，不用宣传数字替代验证。",
     "themes": [
       "MiniMind",
       "从零训练LLM",
@@ -3499,10 +3499,10 @@
     "tools": [
       "MiniMind"
     ],
-    "kind": "Note",
+    "kind": "Tool",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "a9867c5ac53a95f602644935cfbe44aaa64baf80064e89c222753c756b3b43a3",
+    "candidate_seed_revision": "ffb7d2ad9f8436ef495fa5c708a7dc92a6eb5a953e8dd7347fe24734b61f7216",
     "evidence_sha256": "1ff5d682c0322eaceb17c55d9f2c48aa756c760285d32149a6638d3d54e0dfd7",
     "evidence_dependencies": [
       {
@@ -3532,7 +3532,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "d7c43b18195baf917a1761410ea50b611da2c14146616c1ada3be2501a1919e8",
+    "candidate_revision": "0cb71ba0d89309fa497bc1e7169afa9d04987f8204ed1c4f923b83e7ebbe3051",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -3543,18 +3543,18 @@
     "category": "内容增长与商业",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频介绍 CRMEB：覆盖商城、会员、营销活动、订单和后台运营的电商系统，可作为私域电商或二次开发底座；营销数字不能替代部署与安全评估。",
-    "action": "在隔离测试环境跑通商品、下单、支付沙盒、退款和权限审计，确认许可证、备份恢复与升级路径后再承载真实交易。",
+    "summary": "视频介绍小红书 KOS 账号模式：企业专业号可关联个人销售账号，用于个人化沟通、留资和推广；视频带有招商信息，资格、数量、功能与广告合规边界应以平台当前规则为准。",
+    "action": "仅通过小红书官方渠道核对资格、绑定关系、留资、广告标识和离职解绑规则，再用单账号小规模验证，不批量认证。",
     "themes": [
       "企业专业号",
       "小红书KOS",
       "账号矩阵"
     ],
     "tools": [],
-    "kind": "Tool",
+    "kind": "Note",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "9569f31119db09812b8ba0ed5eecf621415b56704b759d5c8ec083f6be5f08b4",
+    "candidate_seed_revision": "c66df5c74073d4ea655a44e177b69d92184185360d19852f82fc7bececf96f40",
     "evidence_sha256": "4a0633a291fbc9a73f8c9473e13a8f5c515780e911ae39bc15dccf3c58acfc47",
     "evidence_dependencies": [
       {
@@ -3584,7 +3584,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "224e245de2719fb81abb693851e0acfb7c2b7fbe7a96d589609072bd261950cd",
+    "candidate_revision": "fc1d35957d7337026bb9e7bc51a9c757f8e27c6a931d7b3e20534c8eba3c19d9",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -3595,18 +3595,18 @@
     "category": "内容增长与商业",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频介绍 FreeDomain：通过社区项目申请免费子域名，并可把 DNS 托管到 Cloudflare、FreeDNS 或 Hostry；它提供的是子域名而非自有顶级域名。",
-    "action": "先用于演示或临时项目并测试 DNS、HTTPS、迁移和失效恢复；品牌官网、邮箱与长期业务仍使用自己持有的域名。",
+    "summary": "视频给出小红书搜索内容方法：从搜索下拉、同行公开评论和官方话题中找具体长尾需求，在标题、开头、正文和标签自然表达主题，再把同一需求拆成系列内容。",
+    "action": "围绕一个真实主题收集 20 个长尾问题并做四周内容实验，以搜索曝光、收藏和实际转化复盘，不刷评论或堆砌关键词。",
     "themes": [
       "内容结构",
       "小红书搜索",
       "长尾词"
     ],
     "tools": [],
-    "kind": "Product",
+    "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "43f262f90fbb0ff9c3d78c680c5c32a6868ce974af8e318a8d6542e1b0722eb4",
+    "candidate_seed_revision": "bd936d5d7979998704435b57eec3875d90d9c69dc90466682812750e1a68754b",
     "evidence_sha256": "c8e179667c80ebadd71519d0595ca3a19f0170c78ea9d34ebaa1e8c708ad83d9",
     "evidence_dependencies": [
       {
@@ -3636,59 +3636,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "f294363f4c176ae9c508cd9b15db34b6d464d4a898ee70411c7c173f758ee0b0",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "69c3acb9000000001a028e64": {
-    "id": "69c3acb9000000001a028e64",
-    "content_sha256": "3ecfc1493637aa967cd2a9582f568203d2d7bdc11d846e2770fb548c75ce149e",
-    "title": "记住这3个网站",
-    "category": "Skills与工作流",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "口播推荐三个 OpenClaw 学习入口：一套分阶段教程、一个面向中文用户的 Skill 集合和一个中文社区，分别解决学习路径、技能发现与安装说明。音频中的网站名称存在识别歧义，尚不能唯一绑定官方网址。",
-    "action": "从原帖或画面只补齐三个准确域名后立即停止视频检查；逐一确认运营主体、安装来源和是否要求上传凭据，再加入资源索引。",
-    "themes": [
-      "OpenClaw",
-      "Skill目录",
-      "学习资源"
-    ],
-    "tools": [],
-    "kind": "Note",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "b18a13f48e77ee6419cf30c89f0498e76bf9ebab76e4996c176e2a2c7b16162d",
-    "evidence_sha256": "5ca84f07dd13029aa6772eabcba1dd9b0315b6e2044c093acf20754f95f2956d",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "b3d4e8a1f09c32b6a954304621296b0e44375f70caaf2e41e11bda0f104f7178"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "746f4e9ffb538d298ca820022f02b5c8754364130509eb1a087093a832fd43da"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "07037f19bc7880f44d545728191dbf778205cdbea5dab8de58842ef74f6a6f52",
+    "candidate_revision": "d6597320d12001c8548b48ee43f65327098ac5e64d3af2c446ca8a640940a8ce",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -3696,17 +3644,19 @@
     "id": "6a60b20d000000001101b25e",
     "content_sha256": "b9981c8db89942189a9a93765444f3b0371dceec86366454c362de58308a6cba",
     "title": "Codex做独立站太牛了！24小时冲到谷歌第一",
-    "category": "AI设计与多媒体",
+    "category": "内容增长与商业",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频给出可灵 AI 的 4K 视频工作流：先用图片模型确定人物与场景，再以参考图和主体绑定生成视频，并在提示词中明确镜头、动作和氛围以保持一致性。",
-    "action": "用一段自有素材对比主体绑定前后的角色一致性、运动自然度、生成时间和成本，并保留人工审核后再对外发布。",
+    "summary": "图文把外贸独立站运营拆成可执行的 Agent 流程：模型负责分析，MCP 连接数据，Agent 调度选品、关键词、Listing、广告、SKU 诊断与客服等任务，再以知识库和多 Agent 协作沉淀经验。",
+    "action": "先挑一个只读环节做最小流程，例如汇总公开关键词并生成待审报告；所有广告、客服和店铺写操作继续由人工确认。",
     "themes": [
-      "4K视频",
-      "主体一致性",
-      "可灵AI"
+      "Agent工作流",
+      "人工审核",
+      "独立站运营"
     ],
-    "tools": [],
+    "tools": [
+      "Codex"
+    ],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
@@ -3727,124 +3677,20 @@
       }
     ],
     "resource": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
     "resource_assessment": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "57fe0b638edec323ef4c917452da31c8b3ac527d91e7fd03cc9e644fce41e62c",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "6a6b611700000000240257ab": {
-    "id": "6a6b611700000000240257ab",
-    "content_sha256": "b4b1ef18ed40e9b0fb88b968330c316e205c71dc22a44d5873e7d1753e1d83a8",
-    "title": "Howto怒省94%token消耗，codex用到爽❗️",
-    "category": "内容增长与商业",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "视频用豆包演示文案复盘方法：让模型扮演首次观看的挑剔观众，逐项指出主题逻辑、口语表达、流失点、互动动机和人设吸引力，再给出多组修改方案。",
-    "action": "选一篇现有口播稿执行“观众视角诊断—逐点改写—真人朗读”三步复盘，并用实际完播和互动数据判断改动是否有效。",
-    "themes": [
-      "内容复盘",
-      "短视频文案",
-      "观众视角"
-    ],
-    "tools": [],
-    "kind": "Workflow",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "2056169a8be760c3afbf97bbca62d1471c124e74a4af0f37e15e65757e3d272c",
-    "evidence_sha256": "9e498232aea38e48f6df2e85269d672325bc08035d6f4d614aeca293c5590477",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "a6a075059116c9e24018e53814fdb17350925f581f26aa6ce8b2dd7a09289102"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "1fe59774cf7dcf3aa622fe5331e73e8ccf1ade3c68e0feefa7c0c33a67dac535"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "695367def73b22dca43bfe1e6795011f51ac153b43b5bfaf27ab947d949ba351",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "6a6af4d1000000000f031d45": {
-    "id": "6a6af4d1000000000f031d45",
-    "content_sha256": "a49f3723a37abbda229d5a7bc9bae80e4148de7dfc17895ab99c8bc061f78ff7",
-    "title": "为什么你的Agent需要一个自己的搜索层？",
-    "category": "本地模型与成本",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "视频总结降低 Claude 与 Codex 上下文成本的工作习惯：任务完成后清空会话、会话中途不换模型、大文件交给子任务提炼、少发截图、精简 MCP 与项目配置，并用进度文件跨会话恢复。",
-    "action": "在下一次长任务记录会话初始上下文、压缩次数和总用量，只采用能复现节省效果且不损失任务准确性的做法。",
-    "themes": [
-      "Token管理",
-      "上下文缓存",
-      "任务隔离"
-    ],
-    "tools": [],
-    "kind": "Workflow",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "e81dc75e2db56e3880fa35d638b165af8402a0cd441320df8b7b5af1b4c7f884",
-    "evidence_sha256": "8d68220674fa911fae15cd27334394b36946e27f9d31654627c49bb1a2da51a2",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "60084327477706a9e4d29c1702784b294d39747a47ff3d24ad78e342f01889fa"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "3f59371bff69bca87bc16398e95080cc91167e7ad93a8f0aff97522282559bc4"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "64a7e9c33aef0617a56d243ece1e563fe5fc0205ecae8e7493e130434555da1a",
+    "candidate_revision": "94d45c5b8cb65ebaf97ed976d68e17caf441043db4f6223baff1f1ecea81dcbb",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -3852,21 +3698,23 @@
     "id": "6a6e9f0a0000000028003550",
     "content_sha256": "cb5a2e893e4cefd9bd868c6acf9db7493d9d4345544d7f2c92802f37c19afdf9",
     "title": "AI 搜索不再需要付费",
-    "category": "AI设计与多媒体",
+    "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频展示一个尚未完全跑通的 AI 数字人口播原型：抓取选题素材、生成文案与配音，再用数字人批量合成视频；作者同时指出单次生成成本较高且自动发布仍是计划。",
-    "action": "只把它当作原型成本案例，先核算单条生成费用、素材授权、数字人标识和人工审核时间，不依据 Demo 直接采购或自动发布。",
+    "summary": "视频介绍 Wigolo：为 Cursor、Codex 等 Agent 提供本地网页搜索、内容抓取和来源整理，搜索记录与缓存留在本机，并减少对按次搜索 API 的依赖。",
+    "action": "在隔离环境测试 Wigolo 的索引来源、结果新鲜度、引用可追溯性与本地资源占用，再决定是否接入 Agent。",
     "themes": [
-      "AI数字人",
-      "原型成本",
-      "口播视频"
+      "Agent工具",
+      "Wigolo",
+      "本地搜索"
     ],
-    "tools": [],
-    "kind": "Note",
+    "tools": [
+      "Wigolo"
+    ],
+    "kind": "Tool",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "3864b87d5fc3c2a94ec4a876bc5b18382cdad5607951789c966edc280fc01e5e",
+    "candidate_seed_revision": "ca5abf6e54423819001cbd2b0b602c5feab612fcbd0ca1334b1dc61847b19c65",
     "evidence_sha256": "1eb59a25df7ac763d6438d42d77722f4b405d6c16a102a7efd996c05672b853a",
     "evidence_dependencies": [
       {
@@ -3883,186 +3731,36 @@
       }
     ],
     "resource": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
     "resource_assessment": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "4504ab69049593e43b66ca3c76466fa4ca51c2ea3233df7885f662d917c28a8d",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "6a6c892b00000000350140f1": {
-    "id": "6a6c892b00000000350140f1",
-    "content_sha256": "b156281382ca6b5aeb6acc3623adf81e7fd9b7e29c8052478cd738429b7abe17",
-    "title": "AI虚拟朋友",
-    "category": "AI设计与多媒体",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "视频演示 Claude Design 的多种设计交互：生成线框图或高保真稿、抓取网页元素、把手绘草图转成设计、通过标注与滑块修改、加载设计系统，并生成演示文稿和动画。",
-    "action": "选一个现有页面，用同一设计系统分别测试草图导入、元素修改和演示稿输出，核对可编辑性、品牌一致性与导出格式。",
-    "themes": [
-      "Claude Design",
-      "UI原型",
-      "设计系统"
-    ],
-    "tools": [],
-    "kind": "Workflow",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "4204deb58f56c65d6f9d1a17266975414f244dad7f507d5a1ca41f2a50c9950b",
-    "evidence_sha256": "f33f0f6970ffa0d575442867efc2f9e365ad4de3a2d0395cfcf9a141c1d394c6",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "71d3864eed32ce0d4fc7b1b4a11fba93c337805f5f5b0b5638d77f84082675f9"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "bd409a8c554f2f32e756ec9bd53e579aaa487b9d9bd6145740788bcbde062124"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "f793d660a2ff582ccba398b4cccdcd2eac48fa2d6dd05f4f572a57aca0f247b3",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "6a795b5a0000000022015f1b": {
-    "id": "6a795b5a0000000022015f1b",
-    "content_sha256": "2ccd2419bafb75387c6f4f067e211b698aea843a9a327ad2afb4cf81d8970b9a",
-    "title": "抱歉，我目前无法直接访问外部链接或抓取小红书笔记的详细内容。 如果你能​​把笔记的正文内容复制粘",
-    "category": "",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "视频介绍 MiniMind：用原生 PyTorch 覆盖预训练、监督微调、LoRA、强化学习和工具调用等小模型训练环节；“两小时”是特定硬件与训练阶段的示例，不代表任意电脑都能得到生产级模型。",
-    "action": "按官方最小数据和配置先跑教学实验，记录显存、时间和效果，再决定是否扩大训练规模，不用宣传数字替代验证。",
-    "themes": [
-      "AI自媒体"
-    ],
-    "tools": [],
-    "kind": "Tool",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "15234ceead6950e90cdd4509b66f275e388d22e4e767fbb691cd80ca3e91735c",
-    "evidence_sha256": "0e5dd5d56f33bc292d814183c4eb1e9edab0605e2e7d61e3412641967bed77ec",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "3af441ae21ecce336d6d28cd0fd2b502936f96cd56a44bed000a9e338fd648fe"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "11a7f6a87f0be7e9ea16fac4670d2c51f285ac119a80cc855b21f984c9fef3e4"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "49de9fa5015868ebdd1b7b3a1e98b847f632f09067ecc8e9ddc969814b2b69b1",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "6a7409e40000000028031daf": {
-    "id": "6a7409e40000000028031daf",
-    "content_sha256": "51131cbb028337867dae49f5327975a2505cb52ea1817bd43f28e9eb1263bf3c",
-    "title": "如何直接编辑GPT生成的图片？",
-    "category": "",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "视频介绍小红书 KOS 账号模式：企业专业号可关联个人销售账号，用于个人化沟通、留资和推广；视频带有招商信息，资格、数量、功能与广告合规边界应以平台当前规则为准。",
-    "action": "仅通过小红书官方渠道核对资格、绑定关系、留资、广告标识和离职解绑规则，再用单账号小规模验证，不批量认证。",
-    "themes": [
-      "AI自媒体"
-    ],
-    "tools": [],
-    "kind": "Note",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "f0d420cde8f3c1f671ec09e1b27b921781e4d7a1eca3f6d301fc244ee54b8a56",
-    "evidence_sha256": "04413d208b2c0c647197e9004274ab1a0cba737f6c0c3ebf06f7b8ace8b94b52",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "f938244443c591338d9ed3323cb909a5846acce72842dbff8071b2264014eb1c"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "197c69cc345a925fe34a78b917122a594c0af31d304c7e6f40ed9ad0004845ef"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "cc1405b94748e9e5379c07d6cab7e31ca72ad5770336ca3e7a99c60753ed8aa4",
+    "candidate_revision": "fb251362d817c4d618c5d6a374e29e987121693f7d7dd0df876219defbc5123b",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a4cbee30000000017029e77": {
     "id": "6a4cbee30000000017029e77",
     "content_sha256": "8a97338dc969bd80bb47488b1afc971330ee48388de945b291f705db9e64f65e",
-    "title": "根据你分享的这篇小红书笔记，我来帮你总结一下核心内容： ​​笔记主题​​：分享两个 AI 工作流",
+    "title": "两个 Coze 自动内容工作流",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频给出小红书搜索内容方法：从搜索下拉、同行公开评论和官方话题中找具体长尾需求，在标题、开头、正文和标签自然表达主题，再把同一需求拆成系列内容。",
-    "action": "围绕一个真实主题收集 20 个长尾问题并做四周内容实验，以搜索曝光、收藏和实际转化复盘，不刷评论或堆砌关键词。",
+    "summary": "视频展示两个 Coze 内容工作流：按日期生成早安电台文案，以及按歌名生成歌曲解读内容；涨粉与变现数字是营销案例，不能视为可复现结果。",
+    "action": "用自有主题各生成一条草稿，人工核对事实、版权和重复度后再发布，并以真实完播与互动数据判断是否值得继续。",
     "themes": [
-      "AI视频生成"
+      "Coze工作流",
+      "人工审核",
+      "自动内容"
     ],
     "tools": [],
     "kind": "Workflow",
@@ -4098,7 +3796,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "8cdeb4e31a2d912f7267873cee7e2e282cdc110e3dbcfa9a2b576b7a9969804d",
+    "candidate_revision": "bbed41ab075255cdc5254a117b44a096e16ba40073b5dce0bcc5577dd7918acc",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4106,19 +3804,17 @@
     "id": "6a6899470000000006012f4a",
     "content_sha256": "9c49a8547aeb01393ec30f03442a8a7e374c2347ad979ce485b8881e0bf91963",
     "title": "电商专用Skill，上班终于可以不用写提示词",
-    "category": "内容增长与商业",
+    "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "图文把外贸独立站运营拆成可执行的 Agent 流程：模型负责分析，MCP 连接数据，Agent 调度选品、关键词、Listing、广告、SKU 诊断与客服等任务，再以知识库和多 Agent 协作沉淀经验。",
-    "action": "先挑一个只读环节做最小流程，例如汇总公开关键词并生成待审报告；所有广告、客服和店铺写操作继续由人工确认。",
+    "summary": "视频展示电商视频运镜工作流：上传产品图后，以选择题确认风格、背景、运镜和分镜，再逐镜头修改并生成成片；文中的 Skill 是平台内自建流程，不是已核验的独立 Agent Skill。",
+    "action": "将其作为交互设计参考，在自有素材上验证分镜一致性、模型成本和镜头修改效率；不传播未核验的 Skill 代号。",
     "themes": [
-      "Agent工作流",
-      "人工审核",
-      "独立站运营"
+      "电商视频",
+      "运镜工作流",
+      "选择式交互"
     ],
-    "tools": [
-      "Codex"
-    ],
+    "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
@@ -4139,20 +3835,20 @@
       }
     ],
     "resource": {
-      "status": "verified",
+      "status": "missing",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
     "resource_assessment": {
-      "status": "verified",
+      "status": "missing",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "0c26d8b386eb73ee81bfb3dd27b6f5d45bc2ed26a0448464f171ec5e966bdb15",
+    "candidate_revision": "b2a12824c6a323926a6cff22308916250ee2fb48a9b144a3bb33c7745f94f521",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4160,17 +3856,19 @@
     "id": "6a704afc0000000008013dae",
     "content_sha256": "0458ff04cfeafb566b14affd7afa9bfb685dc7f1024950df23bde0b331407250",
     "title": "Codex 调用 GPT Pro 保姆级教程",
-    "category": "内容增长与商业",
+    "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "图文把小红书运营拆成十二个可复用环节，覆盖定位、痛点挖掘、选题、标题、结构、封面、语气、内容复用、评论回复、公开案例分析、排期和周复盘；这些是自建流程名称，不是已核验的官方 Skill。",
-    "action": "先把定位、选题和周复盘三个环节做成内部模板，用真实数据验证后再扩展；不把文中的自建名称当作可直接安装资源。",
+    "summary": "视频提出让 ChatGPT 网页推理模式负责复杂分析、Codex 负责本地改文件与测试的分工方式；模型入口、额度与用量规则会变化，视频中的节省数字不是固定保证。",
+    "action": "仅对不含敏感代码的小任务验证分工效果，记录总用量与耗时；使用前核对当前账户权限、数据边界和模型可用性。",
     "themes": [
       "Codex",
-      "内容流程",
-      "小红书运营"
+      "Token成本",
+      "模型分工"
     ],
-    "tools": [],
+    "tools": [
+      "Codex"
+    ],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
@@ -4191,20 +3889,20 @@
       }
     ],
     "resource": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
     "resource_assessment": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "1459ed825a29592b394d08e38c07ac9233cf9040b86fe1494db333086ea18a21",
+    "candidate_revision": "a49fba5a5782afe7ca5cc727c575501e1108a27049ec2268868fb1e73552df43",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4212,21 +3910,23 @@
     "id": "6a49ec170000000020038350",
     "content_sha256": "0730149c577a3c55e5ce274b343c3fd9592f1d3319cfaa8fe8345851c41ed997",
     "title": "夯爆了!这开源项目 4 个月冲到 50.7k 星",
-    "category": "内容增长与商业",
+    "category": "Skills与工作流",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频把小红书运营拆成定位、选题、写作、视觉和复盘五个阶段，并用路由总控串联十个自建流程；重点是把重复决策模板化，而不是证明这些名称对应已核验的官方 Skill。",
-    "action": "先实现账号定位、选题和复盘三个内部模板，用一周真实内容验证输入输出，再决定是否扩展到视觉与总控路由。",
+    "summary": "视频介绍 Agent-Reach：为 Agent 配置并路由网页、X、Reddit、YouTube、GitHub、B站和小红书等上游读取能力，同时提供安装与诊断；部分平台仍依赖本地登录态。",
+    "action": "先用 safe 或 dry-run 方式审查将安装的依赖、凭据路径和平台权限，只启用只读检索，不给主账号任何写操作。",
     "themes": [
-      "小红书运营",
-      "流程拆分",
-      "路由总控"
+      "Agent-Reach",
+      "CLI",
+      "跨平台检索"
     ],
-    "tools": [],
-    "kind": "Workflow",
+    "tools": [
+      "Agent-Reach"
+    ],
+    "kind": "Tool",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "cbf6b17268bc19526fc4cf2b31cb8dd8616b1bdb53d5484332e99a19f2489ab8",
+    "candidate_seed_revision": "40e30b7eed317a9b668b3312b2dcbdf13f04694fce7590ceb02d664bf488592c",
     "evidence_sha256": "d28feca6522ced325b1a982285e1519cbce7a037dda59a97c92d2fb722df6cb7",
     "evidence_dependencies": [
       {
@@ -4243,60 +3943,6 @@
       }
     ],
     "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "646c8f3975efbeff644d247a173b5adb7634bbd2ad0d788ab3e3c374a7badb89",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "6a36a67b0000000015027543": {
-    "id": "6a36a67b0000000015027543",
-    "content_sha256": "00479cd25f220f9e74eafea3a16eb075f326f948a79e9cae54bb66b9816d4426",
-    "title": "抱歉，我目前无法直接访问小红书链接或获取该笔记的具体内容。 如果你希望我帮你总结这篇笔记，可以尝",
-    "category": "AI设计与多媒体",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "视频介绍 Aixcut 的可复用剪辑流程：上传素材和脚本后生成字幕、配乐与初稿，并把反复沟通形成的执行规则保存成下次可调用的流程模板。",
-    "action": "用两条结构相同的自有短视频测试首次配置与再次调用的时间、字幕准确率、音乐版权和人工修改量。",
-    "themes": [
-      "AI剪辑",
-      "Aixcut",
-      "可复用流程"
-    ],
-    "tools": [
-      "Headroom"
-    ],
-    "kind": "Product",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "ffb112111010069a10e3959be582a6237bcec7c2593ed9366855ec4302fb08b1",
-    "evidence_sha256": "5f4fc9cbf79c68e799a6dc44fdac9e7ed49b121908bb60a123642244a516d5cb",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "1d72007b1c0373b5131bc78b5ffbae03359a54520086c272707dfbd7abbbc302"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "002debade1b81b0199afa1dc4a69bc6aef46b9214c9dfc12cf6afd151974ae33"
-      }
-    ],
-    "resource": {
       "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
@@ -4310,7 +3956,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "11469571c31dff351ba63451b1a3d3716ffd67d72d3195d381f4bda579ea1287",
+    "candidate_revision": "408e100435abe74f1dd87d0c823a4237f7452148208b3c7036a547ca09a37d62",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4318,21 +3964,21 @@
     "id": "6a621f16000000001303e77b",
     "content_sha256": "ab4d49b0dbf3ce70a4f6f57a7eaebd764e4d9fd227bf1c1a09bcfa6c389a11d0",
     "title": "为什么很多独立站卖家不愿意透露自己的网址",
-    "category": "Agent与自动化",
+    "category": "内容增长与商业",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频介绍 CometQ 远程控制硬件：通过 USB-C 在系统之外采集画面并发送键鼠控制，可在未登录或系统异常等软件远控受限场景访问设备；其远程穿透与安全主张仍需实测。",
-    "action": "只在隔离测试机验证锁屏、休眠和断网恢复，重点检查固件更新、账户保护、远程撤销、网络暴露和物理断开方式。",
+    "summary": "视频解释独立站卖家谨慎公开网址的原因：站点可能暴露选品、流量入口、广告素材、定价和供应链线索，竞争者可将这些公开信息拼接成商业情报。",
+    "action": "建立公开信息边界，对外案例使用脱敏截图，并定期检查网站、广告库和社媒是否意外暴露供应链、利润或未验证选品。",
     "themes": [
-      "CometQ",
-      "硬件远控",
-      "远程办公"
+      "商业隐私",
+      "独立站",
+      "竞争情报"
     ],
     "tools": [],
-    "kind": "Product",
+    "kind": "Note",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "d819b7aa888192103bca8ec67b393b7db47b4d5c904b570cb6b914948230fd29",
+    "candidate_seed_revision": "b46aa085454ba35791cd4de8b85cc3aec3192329113eea6d3279857bca0726a5",
     "evidence_sha256": "45c6bdcdc68194138b61fa0d0f6a36da271577c5d39cf91a8345d40da918d5c7",
     "evidence_dependencies": [
       {
@@ -4362,7 +4008,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "eb8509b8c1e537db4c50e29cc774e54f903b6b6f4d685eafc6ea6b12a1c4cbf2",
+    "candidate_revision": "f955561833aa1284d99f32bb397ea767a6c9988e367a52c0ffe942a7c1c2fbce",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4370,21 +4016,23 @@
     "id": "6a058b540000000038034851",
     "content_sha256": "05a27f07ae8bfda01e8e83097ac80bf406b0f82c4cfa1e158e07594835efc3b5",
     "title": "永久免费域名项目，简直就是开源公益！",
-    "category": "内容增长与商业",
+    "category": "开发部署与Vibe Coding",
     "category_override": false,
     "category_reason": "",
-    "summary": "图文把淘宝运营拆成十二个内部流程，覆盖选品、关键词、竞品、利润、标题、五图、详情页、客服、活动、库存、评价和周复盘；这些是自建流程名称，不是已核验的可安装 Skill。",
-    "action": "先把利润计算、竞品审计和周复盘做成内部模板，使用脱敏店铺数据验证；库存补货和发布动作必须保留人工确认。",
+    "summary": "视频介绍 FreeDomain：通过社区项目申请免费子域名，并可把 DNS 托管到 Cloudflare、FreeDNS 或 Hostry；它提供的是子域名而非自有顶级域名。",
+    "action": "先用于演示或临时项目并测试 DNS、HTTPS、迁移和失效恢复；品牌官网、邮箱与长期业务仍使用自己持有的域名。",
     "themes": [
-      "人工确认",
-      "流程模板",
-      "淘宝运营"
+      "DNS",
+      "FreeDomain",
+      "免费子域名"
     ],
-    "tools": [],
-    "kind": "Workflow",
+    "tools": [
+      "FreeDomain"
+    ],
+    "kind": "Product",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "4046022cca00993b3882b1510b5134d7e42b73a28dca1bb1abf49ab99753bc1a",
+    "candidate_seed_revision": "f3d31f1beb479fedfa91f4fdd1c26c66cd047208b2e08506ab6e0e90ee3fa5de",
     "evidence_sha256": "cd00e8ee0130c5c32ef5b93dd243e04c471d9cf0f628b4157578dad7d03eb832",
     "evidence_dependencies": [
       {
@@ -4401,20 +4049,20 @@
       }
     ],
     "resource": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
     "resource_assessment": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "c5df5cc9619454237852e9c7e5e4f570f2ff17521be30c2427d87d74fa71e68e",
+    "candidate_revision": "1fd0ee4eb67dda3fbea214558158e201f4fcd5eac0e2bd67a36fe92aa2628a8c",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4422,15 +4070,15 @@
     "id": "6a603e4e000000001d00c0a0",
     "content_sha256": "6eb3ffd7d9b5bc208844e32439a0bcb643d9903428f6fede9adef3a3bef65589",
     "title": "GitHub 上火出圈的视频翻译神器，好用高效",
-    "category": "内容增长与商业",
+    "category": "AI设计与多媒体",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频推广 SparkX 的亚马逊广告能力：诊断账户结构与预算、创建广告、持续调整竞价和关键词，并由 Insight Agent 生成复盘报告；适用门槛和效果属于产品主张。",
-    "action": "先接入只读报告并与人工账户复盘对比，确认授权范围、否词回滚、预算上限和异常暂停后，才考虑任何自动优化。",
+    "summary": "视频介绍 VividDub 的一站式视频本地化流程：接收 YouTube、TikTok、Google Drive 链接或本地文件，完成语音识别、翻译、声音克隆、配音、时间轴字幕、硬字幕移除与重新压制。视频开头清楚展示官方 GitHub 仓库 VividDub/VividDub；该公开仓库目前主要提供产品说明和仓库治理文件，尚未看到应用源码或开源许可证，因此应记录为 GitHub 上的产品项目，而不是 Agent Skill 或已确认的开源源码项目。",
+    "action": "先阅读官方 GitHub 仓库与产品说明，再用一段本人拥有版权的短视频测试一种目标语言；核对翻译、说话人授权、口型与字幕时间轴，并在提交敏感素材前确认隐私、保存期限、删除方式与计费。",
     "themes": [
-      "SparkX",
-      "亚马逊广告",
-      "预算控制"
+      "VividDub",
+      "多语言配音",
+      "视频翻译"
     ],
     "tools": [
       "VividDub"
@@ -4468,7 +4116,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "68fac1dbf7796026ad39f7acb0fdd7b979306fac78eb4891196a47eb7d74ab5f",
+    "candidate_revision": "b5b8dd85cc1053d887b636443f16ba3049b0f70efd7c13b82cadb9cc83db4286",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4476,21 +4124,21 @@
     "id": "6a1ab6bb00000000360012d3",
     "content_sha256": "1ed83425c9a307650c74c6c27dd9d565c92231ab7de3e3709a9172d2a4c96751",
     "title": "AI直出4K高级质感视频。",
-    "category": "内容增长与商业",
+    "category": "AI设计与多媒体",
     "category_override": false,
     "category_reason": "",
-    "summary": "图文介绍 WorkBuddy 的十个亚马逊流程模块，覆盖公开商品与评论调研、店铺定价和目录、Listing、数据上传、订单、广告及政策资讯；工具承担重复查询，运营判断仍由人完成。",
-    "action": "先用只读的公开商品搜索和评论分析验证数据来源与准确率，确认店铺授权、写操作审批和撤销机制后再连接内部账户。",
+    "summary": "视频给出可灵 AI 的 4K 视频工作流：先用图片模型确定人物与场景，再以参考图和主体绑定生成视频，并在提示词中明确镜头、动作和氛围以保持一致性。",
+    "action": "用一段自有素材对比主体绑定前后的角色一致性、运动自然度、生成时间和成本，并保留人工审核后再对外发布。",
     "themes": [
-      "WorkBuddy",
-      "亚马逊运营",
-      "只读验证"
+      "4K视频",
+      "主体一致性",
+      "可灵AI"
     ],
     "tools": [],
-    "kind": "Product",
+    "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "59a16a45a455b708c91ede0703259b2d5e71120ee489f606c6d1228864dc3425",
+    "candidate_seed_revision": "4413d13be38a4f3d49fc2b1e85c303d72c2ad5cc334c2de37421287e8c982784",
     "evidence_sha256": "4e2d6ce26ca27540c5929e0f344a453c13414f5b28021fcf41a24f8ef0bf5fe0",
     "evidence_dependencies": [
       {
@@ -4520,7 +4168,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "808f7954bfaad6ee1fb9b6c1640eb30dbb577901ce46440e88a0ca08979792a6",
+    "candidate_revision": "6b00d01131f3f4b6e94afb1aabc5f8e71f974166bb62bfc2329abd741310f457",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4531,18 +4179,18 @@
     "category": "内容增长与商业",
     "category_override": false,
     "category_reason": "",
-    "summary": "图文整理淘宝新品运营步骤，涉及上架素材、详情页、关键词、活动和广告复盘；其中关于流量扶持、时间窗口与递增单量的说法可能随平台规则变化，不能作为固定规则。",
-    "action": "仅采用合规的素材、关键词和广告复盘部分；任何做单、规避搜索或操纵互动的做法一律不执行，并以淘宝当前官方规则复核。",
+    "summary": "视频用豆包演示文案复盘方法：让模型扮演首次观看的挑剔观众，逐项指出主题逻辑、口语表达、流失点、互动动机和人设吸引力，再给出多组修改方案。",
+    "action": "选一篇现有口播稿执行“观众视角诊断—逐点改写—真人朗读”三步复盘，并用实际完播和互动数据判断改动是否有效。",
     "themes": [
-      "合规运营",
-      "淘宝新品",
-      "页面优化"
+      "内容复盘",
+      "短视频文案",
+      "观众视角"
     ],
     "tools": [],
-    "kind": "Note",
+    "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "d07fcbcbb4b7d97ca1b8f72a704168e3e71807b836b8aa63738c21afb4d42445",
+    "candidate_seed_revision": "a25a63b2ac7fa5a65cbaea971d69a47e809d2d4988bcfc093cd0e9862e47aa0f",
     "evidence_sha256": "2167d59c95728f42c2aaad47ecd835922c8527b926eaa8c0d5d9b87c743d542e",
     "evidence_dependencies": [
       {
@@ -4572,7 +4220,271 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "75c63ca4d99ecfc4c27ba651e09f207034f2fca2c4e0d2698b9859763cb31bfb",
+    "candidate_revision": "2e1784afae55157b0d63509117ecdb476bebc28f66032301720592bf19394512",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "69f32b15000000002202747d": {
+    "id": "69f32b15000000002202747d",
+    "content_sha256": "614e30a6b9e871a8f97fda27c22f516abdc8448b5715f04429b888c3b43bc4af",
+    "title": "用一次就烧我5美刀！AI做爆款视频工具",
+    "category": "AI设计与多媒体",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频展示一个尚未完全跑通的 AI 数字人口播原型：抓取选题素材、生成文案与配音，再用数字人批量合成视频；作者同时指出单次生成成本较高且自动发布仍是计划。",
+    "action": "只把它当作原型成本案例，先核算单条生成费用、素材授权、数字人标识和人工审核时间，不依据 Demo 直接采购或自动发布。",
+    "themes": [
+      "AI数字人",
+      "原型成本",
+      "口播视频"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "ec7d48df073b70ffd638340f213fa4e8eb5b8a47fe187ccc4d0845fc5dc1ca54",
+    "evidence_sha256": "4138d8d287e6d288490cf86d806fa96ea08366f52ce2674ac8223d8eb510ae82",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "9577853a7cc931a196e79eb45b3e4f7f7da43e5f44bb4f20aac41f43cc4e8aa4"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "c67eb345dc3f6653b0561f6bda2f39c006343a653d81dc39edeb36f26aa20cc6"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "99ca6c8905abf13e4dc5004de41d9135825b5d265885d4d9e5852e80cc7688ae",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a5b2393000000001400509f": {
+    "id": "6a5b2393000000001400509f",
+    "content_sha256": "6baea4f1001955361a25775b8c66007fa71968337aaac2fd797b8f0b67bde7f3",
+    "title": "会用Codex，你就是一个人的小红书运营组",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "图文把小红书运营拆成十二个可复用环节，覆盖定位、痛点挖掘、选题、标题、结构、封面、语气、内容复用、评论回复、公开案例分析、排期和周复盘；这些是自建流程名称，不是已核验的官方 Skill。",
+    "action": "先把定位、选题和周复盘三个环节做成内部模板，用真实数据验证后再扩展；不把文中的自建名称当作可直接安装资源。",
+    "themes": [
+      "Codex",
+      "内容流程",
+      "小红书运营"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "44b5775bccc8a21081a73d2d8be3a09feee7711688adf103fcc78706a2de8aab",
+    "evidence_sha256": "17015475e690ef47c5fc3ac3cde53bd757d86df45281eb03ff6bacd0c86258ee",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "89eeff1237961721ea172921e6a69ca0910964f9d22c38dcf22d56b8fbbcaf32"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "0b0506453c92a822d460b137c0bc2238660696147fb485757850fc0c02072b10"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "61520fbc62511a16063f655adbcba3bc91e3e7edfcf3baee1131e9c36e433212",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a642182000000000402bd0a": {
+    "id": "6a642182000000000402bd0a",
+    "content_sha256": "a9992e43c3f3664bfe9a554b644148086c909b50f70f870b233e830c233875a5",
+    "title": "30岁做两年Agent开发，建议大家不要想太多",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "图文给出 Agent 开发学习路径：先理解模型边界与提示词，再用原生 API 做工具调用，随后学习 RAG、多 Agent 协作和工程化部署；重点是故障兜底、状态、成本与监控。",
+    "action": "从一个只读的小 Agent 开始，依次补齐工具调用失败测试、状态恢复、成本记录和日志，再考虑框架或多 Agent 架构。",
+    "themes": [
+      "Agent开发",
+      "学习路径",
+      "工程化"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "68c5626fa279ab2f1be3a2e8d4a2e5b777b2dd87d628dc5045a06a2acb4425d7",
+    "evidence_sha256": "4bbeec5efe549ad5a48fc1b9b5d26c068de4a3ff49c08f31830fd60fee2452c9",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "bfcb1c278fd15b9cb364d031e7a7bba9748f5ff45d267a2014f43a1f7778668d"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "1766397903e70402e1903b27aa51480bf7a77139f72fc4dcc00b4703285bd62b"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "c821e9aab17a15e33fc9ea984e174c253a8940475cfd751a946bcadbeded1a8f",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a4305de0000000017008217": {
+    "id": "6a4305de0000000017008217",
+    "content_sha256": "ea0e4d7c2fbacf7efa04c10bbb7bf5df12d83cf48b8ed06ee8488bdcafcaace4",
+    "title": "你的电脑到底可以本地部署什么大模型？",
+    "category": "本地模型与成本",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 Andyyyy64/whichllm：读取 GPU、CPU 和内存配置，并结合模型资料推荐本机可运行的模型及量化规格，降低本地模型选型门槛。",
+    "action": "使用只读硬件检测运行 whichllm，再以实际显存占用、生成速度和任务质量复核推荐结果，不直接下载超出预算的模型。",
+    "themes": [
+      "whichllm",
+      "本地大模型",
+      "硬件评估"
+    ],
+    "tools": [
+      "whichllm"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "a02aa3941b019e917da35781c00302e115da8f3d96c90ada0b5e47da6444cfa5",
+    "evidence_sha256": "790be473fa753b8712e5a42b18da99bc5e65089cd2dae4de8c4eab37d4c34cf6",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "17842e1f9280cea60171ec58bb63b65ff4d30038229e738556811cf75c901997"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "c8142fd7b2a129b3aa7916e4fd4cadfa6dc7ae07c17962ebc3228a3890946359"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "eaab96c1ec4c6b704ca95d2a1e1405a5531de63efb858abd90cdd72626cabb1b",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "69febd02000000003700c629": {
+    "id": "69febd02000000003700c629",
+    "content_sha256": "85d6f3563d5edab9265b4a695bbbf76d1b3bd66fabc9bd20ecc493db69708cc4",
+    "title": "程序员狂喜！开源宝藏！副业神器！",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 CRMEB：覆盖商城、会员、营销活动、订单和后台运营的电商系统，可作为私域电商或二次开发底座；营销数字不能替代部署与安全评估。",
+    "action": "在隔离测试环境跑通商品、下单、支付沙盒、退款和权限审计，确认许可证、备份恢复与升级路径后再承载真实交易。",
+    "themes": [
+      "CRMEB",
+      "电商系统",
+      "私域运营"
+    ],
+    "tools": [
+      "CRMEB"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "9073c0dafa958e75f82e4ae5d802f5b8938a8fbc0eb9b5b56907caed32285063",
+    "evidence_sha256": "a34afc037b5f7f75bfb215f2b84be20058e04dd1099fb26e190a6ef8222bb30b",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "a54560c7c28bfb1e4af7827ff1a30aad314ea9208519e9195fa73b0887397273"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "f9d4c3e351ca041f40cfc1688ce5d96b9f1338878a9b6b4ce5e91238c2efcb39"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "6380eec6e6a73ae457e1e72662c793005bac03fcb00ab4801c790688d2a99144",
     "review_status": "accepted",
     "review_reason_code": ""
   }
