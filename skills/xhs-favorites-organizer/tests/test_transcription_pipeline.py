@@ -3,12 +3,14 @@ import hashlib
 import json
 import tempfile
 import unittest
+from argparse import Namespace
 from pathlib import Path
 from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "skills" / "xhs-favorites-organizer" / "scripts" / "transcribe-pending-videos.py"
+RUNNER = ROOT / "skills" / "xhs-favorites-organizer" / "scripts" / "run-video-analysis.ps1"
 
 
 class TranscriptionPipelineTests(unittest.TestCase):
@@ -61,6 +63,189 @@ class TranscriptionPipelineTests(unittest.TestCase):
             )
 
             self.assertEqual([item["note_id"] for item in queue], [small, large])
+
+    def test_queue_rejects_reparse_or_symlink_videos(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            media.mkdir()
+            note_id = "a" * 24
+            (media / f"{note_id}.mp4").write_bytes(b"external")
+
+            with mock.patch.object(
+                self.module, "_is_plain_file", return_value=False, create=True
+            ) as is_plain_file:
+                queue = self.module.build_transcription_queue(
+                    media, {}, root / "analysis", max_items=1
+                )
+
+            is_plain_file.assert_called_once()
+            self.assertEqual(queue, [])
+
+    def test_queue_rejects_a_redirected_note_analysis_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            note_id = "a" * 24
+            (media / f"{note_id}.mp4").write_bytes(b"video")
+            note_dir = analysis / note_id
+            note_dir.mkdir(parents=True)
+
+            with mock.patch.object(
+                self.module,
+                "_is_plain_directory",
+                side_effect=lambda path: Path(path) != note_dir,
+            ):
+                queue = self.module.build_transcription_queue(
+                    media, {}, analysis, max_items=1
+                )
+
+            self.assertEqual(queue, [])
+
+    def test_queue_reschedules_stale_curation_for_the_current_content_revision(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            media.mkdir()
+            note_id = "a" * 24
+            (media / f"{note_id}.mp4").write_bytes(b"video")
+
+            queue = self.module.build_transcription_queue(
+                media,
+                {note_id: {"content_sha256": "b" * 64}},
+                root / "analysis",
+                max_items=1,
+                allowed_note_ids={note_id},
+                content_sha256_by_id={note_id: "c" * 64},
+                tool_version="fixture",
+            )
+
+            self.assertEqual([item["note_id"] for item in queue], [note_id])
+
+    def test_atomic_output_rejects_a_redirected_analysis_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "analysis" / "note" / "transcription.json"
+
+            with mock.patch.object(
+                self.module, "_is_plain_directory", return_value=False
+            ):
+                with self.assertRaisesRegex(ValueError, "redirected"):
+                    self.module._atomic_json(output, {"status": "failed"})
+
+            self.assertFalse(output.exists())
+
+    def test_main_rejects_a_redirected_executable_before_queueing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            ffmpeg = root / "ffmpeg.exe"
+            ffprobe = root / "ffprobe.exe"
+            ffmpeg.write_bytes(b"tool")
+            ffprobe.write_bytes(b"tool")
+            curation = root / "curation.json"
+            catalog = root / "catalog.json"
+            config = root / "config.json"
+            curation.write_text("{}", encoding="utf-8")
+            catalog.write_text(json.dumps({"notes": {}}), encoding="utf-8")
+            config.write_text("{}", encoding="utf-8")
+            options = Namespace(
+                media_dir=str(media), curation=str(curation), catalog=str(catalog),
+                config=str(config), analysis_dir=str(analysis), ffmpeg=str(ffmpeg),
+                ffprobe=str(ffprobe), model="small", model_dir=str(root / "models"),
+                language="zh", device="cpu", compute_type="int8", max_items=20,
+                max_item_seconds=600, max_batch_seconds=900, status_file=None,
+                keep_audio=False, reassess_only=False, note_id=[],
+            )
+
+            with (
+                mock.patch.object(self.module, "parse_args", return_value=options),
+                mock.patch.object(
+                    self.module,
+                    "_is_plain_file",
+                    side_effect=lambda path: Path(path) != ffmpeg,
+                ),
+            ):
+                with self.assertRaisesRegex(ValueError, "ffmpeg"):
+                    self.module.main()
+
+    def test_main_passes_only_repeated_cli_note_ids_to_the_queue(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            selected = "a" * 24
+            excluded = "b" * 24
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            ffmpeg = root / "ffmpeg.exe"
+            ffprobe = root / "ffprobe.exe"
+            ffmpeg.write_bytes(b"tool")
+            ffprobe.write_bytes(b"tool")
+            curation = root / "curation.json"
+            catalog = root / "catalog.json"
+            config = root / "config.json"
+            curation.write_text("{}", encoding="utf-8")
+            catalog.write_text(json.dumps({"notes": {
+                selected: {"content_sha256": "c" * 64},
+                excluded: {"content_sha256": "d" * 64},
+            }}), encoding="utf-8")
+            config.write_text("{}", encoding="utf-8")
+            options = Namespace(
+                media_dir=str(media), curation=str(curation), catalog=str(catalog),
+                config=str(config), analysis_dir=str(analysis), ffmpeg=str(ffmpeg),
+                ffprobe=str(ffprobe), model="small", model_dir=str(root / "models"),
+                language="zh", device="cpu", compute_type="int8", max_items=20,
+                max_item_seconds=600, max_batch_seconds=900, status_file=None,
+                keep_audio=False, reassess_only=False, note_id=[selected, selected],
+            )
+            captured = {}
+
+            def capture_queue(*args, **kwargs):
+                captured["allowed_note_ids"] = kwargs["allowed_note_ids"]
+                return []
+
+            with (
+                mock.patch.object(self.module, "parse_args", return_value=options),
+                mock.patch.object(self.module.importlib_metadata, "version", return_value="1.0"),
+                mock.patch.object(self.module, "build_transcription_queue", side_effect=capture_queue),
+            ):
+                self.module.main()
+
+            self.assertEqual(captured["allowed_note_ids"], {selected})
+
+    def test_main_rejects_a_requested_note_outside_the_catalog_scope(self):
+        requested = "f" * 24
+        with self.assertRaisesRegex(ValueError, "outside the catalog scope"):
+            self.module.requested_note_scope([requested], {"a" * 24: {}})
+
+    def test_powershell_entry_forwards_each_requested_note_to_offline_producers(self):
+        source = RUNNER.read_text(encoding="utf-8-sig")
+        self.assertIn("[string[]]$NoteId", source)
+        self.assertIn("$transcriptionArguments += @('--note-id', $requestedNoteId)", source)
+        self.assertIn("$ocrArguments += @('--note-id', $requestedNoteId)", source)
+        self.assertIn("$visualArguments += @('--note-id', $requestedNoteId)", source)
+        self.assertIn("NoteId is outside the catalog scope.", source)
+        self.assertIn("function Assert-PlainLeafPath", source)
+        self.assertIn("function Assert-PlainDirectoryPath", source)
+        for label in (
+            "Transcription Python",
+            "FFmpeg",
+            "FFprobe",
+            "OCR engine",
+            "Visual evidence runner",
+        ):
+            self.assertIn(f"'{label}'", source)
+        self.assertIn("OCR engine must stay inside the workspace.", source)
+        for label in (
+            "Workspace",
+            "Private state directory",
+            "Media directory",
+            "Analysis directory",
+        ):
+            self.assertIn(f"'{label}'", source)
 
     def test_duration_budget_clips_long_items_and_caps_batch(self):
         items = [
@@ -165,6 +350,80 @@ class TranscriptionPipelineTests(unittest.TestCase):
             self.assertEqual(artifact["reason_code"], "transcription_failed")
             self.assertNotIn("text", artifact)
 
+    def test_transcription_rejects_a_redirected_note_directory_before_ffmpeg(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            analysis = root / "analysis"
+            note_id = "a" * 24
+            note_dir = analysis / note_id
+            note_dir.mkdir(parents=True)
+            item = {
+                "note_id": note_id,
+                "video": root / "video.mp4",
+                "source_duration_seconds": 30,
+                "audio_limit_seconds": 30,
+            }
+
+            with (
+                mock.patch.object(
+                    self.module,
+                    "_is_plain_directory",
+                    side_effect=lambda path: Path(path) != note_dir,
+                ),
+                mock.patch.object(self.module, "run") as runner,
+            ):
+                with self.assertRaisesRegex(ValueError, "redirected"):
+                    self.module.transcribe_video(
+                        object(),
+                        Path("ffmpeg"),
+                        item,
+                        {"content_sha256": "b" * 64},
+                        analysis,
+                        "zh",
+                        False,
+                        tool_version="fixture",
+                    )
+
+            runner.assert_not_called()
+
+    def test_transcription_rejects_a_redirected_continuation_before_ffmpeg(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            analysis = root / "analysis"
+            note_id = "a" * 24
+            transcript = analysis / note_id / "transcription.json"
+            transcript.parent.mkdir(parents=True)
+            transcript.write_text("{}", encoding="utf-8")
+            item = {
+                "note_id": note_id,
+                "video": root / "video.mp4",
+                "source_duration_seconds": 30,
+                "audio_start_seconds": 10,
+                "audio_limit_seconds": 20,
+            }
+
+            with (
+                mock.patch.object(
+                    self.module,
+                    "_is_plain_file",
+                    side_effect=lambda path: Path(path) != transcript,
+                ),
+                mock.patch.object(self.module, "run") as runner,
+            ):
+                with self.assertRaisesRegex(ValueError, "continuation"):
+                    self.module.transcribe_video(
+                        object(),
+                        Path("ffmpeg"),
+                        item,
+                        {"content_sha256": "b" * 64},
+                        analysis,
+                        "zh",
+                        False,
+                        tool_version="fixture",
+                    )
+
+            runner.assert_not_called()
+
     def test_successful_transcript_binds_the_catalog_revision_and_tool_contract(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -196,6 +455,8 @@ class TranscriptionPipelineTests(unittest.TestCase):
                     return iter([Segment()]), Info()
 
             def fake_run(command):
+                self.assertIn("-n", command)
+                self.assertNotEqual(Path(command[-1]).name, "audio-16khz.wav")
                 Path(command[-1]).write_bytes(b"synthetic wav")
 
             with mock.patch.object(self.module, "run", side_effect=fake_run):

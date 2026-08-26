@@ -10,7 +10,9 @@ import os
 from pathlib import Path
 import re
 import signal
+import stat
 import subprocess
+import tempfile
 import threading
 import time
 from datetime import datetime, timezone
@@ -22,9 +24,44 @@ IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_OCR_BYTES = 800_000
 
 
+def _is_plain_path(path: Path, expected_mode: int) -> bool:
+    candidate = Path(os.path.abspath(str(path)))
+    try:
+        metadata = os.lstat(candidate)
+    except OSError:
+        return False
+    attributes = getattr(metadata, "st_file_attributes", 0)
+    if (
+        candidate.is_symlink()
+        or attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        or stat.S_IFMT(metadata.st_mode) != expected_mode
+    ):
+        return False
+    for parent in candidate.parents:
+        try:
+            parent_metadata = os.lstat(parent)
+        except OSError:
+            return False
+        if (
+            parent.is_symlink()
+            or getattr(parent_metadata, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        ):
+            return False
+    return True
+
+
+def _is_plain_file(path: Path) -> bool:
+    return _is_plain_path(path, stat.S_IFREG)
+
+
+def _is_plain_directory(path: Path) -> bool:
+    return _is_plain_path(path, stat.S_IFDIR)
+
+
 def ocr_tool_version(engine: Path) -> str:
     target = Path(engine)
-    if not target.is_file() or target.is_symlink():
+    if not _is_plain_file(target):
         raise ValueError("OCR engine identity is unavailable")
     digest = hashlib.sha256()
     with target.open("rb") as handle:
@@ -46,11 +83,29 @@ def dispatch_evidence_methods(context):
 
 def _atomic_json(path: Path, value) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    with temporary.open("x", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, sort_keys=True)
-        handle.write("\n")
-    os.replace(temporary, path)
+    if not _is_plain_directory(path.parent) or (
+        os.path.lexists(path) and not _is_plain_file(path)
+    ):
+        raise ValueError("OCR output path is unavailable or redirected")
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        text=True,
+    )
+    temporary = Path(temporary_name)
+    try:
+        if not _is_plain_file(temporary):
+            raise ValueError("OCR temporary path is unavailable or redirected")
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            descriptor = -1
+            json.dump(value, handle, ensure_ascii=False, sort_keys=True)
+            handle.write("\n")
+        os.replace(temporary, path)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        temporary.unlink(missing_ok=True)
 
 
 def _windows_kill_job(process):
@@ -239,22 +294,34 @@ def extract_cached_images(
     if engine is None:
         return {"status": "ocr_unavailable", "processed": 0, "failed": 0, "records": []}
     engine = Path(engine)
-    if not engine.is_file() or engine.is_symlink():
+    if not _is_plain_file(engine):
         return {"status": "ocr_unavailable", "processed": 0, "failed": 0, "records": []}
+    analysis_dir.mkdir(parents=True, exist_ok=True)
+    if not _is_plain_directory(analysis_dir):
+        raise ValueError("OCR analysis directory is unavailable or redirected")
     records = []
     failed = 0
     candidates = sorted(
         path for path in media_dir.iterdir()
         if (
-            path.is_file()
-            and not path.is_symlink()
+            _is_plain_file(path)
             and path.suffix.lower() in IMAGE_SUFFIXES
             and path.stem in revisions
         )
-    ) if media_dir.is_dir() and not media_dir.is_symlink() else []
+    ) if _is_plain_directory(media_dir) else []
     for image in candidates:
         content_sha256 = revisions[image.stem]
-        artifact_path = analysis_dir / image.stem / "visual-ocr.json"
+        note_dir = analysis_dir / image.stem
+        note_dir.mkdir(parents=True, exist_ok=True)
+        if not _is_plain_directory(note_dir):
+            failed += 1
+            records.append({
+                "note_id": image.stem,
+                "status": "failed",
+                "reason_code": "ocr_output_path_unavailable",
+            })
+            continue
+        artifact_path = note_dir / "visual-ocr.json"
         try:
             tool_version = ocr_tool_version(engine)
         except (OSError, ValueError):

@@ -9,6 +9,7 @@ import math
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 import tempfile
 
@@ -74,6 +75,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-item-seconds", type=float, default=600)
     parser.add_argument("--max-batch-seconds", type=float, default=900)
     parser.add_argument("--status-file")
+    parser.add_argument("--note-id", action="append", default=[])
     parser.add_argument("--keep-audio", action="store_true")
     parser.add_argument("--reassess-only", action="store_true")
     return parser.parse_args()
@@ -106,6 +108,53 @@ def catalog_notes(catalog: dict, published_since: str | None = None) -> dict:
     return selected
 
 
+def requested_note_scope(requested_note_ids: list[str], notes: dict) -> set[str]:
+    requested = set(requested_note_ids)
+    if not requested:
+        return set(notes)
+    if not all(isinstance(note_id, str) and NOTE_ID.fullmatch(note_id) for note_id in requested):
+        raise ValueError("--note-id must use a supported note identifier")
+    if requested - set(notes):
+        raise ValueError("--note-id is outside the catalog scope")
+    return requested
+
+
+def _is_plain_path(path: Path, expected_mode: int) -> bool:
+    candidate = Path(os.path.abspath(str(path)))
+    try:
+        metadata = os.lstat(candidate)
+    except OSError:
+        return False
+    attributes = getattr(metadata, "st_file_attributes", 0)
+    if (
+        candidate.is_symlink()
+        or attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        or stat.S_IFMT(metadata.st_mode) != expected_mode
+    ):
+        return False
+    for parent in candidate.parents:
+        try:
+            parent_metadata = os.lstat(parent)
+        except OSError:
+            return False
+        parent_attributes = getattr(parent_metadata, "st_file_attributes", 0)
+        if (
+            parent.is_symlink()
+            or parent_attributes
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        ):
+            return False
+    return True
+
+
+def _is_plain_file(path: Path) -> bool:
+    return _is_plain_path(path, stat.S_IFREG)
+
+
+def _is_plain_directory(path: Path) -> bool:
+    return _is_plain_path(path, stat.S_IFDIR)
+
+
 def build_transcription_queue(
     media_dir: Path,
     curation: dict,
@@ -117,21 +166,37 @@ def build_transcription_queue(
 ) -> list[dict]:
     if max_items < 1 or max_items > 100:
         raise ValueError("--max-items must be between 1 and 100")
+    if not _is_plain_directory(media_dir):
+        return []
     candidates = []
     for video in media_dir.glob("*.mp4"):
         note_id = video.stem
+        expected_revision = (content_sha256_by_id or {}).get(note_id)
+        curated = curation.get(note_id)
+        curation_current = note_id in curation and (
+            expected_revision is None
+            or (
+                isinstance(curated, dict)
+                and curated.get("content_sha256") == expected_revision
+            )
+        )
         if (
-            not NOTE_ID.fullmatch(note_id)
-            or note_id in curation
+            not _is_plain_file(video)
+            or not NOTE_ID.fullmatch(note_id)
+            or curation_current
             or (allowed_note_ids is not None and note_id not in allowed_note_ids)
         ):
             continue
-        transcript_path = analysis_dir / note_id / "transcription.json"
+        note_dir = analysis_dir / note_id
+        if note_dir.exists() and not _is_plain_directory(note_dir):
+            continue
+        transcript_path = note_dir / "transcription.json"
         resume_start = 0.0
         if transcript_path.is_file():
+            if not _is_plain_file(transcript_path):
+                continue
             try:
                 transcript = json.loads(transcript_path.read_text(encoding="utf-8"))
-                expected_revision = (content_sha256_by_id or {}).get(note_id)
                 current = (
                     isinstance(transcript, dict)
                     and _continuation_shape_is_valid(transcript)
@@ -225,18 +290,36 @@ def write_status(path: Path | None, payload: dict) -> None:
     if path is None:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
+    if not _is_plain_directory(path.parent) or (
+        path.exists() and not _is_plain_file(path)
+    ):
+        raise ValueError("status output path is unavailable or redirected")
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _atomic_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    if not _is_plain_directory(path.parent) or (
+        path.exists() and not _is_plain_file(path)
+    ):
+        raise ValueError("analysis output path is unavailable or redirected")
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        text=True,
+    )
+    temporary = Path(temporary_name)
     try:
-        temporary.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        if not _is_plain_file(temporary):
+            raise ValueError("analysis temporary path is unavailable or redirected")
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            descriptor = -1
+            handle.write(json.dumps(payload, ensure_ascii=False, indent=2))
         temporary.replace(path)
     finally:
+        if descriptor >= 0:
+            os.close(descriptor)
         temporary.unlink(missing_ok=True)
 
 
@@ -470,7 +553,8 @@ def transcribe_video(
 ) -> dict:
     note_dir = analysis_dir / item["note_id"]
     note_dir.mkdir(parents=True, exist_ok=True)
-    audio_path = note_dir / "audio-16khz.wav"
+    if not _is_plain_directory(note_dir):
+        raise ValueError("analysis note directory is unavailable or redirected")
     transcript_path = note_dir / "transcription.json"
     content_sha256 = str(note.get("content_sha256") or "").strip()
     if not HASH.fullmatch(content_sha256):
@@ -481,7 +565,9 @@ def transcribe_video(
     audio_limit = float(item.get("audio_limit_seconds") or item.get("source_duration_seconds") or 0)
     source_duration = float(item.get("source_duration_seconds") or 0.0)
     previous = {}
-    if audio_start > 0 and transcript_path.is_file():
+    if audio_start > 0 and os.path.lexists(transcript_path):
+        if not _is_plain_file(transcript_path):
+            raise ValueError("transcript continuation is unavailable or redirected")
         try:
             candidate = json.loads(transcript_path.read_text(encoding="utf-8"))
             if _transcript_matches_revision(candidate, content_sha256, tool_version):
@@ -490,8 +576,16 @@ def transcribe_video(
                 audio_start = 0.0
         except (OSError, json.JSONDecodeError):
             audio_start = 0.0
+    audio_dir = Path(tempfile.mkdtemp(dir=note_dir, prefix=".audio-"))
+    if not _is_plain_directory(audio_dir):
+        try:
+            audio_dir.rmdir()
+        except OSError:
+            pass
+        raise ValueError("audio temporary directory is unavailable or redirected")
+    audio_path = audio_dir / "audio.wav"
     command = [
-        str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y",
+        str(ffmpeg), "-hide_banner", "-loglevel", "error", "-n",
     ]
     if audio_start > 0:
         command.extend(["-ss", str(audio_start)])
@@ -551,6 +645,11 @@ def transcribe_video(
             "visual_review": assessment,
         }
         _atomic_json(transcript_path, result)
+        if keep_audio:
+            retained_audio = note_dir / "audio-16khz.wav"
+            if os.path.lexists(retained_audio):
+                raise ValueError("retained audio path is unavailable or redirected")
+            os.link(audio_path, retained_audio)
         return result
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired):
         if not previous:
@@ -566,22 +665,47 @@ def transcribe_video(
             })
         raise
     finally:
-        if not keep_audio:
-            audio_path.unlink(missing_ok=True)
+        audio_path.unlink(missing_ok=True)
+        try:
+            audio_dir.rmdir()
+        except OSError:
+            pass
 
 
 def main() -> None:
     args = parse_args()
-    ffmpeg = Path(args.ffmpeg).resolve()
-    ffprobe = Path(args.ffprobe).resolve()
-    if not ffmpeg.is_file() or not ffprobe.is_file():
+    ffmpeg = Path(os.path.abspath(args.ffmpeg))
+    ffprobe = Path(os.path.abspath(args.ffprobe))
+    if not _is_plain_file(ffmpeg) or not _is_plain_file(ffprobe):
         raise ValueError("ffmpeg and ffprobe executables are required")
-    media_dir = Path(args.media_dir).resolve()
-    analysis_dir = Path(args.analysis_dir).resolve()
-    curation = json.loads(Path(args.curation).resolve().read_text(encoding="utf-8"))
-    catalog = json.loads(Path(args.catalog).resolve().read_text(encoding="utf-8"))
-    config = json.loads(Path(args.config).resolve().read_text(encoding="utf-8-sig"))
-    notes = catalog_notes(catalog, config.get("published_since"))
+    media_dir = Path(os.path.abspath(args.media_dir))
+    analysis_dir = Path(os.path.abspath(args.analysis_dir))
+    if not _is_plain_directory(media_dir):
+        raise ValueError("media and analysis directories must not be redirected")
+    if not analysis_dir.exists():
+        if not _is_plain_directory(analysis_dir.parent):
+            raise ValueError(
+                "media and analysis directories must not be redirected"
+            )
+        analysis_dir.mkdir()
+    if not _is_plain_directory(analysis_dir):
+        raise ValueError("media and analysis directories must not be redirected")
+    curation_path = Path(os.path.abspath(args.curation))
+    catalog_path = Path(os.path.abspath(args.catalog))
+    config_path = Path(os.path.abspath(args.config))
+    if not all(
+        _is_plain_file(path)
+        for path in (curation_path, catalog_path, config_path)
+    ):
+        raise ValueError("curation, catalog, and config files must not be redirected")
+    curation = json.loads(curation_path.read_text(encoding="utf-8"))
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    config = json.loads(config_path.read_text(encoding="utf-8-sig"))
+    catalog_scope = catalog_notes(catalog, config.get("published_since"))
+    allowed_note_ids = requested_note_scope(args.note_id, catalog_scope)
+    notes = {
+        note_id: catalog_scope[note_id] for note_id in allowed_note_ids
+    }
     try:
         package_version = importlib_metadata.version("faster-whisper")
     except importlib_metadata.PackageNotFoundError as error:
@@ -601,7 +725,7 @@ def main() -> None:
         curation,
         analysis_dir,
         100,
-        allowed_note_ids=set(notes),
+        allowed_note_ids=allowed_note_ids,
         content_sha256_by_id={
             note_id: str(note.get("content_sha256") or "").strip()
             for note_id, note in notes.items()
@@ -615,7 +739,9 @@ def main() -> None:
         args.max_item_seconds,
         args.max_batch_seconds,
     )
-    status_file = Path(args.status_file).resolve() if args.status_file else None
+    status_file = (
+        Path(os.path.abspath(args.status_file)) if args.status_file else None
+    )
     if not queue:
         result = {
             "queued": 0, "transcribed": 0, "visual_review_needed": 0, "failed": 0,
@@ -630,11 +756,14 @@ def main() -> None:
     except ImportError as error:
         raise RuntimeError("faster-whisper is not installed; run setup-transcription.ps1") from error
 
+    model_dir = Path(os.path.abspath(args.model_dir))
+    if not _is_plain_directory(model_dir):
+        raise ValueError("model directory is unavailable or redirected")
     model = WhisperModel(
         args.model,
         device=args.device,
         compute_type=args.compute_type,
-        download_root=str(Path(args.model_dir).resolve()),
+        download_root=str(model_dir),
         local_files_only=True,
         cpu_threads=min(8, max(1, __import__("os").cpu_count() or 4)),
     )

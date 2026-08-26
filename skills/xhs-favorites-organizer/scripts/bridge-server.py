@@ -217,6 +217,10 @@ class BridgeBusyError(RuntimeError):
     pass
 
 
+class CDPTransportError(RuntimeError):
+    pass
+
+
 def is_manager_origin(value: str | None) -> bool:
     return value == MANAGER_ORIGIN
 
@@ -1108,14 +1112,20 @@ def path_is_reparse_point(path: Path) -> bool:
 
 def require_plain_directory(path: Path, label: str) -> Path:
     candidate = Path(os.path.abspath(str(path)))
-    if path_is_reparse_point(candidate) or not candidate.is_dir():
+    if (
+        any(path_is_reparse_point(part) for part in (candidate, *candidate.parents))
+        or not candidate.is_dir()
+    ):
         raise ValueError(f"{label} is unavailable or redirected")
     return candidate
 
 
 def require_plain_file(path: Path, label: str) -> Path:
     candidate = Path(os.path.abspath(str(path)))
-    if path_is_reparse_point(candidate) or not candidate.is_file():
+    if (
+        any(path_is_reparse_point(part) for part in (candidate, *candidate.parents))
+        or not candidate.is_file()
+    ):
         raise ValueError(f"{label} is unavailable or redirected")
     return candidate
 
@@ -1304,25 +1314,27 @@ class CDPSession:
                     "params": params,
                 }, separators=(",", ":")))
             except Exception as error:
-                raise RuntimeError("CDP connection failed") from error
+                raise CDPTransportError("CDP connection failed") from error
             deadline = time.monotonic() + 10
             while True:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise RuntimeError("CDP command timed out")
+                    raise CDPTransportError("CDP command timed out")
                 try:
                     response = json.loads(self._connection.recv(timeout=remaining))
                 except TimeoutError as error:
-                    raise RuntimeError("CDP command timed out") from error
+                    raise CDPTransportError("CDP command timed out") from error
                 except Exception as error:
-                    raise RuntimeError("CDP connection failed") from error
+                    raise CDPTransportError("CDP connection failed") from error
                 if not isinstance(response, dict) or response.get("id") != request_id:
                     continue
                 if "error" in response:
-                    raise RuntimeError("CDP command failed")
+                    raise CDPTransportError("CDP command failed")
                 result = response.get("result")
                 if not isinstance(result, dict):
-                    raise RuntimeError("CDP command returned an invalid result")
+                    raise CDPTransportError(
+                        "CDP command returned an invalid result"
+                    )
                 return result
 
     def evaluate(self, expression: str) -> str:
@@ -2096,6 +2108,7 @@ def run_bounded_subprocess(
     timeout: float,
     stdout_limit: int,
     stderr_limit: int,
+    cancelled=None,
 ) -> subprocess.CompletedProcess[str]:
     """Capture a child process without allowing either output pipe to grow unbounded."""
     if stdout_limit < 1 or stderr_limit < 1:
@@ -2259,16 +2272,29 @@ def run_bounded_subprocess(
     input_thread.start()
 
     timed_out = False
+    was_cancelled = False
     deadline = time.monotonic() + timeout
     try:
-        returncode = process.wait(timeout=max(0.001, deadline - time.monotonic()))
-    except subprocess.TimeoutExpired:
-        timed_out = True
-        stop_process()
-        try:
-            returncode = process.wait(timeout=1)
-        except subprocess.TimeoutExpired:
-            returncode = process.poll() if process.poll() is not None else -9
+        while True:
+            if callable(cancelled) and cancelled():
+                was_cancelled = True
+                stop_process()
+                break
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                timed_out = True
+                stop_process()
+                break
+            try:
+                returncode = process.wait(timeout=min(0.1, remaining))
+                break
+            except subprocess.TimeoutExpired:
+                continue
+        if was_cancelled or timed_out:
+            try:
+                returncode = process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                returncode = process.poll() if process.poll() is not None else -9
     finally:
         threads = (input_thread, stdout_thread, stderr_thread)
         for thread in threads:
@@ -2286,6 +2312,8 @@ def run_bounded_subprocess(
 
     if timed_out:
         raise subprocess.TimeoutExpired(command, timeout)
+    if was_cancelled:
+        raise RuntimeError("subprocess was cancelled")
     if overflow.is_set():
         raise ValueError("detail fetcher exceeded its output limit")
     if reader_errors:
@@ -2326,6 +2354,23 @@ class Bridge:
             isinstance(config.get("video_analysis"), dict)
             and config["video_analysis"].get("enabled") is True
         )
+        image_ocr = config.get("image_ocr")
+        self.image_ocr_enabled = (
+            isinstance(image_ocr, dict) and image_ocr.get("enabled") is True
+        )
+        self.image_ocr_engine = None
+        if self.image_ocr_enabled and isinstance(image_ocr.get("engine"), str):
+            candidate = Path(os.path.abspath(str(
+                self.workspace / image_ocr["engine"]
+            )))
+            if candidate == self.workspace or self.workspace not in candidate.parents:
+                raise ValueError("image_ocr.engine must stay inside the workspace")
+            try:
+                self.image_ocr_engine = require_plain_file(
+                    candidate, "image_ocr.engine"
+                )
+            except ValueError:
+                self.image_ocr_engine = None
         self.diandian_config = normalize_diandian_config(config)
         self.diandian_enabled = self.diandian_config["enabled"]
         self.knowledge_base = resolve_workspace_path(self.workspace, str(config.get("knowledge_base", "knowledge-base")), "knowledge_base")
@@ -2346,6 +2391,16 @@ class Bridge:
         self.git = resolve_git_executable()
         self.fetcher = self.skill_dir / "scripts" / "fetch-xhs-details.py"
         self.media_fetcher = self.skill_dir / "scripts" / "download-pending-media.py"
+        self.video_analysis_runner = self.skill_dir / "scripts" / "run-video-analysis.ps1"
+        powershell = shutil.which("powershell.exe") or shutil.which("pwsh")
+        try:
+            self.powershell = (
+                require_plain_file(Path(powershell), "PowerShell runtime")
+                if powershell
+                else None
+            )
+        except ValueError:
+            self.powershell = None
         self.media_dir = self.state_dir / "media"
         self.run_dir = self.state_dir / "runs"
         self.organizer = self.skill_dir / "scripts" / "organize.mjs"
@@ -3114,6 +3169,24 @@ class Bridge:
                 reason = entry.get("reason")
                 if not isinstance(reason, str) or not reason.strip():
                     reason = "fallback-required"
+                evidence = entry.get("evidence")
+                valid_evidence = bool(
+                    isinstance(evidence, dict)
+                    and set(evidence) == {
+                        "status", "curation_status", "reason_code", "methods"
+                    }
+                    and evidence.get("status") in {"ready", "missing"}
+                    and evidence.get("curation_status") == "pending_review"
+                    and isinstance(evidence.get("reason_code"), str)
+                    and re.fullmatch(r"[a-z][a-z0-9_]{0,63}", evidence["reason_code"])
+                    and isinstance(evidence.get("methods"), list)
+                    and len(evidence["methods"]) <= 2
+                    and all(
+                        method in {"audio_transcript", "image_ocr"}
+                        for method in evidence["methods"]
+                    )
+                    and len(set(evidence["methods"])) == len(evidence["methods"])
+                )
                 unresolved_by_id[note_id] = {
                     "note_id": note_id,
                     "status": "unresolved",
@@ -3123,6 +3196,7 @@ class Bridge:
                         if entry.get("summary_status") in {"failed", "batch_aborted"}
                         else {}
                     ),
+                    **({"evidence": evidence} if valid_evidence else {}),
                 }
         succeeded_note_ids = [
             note_id for note_id in succeeded_note_ids
@@ -3912,6 +3986,314 @@ class Bridge:
             ]:
                 click_states.pop(key, None)
 
+    def record_evidence_fallback(
+        self, note_id: str, outcome: dict, *, cancelled=None
+    ) -> bool:
+        evidence = {
+            "status": outcome["evidence_status"],
+            "curation_status": outcome["curation_status"],
+            "reason_code": outcome["reason_code"],
+            "methods": list(outcome["methods"]),
+        }
+        with self.get_manual_sync_lock():
+            if callable(cancelled) and cancelled():
+                return False
+            with self.get_summary_report_lock():
+                report = self.read_diandian_report()
+                unresolved = {
+                    entry["note_id"]: entry for entry in report["unresolved"]
+                }
+                entry = unresolved.get(note_id, {
+                    "note_id": note_id,
+                    "status": "unresolved",
+                    "reason": "transport-failed",
+                    "summary_status": "failed",
+                })
+                entry["evidence"] = evidence
+                unresolved[note_id] = entry
+                report["unresolved"] = list(unresolved.values())
+                report["updated_at"] = datetime.now().astimezone().isoformat()
+                atomic_json(self.summary_report_path(), report)
+        return True
+
+    def _fallback_artifact_methods(self, note_id: str) -> list[str]:
+        methods = []
+        try:
+            content_sha256 = self.trusted_content_sha256(note_id)
+        except ValueError:
+            return methods
+        analysis_dir = self.state_dir / "video-analysis"
+        note_dir = analysis_dir / note_id
+        try:
+            require_plain_directory(analysis_dir, "fallback analysis directory")
+            require_plain_directory(note_dir, "fallback note directory")
+        except ValueError:
+            return methods
+        for filename, method, artifact_method, provider, statuses in (
+            (
+                "transcription.json", "audio_transcript", "local_transcription",
+                "faster-whisper", {"partial", "transcribed"},
+            ),
+            (
+                "visual-ocr.json", "image_ocr", "local_image_ocr",
+                "configured-local-engine", {"extracted"},
+            ),
+        ):
+            path = note_dir / filename
+            try:
+                require_plain_file(path, "fallback evidence artifact")
+                if path.stat().st_size > DIANDIAN_RECORD_MAX_BYTES:
+                    continue
+                value = json.loads(path.read_text(encoding="utf-8-sig"))
+            except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError):
+                continue
+            text = value.get("text") if isinstance(value, dict) else None
+            result_sha256 = (
+                value.get("result_sha256") if isinstance(value, dict) else None
+            )
+            if (
+                isinstance(value, dict)
+                and value.get("schema_version") == 1
+                and value.get("status") in statuses
+                and value.get("method") == artifact_method
+                and value.get("provider") == provider
+                and isinstance(value.get("tool_version"), str)
+                and bool(value["tool_version"].strip())
+                and value.get("content_sha256") == content_sha256
+                and isinstance(text, str)
+                and bool(text.strip())
+                and len(text) <= 200_000
+                and isinstance(result_sha256, str)
+                and re.fullmatch(r"[a-f0-9]{64}", result_sha256)
+                and hmac.compare_digest(
+                    result_sha256,
+                    hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                )
+            ):
+                methods.append(method)
+        return methods
+
+    def dispatch_evidence_fallback(
+        self, note_id: str, reason: str, *, cancelled=None
+    ) -> dict:
+        if not isinstance(note_id, str) or not NOTE_ID.fullmatch(note_id):
+            raise ValueError("fallback note_id is invalid")
+        base = {
+            "dispatched": False,
+            "evidence_status": "missing",
+            "curation_status": "pending_review",
+            "methods": [],
+        }
+        reason = str(reason or "").strip()
+        if (
+            reason == DIANDIAN_SAFETY_STOP_REASON
+            or PLATFORM_SAFETY_SIGNAL.search(reason)
+        ):
+            return {**base, "reason_code": "safety_stopped"}
+        if reason != "transport-failed":
+            return {**base, "reason_code": "fallback_not_allowed"}
+        if callable(cancelled) and cancelled():
+            return {**base, "reason_code": "safety_stopped"}
+
+        manual_path = getattr(self, "manual_sync_path", None)
+        if isinstance(manual_path, Path) and manual_path.exists():
+            try:
+                state_path = require_plain_file(
+                    manual_path, "manual safety state"
+                )
+                if state_path.stat().st_size > DIANDIAN_RECORD_MAX_BYTES:
+                    raise ValueError("manual safety state is too large")
+                state = json.loads(
+                    state_path.read_text(encoding="utf-8-sig")
+                )
+            except (OSError, json.JSONDecodeError):
+                return {**base, "reason_code": "safety_state_unavailable"}
+            except ValueError:
+                return {**base, "reason_code": "safety_state_unavailable"}
+            if not isinstance(state, dict):
+                return {**base, "reason_code": "safety_state_unavailable"}
+            if state.get("state") in {
+                "safety-stopped", "safety_stopped"
+            }:
+                return {**base, "reason_code": "safety_stopped"}
+        if (self.state_dir / "media-download-safety-stop.json").exists():
+            return {**base, "reason_code": "safety_stopped"}
+
+        try:
+            media_dir = require_plain_directory(
+                getattr(self, "media_dir", self.state_dir / "media"),
+                "fallback media directory",
+            )
+            media_dir_plain = True
+        except ValueError:
+            media_dir = self.state_dir / "media"
+            media_dir_plain = False
+
+        def cached_media_file(path: Path) -> bool:
+            if not media_dir_plain:
+                return False
+            try:
+                return require_plain_file(path, "fallback cached media").parent == media_dir
+            except ValueError:
+                return False
+
+        cached_video = cached_media_file(media_dir / f"{note_id}.mp4")
+        cached_image = any(
+            cached_media_file(media_dir / f"{note_id}{suffix}")
+            for suffix in (".jpg", ".jpeg", ".png", ".webp")
+        )
+        if not cached_video and not cached_image:
+            outcome = {**base, "reason_code": "evidence_missing"}
+            if not self.record_evidence_fallback(
+                note_id, outcome, cancelled=cancelled
+            ):
+                return {**base, "reason_code": "safety_stopped"}
+            return outcome
+
+        video_ready = cached_video and getattr(
+            self, "video_analysis_enabled", False
+        )
+        image_ready = (
+            cached_image
+            and getattr(self, "image_ocr_enabled", False)
+            and isinstance(getattr(self, "image_ocr_engine", None), Path)
+            and not path_is_reparse_point(self.image_ocr_engine)
+            and self.image_ocr_engine.is_file()
+        )
+        if not video_ready and not image_ready:
+            reason_code = (
+                "ocr_unavailable"
+                if cached_image and not cached_video
+                else "transcription_unavailable"
+                if cached_video and not cached_image
+                else "evidence_tool_unavailable"
+            )
+            outcome = {**base, "reason_code": reason_code}
+            if not self.record_evidence_fallback(
+                note_id, outcome, cancelled=cancelled
+            ):
+                return {**base, "reason_code": "safety_stopped"}
+            return outcome
+
+        try:
+            runner = require_plain_file(
+                getattr(self, "video_analysis_runner", None),
+                "fallback analysis runner",
+            )
+            powershell = require_plain_file(
+                getattr(self, "powershell", None),
+                "fallback PowerShell runtime",
+            )
+        except (TypeError, ValueError):
+            outcome = {**base, "reason_code": "evidence_tool_unavailable"}
+            if not self.record_evidence_fallback(
+                note_id, outcome, cancelled=cancelled
+            ):
+                return {**base, "reason_code": "safety_stopped"}
+            return outcome
+        command = [
+            str(powershell), "-NoProfile", "-NonInteractive",
+            "-ExecutionPolicy", "Bypass", "-File", str(runner),
+            "-Workspace", str(self.workspace), "-Config", str(self.config_path),
+            "-MaxItems", "1", "-NoteId", note_id,
+        ]
+        try:
+            completed = run_bounded_subprocess(
+                command,
+                input_text="",
+                cwd=self.workspace,
+                env={**os.environ, "PYTHONUTF8": "1"},
+                timeout=20 * 60,
+                stdout_limit=64 * 1024,
+                stderr_limit=64 * 1024,
+                cancelled=cancelled,
+            )
+        except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired):
+            completed = None
+        if callable(cancelled) and cancelled():
+            return {**base, "reason_code": "safety_stopped"}
+        methods = self._fallback_artifact_methods(note_id)
+        if callable(cancelled) and cancelled():
+            return {**base, "reason_code": "safety_stopped"}
+        if completed is not None and completed.returncode == 0 and methods:
+            outcome = {
+                **base,
+                "dispatched": True,
+                "evidence_status": "ready",
+                "reason_code": "fallback_ready",
+                "methods": methods,
+            }
+        else:
+            outcome = {
+                **base,
+                "dispatched": completed is not None,
+                "reason_code": (
+                    "transcription_failed"
+                    if video_ready and not image_ready
+                    else "ocr_failed"
+                    if image_ready and not video_ready
+                    else "evidence_fallback_failed"
+                ),
+            }
+        if not self.record_evidence_fallback(
+            note_id, outcome, cancelled=cancelled
+        ):
+            return {**base, "reason_code": "safety_stopped"}
+        return outcome
+
+    def fallback_safety_stopped(self) -> bool:
+        try:
+            with self.get_manual_sync_lock():
+                if (
+                    self.state_dir / "media-download-safety-stop.json"
+                ).exists():
+                    return True
+                state_path = require_plain_file(
+                    self.manual_sync_path, "manual safety state"
+                )
+                if state_path.stat().st_size > DIANDIAN_RECORD_MAX_BYTES:
+                    return True
+                state = json.loads(
+                    state_path.read_text(encoding="utf-8-sig")
+                )
+        except (OSError, RuntimeError, ValueError, json.JSONDecodeError):
+            return True
+        return (
+            not isinstance(state, dict)
+            or state.get("state") in {"safety-stopped", "safety_stopped"}
+        )
+
+    def halt_diandian_transport_failure(
+        self,
+        run_id: str,
+        board_id: str,
+        *,
+        failed_note_id: str | None,
+    ) -> dict:
+        result = self.halt_diandian_cdp_run(
+            run_id,
+            board_id,
+            reason="transport-failed",
+            safety=False,
+            failed_note_id=failed_note_id,
+        )
+        safety_stopped = self.fallback_safety_stopped
+
+        if (
+            failed_note_id is not None
+            and result.get("reason") != DIANDIAN_SAFETY_STOP_REASON
+            and not safety_stopped()
+        ):
+            try:
+                self.dispatch_evidence_fallback(
+                    failed_note_id,
+                    "transport-failed",
+                    cancelled=safety_stopped,
+                )
+            except (OSError, RuntimeError, ValueError):
+                pass
+        return result
+
     def halt_diandian_cdp_run(
         self,
         run_id: str,
@@ -3939,20 +4321,19 @@ class Bridge:
                 if not isinstance(halted_runs, list):
                     halted_runs = []
                 already_halted = run_id in halted_runs
-                if not owns_run or state.get("state") not in {
-                    "starting", "running", "completed", "safety-stopped",
-                }:
-                    self.summary_plans.pop(run_id, None)
-                    return {
-                        "saved": False,
-                        "halted": True,
-                        "reason": DIANDIAN_SAFETY_STOP_REASON if effective_safety else reason,
-                    }
-                if already_halted:
+                if owns_run and already_halted:
                     with guard:
                         getattr(self, "summary_halted", set()).add(run_id)
-                    if effective_safety and state.get("core_completed") is not True:
-                        state["core_completed"] = True
+                    if effective_safety:
+                        state.update({
+                            "state": "safety-stopped",
+                            "core_completed": True,
+                            "error": (
+                                "Xiaohongshu safety stop detected; "
+                                "core import was preserved."
+                            ),
+                        })
+                        state.pop("summary_halt_reason", None)
                         atomic_json(self.manual_sync_path, state)
                     self.summary_plans.pop(run_id, None)
                     return {
@@ -3961,8 +4342,19 @@ class Bridge:
                         "reason": (
                             DIANDIAN_SAFETY_STOP_REASON
                             if effective_safety
+                            else "run-halted"
+                            if reason == "run-halted"
                             else state.get("summary_halt_reason", reason)
                         ),
+                    }
+                if not owns_run or state.get("state") not in {
+                    "starting", "running", "completed", "safety-stopped",
+                }:
+                    self.summary_plans.pop(run_id, None)
+                    return {
+                        "saved": False,
+                        "halted": True,
+                        "reason": DIANDIAN_SAFETY_STOP_REASON if effective_safety else reason,
                     }
                 pending = set(self.summary_plans.get(run_id, set()))
                 report_reason = "safety-halt" if effective_safety else reason
@@ -4293,7 +4685,18 @@ class Bridge:
                 if pending is None or note_id not in pending:
                     raise ValueError("note_id was not planned for DianDian summarization")
 
-            target = self.open_cdp_target("about:blank")
+            try:
+                target = self.open_cdp_target("about:blank")
+            except (
+                OSError,
+                RuntimeError,
+                TimeoutError,
+                LookupError,
+                json.JSONDecodeError,
+            ) as error:
+                raise CDPTransportError(
+                    "DianDian CDP target could not be opened"
+                ) from error
             session = target.session
             spec = getattr(self, "diandian_cdp_spec", None)
             if not isinstance(spec, dict):
@@ -4403,8 +4806,10 @@ class Bridge:
             transport_error = transport_result.get("error")
             if isinstance(transport_error, DiandianPageStop):
                 raise transport_error
+            if isinstance(transport_error, CDPTransportError):
+                raise transport_error
             if isinstance(transport_error, Exception):
-                raise RuntimeError("DianDian CDP transport failed") from transport_error
+                raise transport_error
             summary = transport_result.get("summary")
             if not isinstance(summary, str):
                 raise DiandianPageStop("invalid-summary")
@@ -4457,12 +4862,10 @@ class Bridge:
             with guard:
                 completed[key] = result
             return dict(result)
-        except (OSError, RuntimeError, TimeoutError, KeyError, json.JSONDecodeError):
-            result = self.halt_diandian_cdp_run(
+        except CDPTransportError:
+            result = self.halt_diandian_transport_failure(
                 run_id,
                 board_id,
-                reason="transport-failed",
-                safety=False,
                 failed_note_id=None if saved_committed else note_id,
             )
             if saved_committed:
@@ -4477,21 +4880,6 @@ class Bridge:
                 run_id,
                 board_id,
                 reason="invalid-summary",
-                safety=False,
-                failed_note_id=None if saved_committed else note_id,
-            )
-            if saved_committed:
-                result["saved"] = True
-            with guard:
-                completed[key] = result
-            return dict(result)
-        except Exception:
-            if target is None:
-                raise
-            result = self.halt_diandian_cdp_run(
-                run_id,
-                board_id,
-                reason="transport-failed",
                 safety=False,
                 failed_note_id=None if saved_committed else note_id,
             )
@@ -4655,6 +5043,12 @@ class Bridge:
         if not already_halted:
             self.validate_manual_board_run(run_id, board_id)
         if not safety:
+            if reason == "transport-failed":
+                return self.halt_diandian_transport_failure(
+                    run_id,
+                    board_id,
+                    failed_note_id=note_id,
+                )
             return self.halt_diandian_cdp_run(
                 run_id,
                 board_id,

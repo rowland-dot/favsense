@@ -2739,7 +2739,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             )
             target = SimpleNamespace(session=session, close=mock.Mock())
             bridge.open_cdp_target = mock.Mock(return_value=target)
-            bridge.diandian_cdp_ask = mock.Mock(side_effect=TimeoutError("private URL must never escape"))
+            bridge.diandian_cdp_ask = mock.Mock(
+                side_effect=BRIDGE.CDPTransportError(
+                    "private URL must never escape"
+                )
+            )
             payload = {
                 "run_id": run_id,
                 "board_id": board_id,
@@ -2807,6 +2811,19 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "summary_status": "failed",
             }])
 
+            safety_result = bridge.halt_diandian_run({
+                "run_id": "manual_board",
+                "board_id": "board",
+                "reason": BRIDGE.DIANDIAN_SAFETY_STOP_REASON,
+                "note_id": note_id,
+            })
+            safety_status = bridge.manual_sync_status()
+            self.assertEqual(
+                safety_result["reason"], BRIDGE.DIANDIAN_SAFETY_STOP_REASON
+            )
+            self.assertEqual(safety_status["state"], "safety-stopped")
+            self.assertNotIn("summary_halt_reason", safety_status)
+
             with self.assertRaisesRegex(ValueError, "halt reason"):
                 bridge.halt_diandian_run({
                     "run_id": "manual_board",
@@ -2819,13 +2836,18 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             )
 
     def test_cdp_external_exceptions_are_durably_halted_without_closing_the_target(self):
-        class ConnectionClosedLikeError(Exception):
-            pass
-
-        for external_error, stage in (
-            (LookupError("composer unavailable"), "ask"),
-            (ConnectionClosedLikeError("target disconnected"), "ask"),
-            (ConnectionClosedLikeError("target disconnected during preflight"), "preflight"),
+        for external_error, stage, transport_failure in (
+            (BRIDGE.CDPTransportError("composer unavailable"), "ask", True),
+            (LookupError("internal lookup failed"), "ask", False),
+            (RuntimeError("internal transport logic failed"), "ask", False),
+            (
+                BRIDGE.CDPTransportError("target disconnected during preflight"),
+                "preflight",
+                True,
+            ),
+            (RuntimeError("internal preflight failure"), "preflight", False),
+            (RuntimeError("persistence failed"), "save", False),
+            (AssertionError("internal invariant failed"), "ask", False),
         ):
             with self.subTest(error=type(external_error).__name__, stage=stage), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
@@ -2893,14 +2915,58 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 bridge.diandian_cdp_ask = mock.Mock(side_effect=external_error)
                 if stage == "preflight":
                     session.evaluate.side_effect = external_error
+                elif stage == "save":
+                    summary = "Stable summary with enough content for persistence."
+                    bridge.diandian_cdp_ask = mock.Mock(return_value=summary)
 
-                result = bridge.run_diandian_cdp({
+                    def page_state(_expression):
+                        finished = summary if bridge.diandian_cdp_ask.called else ""
+                        return json.dumps({
+                            "href": ai_url,
+                            "body": "DianDian chat is ready",
+                            "ready": "complete",
+                            "input_ready": True,
+                            "cards": 0,
+                            "msgs": 1 if finished else 0,
+                            "fin": 1 if finished else 0,
+                            "val": "",
+                            "last": finished,
+                        })
+
+                    session.evaluate.side_effect = page_state
+                    bridge.save_diandian_result = mock.Mock(
+                        side_effect=external_error
+                    )
+
+                request = {
                     "run_id": run_id,
                     "board_id": board_id,
                     "note_id": note_id,
                     "title": "Title",
                     "url": f"https://www.xiaohongshu.com/discovery/item/{note_id}?xsec_token=private-token",
-                })
+                }
+                if not transport_failure:
+                    reply_check = (
+                        mock.patch.object(
+                            BRIDGE.GuardedDiandianSession,
+                            "verify_new_reply",
+                            return_value=summary,
+                        )
+                        if stage == "save"
+                        else nullcontext()
+                    )
+                    with (
+                        reply_check,
+                        self.assertRaisesRegex(
+                            type(external_error), str(external_error)
+                        ),
+                    ):
+                        bridge.run_diandian_cdp(request)
+                    target.close.assert_not_called()
+                    self.assertIn(run_id, bridge.summary_plans)
+                    continue
+
+                result = bridge.run_diandian_cdp(request)
 
                 self.assertEqual(
                     result,
@@ -2986,7 +3052,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             session = DelayedComposerSession()
             target = SimpleNamespace(session=session, close=mock.Mock())
             bridge.open_cdp_target = mock.Mock(return_value=target)
-            bridge.diandian_cdp_ask = mock.Mock(side_effect=LookupError("stop after readiness proof"))
+            bridge.diandian_cdp_ask = mock.Mock(
+                side_effect=BRIDGE.CDPTransportError(
+                    "stop after readiness proof"
+                )
+            )
 
             result = bridge.run_diandian_cdp({
                 "run_id": run_id,
@@ -6716,6 +6786,23 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 timeout=0.1,
                 stdout_limit=1024,
                 stderr_limit=1024,
+            )
+        self.assertLess(time.monotonic() - started, 4)
+
+    def test_detail_subprocess_cancellation_kills_and_reaps_the_child(self):
+        started = time.monotonic()
+        cancelled = threading.Event()
+        cancelled.set()
+        with self.assertRaisesRegex(RuntimeError, "cancelled"):
+            BRIDGE.run_bounded_subprocess(
+                [sys.executable, "-c", "import time; time.sleep(10)"],
+                input_text="",
+                cwd=Path.cwd(),
+                env=None,
+                timeout=5,
+                stdout_limit=1024,
+                stderr_limit=1024,
+                cancelled=cancelled.is_set,
             )
         self.assertLess(time.monotonic() - started, 4)
 

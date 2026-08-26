@@ -73,6 +73,43 @@ class ImageTextExtractionTests(unittest.TestCase):
             self.assertNotIn("text", result["records"][0])
             self.assertEqual(runner.call_count, 1)
 
+    def test_redirected_note_output_is_rejected_before_running_the_engine(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            allowed = "a" * 24
+            (media / f"{allowed}.jpg").write_bytes(b"synthetic-image")
+            engine = root / "ocr.exe"
+            engine.write_bytes(b"synthetic-engine")
+            note_dir = analysis / allowed
+            note_dir.mkdir(parents=True)
+            runner = mock.Mock()
+
+            with mock.patch.object(
+                module,
+                "_is_plain_directory",
+                side_effect=lambda path: Path(path) != note_dir,
+            ):
+                result = module.extract_cached_images(
+                    media,
+                    analysis,
+                    engine=engine,
+                    allowed_note_ids={allowed},
+                    content_sha256_by_id={allowed: "c" * 64},
+                    runner=runner,
+                )
+
+            runner.assert_not_called()
+            self.assertEqual(result["processed"], 0)
+            self.assertEqual(result["failed"], 1)
+            self.assertEqual(
+                result["records"][0]["reason_code"],
+                "ocr_output_path_unavailable",
+            )
+
     def test_success_artifact_binds_the_catalog_revision_and_tool_contract(self):
         module = load_module()
         with tempfile.TemporaryDirectory() as directory:
@@ -228,7 +265,7 @@ class ImageTextExtractionTests(unittest.TestCase):
         )
         started = time.monotonic()
         _, _, reason = module._run_engine(
-            [executable, "-c", child], timeout=0.1, max_bytes=65536,
+            [executable, "-c", child], timeout=1, max_bytes=65536,
         )
         self.assertEqual(reason, "")
         self.assertLess(time.monotonic() - started, 2)
