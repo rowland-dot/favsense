@@ -3377,5 +3377,423 @@
     "candidate_revision": "a26063cd8f4310fdda01bfffb827854892f4a0e9ee224c5219059405e6059134",
     "review_status": "accepted",
     "review_reason_code": ""
+  },
+  "6a4a2473000000002201b7a7": {
+    "id": "6a4a2473000000002201b7a7",
+    "content_sha256": "e565a214ae3fa618372cd212c8f41f7ed92e435ef4bc12a4e24a7a87cfd0ce77",
+    "title": "Claude额度实在用不完，我用这9招省token",
+    "category": "AI工具",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 Agent-Reach：为 Agent 配置并路由网页、X、Reddit、YouTube、GitHub、B站和小红书等上游读取能力，同时提供安装与诊断；部分平台仍依赖本地登录态。",
+    "action": "先用 safe 或 dry-run 方式审查将安装的依赖、凭据路径和平台权限，只启用只读检索，不给主账号任何写操作。",
+    "themes": [
+      "Claude",
+      "Token管理",
+      "工作方法"
+    ],
+    "tools": [],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "92b97cce2d2e253565c7cc4ed5c6fa8ecd47ab74ff88986044ce113c2178d2f9",
+    "evidence_sha256": "2c675b6cd77a697112f33ab42a17fc80984262d978f2e8128c674b74ee1b59cc",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "81de9583276ded7bd544a127633570d8b8509d9895dbc3935f775b36bc696daa"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "932ac22aa6905f5155260f847d0f2d168f00bb0cc7a1f782d5f961e24021b7e9"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "9d858fdd2b9daf5844b3d4404d326bf87ace55ebba6aa8558a3aaa29cfecc3eb",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "69f81ca100000000380213c5": {
+    "id": "69f81ca100000000380213c5",
+    "content_sha256": "a5fd70cc51ca9c1c0bac4ee5c4dc94f535085bf3457d515d80e4bf5f1cfcc24a",
+    "title": "就离谱，Claude Design还能这样用？",
+    "category": "AI设计工具",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 Andyyyy64/whichllm：读取 GPU、CPU 和内存配置，并结合模型资料推荐本机可运行的模型及量化规格，降低本地模型选型门槛。",
+    "action": "使用只读硬件检测运行 whichllm，再以实际显存占用、生成速度和任务质量复核推荐结果，不直接下载超出预算的模型。",
+    "themes": [
+      "AI辅助",
+      "UI设计",
+      "原型工具"
+    ],
+    "tools": [],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "c8b6bebaed26a511cd84efd153335ae354e48bd958fd94aac9168e63be1dc617",
+    "evidence_sha256": "c97e4c307b36a87a48bf0e013b384f9ea3ec1e62934eacf9a76923826c46ae4e",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "d0c5efa3cb6f7ebe91e946b9ae5467325873944b5b38fbd5e52105687f77b690"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "99efbb9e021a1b49699fde559314f60bb6d6e60dea3b27bf4a76aff7f478f370"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "3eb2d78ad48d68b88ec3de909f4772c4cd72c2965ba5e1981a2a6c5411bbe984",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "69eb71750000000035033611": {
+    "id": "69eb71750000000035033611",
+    "content_sha256": "e59d6eabbb9bd7023c47a1eb5c0bc6bf6154e4a5541f9ad76a8ff675d7c54dea",
+    "title": "你敢信吗？单卡2小时就能从0到1搭建大模型",
+    "category": "本地模型与成本",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频解释独立站卖家谨慎公开网址的原因：站点可能暴露选品、流量入口、广告素材、定价和供应链线索，竞争者可将这些公开信息拼接成商业情报。",
+    "action": "建立公开信息边界，对外案例使用脱敏截图，并定期检查网站、广告库和社媒是否意外暴露供应链、利润或未验证选品。",
+    "themes": [
+      "MiniMind",
+      "从零训练LLM",
+      "教学项目"
+    ],
+    "tools": [
+      "MiniMind"
+    ],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "a9867c5ac53a95f602644935cfbe44aaa64baf80064e89c222753c756b3b43a3",
+    "evidence_sha256": "1ff5d682c0322eaceb17c55d9f2c48aa756c760285d32149a6638d3d54e0dfd7",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "6de500b81a8cb18a1ccc349d2cf6dbb554ad5cd7072469777a7be455778a064c"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "02db1cdfcc40b55ee25d2ab0bcbce6b8f697d814fda254ba7d56fa19e5e55677"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "d7c43b18195baf917a1761410ea50b611da2c14146616c1ada3be2501a1919e8",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "69e0b576000000002003a92e": {
+    "id": "69e0b576000000002003a92e",
+    "content_sha256": "8ecfa5321dcd83160dc65f6e02c737254cdd523367a1527f50b21cf03bc7cd32",
+    "title": "小红书商家获客，终于有合规新方式了！",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 CRMEB：覆盖商城、会员、营销活动、订单和后台运营的电商系统，可作为私域电商或二次开发底座；营销数字不能替代部署与安全评估。",
+    "action": "在隔离测试环境跑通商品、下单、支付沙盒、退款和权限审计，确认许可证、备份恢复与升级路径后再承载真实交易。",
+    "themes": [
+      "企业专业号",
+      "小红书KOS",
+      "账号矩阵"
+    ],
+    "tools": [],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "9569f31119db09812b8ba0ed5eecf621415b56704b759d5c8ec083f6be5f08b4",
+    "evidence_sha256": "4a0633a291fbc9a73f8c9473e13a8f5c515780e911ae39bc15dccf3c58acfc47",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "d2bed91f50d3ac11f075badcbcdf22b0fdb2bbe6b84168d02f50c8403e534e90"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "c241b118efdd0e4ba1ce9e960aa0ecd9beb19f663d74142ee6b8ec1baae2f276"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "224e245de2719fb81abb693851e0acfb7c2b7fbe7a96d589609072bd261950cd",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a05d372000000000803127c": {
+    "id": "6a05d372000000000803127c",
+    "content_sha256": "f84454981f3ad62ca781ec4a6f7202835a30c080517efcb9c2d5a51d163b2170",
+    "title": "起号最快的方法，就是用搜索流量埋长尾词",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 FreeDomain：通过社区项目申请免费子域名，并可把 DNS 托管到 Cloudflare、FreeDNS 或 Hostry；它提供的是子域名而非自有顶级域名。",
+    "action": "先用于演示或临时项目并测试 DNS、HTTPS、迁移和失效恢复；品牌官网、邮箱与长期业务仍使用自己持有的域名。",
+    "themes": [
+      "内容结构",
+      "小红书搜索",
+      "长尾词"
+    ],
+    "tools": [],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "43f262f90fbb0ff9c3d78c680c5c32a6868ce974af8e318a8d6542e1b0722eb4",
+    "evidence_sha256": "c8e179667c80ebadd71519d0595ca3a19f0170c78ea9d34ebaa1e8c708ad83d9",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "75b08055fe25218647908810d59a89d00417fc46240dad7ba72e83dd4992ca3c"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "13e57ea024146e7c62f7134f2bb654cec6afc2263d5c9e8bb8f67662df31cb59"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "f294363f4c176ae9c508cd9b15db34b6d464d4a898ee70411c7c173f758ee0b0",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "69c3acb9000000001a028e64": {
+    "id": "69c3acb9000000001a028e64",
+    "content_sha256": "3ecfc1493637aa967cd2a9582f568203d2d7bdc11d846e2770fb548c75ce149e",
+    "title": "记住这3个网站",
+    "category": "Skills与工作流",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "口播推荐三个 OpenClaw 学习入口：一套分阶段教程、一个面向中文用户的 Skill 集合和一个中文社区，分别解决学习路径、技能发现与安装说明。音频中的网站名称存在识别歧义，尚不能唯一绑定官方网址。",
+    "action": "从原帖或画面只补齐三个准确域名后立即停止视频检查；逐一确认运营主体、安装来源和是否要求上传凭据，再加入资源索引。",
+    "themes": [
+      "OpenClaw",
+      "Skill目录",
+      "学习资源"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "b18a13f48e77ee6419cf30c89f0498e76bf9ebab76e4996c176e2a2c7b16162d",
+    "evidence_sha256": "5ca84f07dd13029aa6772eabcba1dd9b0315b6e2044c093acf20754f95f2956d",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "b3d4e8a1f09c32b6a954304621296b0e44375f70caaf2e41e11bda0f104f7178"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "746f4e9ffb538d298ca820022f02b5c8754364130509eb1a087093a832fd43da"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "07037f19bc7880f44d545728191dbf778205cdbea5dab8de58842ef74f6a6f52",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a60b20d000000001101b25e": {
+    "id": "6a60b20d000000001101b25e",
+    "content_sha256": "b9981c8db89942189a9a93765444f3b0371dceec86366454c362de58308a6cba",
+    "title": "Codex做独立站太牛了！24小时冲到谷歌第一",
+    "category": "AI设计与多媒体",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频给出可灵 AI 的 4K 视频工作流：先用图片模型确定人物与场景，再以参考图和主体绑定生成视频，并在提示词中明确镜头、动作和氛围以保持一致性。",
+    "action": "用一段自有素材对比主体绑定前后的角色一致性、运动自然度、生成时间和成本，并保留人工审核后再对外发布。",
+    "themes": [
+      "4K视频",
+      "主体一致性",
+      "可灵AI"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "09897216c47d24a3a22274c81fd2db726381219abe9bb981881bbf5d116539ef",
+    "evidence_sha256": "ff869e995df1af987ce537342274c3e859db19a5cbe15350e601f142dc56106e",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "8b0cd5c1f744e6d089cde023006dcd5cae1d9bd3a43a5b54270ca36b09443b78"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "98505f8715edab91fcaae3b0575a606ab03851a451b7b01c4cf89b1b7a56186c"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "57fe0b638edec323ef4c917452da31c8b3ac527d91e7fd03cc9e644fce41e62c",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a6b611700000000240257ab": {
+    "id": "6a6b611700000000240257ab",
+    "content_sha256": "b4b1ef18ed40e9b0fb88b968330c316e205c71dc22a44d5873e7d1753e1d83a8",
+    "title": "Howto怒省94%token消耗，codex用到爽❗️",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频用豆包演示文案复盘方法：让模型扮演首次观看的挑剔观众，逐项指出主题逻辑、口语表达、流失点、互动动机和人设吸引力，再给出多组修改方案。",
+    "action": "选一篇现有口播稿执行“观众视角诊断—逐点改写—真人朗读”三步复盘，并用实际完播和互动数据判断改动是否有效。",
+    "themes": [
+      "内容复盘",
+      "短视频文案",
+      "观众视角"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "2056169a8be760c3afbf97bbca62d1471c124e74a4af0f37e15e65757e3d272c",
+    "evidence_sha256": "9e498232aea38e48f6df2e85269d672325bc08035d6f4d614aeca293c5590477",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "a6a075059116c9e24018e53814fdb17350925f581f26aa6ce8b2dd7a09289102"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "1fe59774cf7dcf3aa622fe5331e73e8ccf1ade3c68e0feefa7c0c33a67dac535"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "695367def73b22dca43bfe1e6795011f51ac153b43b5bfaf27ab947d949ba351",
+    "review_status": "accepted",
+    "review_reason_code": ""
   }
 }
