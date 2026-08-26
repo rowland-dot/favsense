@@ -728,6 +728,81 @@ class BridgeHelpersTest(unittest.TestCase):
         self.assertIsNone(fake_connect.call_args.kwargs["proxy"])
         self.assertIs(target._connection, connection)
 
+    def test_existing_sop_note_session_accepts_only_one_exact_xiaohongshu_page(self):
+        endpoint = BRIDGE.DevToolsEndpoint(9224, "/devtools/browser/browser-id")
+        note_id = "z" * 24
+        worker_id = "22222222-2222-4222-8222-222222222222"
+        target = {
+            "id": "target-id",
+            "type": "page",
+            "url": f"https://www.xiaohongshu.com/discovery/item/{note_id}?xsec_token=private",
+            "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/target-id",
+        }
+        connection = mock.MagicMock()
+        fake_connect = mock.Mock(return_value=connection)
+        fake_client = SimpleNamespace(connect=fake_connect)
+        attacker = {
+            **target,
+            "url": f"https://attacker.invalid/discovery/item/{note_id}",
+        }
+        with mock.patch.object(
+            BRIDGE, "read_sop_devtools_endpoint", return_value=endpoint
+        ), mock.patch.object(
+            BRIDGE, "loopback_devtools_json", return_value=[attacker, target]
+        ), mock.patch.dict(
+            "sys.modules", {"websockets.sync.client": fake_client}
+        ), mock.patch.object(BRIDGE.CDPSession, "evaluate", return_value="true"):
+            with BRIDGE.open_sop_note_session(
+                Path("port-file"), note_id, worker_id
+            ) as session:
+                self.assertIs(session._connection, connection)
+
+        fake_connect.assert_called_once()
+        self.assertIsNone(fake_connect.call_args.kwargs["proxy"])
+        connection.close.assert_called_once()
+
+        duplicate = {
+            **target,
+            "id": "other-target",
+            "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/other-target",
+        }
+        duplicate_connect = mock.Mock(side_effect=[mock.MagicMock(), mock.MagicMock()])
+        duplicate_client = SimpleNamespace(connect=duplicate_connect)
+        with mock.patch.object(
+            BRIDGE, "read_sop_devtools_endpoint", return_value=endpoint
+        ), mock.patch.object(
+            BRIDGE, "loopback_devtools_json", return_value=[target, duplicate]
+        ), mock.patch.dict(
+            "sys.modules", {"websockets.sync.client": duplicate_client}
+        ), mock.patch.object(
+            BRIDGE.CDPSession, "evaluate", return_value="true"
+        ), self.assertRaisesRegex(RuntimeError, "ambiguous"):
+            with BRIDGE.open_sop_note_session(
+                Path("port-file"), note_id, worker_id
+            ):
+                pass
+
+        failed_connection = mock.MagicMock()
+        failed_client = SimpleNamespace(
+            connect=mock.Mock(return_value=failed_connection)
+        )
+        with mock.patch.object(
+            BRIDGE, "read_sop_devtools_endpoint", return_value=endpoint
+        ), mock.patch.object(
+            BRIDGE, "loopback_devtools_json", return_value=[target]
+        ), mock.patch.dict(
+            "sys.modules", {"websockets.sync.client": failed_client}
+        ), mock.patch.object(
+            BRIDGE.CDPSession,
+            "evaluate",
+            side_effect=RuntimeError("binding-failed"),
+        ), self.assertRaisesRegex(RuntimeError, "could not be connected"):
+            with BRIDGE.open_sop_note_session(
+                Path("port-file"), note_id, worker_id
+            ):
+                pass
+        failed_connection.close.assert_called_once()
+
     def test_shared_sop_page_open_re_reads_endpoint_creates_and_activates_one_tab(self):
         endpoint = BRIDGE.DevToolsEndpoint(9224, "/devtools/browser/browser-id")
         requests = []
@@ -837,7 +912,11 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.boards = {"board": "出海电商"}
             batch = "manual20260812010101"
             run_id = bridge.manual_run_id(batch, "board")
-            BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": batch, "state": "running"})
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": batch,
+                "state": "running",
+                "board_note_ids": {"board": ["a" * 24]},
+            })
 
             plan = bridge.diandian_summary_plan({
                 "run_id": run_id,
@@ -1236,7 +1315,11 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.boards = {"board": "出海电商"}
             batch = "manual20260812010101"
             run_id = bridge.manual_run_id(batch, "board")
-            BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": batch, "state": "running"})
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": batch,
+                "state": "running",
+                "board_note_ids": {"board": [existing_id, pending_id]},
+            })
             BRIDGE.atomic_json(bridge.diandian_dir / f"{existing_id}.json", {
                 "version": 1,
                 "provider": "xiaohongshu-diandian",
@@ -1261,6 +1344,65 @@ class BridgeHelpersTest(unittest.TestCase):
                 1,
             )
 
+    def test_diandian_plan_excludes_notes_not_confirmed_by_core_organization(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            confirmed_id = "c" * 24
+            stale_page_id = "s" * 24
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.diandian_enabled = True
+            bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
+            bridge.summary_plans = {}
+            bridge.manual_sync_path = root / "manual-sync.json"
+            bridge.boards = {"board": "出海电商"}
+            bridge.saved_diandian_record = mock.Mock(return_value=None)
+            bridge.record_diandian_succeeded_batch = mock.Mock()
+            batch = "manual20260812010101"
+            run_id = bridge.manual_run_id(batch, "board")
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": batch,
+                "state": "running",
+                "board_note_ids": {"board": [confirmed_id]},
+            })
+
+            plan = bridge.diandian_summary_plan({
+                "run_id": run_id,
+                "board_id": "board",
+                "note_ids": [confirmed_id, stale_page_id],
+            })
+
+            self.assertEqual(plan["note_ids"], [confirmed_id])
+            self.assertEqual(bridge.summary_plans[run_id], {confirmed_id})
+
+    def test_diandian_plan_rejects_missing_or_malformed_core_note_scope(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            note_id = "c" * 24
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.diandian_enabled = True
+            bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
+            bridge.summary_plans = {}
+            bridge.manual_sync_path = root / "manual-sync.json"
+            bridge.boards = {"board": "出海电商"}
+            bridge.saved_diandian_record = mock.Mock(return_value=None)
+            bridge.record_diandian_succeeded_batch = mock.Mock()
+            batch = "manual20260812010101"
+            run_id = bridge.manual_run_id(batch, "board")
+
+            for board_note_ids in (None, [], {"other": [note_id]}, {"board": ["../outside"]}):
+                with self.subTest(scope=type(board_note_ids).__name__):
+                    state = {"batch": batch, "state": "running"}
+                    if board_note_ids is not None:
+                        state["board_note_ids"] = board_note_ids
+                    BRIDGE.atomic_json(bridge.manual_sync_path, state)
+                    with self.assertRaisesRegex(ValueError, "core organization note scope"):
+                        bridge.diandian_summary_plan({
+                            "run_id": run_id,
+                            "board_id": "board",
+                            "note_ids": [note_id],
+                        })
+                    self.assertEqual(bridge.summary_plans, {})
+
     def test_diandian_plan_reschedules_records_rejected_by_the_builders(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -1275,7 +1417,11 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.boards = {"board": "出海电商"}
             batch = "manual20260812010101"
             run_id = bridge.manual_run_id(batch, "board")
-            BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": batch, "state": "running"})
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": batch,
+                "state": "running",
+                "board_note_ids": {"board": [missing_version_id, sensitive_id]},
+            })
             BRIDGE.atomic_json(bridge.diandian_dir / f"{missing_version_id}.json", {
                 "provider": "xiaohongshu-diandian",
                 "prompt": "总结",
@@ -1313,7 +1459,11 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
-            BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": "manual", "state": "running"})
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "manual",
+                "state": "running",
+                "board_note_ids": {"board": [boolean_version_id, bom_id]},
+            })
             record = {
                 "version": 1,
                 "provider": "xiaohongshu-diandian",
@@ -4355,6 +4505,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     "scanned": 1,
                     "new": 0,
                     "next_board_id": None,
+                    "note_ids": [first_id, second_id],
                 })
 
             bridge.process_import = mock.Mock(side_effect=finish_import)
@@ -4998,6 +5149,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "run_mode": "history",
                 "local_only": False,
                 "summary_plan_pending": True,
+                "board_note_ids": {board_id: [note_id, other_id]},
             })
             bridge.summary_plans = {}
             skipped = bridge.diandian_summary_plan({
@@ -5364,6 +5516,468 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.run_diandian_cdp.assert_called_once_with(payload)
             self.assertEqual(post("b" * 64), (BRIDGE.HTTPStatus.UNAUTHORIZED, {"ok": False}))
             bridge.run_diandian_cdp.assert_called_once()
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+    def test_diandian_native_click_is_plan_bound_and_dispatches_one_pointer_click(self):
+        note_id = "z" * 24
+        worker_id = "22222222-2222-4222-8222-222222222222"
+        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge.sop_port_file = Path("dynamic-port-file")
+        bridge.summary_plans = {"manual_board": {note_id}}
+        bridge.summary_run_lock = mock.Mock(return_value=BRIDGE.nullcontext())
+        bridge.validate_manual_board_run = mock.Mock()
+        bridge.diandian_is_halted = mock.Mock(return_value=False)
+        bridge.diandian_browser_contract = {
+            "selectors": {
+                "share_controls": [".share-icon-container"],
+                "unlabeled_share_controls": [".share-icon-container"],
+                "share_action_text": "分享",
+                "share_menu_items": ['[role="menuitem"]'],
+                "copy_action_text": "复制链接",
+            }
+        }
+        session = mock.Mock()
+        session.evaluate.return_value = json.dumps({
+            "found": True,
+            "safety": False,
+            "location_matches": True,
+            "x": 12.5,
+            "y": 34.5,
+        })
+        payload = {
+            "run_id": "manual_board",
+            "board_id": "board",
+            "note_id": note_id,
+            "worker_id": worker_id,
+            "action": "share",
+        }
+
+        with mock.patch.object(
+            BRIDGE,
+            "open_sop_note_session",
+            return_value=BRIDGE.nullcontext(session),
+        ) as open_session:
+            result = bridge.click_diandian_control(payload)
+
+        self.assertEqual(result, {"clicked": True})
+        bridge.validate_manual_board_run.assert_called_once_with("manual_board", "board")
+        open_session.assert_called_once_with(bridge.sop_port_file, note_id, worker_id)
+        self.assertEqual(session.evaluate.call_count, 1)
+        expression = session.evaluate.call_args_list[0].args[0]
+        self.assertIn(".share-icon-container", expression)
+        self.assertIn(note_id, expression)
+        self.assertIn(worker_id, expression)
+        self.assertEqual(session.call.mock_calls, [
+            mock.call(
+                "Input.dispatchMouseEvent",
+                type="mousePressed",
+                x=12.5,
+                y=34.5,
+                button="left",
+                clickCount=1,
+            ),
+            mock.call(
+                "Input.dispatchMouseEvent",
+                type="mouseReleased",
+                x=12.5,
+                y=34.5,
+                button="left",
+                clickCount=1,
+            ),
+        ])
+        bridge.summary_plans["manual_board"].clear()
+        with mock.patch.object(BRIDGE, "open_sop_note_session") as rejected_open, self.assertRaisesRegex(
+            ValueError, "not pending"
+        ):
+            bridge.click_diandian_control(payload)
+        rejected_open.assert_not_called()
+
+    def _native_click_bridge(self, note_id):
+        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge.sop_port_file = Path("dynamic-port-file")
+        bridge.summary_plans = {"manual_board": {note_id}}
+        bridge.summary_run_lock = mock.Mock(return_value=BRIDGE.nullcontext())
+        bridge.validate_manual_board_run = mock.Mock()
+        bridge.diandian_browser_contract = {
+            "selectors": {
+                "share_controls": [".share-icon-container"],
+                "unlabeled_share_controls": [".share-icon-container"],
+                "share_action_text": "分享",
+                "share_menu_items": ['[role="menuitem"]'],
+                "copy_action_text": "复制链接",
+            }
+        }
+        bridge.diandian_is_halted = mock.Mock(return_value=False)
+        return bridge
+
+    @staticmethod
+    def _native_click_payload(note_id, action):
+        return {
+            "run_id": "manual_board",
+            "board_id": "board",
+            "note_id": note_id,
+            "worker_id": "22222222-2222-4222-8222-222222222222",
+            "action": action,
+        }
+
+    def test_diandian_native_click_safety_stop_dispatches_no_input(self):
+        note_id = "z" * 24
+        bridge = self._native_click_bridge(note_id)
+        bridge.halt_diandian_cdp_run = mock.Mock(
+            side_effect=OSError("persist-failed")
+        )
+        session = mock.Mock()
+        session.evaluate.return_value = json.dumps({
+            "found": False,
+            "safety": True,
+            "location_matches": True,
+        })
+
+        with mock.patch.object(
+            BRIDGE,
+            "open_sop_note_session",
+            return_value=BRIDGE.nullcontext(session),
+        ), self.assertRaisesRegex(RuntimeError, "^xhs-safety-stop$"):
+            bridge.click_diandian_control(
+                self._native_click_payload(note_id, "share")
+            )
+
+        session.call.assert_not_called()
+        bridge.halt_diandian_cdp_run.assert_called_once_with(
+            "manual_board",
+            "board",
+            reason=BRIDGE.DIANDIAN_SAFETY_STOP_REASON,
+            safety=True,
+            failed_note_id=note_id,
+        )
+        expression = session.evaluate.call_args.args[0]
+        self.assertIn('script[type="application/json"]', expression)
+        self.assertIn("300031", expression)
+
+    def test_diandian_native_click_safety_cancels_other_notes_before_persisting_halt(self):
+        first_note = "a" * 24
+        second_note = "b" * 24
+        bridge = self._native_click_bridge(first_note)
+        bridge.summary_plans["manual_board"].add(second_note)
+        halt_entered = threading.Event()
+        release_halt = threading.Event()
+
+        def halt(*_args, **_kwargs):
+            halt_entered.set()
+            release_halt.wait(timeout=2)
+            return {
+                "saved": False,
+                "halted": True,
+                "reason": "xhs-safety-stop",
+            }
+
+        bridge.halt_diandian_cdp_run = mock.Mock(side_effect=halt)
+        safety_session = mock.Mock()
+        safety_session.evaluate.return_value = json.dumps({
+            "found": False,
+            "safety": True,
+            "location_matches": True,
+        })
+        errors = []
+
+        @BRIDGE.contextmanager
+        def safety_context():
+            yield safety_session
+            raise RuntimeError("connection-close-failed")
+
+        def first_click():
+            try:
+                bridge.click_diandian_control(
+                    self._native_click_payload(first_note, "share")
+                )
+            except Exception as error:
+                errors.append(error)
+
+        with mock.patch.object(
+            BRIDGE,
+            "open_sop_note_session",
+            return_value=safety_context(),
+        ) as open_session:
+            thread = threading.Thread(target=first_click)
+            thread.start()
+            self.assertTrue(halt_entered.wait(timeout=2))
+            with self.assertRaisesRegex(RuntimeError, "^run-halted$"):
+                bridge.click_diandian_control(
+                    self._native_click_payload(second_note, "share")
+                )
+            release_halt.set()
+            thread.join(timeout=2)
+
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(str(errors[0]), "xhs-safety-stop")
+        self.assertEqual(open_session.call_count, 1)
+        safety_session.call.assert_not_called()
+
+    def test_diandian_native_click_rechecks_worker_bound_page_before_input(self):
+        note_id = "z" * 24
+        bridge = self._native_click_bridge(note_id)
+        session = mock.Mock()
+        session.evaluate.return_value = json.dumps({
+            "found": False,
+            "safety": False,
+            "location_matches": False,
+        })
+
+        with mock.patch.object(
+            BRIDGE,
+            "open_sop_note_session",
+            return_value=BRIDGE.nullcontext(session),
+        ), self.assertRaisesRegex(RuntimeError, "^native-click-share-unavailable$"):
+            bridge.click_diandian_control(
+                self._native_click_payload(note_id, "share")
+            )
+
+        session.call.assert_not_called()
+
+    def test_diandian_native_click_releases_pressed_pointer_after_release_failure(self):
+        note_id = "z" * 24
+        bridge = self._native_click_bridge(note_id)
+        session = mock.Mock()
+        session.evaluate.return_value = json.dumps({
+            "found": True,
+            "safety": False,
+            "location_matches": True,
+            "x": 12.5,
+            "y": 34.5,
+        })
+        release_error = RuntimeError("release-failed")
+        session.call.side_effect = [None, release_error, None]
+
+        with mock.patch.object(
+            BRIDGE,
+            "open_sop_note_session",
+            return_value=BRIDGE.nullcontext(session),
+        ), self.assertRaisesRegex(RuntimeError, "^native-click-input-uncertain$") as raised:
+            bridge.click_diandian_control(
+                self._native_click_payload(note_id, "share")
+            )
+
+        self.assertIs(raised.exception.__cause__, release_error)
+        self.assertEqual(
+            [call.kwargs["type"] for call in session.call.mock_calls],
+            ["mousePressed", "mouseReleased", "mouseReleased"],
+        )
+        replay = {
+            **self._native_click_payload(note_id, "share"),
+            "worker_id": "33333333-3333-4333-8333-333333333333",
+        }
+        with mock.patch.object(BRIDGE, "open_sop_note_session") as unopened:
+            with self.assertRaisesRegex(ValueError, "sequence"):
+                bridge.click_diandian_control(replay)
+        unopened.assert_not_called()
+
+    def test_diandian_native_click_enforces_share_copy_once_per_worker(self):
+        note_id = "z" * 24
+        bridge = self._native_click_bridge(note_id)
+        share = self._native_click_payload(note_id, "share")
+        copy = self._native_click_payload(note_id, "copy")
+
+        with mock.patch.object(BRIDGE, "open_sop_note_session") as unopened:
+            with self.assertRaisesRegex(ValueError, "sequence"):
+                bridge.click_diandian_control(copy)
+        unopened.assert_not_called()
+
+        def successful_session():
+            session = mock.Mock()
+            session.evaluate.return_value = json.dumps({
+                "found": True,
+                "safety": False,
+                "location_matches": True,
+                "x": 12.5,
+                "y": 34.5,
+            })
+            return BRIDGE.nullcontext(session)
+
+        with mock.patch.object(
+            BRIDGE,
+            "open_sop_note_session",
+            side_effect=[successful_session(), successful_session()],
+        ) as open_session:
+            self.assertEqual(
+                bridge.click_diandian_control(share),
+                {"clicked": True},
+            )
+            with self.assertRaisesRegex(ValueError, "sequence"):
+                bridge.click_diandian_control(share)
+            fresh_worker_share = {
+                **share,
+                "worker_id": "33333333-3333-4333-8333-333333333333",
+            }
+            with self.assertRaisesRegex(ValueError, "sequence"):
+                bridge.click_diandian_control(fresh_worker_share)
+            self.assertEqual(
+                bridge.click_diandian_control(copy),
+                {"clicked": True},
+            )
+            with self.assertRaisesRegex(ValueError, "sequence"):
+                bridge.click_diandian_control(copy)
+
+        self.assertEqual(open_session.call_count, 2)
+
+    def test_diandian_native_click_halt_during_recheck_dispatches_no_input(self):
+        note_id = "z" * 24
+        bridge = self._native_click_bridge(note_id)
+        session = mock.Mock()
+        recheck_started = threading.Event()
+        release_recheck = threading.Event()
+
+        def blocking_evaluate(expression):
+            recheck_started.set()
+            release_recheck.wait(timeout=2)
+            return json.dumps({
+                "found": False,
+                "safety": False,
+                "location_matches": False,
+            })
+
+        session.evaluate.side_effect = blocking_evaluate
+        errors = []
+
+        def click():
+            try:
+                bridge.click_diandian_control(
+                    self._native_click_payload(note_id, "share")
+                )
+            except Exception as error:
+                errors.append(error)
+
+        with mock.patch.object(
+            BRIDGE,
+            "open_sop_note_session",
+            return_value=BRIDGE.nullcontext(session),
+        ):
+            thread = threading.Thread(target=click)
+            thread.start()
+            self.assertTrue(recheck_started.wait(timeout=2))
+            halt_thread = threading.Thread(
+                target=bridge.revoke_diandian_cdp_inputs,
+                args=("manual_board",),
+            )
+            halt_thread.start()
+            self.assertTrue(halt_thread.is_alive())
+            release_recheck.set()
+            thread.join(timeout=2)
+            halt_thread.join(timeout=2)
+
+        self.assertFalse(thread.is_alive())
+        self.assertFalse(halt_thread.is_alive())
+        self.assertEqual(len(errors), 1)
+        self.assertIn("unavailable", str(errors[0]))
+        session.call.assert_not_called()
+
+    def test_diandian_native_click_and_halt_linearize_on_the_input_gate(self):
+        note_id = "z" * 24
+        bridge = self._native_click_bridge(note_id)
+        session = mock.Mock()
+        session.evaluate.return_value = json.dumps({
+            "found": True,
+            "safety": False,
+            "location_matches": True,
+            "x": 12.5,
+            "y": 34.5,
+        })
+        pressed = threading.Event()
+        release_press = threading.Event()
+
+        def dispatch(_method, **kwargs):
+            if kwargs["type"] == "mousePressed":
+                pressed.set()
+                release_press.wait(timeout=2)
+
+        session.call.side_effect = dispatch
+        click_results = []
+
+        def click():
+            click_results.append(
+                bridge.click_diandian_control(
+                    self._native_click_payload(note_id, "share")
+                )
+            )
+
+        with mock.patch.object(
+            BRIDGE,
+            "open_sop_note_session",
+            return_value=BRIDGE.nullcontext(session),
+        ):
+            click_thread = threading.Thread(target=click)
+            click_thread.start()
+            self.assertTrue(pressed.wait(timeout=2))
+            halt_thread = threading.Thread(
+                target=bridge.revoke_diandian_cdp_inputs,
+                args=("manual_board",),
+            )
+            halt_thread.start()
+            _, cancelled = bridge.diandian_cdp_run_cancellations["manual_board"]
+            self.assertFalse(cancelled.wait(timeout=0.1))
+            self.assertTrue(halt_thread.is_alive())
+            release_press.set()
+            click_thread.join(timeout=2)
+            halt_thread.join(timeout=2)
+
+        self.assertFalse(click_thread.is_alive())
+        self.assertFalse(halt_thread.is_alive())
+        self.assertEqual(click_results, [{"clicked": True}])
+        self.assertTrue(cancelled.is_set())
+        self.assertEqual(
+            [call.kwargs["type"] for call in session.call.mock_calls],
+            ["mousePressed", "mouseReleased"],
+        )
+
+    def test_diandian_native_click_http_route_requires_the_bridge_token(self):
+        token = "a" * 64
+        payload = {
+            "run_id": "manual_board",
+            "board_id": "board",
+            "note_id": "z" * 24,
+            "worker_id": "22222222-2222-4222-8222-222222222222",
+            "action": "share",
+        }
+        bridge = SimpleNamespace(
+            port=0,
+            token=token,
+            click_diandian_control=mock.Mock(return_value={"clicked": True}),
+        )
+        server = BRIDGE.ThreadingHTTPServer((BRIDGE.HOST, 0), BRIDGE.make_handler(bridge))
+        bridge.port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+
+        def post(supplied_token):
+            request = Request(
+                f"http://{BRIDGE.HOST}:{bridge.port}/sync/diandian-click",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "X-XHS-Bridge-Token": supplied_token,
+                },
+                method="POST",
+            )
+            try:
+                with urlopen(request, timeout=2) as response:
+                    return response.status, json.loads(response.read().decode("utf-8"))
+            except HTTPError as error:
+                return error.code, json.loads(error.read().decode("utf-8"))
+
+        try:
+            self.assertEqual(post(token), (
+                BRIDGE.HTTPStatus.OK,
+                {"ok": True, "clicked": True},
+            ))
+            bridge.click_diandian_control.assert_called_once_with(payload)
+            self.assertEqual(post("b" * 64), (
+                BRIDGE.HTTPStatus.UNAUTHORIZED,
+                {"ok": False},
+            ))
+            bridge.click_diandian_control.assert_called_once()
         finally:
             server.shutdown()
             server.server_close()
@@ -6305,6 +6919,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             self.assertEqual(result["state"], "completed")
             self.assertEqual(result["new"], 1)
             self.assertEqual(result["skipped"], 1)
+            self.assertEqual(result["note_ids"], sorted([old_id, new_id]))
             self.assertEqual(events, ["fetch", "organizer", "knowledge", "media"])
 
     def test_import_restores_catalog_and_report_when_local_generation_fails(self):

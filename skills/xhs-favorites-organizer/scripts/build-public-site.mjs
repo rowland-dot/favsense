@@ -347,6 +347,9 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
         : "captured")
     : "not_started");
   const summaryReasonCode = runState?.summaryReasonCode || formalSummaryReasonCode;
+  const curationStatus = formalDecision.accepted
+    ? "accepted"
+    : (auditEntry?.status === "rejected" ? "rejected" : "pending_review");
   const projectedKind = formalContentKind(
     profile,
     candidateKind === "Skill" ? candidateKind : classify(entry, matchedResources),
@@ -358,6 +361,8 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const projectedTools = candidateKind === "Skill"
     ? projectedResources.map((resource) => resource.name)
     : entry.tools || [];
+  const publicSummary = String(entry.summary || "");
+  const publicDeepSummary = publicDiandian?.summary || publicSummary;
 
   return {
     id: noteId,
@@ -375,11 +380,12 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     suggestedCategory: categoryPolicy.suggestedCategory,
     sourceBoards: categoryPolicy.sourceBoards,
     themes: categoryPolicy.themes,
-    summary: entry.summary,
-    deepSummary: publicDiandian?.summary || entry.summary,
+    summary: publicSummary.length <= publicDeepSummary.length ? publicSummary : publicDeepSummary,
+    deepSummary: publicDeepSummary,
     deepSummarySource: publicDiandian ? "xiaohongshu-diandian" : (isCurated ? "curation" : "source-metadata"),
     curationRevision: isCurated ? curationRevision(entry) : "",
-    summaryStatus: formalDecision.accepted ? "accepted" : "pending_review",
+    summaryStatus: curationStatus,
+    curationStatus,
     summaryReason: formalDecision.reason_code,
     summaryState,
     summaryReasonCode,

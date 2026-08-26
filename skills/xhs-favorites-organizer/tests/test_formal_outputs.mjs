@@ -113,6 +113,105 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
   }
 });
 
+test("explicit rejected audit overrides a matching baseline in both formal builders", async () => {
+  const work = await mkdtemp(join(tmpdir(), "favsense-baseline-override-"));
+  const output = join(work, "knowledge-base");
+  const noteId = "synthetic-baseline-rejected";
+  const metadataText = "Public catalog metadata remains the only allowed fallback.";
+  const privateFormalSummary = "Rejected formal curation summary must not be projected.";
+  const profile = JSON.parse(await readFile(join(root, "config/domain-profiles/software.json"), "utf8"));
+  const paths = Object.fromEntries(
+    ["catalog", "config", "curation", "audit", "baseline", "profile", "resources", "public"]
+      .map((name) => [name, join(work, `${name}.json`)])
+  );
+  const entry = {
+    category: "Synthetic",
+    themes: ["testing"],
+    summary: privateFormalSummary,
+    action: "This rejected action must not be projected.",
+    tools: [],
+    kind: "Note"
+  };
+  try {
+    await Promise.all([
+      writeFile(paths.catalog, JSON.stringify({ version: 1, notes: { [noteId]: {
+        note_id: noteId,
+        title: "Synthetic baseline override",
+        description: metadataText,
+        published_at: "2026-08-26",
+        source_boards: ["Synthetic"],
+        content_sha256: hex("7")
+      } } })),
+      writeFile(paths.config, JSON.stringify({
+        version: 1,
+        domain_profile: paths.profile,
+        curation_file: paths.curation,
+        curation_quality: {
+          publish_only_accepted: true,
+          audit_file: paths.audit,
+          baseline_file: paths.baseline
+        },
+        boards: [{ id: "private-board-id", name: "Synthetic", enabled: true }],
+        public_stats: {}
+      })),
+      writeFile(paths.curation, JSON.stringify({ [noteId]: entry })),
+      writeFile(paths.audit, JSON.stringify({ version: 2, notes: { [noteId]: {
+        status: "rejected",
+        reviewed_at: "2026-08-26",
+        evidence_methods: [],
+        comments_checked: false,
+        claims_supported: false,
+        resource_status: "not_applicable",
+        unresolved_facts: [],
+        reason: "Evidence is insufficient."
+      } } })),
+      writeFile(paths.baseline, JSON.stringify({
+        version: 1,
+        note_ids: [noteId],
+        curation_hashes: { [noteId]: curationRevision(entry) }
+      })),
+      writeFile(paths.profile, JSON.stringify(profile)),
+      writeFile(paths.resources, JSON.stringify({ verified_at: "2026-08-26", resources: [] })),
+      mkdir(join(work, "point"), { recursive: true })
+    ]);
+    const common = [
+      "--catalog", paths.catalog,
+      "--config", paths.config,
+      "--curation", paths.curation,
+      "--profile", paths.profile,
+      "--resources", paths.resources,
+      "--build-version", hex("8")
+    ];
+    const kb = spawnSync(process.execPath, [
+      join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"),
+      ...common,
+      "--diandian-dir", join(work, "point"),
+      "--output", output
+    ], { cwd: root, encoding: "utf8" });
+    assert.equal(kb.status, 0, kb.stderr || kb.stdout);
+    const site = spawnSync(process.execPath, [
+      join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"),
+      ...common,
+      "--diandian-dir", join(work, "point"),
+      "--video-analysis", join(work, "video"),
+      "--output", paths.public
+    ], { cwd: root, encoding: "utf8" });
+    assert.equal(site.status, 0, site.stderr || site.stdout);
+
+    const card = await readFile(join(output, "02-知识卡片", `${noteId}.md`), "utf8");
+    const publicData = JSON.parse(await readFile(paths.public, "utf8"));
+    assert.match(card, new RegExp(metadataText));
+    assert.doesNotMatch(card, new RegExp(privateFormalSummary));
+    assert.equal(publicData.notes[0].summary, metadataText);
+    assert.equal(publicData.notes[0].deepSummary, metadataText);
+    assert.equal(publicData.notes[0].deepSummarySource, "source-metadata");
+    assert.equal(publicData.notes[0].curationStatus, "rejected");
+    assert.doesNotMatch(JSON.stringify(publicData), new RegExp(privateFormalSummary));
+  } finally {
+    await rm(work, { recursive: true, force: true });
+  }
+});
+
 test("unverified Skill stays a pending candidate without a guessed resource or legacy point", async () => {
   const work = await mkdtemp(join(tmpdir(), "favsense-formal-candidate-"));
   const output = join(work, "knowledge-base");

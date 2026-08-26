@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
-import { containsCredentialShape } from "./sensitive-data.mjs";
+import { parseFormalPointSummaryRecord } from "./curation-quality.mjs";
 
 function parseArgs(argv) {
   const result = {};
@@ -31,6 +31,7 @@ function clean(value) {
 }
 
 const STABLE_NOTE_ID = /^[A-Za-z0-9_-]{1,128}$/;
+const HASH = /^[a-f0-9]{64}$/;
 const UNSAFE_OBJECT_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 function isStableNoteId(value) {
@@ -132,26 +133,18 @@ function readContainedText(binding) {
   }
 }
 
-function readDiandianSummary(root, noteId) {
+function readDiandianSummary(root, noteId, contentSha256) {
   if (!root || !isStableNoteId(noteId)) return "";
   const source = readContainedText(
     containedEvidenceFile(root, noteId, `${noteId}.json`, 512 * 1024, false)
   );
   if (!source) return "";
   try {
-    const record = JSON.parse(source.replace(/^\uFEFF/, ""));
-    if (
-      !record
-      || typeof record !== "object"
-      || Array.isArray(record)
-      || record.version !== 1
-      || record.provider !== "xiaohongshu-diandian"
-      || record.prompt !== "总结"
-      || record.note_id !== noteId
-      || containsCredentialShape(record)
-    ) return "";
-    const summary = String(record.summary || "").replace(/\r\n?/g, "\n").trim();
-    return summary && summary.length <= 200_000 ? summary : "";
+    const record = parseFormalPointSummaryRecord(
+      JSON.parse(source.replace(/^\uFEFF/, "")),
+      noteId
+    );
+    return record?.content_sha256 === contentSha256 ? record.summary : "";
   } catch {
     return "";
   }
@@ -171,6 +164,37 @@ function readEvidence(root, noteId, filename) {
   } catch {
     return null;
   }
+}
+
+function currentEvidence(record, contentSha256, contract) {
+  if (
+    !record
+    || typeof record !== "object"
+    || Array.isArray(record)
+    || record.schema_version !== 1
+    || record.status !== contract.status
+    || record.method !== contract.method
+    || clean(record.content_sha256) !== contentSha256
+    || !HASH.test(contentSha256)
+    || !clean(record.provider)
+    || !clean(record.tool_version)
+  ) return null;
+  const text = clean(record.text);
+  const resultSha256 = clean(record.result_sha256);
+  if (
+    !text
+    || !HASH.test(resultSha256)
+    || createHash("sha256").update(text, "utf8").digest("hex") !== resultSha256
+  ) return null;
+  return {
+    text,
+    evidence: {
+      method: record.method,
+      provider: clean(record.provider),
+      version: clean(record.tool_version),
+      result_sha256: resultSha256
+    }
+  };
 }
 
 function aliasesFor(resource) {
@@ -205,13 +229,24 @@ export function prepareReview({ catalog, scope, candidates, resources, evidenceR
       ? supplemental.audit.evidence_methods
       : [];
     const hasImageReview = supplementalMethods.includes("image_review");
-    const transcript = readEvidence(evidenceRoot, noteId, "transcription.json");
-    const visualOcr = readEvidence(evidenceRoot, noteId, "visual-ocr.json");
-    const transcriptText = clean(transcript?.text);
-    const visualText = visualOcr
-      ? clean(visualOcr.text || visualOcr.ocr_text || JSON.stringify(visualOcr))
-      : "";
-    const diandianSummaryText = readDiandianSummary(diandianRoot, noteId);
+    const contentSha256 = clean(note?.content_sha256);
+    const transcript = currentEvidence(
+      readEvidence(evidenceRoot, noteId, "transcription.json"),
+      contentSha256,
+      { status: "transcribed", method: "local_transcription" }
+    );
+    const visualOcr = currentEvidence(
+      readEvidence(evidenceRoot, noteId, "visual-ocr.json"),
+      contentSha256,
+      { status: "extracted", method: "local_image_ocr" }
+    );
+    const transcriptText = transcript?.text || "";
+    const visualText = visualOcr?.text || "";
+    const diandianSummaryText = readDiandianSummary(
+      diandianRoot,
+      noteId,
+      contentSha256
+    );
     const diandianSummarySha256 = diandianSummaryText
       ? createHash("sha256").update(diandianSummaryText, "utf8").digest("hex")
       : "";
@@ -224,7 +259,7 @@ export function prepareReview({ catalog, scope, candidates, resources, evidenceR
     if (publicText) evidenceMethods.push("description");
     if (note?.comment_evidence_checked === true) evidenceMethods.push("comments");
     if (transcriptText) evidenceMethods.push("audio_transcript");
-    if (visualText) evidenceMethods.push("visual_ocr");
+    if (visualText) evidenceMethods.push("image_ocr");
     if (diandianSummaryText) evidenceMethods.push("diandian_summary");
     if (hasImageReview) evidenceMethods.push("image_review");
 
@@ -232,7 +267,9 @@ export function prepareReview({ catalog, scope, candidates, resources, evidenceR
     if (!candidate) blockers.push("candidate-missing");
     if (note?.comment_evidence_checked !== true) blockers.push("comments-unchecked");
     if (note?.type === "视频" && !transcriptText && !visualText && !diandianSummaryText) blockers.push("video-body-evidence-missing");
-    if (note?.type === "图文" && !diandianSummaryText && !hasImageReview) blockers.push("image-text-review-required");
+    if (note?.type === "图文" && !visualText && !diandianSummaryText && !hasImageReview) {
+      blockers.push("image-text-review-required");
+    }
     if (clean(candidate?.summary).length < 32) blockers.push("summary-too-short");
     if (clean(candidate?.action).length < 16) blockers.push("action-too-short");
     if (!clean(candidate?.kind)) blockers.push("kind-missing");
@@ -248,11 +285,14 @@ export function prepareReview({ catalog, scope, candidates, resources, evidenceR
 
     items.push({
       note_id: noteId,
+      content_sha256: contentSha256,
       media_type: note?.type || "",
       source_boards: note?.source_boards || [],
       public_text: publicText,
       transcript_text: transcriptText,
+      transcript_evidence: transcript?.evidence || null,
       visual_text: visualText,
+      visual_evidence: visualOcr?.evidence || null,
       diandian_summary_text: diandianSummaryText,
       diandian_summary_sha256: diandianSummarySha256,
       evidence_methods: evidenceMethods,

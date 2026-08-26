@@ -77,6 +77,7 @@ if ($ocr -and $ocr.enabled -eq $true -and (Test-Path -LiteralPath $manualStatePa
                 '--media-dir', $mediaDirectory,
                 '--analysis-dir', $analysisDirectory,
                 '--engine', $ocrEngine,
+                '--catalog', $catalog,
                 '--report', (Join-Path $workspacePath '.xhs-favorites\image-ocr-status.json')
             )
             foreach ($noteId in @($manualState.frozen_scope.note_ids)) {

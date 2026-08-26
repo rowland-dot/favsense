@@ -101,8 +101,62 @@ export function isPublishableCuration(
   if (policy.publish_only_accepted !== true) return true;
   if (!Object.hasOwn(curation, noteId)) return false;
   const entry = curation[noteId];
+  if (audit?.notes && Object.hasOwn(audit.notes, noteId)) {
+    if (!context.currentRevisions) return false;
+    return hasCompleteAcceptedAudit(noteId, note, entry, audit, context);
+  }
   if (baselineIds.has(noteId) && baselineRevisions.get(noteId) === curationRevision(entry)) return true;
   return hasCompleteAcceptedAudit(noteId, note, entry, audit, context);
+}
+
+export function parseFormalPointSummaryRecord(record, noteId) {
+  const expectedKeys = [
+    "captured_at",
+    "content_sha256",
+    "note_id",
+    "prompt",
+    "prompt_version",
+    "provider",
+    "request_sha256",
+    "summary",
+    "summary_sha256",
+    "title",
+    "version",
+  ];
+  if (
+    !record || typeof record !== "object" || Array.isArray(record)
+    || Object.keys(record).sort().join(",") !== expectedKeys.join(",")
+    || record.version !== 2
+    || record.provider !== "xiaohongshu-diandian"
+    || record.prompt !== "总结"
+    || record.note_id !== noteId
+    || typeof record.title !== "string"
+    || typeof record.summary !== "string"
+    || typeof record.captured_at !== "string"
+    || typeof record.prompt_version !== "string"
+    || typeof record.content_sha256 !== "string"
+    || typeof record.request_sha256 !== "string"
+    || typeof record.summary_sha256 !== "string"
+    || !clean(record.title)
+    || !HASH.test(record.prompt_version)
+    || !HASH.test(record.content_sha256)
+    || !HASH.test(record.request_sha256)
+    || !HASH.test(record.summary_sha256)
+    || !clean(record.captured_at)
+    || containsCredentialShape(record)
+  ) return null;
+  const summary = record.summary.replace(/\r\n?/g, "\n").trim();
+  if (!summary || summary.length > 200_000) return null;
+  const summarySha256 = createHash("sha256").update(summary, "utf8").digest("hex");
+  if (record.summary_sha256 !== summarySha256) return null;
+  return {
+    version: record.version,
+    provider: record.provider,
+    prompt_version: record.prompt_version,
+    summary,
+    summary_sha256: summarySha256,
+    content_sha256: record.content_sha256
+  };
 }
 
 export function loadFormalPointSummary(directory, noteId) {
@@ -113,54 +167,10 @@ export function loadFormalPointSummary(directory, noteId) {
   try {
     const metadata = fs.statSync(target);
     if (!metadata.isFile() || metadata.size > 512 * 1024) return null;
-    const record = JSON.parse(fs.readFileSync(target, "utf8").replace(/^\uFEFF/, ""));
-    const expectedKeys = [
-      "captured_at",
-      "content_sha256",
-      "note_id",
-      "prompt",
-      "prompt_version",
-      "provider",
-      "request_sha256",
-      "summary",
-      "summary_sha256",
-      "title",
-      "version",
-    ];
-    if (
-      !record || typeof record !== "object" || Array.isArray(record)
-      || Object.keys(record).sort().join(",") !== expectedKeys.join(",")
-      || record.version !== 2
-      || record.provider !== "xiaohongshu-diandian"
-      || record.prompt !== "总结"
-      || record.note_id !== noteId
-      || typeof record.title !== "string"
-      || typeof record.summary !== "string"
-      || typeof record.captured_at !== "string"
-      || typeof record.prompt_version !== "string"
-      || typeof record.content_sha256 !== "string"
-      || typeof record.request_sha256 !== "string"
-      || typeof record.summary_sha256 !== "string"
-      || !clean(record.title)
-      || !HASH.test(record.prompt_version)
-      || !HASH.test(record.content_sha256)
-      || !HASH.test(record.request_sha256)
-      || !HASH.test(record.summary_sha256)
-      || !clean(record.captured_at)
-      || containsCredentialShape(record)
-    ) return null;
-    const summary = record.summary.replace(/\r\n?/g, "\n").trim();
-    if (!summary || summary.length > 200_000) return null;
-    const summarySha256 = createHash("sha256").update(summary, "utf8").digest("hex");
-    if (record.summary_sha256 !== summarySha256) return null;
-    return {
-      version: record.version,
-      provider: record.provider,
-      prompt_version: record.prompt_version,
-      summary,
-      summary_sha256: summarySha256,
-      content_sha256: record.content_sha256
-    };
+    return parseFormalPointSummaryRecord(
+      JSON.parse(fs.readFileSync(target, "utf8").replace(/^\uFEFF/, "")),
+      noteId
+    );
   } catch {
     return null;
   }
@@ -194,6 +204,7 @@ export function formalContentKind(profile, candidateKind, accepted = false) {
 }
 
 function revisionReason(auditEntry, current) {
+  if (auditEntry?.status === "rejected") return "audit_rejected";
   if (!auditEntry || auditEntry.status !== "accepted") return "audit_pending";
   if (auditEntry.content_sha256 !== current?.content_sha256) return "content_changed";
   if (auditEntry.evidence_sha256 !== current?.evidence_sha256) return "evidence_changed";
@@ -210,7 +221,7 @@ export function formalCurationDecision({
 } = {}) {
   const base = {
     accepted: false,
-    reason_code: "audit_pending",
+    reason_code: auditEntry?.status === "rejected" ? "audit_rejected" : "audit_pending",
     summary_source: "metadata",
     content_sha256: clean(currentRevisions?.content_sha256),
     evidence_sha256: clean(currentRevisions?.evidence_sha256),

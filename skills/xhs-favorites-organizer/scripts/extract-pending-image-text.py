@@ -17,8 +17,20 @@ from datetime import datetime, timezone
 
 
 NOTE_ID = re.compile(r"^[a-f0-9]{24}$")
+HASH = re.compile(r"^[a-f0-9]{64}$")
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_OCR_BYTES = 800_000
+
+
+def ocr_tool_version(engine: Path) -> str:
+    target = Path(engine)
+    if not target.is_file() or target.is_symlink():
+        raise ValueError("OCR engine identity is unavailable")
+    digest = hashlib.sha256()
+    with target.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return f"local-ocr;engine_sha256={digest.hexdigest()}"
 
 
 def dispatch_evidence_methods(context):
@@ -209,8 +221,21 @@ def _run_engine(command, popen_factory=subprocess.Popen, *, timeout=60, max_byte
         return returncode, "", "ocr_failed"
 
 
-def extract_cached_images(media_dir: Path, analysis_dir: Path, *, engine: Path | None, allowed_note_ids: set[str], runner=subprocess.Popen):
+def extract_cached_images(
+    media_dir: Path,
+    analysis_dir: Path,
+    *,
+    engine: Path | None,
+    allowed_note_ids: set[str],
+    content_sha256_by_id: dict[str, str] | None = None,
+    runner=subprocess.Popen,
+):
     allowed = {note_id for note_id in allowed_note_ids if NOTE_ID.fullmatch(str(note_id))}
+    revisions = {
+        note_id: str(content_sha256).strip()
+        for note_id, content_sha256 in (content_sha256_by_id or {}).items()
+        if note_id in allowed and HASH.fullmatch(str(content_sha256).strip())
+    }
     if engine is None:
         return {"status": "ocr_unavailable", "processed": 0, "failed": 0, "records": []}
     engine = Path(engine)
@@ -220,15 +245,46 @@ def extract_cached_images(media_dir: Path, analysis_dir: Path, *, engine: Path |
     failed = 0
     candidates = sorted(
         path for path in media_dir.iterdir()
-        if path.is_file() and not path.is_symlink() and path.suffix.lower() in IMAGE_SUFFIXES and path.stem in allowed
+        if (
+            path.is_file()
+            and not path.is_symlink()
+            and path.suffix.lower() in IMAGE_SUFFIXES
+            and path.stem in revisions
+        )
     ) if media_dir.is_dir() and not media_dir.is_symlink() else []
     for image in candidates:
+        content_sha256 = revisions[image.stem]
+        artifact_path = analysis_dir / image.stem / "visual-ocr.json"
         try:
-            returncode, output, output_error = _run_engine([str(engine), str(image)], runner)
-        except (OSError, subprocess.TimeoutExpired):
-            returncode, output, output_error = 1, "", "ocr_failed"
+            tool_version = ocr_tool_version(engine)
+        except (OSError, ValueError):
+            tool_version = "unavailable"
+            returncode, output, output_error = 1, "", "ocr_engine_changed"
+        else:
+            try:
+                returncode, output, output_error = _run_engine(
+                    [str(engine), str(image)], runner
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                returncode, output, output_error = 1, "", "ocr_failed"
+            try:
+                current_tool_version = ocr_tool_version(engine)
+            except (OSError, ValueError):
+                current_tool_version = ""
+            if current_tool_version != tool_version:
+                returncode, output, output_error = 1, "", "ocr_engine_changed"
         if returncode != 0 or output_error:
             failed += 1
+            _atomic_json(artifact_path, {
+                "schema_version": 1,
+                "status": "failed",
+                "method": "local_image_ocr",
+                "provider": "configured-local-engine",
+                "tool_version": tool_version,
+                "content_sha256": content_sha256,
+                "captured_at": datetime.now(timezone.utc).isoformat(),
+                "reason_code": output_error or "ocr_failed",
+            })
             records.append({
                 "note_id": image.stem, "status": "failed",
                 "reason_code": output_error or "ocr_failed",
@@ -237,15 +293,26 @@ def extract_cached_images(media_dir: Path, analysis_dir: Path, *, engine: Path |
         text = re.sub(r"\s+", " ", output).strip()
         if not text or len(text) > 200_000:
             failed += 1
+            _atomic_json(artifact_path, {
+                "schema_version": 1,
+                "status": "failed",
+                "method": "local_image_ocr",
+                "provider": "configured-local-engine",
+                "tool_version": tool_version,
+                "content_sha256": content_sha256,
+                "captured_at": datetime.now(timezone.utc).isoformat(),
+                "reason_code": "ocr_empty",
+            })
             records.append({"note_id": image.stem, "status": "failed", "reason_code": "ocr_empty"})
             continue
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        _atomic_json(analysis_dir / image.stem / "visual-ocr.json", {
+        _atomic_json(artifact_path, {
             "schema_version": 1,
             "status": "extracted",
             "method": "local_image_ocr",
             "provider": "configured-local-engine",
-            "tool_version": "local-ocr-v1",
+            "tool_version": tool_version,
+            "content_sha256": content_sha256,
             "result_sha256": digest,
             "captured_at": datetime.now(timezone.utc).isoformat(),
             "text": text,
@@ -259,10 +326,25 @@ def main():
     parser.add_argument("--media-dir", required=True)
     parser.add_argument("--analysis-dir", required=True)
     parser.add_argument("--engine")
+    parser.add_argument("--catalog", required=True)
     parser.add_argument("--note-id", action="append", default=[])
     parser.add_argument("--report", required=True)
     options = parser.parse_args()
-    result = extract_cached_images(Path(options.media_dir), Path(options.analysis_dir), engine=Path(options.engine) if options.engine else None, allowed_note_ids=set(options.note_id))
+    catalog = json.loads(Path(options.catalog).resolve().read_text(encoding="utf-8-sig"))
+    notes = catalog.get("notes") if isinstance(catalog, dict) else None
+    if not isinstance(notes, dict):
+        raise ValueError("catalog must contain a notes object")
+    result = extract_cached_images(
+        Path(options.media_dir),
+        Path(options.analysis_dir),
+        engine=Path(options.engine) if options.engine else None,
+        allowed_note_ids=set(options.note_id),
+        content_sha256_by_id={
+            note_id: note.get("content_sha256")
+            for note_id, note in notes.items()
+            if isinstance(note, dict)
+        },
+    )
     _atomic_json(Path(options.report), result)
     print(json.dumps({key: result[key] for key in ("status", "processed", "failed")}, ensure_ascii=False))
 

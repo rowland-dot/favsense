@@ -19,7 +19,7 @@ const validDate = (value) => {
 function canonicalVersion({ sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest, effectiveDate }) {
   for (const value of [sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest]) if (!HASH.test(value)) throw new Error("SNAPSHOT_DIGEST_INVALID");
   if (!validDate(effectiveDate)) throw new Error("SNAPSHOT_EFFECTIVE_DATE_INVALID");
-  const preimage = { schema_version: 2, sealed_scope_sha256: sealedScopeDigest, curation_input_sha256: curationInputDigest, public_config_sha256: configDigest, input_revision_sha256: inputRevisionDigest, effective_date: effectiveDate, builders: { knowledge_base: 2, public_site: 2 } };
+  const preimage = { schema_version: 2, sealed_scope_sha256: sealedScopeDigest, curation_input_sha256: curationInputDigest, public_config_sha256: configDigest, input_revision_sha256: inputRevisionDigest, effective_date: effectiveDate, builders: { knowledge_base: 2, public_site: 5 } };
   return createHash("sha256").update(JSON.stringify(preimage), "utf8").digest("hex");
 }
 

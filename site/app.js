@@ -454,6 +454,14 @@ function summarySourcePresentation(note) {
   const reason = String(
     note.summaryReasonCode || note.summary_reason_code || note.summaryReason || note.summary_reason || ""
   );
+  const curationStatus = String(
+    note.curationStatus || note.curation_status || note.summaryStatus || note.summary_status || ""
+  );
+  if (curationStatus === "rejected") return {
+    label: "总结未通过审核",
+    tone: "warning",
+    explanation: "当前证据或质量门不足，因此不会作为正式总结展示；后续获得新证据时会重新审核。"
+  };
   if (summaryStatus === "failed") return {
     label: "本篇总结失败，可在下次继续",
     tone: "warning",

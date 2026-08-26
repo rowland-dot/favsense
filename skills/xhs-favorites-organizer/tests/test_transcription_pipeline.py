@@ -1,4 +1,5 @@
 import importlib.util
+import hashlib
 import json
 import tempfile
 import unittest
@@ -135,10 +136,382 @@ class TranscriptionPipelineTests(unittest.TestCase):
             with mock.patch.object(self.module, "run", side_effect=failing_run):
                 with self.assertRaises(RuntimeError):
                     self.module.transcribe_video(
-                        object(), Path("ffmpeg"), item, {}, analysis, "zh", False
+                        object(),
+                        Path("ffmpeg"),
+                        item,
+                        {"content_sha256": "b" * 64},
+                        analysis,
+                        "zh",
+                        False,
+                        tool_version=self.module.transcription_tool_version(
+                            "1.2.3", "small", "cpu", "int8"
+                        ),
                     )
 
             self.assertFalse((analysis / item["note_id"] / "audio-16khz.wav").exists())
+            artifact = json.loads(
+                (analysis / item["note_id"] / "transcription.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(artifact["status"], "failed")
+            self.assertEqual(artifact["content_sha256"], "b" * 64)
+            self.assertEqual(artifact["method"], "local_transcription")
+            self.assertEqual(artifact["provider"], "faster-whisper")
+            self.assertEqual(
+                artifact["tool_version"],
+                self.module.transcription_tool_version(
+                    "1.2.3", "small", "cpu", "int8"
+                ),
+            )
+            self.assertEqual(artifact["reason_code"], "transcription_failed")
+            self.assertNotIn("text", artifact)
+
+    def test_successful_transcript_binds_the_catalog_revision_and_tool_contract(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            analysis = root / "analysis"
+            note_id = "a" * 24
+            content_sha256 = "b" * 64
+            item = {
+                "note_id": note_id,
+                "video": root / "video.mp4",
+                "source_duration_seconds": 4,
+                "audio_start_seconds": 0,
+                "audio_limit_seconds": 4,
+            }
+
+            class Segment:
+                start = 0
+                end = 1
+                text = " revision bound transcript "
+                avg_logprob = -0.1
+                no_speech_prob = 0.0
+
+            class Info:
+                language = "zh"
+                language_probability = 1.0
+                duration = 4
+
+            class Model:
+                def transcribe(self, *_args, **_kwargs):
+                    return iter([Segment()]), Info()
+
+            def fake_run(command):
+                Path(command[-1]).write_bytes(b"synthetic wav")
+
+            with mock.patch.object(self.module, "run", side_effect=fake_run):
+                tool_version = self.module.transcription_tool_version(
+                    "1.2.3", "small", "cpu", "int8"
+                )
+                result = self.module.transcribe_video(
+                    Model(),
+                    Path("ffmpeg"),
+                    item,
+                    {"content_sha256": content_sha256},
+                    analysis,
+                    "zh",
+                    False,
+                    tool_version=tool_version,
+                )
+
+            artifact = json.loads(
+                (analysis / note_id / "transcription.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(result["status"], "transcribed")
+            self.assertEqual(artifact["schema_version"], 1)
+            self.assertEqual(artifact["content_sha256"], content_sha256)
+            self.assertEqual(artifact["method"], "local_transcription")
+            self.assertEqual(artifact["provider"], "faster-whisper")
+            self.assertEqual(artifact["tool_version"], tool_version)
+            self.assertEqual(
+                artifact["result_sha256"],
+                hashlib.sha256(artifact["text"].encode("utf-8")).hexdigest(),
+            )
+            self.assertNotEqual(
+                tool_version,
+                self.module.transcription_tool_version(
+                    "1.2.3", "medium", "cpu", "int8"
+                ),
+            )
+
+    def test_stale_or_different_tool_transcripts_are_requeued_and_not_reassessed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            current_id = "a" * 24
+            stale_id = "b" * 24
+            tool_id = "c" * 24
+            current_revision = "d" * 64
+            stale_revision = "e" * 64
+            tool_version = self.module.transcription_tool_version(
+                "1.2.3", "small", "cpu", "int8"
+            )
+            other_tool_version = self.module.transcription_tool_version(
+                "1.2.3", "medium", "cpu", "int8"
+            )
+            text = "This current transcript contains enough concrete words for reassessment."
+
+            def artifact(content_sha256, version):
+                return {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": version,
+                    "content_sha256": content_sha256,
+                    "result_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                    "text": text,
+                    "audio_window": {
+                        "end": 10,
+                        "next_start": 10,
+                        "truncated": True,
+                        "complete": False,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                }
+
+            records = {
+                current_id: artifact(current_revision, tool_version),
+                stale_id: artifact("f" * 64, tool_version),
+                tool_id: artifact(current_revision, other_tool_version),
+            }
+            original_bytes = {}
+            for note_id, record in records.items():
+                (media / f"{note_id}.mp4").write_bytes(b"video")
+                transcript_path = analysis / note_id / "transcription.json"
+                transcript_path.parent.mkdir(parents=True)
+                transcript_path.write_text(json.dumps(record), encoding="utf-8")
+                original_bytes[note_id] = transcript_path.read_bytes()
+
+            revisions = {
+                current_id: current_revision,
+                stale_id: stale_revision,
+                tool_id: current_revision,
+            }
+            queue = self.module.build_transcription_queue(
+                media,
+                {},
+                analysis,
+                10,
+                allowed_note_ids=set(revisions),
+                content_sha256_by_id=revisions,
+                tool_version=tool_version,
+            )
+            queued = {item["note_id"]: item["resume_start_seconds"] for item in queue}
+            self.assertEqual(queued[stale_id], 0)
+            self.assertEqual(queued[tool_id], 0)
+            self.assertEqual(queued[current_id], 10)
+
+            notes = {
+                note_id: {
+                    "content_sha256": revision,
+                    "title": "safe title",
+                    "description": "",
+                }
+                for note_id, revision in revisions.items()
+            }
+            with mock.patch.object(
+                self.module, "_atomic_json", wraps=self.module._atomic_json
+            ) as atomic_json:
+                result = self.module.reassess_transcripts(
+                    analysis, notes, tool_version=tool_version
+                )
+
+            self.assertEqual(result["reassessed"], 1)
+            atomic_json.assert_called_once()
+            for note_id in (stale_id, tool_id):
+                self.assertEqual(
+                    (analysis / note_id / "transcription.json").read_bytes(),
+                    original_bytes[note_id],
+                )
+
+    def test_malformed_transcript_shapes_fail_closed_to_a_fresh_queue_item(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            non_object_id = "a" * 24
+            nested_shape_id = "b" * 24
+            nested_value_id = "d" * 24
+            malformed_segments_id = "e" * 24
+            huge_number_id = "f" * 24
+            malformed_segment_fields_id = "1" * 24
+            revision = "c" * 64
+            tool_version = self.module.transcription_tool_version(
+                "1.2.3", "small", "cpu", "int8"
+            )
+            malformed = {
+                non_object_id: [],
+                nested_shape_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": [],
+                    "visual_review": [],
+                },
+                nested_value_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": {
+                        "next_start": ["not-a-number"],
+                        "truncated": True,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                    "segments": [],
+                },
+                malformed_segments_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": {
+                        "next_start": 10,
+                        "truncated": True,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                    "segments": ["not-an-object"],
+                },
+                huge_number_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": {
+                        "next_start": int("9" * 4000),
+                        "truncated": True,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                    "segments": [],
+                },
+                malformed_segment_fields_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": {
+                        "next_start": 10,
+                        "truncated": True,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                    "segments": [{
+                        "start": [],
+                        "end": False,
+                        "text": "valid text",
+                        "avg_logprob": {},
+                        "no_speech_prob": ["bad"],
+                    }],
+                },
+            }
+            for note_id, artifact in malformed.items():
+                (media / f"{note_id}.mp4").write_bytes(b"video")
+                transcript_path = analysis / note_id / "transcription.json"
+                transcript_path.parent.mkdir(parents=True)
+                transcript_path.write_text(json.dumps(artifact), encoding="utf-8")
+
+            queue = self.module.build_transcription_queue(
+                media,
+                {},
+                analysis,
+                10,
+                allowed_note_ids=set(malformed),
+                content_sha256_by_id={
+                    note_id: revision for note_id in malformed
+                },
+                tool_version=tool_version,
+            )
+
+            self.assertEqual(
+                {item["note_id"]: item["resume_start_seconds"] for item in queue},
+                {
+                    non_object_id: 0,
+                    nested_shape_id: 0,
+                    nested_value_id: 0,
+                    malformed_segments_id: 0,
+                    huge_number_id: 0,
+                    malformed_segment_fields_id: 0,
+                },
+            )
+
+    def test_failed_continuation_preserves_verified_partial_evidence(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            analysis = root / "analysis"
+            note_id = "a" * 24
+            revision = "b" * 64
+            tool_version = self.module.transcription_tool_version(
+                "1.2.3", "small", "cpu", "int8"
+            )
+            text = "verified partial transcript"
+            transcript_path = analysis / note_id / "transcription.json"
+            transcript_path.parent.mkdir(parents=True)
+            transcript_path.write_text(json.dumps({
+                "schema_version": 1,
+                "status": "partial",
+                "method": "local_transcription",
+                "provider": "faster-whisper",
+                "tool_version": tool_version,
+                "content_sha256": revision,
+                "result_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                "text": text,
+                "segments": [],
+                "audio_window": {
+                    "end": 10,
+                    "next_start": 10,
+                    "truncated": True,
+                    "complete": False,
+                },
+                "visual_review": {"missing_facts": ["content-summary"]},
+            }), encoding="utf-8")
+            original = transcript_path.read_bytes()
+            item = {
+                "note_id": note_id,
+                "video": root / "video.mp4",
+                "source_duration_seconds": 20,
+                "audio_start_seconds": 10,
+                "audio_limit_seconds": 10,
+            }
+
+            with mock.patch.object(
+                self.module, "run", side_effect=RuntimeError("synthetic failure")
+            ):
+                with self.assertRaises(RuntimeError):
+                    self.module.transcribe_video(
+                        object(),
+                        Path("ffmpeg"),
+                        item,
+                        {"content_sha256": revision},
+                        analysis,
+                        "zh",
+                        False,
+                        tool_version=tool_version,
+                    )
+
+            self.assertEqual(transcript_path.read_bytes(), original)
 
     def test_open_source_tool_name_does_not_replace_repository_identity(self):
         note = {"title": "一个很实用的开源视频工具", "description": ""}

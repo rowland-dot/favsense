@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { renameSync, symlinkSync, unlinkSync } from "node:fs";
 import { link, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -439,6 +440,59 @@ test("journaled transaction restores every participant to one generation", async
   await assert.rejects(executeJournaledTransaction({ root, id: "tx-safe", participants: [{ name: "left", target: left, content: "new" }, { name: "right", target: right, content: "new" }], failAt: "swap:right" }));
   assert.equal(await readFile(left, "utf8"), "old");
   assert.equal(await readFile(right, "utf8"), "old");
+});
+
+test("journaled transaction rejects a transaction-root swap before its first staging write", async (context) => {
+  const { executeJournaledTransaction } = await import("../scripts/journaled-transaction.mjs");
+  const root = await mkdtemp(join(tmpdir(), "favsense-journal-root-swap-"));
+  const transactionRoot = join(root, "transactions");
+  const originalRoot = join(root, "transactions-original");
+  const outside = await mkdtemp(join(tmpdir(), "favsense-journal-outside-"));
+  const transaction = join(outside, ".organization-tx-tx-root-swap");
+  const sentinel = join(transaction, "must-remain.txt");
+  const target = join(root, "left.txt");
+  let swapped = false;
+  try {
+    await mkdir(transactionRoot);
+    await mkdir(transaction);
+    await writeFile(sentinel, "outside sentinel");
+    await writeFile(target, "old-left");
+    const probe = join(root, "junction-probe");
+    try {
+      await symlink(outside, probe, process.platform === "win32" ? "junction" : "dir");
+      await rm(probe);
+    } catch (error) {
+      context.skip(`transaction-root swap fixture unavailable: ${error.code}`);
+      return;
+    }
+    const content = {
+      toString() {
+        renameSync(transactionRoot, originalRoot);
+        symlinkSync(outside, transactionRoot, process.platform === "win32" ? "junction" : "dir");
+        swapped = true;
+        return "new-left";
+      }
+    };
+
+    const outcome = await executeJournaledTransaction({
+        root,
+        transactionRoot,
+        id: "tx-root-swap",
+        participants: [{ name: "left", target, content }]
+      }).catch((error) => error);
+
+    assert.equal(await readFile(target, "utf8"), "old-left");
+    assert.deepEqual(await readdir(transaction), ["must-remain.txt"]);
+    assert.equal(await readFile(sentinel, "utf8"), "outside sentinel");
+    assert.equal(outcome?.message, "TRANSACTION_PATH_CHANGED");
+  } finally {
+    if (swapped) {
+      unlinkSync(transactionRoot);
+      renameSync(originalRoot, transactionRoot);
+    }
+    await rm(root, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
+  }
 });
 
 test("journaled transaction recovery rolls a simulated process crash back to one old generation", async () => {

@@ -519,6 +519,25 @@ test("private DianDian summaries become keyed deep summaries without leaking sou
   assert.doesNotMatch(JSON.stringify(data), /xsec_token|source_url/i);
 });
 
+test("a completed rejection is not rendered as waiting for review", async () => {
+  const data = await buildProfileFixture("software.json", {
+    auditStatus: "rejected",
+    auditRecord: {
+      status: "rejected",
+      reviewed_at: "2026-08-26",
+      evidence_methods: ["description", "comments"],
+      comments_checked: true,
+      claims_supported: false,
+      resource_status: "not_applicable",
+      unresolved_facts: [],
+      reason: "当前证据不足"
+    }
+  });
+  assert.equal(data.notes[0].summaryStatus, "rejected");
+  assert.equal(data.notes[0].curationStatus, "rejected");
+  assert.equal(data.notes[0].summaryReasonCode, "audit_rejected");
+});
+
 test("production knowledge build projects failed and batch-aborted summary states from the private run report", async () => {
   const noteId = "aaaaaaaaaaaaaaaaaaaaaaaa";
   const failed = await buildProfileFixture("software.json", {
@@ -600,6 +619,8 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
     failed: summarySourcePresentation({ summaryState: "failed" }),
     aborted: summarySourcePresentation({ summaryState: "batch_aborted" }),
     captured: summarySourcePresentation({ summaryState: "captured" }),
+    rejected: summarySourcePresentation({ summaryState: "captured", curationStatus: "rejected" }),
+    rejectedFailed: summarySourcePresentation({ summaryState: "failed", curationStatus: "rejected" }),
     stale: summarySourcePresentation({ summaryState: "stale", summaryReasonCode: "content_changed" }),
     legacyStale: summarySourcePresentation({ summaryState: "stale", summaryReasonCode: "unknown_legacy" }),
     formatted: formatSummaryHtml("执行步骤：\\n1，先找参考图\\n2，再洗素材\\n\\n**补充说明**\\n补充说明。<script>alert(1)</script>"),
@@ -614,6 +635,8 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
   assert.equal(result.failed.label, "本篇总结失败，可在下次继续");
   assert.equal(result.aborted.label, "本次未尝试，可继续整理");
   assert.equal(result.captured.label, "总结已捕获，等待审核");
+  assert.equal(result.rejected.label, "总结未通过审核");
+  assert.equal(result.rejectedFailed.label, "总结未通过审核");
   assert.equal(result.stale.label, "正文已变化，等待重新审核");
   assert.equal(result.legacyStale.label, "历史整理状态待确认，等待重新整理");
   assert.equal(result.legacyStale.explanation, "核心收藏已保留；旧版记录无法确认是否曾完成总结。");
@@ -3145,14 +3168,16 @@ test("runBoard stays on the current board when both skip acknowledgements fail",
   assert.doesNotMatch(result.status, /完成/);
 });
 
-test("note-page share worker falls back to the transient current URL only after clicking 分享 and 复制链接", async () => {
+test("CDP note-page share worker delegates exactly one native 分享 and 复制链接 click", async () => {
   const contract = JSON.parse(await read(
     "skills/xhs-favorites-organizer/test-fixtures/diandian-single-note-state-arc.json"
   ));
+  const browserContract = structuredClone(TEST_DIANDIAN_CONTRACT);
+  browserContract.cdp_enabled = true;
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
   const runAt = template.match(/^\/\/ @run-at\s+(\S+)$/m)?.[1];
   const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
-  const userscript = renderUserscriptTemplate(template)
+  const userscript = renderUserscriptTemplate(template, browserContract)
     .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { signedMessage, validMessage };\n${exportMarker}`);
   class SharedChannel {
     static instances = new Set();
@@ -3179,6 +3204,7 @@ test("note-page share worker falls back to the transient current URL only after 
   let copyClicks = 0;
   let shareContainerClicks = 0;
   let copyContainerClicks = 0;
+  const nativeClickRequests = [];
   let cleanedLocation = "";
   const visibleElement = (text, click) => ({
     textContent: text,
@@ -3195,10 +3221,16 @@ test("note-page share worker falls back to the transient current URL only after 
   const copy = visibleElement("复制链接", () => { copyContainerClicks += 1; });
   copy.contains = (element) => element === copyHit;
   let domReady;
+  const documentAttributes = new Map();
   const document = {
     readyState: "loading",
     body: { innerText: "" },
-    documentElement: { appendChild() {} },
+    documentElement: {
+      appendChild() {},
+      setAttribute(name, value) { documentAttributes.set(name, value); },
+      getAttribute(name) { return documentAttributes.get(name) ?? null; },
+      removeAttribute(name) { documentAttributes.delete(name); }
+    },
     addEventListener(type, listener) { if (type === "DOMContentLoaded") domReady = listener; },
     getElementById: () => null,
     createElement: () => ({ style: {}, textContent: "" }),
@@ -3237,7 +3269,17 @@ test("note-page share worker falls back to the transient current URL only after 
     setTimeout: (callback) => { queueMicrotask(callback); return 1; },
     clearTimeout() {},
     queueMicrotask,
-    GM_registerMenuCommand() {}
+    GM_registerMenuCommand() {},
+    GM_xmlhttpRequest(options) {
+      const pathname = new URL(options.url).pathname;
+      const body = options.data ? JSON.parse(options.data) : null;
+      if (pathname === "/sync/diandian-click") {
+        nativeClickRequests.push(body);
+        if (body.action === "share") shareClicks += 1;
+        if (body.action === "copy") copyClicks += 1;
+      }
+      queueMicrotask(() => options.onload({ status: 200, responseText: '{"ok":true,"clicked":true}' }));
+    }
   };
   context.globalThis = context;
   runInNewContext(userscript, context);
@@ -3304,6 +3346,7 @@ test("note-page share worker falls back to the transient current URL only after 
   const ready = nextMessage("share-ready");
   controller.postMessage(await hooks.signedMessage({ type: "share-probe", ...base }));
   await ready;
+  assert.equal(documentAttributes.get("data-xhs-kb-share-worker"), workerId);
   const copied = nextMessage("share-link");
   controller.postMessage(await hooks.signedMessage({ type: "copy-link", ...base }));
   const result = await copied;
@@ -3313,14 +3356,33 @@ test("note-page share worker falls back to the transient current URL only after 
   assert.equal(copyClicks, contract.expected_copy_clicks);
   assert.equal(shareContainerClicks, 0);
   assert.equal(copyContainerClicks, 0);
+  assert.deepEqual(nativeClickRequests, [
+    {
+      run_id: "batch1_board1",
+      board_id: "board1",
+      note_id: "note-a",
+      worker_id: workerId,
+      action: "share"
+    },
+    {
+      run_id: "batch1_board1",
+      board_id: "board1",
+      note_id: "note-a",
+      worker_id: workerId,
+      action: "copy"
+    }
+  ]);
   assert.equal(result.url, "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=current-token");
   assert.equal(cleanedLocation, "/discovery/item/note-a");
+  assert.equal(documentAttributes.has("data-xhs-kb-share-worker"), false);
 });
 
-test("note-page share worker reports a safety stop that appears after copy", async () => {
+test("CDP note-page share worker propagates native safety stop without requesting copy", async () => {
+  const browserContract = structuredClone(TEST_DIANDIAN_CONTRACT);
+  browserContract.cdp_enabled = true;
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
   const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
-  const userscript = renderUserscriptTemplate(template)
+  const userscript = renderUserscriptTemplate(template, browserContract)
     .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { signedMessage, validMessage };\n${exportMarker}`);
   class SharedChannel {
     static instances = new Set();
@@ -3336,6 +3398,7 @@ test("note-page share worker reports a safety stop that appears after copy", asy
   }
   let shareClicks = 0;
   let cleanedLocation = "";
+  const nativeClickRequests = [];
   const document = {
     body: { innerText: "" },
     documentElement: { appendChild() {} },
@@ -3382,7 +3445,20 @@ test("note-page share worker reports a safety stop that appears after copy", asy
     getComputedStyle: () => ({ display: "block", visibility: "visible", opacity: "1" }),
     URL, URLSearchParams, TextEncoder, crypto: webcrypto, BroadcastChannel: SharedChannel,
     setTimeout, clearTimeout, queueMicrotask,
-    GM_registerMenuCommand() {}
+    GM_registerMenuCommand() {},
+    GM_xmlhttpRequest(options) {
+      const pathname = new URL(options.url).pathname;
+      const body = options.data ? JSON.parse(options.data) : null;
+      if (pathname === "/sync/diandian-click") {
+        nativeClickRequests.push(body);
+        queueMicrotask(() => options.onload({
+          status: 500,
+          responseText: '{"ok":false,"error":"xhs-safety-stop"}'
+        }));
+        return;
+      }
+      queueMicrotask(() => options.onload({ status: 200, responseText: '{"ok":true}' }));
+    }
   };
   context.globalThis = context;
   runInNewContext(userscript, context);
@@ -3405,6 +3481,7 @@ test("note-page share worker reports a safety stop that appears after copy", asy
   const result = await failed;
   assert.equal(result.type, "share-failed");
   assert.equal(result.error, "xhs-safety-stop");
+  assert.deepEqual(nativeClickRequests.map((request) => request.action), ["share"]);
   assert.equal(cleanedLocation, "/discovery/item/note-a");
   controller.close();
 });

@@ -406,6 +406,10 @@ __DIANDIAN_MATCH_LINE__
     "duplicate-submit",
     "invalid-summary",
     "login-required",
+    "native-click-copy-unavailable",
+    "native-click-input-uncertain",
+    "native-click-sequence-invalid",
+    "native-click-share-unavailable",
     "note-context-mismatch",
     "note-not-on-board",
     "page-not-ready",
@@ -485,7 +489,17 @@ __DIANDIAN_MATCH_LINE__
     }, diandianTiming("share_control_wait"), "笔记页面的分享控件没有稳定显示", 100);
   }
 
-  function clickVisibleAction(element) {
+  async function clickVisibleAction(element, context, action) {
+    if (DIANDIAN.cdp_enabled === true) {
+      await post("/sync/diandian-click", {
+        run_id: context.run_id,
+        board_id: context.board_id,
+        note_id: context.note_id,
+        worker_id: context.worker_id,
+        action,
+      }, 10000);
+      return;
+    }
     const bounds = element?.getBoundingClientRect?.();
     const hit = bounds && bounds.width > 0 && bounds.height > 0 && document.elementFromPoint
       ? document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2)
@@ -512,10 +526,10 @@ __DIANDIAN_MATCH_LINE__
     return "";
   }
 
-  async function copyVisibleShareLink(noteId) {
+  async function copyVisibleShareLink(noteId, context) {
     assertSafePage();
     const shareButton = await waitForStableSharePage();
-    clickVisibleAction(shareButton);
+    await clickVisibleAction(shareButton, context, "share");
 
     const copyButton = await waitUntil(() => skillQueryAll(
       DIANDIAN.selectors.share_menu_items,
@@ -523,7 +537,7 @@ __DIANDIAN_MATCH_LINE__
       element,
       DIANDIAN.selectors.copy_action_text,
     )), diandianTiming("share_menu_wait"), "分享菜单中没有找到复制链接");
-    clickVisibleAction(copyButton);
+    await clickVisibleAction(copyButton, context, "copy");
 
     const attributeCandidates = [
       copyButton.dataset?.clipboardText,
@@ -661,7 +675,8 @@ __DIANDIAN_MATCH_LINE__
   }
 
   async function runShareLinkWorker(currentNoteId, requestedWorkerId) {
-    if (!/^[a-f0-9-]{36}$/i.test(requestedWorkerId || "")) return;
+    if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(requestedWorkerId || "")) return;
+    document.documentElement?.setAttribute?.("data-xhs-kb-share-worker", requestedWorkerId);
     const channel = new BroadcastChannel(await diandianChannelName());
     let processing = false;
     let readySent = false;
@@ -690,7 +705,7 @@ __DIANDIAN_MATCH_LINE__
       if (message.type !== "copy-link" || processing) return;
       processing = true;
       try {
-        const url = await copyVisibleShareLink(currentNoteId);
+        const url = await copyVisibleShareLink(currentNoteId, message);
         await broadcast(channel, { ...message, type: "share-link", url, signature: undefined });
       } catch (error) {
         await broadcast(channel, {
@@ -701,6 +716,9 @@ __DIANDIAN_MATCH_LINE__
         });
       } finally {
         history.replaceState(history.state, "", location.pathname);
+        if (document.documentElement?.getAttribute?.("data-xhs-kb-share-worker") === requestedWorkerId) {
+          document.documentElement.removeAttribute?.("data-xhs-kb-share-worker");
+        }
         processing = false;
         channel.close();
       }

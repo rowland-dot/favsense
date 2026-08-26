@@ -56,6 +56,9 @@ NOTE_PATH = re.compile(r"^/(?:explore|discovery/item)/([A-Za-z0-9_-]{1,128})$")
 NOTE_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 RUN_ID = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 BOARD_ID = re.compile(r"^[a-z0-9]{1,80}$")
+WORKER_ID = re.compile(
+    r"^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+)
 TOKEN_QUERY = re.compile(
     r"(?i)([\"']?xsec[\s_-]*token[\"']?\s*[:=]\s*[\"']?)[^\"'&,}\]\s]+"
 )
@@ -1444,6 +1447,171 @@ def open_sop_cdp_target(port_file: Path, initial_url: str = "about:blank") -> CD
     return CDPTarget(endpoint, target_id, connection)
 
 
+@contextmanager
+def open_sop_note_session(port_file: Path, note_id: str, worker_id: str):
+    if not NOTE_ID.fullmatch(note_id) or not WORKER_ID.fullmatch(worker_id):
+        raise ValueError("SOP note target is invalid")
+    endpoint = read_sop_devtools_endpoint(port_file)
+    values = loopback_devtools_json(endpoint, "/json/list")
+    if not isinstance(values, list) or len(values) > 1000:
+        raise RuntimeError("SOP DevTools target list is invalid")
+    candidates = []
+    for value in values:
+        if not isinstance(value, dict) or value.get("type") != "page":
+            continue
+        try:
+            target_note_id = note_id_from_url(str(value.get("url", "")))
+        except ValueError:
+            continue
+        if target_note_id != note_id:
+            continue
+        _, websocket_url = validate_sop_target_response(value, endpoint)
+        candidates.append(websocket_url)
+    if not candidates:
+        raise RuntimeError("SOP note target is unavailable or ambiguous")
+    try:
+        from websockets.sync.client import connect
+    except (ImportError, OSError, RuntimeError) as error:
+        raise RuntimeError("SOP note target could not be connected") from error
+    matches = []
+    try:
+        binding_expression = f"String({diandian_note_location_expression(note_id, worker_id)})"
+        for websocket_url in candidates:
+            connection = None
+            try:
+                connection = connect(
+                    websocket_url,
+                    proxy=None,
+                    open_timeout=5,
+                    close_timeout=5,
+                    max_size=1024 * 1024,
+                )
+                session = CDPSession(connection)
+                if session.evaluate(binding_expression) == "true":
+                    matches.append((connection, session))
+                    connection = None
+                else:
+                    connection.close()
+                    connection = None
+            except (OSError, RuntimeError) as error:
+                if connection is not None:
+                    try:
+                        connection.close()
+                    except Exception:
+                        pass
+                raise RuntimeError("SOP note target could not be connected") from error
+        if len(matches) != 1:
+            raise RuntimeError("SOP note target is unavailable or ambiguous")
+        yield matches[0][1]
+    finally:
+        for connection, _ in matches:
+            connection.close()
+
+
+def diandian_note_location_expression(note_id: str, worker_id: str) -> str:
+    if not NOTE_ID.fullmatch(note_id) or not WORKER_ID.fullmatch(worker_id):
+        raise ValueError("DianDian native click note is invalid")
+    return (
+        "(()=>{"
+        "const match=location.pathname.match("
+        "/^\\/(?:explore|discovery\\/item)\\/([A-Za-z0-9_-]{1,128})$/);"
+        f"return location.origin==='https://www.xiaohongshu.com'&&match?.[1]==={json.dumps(note_id)}"
+        "&&!location.hash&&document.documentElement?.getAttribute('data-xhs-kb-share-worker')==="
+        f"{json.dumps(worker_id)};"
+        "})()"
+    )
+
+
+def diandian_control_point_expression(
+    selectors: dict,
+    action: str,
+    note_id: str,
+    worker_id: str,
+) -> str:
+    if (
+        not isinstance(selectors, dict)
+        or action not in {"share", "copy"}
+        or not NOTE_ID.fullmatch(note_id)
+        or not WORKER_ID.fullmatch(worker_id)
+    ):
+        raise ValueError("DianDian native click contract is invalid")
+    required_lists = (
+        "share_controls",
+        "unlabeled_share_controls",
+        "share_menu_items",
+    )
+    if any(
+        not isinstance(selectors.get(key), list)
+        or not selectors[key]
+        or not all(isinstance(value, str) and value for value in selectors[key])
+        for key in required_lists
+    ):
+        raise ValueError("DianDian native click selectors are invalid")
+    if not all(
+        isinstance(selectors.get(key), str) and selectors[key]
+        for key in ("share_action_text", "copy_action_text")
+    ):
+        raise ValueError("DianDian native click labels are invalid")
+    return (
+        "JSON.stringify((()=>{"
+        f"const selectors={json.dumps(selectors, ensure_ascii=False)};"
+        f"const action={json.dumps(action)};"
+        f"const noteId={json.dumps(note_id)};"
+        f"const workerId={json.dumps(worker_id)};"
+        "const noteMatch=location.pathname.match("
+        "/^\\/(?:explore|discovery\\/item)\\/([A-Za-z0-9_-]{1,128})$/);"
+        "const locationMatches=location.origin==='https://www.xiaohongshu.com'&&"
+        "noteMatch?.[1]===noteId&&!location.hash&&"
+        "document.documentElement?.getAttribute('data-xhs-kb-share-worker')===workerId;"
+        "if(!locationMatches)return {found:false,safety:false,location_matches:false};"
+        "const visible=e=>!!e&&e.getClientRects().length&&"
+        "getComputedStyle(e).display!=='none'&&getComputedStyle(e).visibility!=='hidden'&&"
+        "getComputedStyle(e).opacity!=='0';"
+        "const label=e=>`${e?.textContent||''} ${e?.getAttribute?.('aria-label')||''} "
+        "${e?.getAttribute?.('title')||''}`.replace(/\\s+/g,' ').trim();"
+        "const exact=(e,t)=>[e?.textContent,e?.getAttribute?.('aria-label'),e?.getAttribute?.('title')]"
+        ".some(v=>String(v||'').replace(/\\s+/g,' ').trim()===t);"
+        "const copyScope=e=>{const scope=e?.closest?.("
+        "'[class*=\"share-popup\" i],[class*=\"share_popup\" i],"
+        "[data-testid*=\"share\" i][role=\"dialog\"]');"
+        "return !!scope&&visible(scope);};"
+        "const challenge=[...document.querySelectorAll("
+        "'[class*=\"captcha\" i],[id*=\"captcha\" i],[class*=\"geetest\" i],"
+        "[id*=\"geetest\" i],[data-testid*=\"captcha\" i],[data-testid*=\"verify\" i],"
+        "iframe[src*=\"captcha\" i]')].some(visible);"
+        "const warning=[...document.querySelectorAll("
+        "'[role=\"alert\"],[role=\"dialog\"],[aria-modal=\"true\"]')].filter(visible)"
+        ".some(e=>/(?:验证码|访问频繁|操作频繁|请求频繁|安全限制|300031|captcha)/i"
+        ".test(e.innerText||e.textContent||''));"
+        "const structured=[...document.querySelectorAll("
+        "'script[type=\"application/json\"],script#__INITIAL_STATE__')]"
+        ".some(e=>/[\"'](?:error[_-]?code|status[_-]?code|code|status)[\"']"
+        "\\s*[:=]\\s*[\"']?300031\\b/i.test(e.textContent||''));"
+        "if(challenge||warning||structured)"
+        "return {found:false,safety:true,location_matches:true};"
+        "let element=null;"
+        "if(action==='share'){"
+        "for(const selector of selectors.share_controls){"
+        "const candidates=[...document.querySelectorAll(selector)].filter(visible);"
+        "element=candidates.find(e=>label(e).split(/\\s+/).includes(selectors.share_action_text))||null;"
+        "if(!element&&selectors.unlabeled_share_controls.includes(selector))element=candidates[0]||null;"
+        "if(element)break;"
+        "}"
+        "}else{"
+        "element=selectors.share_menu_items.flatMap(s=>[...document.querySelectorAll(s)])"
+        ".find(e=>visible(e)&&copyScope(e)&&exact(e,selectors.copy_action_text))||null;"
+        "}"
+        "if(!element)return {found:false,safety:false,location_matches:true};"
+        "const rect=element.getBoundingClientRect();"
+        "const x=rect.left+rect.width/2,y=rect.top+rect.height/2;"
+        "const hit=document.elementFromPoint(x,y);"
+        "if(!(rect.width>0&&rect.height>0&&hit&&(hit===element||element.contains(hit))))"
+        "return {found:false,safety:false,location_matches:true};"
+        "return {found:true,safety:false,location_matches:true,x,y};"
+        "})())"
+    )
+
+
 def ai_page_state_expression(spec: dict) -> str:
     selectors = spec.get("selectors") if isinstance(spec, dict) else None
     if not isinstance(selectors, dict):
@@ -2320,6 +2488,9 @@ class Bridge:
         ] = {}
         self.diandian_cdp_run_cancellations: dict[
             str, tuple[threading.Lock, threading.Event]
+        ] = {}
+        self.diandian_click_states: dict[
+            tuple[str, str], tuple[str, str]
         ] = {}
         self.diandian_sleep = time.sleep
 
@@ -3619,6 +3790,30 @@ class Bridge:
                     return self.complete_empty_diandian_plan(
                         run_id, board_id, abandoned=True, enabled=False
                     )
+                board_note_ids = state.get("board_note_ids")
+                confirmed = (
+                    [target_note_id]
+                    if target_note_id is not None
+                    else board_note_ids.get(board_id)
+                    if isinstance(board_note_ids, dict)
+                    else None
+                )
+                if (
+                    not isinstance(confirmed, list)
+                    or not all(
+                        isinstance(note_id, str) and NOTE_ID.fullmatch(note_id)
+                        for note_id in confirmed
+                    )
+                ):
+                    raise ValueError("core organization note scope is invalid")
+                confirmed_ids = set(confirmed)
+                note_ids = [
+                    note_id for note_id in note_ids if note_id in confirmed_ids
+                ]
+                if not note_ids:
+                    return self.complete_empty_diandian_plan(
+                        run_id, board_id, abandoned=True, enabled=False
+                    )
                 if run_id in self.summary_plans:
                     current = self.summary_plans[run_id]
                     return {
@@ -3686,8 +3881,36 @@ class Bridge:
                 control = (threading.Lock(), threading.Event())
                 run_controls[run_id] = control
             input_gate, cancelled = control
-            with input_gate:
-                cancelled.set()
+        with input_gate:
+            cancelled.set()
+        with guard:
+            click_states = getattr(self, "diandian_click_states", None)
+            if click_states is None:
+                click_states = {}
+                self.diandian_click_states = click_states
+            for key in [key for key in click_states if key[0] == run_id]:
+                click_states.pop(key, None)
+
+    def clear_diandian_click_states(
+        self,
+        run_id: str,
+        note_id: str | None = None,
+    ) -> None:
+        guard = getattr(self, "diandian_cdp_guard", None)
+        if guard is None:
+            guard = threading.Lock()
+            self.diandian_cdp_guard = guard
+        with guard:
+            click_states = getattr(self, "diandian_click_states", None)
+            if click_states is None:
+                self.diandian_click_states = {}
+                return
+            for key in [
+                key
+                for key in click_states
+                if key[0] == run_id and (note_id is None or key[1] == note_id)
+            ]:
+                click_states.pop(key, None)
 
     def halt_diandian_cdp_run(
         self,
@@ -3796,6 +4019,189 @@ class Bridge:
                     "halted": True,
                     "reason": DIANDIAN_SAFETY_STOP_REASON if effective_safety else reason,
                 }
+
+    def click_diandian_control(self, payload: dict) -> dict:
+        if set(payload) != {
+            "run_id",
+            "board_id",
+            "note_id",
+            "worker_id",
+            "action",
+        }:
+            raise ValueError("DianDian native click request contains unsupported fields")
+        run_id = payload.get("run_id")
+        board_id = payload.get("board_id")
+        note_id = payload.get("note_id")
+        worker_id = payload.get("worker_id")
+        action = payload.get("action")
+        if not all(
+            isinstance(value, str)
+            for value in (run_id, board_id, note_id, worker_id, action)
+        ):
+            raise ValueError("DianDian native click request fields must be strings")
+        if (
+            not RUN_ID.fullmatch(run_id)
+            or not BOARD_ID.fullmatch(board_id)
+            or not NOTE_ID.fullmatch(note_id)
+            or not WORKER_ID.fullmatch(worker_id)
+            or action not in {"share", "copy"}
+        ):
+            raise ValueError("DianDian native click request is invalid")
+        with self.summary_run_lock(run_id):
+            self.validate_manual_board_run(run_id, board_id)
+            if note_id not in self.summary_plans.get(run_id, set()):
+                raise ValueError("DianDian native click note is not pending")
+            contract = getattr(self, "diandian_browser_contract", {})
+            selectors = contract.get("selectors") if isinstance(contract, dict) else None
+            expression = diandian_control_point_expression(
+                selectors,
+                action,
+                note_id,
+                worker_id,
+            )
+        guard = getattr(self, "diandian_cdp_guard", None)
+        if guard is None:
+            guard = threading.Lock()
+            self.diandian_cdp_guard = guard
+        click_key = (run_id, note_id)
+        in_progress = f"{action}-in-progress"
+        success_state = "shared" if action == "share" else "consumed"
+        retry_state = None if action == "share" else "shared"
+        claimed_state = (worker_id, in_progress)
+        with guard:
+            controls = getattr(self, "diandian_cdp_run_cancellations", None)
+            if controls is None:
+                controls = {}
+                self.diandian_cdp_run_cancellations = controls
+            control = controls.get(run_id)
+            if control is None:
+                control = (threading.Lock(), threading.Event())
+                controls[run_id] = control
+            input_gate, cancelled = control
+            if cancelled.is_set():
+                raise RuntimeError("run-halted")
+            click_states = getattr(self, "diandian_click_states", None)
+            if click_states is None:
+                click_states = {}
+                self.diandian_click_states = click_states
+            current_state = click_states.get(click_key)
+            if (action == "share" and current_state is not None) or (
+                action == "copy" and current_state != (worker_id, "shared")
+            ):
+                raise ValueError("native-click-sequence-invalid")
+            click_states[click_key] = claimed_state
+        succeeded = False
+        input_attempted = False
+        safety_detected = False
+        try:
+            try:
+                with open_sop_note_session(
+                    self.sop_port_file,
+                    note_id,
+                    worker_id,
+                ) as session:
+                    with input_gate:
+                        if cancelled.is_set() or self.diandian_is_halted(run_id):
+                            raise RuntimeError("run-halted")
+                        try:
+                            point = json.loads(session.evaluate(expression))
+                        except json.JSONDecodeError as error:
+                            raise RuntimeError(
+                                "DianDian native click target is invalid"
+                            ) from error
+                        if (
+                            not isinstance(point, dict)
+                            or point.get("safety") not in {True, False}
+                        ):
+                            raise RuntimeError(
+                                "DianDian native click target is invalid"
+                            )
+                        if point.get("safety") is True:
+                            safety_detected = True
+                            cancelled.set()
+                        else:
+                            x = point.get("x")
+                            y = point.get("y")
+                            if (
+                                point.get("found") is not True
+                                or point.get("location_matches") is not True
+                                or not all(
+                                    isinstance(value, (int, float))
+                                    and not isinstance(value, bool)
+                                    and abs(value) < 100_000
+                                    for value in (x, y)
+                                )
+                            ):
+                                raise RuntimeError(
+                                    "DianDian native click target is unavailable"
+                                )
+                            input_attempted = True
+                            try:
+                                session.call(
+                                    "Input.dispatchMouseEvent",
+                                    type="mousePressed",
+                                    x=x,
+                                    y=y,
+                                    button="left",
+                                    clickCount=1,
+                                )
+                                session.call(
+                                    "Input.dispatchMouseEvent",
+                                    type="mouseReleased",
+                                    x=x,
+                                    y=y,
+                                    button="left",
+                                    clickCount=1,
+                                )
+                            except Exception:
+                                try:
+                                    session.call(
+                                        "Input.dispatchMouseEvent",
+                                        type="mouseReleased",
+                                        x=x,
+                                        y=y,
+                                        button="left",
+                                        clickCount=1,
+                                    )
+                                except Exception:
+                                    pass
+                                raise
+            except Exception as error:
+                if not safety_detected:
+                    if isinstance(error, RuntimeError) and str(error) == "run-halted":
+                        raise
+                    reason = (
+                        "native-click-input-uncertain"
+                        if input_attempted
+                        else f"native-click-{action}-unavailable"
+                    )
+                    raise RuntimeError(reason) from error
+            if safety_detected:
+                try:
+                    self.halt_diandian_cdp_run(
+                        run_id,
+                        board_id,
+                        reason=DIANDIAN_SAFETY_STOP_REASON,
+                        safety=True,
+                        failed_note_id=note_id,
+                    )
+                except Exception as error:
+                    raise RuntimeError("xhs-safety-stop") from error
+                raise RuntimeError("xhs-safety-stop")
+            succeeded = True
+        finally:
+            with guard:
+                click_states = getattr(self, "diandian_click_states", {})
+                if click_states.get(click_key) == claimed_state:
+                    if succeeded:
+                        click_states[click_key] = (worker_id, success_state)
+                    elif input_attempted:
+                        click_states[click_key] = (worker_id, "uncertain")
+                    elif retry_state is None:
+                        click_states.pop(click_key, None)
+                    else:
+                        click_states[click_key] = (worker_id, retry_state)
+        return {"clicked": True}
 
     def run_diandian_cdp(self, payload: dict) -> dict:
         if set(payload) != {"run_id", "board_id", "note_id", "title", "url"}:
@@ -4166,6 +4572,7 @@ class Bridge:
                     raise RuntimeError("DianDian summary saver did not persist expected record")
                 self.record_diandian_succeeded(note_id)
                 pending.remove(note_id)
+                self.clear_diandian_click_states(run_id, note_id)
                 try:
                     self.update_diandian_progress(
                         run_id,
@@ -5462,7 +5869,7 @@ class Bridge:
                 "report": str(report) if fetched_notes or not safety_stopped else None,
                 "media": media,
                 "next_board_id": next_board_id,
-                "note_ids": sorted(unique),
+                "note_ids": sorted((known & set(unique)) | fetched_ids),
             }
             if safety_stopped:
                 result["error"] = "小红书触发安全限制，已停止本轮且不会继续重试"
@@ -5631,7 +6038,7 @@ def make_handler(bridge: Bridge):
             if self.path not in {
                 "/import-sync", "/boards", "/sync/start", "/sync/failure", "/sync/discover",
                 "/sync/summary-plan", "/sync/diandian-result", "/sync/diandian-skip",
-                "/sync/diandian-halt", "/sync/diandian-cdp", "/notes/open",
+                "/sync/diandian-halt", "/sync/diandian-click", "/sync/diandian-cdp", "/notes/open",
                 "/notes/organization-status",
                 "/install/complete",
             }:
@@ -5686,6 +6093,9 @@ def make_handler(bridge: Bridge):
                     return
                 if self.path == "/sync/diandian-halt":
                     self.send_json(HTTPStatus.OK, {"ok": True, **bridge.halt_diandian_run(payload)})
+                    return
+                if self.path == "/sync/diandian-click":
+                    self.send_json(HTTPStatus.OK, {"ok": True, **bridge.click_diandian_control(payload)})
                     return
                 if self.path == "/sync/diandian-cdp":
                     self.send_json(HTTPStatus.OK, {"ok": True, **bridge.run_diandian_cdp(payload)})

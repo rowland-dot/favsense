@@ -1,5 +1,6 @@
 import importlib.util
 import io
+import json
 import os
 import subprocess
 import sys
@@ -11,6 +12,7 @@ from unittest import mock
 
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "extract-pending-image-text.py"
+RUNNER = Path(__file__).parents[1] / "scripts" / "run-video-analysis.ps1"
 
 
 def load_module():
@@ -57,12 +59,119 @@ class ImageTextExtractionTests(unittest.TestCase):
             def run_engine(_command, **_options):
                 return Process()
             runner = mock.Mock(side_effect=run_engine)
-            result = module.extract_cached_images(media, root / "analysis", engine=engine, allowed_note_ids={allowed}, runner=runner)
+            result = module.extract_cached_images(
+                media,
+                root / "analysis",
+                engine=engine,
+                allowed_note_ids={allowed},
+                content_sha256_by_id={allowed: "c" * 64},
+                runner=runner,
+            )
             self.assertEqual(result["status"], "completed")
             self.assertEqual(result["processed"], 1)
             self.assertEqual(result["records"][0]["note_id"], allowed)
             self.assertNotIn("text", result["records"][0])
             self.assertEqual(runner.call_count, 1)
+
+    def test_success_artifact_binds_the_catalog_revision_and_tool_contract(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); media = root / "media"; media.mkdir()
+            allowed = "a" * 24
+            content_sha256 = "b" * 64
+            (media / f"{allowed}.jpg").write_bytes(b"synthetic-image")
+            engine = root / "ocr.exe"; engine.write_bytes(b"synthetic-engine")
+
+            class Process:
+                stdout = io.BytesIO(b"revision bound OCR text")
+                stderr = io.BytesIO()
+                returncode = 0
+
+                def wait(self, timeout=None):
+                    return self.returncode
+
+                def terminate(self):
+                    self.returncode = 1
+
+                def kill(self):
+                    self.returncode = 1
+
+            result = module.extract_cached_images(
+                media,
+                root / "analysis",
+                engine=engine,
+                allowed_note_ids={allowed},
+                content_sha256_by_id={allowed: content_sha256},
+                runner=lambda *_args, **_kwargs: Process(),
+            )
+
+            self.assertEqual(result["processed"], 1)
+            artifact = json.loads(
+                (root / "analysis" / allowed / "visual-ocr.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(artifact["schema_version"], 1)
+            self.assertEqual(artifact["content_sha256"], content_sha256)
+            self.assertEqual(artifact["status"], "extracted")
+            self.assertEqual(artifact["method"], "local_image_ocr")
+            self.assertTrue(artifact["provider"])
+            tool_version = module.ocr_tool_version(engine)
+            self.assertEqual(artifact["tool_version"], tool_version)
+            self.assertEqual(
+                artifact["result_sha256"],
+                module.hashlib.sha256(artifact["text"].encode("utf-8")).hexdigest(),
+            )
+            engine.write_bytes(b"different-synthetic-engine")
+            self.assertNotEqual(tool_version, module.ocr_tool_version(engine))
+
+    def test_engine_identity_drift_during_execution_fails_closed(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); media = root / "media"; media.mkdir()
+            allowed = "a" * 24
+            (media / f"{allowed}.jpg").write_bytes(b"synthetic-image")
+            engine = root / "ocr.exe"; engine.write_bytes(b"original-engine")
+
+            class Process:
+                stdout = io.BytesIO(b"text from changed engine")
+                stderr = io.BytesIO()
+                returncode = 0
+
+                def wait(self, timeout=None):
+                    return self.returncode
+
+                def terminate(self):
+                    self.returncode = 1
+
+                def kill(self):
+                    self.returncode = 1
+
+            def replace_engine(*_args, **_kwargs):
+                engine.write_bytes(b"replacement-engine")
+                return Process()
+
+            result = module.extract_cached_images(
+                media,
+                root / "analysis",
+                engine=engine,
+                allowed_note_ids={allowed},
+                content_sha256_by_id={allowed: "b" * 64},
+                runner=replace_engine,
+            )
+
+            self.assertEqual(result["processed"], 0)
+            self.assertEqual(result["failed"], 1)
+            self.assertEqual(result["records"][0]["reason_code"], "ocr_engine_changed")
+            artifact = json.loads(
+                (root / "analysis" / allowed / "visual-ocr.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(artifact["status"], "failed")
+            self.assertEqual(artifact["reason_code"], "ocr_engine_changed")
+            self.assertNotIn("text", artifact)
+
+    def test_real_runner_passes_the_catalog_to_the_ocr_producer(self):
+        source = RUNNER.read_text(encoding="utf-8-sig")
+        ocr_call = source[source.index("$ocrArguments = @("):source.index("& $python @ocrArguments")]
+        self.assertIn("'--catalog', $catalog", ocr_call)
 
     def test_engine_output_is_spooled_and_rejected_before_an_unbounded_read(self):
         module = load_module()
@@ -76,13 +185,24 @@ class ImageTextExtractionTests(unittest.TestCase):
 
             result = module.extract_cached_images(
                 media, root / "analysis", engine=Path(sys.executable).resolve(),
-                allowed_note_ids={allowed},
+                allowed_note_ids={allowed}, content_sha256_by_id={allowed: "c" * 64},
             )
             self.assertEqual(result["status"], "partial")
             self.assertEqual(result["records"], [{
                 "note_id": allowed, "status": "failed", "reason_code": "ocr_output_too_large",
             }])
-            self.assertFalse((root / "analysis" / allowed / "visual-ocr.json").exists())
+            artifact = json.loads(
+                (root / "analysis" / allowed / "visual-ocr.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(artifact["status"], "failed")
+            self.assertEqual(artifact["content_sha256"], "c" * 64)
+            self.assertEqual(artifact["method"], "local_image_ocr")
+            self.assertEqual(artifact["provider"], "configured-local-engine")
+            self.assertEqual(
+                artifact["tool_version"], module.ocr_tool_version(Path(sys.executable))
+            )
+            self.assertEqual(artifact["reason_code"], "ocr_output_too_large")
+            self.assertNotIn("text", artifact)
 
     def test_engine_stderr_and_timeout_are_bounded_with_real_children(self):
         module = load_module()
