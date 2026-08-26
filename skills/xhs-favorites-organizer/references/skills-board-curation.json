@@ -2260,5 +2260,62 @@
     "candidate_revision": "57d791cb247f7cbe47f4d8ad9693ca483cb8000e92955400ca213760b659bf86",
     "review_status": "accepted",
     "review_reason_code": ""
+  },
+  "6a7c21c20000000022030f2d": {
+    "id": "6a7c21c20000000022030f2d",
+    "content_sha256": "f2b10722a4de6af99fb9e1098d7b516d8238cecb097a3148567541fa9615a7dc",
+    "title": "没有服务器，也能直接一键部署",
+    "category": "开发部署与 Vibe Coding",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "PocketBay 是面向 AI 编程项目的部署与托管平台。用户把官方部署指南交给 Codex、Claude Code、Cursor 等编程 Agent；Agent 在本地识别项目类型并创建一次性配对会话，用户确认项目名称和部署类型后才允许上传。平台随后负责受限构建、健康检查、托管域名、HTTPS、日志和运行生命周期。它适合静态站、Next.js、普通 Node.js/Python Web 服务和单容器应用，不适合多服务编排、后台任务、Kubernetes、GPU 推理或持续高负载；因此“一键部署”是简化部署流程，并不代表所有项目都能无条件上线。",
+    "action": "先用一个不含密钥和私人数据的小型演示项目试跑。浏览器授权前核对项目名和部署类型；上线后检查构建日志、HTTPS、休眠唤醒和数据持久化。正式迁移前确认是否依赖多服务、后台任务、Redis、对象存储、GPU 或固定 SLA，命中限制则不要迁入。",
+    "themes": [
+      "AI 应用部署",
+      "AI 编程 Agent",
+      "AI基础知识",
+      "安全授权",
+      "开发部署与 Vibe Coding",
+      "托管运行"
+    ],
+    "tools": [
+      "PocketBay"
+    ],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "565b3e771eabcad5bea3d492650da6907c8cbfa064b2e93d77cd11eb3d7bc1a1",
+    "evidence_sha256": "c184d9d9ad7073f7d1ff12a9c162234e000ab5e04898bc0a4f0bdc64e913ff6e",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "7fec1cfdf6338ecc4ee773a577b5f53a1ec28f58eed0557372e609e00826443b"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "547577576300de3f183180c5877542d8fca10f652c37b08193d466cab6b4e4a9"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "bc78ebced0a4659f61100849abb015d9fa7863a3ab6e8ea677374bf8bb1ce6a0",
+    "review_status": "accepted",
+    "review_reason_code": "用户已批准 PocketBay Product 策展；当前正文与点点 v2 总结 revision 一致，官方产品资源和平台限制已核验。"
   }
 }

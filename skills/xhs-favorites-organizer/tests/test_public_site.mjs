@@ -144,6 +144,74 @@ test("personal state is exposed only after browser storage accepts the write", a
   assert.equal(failingContext.result.messages.some((message) => /尚未就绪|尚未加载/.test(message)), true);
 });
 
+test("accepted cards display the formal curation summary without displacing personal overrides", async () => {
+  const app = await read("site/app.js");
+  const source = sourceSlice(
+    app,
+    "function noteDescription(note)",
+    "\nfunction renderPersonalControls"
+  );
+  const context = {
+    state: {
+      descriptionOverrides: {
+        personal: { description: "Personal approved wording", deleted: false },
+        deleted: { description: "Deleted personal wording", deleted: true }
+      }
+    },
+    result: null
+  };
+
+  runInNewContext(`${source}
+    result = {
+      accepted: noteDescription({
+        id: "accepted",
+        curationStatus: "accepted",
+        summary: "Formal accepted curation summary",
+        deepSummary: "Raw point summary that was not the approved wording"
+      }),
+      acceptedViaSummaryStatus: noteDescription({
+        id: "accepted-summary-status",
+        summaryStatus: "accepted",
+        summary: "Formal accepted summary-status wording",
+        deepSummary: "Different raw point summary"
+      }),
+      rejected: noteDescription({
+        id: "rejected",
+        curationStatus: "rejected",
+        summary: "Safe metadata fallback",
+        deepSummary: "Existing rejected deep fallback"
+      }),
+      pending: noteDescription({
+        id: "pending",
+        curationStatus: "pending",
+        summary: "Safe pending metadata",
+        deepSummary: "Existing pending deep fallback"
+      }),
+      personal: noteDescription({
+        id: "personal",
+        curationStatus: "accepted",
+        summary: "Formal accepted curation summary",
+        deepSummary: "Raw point summary"
+      }),
+      deletedPersonal: noteDescription({
+        id: "deleted",
+        curationStatus: "accepted",
+        summary: "Formal summary after personal deletion",
+        deepSummary: "Raw point summary"
+      })
+    };
+  `, context);
+
+  assert.deepEqual({ ...context.result }, {
+    accepted: "Formal accepted curation summary",
+    acceptedViaSummaryStatus: "Formal accepted summary-status wording",
+    rejected: "Existing rejected deep fallback",
+    pending: "Existing pending deep fallback",
+    personal: "Personal approved wording",
+    deletedPersonal: "Formal summary after personal deletion"
+  });
+});
+
 test("personal backup controls fail closed until knowledge IDs are available", async () => {
   const app = await read("site/app.js");
   const personalFunctions = sourceSlice(app, "function validNoteIds()", "function noteDescription");
@@ -446,7 +514,7 @@ test("public site ships complete, structured knowledge data", async () => {
     assert.match(note.id, /^[a-f0-9]{24}$/);
     assert.ok(note.title.length > 0);
     assert.ok(note.summary.length > 0);
-    assert.ok(note.deepSummary.length >= note.summary.length);
+    assert.ok(note.deepSummary.length > 0);
     assert.equal(typeof note.action, "string");
     if (note.action) assert.ok(note.action.length > 20);
     assert.match(note.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/search_result\?/);
@@ -517,6 +585,38 @@ test("private DianDian summaries become keyed deep summaries without leaking sou
   assert.equal(data.notes[0].summaryState, "captured");
   assert.equal(data.notes[0].summaryReasonCode, "");
   assert.doesNotMatch(JSON.stringify(data), /xsec_token|source_url/i);
+});
+
+test("accepted production builds keep a longer formal summary separate from the point evidence", async () => {
+  const noteId = "aaaaaaaaaaaaaaaaaaaaaaaa";
+  const formalSummary = "PocketBay 是面向 AI 编程项目的部署与托管产品；正式策展总结会补充一次性配对、浏览器授权、支持的运行时，以及多服务、后台任务、GPU 和固定 SLA 等平台边界。";
+  const pointSummary = "PocketBay 可以帮助用户部署 AI 生成的应用。";
+  const data = await buildProfileFixture("software.json", {
+    curation: {
+      [noteId]: {
+        category: "开发部署与 Vibe Coding",
+        themes: ["AI 应用部署"],
+        summary: formalSummary,
+        action: "先用不含密钥的小型项目试跑，并在浏览器授权前核对项目名与部署类型。",
+        tools: [],
+        kind: "Product"
+      }
+    },
+    note: {
+      title: "部署产品",
+      description: "PocketBay 部署说明",
+      source_boards: ["AI基础知识"],
+      type: "视频",
+      comment_evidence_checked: true
+    },
+    boards: [{ id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "AI基础知识", enabled: true }],
+    diandianSummary: pointSummary,
+    auditStatus: "accepted"
+  });
+
+  assert.equal(data.notes[0].summary, formalSummary);
+  assert.equal(data.notes[0].deepSummary, pointSummary);
+  assert.equal(data.notes[0].curationStatus, "accepted");
 });
 
 test("a completed rejection is not rendered as waiting for review", async () => {

@@ -719,10 +719,16 @@ test("Skill requires a verified GitHub resource, license and manifest", () => {
   assert.match(result.fatal.join("\n"), /skill-manifest-missing/);
 });
 
-test("category override requires an explicit reason", () => {
+test("a curated category stays a suggestion unless an explicit override has a reason", () => {
   const input = fixture();
   input.curation[input.id].category = "另一主题";
-  const result = auditCuration(input);
+  input.audit.notes[input.id].curation_sha256 = curationRevision(input.curation[input.id]);
+  let result = auditCuration(input);
+  assert.deepEqual(result.fatal, []);
+
+  input.curation[input.id].category_override = true;
+  input.audit.notes[input.id].curation_sha256 = curationRevision(input.curation[input.id]);
+  result = auditCuration(input);
   assert.match(result.fatal.join("\n"), /category-override-unexplained/);
 });
 

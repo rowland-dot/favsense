@@ -273,7 +273,12 @@ function persistPersonalData(candidate = personalData()) {
 
 function noteDescription(note) {
   const override = state.descriptionOverrides[note.id];
-  return (!override?.deleted && override?.description) || note.deepSummary || note.summary;
+  if (!override?.deleted && override?.description) return override.description;
+  const curationStatus = String(
+    note.curationStatus || note.curation_status || note.summaryStatus || note.summary_status || ""
+  );
+  if (curationStatus === "accepted") return note.summary || "";
+  return note.deepSummary || note.summary;
 }
 
 function renderPersonalControls() {

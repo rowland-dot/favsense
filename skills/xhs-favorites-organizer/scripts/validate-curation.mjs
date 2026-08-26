@@ -80,7 +80,6 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
   const resourceItems = Array.isArray(resources) ? resources : resources.resources || [];
   const resourceLookup = new Map();
   for (const resource of resourceItems) for (const alias of aliasesFor(resource)) resourceLookup.set(alias, resource);
-  const configuredBoards = new Map((config.boards || []).map((board) => [clean(board.name), board]));
   const requestedIds = Array.isArray(scopeIds) ? [...new Set(scopeIds.map(clean).filter(Boolean))] : null;
   const scoped = requestedIds
     ? requestedIds.filter((noteId) => Object.hasOwn(notes, noteId)).map((noteId) => [noteId, notes[noteId]])
@@ -144,10 +143,8 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
         if (clean(entry.action).length < 16 || GENERIC_TEXT.some((pattern) => pattern.test(clean(entry.action)))) errors.push("action-not-specific");
         if (!Array.isArray(entry.themes) || entry.themes.length < 1) errors.push("themes-missing");
         if (!Array.isArray(entry.tools)) errors.push("tools-invalid");
-        const sourceName = Array.isArray(note.source_boards) ? clean(note.source_boards[0]) : "";
-        const sourceCategory = clean(configuredBoards.get(sourceName)?.category) || sourceName;
-        if (clean(entry.category) && sourceCategory && clean(entry.category) !== sourceCategory) {
-          if (entry.category_override !== true || !clean(entry.category_reason)) errors.push("category-override-unexplained");
+        if (entry.category_override === true && (!clean(entry.category) || !clean(entry.category_reason))) {
+          errors.push("category-override-unexplained");
         }
         const kind = clean(entry.kind);
         if (!kind) errors.push("kind-missing");

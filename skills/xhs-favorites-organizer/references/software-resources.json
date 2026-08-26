@@ -908,6 +908,22 @@
       "license": "MIT",
       "skill_manifest": "amazon-global-selling/SKILL.md",
       "verified_at": "2026-08-12"
+    },
+    {
+      "name": "PocketBay",
+      "aliases": [
+        "PocketBay AI"
+      ],
+      "type": "产品官网",
+      "website": "https://pocketbay.com/",
+      "documentation": "https://pocketbay.com/zh-CN/deploy",
+      "faq": "https://pocketbay.com/zh-CN/faq",
+      "limitations": "https://pocketbay.com/docs/limitations",
+      "trust": "https://pocketbay.com/trust",
+      "metric_icon": "↗",
+      "stars": "官方网站",
+      "usage_note": "AI 原生应用部署与托管产品。先用不含密钥和私人数据的小型项目试跑；浏览器授权前核对项目名和部署类型，并在正式采用前确认多服务、后台任务、数据服务、GPU、扩展性和 SLA 限制。",
+      "verified_at": "2026-08-26"
     }
   ]
 }

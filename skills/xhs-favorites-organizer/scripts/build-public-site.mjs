@@ -380,7 +380,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     suggestedCategory: categoryPolicy.suggestedCategory,
     sourceBoards: categoryPolicy.sourceBoards,
     themes: categoryPolicy.themes,
-    summary: publicSummary.length <= publicDeepSummary.length ? publicSummary : publicDeepSummary,
+    summary: publicSummary,
     deepSummary: publicDeepSummary,
     deepSummarySource: publicDiandian ? "xiaohongshu-diandian" : (isCurated ? "curation" : "source-metadata"),
     curationRevision: isCurated ? curationRevision(entry) : "",
