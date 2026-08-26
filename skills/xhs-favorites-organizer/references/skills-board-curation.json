@@ -4207,5 +4207,373 @@
     "candidate_revision": "1459ed825a29592b394d08e38c07ac9233cf9040b86fe1494db333086ea18a21",
     "review_status": "accepted",
     "review_reason_code": ""
+  },
+  "6a49ec170000000020038350": {
+    "id": "6a49ec170000000020038350",
+    "content_sha256": "0730149c577a3c55e5ce274b343c3fd9592f1d3319cfaa8fe8345851c41ed997",
+    "title": "夯爆了!这开源项目 4 个月冲到 50.7k 星",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频把小红书运营拆成定位、选题、写作、视觉和复盘五个阶段，并用路由总控串联十个自建流程；重点是把重复决策模板化，而不是证明这些名称对应已核验的官方 Skill。",
+    "action": "先实现账号定位、选题和复盘三个内部模板，用一周真实内容验证输入输出，再决定是否扩展到视觉与总控路由。",
+    "themes": [
+      "小红书运营",
+      "流程拆分",
+      "路由总控"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "cbf6b17268bc19526fc4cf2b31cb8dd8616b1bdb53d5484332e99a19f2489ab8",
+    "evidence_sha256": "d28feca6522ced325b1a982285e1519cbce7a037dda59a97c92d2fb722df6cb7",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "e215aec220c8d27fe3da97d14a18fdedc77fe42d77ed17ffef49ebc7d51f8c22"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "fc145364ec28394114a4d4ba4ab273511d44a30ac2c15dbd54a249b94e207641"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "646c8f3975efbeff644d247a173b5adb7634bbd2ad0d788ab3e3c374a7badb89",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a36a67b0000000015027543": {
+    "id": "6a36a67b0000000015027543",
+    "content_sha256": "00479cd25f220f9e74eafea3a16eb075f326f948a79e9cae54bb66b9816d4426",
+    "title": "抱歉，我目前无法直接访问小红书链接或获取该笔记的具体内容。 如果你希望我帮你总结这篇笔记，可以尝",
+    "category": "AI设计与多媒体",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 Aixcut 的可复用剪辑流程：上传素材和脚本后生成字幕、配乐与初稿，并把反复沟通形成的执行规则保存成下次可调用的流程模板。",
+    "action": "用两条结构相同的自有短视频测试首次配置与再次调用的时间、字幕准确率、音乐版权和人工修改量。",
+    "themes": [
+      "AI剪辑",
+      "Aixcut",
+      "可复用流程"
+    ],
+    "tools": [
+      "Headroom"
+    ],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "ffb112111010069a10e3959be582a6237bcec7c2593ed9366855ec4302fb08b1",
+    "evidence_sha256": "5f4fc9cbf79c68e799a6dc44fdac9e7ed49b121908bb60a123642244a516d5cb",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "1d72007b1c0373b5131bc78b5ffbae03359a54520086c272707dfbd7abbbc302"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "002debade1b81b0199afa1dc4a69bc6aef46b9214c9dfc12cf6afd151974ae33"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "11469571c31dff351ba63451b1a3d3716ffd67d72d3195d381f4bda579ea1287",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a621f16000000001303e77b": {
+    "id": "6a621f16000000001303e77b",
+    "content_sha256": "ab4d49b0dbf3ce70a4f6f57a7eaebd764e4d9fd227bf1c1a09bcfa6c389a11d0",
+    "title": "为什么很多独立站卖家不愿意透露自己的网址",
+    "category": "Agent与自动化",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 CometQ 远程控制硬件：通过 USB-C 在系统之外采集画面并发送键鼠控制，可在未登录或系统异常等软件远控受限场景访问设备；其远程穿透与安全主张仍需实测。",
+    "action": "只在隔离测试机验证锁屏、休眠和断网恢复，重点检查固件更新、账户保护、远程撤销、网络暴露和物理断开方式。",
+    "themes": [
+      "CometQ",
+      "硬件远控",
+      "远程办公"
+    ],
+    "tools": [],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "d819b7aa888192103bca8ec67b393b7db47b4d5c904b570cb6b914948230fd29",
+    "evidence_sha256": "45c6bdcdc68194138b61fa0d0f6a36da271577c5d39cf91a8345d40da918d5c7",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "49a001516b8f43f04df4069e47642cfc54b07b6f69c84fe2eeaf4f823a430d7a"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "4dac8daa83d37c416fe9f4639f2b09ec7de14dc9419860bc5a1aa9e7a8169349"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "eb8509b8c1e537db4c50e29cc774e54f903b6b6f4d685eafc6ea6b12a1c4cbf2",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a058b540000000038034851": {
+    "id": "6a058b540000000038034851",
+    "content_sha256": "05a27f07ae8bfda01e8e83097ac80bf406b0f82c4cfa1e158e07594835efc3b5",
+    "title": "永久免费域名项目，简直就是开源公益！",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "图文把淘宝运营拆成十二个内部流程，覆盖选品、关键词、竞品、利润、标题、五图、详情页、客服、活动、库存、评价和周复盘；这些是自建流程名称，不是已核验的可安装 Skill。",
+    "action": "先把利润计算、竞品审计和周复盘做成内部模板，使用脱敏店铺数据验证；库存补货和发布动作必须保留人工确认。",
+    "themes": [
+      "人工确认",
+      "流程模板",
+      "淘宝运营"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "4046022cca00993b3882b1510b5134d7e42b73a28dca1bb1abf49ab99753bc1a",
+    "evidence_sha256": "cd00e8ee0130c5c32ef5b93dd243e04c471d9cf0f628b4157578dad7d03eb832",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "40e636e9568002e12725a4547b81a118bc39b9cff087684538f978d2e6aa1abe"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "3b5cbb4da765a96fc0c473151b34326c090b18c8ec0e20b9d188b129480163ee"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "c5df5cc9619454237852e9c7e5e4f570f2ff17521be30c2427d87d74fa71e68e",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a603e4e000000001d00c0a0": {
+    "id": "6a603e4e000000001d00c0a0",
+    "content_sha256": "6eb3ffd7d9b5bc208844e32439a0bcb643d9903428f6fede9adef3a3bef65589",
+    "title": "GitHub 上火出圈的视频翻译神器，好用高效",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推广 SparkX 的亚马逊广告能力：诊断账户结构与预算、创建广告、持续调整竞价和关键词，并由 Insight Agent 生成复盘报告；适用门槛和效果属于产品主张。",
+    "action": "先接入只读报告并与人工账户复盘对比，确认授权范围、否词回滚、预算上限和异常暂停后，才考虑任何自动优化。",
+    "themes": [
+      "SparkX",
+      "亚马逊广告",
+      "预算控制"
+    ],
+    "tools": [
+      "VividDub"
+    ],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "53bae30cb278b6373325251fb1dad43b2530cb830c4f3913e508b67f3f721ada",
+    "evidence_sha256": "ef226f576172481ea754a30b42927f735f481f4f650fc56d145f917d32648b3c",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "cfecf0a7ed379e87e2e66195a939f99da10aed7caeda9f906e13d92e2e0d06c0"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "b27b5da50b24c693ac82e4ee7c0d24fa7a08dfc2f827d6c3c0c9f61027c21637"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "68fac1dbf7796026ad39f7acb0fdd7b979306fac78eb4891196a47eb7d74ab5f",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a1ab6bb00000000360012d3": {
+    "id": "6a1ab6bb00000000360012d3",
+    "content_sha256": "1ed83425c9a307650c74c6c27dd9d565c92231ab7de3e3709a9172d2a4c96751",
+    "title": "AI直出4K高级质感视频。",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "图文介绍 WorkBuddy 的十个亚马逊流程模块，覆盖公开商品与评论调研、店铺定价和目录、Listing、数据上传、订单、广告及政策资讯；工具承担重复查询，运营判断仍由人完成。",
+    "action": "先用只读的公开商品搜索和评论分析验证数据来源与准确率，确认店铺授权、写操作审批和撤销机制后再连接内部账户。",
+    "themes": [
+      "WorkBuddy",
+      "亚马逊运营",
+      "只读验证"
+    ],
+    "tools": [],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "59a16a45a455b708c91ede0703259b2d5e71120ee489f606c6d1228864dc3425",
+    "evidence_sha256": "4e2d6ce26ca27540c5929e0f344a453c13414f5b28021fcf41a24f8ef0bf5fe0",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "feee198c3f7c9128870a8e5b6aef446ae8c06a1e2ab1680cd6610b86236697a0"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "1161c1485235ace2ad79e7e663673940bf2bcf1c51a327df74c99c0c2dadd979"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "808f7954bfaad6ee1fb9b6c1640eb30dbb577901ce46440e88a0ca08979792a6",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a156a110000000035029eef": {
+    "id": "6a156a110000000035029eef",
+    "content_sha256": "b7f09dac76ca844dcd9f0d254771f8ae0bc5b77215d47aa0dc194dbd385c7731",
+    "title": "不同工资的编导如何使用AI？",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "图文整理淘宝新品运营步骤，涉及上架素材、详情页、关键词、活动和广告复盘；其中关于流量扶持、时间窗口与递增单量的说法可能随平台规则变化，不能作为固定规则。",
+    "action": "仅采用合规的素材、关键词和广告复盘部分；任何做单、规避搜索或操纵互动的做法一律不执行，并以淘宝当前官方规则复核。",
+    "themes": [
+      "合规运营",
+      "淘宝新品",
+      "页面优化"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "d07fcbcbb4b7d97ca1b8f72a704168e3e71807b836b8aa63738c21afb4d42445",
+    "evidence_sha256": "2167d59c95728f42c2aaad47ecd835922c8527b926eaa8c0d5d9b87c743d542e",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "894c10b9090c6a7c6939bbb817fc09186b34385b6f5e4653cdc64334bbbd64bb"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "cafe3b18bf36410ba53d88bb912cc0e3e99c40a4f8e04f1bb53cfc44acf6e0a3"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "75c63ca4d99ecfc4c27ba651e09f207034f2fca2c4e0d2698b9859763cb31bfb",
+    "review_status": "accepted",
+    "review_reason_code": ""
   }
 }
