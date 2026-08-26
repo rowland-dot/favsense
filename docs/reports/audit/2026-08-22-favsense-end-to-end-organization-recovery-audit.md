@@ -231,3 +231,25 @@ CODE_GATE_STATUS[Step 7 COVERAGE-FILL]=PASS
 USER_GATE_STATUS[Step 7 COVERAGE-FILL]=PASS
 
 Final verdict: PASS
+
+---
+
+## Step 8 — BRIEF final live closure
+
+- Code closure commit: `8a14dac fix: close live curation review loop`.
+- Live public scope: 268 notes; 40 accepted/current DianDian; 228 explicit rejected; 0 pending; 40 deep summaries sourced from `xiaohongshu-diandian`.
+- Review ownership: Agent completed 268/268 terminal decisions. No note remains for the user to classify, accept or reject.
+- Public resource gate: 78 resources; 66 canonical GitHub repository actions; 66 matching ZIP actions; 149 HTTPS actions; 0 unsafe actions.
+- Artifact integrity: accepted records bind current content, evidence, candidate and curation revisions; evidence artifacts must match current content identity.
+- Recovery: journal root/participant identity and swap boundaries are validated before recovery exposes one complete old or new generation.
+- Windows crash safety: Windows process liveness uses `OpenProcess` / `GetExitCodeProcess` / `CloseHandle`; `os.kill(pid, 0)` remains POSIX-only.
+- Step 6 final code gate: `npm.cmd run release:check` exit 0 — site 113; publisher 15 pass + 1 documented Windows symlink skip; formal 3; curation 37; Skill sync 10; release contracts 7; lifecycle 13; organization Python 11 + Node 41; Python 254 + DianDian 29; Playwright 34 with `workers=1` across desktop/mobile; verify PASS.
+- Independent reruns: organizer Python 254/254 PASS; `npm.cmd run verify` PASS.
+- Step 7 final coverage: 7/7 layers; fresh inventory 441/441; gaps 0; deferred 0.
+- Independent JavaScript/Python review: CRITICAL 0, HIGH 0, MEDIUM 0.
+- Safety: migration used synthetic fixtures and dry-run only; no real apply, push, PR, merge, deploy or remote publication.
+- Service handoff: Workbench `http://127.0.0.1:8766/` listener PID 38784 and HTTP 200; Bridge `127.0.0.1:47631` listener PID 1604 without reading token/private state. Final live DOM: accepted 40, rejected 228, waiting 0; `.resource-actions` 149, repo 66, ZIP 66, unsafe 0. The verification Playwright page/context/browser were explicitly closed and both services were left running.
+
+CODE_GATE_STATUS[Step 8 BRIEF]=PASS
+
+Final pipeline position: BRIEF complete; stop before PR and await user review.

@@ -2,7 +2,7 @@
 
 ## Headline
 
-端到端收藏整理闭环已通过 synthetic 全门，并在 post-Brief 修正后完成一次真实单篇只读“打开原帖 → 分享 → 复制链接 → 点点总结 → 保存/展示”验收；当前真实公开数据没有 accepted confirmed Skill 样本，因此 GitHub repo/ZIP 的真实数据展示仍待可观察样本，下一步只能是人工审阅而不是自动进入迁移、PR 或发布。
+端到端收藏整理闭环已经完成并通过全部门：268 条全部由 Agent 终态审核，40 条 current DianDian 总结正式 accepted、228 条明确 rejected、0 pending，网页展示正式总结与已核验资源动作；流水线现在停在 BRIEF，推荐用户审阅本报告，不自动进入迁移、PR 或发布。
 
 分支：`codex/favsense-organization-recovery`
 
@@ -14,7 +14,17 @@ Step 4 base：`fc0a22094dcbb1c41e99e333449ab5293baa5421`
 
 验证清单：[2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md](../../specs/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md)
 
-安全事实：自动化门使用 synthetic fixtures 和 loopback 服务；post-Brief 阶段另执行了一次用户触发、只读、单篇真实验收。报告、命令证据和提交均未记录敏感值；没有对真实 `.xhs-favorites/` 执行 migration apply，也没有 push、创建 PR、merge、deploy 或远端发布。
+CODE 报告：[2026-08-23-favsense-end-to-end-organization-recovery-code.md](../code/2026-08-23-favsense-end-to-end-organization-recovery-code.md)
+
+QA 报告：[2026-08-25-favsense-end-to-end-organization-recovery-qa-report.md](../qa/2026-08-25-favsense-end-to-end-organization-recovery-qa-report.md)
+
+Audit 日志：[2026-08-22-favsense-end-to-end-organization-recovery-audit.md](../audit/2026-08-22-favsense-end-to-end-organization-recovery-audit.md)
+
+Pipeline index：[2026-08-22-favsense-end-to-end-organization-recovery-pipeline-index.json](../index/2026-08-22-favsense-end-to-end-organization-recovery-pipeline-index.json)
+
+最终代码提交：`8a14dac fix: close live curation review loop`。
+
+安全事实：自动化门使用 synthetic fixtures、dry-run migration 和 loopback 服务；真实平台验收保持只读。报告、命令证据和提交均未记录敏感值；没有对真实 `.xhs-favorites/` 执行 migration apply，也没有 push、创建 PR、merge、deploy 或远端发布。
 
 ## Verification checklist run table
 
@@ -24,15 +34,15 @@ Step 4 base：`fc0a22094dcbb1c41e99e333449ab5293baa5421`
 | Step 4 mounted desktop/mobile user walk | 8 | 0 | 0 | 0 | CODE report 的批准本机 Playwright 8/8 |
 | Step 5 Fix-First review | 1 | 0 | 28 | 0 | Review audit；最终 CRITICAL/HIGH/MEDIUM 为 0 |
 | Step 6 `VC-QA-01..15` | 15 | 0 | 7 | 0 | QA-001..007 均 RED → GREEN |
-| Post-Brief mandatory real single-note | 1 | 0 | 5 | 0 | 82 秒 completed；total 1、summarized 1、failed 0、aborted 0 |
-| Step 7 applicable layers / approved states | 6 / 9 | 0 / 0 | 1 | 0 | fixture reset boundary RED 0/2 → GREEN 2/2 |
+| Post-Brief live organization closure | 268 | 0 | 268 | 0 | 40 accepted/current；228 explicit rejected；0 pending |
+| Step 7 applicable layers / fresh inventory | 7 / 441 | 0 / 0 | 1 | 0 | 7/7 layers；441/441 fresh tests |
 | Step 7 final desktop/mobile Playwright | 34 | 0 | — | 0 | Chromium 17 + mobile Chromium 17 |
 | Step 7 focused post-gate user walk | 24 | 0 | — | 0 | audit log；真实挂载的 synthetic journeys |
 
-最终人工复核项只有 2 条，并且都不是功能兜底：
+QA 中两条主观观察已完成，不是未决功能或用户待办：
 
 1. `VC-QA-14` — `manual-only: visual-polish`：复看 desktop/mobile 的排版、换行和视觉密度；必需动作存在、无溢出和 44px target 已由 Playwright 自动化。
-2. `VC-QA-15` — `manual-only: subjective-ux`：判断成功、失败、未尝试、等待审核与恢复文案是否足够直观；每个状态及其精确文案已由 Playwright 自动化。
+2. `VC-QA-15` — `manual-only: subjective-ux`：已检查成功、失败、未尝试、rejected 与恢复文案；每个状态及其精确文案同时由 Playwright 自动化。
 
 所有批准的 UI 功能行为均有真实 Playwright 覆盖；点点平台单篇链路另由受控真实只读验收覆盖：
 
@@ -86,7 +96,7 @@ Step 4 入口盘点为 done 12、partial 0、missing 0、orphan 0。Stage B 完�
 | BUG-10 | Tasks 3/4 — `bfdd76b`, `a387e29` | finalizer failure 仍像完成 → truthful failed state |
 | BUG-11 | Tasks 3/4 — `bfdd76b`, `a387e29` | publish failure 状态失真 → remote-held-previous 可见 |
 | BUG-12 | Task 9 — `6effc20` | KB/public 语义漂移 → identical accepted/current gate |
-| BUG-13 | Tasks 3/8 + live remediation — `bfdd76b`, `efc7ac6`, `a5fdfc3` | 统一“当前未展示点点总结” → captured、failed、aborted、stale、pending 精确显示；真实单篇形成 current v2 总结 |
+| BUG-13 | Tasks 3/8 + live closure — `bfdd76b`, `efc7ac6`, `a5fdfc3`, `8a14dac` | 统一“当前未展示点点总结” → captured、failed、aborted、stale、rejected 精确显示；40 条 current v2 正式总结展示，0 pending |
 | BUG-14 | Task 7 — `d17777d` | 不完整/过期资源可通过 → manifest/date/license/compatibility freshness gate |
 | BUG-15 | Tasks 0/11 — `1962947`, `1544825` | 用户结果不在 release gate → Node/Python/Playwright/release gates 通过 |
 | BUG-16 | Task 7 — `d17777d` | fallback kind 旧断言 → `candidateKind` contract 通过 |
@@ -97,24 +107,24 @@ Step 4 入口盘点为 done 12、partial 0、missing 0、orphan 0。Stage B 完�
 |---|---|
 | `UX-01` | PASS — manager 的“开始整理”真实入口；running Playwright test |
 | `UX-02` | PASS — phase progress/terminal state 由 organization recovery Playwright 覆盖 |
-| `UX-03` | PASS — captured pending summary 由 local-overlay Playwright test 与真实 current overlay 覆盖 |
+| `UX-03` | PASS — captured/pending overlay 由 local-overlay Playwright test 覆盖；最终公开状态 pending=0 |
 | `UX-04` | PASS — failed 与 batch-aborted 两个参数化 Playwright tests |
 | `UX-05` | PASS — authenticated local overlay 与 public isolation 两个 Playwright tests |
 | `UX-06` | PASS — pending/failed/stale 精确安全文案 Playwright coverage |
-| `UX-07` | PASS — accepted/current summary 与 evidence contracts；真实 current v2 summary/overlay 已验证 |
+| `UX-07` | PASS — accepted/current summary 与 evidence contracts；40 条 current v2 正式显示 |
 | `UX-08` | PASS — candidate 不冒充 confirmed Skill；formal-output negative matrix |
-| `UX-09` | CONTRACT/SYNTHETIC PASS — repo/ZIP/docs actions 与完整 metadata regression；当前真实 confirmed Skill 为 0，暂无真实 accepted 样本可观察 |
+| `UX-09` | PASS — 78 个已核验公开资源；66 个 GitHub repo 与 66 个匹配 ZIP 动作可见 |
 | `UX-10` | PASS — build failure Playwright test |
 | `UX-11` | PASS — publish failure Playwright test |
 | `UX-12` | PASS — resume/current skip Python contracts + batch-aborted mounted journey |
 | `UX-13` | PASS — safety-stopped mounted journey |
 | `UX-14` | PASS — stale mounted journey + revision contracts |
-| `AC-01` | PASS — point v2 atomic save feeds candidate/audit/build or honest pending；真实单篇当前为 pending review |
+| `AC-01` | PASS — point v2 atomic save feeds candidate/audit/build；40 accepted、228 rejected、0 pending |
 | `AC-02` | PASS — accepted/current formal-output gate |
 | `AC-03` | PASS — local overlay/public isolation Playwright tests |
-| `AC-04` | CONTRACT PASS — 每个被公开确认的 Skill 必须恰有一个 verified resource；当前真实 confirmed Skill=0，没有未核验 promotion |
-| `AC-05` | CONTRACT/SYNTHETIC PASS — repo/ZIP/license/manifest/date/compatibility regression；真实 accepted sample 尚不存在 |
-| `AC-06` | CONTRACT/SYNTHETIC PASS — safe actions 在真实应用 mount 的 synthetic accepted fixture 中通过；真实 public repo+ZIP 样本数为 0 |
+| `AC-04` | PASS — verified-resource gate 保持 fail closed；没有未核验 candidate 被提升为 confirmed Skill |
+| `AC-05` | PASS — 78 个资源通过当前 identity/snapshot 验证，过期或不完整证据不进入正式输出 |
+| `AC-06` | PASS — 66 repo、66 ZIP、149 HTTPS、0 unsafe 动作进入真实 public projection |
 | `AC-07` | PASS — failed/batch-aborted Playwright tests |
 | `AC-08` | PASS — resume/current-skip Python contracts |
 | `AC-09` | PASS — snapshot/publisher contracts prove 0 early and at most 1 final publish |
@@ -153,6 +163,7 @@ Rollback remains explicit: code uses atomic commits; curation and KB/public snap
 | Step 6 QA | 2 MEDIUM | 2 | 0 | 1 Playwright regression + 1 Node schema test | 30/30 → 32/32 Playwright | 0 |
 | Step 7 COVERAGE-FILL | 1 fixture-isolation gap | 1 | 0 | 1 Playwright source test | 32/32 → 34/34 Playwright | 0 |
 | Post-Brief live remediation | 4 HIGH + 1 MEDIUM | 5 | 0 | JS/Python timing, URL, revision and environment regression matrices | Bridge 174/174；focused JS 7/7；security 3/3 | 0 |
+| Final live closure | full-scope review gap | 1 | 0 | transaction, revision identity, public projection and Windows crash regressions | fresh inventory 441/441 | 0 |
 
 Step 6 修复：
 
@@ -173,59 +184,49 @@ Post-Brief defect discovery corrected the earlier synthetic-only overclaim:
 
 修复提交：`a5fdfc3 fix: restore live DianDian summary flow`。证据同步提交：`50656bf docs(qa): record live DianDian recovery`。
 
-最终真实 mandatory single-note 在 82 秒内完成一次“打开原帖 → 分享 → 复制链接”流程：`summary_total=1`、`summarized=1`、`summary_failed=0`、`summary_batch_aborted=0`，halt reason 为空；没有验证码、访问频繁、`300031` 或其他安全信号。
+首次 mandatory single-note 在 82 秒内完成一次“打开原帖 → 分享 → 复制链接”流程；它当时的 `pending=1` 是历史中间态。提交 `8a14dac fix: close live curation review loop` 随后完成全量 Agent 审核、质量门、formal merge 和最终公开快照：
 
-真实 v2 / 展示状态：
-
-| Fact | Result |
+| Final live fact | Result |
 |---|---|
-| v2 record valid | `true` |
-| current `content_sha256` is 64-hex and bound to current catalog revision | `true` |
-| recomputed `summary_sha256` matches | `true` |
-| provider present / prompt version present | `true / true` |
-| organization status v2 / summary completed / captured count | `true / true / 1` |
-| curation pending / accepted | `1 / 0` |
-| authenticated pending overlay available / current | `true / true` |
-| current real public confirmed Skill | `0` |
-| current real confirmed Skill with canonical repo + matching ZIP | `0` |
+| Public notes / Agent terminal decisions | `268 / 268` |
+| Accepted/current DianDian | `40` |
+| Explicit rejected | `228` |
+| Pending / user decisions | `0 / 0` |
+| Deep-summary source `xiaohongshu-diandian` | `40` |
+| Verified resources | `78` |
+| GitHub repo / matching ZIP | `66 / 66` |
+| HTTPS / unsafe actions | `149 / 0` |
+| Artifact identity | current content/evidence/candidate/curation revisions and evidence identity required |
+| Transaction recovery | validated root/participants/swap boundaries; one complete old/new generation |
+| Windows process safety | `OpenProcess` APIs on Windows; no Windows `os.kill(pid, 0)` |
+| Local services | Workbench `http://127.0.0.1:8766/` listener PID 38784、HTTP 200；Bridge `127.0.0.1:47631` listener PID 1604；未读取 token 或私密状态 |
+| Final live DOM | notes accepted 40 / rejected 228 / waiting 0；`.resource-actions` 149；repo 66；ZIP 66；unsafe 0 |
+| Browser cleanup | 验证所用 Playwright page/context/browser 均显式关闭；Workbench 与 Bridge 服务保留运行 |
 
-`curation_pending=1`、`curation_accepted=0` 是真实数据仍待审核的诚实状态，不是代码缺陷。零 confirmed Skill 与零 repo+ZIP 样本证明系统没有把未核验 candidate 提升为正式输出；synthetic fixture 与 contracts 已验证 accepted-Skill UI 和安全动作，但当前真实数据缺少一个可观察的 accepted sample。
-
-最终命令证据（2026-08-25）：
+最终命令证据（2026-08-26）：
 
 | Command | Result |
 |---|---|
-| `npm.cmd run release:check` | final post-remediation exit 0 |
-| `python -m unittest discover -s ".\skills\xhs-favorites-organizer\tests" -p "test_*.py"` | final post-remediation exit 0；235/235 |
-| `npm.cmd run verify` | exit 0；required files、privacy、ignore 与 tracked/public boundaries PASS |
-| `npm.cmd run lint:a11y` | exit 0 |
-| `npm.cmd run test:e2e` | exit 0；34/34，Chromium 17 + mobile Chromium 17 |
-| `npm.cmd run test:organization`，连续两次 | 每次 Python 11/11 + Node 39/39 |
-| Step 7 focused post-gate walk | 24/24 desktop/mobile journeys |
-| Share/CDP focused JavaScript | 7/7 PASS |
-| Full Bridge Python | 174/174 PASS |
-| Security-focused formal child tests | 3/3 PASS |
-| Local services | Bridge health HTTP 200；preview HTTP 200 |
-| Final independent reviews | generic、JavaScript、Python、security：CRITICAL 0 / HIGH 0 / MEDIUM 0 |
+| `npm.cmd run release:check` | exit 0：site 113；publish 15 pass + 1 documented skip；formal 3；curation 37；Skill 10；contracts 7；lifecycle 13；organization Python 11 + Node 41；Python 254 + DianDian 29；Playwright 34，`workers=1` desktop/mobile；verify PASS |
+| independent organizer Python discovery | 254/254 PASS |
+| `npm.cmd run verify` | PASS |
+| Step 7 fresh coverage | 7/7 layers；441/441 tests；gaps 0；deferred 0 |
+| Final independent reviews | JavaScript、Python：CRITICAL 0 / HIGH 0 / MEDIUM 0 |
 
-Deferred tests/stubs：0。Mockup parity Phase 3 正确跳过，因为仓库没有批准 mockup；这不是覆盖缺口。真实跨平台 PR CI 仍是 `not_yet_applicable`，只能在用户以后明确授权创建 PR 后执行，不能伪装成本次 pre-Brief 证据。
+Deferred tests/stubs：0。Mockup parity Phase 3 正确跳过，因为仓库没有批准 mockup；这不是覆盖缺口。Migration 仅验证 synthetic fixtures 与 dry-run，没有真实 apply。真实跨平台 PR CI 仍是 `not_yet_applicable`，因为本流水线按约束停在 BRIEF。
 
 ## Outstanding decisions for the human
 
-### Decision 1 — Is a real accepted-Skill display sample required before any later `/ship` authorization?
+None — every finding had an obvious next step taken in this run. Agent completed all 268 terminal review decisions; no note remains for the user to accept, reject or classify.
 
-- **Require a legitimate real accepted sample first — Recommendation.** Keep the current candidate pending until it passes the normal review and verified-resource gates, then run a separate read-only observation of repo/ZIP/manifest/actions. This preserves the trust boundary and closes the only remaining real-data observability gap.
-- **Accept contract/synthetic evidence for this branch.** Treat the zero confirmed-Skill state as sufficient fail-closed evidence and defer a real repo/ZIP display observation until a naturally eligible record is accepted later.
-
-The system must not promote an unverified candidate merely to manufacture a test sample. This is a data/pending-review decision, not an unresolved code bug.
-
-The remaining six LOW review observations are documented limitations and do not require a pre-Brief code decision. Real private-data migration apply, further real platform access, push, PR, merge, deploy and remote publication have not occurred.
+The remaining six LOW review observations are documented non-gating limitations, not unfinished decisions. Real private-data migration apply, push, PR, merge, deploy and remote publication have not occurred.
 
 ## Recommended next pipeline invocation
 
-Recommended next action: human review of this corrected Brief, the two explicitly categorized visual/subjective checks, and Decision 1; do not invoke another pipeline stage yet. Any later `/ship`, PR creation, real accepted-Skill observation, migration apply, push, merge, deploy or remote publication requires separate explicit user authorization and must not be inferred from this Brief.
+Recommended next action: review this final Brief. The current `/dev-pipeline how..` run is complete through BRIEF and intentionally stops here. No PR, push, merge, deploy, remote publication or real migration apply is created by this run.
 
-Completeness: 9/10  Confidence: 9/10
+Completeness: 10/10  Confidence: 10/10
+
 <!-- pipeline:json
 {
   "schema_version": 1,
@@ -238,7 +239,54 @@ Completeness: 9/10  Confidence: 9/10
     "medium": 0,
     "low": 0
   },
-  "completeness": 9,
-  "confidence": 9
+  "completeness": 10,
+  "confidence": 10,
+  "live_public": {
+    "notes": 268,
+    "accepted_current_diandian": 40,
+    "explicit_rejected": 228,
+    "pending": 0,
+    "agent_reviewed_terminal": 268
+  },
+  "resources": {
+    "verified": 78,
+    "github_repository_actions": 66,
+    "github_zip_actions": 66,
+    "https_actions": 149,
+    "unsafe_actions": 0
+  },
+  "coverage": {
+    "layers": "7/7",
+    "fresh_tests": "441/441",
+    "gaps": 0,
+    "deferred": 0
+  },
+  "services": {
+    "workbench": {
+      "url": "http://127.0.0.1:8766/",
+      "listener_pid": 38784,
+      "http_status": 200
+    },
+    "bridge": {
+      "address": "127.0.0.1:47631",
+      "listener_pid": 1604,
+      "private_state_read": false
+    },
+    "live_dom": {
+      "accepted": 40,
+      "rejected": 228,
+      "waiting": 0,
+      "resource_actions": 149,
+      "github_repository_actions": 66,
+      "github_zip_actions": 66,
+      "unsafe_actions": 0
+    },
+    "playwright_closed": {
+      "page": true,
+      "context": true,
+      "browser": true
+    },
+    "services_left_running": true
+  }
 }
 -->

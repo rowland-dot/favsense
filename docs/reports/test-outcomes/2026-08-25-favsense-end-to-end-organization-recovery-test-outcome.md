@@ -131,6 +131,31 @@ _None._
 - Windows symlink 条件 skip 是已记录的平台能力差异。
 - 本轮只做 coverage audit，不修改产品代码，也不执行真实 migration apply。
 
+## Final closure revalidation — 2026-08-26
+
+提交 `8a14dac fix: close live curation review loop` 后，Step 7 对扩展后的正式组织、事务恢复、artifact revision identity、Windows crash safety、公开状态与资源动作矩阵进行了 fresh revalidation：
+
+| Coverage fact | Result |
+|---|---|
+| Applicable behavioral layers | 7/7 |
+| Fresh test inventory | 441/441 PASS |
+| Public terminal-state scope | 268/268 |
+| Accepted/current DianDian / explicit rejected / pending | 40 / 228 / 0 |
+| Verified resources | 78 |
+| GitHub repo / ZIP / HTTPS / unsafe actions | 66 / 66 / 149 / 0 |
+| Unresolved gaps | 0 |
+| Deferred tests/stubs | 0 |
+| JavaScript review | CRITICAL 0 / HIGH 0 / MEDIUM 0 |
+| Python review | CRITICAL 0 / HIGH 0 / MEDIUM 0 |
+
+Fresh gate evidence:
+
+- `npm.cmd run release:check` exit 0：site 113；publisher 15 pass + 1 documented Windows symlink skip；formal 3；curation 37；Skill sync 10；release contracts 7；lifecycle 13；organization Python 11 + Node 41；Python 254 + DianDian 29；Playwright 34 with `workers=1` across desktop/mobile；verify PASS。
+- Independent organizer Python discovery：254/254 PASS。
+- Independent `npm.cmd run verify`：PASS。
+
+Migration coverage remained synthetic/dry-run only. No real apply, push, PR, merge, deploy or remote publication occurred.
+
 ## Privacy and safety
 
 - 仅使用 synthetic fixtures、stable test IDs 与 loopback `127.0.0.1`。
@@ -142,11 +167,13 @@ _None._
 
 ## Final assessment
 
-- Applicable layers audited: 6/6.
-- Approved feature states visited: 9/9.
+- Applicable layers audited: 7/7.
+- Fresh test inventory: 441/441.
+- Public terminal-state scope: 268/268; pending 0.
 - Missing behaviors found/resolved/deferred: 1/1/0.
 - New source tests / project executions: 1/2.
 - Unresolved findings: 0.
+- Deferred tests/stubs: 0.
 - Step 7 Stage A coverage gate: PASS.
 
 Completeness: 10/10  Confidence: 10/10

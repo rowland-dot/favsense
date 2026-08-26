@@ -3,7 +3,7 @@
 - 日期：2026-08-25
 - 分支：`codex/favsense-organization-recovery`
 - Step 6 起始提交：`b1abf258b0fb682b83352cd89f10152dfef585c4`
-- QA 修复提交：`84cc434`、`d14de43`、`911baef`、`645e6b2`；post-Brief live remediation：`a5fdfc3`
+- QA 修复提交：`84cc434`、`d14de43`、`911baef`、`645e6b2`；post-Brief live remediation：`a5fdfc3`；最终 live closure：`8a14dac`
 - 范围：批准清单 `VC-QA-01..15`
 - 脚本化 QA 数据边界：使用 `serve-qa-fixture.mjs` 的 synthetic fixture；未执行真实 migration apply。2026-08-25 的 post-Brief 修正另行执行了一次用户触发、只读、单篇真实验收；下文只记录安全聚合结果，不记录 ID、标题、总结正文、路径、URL、token、Cookie 或 `xsec_token`。
 - Mockup / trigger / callsite：批准计划没有 mockup，`MOCKUP_PATHS=[]`、`CALLSITE_LIST=[]`；因此没有 `data-mockup-state` 或 `data-mockup-trigger` 项。
@@ -16,6 +16,7 @@ Step 6 PASS。原始 synthetic QA 发现 2 个 MEDIUM 缺陷；post-Brief live a
 - 修复后 Playwright：32/32 PASS（新增 QA-001 desktop/mobile 回归）。
 - Step 6 code gate：`npm.cmd run release:check` exit 0。
 - Post-Brief live gate：真实单篇必须经过“打开原帖 → 分享 → 复制链接”一次，最终 `completed`；`summary_total=1`、`summarized=1`、`summary_failed=0`、`summary_batch_aborted=0`。
+- Final live closure：268 条全部由 Agent 完成终态审核；40 条 accepted/current DianDian，228 条 explicit rejected，0 pending。正式公开资源与动作门全部通过。
 - 最终未修复严重度：CRITICAL=0 HIGH=0 MEDIUM=0 LOW=0。
 
 ## State coverage — pre-walk
@@ -150,7 +151,7 @@ Step 6 PASS。原始 synthetic QA 发现 2 个 MEDIUM 缺陷；post-Brief live a
 - GREEN：3/3 security-focused tests、Bridge 174/174、site 112/112 与 share/CDP focused 7/7 通过；最终真实单篇完整通过。
 - 提交：`a5fdfc3 fix: restore live DianDian summary flow`
 
-### Live data-state acceptance
+### Live data-state acceptance — historical 2026-08-25 snapshot
 
 - 当前目标 v2 record valid：`true`。
 - `content_sha256` 为 64-hex 且绑定 current catalog revision：`true`。
@@ -160,6 +161,8 @@ Step 6 PASS。原始 synthetic QA 发现 2 个 MEDIUM 缺陷；post-Brief live a
 - curation 当前为 pending review：`curation_pending=1`、`curation_accepted=0`。这不是 accepted formal output，也不得描述成已审核。
 - authenticated loopback pending overlay available/current：`true / true`。
 - 当前真实 public data 的 confirmed Skill：`0`；同时具备唯一 canonical GitHub repo action 与匹配 ZIP action 的 confirmed Skill：`0`。Synthetic fixture 的 accepted Skill 只证明 UI contract，不代表真实数据已有 confirmed Skill。
+
+这一小节记录的是首次真实单篇完成后的历史中间状态。它已被下文 2026-08-26 的全量 Agent 审核与正式快照取代，不代表当前 live public 状态。
 
 ### Final live remediation gates
 
@@ -174,6 +177,33 @@ Step 6 PASS。原始 synthetic QA 发现 2 个 MEDIUM 缺陷；post-Brief live a
 | Public/privacy verifier | `npm.cmd run verify` PASS |
 | Independent review | JavaScript、Python、安全与最终 code gate 均 PASS；未解决发现为零 |
 | Hygiene | 临时 probe 已移除；generated public artifact 恢复到受控版本；`git diff --check` PASS |
+
+### Final full-scope acceptance — 2026-08-26
+
+提交 `8a14dac fix: close live curation review loop` 完成全量正式审核和公开快照闭环：
+
+| Acceptance fact | Result |
+|---|---|
+| Public notes | 268 |
+| Agent-reviewed terminal decisions | 268/268 |
+| Accepted/current DianDian | 40 |
+| Explicitly rejected | 228 |
+| Pending / user decisions | 0 / 0 |
+| Deep-summary source `xiaohongshu-diandian` | 40 |
+| Verified public resources | 78 |
+| GitHub repository / matching ZIP actions | 66 / 66 |
+| HTTPS / unsafe actions | 149 / 0 |
+| Revision identity | accepted content/evidence/candidate/curation and evidence artifacts all current |
+| Transaction recovery | root and participant identities validated; one complete old/new generation after swap recovery |
+| Windows crash safety | Windows liveness uses `OpenProcess` APIs; no Windows `os.kill(pid, 0)` |
+
+最终 gate 以单 worker 串行执行浏览器项目，避免浏览器与其他测试并发叠加：
+
+- `npm.cmd run release:check` exit 0：site 113；publisher 15 pass + 1 documented Windows symlink skip；formal 3；curation 37；Skill sync 10；release contracts 7；lifecycle 13；organization Python 11 + Node 41；Python 254 + DianDian 29；Playwright 34（`workers=1`，desktop + mobile）；`verify` PASS。
+- 独立 Python discovery：254/254 PASS。
+- 独立 `npm.cmd run verify`：PASS。
+- 独立 JavaScript / Python review：CRITICAL 0、HIGH 0、MEDIUM 0。
+- Migration 只使用 synthetic fixtures 与 dry-run；没有真实 apply。
 
 ## VC-QA-01..15 result matrix
 
@@ -240,6 +270,9 @@ _No regressions found._
 | security-focused formal child suite（post-Brief） | 0 | 3/3 PASS |
 | mandatory real single-note acceptance（post-Brief） | 0 | 82 秒；`completed`；total 1 / summarized 1 / failed 0 / aborted 0 |
 | `npm.cmd run verify`（post-Brief） | 0 | required files、privacy boundary、Git ignore/tracking boundary PASS |
+| `npm.cmd run release:check`（final live closure） | 0 | site 113；publish 15+1 skip；formal 3；curation 37；Skill 10；contracts 7；lifecycle 13；organization Python 11 + Node 41；Python 254 + DianDian 29；Playwright 34，`workers=1` desktop/mobile；verify PASS |
+| independent organizer Python discovery（final） | 0 | 254/254 PASS |
+| `npm.cmd run verify`（final） | 0 | PASS |
 
 一次误用 Python dotted unittest class 名称产生 loader error；随后核对该文件没有 migration test，相关 migration contract 由上述 Node 17/17 目标测试与完整 release gate 覆盖。该 runner 输入错误不是产品失败。
 
@@ -250,16 +283,17 @@ _No regressions found._
 - 原始浏览器 QA 只出现 synthetic stable IDs 与固定测试 URL；post-Brief 另执行一次用户触发的真实单篇只读验收。
 - 报告与命令证据未输出 Cookie、`xsec_token`、bridge token、个人主页、收藏夹 ID、note ID、标题、总结正文、原始视频、帧或完整 OCR。
 - Post-Brief 真实验收只使用既有 SOP 浏览器与本地 loopback；没有批量平台操作、点赞、评论、发布、取消收藏、GitHub API 查询或模型依赖的核心同步。
+- 最终全量审核由 Agent 对既有私有候选和证据执行；公开报告只记录聚合计数，不记录条目 ID、标题、总结正文或私有证据。
 - 未运行真实迁移 apply；未 push、创建 PR、merge 或 deploy。
 
 ## Final assessment
 
-- Bugs found: 7
-- Verified fixes: 7
+- Bugs found / verified fixes: 7 / 7
 - Best-effort/reverted/deferred: 0/0/0
-- Baseline → final browser suite: 30/30 → 32/32
-- Post-Brief real acceptance: 1/1 summarized；0 failed；0 aborted
-- Real public confirmed Skill / repo+ZIP complete: 0 / 0
+- Baseline → final browser suite: 30/30 → 34/34，`workers=1` desktop/mobile
+- Final public review: 268/268 terminal；40 accepted/current DianDian；228 explicit rejected；0 pending
+- Public resources/actions: 78 resources；66 repo；66 ZIP；149 HTTPS；0 unsafe
+- Step 7 coverage: 7/7；fresh 441/441；gaps 0；deferred 0
 - Health score: 92 → 100
 - Step 6 code gate: PASS
 

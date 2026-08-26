@@ -2,6 +2,8 @@
   "version": 1,
   "slug": "2026-08-22-favsense-end-to-end-organization-recovery",
   "generated_at": "2026-08-22T15:50:08.228Z",
+  "updated_at": "2026-08-26",
+  "current_head": "8a14dacb64fb839f60d19eca1d1d66bf95b98fdf",
   "spec_file": "C:\\Users\\rowla\\Codex\\小红书收藏整理\\docs\\specs\\2026-08-22-favsense-end-to-end-organization-recovery-spec.md",
   "checklist_file": "C:\\Users\\rowla\\Codex\\小红书收藏整理\\docs\\specs\\2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md",
   "mockup_files": [],
@@ -9,5 +11,105 @@
   "mockup_states": [],
   "handlers": [],
   "destructive_components": [],
-  "draggable_primitives": []
+  "draggable_primitives": [],
+  "pipeline_tail": {
+    "position": "brief",
+    "steps": {
+      "code": "pass",
+      "review": "pass",
+      "qa": "pass",
+      "coverage_fill": "pass",
+      "brief": "complete_pending_user_review"
+    },
+    "live_public": {
+      "notes": 268,
+      "accepted_current_diandian": 40,
+      "explicit_rejected": 228,
+      "pending": 0,
+      "deep_summary_source_diandian": 40,
+      "agent_reviewed_terminal": 268
+    },
+    "resources": {
+      "verified": 78,
+      "github_repository_actions": 66,
+      "github_zip_actions": 66,
+      "https_actions": 149,
+      "unsafe_actions": 0
+    },
+    "release_check": {
+      "exit": 0,
+      "site": 113,
+      "publisher_pass": 15,
+      "publisher_skip": 1,
+      "formal": 3,
+      "curation": 37,
+      "skill_sync": 10,
+      "release_contracts": 7,
+      "lifecycle": 13,
+      "organization_python": 11,
+      "organization_node": 41,
+      "organizer_python": 254,
+      "diandian_python": 29,
+      "playwright": 34,
+      "playwright_workers": 1,
+      "playwright_projects": [
+        "desktop",
+        "mobile"
+      ],
+      "verify": "pass"
+    },
+    "coverage": {
+      "layers": "7/7",
+      "fresh_tests": "441/441",
+      "gaps": 0,
+      "deferred": 0
+    },
+    "independent_review": {
+      "javascript": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0
+      },
+      "python": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0
+      }
+    },
+    "safety": {
+      "migration": "synthetic_fixtures_and_dry_run_only",
+      "real_migration_apply": false,
+      "push": false,
+      "pr": false,
+      "merge": false,
+      "deploy": false
+    },
+    "services": {
+      "workbench": {
+        "url": "http://127.0.0.1:8766/",
+        "listener_pid": 38784,
+        "http_status": 200
+      },
+      "bridge": {
+        "address": "127.0.0.1:47631",
+        "listener_pid": 1604,
+        "private_state_read": false
+      },
+      "live_dom": {
+        "accepted": 40,
+        "rejected": 228,
+        "waiting": 0,
+        "resource_actions": 149,
+        "github_repository_actions": 66,
+        "github_zip_actions": 66,
+        "unsafe_actions": 0
+      },
+      "playwright_closed": {
+        "page": true,
+        "context": true,
+        "browser": true
+      },
+      "services_left_running": true
+    }
+  }
 }

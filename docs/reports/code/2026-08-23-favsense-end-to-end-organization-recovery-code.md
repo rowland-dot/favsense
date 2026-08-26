@@ -1,6 +1,6 @@
 # FavSense organization recovery — CODE report
 
-Date completed: 2026-08-25
+Date completed: 2026-08-26
 Pipeline step: 4 / CODE
 Branch: `codex/favsense-organization-recovery`
 Base / Step 4 pre-SHA: `fc0a22094dcbb1c41e99e333449ab5293baa5421`
@@ -115,12 +115,12 @@ No line/branch percentage tool is configured in this repository, so this report 
 - Publish failure: the new local pair remains, the remote stays on the prior version, and no force push occurs.
 - Migration: dry-run is the default; guarded apply requires a matching fresh confirmation and uses the same journal/rollback mechanism.
 
-## Remaining gates and known limitations
+## Downstream gates and known limitations
 
-- Step 5 REVIEW, Step 6 QA, Step 7 COVERAGE-FILL/AUDIT and Step 8 BRIEF remain separate pipeline stages.
+- Step 5 REVIEW, Step 6 QA and Step 7 COVERAGE-FILL/AUDIT have passed; Step 8 BRIEF is the current handoff stage.
 - The two approved manual-only checks are visual readability and subjective message clarity; no functional interaction is manual-only.
 - Real private-data migration apply, real platform access, remote publication, PR creation, push, merge and deploy have not occurred.
-- Therefore this branch may be declared `implementation_ready` after downstream gates, but the real private dataset must not be described as restored before a separately authorized dry-run/apply/rebuild validation.
+- Migration verification used only synthetic fixtures and dry-run plans. The real private dataset was not migrated.
 
 ## Post-Brief live remediation — 2026-08-25
 
@@ -161,11 +161,37 @@ The zero confirmed-Skill count is intentional truthful state evidence, not a fai
 
 The remediation changed only the userscript template, Bridge implementation and their JavaScript/Python tests. Temporary diagnostic probes were removed, the generated public artifact was restored to the controlled version, the service and preview remained healthy, and the commit contained no private/generated paths or live credentials.
 
+## Final live organization closure — 2026-08-26
+
+Atomic closure commit:
+
+- `8a14dacb64fb839f60d19eca1d1d66bf95b98fdf fix: close live curation review loop`
+
+This commit closed the remaining real-data review gap without weakening the trust boundary:
+
+- The full 268-note public scope reached an Agent-reviewed terminal state: 40 current, revision-bound DianDian summaries accepted; 228 explicitly rejected with recorded reasons; 0 pending and no item left for the user to decide.
+- All 40 accepted records use `xiaohongshu-diandian` as the deep-summary source and bind the accepted artifact to current content, evidence, candidate and curation revisions. Stale or identity-mismatched artifacts fail closed.
+- The public projection contains 78 verified resources, including 66 canonical GitHub repository actions and 66 matching ZIP actions. Across the site there are 149 HTTPS actions and 0 unsafe actions.
+- Formal merge now uses the existing organization lock plus the participant-aware journal transaction. Recovery validates the transaction root, immutable participant identity and swap boundaries before choosing one complete old or new generation; mixed-root, redirected, duplicate or incomplete journals fail closed.
+- The Windows process-liveness probe uses `OpenProcess` / `GetExitCodeProcess` / `CloseHandle`; Windows never sends `os.kill(pid, 0)`. POSIX retains the standard signal-0 probe.
+- Video/OCR/transcription evidence is accepted only when its artifact revision identity matches the current content revision. No raw media, frame evidence or complete OCR content enters public output or this report.
+
+### Final verification matrix
+
+| Gate | Result |
+|---|---|
+| `npm.cmd run release:check` | exit 0: site 113; publisher 15 pass + 1 documented Windows symlink skip; formal outputs 3; curation 37; Skill sync 10; release contracts 7; lifecycle 13; organization Python 11 + Node 41; Python 254 + DianDian 29; Playwright 34 with `workers=1` across desktop and mobile; final `verify` pass |
+| Independent organizer Python discovery | 254/254 PASS |
+| `npm.cmd run verify` | PASS |
+| Step 7 behavioral coverage | 7/7 layers; fresh test inventory 441/441; unresolved gaps 0; deferred tests/stubs 0 |
+| Independent JavaScript review | CRITICAL 0 / HIGH 0 / MEDIUM 0 |
+| Independent Python review | CRITICAL 0 / HIGH 0 / MEDIUM 0 |
+
+No real migration apply, push, PR, merge, deploy or remote publication occurred.
+
 ## Pipeline result
 
-Stage B Task 0–11 implementation is complete. No mockups or React components were introduced, so Stage C mockup/mount checks resolve to their documented no-mockup/no-component paths. Task 11 independent generic, JavaScript and security reviews each returned PASS with zero findings. The later Step 6 live remediation is recorded above and in the QA report; it does not rewrite Task 0–11 history or claim a real migration, publication or confirmed Skill. This CODE report supplies both the original implementation handoff and the post-Brief corrective evidence.
-
-Completeness: 10/10  Confidence: 9/10
+Stage B Task 0–11 implementation is complete. No mockups or React components were introduced, so Stage C mockup/mount checks resolve to their documented no-mockup/no-component paths. The original Task 0–11 RED/GREEN/commit history remains intact above; commits `a5fdfc3` and `8a14dac` record the later real-chain correction and full Agent review closure. Final REVIEW, QA and COVERAGE-FILL gates have zero unresolved CRITICAL/HIGH/MEDIUM findings, zero coverage gaps and zero deferred tests. The pipeline is intentionally stopped at BRIEF for user review.
 
 <!-- pipeline:json
 {
@@ -179,7 +205,7 @@ Completeness: 10/10  Confidence: 9/10
     "low": 0
   },
   "completeness": 10,
-  "confidence": 9,
+  "confidence": 10,
   "state_coverage": {
     "tagged_states": 0,
     "covered_states": 0,
@@ -189,3 +215,5 @@ Completeness: 10/10  Confidence: 9/10
   "findings": []
 }
 -->
+
+Completeness: 10/10  Confidence: 10/10
