@@ -4805,5 +4805,323 @@
     "candidate_revision": "5e096d0cab5bc16442ece1266dd5c1ceb056f75e05a1c88c8ef839fa7b4c26b8",
     "review_status": "accepted",
     "review_reason_code": ""
+  },
+  "6a788e830000000022033bb3": {
+    "id": "6a788e830000000022033bb3",
+    "content_sha256": "9287149640774b1bc26119c3a39240bac5b55fd83209dae1eed5f1e218eab4e7",
+    "title": "全站推广投产高、销量下滑时怎么排查",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频讨论电商全站推广中投产目标提高后销量下滑的问题，建议先从不同使用场景和需求拆分商品表达，再用关键词与人群渠道验证新增受众；“拆链接”属于作者经验，不是平台固定规则。",
+    "action": "先在不复制商品和不操纵流量的前提下，用现有评价归纳两个真实场景，做小预算素材与人群对照测试，并以利润、成交和退货共同复盘。",
+    "themes": [
+      "人群资产",
+      "场景测试",
+      "电商投放"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "0dde81f6c39783a775f86f9523fc78ba6a572dd6c23dbfb3491e3bc818285962",
+    "evidence_sha256": "2f22b4689ef0d235a9cf06670f387248ccd4c1e922e3485cf7d87bc616781d05",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "628d1207da77fa28a0c45bc7fb26cce4fc5b9cbd30f6c0ee286a790a20547c98"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "04ac52ccb52d26c184725d83785a90ba01cb8e92304a616d27d518384f58d173"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "6c72ee931c7637f2d467c054a35f4bd1708fe5cd0e84aa289343b2ba1b5bb9c1",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a6c1db8000000003400fb62": {
+    "id": "6a6c1db8000000003400fb62",
+    "content_sha256": "1248cf09cd08635b5e9f52da57dba9c17525361255fd8b00879a66b448c262e0",
+    "title": "99%卖家还在死磕亚马逊，Codex直接让你解放",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频把亚马逊运营拆成 Codex 执行流程：标准化输入、通过数据接口生成诊断、把选品规则封装为可复用流程，并批量形成广告调整建议；库存、否词和预算等高风险动作不能无人审核。",
+    "action": "先做只读诊断报告并与人工结论对比；广告否词、竞价、库存和发布操作必须设置预算上限、审批、日志与可回滚方案。",
+    "themes": [
+      "Codex",
+      "亚马逊运营",
+      "人工审批"
+    ],
+    "tools": [
+      "Codex"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "6eac8c44d62940c348cb79dd7f96f94467038bc36095e2e43a1577c74912c0bd",
+    "evidence_sha256": "bc718cac6c72ae23c2fd2bbea5293d43574f2482d5b282b75cfb9e898d0bc219",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "c26c4c75de7490cbde39fe3b2a3c3831dd5d1a410cf551f38c4ae8224b2caf25"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "86a93e67880c77d10c6889c01e6d2b2c01f48885eccd73b738fdf496b3c746ce"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "8a8e3a9cee0148329a915e46f7ceaadc50e585288d22ebb5eab2e2373c6e0af4",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a7163b30000000035014af4": {
+    "id": "6a7163b30000000035014af4",
+    "content_sha256": "87385e8c797a0035f742ae17066403115d31d8217a5aa3963d12e09dcf74d32f",
+    "title": "99%亚马逊卖家A+还在疯狂砸钱？",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频给出用 Codex 标准化亚马逊 A+ 视觉制作的六步流程：结构化收集产品与品牌资料、选择页面模板、固化尺寸和违规过滤、批量生成、逐模块校验并归档复用；节省工时与转化提升是作者主张。",
+    "action": "先用一个自有商品制作单套草稿，逐项核对尺寸、品牌素材授权、文字合规和事实准确性；所有图片由人工审核后再上传亚马逊。",
+    "themes": [
+      "Codex",
+      "亚马逊A+",
+      "视觉工作流"
+    ],
+    "tools": [
+      "Codex"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "9cb12a5f1333400907b5d87cb571ee3baa9772c24813d4e2283e433b1ee733db",
+    "evidence_sha256": "c55819e044944c52c1a697129229e49217e4afcd8d9a59909e5e915400b2f9f6",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "c0db8592a84ba80e6ad6e0bdfc65545ff989a9c6e80c041aaa40340d5baa6bc3"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "1d2b56ebba3bbed8e17713b92f27c204b0cc892e31fb65ec453ee289f94557d9"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "ee5145a3210b3839ae1d8f06f9cf748b34c3d5999afba49d99c9cc7818763eb9",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "67c81ab6000000002901724c": {
+    "id": "67c81ab6000000002901724c",
+    "content_sha256": "60768c1f5b8fe70e063bf41bea39049c0bfce3fb6f6d26c429aa71e8f9758eb8",
+    "title": "客服外包竟然这么便宜了！？",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "图文是“幻想客服”电商客服外包广告，主要用规模招聘、集中设备、标准流程和弹性排班解释低价，并列出按咨询量分档的报价；价格、在线时长和服务质量均为商家自述。",
+    "action": "若评估外包，至少对比三家并核对合同、响应指标、数据保密、账号权限、退款与退出交接；先用低权限短周期试运行，不只按月费选择。",
+    "themes": [
+      "供应商评估",
+      "客服外包",
+      "数据保密"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "28f56ba0c70ed995f12a2f53b666bb787d3120273c39333ace942a29780dcb2c",
+    "evidence_sha256": "004aae31f945a96408c738ec500d88b24e59d62538d77137e8a46361c48d7822",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "50b7c57c3705671e1628f3f74c7f1216e716d283b88ef8d0b4cf29c8b884e68e"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "d18911ef5f7d5c37a27cbd73b1e408b19311bdcb0ca57bb3963f840b209e1587"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "a44f313e8781b10141fde23bc23dab16ab6c1167b4ff2d7d6c2650ed232af116",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a744c36000000000503049c": {
+    "id": "6a744c36000000000503049c",
+    "content_sha256": "ca74134178d5d7016d9cd735136833d961f7a7027bcdeb74ab2c362ff759ea6b",
+    "title": "Codex 亚马逊选品 Go/No-Go 工作流",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频把亚马逊选品经验封装为 Codex 工作流：沉淀历史案例，按市场容量、竞争、利润、流量、供应链和风险六维检查，再用红黄绿状态形成 Go/No-Go 结论并持续用案例迭代。",
+    "action": "先用已知结果的历史商品建立金标集，明确六维阈值和缺失数据规则；系统只输出建议与证据，最终采购和备货仍由人审批。",
+    "themes": [
+      "Codex",
+      "Go/No-Go",
+      "亚马逊选品"
+    ],
+    "tools": [
+      "Codex"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "75e5b365014f1483e349a864ec8d2ca118fc50800620703fb50763e9f0429f0c",
+    "evidence_sha256": "5cb8d643b025f886bc67e564f6c00cbcff6c2b985503effe2f833e69afcd5fa9",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "712c1888cee820677a32f7e2a91b245cb3acd4479ed332cd6eb7e94244d6ad4a"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "02b3a1bfc56443399e503ba4c3582ee09ad5408411f2c34fb34a30c0c3a86d03"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "5b2044b336ec588cfd5b75efa7b616ffbe7f83b122ea621d12482d0806460a2b",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a7ad5200000000021021360": {
+    "id": "6a7ad5200000000021021360",
+    "content_sha256": "78483a3720877ed033186b2c336263d5974a142a1f2c01721d824b3ee25da061",
+    "title": "选品怕踩坑？官方模拟器免费测",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍亚马逊后台的新品规划或增长机会模拟功能：按关键词查看需求、季节性、竞争、价格、广告成本和利润估算，用历史数据在投产前筛除明显不合适的方向；预测不能替代产品差异化与真实测试。",
+    "action": "先在自己的卖家后台确认是否开放该功能，用一个历史商品对照预测与实际结果，再把模拟器作为初筛，不直接据此备货。",
+    "themes": [
+      "亚马逊选品",
+      "市场模拟",
+      "风险控制"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "30fafe6b5dbea5b37fedc6c023c0ecf261fc0e221f9f2d4c341ebbd22292a9c0",
+    "evidence_sha256": "069f7d635fbae29ecc21f0efbdd7f3464d0ec27c1e607334fdd679af81142939",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "d14fbbb52747674e9e43ca537b6532db182fed41301849726a8eca7998314e5c"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "85c0aa5f8dea2fba31456ba7092990405af0c079f19e3fcce3c9811ce260f0d1"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "24e4919e0ff9433ba610279e23d0e19a8dafdbaf309efc0f0a21bbbbf5623c44",
+    "review_status": "accepted",
+    "review_reason_code": ""
   }
 }
