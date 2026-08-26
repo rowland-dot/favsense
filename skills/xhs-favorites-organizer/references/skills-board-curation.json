@@ -5123,5 +5123,109 @@
     "candidate_revision": "24e4919e0ff9433ba610279e23d0e19a8dafdbaf309efc0f0a21bbbbf5623c44",
     "review_status": "accepted",
     "review_reason_code": ""
+  },
+  "6a7598ce0000000032022236": {
+    "id": "6a7598ce0000000032022236",
+    "content_sha256": "dd1bd7c01db7e02c2740c6b846f0b6b12d135205a116e30005fef9c9b474dc18",
+    "title": "为什么有的新品上架就有100个5星好评？",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频列举新品快速累积五星评价的四种做法，其中合并差异商品变体、跨站共享评价和以返现换五星都存在评价操纵或合规风险；内容价值在于识别这些套路，不是执行指南。",
+    "action": "只使用亚马逊当前官方允许的 Vine 与真实购买反馈，不合并不相同的变体、不诱导五星、不寄返现卡；发现异常评价策略时交由合规人员核对平台规则。",
+    "themes": [
+      "亚马逊评价",
+      "反操纵",
+      "合规风险"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "5a624fb43cfced46687f64c579f6c5f809ec144a03d95e6395091876f165ce5a",
+    "evidence_sha256": "4035f1cf46222009ae11c9a6050d2ab080658dbbf9056feedfd367f754d634fa",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "8dc7785ed397ec4d4f12785b7c8f570326a06ac9258c10c4e1e55755979137f9"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "e3a80a270aada533695de59ad9b07370dccb2656594e58febe0821e7b07e48cc"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "c9130c9ec74e0e443b26069abce3f0a8d6a81280489539dd04411fad8dc26d72",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a75cc8c000000002701da06": {
+    "id": "6a75cc8c000000002701da06",
+    "content_sha256": "2583fb356b1a2f4271c90214a411a2c2e7b75d7eb90c9fdef4d9f08bcb290447",
+    "title": "千问办公AI工作流，解决新手做账号的问题",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频用千问办公串联自媒体账号诊断、公开竞品整理、热点与选题优先级、脚本生成四步流程，并把报告、表格和文档连接起来；“解决九成问题”和爆款概率属于作者主张。",
+    "action": "只上传已脱敏的自有账号数据，竞品仅使用公开且获准信息；先生成待审报告与一条草稿，由人工核对隐私、事实、版权和平台合规后再使用。",
+    "themes": [
+      "人工审核",
+      "数据驱动选题",
+      "自媒体运营"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "b0c25297bb515ac5a797fbd3d3dfaea2afaf5f4b0bd5970aea5beb381e80b798",
+    "evidence_sha256": "96709c94a2a3e184bfc2f43b2945d118c710a1126e8c297577c17d70210387fe",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "a3e385bf5a2c9819b75b9b274b0829f24a63123abeb05239b6bdcf9d26be3404"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "7bccf56122cfce9834249094f6ba81246479b7f9565f1129ed0cdd4848bb3e09"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "7668318df4e5c8eed640fddc5bda1198fa86baa07b3b07bbd76083c62f2bf93a",
+    "review_status": "accepted",
+    "review_reason_code": ""
   }
 }
