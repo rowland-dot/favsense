@@ -2837,5 +2837,545 @@
     "candidate_revision": "99221e798deedd8f88e9d0877d271a438fb95956274cfdc9fbf2995d7e13fdad",
     "review_status": "accepted",
     "review_reason_code": ""
+  },
+  "6a5cbbee000000000f00afaf": {
+    "id": "6a5cbbee000000000f00afaf",
+    "content_sha256": "b37dc8b5c667aa4696fd49b1cc985a19b8db9a5b0a703d7677246b0186d44bad",
+    "title": "爬虫界的降维打击！",
+    "category": "信息采集与搜索",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频展示 Crawl4AI：把网页正文整理为适合 LLM 与 RAG 使用的 Markdown，并支持深度抓取、代理切换和动态页面处理；它解决的是从网页到可用语料的采集转换。",
+    "action": "在隔离环境用 10 个静态与动态页面测试正文完整度、Markdown 结构、失败率和反爬边界，不携带个人登录态。",
+    "themes": [
+      "Crawl4AI",
+      "LLM数据",
+      "网页转Markdown"
+    ],
+    "tools": [
+      "Crawl4AI"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "5fb53dc5ddd9ed031a56a87271d96e3cbef0cc76fe5ace30634d790be4c08b36",
+    "evidence_sha256": "3a8bcfa21b0d8315d308fd81fbc1826633733b1f3e9fc89caac9b7af69df9db1",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "eb869011e76955558339da309e4699438549375199715d51aeec6f6e1ab251c4"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "0562d1de55e05e8615280035803f785d934fadbca37eaee3d10e852fd804cc55"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "155396c068b4f239d322ff3f4ac735ee65aa1cb116d0a34c2f9386732f887172",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a5d5d1b000000001c010d2d": {
+    "id": "6a5d5d1b000000001c010d2d",
+    "content_sha256": "9be294bbfe42f6d6ffba23b378c93d3515dbdb1877abd56f0d29ca1fabecc1ad",
+    "title": "第158集 让你的AI长出手脚，不需额外API",
+    "category": "信息采集与搜索",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 Wigolo：一个本地优先的网页搜索、抓取、爬取与研究 MCP，可在本地基础设施中为 Agent 提供检索能力，不要求额外搜索 API Key。",
+    "action": "在隔离环境测试 Wigolo 的索引来源、搜索新鲜度、引用可追溯性和本地资源占用，再决定是否接入 Agent。",
+    "themes": [
+      "MCP",
+      "Wigolo",
+      "本地搜索"
+    ],
+    "tools": [
+      "Wigolo"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "2e4539bd4b4775888bc56193e79f5962f74842c774912beb228d969aace9a523",
+    "evidence_sha256": "fa14edc415c1e7e29e3dcec769fa59c8bc7faa5840a71346a69a1b4571d547f3",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "8da956effb591892d535eb4a502d66e7d99e190968d0be2c59821f3a3f5390ba"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "182949a92774058c4b78927a97d7527fe16d9d8c3ed0bcd3b371c3a9be6796ef"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "d6a371c38aead5d7d7c0999cabfabf90c0f1bfb6357d57a9594647b7c71223d0",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a5a3a29000000001c00d15b": {
+    "id": "6a5a3a29000000001c00d15b",
+    "content_sha256": "a225ab1455114308da3cf4c12bf1a86fd6a812f81a0f2a1c8afde0a41d40d36b",
+    "title": "Grok Build 直接全量开源！！！",
+    "category": "开发部署与Vibe Coding",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频把 Grok Build 描述为开源 Agent 开发框架，重点是让模型拆解目标、选择工具、执行并根据结果调整；同时提醒源码透明不等于开放协作，数据上传行为仍需独立审计。",
+    "action": "先核对官方仓库、许可证和遥测实现，再用同一小应用与现有 coding agent 对比可测试性、权限边界和数据外发。",
+    "themes": [
+      "Agent框架",
+      "Grok Build",
+      "开源"
+    ],
+    "tools": [
+      "Grok Build"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "27baba8ff1aed9b12f0d7735b6e04194bf9e5e0f4fdee088faa33e0fac8c1347",
+    "evidence_sha256": "1679e77c6fd8a1908a8ba2b26ab64e938f89436fdd77b241f65e21334963e559",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "509746c61355207e9f59ace83d6e9cbb918def42fdd334c543746246ca9dc29c"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "0cadbd805fc96439b19da16ae9816d6ef4ce292e601260d4655fa726f9f0a731"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "0a4351c22ad618eec6089bd80ba88ead8041ffa2f04cce02ecf98928f2d8ffd1",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a5420d500000000060310a2": {
+    "id": "6a5420d500000000060310a2",
+    "content_sha256": "d5e1b8c553503ee39fc7e487f39e9078c84eb096317adefc98726e4a46fc6f89",
+    "title": "X上那些搬运号的内容到底哪来的？终于被我",
+    "category": "信息采集与搜索",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频展示 MediaCrawler 可采集多个主流平台的公开内容与互动线索，并借助浏览器登录态取得请求签名，而不是依赖复杂的 JavaScript 逆向。",
+    "action": "仅对自有账号和获授权公开内容做只读测试，检查平台风控、登录态隔离、数据最小化和长期维护成本。",
+    "themes": [
+      "MediaCrawler",
+      "浏览器登录态",
+      "社媒采集"
+    ],
+    "tools": [
+      "MediaCrawler"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "0b235e463d936bdea401ee013e5d7475ef3728a5fff0ab698c7b6f454ea04fee",
+    "evidence_sha256": "6c1117f063fe4115371500ec854a5e4e58316e9449d5f2330663233708628f56",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "8e03022521554afd79cd723b1d4c4ded439e6cf298130e634dbe70419125463e"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "172f764c80e8d2d2ccba1cfbf31e25bce4e6bf1ec3f3b821b4d859f9771280f5"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "234f2a204ff6a0f59bfa64899a3316f338e6c1caae5a8c51277a585b39e65f4b",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a56e91c000000000803ce3f": {
+    "id": "6a56e91c000000000803ce3f",
+    "content_sha256": "878b9f74fc44c3c0d34c7fc388f8b6398780fca2cedc95361fa17d96907f2cd2",
+    "title": "有了这个skill 程序员不知道是该哭还是笑",
+    "category": "Skills与工作流",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 Graphify：把代码及相关材料转换为可查询知识图谱，用节点和关系呈现代码结构与调用路径，帮助 Agent 和开发者理解、检索与交接项目。",
+    "action": "只在本仓库副本中运行 Graphify，抽样核对采集、构建和知识卡片依赖是否准确，并检查它读取与保存了哪些文件。",
+    "themes": [
+      "Graphify",
+      "代码理解",
+      "知识图谱"
+    ],
+    "tools": [
+      "Graphify"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "d1e9facdef8e275afc5a609befa033fe8ba06c067f2e19b879ec1db6b3048ffb",
+    "evidence_sha256": "42319d0840a17df1a9a65c914f3e8ae18180e83ff4d85f624dc391b7aa49b19b",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "92863b71db252663bbce6794fbbd54871475f8bfdebfc6a18e68ebbdae6e29cb"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "6a3e4780f9b793c4a6703401c3c76d8c310e669bba479a6a4b74a90624b5c4b2"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "0b52921b0ed2ded39bf8881d7308b496f8cd5a21428db82212ea449bd3bee286",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a52740f000000001503fec2": {
+    "id": "6a52740f000000001503fec2",
+    "content_sha256": "dc06f48c635eaeb35356b237fc7bdcc7b1ba2563a1d5f1f93063143427f56ec6",
+    "title": "第130集 AI出海如何找客户找资源",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频以 ScrapeGraphAI 演示用 Python 抓取目标网站，再由模型把公开页面整理成公司、联系人和其他结构化字段，用于出海客户研究。",
+    "action": "先定义合法公开字段和禁止采集项，再对 20 条公开公司资料验证抽取准确率、来源可追溯性与人工复核成本。",
+    "themes": [
+      "ScrapeGraphAI",
+      "公开线索",
+      "出海获客"
+    ],
+    "tools": [
+      "ScrapeGraphAI"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "ed422a4f5314821336113d5dbaeb22663cd2d6877ae10fde2879212306390cfe",
+    "evidence_sha256": "0c19561f999b5e33b5853a3012177c115684746df8b4439c658b8430ff037dba",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "c04ed23a8c3effa413eb235c2ee95a3f6000b5bdf04e83f8b094a392d9ca0d71"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "7f9cb001696655e04418d79c0b1d2929fa189000658868217a5db95edabfd545"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "c100ed9f2f90d3e6461627b91e91ce0c90e1e64421d54331b0ed95b82f1fed2a",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a506c6a000000002100b1a5": {
+    "id": "6a506c6a000000002100b1a5",
+    "content_sha256": "87cf4045ef51825f40748a8c593375bf71e6cdb71984ef5ae7afd130af49cbeb",
+    "title": "让AI看懂电脑屏幕？这个项目有点东西",
+    "category": "Agent与自动化",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频演示 Mano-P 通过本地视觉模型理解屏幕并执行跨应用 GUI 操作；它强调端侧隐私，但主要硬件条件集中在较高配置的 Apple Silicon 或专用算力设备。",
+    "action": "当前 Windows 机器先做资料评估，不直接安装；重点核实模型与 SDK 开放程度、硬件要求、权限范围和误操作防护。",
+    "themes": [
+      "GUI-VLA",
+      "Mano-P",
+      "本地推理"
+    ],
+    "tools": [
+      "Mano-P"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "ce88d1a4ef61595726f8b2a5554de4f6096538450cb0e05c7e4822a69d937779",
+    "evidence_sha256": "45a0779b222e41f9a2443db5f85ecaa6a1dbc8cadc3ce3bf7fc622e15d95a57e",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "c4583ccd82185c586799a39906e96726b6a048e09de3694b1192559f63d75b99"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "ce83a8f1e7d3fb15e59b6961fe0e3faa6fe95d49d8d5634bc037cce2c8641542"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "a91b5e157c3fd2dfae33e012e9f92aa6ce7c18a70578217c81ba3180f605e42a",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a4b71cd000000000f006747": {
+    "id": "6a4b71cd000000000f006747",
+    "content_sha256": "6a5e51b888489f1725736e70b4ff7695c74c2b5c9100ee04b5d2cfa375a45988",
+    "title": "可以记录会议的开源项目",
+    "category": "知识管理与记忆",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频项目是 Meetily：在本地完成会议录音、实时转写与摘要，可连接本地 Ollama 模型；核心价值是会议数据不必上传云端。",
+    "action": "用已获参与者授权的短会议测试中文转写、说话人区分、系统音频采集和 Markdown 导出，并检查本地数据删除方式。",
+    "themes": [
+      "Meetily",
+      "会议转写",
+      "本地隐私"
+    ],
+    "tools": [
+      "Meetily"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "1dde0157061cc8f7d74636ccfbf249dcba7cb2459c88e41a9f971fd1361ebd4b",
+    "evidence_sha256": "c5e3dbf40bfce76e63ad1ea88777933dde002a9d4a163dd26ffba1417916d62c",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "4632eff8da6b61179e219d8f2cbfec49685802145a3b8c14ae6027fc4b1a8cd5"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "ed79aa293b93958916c6af24511fbe3fc8ff6926d9de81b3f1edaca7131de2eb",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a4c8cb2000000001603ed97": {
+    "id": "6a4c8cb2000000001603ed97",
+    "content_sha256": "b335fa05d7bdf7050c26d3958a0bebb0b5ebfe95b0aa75fc6e2914bf88c12483",
+    "title": "Scritty——多Agent共享一个记忆池👾",
+    "category": "知识管理与记忆",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 Scritty：在同一终端运行多个 AI CLI，自动捕获会话并建立本地可搜索记忆，再通过 MCP 或 CLI 让不同 Agent 回读，实现跨 Agent 接力。",
+    "action": "先审查其本地存储、加密、遥测、导出和删除机制，再与纯 Markdown 共享记忆方案比较成本与可迁移性。",
+    "themes": [
+      "MCP",
+      "Scritty",
+      "多Agent记忆"
+    ],
+    "tools": [
+      "Scritty"
+    ],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "cd0d6113a5469e9fa56d9cfc6e4d61c084208e0d30e23aebe6b255c409f2e380",
+    "evidence_sha256": "a5e4e9809adbf4d4c10e7a6f601c1f7b4c2a28fe71a2a12a271c2618eed4daa8",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "f96e2b2f20da8e8d3d56991b008c4aa4643f583f139c1998f286b9526fe58605"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "a98f84211a4fea914605f46940ffe75a61b358668869ba0102c628bcf88955dd"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "eac3d216aa07711ec7bf342544a825e32cc70ccc550384175d09cb4140128d16",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a43955b0000000015027d45": {
+    "id": "6a43955b0000000015027d45",
+    "content_sha256": "e8f401fcfaa5f67a76628412cca3ca27b7ef45dab1b94ec5047ffd4219e7aa39",
+    "title": "太离谱了！月入14万美金，0个员工，全靠AI打工！",
+    "category": "内容增长与商业",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频以 Postiz 展示社交媒体运营平台：集中管理账号、内容日历、AI 辅助创作、评论互动与多平台排期发布；收入和用户规模属于原帖营销主张，不作为采用依据。",
+    "action": "只启用草稿和人工审核，先核实各平台官方 OAuth、权限撤销、失败重试和账号风控，再考虑任何自动发布。",
+    "themes": [
+      "Postiz",
+      "社媒运营",
+      "自动排期"
+    ],
+    "tools": [
+      "Postiz"
+    ],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "d9124b68aeee08aeb765b7b1242c5daa16066949a841f03303af8258bc40852f",
+    "evidence_sha256": "94581d573482c6d9208f5f7840cef9c0e673a75d6709113e61561c4100f48a58",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "a0c89a720fc783447a6553d4ea53760eee93fcfa83e8b39d9dc86e1e474199e8"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "19d9c3f30903dea4ebb3a76aaa34eaf3c59de45eceff1145c218e778d850c6ec"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "a26063cd8f4310fdda01bfffb827854892f4a0e9ee224c5219059405e6059134",
+    "review_status": "accepted",
+    "review_reason_code": ""
   }
 }
