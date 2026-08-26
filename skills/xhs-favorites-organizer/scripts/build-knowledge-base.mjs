@@ -653,6 +653,10 @@ function main() {
   const diandianDirectory = options["diandian-dir"]
     ? path.resolve(options["diandian-dir"])
     : path.resolve(workspace, ".xhs-favorites/diandian-summaries");
+  const expectedPromptVersion = String(options["diandian-prompt-version"] || "");
+  if (expectedPromptVersion && !/^[a-f0-9]{64}$/.test(expectedPromptVersion)) {
+    throw new Error("DianDian prompt version is invalid");
+  }
   const buildVersion = String(options["build-version"] || "");
   if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) throw new Error("--build-version must be a 64-character lowercase SHA-256");
   const effectiveDate = String(options["effective-date"] || new Date().toISOString().slice(0, 10));
@@ -683,7 +687,7 @@ function main() {
     const skillResource = candidateKind === "Skill"
       ? confirmedSkillResource(matchingResources, { today: effectiveDate, maxAgeDays: 30 })
       : null;
-    const currentRevisions = currentFormalRevisions(note, candidateEntry, skillResource);
+    const currentRevisions = currentFormalRevisions(note, candidateEntry, skillResource, expectedPromptVersion);
     const isCurated = hasCuration
       && isPublishableCuration(
         id,
@@ -711,7 +715,7 @@ function main() {
       categoryReason: categoryPolicy.categoryReason,
       themes: categoryPolicy.themes
     };
-    const point = loadFormalPointSummary(diandianDirectory, id);
+    const point = loadFormalPointSummary(diandianDirectory, id, expectedPromptVersion);
     const formalDecision = formalCurationDecision({
       publishable: isCurated,
       auditEntry: curationAudit?.notes?.[id],

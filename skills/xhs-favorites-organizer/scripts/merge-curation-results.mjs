@@ -265,8 +265,12 @@ function formalCandidate(noteId, note, candidate, auditEntry, resources, evidenc
 export function mergeResults({
   catalog, config, scope, review, candidates, resources, audit, curation,
   evidenceReview = null, pointSummaries = null, expectedCount = null,
+  expectedPromptVersion = "",
   today = new Date().toISOString().slice(0, 10)
 }) {
+  if (expectedPromptVersion && !/^[a-f0-9]{64}$/.test(expectedPromptVersion)) {
+    throw new Error("DianDian prompt version is invalid");
+  }
   const items = Array.isArray(review?.items) ? review.items : null;
   if (!items) throw new Error("review.items must be an array");
   if (expectedCount !== null && items.length !== expectedCount) throw new Error(`review must contain exactly ${expectedCount} items`);
@@ -316,7 +320,12 @@ export function mergeResults({
         noteId, note, candidate, auditEntry, resources, evidenceById.get(noteId), point, today
       );
       const formalEntry = formal.entry;
-      const current = currentFormalRevisions(note, formalEntry, formal.assessment.resource);
+      const current = currentFormalRevisions(
+        note,
+        formalEntry,
+        formal.assessment.resource,
+        expectedPromptVersion
+      );
       if (!current) throw new Error("accepted review could not be bound to current formal revisions");
       Object.assign(auditEntry, current, {
         curation_sha256: current.curation_revision
@@ -449,6 +458,10 @@ async function main() {
     let merged;
     try {
       const scope = readJson(options.scope, "scope");
+      const expectedPromptVersion = String(options["diandian-prompt-version"] || "");
+      if (expectedPromptVersion && !/^[a-f0-9]{64}$/.test(expectedPromptVersion)) {
+        throw new Error("DianDian prompt version is invalid");
+      }
       merged = mergeResults({
         catalog: readJson(options.catalog, "catalog"),
         config: readJson(options.config, "config"),
@@ -462,9 +475,10 @@ async function main() {
         pointSummaries: options["diandian-root"]
           ? Object.fromEntries((scope.note_ids || []).map((noteId) => [
               noteId,
-              loadFormalPointSummary(path.resolve(options["diandian-root"]), noteId)
+              loadFormalPointSummary(path.resolve(options["diandian-root"]), noteId, expectedPromptVersion)
             ]))
           : null,
+        expectedPromptVersion,
         expectedCount: options["expected-count"] === undefined ? null : Number(options["expected-count"])
       });
     } catch (error) {

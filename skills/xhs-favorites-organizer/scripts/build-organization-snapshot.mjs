@@ -19,7 +19,7 @@ const validDate = (value) => {
 function canonicalVersion({ sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest, effectiveDate }) {
   for (const value of [sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest]) if (!HASH.test(value)) throw new Error("SNAPSHOT_DIGEST_INVALID");
   if (!validDate(effectiveDate)) throw new Error("SNAPSHOT_EFFECTIVE_DATE_INVALID");
-  const preimage = { schema_version: 2, sealed_scope_sha256: sealedScopeDigest, curation_input_sha256: curationInputDigest, public_config_sha256: configDigest, input_revision_sha256: inputRevisionDigest, effective_date: effectiveDate, builders: { knowledge_base: 2, public_site: 6 } };
+  const preimage = { schema_version: 2, sealed_scope_sha256: sealedScopeDigest, curation_input_sha256: curationInputDigest, public_config_sha256: configDigest, input_revision_sha256: inputRevisionDigest, effective_date: effectiveDate, builders: { knowledge_base: 3, public_site: 7 } };
   return createHash("sha256").update(JSON.stringify(preimage), "utf8").digest("hex");
 }
 
@@ -423,10 +423,42 @@ async function boundedFile(root, target, label, { optional = false, maxBytes = 1
     throw new Error("SNAPSHOT_INPUT_UNAVAILABLE");
   }
   if (!before.isFile() || before.isSymbolicLink() || before.size > maxBytes) throw new Error("SNAPSHOT_INPUT_INVALID");
-  const source = await readFile(target);
-  const after = await lstat(target);
-  if (!after.isFile() || after.isSymbolicLink() || after.size !== before.size || after.mtimeMs !== before.mtimeMs) throw new Error("SNAPSHOT_INPUT_CHANGED");
-  return { name: label, state: "file", sha256: sha256(source), source };
+  const rootMetadata = await lstat(root);
+  if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink()) throw new Error("SNAPSHOT_INPUT_PATH_INVALID");
+  const realRoot = await realpath(root);
+  const realTarget = await realpath(target);
+  if (!inside(realRoot, realTarget)) throw new Error("SNAPSHOT_INPUT_PATH_INVALID");
+  const sameIdentity = (left, right) => (
+    left.dev === right.dev
+    && left.ino === right.ino
+    && left.mode === right.mode
+    && left.size === right.size
+    && left.mtimeMs === right.mtimeMs
+  );
+  const noFollow = process.platform === "win32" ? 0 : (fsConstants.O_NOFOLLOW || 0);
+  const handle = await open(target, fsConstants.O_RDONLY | noFollow);
+  try {
+    const opened = await handle.stat();
+    if (!opened.isFile() || !sameIdentity(before, opened) || opened.size > maxBytes) {
+      throw new Error("SNAPSHOT_INPUT_CHANGED");
+    }
+    const source = await handle.readFile();
+    if (source.byteLength > maxBytes) throw new Error("SNAPSHOT_INPUT_INVALID");
+    const openedAfter = await handle.stat();
+    const after = await lstat(target);
+    const realTargetAfter = await realpath(target);
+    if (
+      !after.isFile()
+      || after.isSymbolicLink()
+      || !sameIdentity(opened, openedAfter)
+      || !sameIdentity(before, after)
+      || realTargetAfter !== realTarget
+      || !inside(realRoot, realTargetAfter)
+    ) throw new Error("SNAPSHOT_INPUT_CHANGED");
+    return { name: label, state: "file", sha256: sha256(source), source };
+  } finally {
+    await handle.close();
+  }
 }
 
 async function imageInventory(root, directory, noteId) {
@@ -450,6 +482,8 @@ async function imageInventory(root, directory, noteId) {
 
 export async function captureBuilderInputs(options, effectiveDate) {
   const root = resolve(options.root);
+  const promptVersion = String(options.diandianPromptVersion || "");
+  if (promptVersion && !HASH.test(promptVersion)) throw new Error("SNAPSHOT_INPUT_INVALID");
   const fixed = {
     catalog: resolve(options.catalog),
     config: resolve(options.config),
@@ -489,6 +523,7 @@ export async function captureBuilderInputs(options, effectiveDate) {
   const noteIds = Object.keys(catalog?.notes || {}).filter((id) => /^[A-Za-z0-9_-]{1,128}$/.test(id)).sort();
   const quality = config?.curation_quality && typeof config.curation_quality === "object" ? config.curation_quality : {};
   const inputs = [...core];
+  if (promptVersion) inputs.push({ name: "diandian-prompt-version", state: "value", sha256: promptVersion });
   if (quality.publish_only_accepted === true) {
     inputs.push(await boundedFile(root, resolve(root, quality.audit_file || ".xhs-favorites/curation-audit.json"), "audit_file"));
     if (typeof quality.baseline_file === "string" && quality.baseline_file) {
@@ -588,7 +623,14 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
   }
   await writeFile(paths.config, `${JSON.stringify(config)}\n`, { encoding: "utf8", flag: "wx" });
   await writeFile(paths.curation, `${JSON.stringify(effectiveCurationValue)}\n`, { encoding: "utf8", flag: "wx" });
-  return { ...paths, ...(hasResources ? {} : { resources: "" }) };
+  const promptVersion = entries.get("diandian-prompt-version");
+  return {
+    ...paths,
+    ...(hasResources ? {} : { resources: "" }),
+    promptVersion: promptVersion?.state === "value" && HASH.test(promptVersion.sha256)
+      ? promptVersion.sha256
+      : "",
+  };
 }
 
 async function atomicJson(path, value) {
@@ -624,7 +666,11 @@ function cliArgs(argv) {
     result[key.slice(2)] = value;
   }
   const required = ["root", "kb-target", "public-target", "catalog", "config", "curation", "curation-bundle", "profile", "sealed-scope-digest", "diandian-dir", "diandian-report", "video-analysis", "effective-date"];
-  if (Object.keys(result).some((key) => ![...required, "resources"].includes(key)) || required.some((key) => !result[key])) throw new Error("SNAPSHOT_ARGUMENT_INVALID");
+  const optional = ["resources", "diandian-prompt-version"];
+  if (
+    Object.keys(result).some((key) => ![...required, ...optional].includes(key))
+    || required.some((key) => !result[key])
+  ) throw new Error("SNAPSHOT_ARGUMENT_INVALID");
   return result;
 }
 
@@ -648,6 +694,7 @@ async function runCli() {
     profile: options.profile,
     diandianDir: options["diandian-dir"],
     diandianReport: options["diandian-report"],
+    diandianPromptVersion: options["diandian-prompt-version"],
     videoAnalysis: options["video-analysis"],
     ...(options.resources ? { resources: options.resources } : {}),
   };
@@ -673,12 +720,12 @@ async function runCli() {
         };
       },
       buildKnowledgeBase: async ({ target, buildVersion }) => {
-        const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate];
+        const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate, ...(frozen.promptVersion ? ["--diandian-prompt-version", frozen.promptVersion] : [])];
         runBuilder(join(scriptDir, "build-knowledge-base.mjs"), [...shared, "--output", target, "--diandian-dir", frozen.diandian, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
         await writeFile(join(target, "build.json"), `${JSON.stringify({ schema_version: 1, build_version: buildVersion })}\n`, "utf8");
       },
       buildPublicSite: async ({ target, buildVersion }) => {
-        const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate];
+        const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate, ...(frozen.promptVersion ? ["--diandian-prompt-version", frozen.promptVersion] : [])];
         runBuilder(join(scriptDir, "build-public-site.mjs"), [...shared, "--output", target, "--build-version", buildVersion, "--diandian-dir", frozen.diandian, "--diandian-report", frozen.report, "--video-analysis", frozen.video, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
       },
     });

@@ -378,6 +378,9 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.catalog_path = bridge.state_dir / "catalog.json"
             bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
             bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
+            bridge.diandian_skill_path = root / "configured-diandian-skill"
+            bridge.diandian_release = {"version": "1.2.0", "cdp_transport": "scripts/cdp_transport.py"}
+            bridge.diandian_browser_contract = {"enabled": True, "cdp_enabled": True, "schema_version": 1}
             bridge.config_path = root / "config.json"
             bridge.profile = root / "profile.json"
             bridge.curation = root / "curation.json"
@@ -438,6 +441,10 @@ class BridgeHelpersTest(unittest.TestCase):
             command, options = calls[0]
             self.assertEqual(option(command, "--curation-bundle"), str(bundle))
             self.assertEqual(option(command, "--diandian-report"), str(bridge.diandian_report_path))
+            self.assertEqual(
+                option(command, "--diandian-prompt-version"),
+                BRIDGE.diandian_prompt_version(bridge.diandian_release, bridge.diandian_browser_contract),
+            )
             self.assertEqual(option(command, "--video-analysis"), str(bridge.state_dir / "video-analysis"))
             self.assertRegex(option(command, "--effective-date"), r"^\d{4}-\d{2}-\d{2}$")
             self.assertNotIn("--input-revision-digest", command)
@@ -4553,7 +4560,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             self.assertEqual(bridge.rebuild_knowledge_base.call_count, 1)
             self.assertEqual(bridge.manual_sync_status()["state"], "completed")
 
-    def test_rebuild_passes_same_private_summary_directory_to_both_builders(self):
+    def test_rebuild_passes_same_private_summary_contract_to_both_builders(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
@@ -4567,6 +4574,13 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.workspace = root
             bridge.diandian_dir = root / "private-summaries"
             bridge.resource_registry = None
+            bridge.diandian_skill_path = root / "diandian-skill"
+            bridge.diandian_release = {"version": "1.2.0"}
+            bridge.diandian_browser_contract = {"enabled": True, "version": 1}
+            expected_prompt_version = BRIDGE.diandian_prompt_version(
+                bridge.diandian_release,
+                bridge.diandian_browser_contract,
+            )
 
             with mock.patch.object(BRIDGE.subprocess, "run", return_value=mock.Mock(returncode=0)) as run:
                 bridge.rebuild_knowledge_base()
@@ -4576,6 +4590,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 command = call.args[0]
                 position = command.index("--diandian-dir")
                 self.assertEqual(Path(command[position + 1]), bridge.diandian_dir)
+                prompt_position = command.index("--diandian-prompt-version")
+                self.assertEqual(command[prompt_position + 1], expected_prompt_version)
 
     def test_rebuild_restores_previous_public_generation_when_knowledge_build_fails(self):
         with tempfile.TemporaryDirectory() as directory:

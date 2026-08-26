@@ -5476,6 +5476,15 @@ class Bridge:
     def rebuild_knowledge_base(self) -> None:
         public_output = self.workspace / "site" / "data" / "knowledge.json"
         public_snapshot = public_output.read_bytes() if public_output.exists() else None
+        prompt_version_args = []
+        if getattr(self, "diandian_skill_path", None) is not None:
+            prompt_version_args = [
+                "--diandian-prompt-version",
+                diandian_prompt_version(
+                    self.diandian_release,
+                    self.diandian_browser_contract,
+                ),
+            ]
         public_builder_args = [
             "node", str(self.public_builder),
             "--config", str(self.config_path),
@@ -5483,6 +5492,7 @@ class Bridge:
             "--curation", str(self.curation),
             "--summaries", str(self.knowledge_base / "05-Skills成果" / "Skills面板逐篇总结与总汇.md"),
             "--diandian-dir", str(self.diandian_dir),
+            *prompt_version_args,
             "--output", str(public_output),
         ]
         if self.resource_registry is not None:
@@ -5508,6 +5518,7 @@ class Bridge:
                     "--curation", str(self.curation),
                     "--profile", str(self.profile),
                     "--diandian-dir", str(self.diandian_dir),
+                    *prompt_version_args,
                     "--output", str(self.knowledge_base),
                 ],
                 text=True,
@@ -5559,6 +5570,11 @@ class Bridge:
             "--video-analysis", str(self.state_dir / "video-analysis"),
             "--effective-date", datetime.now(timezone.utc).date().isoformat(),
         ]
+        if self.diandian_skill_path is not None:
+            command.extend([
+                "--diandian-prompt-version",
+                diandian_prompt_version(self.diandian_release, self.diandian_browser_contract),
+            ])
         if self.resource_registry is not None:
             command.extend(["--resources", str(self.resource_registry)])
         completed = run_bounded_subprocess(

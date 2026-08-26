@@ -121,6 +121,7 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-review.mjs" `
   --resources ".\skills\xhs-favorites-organizer\references\software-resources.json" `
   --evidence-root ".\.xhs-favorites\video-analysis" `
   --diandian-dir ".\.xhs-favorites\diandian-summaries" `
+  --diandian-prompt-version "<Bridge/整理编排器已验证并冻结的 64 位 prompt_version>" `
   --supplemental-review ".\.xhs-favorites\diandian-fallback-review.json" `
   --output ".\.xhs-favorites\curation-review.json"
 ```
@@ -139,8 +140,12 @@ node ".\skills\xhs-favorites-organizer\scripts\merge-curation-results.mjs" `
   --resources ".\skills\xhs-favorites-organizer\references\software-resources.json" `
   --audit ".\.xhs-favorites\curation-audit.json" `
   --curation ".\skills\xhs-favorites-organizer\references\skills-board-curation.json" `
+  --diandian-root ".\.xhs-favorites\diandian-summaries" `
+  --diandian-prompt-version "<Bridge/整理编排器已验证并冻结的 64 位 prompt_version>" `
   --expected-count 12
 ```
+
+`prompt_version` 必须由已验证的 Bridge/整理编排器提供；这些 Node CLI 不读取外部 Skill release 或 browser contract，也不接受人工推导的替代值。缺少或不匹配该冻结值时，点点正文及依赖它的正式 curation 一律降级，不得发布。
 
 ## 7. 旧组织状态迁移
 

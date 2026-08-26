@@ -401,10 +401,12 @@ test("coordinator captures and freezes every builder input with the exact bundle
     root, catalog: files.catalog, config: files.config, curation: files.curation,
     curationBundle: files.bundle, profile: files.profile, resources: files.resources,
     diandianDir: points, diandianReport: files.report, videoAnalysis: video,
+    diandianPromptVersion: "9".repeat(64),
   };
   const baseline = await captureBuilderInputs(options, "2026-08-25");
   assert.equal(baseline.sealedScopeDigest, (await import("node:crypto")).createHash("sha256").update(JSON.stringify([noteId])).digest("hex"));
   const frozen = await materializeCapturedInputs(root, baseline, {});
+  assert.equal(frozen.promptVersion, "9".repeat(64));
   await writeFile(files.catalog, JSON.stringify({ changed: "after-capture" }));
   assert.equal(await readFile(frozen.catalog, "utf8"), original.catalog);
   await writeFile(files.catalog, original.catalog);
@@ -419,6 +421,11 @@ test("coordinator captures and freezes every builder input with the exact bundle
   }
   const nextDay = await captureBuilderInputs(options, "2026-08-26");
   assert.notEqual(nextDay.inputRevisionDigest, baseline.inputRevisionDigest);
+  const changedPrompt = await captureBuilderInputs({
+    ...options,
+    diandianPromptVersion: "8".repeat(64),
+  }, "2026-08-25");
+  assert.notEqual(changedPrompt.inputRevisionDigest, baseline.inputRevisionDigest);
 
   await writeFile(files.config, JSON.stringify({ curation_quality: { publish_only_accepted: true } }));
   const defaultAudit = await captureBuilderInputs(options, "2026-08-25");

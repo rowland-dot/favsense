@@ -70,6 +70,14 @@ const paths = {
   diandianReport: arg("diandian-report", resolve(workspace, ".xhs-favorites/diandian-rerun-report.json")),
   output: arg("output", resolve(workspace, "site/data/knowledge.json"))
 };
+const promptVersionIndex = process.argv.indexOf("--diandian-prompt-version");
+const explicitPromptVersion = promptVersionIndex >= 0
+  ? String(process.argv[promptVersionIndex + 1] || "")
+  : "";
+if (explicitPromptVersion && !/^[a-f0-9]{64}$/.test(explicitPromptVersion)) {
+  throw new Error("DianDian prompt version is invalid");
+}
+const expectedPromptVersion = explicitPromptVersion;
 const buildVersionIndex = process.argv.indexOf("--build-version");
 const buildVersion = buildVersionIndex >= 0 ? String(process.argv[buildVersionIndex + 1] || "") : "";
 if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) throw new Error("--build-version must be a 64-character lowercase SHA-256");
@@ -288,7 +296,7 @@ async function loadDiandianRunStates(path, noteIds) {
 }
 const diandianRunStateById = await loadDiandianRunStates(paths.diandianReport, new Set(Object.keys(rawNotes)));
 const diandianById = new Map(Object.keys(rawNotes)
-  .map((noteId) => [noteId, loadFormalPointSummary(paths.diandian, noteId)])
+  .map((noteId) => [noteId, loadFormalPointSummary(paths.diandian, noteId, expectedPromptVersion)])
   .filter(([, summary]) => summary));
 const evidenceStats = await collectVideoEvidenceStats(paths.videoAnalysis, config.public_stats, Object.keys(rawNotes));
 const frameVerifiedNoteIds = new Set(evidenceStats.verifiedNoteIds);
@@ -303,7 +311,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const confirmedResource = candidateKind === "Skill"
     ? confirmedSkillResource(rawCandidateResources, { today: effectiveDate, maxAgeDays: 30 })
     : null;
-  const currentRevisions = currentFormalRevisions(raw, candidateEntry, confirmedResource);
+  const currentRevisions = currentFormalRevisions(raw, candidateEntry, confirmedResource, expectedPromptVersion);
   const isCurated = hasCuration
     && isPublishableCuration(
       noteId,

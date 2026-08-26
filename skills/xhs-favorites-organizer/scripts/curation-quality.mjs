@@ -105,11 +105,18 @@ export function isPublishableCuration(
     if (!context.currentRevisions) return false;
     return hasCompleteAcceptedAudit(noteId, note, entry, audit, context);
   }
-  if (baselineIds.has(noteId) && baselineRevisions.get(noteId) === curationRevision(entry)) return true;
+  if (baselineIds.has(noteId) && baselineRevisions.get(noteId) === curationRevision(entry)) {
+    const dependencies = canonicalDependencies(entry?.evidence_dependencies);
+    if (entry?.evidence_dependencies !== undefined && !dependencies) return false;
+    if (dependencies?.some((dependency) => dependency.method === "diandian_summary")) {
+      return Boolean(context.currentRevisions);
+    }
+    return true;
+  }
   return hasCompleteAcceptedAudit(noteId, note, entry, audit, context);
 }
 
-export function parseFormalPointSummaryRecord(record, noteId) {
+export function parseFormalPointSummaryRecord(record, noteId, expectedPromptVersion = "") {
   const expectedKeys = [
     "captured_at",
     "content_sha256",
@@ -142,6 +149,7 @@ export function parseFormalPointSummaryRecord(record, noteId) {
     || !HASH.test(record.content_sha256)
     || !HASH.test(record.request_sha256)
     || !HASH.test(record.summary_sha256)
+    || (expectedPromptVersion && record.prompt_version !== expectedPromptVersion)
     || !clean(record.captured_at)
     || containsCredentialShape(record)
   ) return null;
@@ -159,37 +167,89 @@ export function parseFormalPointSummaryRecord(record, noteId) {
   };
 }
 
-export function loadFormalPointSummary(directory, noteId) {
+export function loadFormalPointSummary(directory, noteId, expectedPromptVersion) {
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(String(noteId || ""))) return null;
+  if (expectedPromptVersion !== undefined && !HASH.test(expectedPromptVersion)) return null;
   const base = path.resolve(directory);
   const target = path.resolve(base, `${noteId}.json`);
   if (path.dirname(target) !== base) return null;
+  let descriptor;
   try {
-    const metadata = fs.statSync(target);
-    if (!metadata.isFile() || metadata.size > 512 * 1024) return null;
+    const baseMetadata = fs.lstatSync(base);
+    const metadata = fs.lstatSync(target);
+    if (
+      !baseMetadata.isDirectory()
+      || baseMetadata.isSymbolicLink()
+      || !metadata.isFile()
+      || metadata.isSymbolicLink()
+      || metadata.size > 512 * 1024
+    ) return null;
+    const realBase = fs.realpathSync.native(base);
+    const realTarget = fs.realpathSync.native(target);
+    const relativeTarget = path.relative(realBase, realTarget);
+    if (
+      path.isAbsolute(relativeTarget)
+      || relativeTarget === ".."
+      || relativeTarget.startsWith(`..${path.sep}`)
+    ) return null;
+    const noFollow = process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW || 0);
+    descriptor = fs.openSync(target, fs.constants.O_RDONLY | noFollow);
+    const opened = fs.fstatSync(descriptor);
+    if (
+      !opened.isFile()
+      || opened.dev !== metadata.dev
+      || opened.ino !== metadata.ino
+      || opened.size > 512 * 1024
+    ) return null;
+    const source = fs.readFileSync(descriptor, "utf8");
+    if (Buffer.byteLength(source, "utf8") > 512 * 1024) return null;
+    const after = fs.lstatSync(target);
+    const openedAfter = fs.fstatSync(descriptor);
+    if (
+      !after.isFile()
+      || after.isSymbolicLink()
+      || after.dev !== metadata.dev
+      || after.ino !== metadata.ino
+      || openedAfter.dev !== opened.dev
+      || openedAfter.ino !== opened.ino
+      || fs.realpathSync.native(target) !== realTarget
+    ) return null;
     return parseFormalPointSummaryRecord(
-      JSON.parse(fs.readFileSync(target, "utf8").replace(/^\uFEFF/, "")),
-      noteId
+      JSON.parse(source.replace(/^\uFEFF/, "")),
+      noteId,
+      expectedPromptVersion
     );
   } catch {
     return null;
+  } finally {
+    if (descriptor !== undefined) fs.closeSync(descriptor);
   }
 }
 
-export function currentFormalRevisions(note, entry, resource = null) {
+export function currentFormalRevisions(note, entry, resource = null, expectedPromptVersion = "") {
+  const dependencies = canonicalDependencies(entry?.evidence_dependencies);
+  if (!dependencies) return null;
+  const pointDependencies = dependencies.filter((dependency) => dependency.method === "diandian_summary");
+  if (
+    pointDependencies.length
+    && (
+      !HASH.test(expectedPromptVersion)
+      || pointDependencies.some((dependency) => dependency.version !== expectedPromptVersion)
+    )
+  ) return null;
   const candidate = {
     content_sha256: clean(note?.content_sha256),
     evidence_sha256: clean(entry?.evidence_sha256),
     candidate_revision: clean(entry?.candidate_revision),
     curation_revision: entry ? curationRevision(entry) : "",
-    evidence_dependencies: entry?.evidence_dependencies,
+    evidence_dependencies: dependencies,
     resource_required: clean(entry?.kind) === "Skill",
     resource_id: clean(resource?.id),
     resource_identity_sha256: clean(resource?.resource_identity_sha256),
     verification_snapshot_sha256: clean(resource?.verification_snapshot_sha256),
     resource_fresh: resource !== null,
   };
-  return REVISION_KEYS.every((key) => HASH.test(candidate[key])) && canonicalDependencies(candidate.evidence_dependencies)
+  return REVISION_KEYS.every((key) => HASH.test(candidate[key]))
     ? candidate
     : null;
 }

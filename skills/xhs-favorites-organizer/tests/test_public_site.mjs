@@ -488,7 +488,9 @@ async function buildProfileFixture(profileFile, options = {}) {
     "--video-analysis", resolve(work, "video-analysis"),
     "--output", outputPath
   ];
-  if (options.diandianSummary || options.diandianRecord) args.push("--diandian-dir", diandianPath);
+  if (options.diandianSummary || options.diandianRecord) {
+    args.push("--diandian-dir", diandianPath, "--diandian-prompt-version", promptVersion);
+  }
   if (options.diandianReport) args.push("--diandian-report", diandianReportPath);
   if (options.resources) args.push("--resources", options.resources);
   const result = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8" });

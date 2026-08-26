@@ -12,6 +12,7 @@ import {
   acceptedRevisionsCurrent,
   currentFormalRevisions,
   isPublishableCuration,
+  loadFormalPointSummary,
   publicEvidenceStatus
 } from "../scripts/curation-quality.mjs";
 import { prepareScope } from "../scripts/prepare-curation-scope.mjs";
@@ -26,6 +27,25 @@ const mergeCli = path.join(
   repositoryRoot,
   "skills/xhs-favorites-organizer/scripts/merge-curation-results.mjs"
 );
+const prepareReviewCli = path.join(
+  repositoryRoot,
+  "skills/xhs-favorites-organizer/scripts/prepare-curation-review.mjs"
+);
+
+test("public Skill rebuild examples preserve the Bridge-frozen DianDian prompt contract", () => {
+  const skill = fs.readFileSync(
+    path.join(repositoryRoot, "skills/xhs-favorites-organizer/SKILL.md"),
+    "utf8"
+  );
+  assert.match(skill, /rebuild_knowledge_base\(\)/);
+  assert.match(skill, /不要直接运行缺少该值的底层 builder/);
+  const examples = skill.match(/```powershell[\s\S]*?```/g) || [];
+  const knowledge = examples.find((example) => example.includes("build-knowledge-base.mjs")) || "";
+  const publicSite = examples.find((example) => example.includes("build-public-site.mjs")) || "";
+  for (const example of [knowledge, publicSite]) {
+    assert.match(example, /--diandian-prompt-version \$promptVersion/);
+  }
+});
 
 function writeJson(filename, value) {
   fs.mkdirSync(path.dirname(filename), { recursive: true });
@@ -217,6 +237,7 @@ test("DianDian summary is valid body evidence for video and image without bypass
 test("review preparation uses only a matching keyed DianDian summary as body evidence", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-diandian-review-"));
   const noteId = "note-current";
+  const currentPromptVersion = "7".repeat(64);
   const catalog = { notes: { [noteId]: {
     note_id: noteId,
     title: "具体标题",
@@ -255,7 +276,23 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory
+      diandianRoot: directory,
+      expectedPromptVersion: currentPromptVersion
+    });
+    assert.equal(review.items[0].diandian_summary_text, "");
+    assert.equal(review.items[0].blockers.includes("image-text-review-required"), true);
+
+    const currentRecord = JSON.parse(fs.readFileSync(path.join(directory, `${noteId}.json`), "utf8"));
+    currentRecord.prompt_version = currentPromptVersion;
+    fs.writeFileSync(path.join(directory, `${noteId}.json`), JSON.stringify(currentRecord), "utf8");
+    review = prepareReview({
+      catalog,
+      scope: { note_ids: [noteId] },
+      candidates,
+      resources: { resources: [{ name: "EvidenceTool" }] },
+      evidenceRoot: path.join(directory, "video"),
+      diandianRoot: directory,
+      expectedPromptVersion: currentPromptVersion
     });
     assert.equal(review.items[0].diandian_summary_text.includes("EvidenceTool"), true);
     assert.equal(review.items[0].content_sha256, "a".repeat(64));
@@ -273,7 +310,8 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory
+      diandianRoot: directory,
+      expectedPromptVersion: currentPromptVersion
     });
     assert.equal(review.items[0].diandian_summary_text, "");
     assert.equal(review.items[0].blockers.includes("image-text-review-required"), true);
@@ -288,7 +326,8 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory
+      diandianRoot: directory,
+      expectedPromptVersion: currentPromptVersion
     });
     assert.equal(review.items[0].diandian_summary_text, "");
 
@@ -302,7 +341,8 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory
+      diandianRoot: directory,
+      expectedPromptVersion: currentPromptVersion
     });
     assert.equal(review.items[0].diandian_summary_text, "");
 
@@ -321,11 +361,45 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory
+      diandianRoot: directory,
+      expectedPromptVersion: currentPromptVersion
     });
     assert.equal(review.items[0].diandian_summary_text, "");
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("review preparation CLI requires the validated frozen DianDian prompt version", () => {
+  const result = spawnSync(process.execPath, [
+    prepareReviewCli,
+    "--catalog", "catalog.json",
+    "--scope", "scope.json",
+    "--candidates", "candidates.json",
+    "--resources", "resources.json",
+    "--evidence-root", "evidence",
+    "--output", "review.json"
+  ], { cwd: repositoryRoot, encoding: "utf8" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /--diandian-prompt-version is required/);
+});
+
+test("formal point loader rejects a direct-child symlink or reparse point", (context) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-formal-point-link-"));
+  const outside = path.join(root, "outside.json");
+  const pointRoot = path.join(root, "point");
+  fs.mkdirSync(pointRoot);
+  fs.writeFileSync(outside, "{}", "utf8");
+  try {
+    try {
+      fs.symlinkSync(outside, path.join(pointRoot, "linked-note.json"), "file");
+    } catch (error) {
+      context.skip(`file-link fixture unavailable: ${error.code || error.message}`);
+      return;
+    }
+    assert.equal(loadFormalPointSummary(pointRoot, "linked-note", "7".repeat(64)), null);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
 

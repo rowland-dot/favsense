@@ -83,22 +83,25 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
 
 一次性历史回溯使用 `-Mode history`。历史模式会谨慎滚动每个启用面板，最多读取 200 个可见条目；触发风控即停止。不得把历史模式设为每日任务。
 
-只重建知识库、不访问网络：
+正式的本地重建由 Bridge 的 `rebuild_knowledge_base()` 统一编排，不访问平台网络，并把已验证 DianDian Skill 合同的冻结 `prompt_version` 同时传给知识库和网页 builder。不要直接运行缺少该值的底层 builder，否则含点点证据的正式总结会安全降级。仅在测试隔离环境中由 Bridge/整理编排器提供冻结值后，才可直接运行：
 
 ```powershell
+$promptVersion = "<Bridge/整理编排器已验证并冻结的 64 位 prompt_version>"
 node ".\skills\xhs-favorites-organizer\scripts\build-knowledge-base.mjs" `
   --catalog ".\.xhs-favorites\catalog.json" `
   --config ".\config\xhs-favorites.json" `
   --curation ".\skills\xhs-favorites-organizer\references\skills-board-curation.json" `
   --diandian-dir ".\.xhs-favorites\diandian-summaries" `
+  --diandian-prompt-version $promptVersion `
   --output ".\knowledge-base"
 ```
 
-只更新公开网页数据：
+同一隔离重建中的公开网页数据必须使用完全相同的冻结值：
 
 ```powershell
 node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs" `
-  --diandian-dir ".\.xhs-favorites\diandian-summaries"
+  --diandian-dir ".\.xhs-favorites\diandian-summaries" `
+  --diandian-prompt-version $promptVersion
 ```
 
 当私有配置中的 `publish.enabled` 为 `true` 时，最后一个收藏夹完成只形成核心 checkpoint；Bridge 必须等待冻结范围内的总结、证据、候选、资源与 curation 状态确定，再为正式知识库和公开数据构建一个共享 `build_version` 的最终快照。两个 staging 输出全部验证并原子交换成功后，才允许调用 `publish-huggingface.mjs`，同一运行最多发布一次。发布会排除 `site/.local/`，并仅把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，保留其余元数据与正文。发布凭据必须来自系统 Git 凭据管理器，不能写入配置、脚本或仓库；构建失败保留上一对本地快照，发布失败保留本地新快照与远端上一版。
