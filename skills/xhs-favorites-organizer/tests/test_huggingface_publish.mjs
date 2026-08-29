@@ -41,6 +41,7 @@ async function createRemoteFixture(root) {
     "---\ntitle: Existing Space\nsdk: static\napp_file: site/index.html\nheader: default\nheader: duplicate\n---\n\nKeep this description.\n",
     "utf8"
   );
+  await writeFile(path.join(seed, ".editorconfig"), "root = true\n", "utf8");
   await writeFile(path.join(seed, "site", "index.html"), "old", "utf8");
   await writeFile(path.join(seed, "site", "stale.js"), "stale", "utf8");
   git(["add", "."], seed);
@@ -90,6 +91,7 @@ test("publisher mirrors only the public site and enforces the mini Space header"
   assert.match(readme, /title: Existing Space/);
   assert.match(readme, /Keep this description\./);
   assert.deepEqual(readme.match(/^header:\s*.*$/gm), ["header: mini"]);
+  assert.match(await readFile(path.join(checkout, ".editorconfig"), "utf8"), /^root = true\r?\n$/);
   assert.equal(await readFile(path.join(checkout, "site", "index.html"), "utf8"), "new");
   assert.equal(await readFile(path.join(checkout, "site", "data", "knowledge.json"), "utf8"), "{\"notes\":[]}");
   assert.throws(() => git(["ls-files", "--error-unmatch", "site/stale.js"], checkout));
