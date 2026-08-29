@@ -195,7 +195,7 @@ async function main() {
     await validatePublicTree(checkout, {
       privateIdentifiers,
       excludedRootNames: [".git"],
-      allowedRootTextNames: [".gitattributes", ".gitignore", "LICENSE"],
+      allowedRootTextNames: [".editorconfig", ".gitattributes", ".gitignore", "LICENSE"],
     });
     const targetSite = path.join(checkout, "site");
     await rm(targetSite, { recursive: true, force: true });
@@ -219,7 +219,7 @@ async function main() {
     await validatePublicTree(checkout, {
       privateIdentifiers,
       excludedRootNames: [".git"],
-      allowedRootTextNames: [".gitattributes", ".gitignore", "LICENSE"],
+      allowedRootTextNames: [".editorconfig", ".gitattributes", ".gitignore", "LICENSE"],
     });
 
     runGit(["add", "-A", "--", "site", "README.md"], checkout);
