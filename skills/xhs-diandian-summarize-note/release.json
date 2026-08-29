@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "package": "xhs-diandian-summarize-note",
+  "version": "1.1.0",
+  "release_directory": "xhs-diandian-summarize-note-v1.1.0",
+  "skill_directory": "xhs-diandian-summarize-note",
+  "runtime_contract": "runtime/browser-contract.json",
+  "saver": "scripts/save_diandian_summary.py",
+  "saver_api": 1,
+  "files": [
+    "SKILL.md",
+    "release.json",
+    "runtime/browser-contract.json",
+    "agents/openai.yaml",
+    "scripts/save_diandian_batch.py",
+    "scripts/save_diandian_summary.py",
+    "test-fixtures/reject-signed-source.txt",
+    "tests/test_batch.py",
+    "tests/test_save_summary.py",
+    "tests/fixtures/diandian-with-footer.txt"
+  ]
+}

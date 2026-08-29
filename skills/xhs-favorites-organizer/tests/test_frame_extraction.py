@@ -75,6 +75,18 @@ class FrameExtractionQueueTests(unittest.TestCase):
             )
             self.assertEqual([item["note_id"] for item in queue], [catalogued])
 
+    def test_requested_note_scope_is_exact_and_catalog_bounded(self):
+        selected = "a" * 24
+        other = "b" * 24
+        allowed = {selected, other}
+
+        self.assertEqual(
+            self.module.requested_note_scope([selected, selected], allowed),
+            {selected},
+        )
+        with self.assertRaisesRegex(ValueError, "outside the catalog scope"):
+            self.module.requested_note_scope(["c" * 24], allowed)
+
     def test_catalog_scope_excludes_old_and_undated_notes(self):
         catalog = {"notes": {
             "a" * 24: {"published_at": "2026-01-01_00:00:00"},

@@ -8,16 +8,39 @@ permissions:
   contents: read
 
 jobs:
-  static-site:
-    runs-on: ubuntu-latest
+  release-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install locked Node dependencies
+        run: npm ci
+
+      - name: Install Chromium on Ubuntu
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Chromium on Windows
+        if: runner.os == 'Windows'
+        run: npx.cmd playwright install chromium
 
       - name: Check JavaScript syntax
         run: |
@@ -26,14 +49,17 @@ jobs:
           node --check site/local-bridge-utils.mjs
           node --check scripts/serve-site.mjs
           node --check scripts/verify-release.mjs
+          node --check scripts/run-python-tests.mjs
           node --check skills/xhs-favorites-organizer/scripts/build-public-site.mjs
           node --check skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs
 
-      - name: Test public site and deterministic builders
-        run: npm test
+      - name: Run the complete release gate
+        run: npm run release:check
 
-      - name: Test local bridge contracts
-        run: python3 skills/xhs-favorites-organizer/tests/test_bridge.py
+      - name: Run Windows setup safety contracts
+        if: runner.os == 'Windows'
+        run: npm.cmd run test:windows-contracts
 
-      - name: Verify open-source release boundary
-        run: npm run verify
+      - name: Verify PR development lifecycle
+        if: github.event_name == 'pull_request'
+        run: node scripts/verify-development-lifecycle.mjs

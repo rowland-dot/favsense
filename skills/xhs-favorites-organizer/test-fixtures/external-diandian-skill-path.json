@@ -1,0 +1,11 @@
+{
+  "config_key": "skill_path",
+  "skill_name": "xhs-diandian-summarize-note",
+  "required_files": [
+    "SKILL.md",
+    "release.json",
+    "runtime/browser-contract.json",
+    "scripts/save_diandian_summary.py"
+  ],
+  "portable_example": "skills/xhs-diandian-summarize-note"
+}

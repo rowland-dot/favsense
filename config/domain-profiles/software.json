@@ -69,12 +69,23 @@
     },
     "metric": { "label": "Star", "icon": "★", "missing": "暂无数据" },
     "fields": [],
+    "fields_by_type": {
+      "Agent Skill": [
+        { "field": "license", "label": "许可证" },
+        { "field": "skill_manifest", "label": "Skill manifest" },
+        { "field": "verified_at", "label": "核验日期" },
+        { "field": "compatibility", "label": "兼容性" }
+      ]
+    },
     "actions": [
       { "field": "repo", "label": "官方仓库" },
       { "field": "download", "label": "下载 ZIP" },
       { "field": "website", "label": "打开官网" },
       { "field": "documentation", "label": "打开文档" },
-      { "field": "tutorial", "label": "查看教程" }
+      { "field": "tutorial", "label": "查看教程" },
+      { "field": "faq", "label": "查看 FAQ" },
+      { "field": "limitations", "label": "平台限制" },
+      { "field": "trust", "label": "安全与信任" }
     ],
     "groups": [
       { "label": "GitHub 项目", "pattern": "GitHub 项目|GitHub 产品项目" },

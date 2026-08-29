@@ -1,0 +1,14 @@
+{
+  "description": "A single-note DianDian run must copy once, inject the link once, append only the fixed prompt suffix, submit once, wait for a new finished answer, save it once, and stop the batch on a link-recognition failure.",
+  "note_id": "note-a",
+  "expected_share_clicks": 1,
+  "expected_copy_clicks": 1,
+  "expected_link_injections": 1,
+  "expected_prompt_append": " 总结",
+  "expected_submissions": 1,
+  "minimum_page_stability_ms": 1500,
+  "failed_ai_tab": "keep-open",
+  "failure_policy": {
+    "link-not-recognized": "record-current-and-abandon-remaining"
+  }
+}

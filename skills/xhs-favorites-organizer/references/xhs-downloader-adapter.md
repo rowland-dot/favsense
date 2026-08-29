@@ -1,37 +1,10 @@
 # XHS-Downloader 适配说明
 
-## 浏览器用户脚本
-
-使用官方仓库 `JoeanAmier/XHS-Downloader` 已审查提交 `d805ebdd3db53f68137bc2b7a6ed118ce572d09b` 中的用户脚本。Chrome 138+ 与 Tampermonkey 5.3+ 需要在扩展详情中开启“允许用户脚本”。关闭该脚本的自动更新；升级前重新审查新提交。
-
-官方脚本文件名是 `XHS-Downloader.js`，部分 Chrome 不会自动显示安装页。遇到这种情况：
-
-1. 打开 Tampermonkey 控制面板的 `Utilities`；
-2. 找到 `Import from URL`；
-3. 输入固定提交的 raw URL：`https://raw.githubusercontent.com/JoeanAmier/XHS-Downloader/d805ebdd3db53f68137bc2b7a6ed118ce572d09b/static/XHS-Downloader.js`；
-4. 确认安装。
-
-保持“自动滚动页面”关闭。手动滚动后再提取已加载的收藏或专辑链接。
-
 ## 本地详情读取器
 
-在工作目录中隔离安装，不写入全局 Python 环境：
+`setup-autosync.ps1` 会先调用 `setup-xhs-downloader.ps1`，从官方仓库隔离准备已审查提交 `d805ebdd3db53f68137bc2b7a6ed118ce572d09b`，再生成任何本机 Bridge 凭据。安装器只使用锁文件和 Python 3.12，在 `.xhs-tools/` 内完成临时 checkout 与依赖安装，全部成功后才把它提升为正式运行时。
 
-```powershell
-git clone --depth 1 https://github.com/JoeanAmier/XHS-Downloader.git `
-  ".xhs-tools\XHS-Downloader"
-
-git -C ".xhs-tools\XHS-Downloader" fetch --depth 1 origin `
-  d805ebdd3db53f68137bc2b7a6ed118ce572d09b
-git -C ".xhs-tools\XHS-Downloader" checkout --detach `
-  d805ebdd3db53f68137bc2b7a6ed118ce572d09b
-
-$env:UV_CACHE_DIR = "<工作目录>\.xhs-tools\uv-cache"
-$env:UV_PYTHON_INSTALL_DIR = "<工作目录>\.xhs-tools\uv-python"
-uv sync --locked --no-dev --python "<Python-3.12-path>"
-```
-
-在 `.xhs-tools\XHS-Downloader` 中执行 `uv sync`。要求 Python 3.12 或更高版本。
+已有 checkout 必须同时满足：官方 HTTPS origin、提交号完全一致、工作树无修改或未跟踪文件；否则安装会停止且不会覆盖目录。升级前必须先审查并同步修改安装器、详情读取器、媒体读取器和本文中的固定提交。
 
 详情读取器必须使用：
 
@@ -44,7 +17,7 @@ uv sync --locked --no-dev --python "<Python-3.12-path>"
 
 不要使用项目已经失效的“从浏览器读取 Cookie”功能，也不要配置手工 Cookie。
 
-`fetch-xhs-details.py` 会拒绝其他提交或包含已跟踪文件修改的 checkout，并在发出请求前用启用证书验证的客户端替换上游客户端。任何一条详情失败都会立即终止当前批次，不继续请求或自动重试。
+`fetch-xhs-details.py` 会拒绝其他提交或包含已跟踪文件修改的 checkout，并在发出请求前用启用证书验证的客户端替换上游客户端。Bridge 把当前页面中的临时签名链接直接写入详情子进程的标准输入，不经过剪贴板或人工复制。普通详情缺口会以脱敏失败项返回；遇到验证码、`300031`、访问频繁或安全限制时，当前及剩余条目统一标记为 `safety stop` 并立即停止请求。
 
 ## 数据契约
 
@@ -62,8 +35,14 @@ uv sync --locked --no-dev --python "<Python-3.12-path>"
       "author": "nickname",
       "webUrl": "https://www.xiaohongshu.com/explore/stable-note-id"
     }
+  ],
+  "failures": [
+    {
+      "note_id": "stable-note-id",
+      "reason": "detail unavailable"
+    }
   ]
 }
 ```
 
-输出不得包含原始查询参数、`xsec_token` 或 Cookie。批次采用原子失败语义：任何一条详情不可用时立即停止，不输出部分 JSON，也不写 catalog 或日报。剪贴板保持不变，等待用户稍后重新运行。
+输出不得包含原始查询参数、`xsec_token` 或 Cookie。Bridge 只接收成功详情与脱敏失败分区；安全停止后不继续请求、排队媒体或发布。

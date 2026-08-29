@@ -19,7 +19,7 @@
     <a class="skip-link" href="#main-content">跳到主要内容</a>
 
     <header class="site-header">
-      <a class="brand" href="#" aria-label="FavSense 拾光台首页">
+      <a class="brand" href="#notes" data-home-link aria-label="返回知识卡首页">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 42 42" role="img">
             <path d="M8 10.5h26v21H8z" />
@@ -31,7 +31,7 @@
       </a>
 
       <nav class="primary-nav" aria-label="主导航">
-        <button class="nav-button is-active" type="button" data-view="notes">知识卡</button>
+        <button class="nav-button is-active" type="button" data-view="notes" aria-current="page">知识卡</button>
         <button class="nav-button" id="resources-nav" type="button" data-view="resources">资源索引</button>
         <button class="nav-button" type="button" data-view="method">同步设置</button>
       </nav>
@@ -98,14 +98,14 @@
           <div class="toolbar">
             <label class="search-box">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></svg>
-              <input id="search-input" type="search" placeholder="搜索标题、主题、工具或结论…" autocomplete="off" />
+              <input id="search-input" type="search" aria-label="搜索知识卡" placeholder="搜索标题、主题、工具或结论…" autocomplete="off" />
               <kbd aria-label="键盘快捷键：按斜杠键搜索">按 / 搜索</kbd>
             </label>
             <label class="sort-control">
               <span>排序</span>
-              <select id="sort-select">
-                <option value="curated">推荐顺序</option>
+              <select id="sort-select" aria-label="知识卡排序方式">
                 <option value="newest">最近发布</option>
+                <option value="curated">推荐顺序</option>
                 <option value="popular">收藏热度</option>
               </select>
             </label>
@@ -140,7 +140,7 @@
         <div class="resource-toolbar">
           <label class="search-box search-box--wide">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></svg>
-            <input id="resource-search" type="search" placeholder="搜索资源名称、类型或用途…" />
+            <input id="resource-search" type="search" aria-label="搜索资源" placeholder="搜索资源名称、类型或用途…" />
           </label>
           <div class="resource-controls">
             <button class="resource-bookmark-filter" id="resource-bookmark-filter" type="button" aria-pressed="false">
@@ -225,7 +225,7 @@
       </section>
     </main>
 
-    <dialog class="detail-dialog" id="detail-dialog">
+    <dialog class="detail-dialog" id="detail-dialog" aria-labelledby="detail-title">
       <div class="dialog-shell">
         <button class="dialog-close" id="dialog-close" type="button" aria-label="关闭详情">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" /></svg>

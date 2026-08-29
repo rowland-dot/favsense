@@ -30,11 +30,28 @@
   },
   "scripts": {
     "preview": "node scripts/serve-site.mjs",
+    "preview:qa-fixture": "node scripts/serve-qa-fixture.mjs",
     "test:site": "node --test skills/xhs-favorites-organizer/tests/test_public_site.mjs",
     "test:publish": "node --test skills/xhs-favorites-organizer/tests/test_huggingface_publish.mjs",
-    "test:knowledge": "node skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs",
-    "test": "npm run test:site && npm run test:publish && npm run test:knowledge",
+    "test:knowledge": "node skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs && node --test skills/xhs-favorites-organizer/tests/test_formal_outputs.mjs",
+    "test:curation": "node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs",
+    "test:skill-sync": "node --test scripts/test-sync-diandian-skill.mjs",
+    "test:release-contracts": "node --test scripts/test-run-python-tests.mjs scripts/test-verify-release.mjs",
+    "test:lifecycle": "node --test scripts/test-verify-development-lifecycle.mjs scripts/test-check-syntax.mjs scripts/test-run-organization-tests.mjs",
+    "test:organization": "node scripts/run-organization-tests.mjs",
+    "verify:github-resources": "node skills/xhs-favorites-organizer/scripts/verify-github-resources.mjs",
+    "test:e2e": "playwright test",
+    "test:windows-contracts": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File skills/xhs-favorites-organizer/tests/test_setup_browser_profile.ps1 -ScriptPath skills/xhs-favorites-organizer/scripts/setup-autosync.ps1 && powershell.exe -NoProfile -ExecutionPolicy Bypass -File skills/xhs-favorites-organizer/tests/test_setup_transaction.ps1 -ScriptPath skills/xhs-favorites-organizer/scripts/setup-autosync.ps1 && powershell.exe -NoProfile -ExecutionPolicy Bypass -File skills/xhs-favorites-organizer/tests/test_setup_xhs_downloader.ps1 -ScriptPath skills/xhs-favorites-organizer/scripts/setup-xhs-downloader.ps1 && powershell.exe -NoProfile -ExecutionPolicy Bypass -File skills/xhs-favorites-organizer/tests/test_start_autosync.ps1 -ScriptPath \"%CD%/skills/xhs-favorites-organizer/scripts/start-autosync.ps1\"",
+    "lint:a11y": "eslint site/app.js site/local-bridge-utils.mjs site/resource-utils.mjs",
+    "check:syntax": "node scripts/check-syntax.mjs",
+    "test:python": "node scripts/run-python-tests.mjs",
+    "test": "npm run test:site && npm run test:publish && npm run test:knowledge && npm run test:curation && npm run test:skill-sync && npm run test:release-contracts && npm run test:lifecycle",
     "verify": "node scripts/verify-release.mjs",
-    "release:check": "npm test && npm run verify"
+    "release:check": "npm run check:syntax && npm run lint:a11y && npm test && npm run test:organization && npm run test:python && npm run test:e2e && npm run verify"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2"
   }
 }

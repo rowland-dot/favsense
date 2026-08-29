@@ -1,0 +1,17 @@
+{
+  "note_id": "dddddddddddddddddddddddd",
+  "board_id": "boardfixture",
+  "protocol_version": 11,
+  "expected_status": "opened",
+  "required_query": {
+    "source": "web_user_page",
+    "xhs_kb_open_note": "dddddddddddddddddddddddd"
+  },
+  "forbidden_fragments": [
+    "navigation_url",
+    "browser-profile",
+    "--user-data-dir",
+    "DevToolsActivePort",
+    "chrome.exe"
+  ]
+}

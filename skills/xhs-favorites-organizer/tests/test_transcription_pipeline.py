@@ -1,13 +1,16 @@
 import importlib.util
+import hashlib
 import json
 import tempfile
 import unittest
+from argparse import Namespace
 from pathlib import Path
 from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "skills" / "xhs-favorites-organizer" / "scripts" / "transcribe-pending-videos.py"
+RUNNER = ROOT / "skills" / "xhs-favorites-organizer" / "scripts" / "run-video-analysis.ps1"
 
 
 class TranscriptionPipelineTests(unittest.TestCase):
@@ -60,6 +63,189 @@ class TranscriptionPipelineTests(unittest.TestCase):
             )
 
             self.assertEqual([item["note_id"] for item in queue], [small, large])
+
+    def test_queue_rejects_reparse_or_symlink_videos(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            media.mkdir()
+            note_id = "a" * 24
+            (media / f"{note_id}.mp4").write_bytes(b"external")
+
+            with mock.patch.object(
+                self.module, "_is_plain_file", return_value=False, create=True
+            ) as is_plain_file:
+                queue = self.module.build_transcription_queue(
+                    media, {}, root / "analysis", max_items=1
+                )
+
+            is_plain_file.assert_called_once()
+            self.assertEqual(queue, [])
+
+    def test_queue_rejects_a_redirected_note_analysis_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            note_id = "a" * 24
+            (media / f"{note_id}.mp4").write_bytes(b"video")
+            note_dir = analysis / note_id
+            note_dir.mkdir(parents=True)
+
+            with mock.patch.object(
+                self.module,
+                "_is_plain_directory",
+                side_effect=lambda path: Path(path) != note_dir,
+            ):
+                queue = self.module.build_transcription_queue(
+                    media, {}, analysis, max_items=1
+                )
+
+            self.assertEqual(queue, [])
+
+    def test_queue_reschedules_stale_curation_for_the_current_content_revision(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            media.mkdir()
+            note_id = "a" * 24
+            (media / f"{note_id}.mp4").write_bytes(b"video")
+
+            queue = self.module.build_transcription_queue(
+                media,
+                {note_id: {"content_sha256": "b" * 64}},
+                root / "analysis",
+                max_items=1,
+                allowed_note_ids={note_id},
+                content_sha256_by_id={note_id: "c" * 64},
+                tool_version="fixture",
+            )
+
+            self.assertEqual([item["note_id"] for item in queue], [note_id])
+
+    def test_atomic_output_rejects_a_redirected_analysis_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "analysis" / "note" / "transcription.json"
+
+            with mock.patch.object(
+                self.module, "_is_plain_directory", return_value=False
+            ):
+                with self.assertRaisesRegex(ValueError, "redirected"):
+                    self.module._atomic_json(output, {"status": "failed"})
+
+            self.assertFalse(output.exists())
+
+    def test_main_rejects_a_redirected_executable_before_queueing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            ffmpeg = root / "ffmpeg.exe"
+            ffprobe = root / "ffprobe.exe"
+            ffmpeg.write_bytes(b"tool")
+            ffprobe.write_bytes(b"tool")
+            curation = root / "curation.json"
+            catalog = root / "catalog.json"
+            config = root / "config.json"
+            curation.write_text("{}", encoding="utf-8")
+            catalog.write_text(json.dumps({"notes": {}}), encoding="utf-8")
+            config.write_text("{}", encoding="utf-8")
+            options = Namespace(
+                media_dir=str(media), curation=str(curation), catalog=str(catalog),
+                config=str(config), analysis_dir=str(analysis), ffmpeg=str(ffmpeg),
+                ffprobe=str(ffprobe), model="small", model_dir=str(root / "models"),
+                language="zh", device="cpu", compute_type="int8", max_items=20,
+                max_item_seconds=600, max_batch_seconds=900, status_file=None,
+                keep_audio=False, reassess_only=False, note_id=[],
+            )
+
+            with (
+                mock.patch.object(self.module, "parse_args", return_value=options),
+                mock.patch.object(
+                    self.module,
+                    "_is_plain_file",
+                    side_effect=lambda path: Path(path) != ffmpeg,
+                ),
+            ):
+                with self.assertRaisesRegex(ValueError, "ffmpeg"):
+                    self.module.main()
+
+    def test_main_passes_only_repeated_cli_note_ids_to_the_queue(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            selected = "a" * 24
+            excluded = "b" * 24
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            ffmpeg = root / "ffmpeg.exe"
+            ffprobe = root / "ffprobe.exe"
+            ffmpeg.write_bytes(b"tool")
+            ffprobe.write_bytes(b"tool")
+            curation = root / "curation.json"
+            catalog = root / "catalog.json"
+            config = root / "config.json"
+            curation.write_text("{}", encoding="utf-8")
+            catalog.write_text(json.dumps({"notes": {
+                selected: {"content_sha256": "c" * 64},
+                excluded: {"content_sha256": "d" * 64},
+            }}), encoding="utf-8")
+            config.write_text("{}", encoding="utf-8")
+            options = Namespace(
+                media_dir=str(media), curation=str(curation), catalog=str(catalog),
+                config=str(config), analysis_dir=str(analysis), ffmpeg=str(ffmpeg),
+                ffprobe=str(ffprobe), model="small", model_dir=str(root / "models"),
+                language="zh", device="cpu", compute_type="int8", max_items=20,
+                max_item_seconds=600, max_batch_seconds=900, status_file=None,
+                keep_audio=False, reassess_only=False, note_id=[selected, selected],
+            )
+            captured = {}
+
+            def capture_queue(*args, **kwargs):
+                captured["allowed_note_ids"] = kwargs["allowed_note_ids"]
+                return []
+
+            with (
+                mock.patch.object(self.module, "parse_args", return_value=options),
+                mock.patch.object(self.module.importlib_metadata, "version", return_value="1.0"),
+                mock.patch.object(self.module, "build_transcription_queue", side_effect=capture_queue),
+            ):
+                self.module.main()
+
+            self.assertEqual(captured["allowed_note_ids"], {selected})
+
+    def test_main_rejects_a_requested_note_outside_the_catalog_scope(self):
+        requested = "f" * 24
+        with self.assertRaisesRegex(ValueError, "outside the catalog scope"):
+            self.module.requested_note_scope([requested], {"a" * 24: {}})
+
+    def test_powershell_entry_forwards_each_requested_note_to_offline_producers(self):
+        source = RUNNER.read_text(encoding="utf-8-sig")
+        self.assertIn("[string[]]$NoteId", source)
+        self.assertIn("$transcriptionArguments += @('--note-id', $requestedNoteId)", source)
+        self.assertIn("$ocrArguments += @('--note-id', $requestedNoteId)", source)
+        self.assertIn("$visualArguments += @('--note-id', $requestedNoteId)", source)
+        self.assertIn("NoteId is outside the catalog scope.", source)
+        self.assertIn("function Assert-PlainLeafPath", source)
+        self.assertIn("function Assert-PlainDirectoryPath", source)
+        for label in (
+            "Transcription Python",
+            "FFmpeg",
+            "FFprobe",
+            "OCR engine",
+            "Visual evidence runner",
+        ):
+            self.assertIn(f"'{label}'", source)
+        self.assertIn("OCR engine must stay inside the workspace.", source)
+        for label in (
+            "Workspace",
+            "Private state directory",
+            "Media directory",
+            "Analysis directory",
+        ):
+            self.assertIn(f"'{label}'", source)
 
     def test_duration_budget_clips_long_items_and_caps_batch(self):
         items = [
@@ -135,10 +321,458 @@ class TranscriptionPipelineTests(unittest.TestCase):
             with mock.patch.object(self.module, "run", side_effect=failing_run):
                 with self.assertRaises(RuntimeError):
                     self.module.transcribe_video(
-                        object(), Path("ffmpeg"), item, {}, analysis, "zh", False
+                        object(),
+                        Path("ffmpeg"),
+                        item,
+                        {"content_sha256": "b" * 64},
+                        analysis,
+                        "zh",
+                        False,
+                        tool_version=self.module.transcription_tool_version(
+                            "1.2.3", "small", "cpu", "int8"
+                        ),
                     )
 
             self.assertFalse((analysis / item["note_id"] / "audio-16khz.wav").exists())
+            artifact = json.loads(
+                (analysis / item["note_id"] / "transcription.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(artifact["status"], "failed")
+            self.assertEqual(artifact["content_sha256"], "b" * 64)
+            self.assertEqual(artifact["method"], "local_transcription")
+            self.assertEqual(artifact["provider"], "faster-whisper")
+            self.assertEqual(
+                artifact["tool_version"],
+                self.module.transcription_tool_version(
+                    "1.2.3", "small", "cpu", "int8"
+                ),
+            )
+            self.assertEqual(artifact["reason_code"], "transcription_failed")
+            self.assertNotIn("text", artifact)
+
+    def test_transcription_rejects_a_redirected_note_directory_before_ffmpeg(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            analysis = root / "analysis"
+            note_id = "a" * 24
+            note_dir = analysis / note_id
+            note_dir.mkdir(parents=True)
+            item = {
+                "note_id": note_id,
+                "video": root / "video.mp4",
+                "source_duration_seconds": 30,
+                "audio_limit_seconds": 30,
+            }
+
+            with (
+                mock.patch.object(
+                    self.module,
+                    "_is_plain_directory",
+                    side_effect=lambda path: Path(path) != note_dir,
+                ),
+                mock.patch.object(self.module, "run") as runner,
+            ):
+                with self.assertRaisesRegex(ValueError, "redirected"):
+                    self.module.transcribe_video(
+                        object(),
+                        Path("ffmpeg"),
+                        item,
+                        {"content_sha256": "b" * 64},
+                        analysis,
+                        "zh",
+                        False,
+                        tool_version="fixture",
+                    )
+
+            runner.assert_not_called()
+
+    def test_transcription_rejects_a_redirected_continuation_before_ffmpeg(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            analysis = root / "analysis"
+            note_id = "a" * 24
+            transcript = analysis / note_id / "transcription.json"
+            transcript.parent.mkdir(parents=True)
+            transcript.write_text("{}", encoding="utf-8")
+            item = {
+                "note_id": note_id,
+                "video": root / "video.mp4",
+                "source_duration_seconds": 30,
+                "audio_start_seconds": 10,
+                "audio_limit_seconds": 20,
+            }
+
+            with (
+                mock.patch.object(
+                    self.module,
+                    "_is_plain_file",
+                    side_effect=lambda path: Path(path) != transcript,
+                ),
+                mock.patch.object(self.module, "run") as runner,
+            ):
+                with self.assertRaisesRegex(ValueError, "continuation"):
+                    self.module.transcribe_video(
+                        object(),
+                        Path("ffmpeg"),
+                        item,
+                        {"content_sha256": "b" * 64},
+                        analysis,
+                        "zh",
+                        False,
+                        tool_version="fixture",
+                    )
+
+            runner.assert_not_called()
+
+    def test_successful_transcript_binds_the_catalog_revision_and_tool_contract(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            analysis = root / "analysis"
+            note_id = "a" * 24
+            content_sha256 = "b" * 64
+            item = {
+                "note_id": note_id,
+                "video": root / "video.mp4",
+                "source_duration_seconds": 4,
+                "audio_start_seconds": 0,
+                "audio_limit_seconds": 4,
+            }
+
+            class Segment:
+                start = 0
+                end = 1
+                text = " revision bound transcript "
+                avg_logprob = -0.1
+                no_speech_prob = 0.0
+
+            class Info:
+                language = "zh"
+                language_probability = 1.0
+                duration = 4
+
+            class Model:
+                def transcribe(self, *_args, **_kwargs):
+                    return iter([Segment()]), Info()
+
+            def fake_run(command):
+                self.assertIn("-n", command)
+                self.assertNotEqual(Path(command[-1]).name, "audio-16khz.wav")
+                Path(command[-1]).write_bytes(b"synthetic wav")
+
+            with mock.patch.object(self.module, "run", side_effect=fake_run):
+                tool_version = self.module.transcription_tool_version(
+                    "1.2.3", "small", "cpu", "int8"
+                )
+                result = self.module.transcribe_video(
+                    Model(),
+                    Path("ffmpeg"),
+                    item,
+                    {"content_sha256": content_sha256},
+                    analysis,
+                    "zh",
+                    False,
+                    tool_version=tool_version,
+                )
+
+            artifact = json.loads(
+                (analysis / note_id / "transcription.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(result["status"], "transcribed")
+            self.assertEqual(artifact["schema_version"], 1)
+            self.assertEqual(artifact["content_sha256"], content_sha256)
+            self.assertEqual(artifact["method"], "local_transcription")
+            self.assertEqual(artifact["provider"], "faster-whisper")
+            self.assertEqual(artifact["tool_version"], tool_version)
+            self.assertEqual(
+                artifact["result_sha256"],
+                hashlib.sha256(artifact["text"].encode("utf-8")).hexdigest(),
+            )
+            self.assertNotEqual(
+                tool_version,
+                self.module.transcription_tool_version(
+                    "1.2.3", "medium", "cpu", "int8"
+                ),
+            )
+
+    def test_stale_or_different_tool_transcripts_are_requeued_and_not_reassessed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            current_id = "a" * 24
+            stale_id = "b" * 24
+            tool_id = "c" * 24
+            current_revision = "d" * 64
+            stale_revision = "e" * 64
+            tool_version = self.module.transcription_tool_version(
+                "1.2.3", "small", "cpu", "int8"
+            )
+            other_tool_version = self.module.transcription_tool_version(
+                "1.2.3", "medium", "cpu", "int8"
+            )
+            text = "This current transcript contains enough concrete words for reassessment."
+
+            def artifact(content_sha256, version):
+                return {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": version,
+                    "content_sha256": content_sha256,
+                    "result_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                    "text": text,
+                    "audio_window": {
+                        "end": 10,
+                        "next_start": 10,
+                        "truncated": True,
+                        "complete": False,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                }
+
+            records = {
+                current_id: artifact(current_revision, tool_version),
+                stale_id: artifact("f" * 64, tool_version),
+                tool_id: artifact(current_revision, other_tool_version),
+            }
+            original_bytes = {}
+            for note_id, record in records.items():
+                (media / f"{note_id}.mp4").write_bytes(b"video")
+                transcript_path = analysis / note_id / "transcription.json"
+                transcript_path.parent.mkdir(parents=True)
+                transcript_path.write_text(json.dumps(record), encoding="utf-8")
+                original_bytes[note_id] = transcript_path.read_bytes()
+
+            revisions = {
+                current_id: current_revision,
+                stale_id: stale_revision,
+                tool_id: current_revision,
+            }
+            queue = self.module.build_transcription_queue(
+                media,
+                {},
+                analysis,
+                10,
+                allowed_note_ids=set(revisions),
+                content_sha256_by_id=revisions,
+                tool_version=tool_version,
+            )
+            queued = {item["note_id"]: item["resume_start_seconds"] for item in queue}
+            self.assertEqual(queued[stale_id], 0)
+            self.assertEqual(queued[tool_id], 0)
+            self.assertEqual(queued[current_id], 10)
+
+            notes = {
+                note_id: {
+                    "content_sha256": revision,
+                    "title": "safe title",
+                    "description": "",
+                }
+                for note_id, revision in revisions.items()
+            }
+            with mock.patch.object(
+                self.module, "_atomic_json", wraps=self.module._atomic_json
+            ) as atomic_json:
+                result = self.module.reassess_transcripts(
+                    analysis, notes, tool_version=tool_version
+                )
+
+            self.assertEqual(result["reassessed"], 1)
+            atomic_json.assert_called_once()
+            for note_id in (stale_id, tool_id):
+                self.assertEqual(
+                    (analysis / note_id / "transcription.json").read_bytes(),
+                    original_bytes[note_id],
+                )
+
+    def test_malformed_transcript_shapes_fail_closed_to_a_fresh_queue_item(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            media = root / "media"
+            analysis = root / "analysis"
+            media.mkdir()
+            non_object_id = "a" * 24
+            nested_shape_id = "b" * 24
+            nested_value_id = "d" * 24
+            malformed_segments_id = "e" * 24
+            huge_number_id = "f" * 24
+            malformed_segment_fields_id = "1" * 24
+            revision = "c" * 64
+            tool_version = self.module.transcription_tool_version(
+                "1.2.3", "small", "cpu", "int8"
+            )
+            malformed = {
+                non_object_id: [],
+                nested_shape_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": [],
+                    "visual_review": [],
+                },
+                nested_value_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": {
+                        "next_start": ["not-a-number"],
+                        "truncated": True,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                    "segments": [],
+                },
+                malformed_segments_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": {
+                        "next_start": 10,
+                        "truncated": True,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                    "segments": ["not-an-object"],
+                },
+                huge_number_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": {
+                        "next_start": int("9" * 4000),
+                        "truncated": True,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                    "segments": [],
+                },
+                malformed_segment_fields_id: {
+                    "schema_version": 1,
+                    "status": "partial",
+                    "method": "local_transcription",
+                    "provider": "faster-whisper",
+                    "tool_version": tool_version,
+                    "content_sha256": revision,
+                    "result_sha256": hashlib.sha256(b"valid text").hexdigest(),
+                    "text": "valid text",
+                    "audio_window": {
+                        "next_start": 10,
+                        "truncated": True,
+                    },
+                    "visual_review": {"missing_facts": ["content-summary"]},
+                    "segments": [{
+                        "start": [],
+                        "end": False,
+                        "text": "valid text",
+                        "avg_logprob": {},
+                        "no_speech_prob": ["bad"],
+                    }],
+                },
+            }
+            for note_id, artifact in malformed.items():
+                (media / f"{note_id}.mp4").write_bytes(b"video")
+                transcript_path = analysis / note_id / "transcription.json"
+                transcript_path.parent.mkdir(parents=True)
+                transcript_path.write_text(json.dumps(artifact), encoding="utf-8")
+
+            queue = self.module.build_transcription_queue(
+                media,
+                {},
+                analysis,
+                10,
+                allowed_note_ids=set(malformed),
+                content_sha256_by_id={
+                    note_id: revision for note_id in malformed
+                },
+                tool_version=tool_version,
+            )
+
+            self.assertEqual(
+                {item["note_id"]: item["resume_start_seconds"] for item in queue},
+                {
+                    non_object_id: 0,
+                    nested_shape_id: 0,
+                    nested_value_id: 0,
+                    malformed_segments_id: 0,
+                    huge_number_id: 0,
+                    malformed_segment_fields_id: 0,
+                },
+            )
+
+    def test_failed_continuation_preserves_verified_partial_evidence(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            analysis = root / "analysis"
+            note_id = "a" * 24
+            revision = "b" * 64
+            tool_version = self.module.transcription_tool_version(
+                "1.2.3", "small", "cpu", "int8"
+            )
+            text = "verified partial transcript"
+            transcript_path = analysis / note_id / "transcription.json"
+            transcript_path.parent.mkdir(parents=True)
+            transcript_path.write_text(json.dumps({
+                "schema_version": 1,
+                "status": "partial",
+                "method": "local_transcription",
+                "provider": "faster-whisper",
+                "tool_version": tool_version,
+                "content_sha256": revision,
+                "result_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                "text": text,
+                "segments": [],
+                "audio_window": {
+                    "end": 10,
+                    "next_start": 10,
+                    "truncated": True,
+                    "complete": False,
+                },
+                "visual_review": {"missing_facts": ["content-summary"]},
+            }), encoding="utf-8")
+            original = transcript_path.read_bytes()
+            item = {
+                "note_id": note_id,
+                "video": root / "video.mp4",
+                "source_duration_seconds": 20,
+                "audio_start_seconds": 10,
+                "audio_limit_seconds": 10,
+            }
+
+            with mock.patch.object(
+                self.module, "run", side_effect=RuntimeError("synthetic failure")
+            ):
+                with self.assertRaises(RuntimeError):
+                    self.module.transcribe_video(
+                        object(),
+                        Path("ffmpeg"),
+                        item,
+                        {"content_sha256": revision},
+                        analysis,
+                        "zh",
+                        False,
+                        tool_version=tool_version,
+                    )
+
+            self.assertEqual(transcript_path.read_bytes(), original)
 
     def test_open_source_tool_name_does_not_replace_repository_identity(self):
         note = {"title": "一个很实用的开源视频工具", "description": ""}

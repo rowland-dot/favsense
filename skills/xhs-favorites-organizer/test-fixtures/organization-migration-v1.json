@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "note-current",
+      "note": {
+        "title": "Current accepted note",
+        "description": "Stable synthetic body",
+        "tags": ["synthetic"],
+        "media_type": "note"
+      },
+      "evidence": {
+        "comments": [],
+        "comments_checked": true,
+        "methods": [
+          {
+            "method": "public_text",
+            "provider": "favsense",
+            "version": "1",
+            "result_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ]
+      },
+      "curation": {
+        "title": "Current accepted note",
+        "category": "Synthetic",
+        "category_override": false,
+        "category_reason": "",
+        "summary": "Reviewed synthetic summary.",
+        "action": "Keep this synthetic result.",
+        "themes": ["testing"],
+        "tools": [],
+        "kind": "Other"
+      },
+      "audit": {
+        "status": "accepted",
+        "content_sha256": "790f1c3a07767a11545617186da4a667baad19684ba5222a491924ddf1c36bcf",
+        "evidence_sha256": "a1190169fff14fb7b597f54b9fe0c617f41a8323f7fc0a7c0ba8121ee2d30db4",
+        "candidate_revision": "2a28c1686f0e6c532d04f47c4925e54dbd94436696c2fc4c6050318e939ee40a",
+        "curation_revision": "6da453b95fe587eb32658ee7f4484e10c9d0afcbc7804c2e4fafb4aec19955ca",
+        "evidence_dependencies": [
+          {
+            "method": "public_text",
+            "provider": "favsense",
+            "version": "1",
+            "result_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ]
+      }
+    },
+    {
+      "id": "note-current",
+      "note": {
+        "title": "Current accepted note",
+        "description": "Stable synthetic body",
+        "tags": ["synthetic"],
+        "media_type": "note"
+      },
+      "evidence": {
+        "comments": [],
+        "comments_checked": true,
+        "methods": [
+          {
+            "method": "public_text",
+            "provider": "favsense",
+            "version": "1",
+            "result_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ]
+      },
+      "curation": {
+        "title": "Current accepted note",
+        "category": "Synthetic",
+        "category_override": false,
+        "category_reason": "",
+        "summary": "Reviewed synthetic summary.",
+        "action": "Keep this synthetic result.",
+        "themes": ["testing"],
+        "tools": [],
+        "kind": "Other"
+      },
+      "audit": {
+        "status": "accepted",
+        "content_sha256": "790f1c3a07767a11545617186da4a667baad19684ba5222a491924ddf1c36bcf",
+        "evidence_sha256": "a1190169fff14fb7b597f54b9fe0c617f41a8323f7fc0a7c0ba8121ee2d30db4",
+        "candidate_revision": "2a28c1686f0e6c532d04f47c4925e54dbd94436696c2fc4c6050318e939ee40a",
+        "curation_revision": "6da453b95fe587eb32658ee7f4484e10c9d0afcbc7804c2e4fafb4aec19955ca",
+        "evidence_dependencies": [
+          {
+            "method": "public_text",
+            "provider": "favsense",
+            "version": "1",
+            "result_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ]
+      }
+    },
+    {
+      "id": "note-point",
+      "note": {
+        "title": "Legacy point note",
+        "description": "Synthetic point body",
+        "tags": [],
+        "media_type": "note"
+      },
+      "legacy_prompt_version": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "point": {
+        "version": 1,
+        "provider": "xiaohongshu-diandian",
+        "prompt": "总结",
+        "title": "Legacy point note",
+        "summary": "A valid synthetic legacy summary.",
+        "captured_at": "2026-08-20T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "note-invalid-point",
+      "note": {
+        "title": "Invalid point note",
+        "description": "Synthetic invalid point body",
+        "tags": [],
+        "media_type": "note"
+      },
+      "point": {
+        "version": 1,
+        "provider": "xiaohongshu-diandian",
+        "prompt": "总结",
+        "title": "Invalid point note",
+        "summary": "",
+        "captured_at": "2026-08-20T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "note-unresolved",
+      "note": {
+        "title": "Legacy unresolved note",
+        "description": "Synthetic unresolved body",
+        "tags": [],
+        "media_type": "note"
+      },
+      "legacy_unresolved": "transport_failed"
+    },
+    {
+      "id": "note-false-skill",
+      "note": {
+        "title": "Looks like a Skill",
+        "description": "Synthetic candidate without resource proof",
+        "tags": ["Skill"],
+        "media_type": "note"
+      },
+      "curation": {
+        "title": "Looks like a Skill",
+        "category": "Synthetic",
+        "summary": "Unverified synthetic candidate.",
+        "action": "Verify the entity first.",
+        "themes": ["testing"],
+        "tools": ["Unverified Tool"],
+        "kind": "Skill"
+      }
+    }
+  ]
+}

@@ -44,12 +44,71 @@ export function validateResourceIndex(radar) {
   if (!radar || !Array.isArray(radar.sorts) || radar.sorts.length === 0) {
     throw new Error("resource_index.sorts must contain at least one sort option.");
   }
+  if (radar.groups !== undefined && !Array.isArray(radar.groups)) {
+    throw new Error("resource_index.groups must be an array.");
+  }
+  if (radar.default_group !== undefined && (typeof radar.default_group !== "string" || !radar.default_group.trim())) {
+    throw new Error("resource_index.default_group must be a non-empty string.");
+  }
+  if (
+    radar.fields_by_type !== undefined
+    && (
+      !radar.fields_by_type
+      || typeof radar.fields_by_type !== "object"
+      || Array.isArray(radar.fields_by_type)
+      || Object.getPrototypeOf(radar.fields_by_type) !== Object.prototype
+    )
+  ) {
+    throw new Error("resource_index.fields_by_type must be an object.");
+  }
+  for (const [resourceType, fields] of Object.entries(radar.fields_by_type || {})) {
+    if (!resourceType.trim() || !Array.isArray(fields)) {
+      throw new Error("Every resource_index.fields_by_type entry requires a non-empty type and an array.");
+    }
+    for (const field of fields) {
+      if (
+        !field
+        || typeof field !== "object"
+        || Array.isArray(field)
+        || Object.getPrototypeOf(field) !== Object.prototype
+        || typeof field.field !== "string"
+        || !field.field.trim()
+        || typeof field.label !== "string"
+        || !field.label.trim()
+      ) {
+        throw new Error("Every resource_index.fields_by_type descriptor requires non-empty field and label strings.");
+      }
+    }
+  }
+  for (const group of radar.groups || []) {
+    if (
+      !group
+      || typeof group !== "object"
+      || Array.isArray(group)
+      || typeof group.label !== "string"
+      || !group.label.trim()
+      || typeof group.pattern !== "string"
+      || !group.pattern.trim()
+    ) {
+      throw new Error("Every resource_index group requires string label and pattern fields.");
+    }
+  }
   const resourceTypes = new Set((radar.groups || []).map((group) => group.label).filter(Boolean));
   if (radar.default_group) resourceTypes.add(radar.default_group);
   let globalSortCount = 0;
   for (const sort of radar.sorts) {
-    if (!sort?.id || !sort?.label || !sort?.field || !sort?.type || !sort?.direction) {
+    if (
+      !sort
+      || typeof sort.id !== "string" || !sort.id.trim()
+      || typeof sort.label !== "string" || !sort.label.trim()
+      || typeof sort.field !== "string" || !sort.field.trim()
+      || typeof sort.type !== "string" || !sort.type.trim()
+      || typeof sort.direction !== "string" || !sort.direction.trim()
+    ) {
       throw new Error("Every resource_index sort requires id, label, field, type and direction.");
+    }
+    if (!["text", "number"].includes(sort.type) || !["asc", "desc"].includes(sort.direction)) {
+      throw new Error(`resource_index sort ${sort.id} has an unsupported type or direction.`);
     }
     if (sort.applies_to === undefined || (Array.isArray(sort.applies_to) && sort.applies_to.length === 0)) {
       globalSortCount += 1;

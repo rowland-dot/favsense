@@ -1,76 +1,1094 @@
 {
-  "verified_at": "2026-07-29",
+  "verified_at": "2026-08-29",
   "resources": [
-    { "name": "AnySearch Skill", "aliases": ["AnySearch"], "type": "Agent Skill", "repo": "https://github.com/anysearch-ai/anysearch-skill", "download": "https://github.com/anysearch-ai/anysearch-skill/archive/refs/heads/main.zip", "stars": "4.8k", "stars_numeric": 4800, "usage_note": "使用前确认远程数据来源，以及凭据会被发送到哪里。" },
-    { "name": "Graphify", "aliases": [], "type": "跨 Agent Skill / CLI", "repo": "https://github.com/Graphify-Labs/graphify", "download": "https://github.com/Graphify-Labs/graphify/archive/refs/heads/main.zip", "stars": "97.0k", "stars_numeric": 97000, "usage_note": "建议先在仓库副本中建立图谱，避免直接影响工作目录。" },
-    { "name": "last30days Skill", "aliases": ["last30days"], "type": "近期研究 Skill", "repo": "https://github.com/mvanhorn/last30days-skill", "download": "https://github.com/mvanhorn/last30days-skill/archive/refs/heads/main.zip", "stars": "54.5k", "stars_numeric": 54500, "usage_note": "MIT；部分来源需要 Cookie、平台登录或第三方 API，先限制来源与凭据范围。" },
-    { "name": "Agent-Reach", "aliases": [], "type": "Agent 能力路由层", "repo": "https://github.com/Panniantong/Agent-Reach", "download": "https://github.com/Panniantong/Agent-Reach/archive/refs/heads/main.zip", "stars": "61.4k", "stars_numeric": 61400, "usage_note": "建议启用只读和安全模式，再逐步开放能力。" },
-    { "name": "mattpocock/skills", "aliases": [], "type": "Skill 集合", "repo": "https://github.com/mattpocock/skills", "download": "https://github.com/mattpocock/skills/archive/refs/heads/main.zip", "stars": "191.2k", "stars_numeric": 191200, "usage_note": "建议逐项选择和测试，不要直接安装整个合集。" },
-    { "name": "andrej-karpathy-skills", "aliases": [], "type": "编码指令 / Skill 包", "repo": "https://github.com/multica-ai/andrej-karpathy-skills", "download": "https://github.com/multica-ai/andrej-karpathy-skills/archive/refs/heads/main.zip", "stars": "196.8k", "stars_numeric": 196800, "usage_note": "使用前检查其中的编码规则是否与现有项目约定冲突。" },
-    { "name": "PPT Master", "aliases": ["ppt-master"], "type": "演示文稿 Skill", "repo": "https://github.com/hugohe3/ppt-master", "download": "https://github.com/hugohe3/ppt-master/archive/refs/heads/main.zip", "stars": "41.4k", "stars_numeric": 41400, "usage_note": "需要确认素材授权和导出后的可编辑性。" },
-    { "name": "dot-skill / colleague-skill", "aliases": ["dot-skill", "colleague-skill"], "type": "知识/风格提取 Skill", "repo": "https://github.com/titanwings/colleague-skill", "download": "https://github.com/titanwings/colleague-skill/archive/refs/heads/main.zip", "stars": "20.5k", "stars_numeric": 20500, "usage_note": "只处理本人资料或已经取得明确授权的内容。" },
-    { "name": "PUA / PIP", "aliases": ["PUA", "PIP"], "type": "持续调试指令包", "repo": "https://github.com/tanweai/pua", "download": "https://github.com/tanweai/pua/archive/refs/heads/main.zip", "stars": "19.1k", "stars_numeric": 19100, "usage_note": "可借鉴持续验证循环，不建议照搬其中的对抗性措辞。" },
-    { "name": "web-access", "aliases": [], "type": "联网访问 Skill", "repo": "https://github.com/eze-is/web-access", "download": "https://github.com/eze-is/web-access/archive/refs/heads/main.zip", "stars": "8.5k", "stars_numeric": 8500, "usage_note": "建议在隔离浏览器中使用，并限制下载和网页访问权限。" },
-    { "name": "Microsoft MarkItDown", "aliases": ["MarkItDown"], "type": "文档转换 / MCP", "repo": "https://github.com/microsoft/markitdown", "download": "https://github.com/microsoft/markitdown/archive/refs/heads/main.zip", "stars": "169.4k", "stars_numeric": 169400, "usage_note": "适合优先测试 Markdown 转换的格式保真度。" },
-    { "name": "Crawl4AI", "aliases": [], "type": "网页采集框架", "repo": "https://github.com/unclecode/crawl4ai", "download": "https://github.com/unclecode/crawl4ai/archive/refs/heads/main.zip", "stars": "75.3k", "stars_numeric": 75300, "usage_note": "重点测试动态页面抓取与 Markdown 输出质量。" },
-    { "name": "Wigolo", "aliases": [], "type": "本地搜索 / 抓取 MCP", "repo": "https://github.com/KnockOutEZ/wigolo", "download": "https://github.com/KnockOutEZ/wigolo/archive/refs/heads/main.zip", "stars": "3.7k", "stars_numeric": 3700, "usage_note": "使用前确认索引来源、覆盖范围和更新时间。" },
-    { "name": "Headroom", "aliases": [], "type": "上下文压缩库 / MCP", "repo": "https://github.com/headroomlabs-ai/headroom", "download": "https://github.com/headroomlabs-ai/headroom/archive/refs/heads/main.zip", "stars": "62.8k", "stars_numeric": 62800, "usage_note": "评估压缩率时，应同时检查答案正确率是否下降。" },
-    { "name": "CocoIndex", "aliases": [], "type": "增量数据与代码索引", "repo": "https://github.com/cocoindex-io/cocoindex", "download": "https://github.com/cocoindex-io/cocoindex/archive/refs/heads/main.zip", "stars": "11.1k", "stars_numeric": 11100, "usage_note": "重点比较 AST 索引质量、增量更新时间和运行成本。" },
-    { "name": "Cognee", "aliases": [], "type": "Agent 记忆 / 知识图谱", "repo": "https://github.com/topoteretes/cognee", "download": "https://github.com/topoteretes/cognee/archive/refs/heads/main.zip", "stars": "29.5k", "stars_numeric": 29500, "usage_note": "采用前确认数据能否完整导出和彻底删除。" },
-    { "name": "Meetily", "aliases": [], "type": "本地会议转写", "repo": "https://github.com/Zackriya-Solutions/meetily", "download": "https://github.com/Zackriya-Solutions/meetily/archive/refs/heads/main.zip", "stars": "27.0k", "stars_numeric": 27000, "usage_note": "需要实测中文转写质量，并确认所有参会者同意录音。" },
-    { "name": "MediaCrawler", "aliases": [], "type": "多平台公开内容采集", "repo": "https://github.com/NanmiCoder/MediaCrawler", "download": "https://github.com/NanmiCoder/MediaCrawler/archive/refs/heads/main.zip", "stars": "58.1k", "stars_numeric": 58100, "usage_note": "只处理自有、公开或已授权数据；遇到平台限制立即停止。" },
-    { "name": "ScrapeGraphAI", "aliases": ["Scrapegraph-ai"], "type": "LLM 网页抽取", "repo": "https://github.com/ScrapeGraphAI/Scrapegraph-ai", "download": "https://github.com/ScrapeGraphAI/Scrapegraph-ai/archive/refs/heads/main.zip", "stars": "28.7k", "stars_numeric": 28700, "usage_note": "开始前应明确允许采集的公开字段和禁止采集的信息。" },
-    { "name": "FinanceDatabase", "aliases": [], "type": "金融标的元数据库", "repo": "https://github.com/JerBouma/FinanceDatabase", "download": "https://github.com/JerBouma/FinanceDatabase/archive/refs/heads/main.zip", "stars": "8.3k", "stars_numeric": 8300, "usage_note": "它提供标的元数据，不是实时行情来源。" },
-    { "name": "Mano-P", "aliases": [], "type": "本地 GUI-VLA", "repo": "https://github.com/Mininglamp-AI/Mano-P", "download": "https://github.com/Mininglamp-AI/Mano-P/archive/refs/heads/main.zip", "stars": "2.5k", "stars_numeric": 2500, "usage_note": "需要核对硬件要求，并设置防止误操作的保护措施。" },
-    { "name": "Grok Build", "aliases": [], "type": "开源 coding agent", "repo": "https://github.com/xai-org/grok-build", "download": "https://github.com/xai-org/grok-build/archive/refs/heads/main.zip", "stars": "23.0k", "stars_numeric": 23000, "usage_note": "建议用相同任务与现有 Coding Agent 做对比测试。" },
-    { "name": "Postiz", "aliases": [], "type": "社媒运营平台", "repo": "https://github.com/gitroomhq/postiz-app", "download": "https://github.com/gitroomhq/postiz-app/archive/refs/heads/main.zip", "stars": "30.9k", "stars_numeric": 30900, "usage_note": "采用 AGPL；自动发布前应保留人工确认。" },
-    { "name": "awesome-selfhosted", "aliases": [], "type": "自托管项目目录", "repo": "https://github.com/awesome-selfhosted/awesome-selfhosted", "download": "https://github.com/awesome-selfhosted/awesome-selfhosted/archive/refs/heads/master.zip", "stars": "308.7k", "stars_numeric": 308700, "usage_note": "适合发现项目，不建议按目录整体安装。" },
-    { "name": "Pake", "aliases": [], "type": "网页打包桌面应用", "repo": "https://github.com/tw93/Pake", "download": "https://github.com/tw93/Pake/archive/refs/heads/master.zip", "stars": "60.3k", "stars_numeric": 60300, "usage_note": "是否采用取决于桌面封装需求和目标平台。" },
-    { "name": "Palmier Pro", "aliases": [], "type": "AI 视频编辑", "repo": "https://github.com/palmier-io/palmier-pro", "download": "https://github.com/palmier-io/palmier-pro/archive/refs/heads/main.zip", "stars": "12.3k", "stars_numeric": 12300, "usage_note": "使用前确认媒体访问权限和输出是否可继续编辑。" },
-    { "name": "codebase-memory-mcp", "aliases": [], "type": "代码库记忆 MCP", "repo": "https://github.com/DeusData/codebase-memory-mcp", "download": "https://github.com/DeusData/codebase-memory-mcp/archive/refs/heads/main.zip", "stars": "35.9k", "stars_numeric": 35900, "usage_note": "与 CocoIndex、Graphify 功能重叠，建议先做同题比较。" },
-    { "name": "Scritty", "aliases": [], "type": "闭源付费本地记忆产品", "repo": "https://github.com/scritty-org/scritty", "download": "https://github.com/scritty-org/scritty/archive/refs/heads/main.zip", "stars": "9", "stars_numeric": 9, "usage_note": "GitHub 主要提供文档和发布包；使用前确认加密、遥测与删除机制。" },
-    { "name": "whichllm", "aliases": [], "type": "本地模型硬件评估", "repo": "https://github.com/Andyyyy64/whichllm", "download": "https://github.com/Andyyyy64/whichllm/archive/refs/heads/main.zip", "stars": "6k", "stars_numeric": 6000, "usage_note": "会读取本机硬件并访问 Hugging Face；使用前确认联网行为与模型缓存位置。" },
-    { "name": "Cloud Mail", "aliases": ["cloud-mail"], "type": "Cloudflare 自托管邮件服务", "repo": "https://github.com/maillab/cloud-mail", "download": "https://github.com/maillab/cloud-mail/archive/refs/heads/main.zip", "stars": "12.9k", "stars_numeric": 12900, "usage_note": "先用测试域名核对 DNS、转发、访问控制、垃圾邮件和数据保留策略。" },
-    { "name": "AiToEarn", "aliases": [], "type": "内容自动化平台", "repo": "https://github.com/yikart/AiToEarn", "download": "https://github.com/yikart/AiToEarn/archive/refs/heads/main.zip", "stars": "24.4k", "stars_numeric": 24400, "usage_note": "先使用草稿和人工审核，不要直接授权自动发布到正式账号。" },
-    { "name": "aliang-skills", "aliases": ["阿亮 Skills"], "type": "多模态创作 Skill 合集", "repo": "https://github.com/aliang2052/aliang-skills", "download": "https://github.com/aliang2052/aliang-skills/archive/refs/heads/main.zip", "stars": "20", "stars_numeric": 20, "usage_note": "依赖百炼 CLI 和 API Key；视频生成可能产生费用，必须保留显式确认。" },
-    { "name": "AutoResearch", "aliases": ["autoresearch"], "type": "自主实验框架", "repo": "https://github.com/karpathy/autoresearch", "download": "https://github.com/karpathy/autoresearch/archive/refs/heads/master.zip", "stars": "92.2k", "stars_numeric": 92200, "usage_note": "必须设置隔离环境、固定预算、单一指标和停止条件，防止指标投机。" },
-    { "name": "Build Your Own X", "aliases": ["build-your-own-x"], "type": "项目式学习资源索引", "repo": "https://github.com/codecrafters-io/build-your-own-x", "download": "https://github.com/codecrafters-io/build-your-own-x/archive/refs/heads/master.zip", "stars": "532.4k", "stars_numeric": 532400, "usage_note": "它是教程目录而不是可安装 Skill；应按学习目标选择单个项目。" },
-    { "name": "pm-skills", "aliases": ["PM Skills Marketplace"], "type": "产品管理 Skill 市场", "repo": "https://github.com/phuryn/pm-skills", "download": "https://github.com/phuryn/pm-skills/archive/refs/heads/main.zip", "stars": "24.6k", "stars_numeric": 24600, "usage_note": "按具体产品阶段选择单项 Skill，不要默认安装全部工作流。" },
-    { "name": "Hermes Agent", "aliases": ["hermes-agent"], "type": "成长型 Agent", "repo": "https://github.com/NousResearch/hermes-agent", "download": "https://github.com/NousResearch/hermes-agent/archive/refs/heads/main.zip", "stars": "221.8k", "stars_numeric": 221800, "usage_note": "启用自我改进和外部工具前，先限制文件、网络与执行权限。" },
-    { "name": "Open Notebook", "aliases": ["open-notebook"], "type": "自托管研究知识库", "repo": "https://github.com/lfnovo/open-notebook", "download": "https://github.com/lfnovo/open-notebook/archive/refs/heads/main.zip", "stars": "36.1k", "stars_numeric": 36100, "usage_note": "部署前确认模型提供商、存储位置、引用质量和内容删除机制。" },
-    { "name": "Impeccable", "aliases": [], "type": "前端设计 Skill / CLI", "repo": "https://github.com/pbakaus/impeccable", "download": "https://github.com/pbakaus/impeccable/archive/refs/heads/main.zip", "stars": "52.1k", "stars_numeric": 52100, "usage_note": "Apache-2.0；先初始化项目设计约束，再使用审查和改进命令。" },
-    { "name": "Open-LLM-VTuber", "aliases": [], "type": "本地语音与 Live2D Agent", "repo": "https://github.com/Open-LLM-VTuber/Open-LLM-VTuber", "download": "https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/archive/refs/heads/main.zip", "stars": "12.8k", "stars_numeric": 12800, "usage_note": "代码、前端和 Live2D 素材可能适用不同许可证；商用前逐项核对。" },
-    { "name": "Harness", "aliases": ["revfactory/harness"], "type": "Agent 团队生成 Meta-Skill", "repo": "https://github.com/revfactory/harness", "download": "https://github.com/revfactory/harness/archive/refs/heads/main.zip", "stars": "8.5k", "stars_numeric": 8500, "usage_note": "生成的 Agent 和 Skill 仍需人工审查权限、边界与验收条件；采用 Apache-2.0。" },
-    { "name": "Taste Skill", "aliases": ["taste-skill"], "type": "前端设计 Skill 合集", "repo": "https://github.com/Leonxlnx/taste-skill", "download": "https://github.com/Leonxlnx/taste-skill/archive/refs/heads/main.zip", "stars": "68.6k", "stars_numeric": 68600, "usage_note": "MIT；默认 v2 仍标注为实验版，应按项目选择单一设计 Skill 并锁定版本。" },
-    { "name": "CRMEB", "aliases": ["crmeb/CRMEB"], "type": "开源电商系统", "repo": "https://github.com/crmeb/CRMEB", "download": "https://github.com/crmeb/CRMEB/archive/refs/heads/master.zip", "stars": "9.2k", "stars_numeric": 9200, "usage_note": "Apache-2.0；真实交易前必须审计支付、用户数据、权限、备份与升级路径。" },
-    { "name": "Higgsfield Skills", "aliases": ["Virality Predictor"], "type": "视频创作 Agent Skills", "repo": "https://github.com/higgsfield-ai/skills", "download": "https://github.com/higgsfield-ai/skills/archive/refs/heads/main.zip", "stars": "622", "stars_numeric": 622, "usage_note": "MIT；传播预测只是创作启发，上传视频前确认素材权利与隐私。" },
-    { "name": "Higgsfield CLI", "aliases": ["higgsfield-ai/cli"], "type": "多媒体生成 CLI", "repo": "https://github.com/higgsfield-ai/cli", "download": "https://github.com/higgsfield-ai/cli/archive/refs/heads/main.zip", "stars": "425", "stars_numeric": 425, "usage_note": "MIT；使用前核对账号凭据、付费调用、生成素材保存位置和版权条件。" },
-    { "name": "Marketing Skills", "aliases": ["marketingskills"], "type": "营销 Agent Skill 合集", "repo": "https://github.com/coreyhaines31/marketingskills", "download": "https://github.com/coreyhaines31/marketingskills/archive/refs/heads/main.zip", "stars": "42.1k", "stars_numeric": 42108, "usage_note": "MIT；按角色选择单项 Skill，并用产品事实、品牌语气、合规与人工发布统一验收。" },
-    { "name": "Aaron Marketing Skills", "aliases": ["seo-geo-claude-skills", "aaron-marketing-skills"], "type": "SEO / GEO / 营销 Skill 合集", "repo": "https://github.com/aaron-he-zhu/aaron-marketing-skills", "download": "https://github.com/aaron-he-zhu/aaron-marketing-skills/archive/refs/heads/main.zip", "stars": "2.5k", "stars_numeric": 2473, "usage_note": "Apache-2.0；视频中的旧仓库已迁移到这里，安装时使用当前主仓库。" },
-    { "name": "AI HOT", "aliases": ["aihot", "Khazix Skills"], "type": "中文 AI 热点扫描 Skill", "repo": "https://github.com/KKKKhazix/khazix-skills", "download": "https://github.com/KKKKhazix/khazix-skills/archive/refs/heads/main.zip", "stars": "18.6k", "stars_numeric": 18574, "usage_note": "MIT；Skill 位于 aihot 目录，热点结论必须回到原始来源核验并保留日期。" },
-    { "name": "OpenCLI", "aliases": ["jackwener/OpenCLI"], "type": "网页命令化 CLI / Agent Skills", "repo": "https://github.com/jackwener/opencli", "download": "https://github.com/jackwener/opencli/archive/refs/heads/main.zip", "stars": "27.3k", "stars_numeric": 27300, "usage_note": "Apache-2.0；会使用已登录浏览器，先限制站点、命令与写操作，并用专用会话测试。" },
-    { "name": "NotebookLM Skill", "aliases": ["PleasePrompto/notebooklm-skill"], "type": "Claude Code 资料问答 Skill", "repo": "https://github.com/PleasePrompto/notebooklm-skill", "download": "https://github.com/PleasePrompto/notebooklm-skill/archive/refs/heads/master.zip", "stars": "7.5k", "stars_numeric": 7500, "usage_note": "MIT；仅本地 Claude Code，依赖非官方浏览器自动化并保存 Google 会话，建议使用专用账号且不要共享认证目录。" },
-    { "name": "ListenHub Skills", "aliases": ["marswaveai/skills", "ListenHub"], "type": "播客与多媒体 Agent Skills", "repo": "https://github.com/marswaveai/skills", "download": "https://github.com/marswaveai/skills/archive/refs/heads/main.zip", "stars": "75", "stars_numeric": 75, "usage_note": "MIT；部分能力需要 ListenHub API Key 或 OAuth，生成音视频前核对费用、声音授权和素材出口。" },
-    { "name": "Stitch Remotion Skill", "aliases": ["Remotion Skill", "stitch-skills"], "type": "产品演示视频 Agent Skill", "repo": "https://github.com/google-labs-code/stitch-skills", "download": "https://github.com/google-labs-code/stitch-skills/archive/refs/heads/main.zip", "stars": "7.8k", "stars_numeric": 7800, "usage_note": "Apache-2.0；目标 Skill 位于 stitch-build/remotion，并依赖 Stitch MCP；不要与 Remotion 框架主仓库混淆。" },
-    { "name": "Humanizer-zh", "aliases": ["op7418/Humanizer-zh"], "type": "中文写作编辑 Skill", "repo": "https://github.com/op7418/Humanizer-zh", "download": "https://github.com/op7418/Humanizer-zh/archive/refs/heads/main.zip", "stars": "14.0k", "stars_numeric": 14000, "usage_note": "MIT；用于改善表达而不是规避检测，改写后仍需人工核对事实、引文与作者声音。" },
-    { "name": "baoyu-skills", "aliases": ["baoyu skill", "宝玉 Skills"], "type": "内容与多媒体 Agent Skill 合集", "repo": "https://github.com/JimLiu/baoyu-skills", "download": "https://github.com/JimLiu/baoyu-skills/archive/refs/heads/main.zip", "stars": "24.3k", "stars_numeric": 24300, "usage_note": "MIT；只安装所需 Skill，逐项核对 API Key、付费生成、第三方素材和自动发布权限。" },
-    { "name": "FreeDomain", "aliases": ["DigitalPlatDev/FreeDomain"], "type": "免费子域名服务", "repo": "https://github.com/DigitalPlatDev/FreeDomain", "download": "https://github.com/DigitalPlatDev/FreeDomain/archive/refs/heads/main.zip", "stars": "189.2k", "stars_numeric": 189201, "usage_note": "AGPL-3.0；提供子域名而非自有顶级域名，长期业务需评估控制权、续期、滥用政策与服务连续性。" },
-    { "name": "AiWind", "aliases": ["AIWIND"], "type": "提示词与案例网站", "website": "https://aiwind.org/", "metric_icon": "↗", "stars": "官方网站", "usage_note": "提示词效果会随模型和版本变化；用于灵感与对照测试，不保证生成结果。" },
-    { "name": "Crawl4AI 官网", "aliases": ["Crawl4AI Website"], "type": "官方网站", "website": "https://crawl4ai.com/", "metric_icon": "↗", "stars": "官方网站", "usage_note": "查看产品入口、托管服务与项目概览；开源库的具体用法以官方文档为准。" },
-    { "name": "Crawl4AI 官方文档", "aliases": ["Crawl4AI Docs"], "type": "官方文档", "documentation": "https://docs.crawl4ai.com/", "metric_icon": "↗", "stars": "官方资料", "usage_note": "包含安装、抓取配置、结构化抽取、命令行与 API 参考。" },
-    { "name": "Crawl4AI 快速入门", "aliases": ["Crawl4AI Quick Start"], "type": "教程", "tutorial": "https://docs.crawl4ai.com/core/quickstart/", "metric_icon": "→", "stars": "入门教程", "usage_note": "用最小示例完成首次抓取、Markdown 输出与结构化数据提取。" },
-    { "name": "CocoIndex 官方文档", "aliases": ["CocoIndex Docs"], "type": "官方文档", "documentation": "https://cocoindex.io/docs/index", "metric_icon": "↗", "stars": "官方资料", "usage_note": "查看增量处理、代码索引、知识图谱与数据管道的当前用法。" },
-    { "name": "Cognee 官方文档", "aliases": ["Cognee Docs"], "type": "官方文档", "documentation": "https://docs.cognee.ai/", "metric_icon": "↗", "stars": "官方资料", "usage_note": "用于比较开源部署与云服务，并核对记忆、检索和数据删除能力。" },
-    { "name": "Postiz 官方文档", "aliases": ["Postiz Docs"], "type": "官方文档", "documentation": "https://docs.postiz.com/introduction", "metric_icon": "↗", "stars": "官方资料", "usage_note": "包含自托管安装、平台连接、内容排程和公开 API 说明。" },
-    { "name": "Anthropic Frontend Design", "aliases": ["frontend-design", "Anthropic Skills"], "type": "前端设计 Agent Skill", "repo": "https://github.com/anthropics/skills", "download": "https://github.com/anthropics/skills/archive/refs/heads/main.zip", "stars": "164.8k", "stars_numeric": 164800, "usage_note": "仓库包含混合许可证内容；frontend-design 的具体许可应读取其 LICENSE.txt，不要把整仓统一视为 Apache-2.0。" },
-    { "name": "UI/UX Pro Max", "aliases": ["ui-ux-pro-max"], "type": "UI/UX Agent Skill", "repo": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill", "download": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/archive/refs/heads/main.zip", "stars": "111.1k", "stars_numeric": 111100, "usage_note": "MIT；安装前核对当前 CLI 包名和实际交付的 Skill 数量，必要时使用官方仓库源码安装。" },
-    { "name": "UI Skills", "aliases": ["ui-skills", "baseline-ui"], "type": "设计工程 Agent Skills", "repo": "https://github.com/ibelick/ui-skills", "download": "https://github.com/ibelick/ui-skills/archive/refs/heads/main.zip", "stars": "6.7k", "stars_numeric": 6700, "usage_note": "MIT；按 baseline、accessibility、motion 等单项安装，不必整套同时启用。" },
-    { "name": "OpenPencil", "aliases": ["Open Pencil", "open-pencil"], "type": "AI 原生设计编辑器 / MCP / Agent Skill", "repo": "https://github.com/open-pencil/open-pencil", "download": "https://github.com/open-pencil/open-pencil/archive/refs/heads/master.zip", "stars": "7.4k", "stars_numeric": 7400, "usage_note": "MIT；MCP 默认可操作设计文件，使用 OPENPENCIL_MCP_ROOT 限定文件范围，并在导出前人工检查。" },
-    { "name": "video-use", "aliases": ["Video Use"], "type": "自然语言视频剪辑 Agent Skill", "repo": "https://github.com/browser-use/video-use", "download": "https://github.com/browser-use/video-use/archive/refs/heads/main.zip", "stars": "8.5k", "stars_numeric": 8500, "usage_note": "MIT；官方流程依赖 FFmpeg 与 ElevenLabs Scribe API。处理私人素材前核对上传范围、费用和声音/肖像授权，也可替换为本地 ASR。" },
-    { "name": "MiniMind", "aliases": ["minimind-3"], "type": "小语言模型训练教程与框架", "repo": "https://github.com/jingyaogong/minimind", "download": "https://github.com/jingyaogong/minimind/archive/refs/heads/master.zip", "stars": "53.9k", "stars_numeric": 53900, "usage_note": "Apache-2.0；官方‘两小时’基准是单张 RTX 3090 上的一次 SFT epoch，不代表任意硬件或完整生产训练。" },
-    { "name": "Browser Harness", "aliases": ["browser-harness"], "type": "可扩展 CDP 浏览器 Agent Harness", "repo": "https://github.com/browser-use/browser-harness", "download": "https://github.com/browser-use/browser-harness/archive/refs/heads/main.zip", "stars": "13.9k", "stars_numeric": 13900, "usage_note": "MIT；可直接操作真实浏览器且扩展 helper，自由度高。应使用隔离配置、最小权限、动作日志和写操作确认门。" },
-    { "name": "RTK", "aliases": ["rtk-ai/rtk"], "type": "Agent 终端输出压缩 CLI", "repo": "https://github.com/rtk-ai/rtk", "download": "https://github.com/rtk-ai/rtk/archive/refs/heads/develop.zip", "stars": "73.7k", "stars_numeric": 73700, "usage_note": "Apache-2.0；压缩比例因命令而异。启用前用固定任务验证关键错误、diff 与日志行没有被过滤。" },
-    { "name": "Scrapling", "aliases": ["D4Vinci/Scrapling"], "type": "自适应网页采集框架 / MCP", "repo": "https://github.com/D4Vinci/Scrapling", "download": "https://github.com/D4Vinci/Scrapling/archive/refs/heads/main.zip", "stars": "71.6k", "stars_numeric": 71600, "usage_note": "BSD-3-Clause；只采集自有、公开或已授权页面。遇到验证码、频控或平台安全限制立即停止。" },
-    { "name": "VividDub", "aliases": ["Vivid Dub", "VividDub/VividDub"], "type": "GitHub 产品项目", "repo": "https://github.com/VividDub/VividDub", "download": "https://github.com/VividDub/VividDub/archive/refs/heads/main.zip", "website": "https://vividdub.com/", "stars": "7", "stars_numeric": 7, "usage_note": "官方 GitHub 仓库已确认。仓库公开，但截至 2026-07-29 主要包含产品说明与仓库治理文件，未见应用源码或开源许可证；它不是 Agent Skill。使用产品前仍需核对素材权利、声音克隆授权、隐私与计费。" }
+    {
+      "name": "AnySearch Skill",
+      "aliases": [
+        "AnySearch"
+      ],
+      "type": "Agent Skill",
+      "repo": "https://github.com/anysearch-ai/anysearch-skill",
+      "download": "https://github.com/anysearch-ai/anysearch-skill/archive/refs/heads/main.zip",
+      "stars": "4.8k",
+      "stars_numeric": 4800,
+      "usage_note": "使用前确认远程数据来源，以及凭据会被发送到哪里。"
+    },
+    {
+      "name": "Graphify",
+      "aliases": [],
+      "type": "跨 Agent Skill / CLI",
+      "repo": "https://github.com/Graphify-Labs/graphify",
+      "download": "https://github.com/Graphify-Labs/graphify/archive/refs/heads/main.zip",
+      "stars": "97.0k",
+      "stars_numeric": 97000,
+      "usage_note": "建议先在仓库副本中建立图谱，避免直接影响工作目录。"
+    },
+    {
+      "name": "last30days Skill",
+      "aliases": [
+        "last30days"
+      ],
+      "type": "近期研究 Skill",
+      "repo": "https://github.com/mvanhorn/last30days-skill",
+      "download": "https://github.com/mvanhorn/last30days-skill/archive/refs/heads/main.zip",
+      "stars": "54.5k",
+      "stars_numeric": 54500,
+      "usage_note": "MIT；部分来源需要 Cookie、平台登录或第三方 API，先限制来源与凭据范围。"
+    },
+    {
+      "name": "Agent-Reach",
+      "aliases": [],
+      "type": "Agent 能力路由层",
+      "repo": "https://github.com/Panniantong/Agent-Reach",
+      "download": "https://github.com/Panniantong/Agent-Reach/archive/refs/heads/main.zip",
+      "stars": "61.4k",
+      "stars_numeric": 61400,
+      "usage_note": "建议启用只读和安全模式，再逐步开放能力。"
+    },
+    {
+      "name": "mattpocock/skills",
+      "aliases": [],
+      "type": "Skill 集合",
+      "repo": "https://github.com/mattpocock/skills",
+      "download": "https://github.com/mattpocock/skills/archive/refs/heads/main.zip",
+      "stars": "191.2k",
+      "stars_numeric": 191200,
+      "usage_note": "建议逐项选择和测试，不要直接安装整个合集。"
+    },
+    {
+      "name": "andrej-karpathy-skills",
+      "aliases": [],
+      "type": "编码指令 / Skill 包",
+      "repo": "https://github.com/multica-ai/andrej-karpathy-skills",
+      "download": "https://github.com/multica-ai/andrej-karpathy-skills/archive/refs/heads/main.zip",
+      "stars": "196.8k",
+      "stars_numeric": 196800,
+      "usage_note": "使用前检查其中的编码规则是否与现有项目约定冲突。"
+    },
+    {
+      "name": "PPT Master",
+      "aliases": [
+        "ppt-master"
+      ],
+      "type": "演示文稿 Skill",
+      "repo": "https://github.com/hugohe3/ppt-master",
+      "download": "https://github.com/hugohe3/ppt-master/archive/refs/heads/main.zip",
+      "stars": "41.4k",
+      "stars_numeric": 41400,
+      "usage_note": "需要确认素材授权和导出后的可编辑性。"
+    },
+    {
+      "name": "dot-skill / colleague-skill",
+      "aliases": [
+        "dot-skill",
+        "colleague-skill"
+      ],
+      "type": "知识/风格提取 Skill",
+      "repo": "https://github.com/titanwings/colleague-skill",
+      "download": "https://github.com/titanwings/colleague-skill/archive/refs/heads/main.zip",
+      "stars": "20.5k",
+      "stars_numeric": 20500,
+      "usage_note": "只处理本人资料或已经取得明确授权的内容。"
+    },
+    {
+      "name": "PUA / PIP",
+      "aliases": [
+        "PUA",
+        "PIP"
+      ],
+      "type": "持续调试指令包",
+      "repo": "https://github.com/tanweai/pua",
+      "download": "https://github.com/tanweai/pua/archive/refs/heads/main.zip",
+      "stars": "19.1k",
+      "stars_numeric": 19100,
+      "usage_note": "可借鉴持续验证循环，不建议照搬其中的对抗性措辞。"
+    },
+    {
+      "name": "web-access",
+      "aliases": [],
+      "type": "联网访问 Skill",
+      "repo": "https://github.com/eze-is/web-access",
+      "download": "https://github.com/eze-is/web-access/archive/refs/heads/main.zip",
+      "stars": "8.5k",
+      "stars_numeric": 8500,
+      "usage_note": "建议在隔离浏览器中使用，并限制下载和网页访问权限。"
+    },
+    {
+      "name": "Microsoft MarkItDown",
+      "aliases": [
+        "MarkItDown"
+      ],
+      "type": "文档转换 / MCP",
+      "repo": "https://github.com/microsoft/markitdown",
+      "download": "https://github.com/microsoft/markitdown/archive/refs/heads/main.zip",
+      "stars": "169.4k",
+      "stars_numeric": 169400,
+      "usage_note": "适合优先测试 Markdown 转换的格式保真度。"
+    },
+    {
+      "name": "Crawl4AI",
+      "aliases": [],
+      "type": "网页采集框架",
+      "repo": "https://github.com/unclecode/crawl4ai",
+      "download": "https://github.com/unclecode/crawl4ai/archive/refs/heads/main.zip",
+      "stars": "75.3k",
+      "stars_numeric": 75300,
+      "usage_note": "重点测试动态页面抓取与 Markdown 输出质量。"
+    },
+    {
+      "name": "Wigolo",
+      "aliases": [],
+      "type": "本地搜索 / 抓取 MCP",
+      "repo": "https://github.com/KnockOutEZ/wigolo",
+      "download": "https://github.com/KnockOutEZ/wigolo/archive/refs/heads/main.zip",
+      "stars": "3.7k",
+      "stars_numeric": 3700,
+      "usage_note": "使用前确认索引来源、覆盖范围和更新时间。"
+    },
+    {
+      "name": "Headroom",
+      "aliases": [],
+      "type": "上下文压缩库 / MCP",
+      "repo": "https://github.com/headroomlabs-ai/headroom",
+      "download": "https://github.com/headroomlabs-ai/headroom/archive/refs/heads/main.zip",
+      "stars": "62.8k",
+      "stars_numeric": 62800,
+      "usage_note": "评估压缩率时，应同时检查答案正确率是否下降。"
+    },
+    {
+      "name": "CocoIndex",
+      "aliases": [],
+      "type": "增量数据与代码索引",
+      "repo": "https://github.com/cocoindex-io/cocoindex",
+      "download": "https://github.com/cocoindex-io/cocoindex/archive/refs/heads/main.zip",
+      "stars": "11.1k",
+      "stars_numeric": 11100,
+      "usage_note": "重点比较 AST 索引质量、增量更新时间和运行成本。"
+    },
+    {
+      "name": "Cognee",
+      "aliases": [],
+      "type": "Agent 记忆 / 知识图谱",
+      "repo": "https://github.com/topoteretes/cognee",
+      "download": "https://github.com/topoteretes/cognee/archive/refs/heads/main.zip",
+      "stars": "29.5k",
+      "stars_numeric": 29500,
+      "usage_note": "采用前确认数据能否完整导出和彻底删除。"
+    },
+    {
+      "name": "Meetily",
+      "aliases": [],
+      "type": "本地会议转写",
+      "repo": "https://github.com/Zackriya-Solutions/meetily",
+      "download": "https://github.com/Zackriya-Solutions/meetily/archive/refs/heads/main.zip",
+      "stars": "27.0k",
+      "stars_numeric": 27000,
+      "usage_note": "需要实测中文转写质量，并确认所有参会者同意录音。"
+    },
+    {
+      "name": "MediaCrawler",
+      "aliases": [],
+      "type": "多平台公开内容采集",
+      "repo": "https://github.com/NanmiCoder/MediaCrawler",
+      "download": "https://github.com/NanmiCoder/MediaCrawler/archive/refs/heads/main.zip",
+      "stars": "58.1k",
+      "stars_numeric": 58100,
+      "usage_note": "只处理自有、公开或已授权数据；遇到平台限制立即停止。"
+    },
+    {
+      "name": "ScrapeGraphAI",
+      "aliases": [
+        "Scrapegraph-ai"
+      ],
+      "type": "LLM 网页抽取",
+      "repo": "https://github.com/ScrapeGraphAI/Scrapegraph-ai",
+      "download": "https://github.com/ScrapeGraphAI/Scrapegraph-ai/archive/refs/heads/main.zip",
+      "stars": "28.7k",
+      "stars_numeric": 28700,
+      "usage_note": "开始前应明确允许采集的公开字段和禁止采集的信息。"
+    },
+    {
+      "name": "FinanceDatabase",
+      "aliases": [],
+      "type": "金融标的元数据库",
+      "repo": "https://github.com/JerBouma/FinanceDatabase",
+      "download": "https://github.com/JerBouma/FinanceDatabase/archive/refs/heads/main.zip",
+      "stars": "8.3k",
+      "stars_numeric": 8300,
+      "usage_note": "它提供标的元数据，不是实时行情来源。"
+    },
+    {
+      "name": "Mano-P",
+      "aliases": [],
+      "type": "本地 GUI-VLA",
+      "repo": "https://github.com/Mininglamp-AI/Mano-P",
+      "download": "https://github.com/Mininglamp-AI/Mano-P/archive/refs/heads/main.zip",
+      "stars": "2.5k",
+      "stars_numeric": 2500,
+      "usage_note": "需要核对硬件要求，并设置防止误操作的保护措施。"
+    },
+    {
+      "name": "Grok Build",
+      "aliases": [],
+      "type": "开源 coding agent",
+      "repo": "https://github.com/xai-org/grok-build",
+      "download": "https://github.com/xai-org/grok-build/archive/refs/heads/main.zip",
+      "stars": "23.0k",
+      "stars_numeric": 23000,
+      "usage_note": "建议用相同任务与现有 Coding Agent 做对比测试。"
+    },
+    {
+      "name": "Postiz",
+      "aliases": [],
+      "type": "社媒运营平台",
+      "repo": "https://github.com/gitroomhq/postiz-app",
+      "download": "https://github.com/gitroomhq/postiz-app/archive/refs/heads/main.zip",
+      "stars": "30.9k",
+      "stars_numeric": 30900,
+      "usage_note": "采用 AGPL；自动发布前应保留人工确认。"
+    },
+    {
+      "name": "awesome-selfhosted",
+      "aliases": [],
+      "type": "自托管项目目录",
+      "repo": "https://github.com/awesome-selfhosted/awesome-selfhosted",
+      "download": "https://github.com/awesome-selfhosted/awesome-selfhosted/archive/refs/heads/master.zip",
+      "stars": "308.7k",
+      "stars_numeric": 308700,
+      "usage_note": "适合发现项目，不建议按目录整体安装。"
+    },
+    {
+      "name": "Pake",
+      "aliases": [],
+      "type": "网页打包桌面应用",
+      "repo": "https://github.com/tw93/Pake",
+      "download": "https://github.com/tw93/Pake/archive/refs/heads/master.zip",
+      "stars": "60.3k",
+      "stars_numeric": 60300,
+      "usage_note": "是否采用取决于桌面封装需求和目标平台。"
+    },
+    {
+      "name": "Palmier Pro",
+      "aliases": [],
+      "type": "AI 视频编辑",
+      "repo": "https://github.com/palmier-io/palmier-pro",
+      "download": "https://github.com/palmier-io/palmier-pro/archive/refs/heads/main.zip",
+      "stars": "12.3k",
+      "stars_numeric": 12300,
+      "usage_note": "使用前确认媒体访问权限和输出是否可继续编辑。"
+    },
+    {
+      "name": "codebase-memory-mcp",
+      "aliases": [],
+      "type": "代码库记忆 MCP",
+      "repo": "https://github.com/DeusData/codebase-memory-mcp",
+      "download": "https://github.com/DeusData/codebase-memory-mcp/archive/refs/heads/main.zip",
+      "stars": "35.9k",
+      "stars_numeric": 35900,
+      "usage_note": "与 CocoIndex、Graphify 功能重叠，建议先做同题比较。"
+    },
+    {
+      "name": "Scritty",
+      "aliases": [],
+      "type": "闭源付费本地记忆产品",
+      "repo": "https://github.com/scritty-org/scritty",
+      "download": "https://github.com/scritty-org/scritty/archive/refs/heads/main.zip",
+      "stars": "9",
+      "stars_numeric": 9,
+      "usage_note": "GitHub 主要提供文档和发布包；使用前确认加密、遥测与删除机制。"
+    },
+    {
+      "name": "whichllm",
+      "aliases": [],
+      "type": "本地模型硬件评估",
+      "repo": "https://github.com/Andyyyy64/whichllm",
+      "download": "https://github.com/Andyyyy64/whichllm/archive/refs/heads/main.zip",
+      "stars": "6k",
+      "stars_numeric": 6000,
+      "usage_note": "会读取本机硬件并访问 Hugging Face；使用前确认联网行为与模型缓存位置。"
+    },
+    {
+      "name": "Cloud Mail",
+      "aliases": [
+        "cloud-mail"
+      ],
+      "type": "Cloudflare 自托管邮件服务",
+      "repo": "https://github.com/maillab/cloud-mail",
+      "download": "https://github.com/maillab/cloud-mail/archive/refs/heads/main.zip",
+      "stars": "12.9k",
+      "stars_numeric": 12900,
+      "usage_note": "先用测试域名核对 DNS、转发、访问控制、垃圾邮件和数据保留策略。"
+    },
+    {
+      "name": "AiToEarn",
+      "aliases": [],
+      "type": "内容自动化平台",
+      "repo": "https://github.com/yikart/AiToEarn",
+      "download": "https://github.com/yikart/AiToEarn/archive/refs/heads/main.zip",
+      "stars": "24.4k",
+      "stars_numeric": 24400,
+      "usage_note": "先使用草稿和人工审核，不要直接授权自动发布到正式账号。"
+    },
+    {
+      "name": "aliang-skills",
+      "aliases": [
+        "阿亮 Skills"
+      ],
+      "type": "多模态创作 Skill 合集",
+      "repo": "https://github.com/aliang2052/aliang-skills",
+      "download": "https://github.com/aliang2052/aliang-skills/archive/refs/heads/main.zip",
+      "stars": "20",
+      "stars_numeric": 20,
+      "usage_note": "依赖百炼 CLI 和 API Key；视频生成可能产生费用，必须保留显式确认。"
+    },
+    {
+      "name": "AutoResearch",
+      "aliases": [
+        "autoresearch"
+      ],
+      "type": "自主实验框架",
+      "repo": "https://github.com/karpathy/autoresearch",
+      "download": "https://github.com/karpathy/autoresearch/archive/refs/heads/master.zip",
+      "stars": "92.2k",
+      "stars_numeric": 92200,
+      "usage_note": "必须设置隔离环境、固定预算、单一指标和停止条件，防止指标投机。"
+    },
+    {
+      "name": "Build Your Own X",
+      "aliases": [
+        "build-your-own-x"
+      ],
+      "type": "项目式学习资源索引",
+      "repo": "https://github.com/codecrafters-io/build-your-own-x",
+      "download": "https://github.com/codecrafters-io/build-your-own-x/archive/refs/heads/master.zip",
+      "stars": "532.4k",
+      "stars_numeric": 532400,
+      "usage_note": "它是教程目录而不是可安装 Skill；应按学习目标选择单个项目。"
+    },
+    {
+      "name": "pm-skills",
+      "aliases": [
+        "PM Skills Marketplace"
+      ],
+      "type": "产品管理 Skill 市场",
+      "repo": "https://github.com/phuryn/pm-skills",
+      "download": "https://github.com/phuryn/pm-skills/archive/refs/heads/main.zip",
+      "stars": "24.6k",
+      "stars_numeric": 24600,
+      "usage_note": "按具体产品阶段选择单项 Skill，不要默认安装全部工作流。"
+    },
+    {
+      "name": "Hermes Agent",
+      "aliases": [
+        "hermes-agent"
+      ],
+      "type": "成长型 Agent",
+      "repo": "https://github.com/NousResearch/hermes-agent",
+      "download": "https://github.com/NousResearch/hermes-agent/archive/refs/heads/main.zip",
+      "stars": "221.8k",
+      "stars_numeric": 221800,
+      "usage_note": "启用自我改进和外部工具前，先限制文件、网络与执行权限。"
+    },
+    {
+      "name": "Open Notebook",
+      "aliases": [
+        "open-notebook"
+      ],
+      "type": "自托管研究知识库",
+      "repo": "https://github.com/lfnovo/open-notebook",
+      "download": "https://github.com/lfnovo/open-notebook/archive/refs/heads/main.zip",
+      "stars": "36.1k",
+      "stars_numeric": 36100,
+      "usage_note": "部署前确认模型提供商、存储位置、引用质量和内容删除机制。"
+    },
+    {
+      "name": "Impeccable",
+      "aliases": [],
+      "type": "前端设计 Skill / CLI",
+      "repo": "https://github.com/pbakaus/impeccable",
+      "download": "https://github.com/pbakaus/impeccable/archive/refs/heads/main.zip",
+      "stars": "52.1k",
+      "stars_numeric": 52100,
+      "usage_note": "Apache-2.0；先初始化项目设计约束，再使用审查和改进命令。"
+    },
+    {
+      "name": "Open-LLM-VTuber",
+      "aliases": [],
+      "type": "本地语音与 Live2D Agent",
+      "repo": "https://github.com/Open-LLM-VTuber/Open-LLM-VTuber",
+      "download": "https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/archive/refs/heads/main.zip",
+      "stars": "12.8k",
+      "stars_numeric": 12800,
+      "usage_note": "代码、前端和 Live2D 素材可能适用不同许可证；商用前逐项核对。"
+    },
+    {
+      "name": "Harness",
+      "aliases": [
+        "revfactory/harness"
+      ],
+      "type": "Agent 团队生成 Meta-Skill",
+      "repo": "https://github.com/revfactory/harness",
+      "download": "https://github.com/revfactory/harness/archive/refs/heads/main.zip",
+      "stars": "8.5k",
+      "stars_numeric": 8500,
+      "usage_note": "生成的 Agent 和 Skill 仍需人工审查权限、边界与验收条件；采用 Apache-2.0。"
+    },
+    {
+      "name": "Taste Skill",
+      "aliases": [
+        "taste-skill"
+      ],
+      "type": "前端设计 Skill 合集",
+      "repo": "https://github.com/Leonxlnx/taste-skill",
+      "download": "https://github.com/Leonxlnx/taste-skill/archive/refs/heads/main.zip",
+      "stars": "68.6k",
+      "stars_numeric": 68600,
+      "usage_note": "MIT；默认 v2 仍标注为实验版，应按项目选择单一设计 Skill 并锁定版本。"
+    },
+    {
+      "name": "CRMEB",
+      "aliases": [
+        "crmeb/CRMEB"
+      ],
+      "type": "开源电商系统",
+      "repo": "https://github.com/crmeb/CRMEB",
+      "download": "https://github.com/crmeb/CRMEB/archive/refs/heads/master.zip",
+      "stars": "9.2k",
+      "stars_numeric": 9200,
+      "usage_note": "Apache-2.0；真实交易前必须审计支付、用户数据、权限、备份与升级路径。"
+    },
+    {
+      "name": "Higgsfield Skills",
+      "aliases": [
+        "Virality Predictor"
+      ],
+      "type": "视频创作 Agent Skills",
+      "repo": "https://github.com/higgsfield-ai/skills",
+      "download": "https://github.com/higgsfield-ai/skills/archive/refs/heads/main.zip",
+      "stars": "622",
+      "stars_numeric": 622,
+      "usage_note": "MIT；传播预测只是创作启发，上传视频前确认素材权利与隐私。"
+    },
+    {
+      "name": "Higgsfield CLI",
+      "aliases": [
+        "higgsfield-ai/cli"
+      ],
+      "type": "多媒体生成 CLI",
+      "repo": "https://github.com/higgsfield-ai/cli",
+      "download": "https://github.com/higgsfield-ai/cli/archive/refs/heads/main.zip",
+      "stars": "425",
+      "stars_numeric": 425,
+      "usage_note": "MIT；使用前核对账号凭据、付费调用、生成素材保存位置和版权条件。"
+    },
+    {
+      "name": "Marketing Skills",
+      "aliases": [
+        "marketingskills"
+      ],
+      "type": "营销 Agent Skill 合集",
+      "repo": "https://github.com/coreyhaines31/marketingskills",
+      "download": "https://github.com/coreyhaines31/marketingskills/archive/refs/heads/main.zip",
+      "stars": "42.1k",
+      "stars_numeric": 42108,
+      "usage_note": "MIT；按角色选择单项 Skill，并用产品事实、品牌语气、合规与人工发布统一验收。"
+    },
+    {
+      "name": "Aaron Marketing Skills",
+      "aliases": [
+        "seo-geo-claude-skills",
+        "aaron-marketing-skills"
+      ],
+      "type": "SEO / GEO / 营销 Skill 合集",
+      "repo": "https://github.com/aaron-he-zhu/aaron-marketing-skills",
+      "download": "https://github.com/aaron-he-zhu/aaron-marketing-skills/archive/refs/heads/main.zip",
+      "stars": "2.5k",
+      "stars_numeric": 2473,
+      "usage_note": "Apache-2.0；视频中的旧仓库已迁移到这里，安装时使用当前主仓库。"
+    },
+    {
+      "name": "AI HOT",
+      "aliases": [
+        "aihot",
+        "Khazix Skills"
+      ],
+      "type": "中文 AI 热点扫描 Skill",
+      "repo": "https://github.com/KKKKhazix/khazix-skills",
+      "download": "https://github.com/KKKKhazix/khazix-skills/archive/refs/heads/main.zip",
+      "stars": "18.6k",
+      "stars_numeric": 18574,
+      "usage_note": "MIT；Skill 位于 aihot 目录，热点结论必须回到原始来源核验并保留日期。"
+    },
+    {
+      "name": "OpenCLI",
+      "aliases": [
+        "jackwener/OpenCLI"
+      ],
+      "type": "网页命令化 CLI / Agent Skills",
+      "repo": "https://github.com/jackwener/opencli",
+      "download": "https://github.com/jackwener/opencli/archive/refs/heads/main.zip",
+      "stars": "27.3k",
+      "stars_numeric": 27300,
+      "usage_note": "Apache-2.0；会使用已登录浏览器，先限制站点、命令与写操作，并用专用会话测试。"
+    },
+    {
+      "name": "NotebookLM Skill",
+      "aliases": [
+        "PleasePrompto/notebooklm-skill"
+      ],
+      "type": "Claude Code 资料问答 Skill",
+      "repo": "https://github.com/PleasePrompto/notebooklm-skill",
+      "download": "https://github.com/PleasePrompto/notebooklm-skill/archive/refs/heads/master.zip",
+      "stars": "7.5k",
+      "stars_numeric": 7500,
+      "usage_note": "MIT；仅本地 Claude Code，依赖非官方浏览器自动化并保存 Google 会话，建议使用专用账号且不要共享认证目录。"
+    },
+    {
+      "name": "ListenHub Skills",
+      "aliases": [
+        "marswaveai/skills",
+        "ListenHub"
+      ],
+      "type": "播客与多媒体 Agent Skills",
+      "repo": "https://github.com/marswaveai/skills",
+      "download": "https://github.com/marswaveai/skills/archive/refs/heads/main.zip",
+      "stars": "75",
+      "stars_numeric": 75,
+      "usage_note": "MIT；部分能力需要 ListenHub API Key 或 OAuth，生成音视频前核对费用、声音授权和素材出口。"
+    },
+    {
+      "name": "Stitch Remotion Skill",
+      "aliases": [
+        "Remotion Skill",
+        "stitch-skills"
+      ],
+      "type": "产品演示视频 Agent Skill",
+      "repo": "https://github.com/google-labs-code/stitch-skills",
+      "download": "https://github.com/google-labs-code/stitch-skills/archive/refs/heads/main.zip",
+      "stars": "7.8k",
+      "stars_numeric": 7800,
+      "usage_note": "Apache-2.0；目标 Skill 位于 stitch-build/remotion，并依赖 Stitch MCP；不要与 Remotion 框架主仓库混淆。"
+    },
+    {
+      "name": "Humanizer-zh",
+      "aliases": [
+        "op7418/Humanizer-zh"
+      ],
+      "type": "中文写作编辑 Skill",
+      "repo": "https://github.com/op7418/Humanizer-zh",
+      "download": "https://github.com/op7418/Humanizer-zh/archive/refs/heads/main.zip",
+      "stars": "14.0k",
+      "stars_numeric": 14000,
+      "usage_note": "MIT；用于改善表达而不是规避检测，改写后仍需人工核对事实、引文与作者声音。"
+    },
+    {
+      "name": "baoyu-skills",
+      "aliases": [
+        "baoyu skill",
+        "宝玉 Skills"
+      ],
+      "type": "内容与多媒体 Agent Skill 合集",
+      "repo": "https://github.com/JimLiu/baoyu-skills",
+      "download": "https://github.com/JimLiu/baoyu-skills/archive/refs/heads/main.zip",
+      "stars": "24.3k",
+      "stars_numeric": 24300,
+      "usage_note": "MIT；只安装所需 Skill，逐项核对 API Key、付费生成、第三方素材和自动发布权限。"
+    },
+    {
+      "name": "FreeDomain",
+      "aliases": [
+        "DigitalPlatDev/FreeDomain"
+      ],
+      "type": "免费子域名服务",
+      "repo": "https://github.com/DigitalPlatDev/FreeDomain",
+      "download": "https://github.com/DigitalPlatDev/FreeDomain/archive/refs/heads/main.zip",
+      "stars": "189.2k",
+      "stars_numeric": 189201,
+      "usage_note": "AGPL-3.0；提供子域名而非自有顶级域名，长期业务需评估控制权、续期、滥用政策与服务连续性。"
+    },
+    {
+      "name": "AiWind",
+      "aliases": [
+        "AIWIND"
+      ],
+      "type": "提示词与案例网站",
+      "website": "https://aiwind.org/",
+      "metric_icon": "↗",
+      "stars": "官方网站",
+      "usage_note": "提示词效果会随模型和版本变化；用于灵感与对照测试，不保证生成结果。"
+    },
+    {
+      "name": "Crawl4AI 官网",
+      "aliases": [
+        "Crawl4AI Website"
+      ],
+      "type": "官方网站",
+      "website": "https://crawl4ai.com/",
+      "metric_icon": "↗",
+      "stars": "官方网站",
+      "usage_note": "查看产品入口、托管服务与项目概览；开源库的具体用法以官方文档为准。"
+    },
+    {
+      "name": "Crawl4AI 官方文档",
+      "aliases": [
+        "Crawl4AI Docs"
+      ],
+      "type": "官方文档",
+      "documentation": "https://docs.crawl4ai.com/",
+      "metric_icon": "↗",
+      "stars": "官方资料",
+      "usage_note": "包含安装、抓取配置、结构化抽取、命令行与 API 参考。"
+    },
+    {
+      "name": "Crawl4AI 快速入门",
+      "aliases": [
+        "Crawl4AI Quick Start"
+      ],
+      "type": "教程",
+      "tutorial": "https://docs.crawl4ai.com/core/quickstart/",
+      "metric_icon": "→",
+      "stars": "入门教程",
+      "usage_note": "用最小示例完成首次抓取、Markdown 输出与结构化数据提取。"
+    },
+    {
+      "name": "CocoIndex 官方文档",
+      "aliases": [
+        "CocoIndex Docs"
+      ],
+      "type": "官方文档",
+      "documentation": "https://cocoindex.io/docs/index",
+      "metric_icon": "↗",
+      "stars": "官方资料",
+      "usage_note": "查看增量处理、代码索引、知识图谱与数据管道的当前用法。"
+    },
+    {
+      "name": "Cognee 官方文档",
+      "aliases": [
+        "Cognee Docs"
+      ],
+      "type": "官方文档",
+      "documentation": "https://docs.cognee.ai/",
+      "metric_icon": "↗",
+      "stars": "官方资料",
+      "usage_note": "用于比较开源部署与云服务，并核对记忆、检索和数据删除能力。"
+    },
+    {
+      "name": "Postiz 官方文档",
+      "aliases": [
+        "Postiz Docs"
+      ],
+      "type": "官方文档",
+      "documentation": "https://docs.postiz.com/introduction",
+      "metric_icon": "↗",
+      "stars": "官方资料",
+      "usage_note": "包含自托管安装、平台连接、内容排程和公开 API 说明。"
+    },
+    {
+      "name": "Anthropic Frontend Design",
+      "aliases": [
+        "frontend-design",
+        "Anthropic Skills"
+      ],
+      "type": "前端设计 Agent Skill",
+      "repo": "https://github.com/anthropics/skills",
+      "download": "https://github.com/anthropics/skills/archive/refs/heads/main.zip",
+      "stars": "164.8k",
+      "stars_numeric": 164800,
+      "usage_note": "仓库包含混合许可证内容；frontend-design 的具体许可应读取其 LICENSE.txt，不要把整仓统一视为 Apache-2.0。"
+    },
+    {
+      "name": "UI/UX Pro Max",
+      "aliases": [
+        "ui-ux-pro-max"
+      ],
+      "type": "UI/UX Agent Skill",
+      "repo": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+      "download": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/archive/refs/heads/main.zip",
+      "stars": "111.1k",
+      "stars_numeric": 111100,
+      "usage_note": "MIT；安装前核对当前 CLI 包名和实际交付的 Skill 数量，必要时使用官方仓库源码安装。"
+    },
+    {
+      "name": "UI Skills",
+      "aliases": [
+        "ui-skills",
+        "baseline-ui"
+      ],
+      "type": "设计工程 Agent Skills",
+      "repo": "https://github.com/ibelick/ui-skills",
+      "download": "https://github.com/ibelick/ui-skills/archive/refs/heads/main.zip",
+      "stars": "6.7k",
+      "stars_numeric": 6700,
+      "usage_note": "MIT；按 baseline、accessibility、motion 等单项安装，不必整套同时启用。"
+    },
+    {
+      "name": "OpenPencil",
+      "aliases": [
+        "Open Pencil",
+        "open-pencil"
+      ],
+      "type": "AI 原生设计编辑器 / MCP / Agent Skill",
+      "repo": "https://github.com/open-pencil/open-pencil",
+      "download": "https://github.com/open-pencil/open-pencil/archive/refs/heads/master.zip",
+      "stars": "7.4k",
+      "stars_numeric": 7400,
+      "usage_note": "MIT；MCP 默认可操作设计文件，使用 OPENPENCIL_MCP_ROOT 限定文件范围，并在导出前人工检查。"
+    },
+    {
+      "name": "video-use",
+      "aliases": [
+        "Video Use"
+      ],
+      "type": "自然语言视频剪辑 Agent Skill",
+      "repo": "https://github.com/browser-use/video-use",
+      "download": "https://github.com/browser-use/video-use/archive/refs/heads/main.zip",
+      "stars": "8.5k",
+      "stars_numeric": 8500,
+      "usage_note": "MIT；官方流程依赖 FFmpeg 与 ElevenLabs Scribe API。处理私人素材前核对上传范围、费用和声音/肖像授权，也可替换为本地 ASR。"
+    },
+    {
+      "name": "MiniMind",
+      "aliases": [
+        "minimind-3"
+      ],
+      "type": "小语言模型训练教程与框架",
+      "repo": "https://github.com/jingyaogong/minimind",
+      "download": "https://github.com/jingyaogong/minimind/archive/refs/heads/master.zip",
+      "stars": "53.9k",
+      "stars_numeric": 53900,
+      "usage_note": "Apache-2.0；官方‘两小时’基准是单张 RTX 3090 上的一次 SFT epoch，不代表任意硬件或完整生产训练。"
+    },
+    {
+      "name": "Browser Harness",
+      "aliases": [
+        "browser-harness"
+      ],
+      "type": "可扩展 CDP 浏览器 Agent Harness",
+      "repo": "https://github.com/browser-use/browser-harness",
+      "download": "https://github.com/browser-use/browser-harness/archive/refs/heads/main.zip",
+      "stars": "13.9k",
+      "stars_numeric": 13900,
+      "usage_note": "MIT；可直接操作真实浏览器且扩展 helper，自由度高。应使用隔离配置、最小权限、动作日志和写操作确认门。"
+    },
+    {
+      "name": "RTK",
+      "aliases": [
+        "rtk-ai/rtk"
+      ],
+      "type": "Agent 终端输出压缩 CLI",
+      "repo": "https://github.com/rtk-ai/rtk",
+      "download": "https://github.com/rtk-ai/rtk/archive/refs/heads/develop.zip",
+      "stars": "74.6k",
+      "stars_numeric": 74557,
+      "usage_note": "Apache-2.0；压缩比例因命令而异。启用前用固定任务验证关键错误、diff 与日志行没有被过滤。",
+      "license": "Apache-2.0",
+      "verified_at": "2026-08-04"
+    },
+    {
+      "name": "Scrapling",
+      "aliases": [
+        "D4Vinci/Scrapling"
+      ],
+      "type": "自适应网页采集框架 / MCP",
+      "repo": "https://github.com/D4Vinci/Scrapling",
+      "download": "https://github.com/D4Vinci/Scrapling/archive/refs/heads/main.zip",
+      "stars": "71.6k",
+      "stars_numeric": 71600,
+      "usage_note": "BSD-3-Clause；只采集自有、公开或已授权页面。遇到验证码、频控或平台安全限制立即停止。"
+    },
+    {
+      "name": "VividDub",
+      "aliases": [
+        "Vivid Dub",
+        "VividDub/VividDub"
+      ],
+      "type": "GitHub 产品项目",
+      "repo": "https://github.com/VividDub/VividDub",
+      "download": "https://github.com/VividDub/VividDub/archive/refs/heads/main.zip",
+      "website": "https://vividdub.com/",
+      "stars": "30",
+      "stars_numeric": 30,
+      "usage_note": "官方 GitHub 仓库已确认。仓库公开，但截至 2026-07-29 主要包含产品说明与仓库治理文件，未见应用源码或开源许可证；它不是 Agent Skill。使用产品前仍需核对素材权利、声音克隆授权、隐私与计费。",
+      "license": "未声明",
+      "verified_at": "2026-08-04"
+    },
+    {
+      "name": "WorkBuddy",
+      "aliases": [
+        "腾讯 WorkBuddy"
+      ],
+      "type": "产品官网",
+      "website": "https://www.workbuddy.cn/work/",
+      "documentation": "https://www.workbuddy.cn/docs/workbuddy/Overview",
+      "metric_icon": "↗",
+      "stars": "官方网站",
+      "usage_note": "腾讯的全场景 AI 工作台，支持 MCP 与自定义 Skills；使用亚马逊或店铺能力前应单独核对数据权限、平台授权与可回滚性。",
+      "verified_at": "2026-08-04"
+    },
+    {
+      "name": "Comet Q",
+      "aliases": [
+        "GL-RMQ1",
+        "GL.iNet Comet Q"
+      ],
+      "type": "产品官网",
+      "website": "https://www.gl-inet.com/products/gl-rmq1/",
+      "documentation": "https://docs.gl-inet.com/kvm/en/user_guide/gl-rmq1/quick_setup_guide/",
+      "metric_icon": "↗",
+      "stars": "官方网站",
+      "usage_note": "USB-C 远程 KVM；购买或接入前核对 DP Alt Mode、设备兼容清单、远程认证、固件更新和网络暴露面。",
+      "verified_at": "2026-08-04"
+    },
+    {
+      "name": "SparkX",
+      "aliases": [
+        "SparkX AI Platform"
+      ],
+      "type": "产品官网",
+      "website": "https://www.sparkx.cn/",
+      "metric_icon": "↗",
+      "stars": "官方网站",
+      "usage_note": "面向亚马逊等平台的 AI 营销与广告优化产品；自动建议必须受预算、利润、库存和人工审批约束。",
+      "verified_at": "2026-08-04"
+    },
+    {
+      "name": "Flova",
+      "aliases": [
+        "Flova AI"
+      ],
+      "type": "产品官网",
+      "website": "https://www.flova.ai/",
+      "documentation": "https://www.flova.ai/docs/en/features/skills",
+      "metric_icon": "↗",
+      "stars": "官方网站",
+      "usage_note": "视频创作 Agent 产品；其 Skills 是产品内可复用制作手册，不应误写成 GitHub Agent Skill。提交素材前核对版权、授权、保存期限与计费。",
+      "verified_at": "2026-08-04"
+    },
+    {
+      "name": "Aixcut",
+      "aliases": [
+        "AIXCUT",
+        "AiXcut"
+      ],
+      "type": "产品官网",
+      "website": "https://www.aixcut.com/",
+      "metric_icon": "↗",
+      "stars": "官方网站",
+      "usage_note": "内容分析驱动的 AI 视频编辑产品；使用产品内 Skill 前先测试素材授权、字幕准确率、时间线可编辑性和导出质量。",
+      "verified_at": "2026-08-04"
+    },
+    {
+      "name": "Codex",
+      "aliases": [
+        "OpenAI Codex",
+        "openai/codex"
+      ],
+      "type": "官方编码 Agent / CLI",
+      "repo": "https://github.com/openai/codex",
+      "download": "https://github.com/openai/codex/archive/refs/heads/main.zip",
+      "website": "https://openai.com/codex/",
+      "stars": "105.3k",
+      "stars_numeric": 105300,
+      "usage_note": "OpenAI 官方编码 Agent 与开源 CLI。把业务 SOP 封装为 Skill 前，应限制文件、联网和命令权限，并用可回滚样例验证输出。",
+      "license": "Apache-2.0",
+      "verified_at": "2026-08-12"
+    },
+    {
+      "name": "Nexscope Amazon Skills",
+      "aliases": [
+        "Amazon Skills by Nexscope",
+        "nexscope-ai/Amazon-Skills"
+      ],
+      "type": "跨 Agent Skill 集合",
+      "repo": "https://github.com/nexscope-ai/Amazon-Skills",
+      "download": "https://github.com/nexscope-ai/Amazon-Skills/archive/refs/heads/main.zip",
+      "stars": "524",
+      "stars_numeric": 524,
+      "usage_note": "MIT；官方仓库包含 53 个 Amazon 卖家 Skill，并明确 Skill 本身不能访问实时市场数据。采用前逐项核对费率、数据日期、脚本与外部权限。",
+      "license": "MIT",
+      "skill_manifest": "amazon-global-selling/SKILL.md",
+      "verified_at": "2026-08-12"
+    },
+    {
+      "name": "PocketBay",
+      "aliases": [
+        "PocketBay AI"
+      ],
+      "type": "产品官网",
+      "website": "https://pocketbay.com/",
+      "documentation": "https://pocketbay.com/zh-CN/deploy",
+      "faq": "https://pocketbay.com/zh-CN/faq",
+      "limitations": "https://pocketbay.com/docs/limitations",
+      "trust": "https://pocketbay.com/trust",
+      "metric_icon": "↗",
+      "stars": "官方网站",
+      "usage_note": "AI 原生应用部署与托管产品。先用不含密钥和私人数据的小型项目试跑；浏览器授权前核对项目名和部署类型，并在正式采用前确认多服务、后台任务、数据服务、GPU、扩展性和 SLA 限制。",
+      "verified_at": "2026-08-26"
+    },
+    {
+      "id": "github-dietrichgebert-ponytail",
+      "name": "ponytail",
+      "aliases": [
+        "Ponytail",
+        "马尾辫",
+        "马尾辫 Skill",
+        "RedSkill"
+      ],
+      "type": "Agent Skill",
+      "canonical_repo": "DietrichGebert/ponytail",
+      "repo": "https://github.com/DietrichGebert/ponytail",
+      "download": "https://github.com/DietrichGebert/ponytail/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "skill_manifest": "skills/ponytail/SKILL.md",
+      "verified_at": "2026-08-27",
+      "stars_numeric": 112054,
+      "compatibility": [
+        "Claude Code",
+        "Codex"
+      ],
+      "compatibility_evidence": [
+        "README.md"
+      ],
+      "status": "verified",
+      "usage_note": "先审查插件 hooks 与 Node 依赖，再在测试分支用同一任务对比代码量、正确性和测试完整性；94% 是官方基准中的单任务上限，不是普遍保证。",
+      "source_urls": [
+        "https://github.com/DietrichGebert/ponytail",
+        "https://github.com/DietrichGebert/ponytail/blob/main/README.md",
+        "https://github.com/DietrichGebert/ponytail/blob/main/skills/ponytail/SKILL.md",
+        "https://github.com/DietrichGebert/ponytail/blob/main/LICENSE",
+        "https://github.com/DietrichGebert/ponytail/archive/refs/heads/main.zip"
+      ],
+      "resource_identity_sha256": "0622f3727afcd034fc4eb5133479391764e2436706896483e11925cf3f14992b",
+      "verification_snapshot_sha256": "8b3c9523d5a2db08d417666d0c1d4963fd91467daf9f131068eab7fc0c093ab5"
+    },
+    {
+      "name": "Pixelle-Video",
+      "aliases": [
+        "PixelleVideo"
+      ],
+      "type": "开源 AI 视频生成工具",
+      "canonical_repo": "ATH-MaaS/Pixelle-Video",
+      "default_branch": "main",
+      "repo": "https://github.com/ATH-MaaS/Pixelle-Video",
+      "download": "https://github.com/ATH-MaaS/Pixelle-Video/archive/refs/heads/main.zip",
+      "releases": "https://github.com/ATH-MaaS/Pixelle-Video/releases",
+      "license": "Apache-2.0",
+      "verified_at": "2026-08-27",
+      "stars_numeric": 27337,
+      "status": "verified",
+      "usage_note": "Apache-2.0；会调用第三方模型、TTS、图像或视频服务。只用测试凭据和自有素材，先核对供应商费用、素材版权、网络访问与本地缓存。",
+      "source_urls": [
+        "https://github.com/ATH-MaaS/Pixelle-Video",
+        "https://github.com/ATH-MaaS/Pixelle-Video/blob/main/README.md",
+        "https://github.com/ATH-MaaS/Pixelle-Video/blob/main/LICENSE",
+        "https://github.com/ATH-MaaS/Pixelle-Video/releases",
+        "https://github.com/ATH-MaaS/Pixelle-Video/archive/refs/heads/main.zip"
+      ]
+    },
+    {
+      "id": "github-firecrawl-anydoc",
+      "name": "anydoc",
+      "aliases": [
+        "anydoc",
+        "convert-documents-to-markdown"
+      ],
+      "type": "Agent Skill",
+      "canonical_repo": "firecrawl/anydoc",
+      "repo": "https://github.com/firecrawl/anydoc",
+      "download": "https://github.com/firecrawl/anydoc/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "skill_manifest": "skills/convert-documents-to-markdown/SKILL.md",
+      "verified_at": "2026-08-27",
+      "stars_numeric": 18538,
+      "compatibility": [
+        "Claude Code",
+        "Codex"
+      ],
+      "compatibility_evidence": [
+        "README.md"
+      ],
+      "status": "verified",
+      "usage_note": "MIT；首次 npx 使用会下载预编译包。扫描或纯图片 PDF 不受本地转换支持，需要另行受控文字识别；先用无敏感内容的样本文档验证格式保真。",
+      "source_urls": [
+        "https://github.com/firecrawl/anydoc",
+        "https://github.com/firecrawl/anydoc/blob/main/README.md",
+        "https://github.com/firecrawl/anydoc/blob/main/skills/convert-documents-to-markdown/SKILL.md",
+        "https://github.com/firecrawl/anydoc/blob/main/LICENSE",
+        "https://github.com/firecrawl/anydoc/archive/refs/heads/main.zip"
+      ],
+      "resource_identity_sha256": "05761bf19e87d44199be6c63616571e1499025edb623f20d1f6a035eeee896f6",
+      "verification_snapshot_sha256": "3e9cc580dba0d83b2a466f8e40631f8a4aaa48c4ecab1cc2bfc8451e91761d6b"
+    },
+    {
+      "name": "MoneyPrinterTurbo",
+      "aliases": [
+        "印钞机",
+        "Money Printer Turbo"
+      ],
+      "type": "开源 AI 视频生成工具",
+      "canonical_repo": "harry0703/MoneyPrinterTurbo",
+      "default_branch": "main",
+      "repo": "https://github.com/harry0703/MoneyPrinterTurbo",
+      "download": "https://github.com/harry0703/MoneyPrinterTurbo/archive/refs/heads/main.zip",
+      "releases": "https://github.com/harry0703/MoneyPrinterTurbo/releases",
+      "license": "MIT",
+      "verified_at": "2026-08-28",
+      "stars_numeric": 117620,
+      "status": "verified",
+      "usage_note": "项目会调用文本、语音和素材服务生成视频；只用自有或已授权素材，在隔离环境审查第三方 API、凭据、网络访问、缓存与输出版权，不采信批量产量或收益承诺。",
+      "source_urls": [
+        "https://github.com/harry0703/MoneyPrinterTurbo",
+        "https://github.com/harry0703/MoneyPrinterTurbo/blob/main/README.md",
+        "https://github.com/harry0703/MoneyPrinterTurbo/blob/main/LICENSE",
+        "https://github.com/harry0703/MoneyPrinterTurbo/releases",
+        "https://github.com/harry0703/MoneyPrinterTurbo/archive/refs/heads/main.zip"
+      ]
+    },
+    {
+      "name": "TrendRadar",
+      "aliases": [
+        "Trend Radar"
+      ],
+      "type": "热点聚合与舆情监控工具",
+      "canonical_repo": "sansan0/TrendRadar",
+      "default_branch": "master",
+      "repo": "https://github.com/sansan0/TrendRadar",
+      "download": "https://github.com/sansan0/TrendRadar/archive/refs/heads/master.zip",
+      "license": "GPL-3.0",
+      "verified_at": "2026-08-29",
+      "stars_numeric": 61897,
+      "status": "verified",
+      "usage_note": "GPL-3.0；支持多平台热点、RSS、AI 分析和多种推送渠道。启用前只配置必要来源，审查第三方模型、消息推送、邮箱和 MCP 的凭据与数据外发范围。",
+      "source_urls": [
+        "https://github.com/sansan0/TrendRadar",
+        "https://github.com/sansan0/TrendRadar/blob/master/README.md",
+        "https://github.com/sansan0/TrendRadar/blob/master/LICENSE",
+        "https://github.com/sansan0/TrendRadar/archive/refs/heads/master.zip"
+      ]
+    },
+    {
+      "name": "speech-to-speech",
+      "aliases": [
+        "Hugging Face speech-to-speech"
+      ],
+      "type": "本地语音 Agent 框架",
+      "canonical_repo": "huggingface/speech-to-speech",
+      "default_branch": "main",
+      "repo": "https://github.com/huggingface/speech-to-speech",
+      "download": "https://github.com/huggingface/speech-to-speech/archive/refs/heads/main.zip",
+      "releases": "https://github.com/huggingface/speech-to-speech/releases",
+      "license": "Apache-2.0",
+      "verified_at": "2026-08-29",
+      "stars_numeric": 12919,
+      "status": "verified",
+      "usage_note": "Apache-2.0；本地语音 Agent 由 VAD、语音识别、语言模型和语音合成组成。使用前核对模型下载、麦克风、网络后端、显存与语音数据留存范围。",
+      "source_urls": [
+        "https://github.com/huggingface/speech-to-speech",
+        "https://github.com/huggingface/speech-to-speech/blob/main/README.md",
+        "https://github.com/huggingface/speech-to-speech/blob/main/LICENSE",
+        "https://github.com/huggingface/speech-to-speech/releases",
+        "https://github.com/huggingface/speech-to-speech/archive/refs/heads/main.zip"
+      ]
+    }
   ]
 }

@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { contentRevision } from "./content-revision.mjs";
 
 const ID_KEYS = ["note_id", "noteId", "id"];
 const TITLE_KEYS = ["display_title", "displayTitle", "title", "name"];
@@ -529,6 +530,7 @@ function main() {
     if (note.detail_fetched === true) delete merged.fetch_error;
     merged.first_seen_at = existing?.first_seen_at ?? note.first_seen_at;
     merged.last_seen_at = now;
+    merged.content_sha256 = contentRevision(merged);
     catalog.notes[note.note_id] = merged;
   }
   catalog.updated_at = now;

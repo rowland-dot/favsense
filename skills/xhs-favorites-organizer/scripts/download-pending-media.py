@@ -17,7 +17,20 @@ from urllib.parse import urlparse
 NOTE_ID = re.compile(r"^[a-f0-9]{24}$")
 NOTE_PATH = re.compile(r"^/(?:explore|discovery/item)/([a-f0-9]{24})$")
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-SAFETY_LIMIT = re.compile(r"300031|验证码|访问频繁|安全限制", re.IGNORECASE)
+SAFETY_LIMIT = re.compile(
+    r"(?:300031|验证码|滑块(?:验证)?|请完成(?:安全)?验证|访问频繁|操作频繁|"
+    r"请求频繁|安全验证|安全限制|captcha|too\s+many\s+requests|"
+    r"http(?:/[\d.]+)?\s*429|status[_\s-]*(?:code)?\s*[:=]?\s*429|"
+    r"(?:状态码|错误码)\s*[:：=]?\s*429|"
+    r"[\"']?(?:code|status)[\"']?\s*[:=]\s*429)",
+    re.IGNORECASE,
+)
+STRUCTURED_SAFETY_LIMIT = re.compile(
+    r"(?:[\"']?(?:error[_-]?code|code|status)[\"']?\s*[:=]\s*[\"']?(?:300031|429)\b|"
+    r"http(?:/[\d.]+)?\s*429|status[_\s-]*(?:code)?\s*[:=]?\s*429|"
+    r"(?:状态码|错误码)\s*[:：=]?\s*(?:300031|429))",
+    re.IGNORECASE,
+)
 PINNED_XHS_COMMIT = "d805ebdd3db53f68137bc2b7a6ed118ce572d09b"
 
 
@@ -45,60 +58,59 @@ def contains_safety_limit(value: str) -> bool:
 
 def safety_limit_detected(output: str, error: Exception | None = None) -> bool:
     """Recognize platform stop signals without persisting request details."""
-    return contains_safety_limit(output) or (
+    return bool(STRUCTURED_SAFETY_LIMIT.search(str(output or ""))) or (
         error is not None and contains_safety_limit(str(error))
     )
 
 
+def write_safety_stop(path: Path | None) -> None:
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        return
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        json.dump({
+            "stopped_at": datetime.now(timezone.utc).isoformat(),
+            "reason": "platform-safety-limit",
+        }, handle)
+
+
 def acquire_single_flight(lock_path: Path | None):
-    """Acquire a process-wide media lock; the caller must close and remove it."""
+    """Acquire a crash-safe OS file lock; the caller releases it by closing."""
     if lock_path is None:
         return None
     lock_path.parent.mkdir(parents=True, exist_ok=True)
+    if lock_path.is_symlink():
+        raise ValueError("platform request lock must not be redirected")
+    handle = lock_path.open("a+", encoding="utf-8")
     try:
-        descriptor = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError:
-        try:
-            lock_data = json.loads(lock_path.read_text(encoding="utf-8"))
-            owner_pid = int(lock_data.get("pid"))
-        except (OSError, ValueError, TypeError, json.JSONDecodeError):
-            owner_pid = -1
-        if process_is_alive(owner_pid):
-            raise
-        lock_path.unlink(missing_ok=True)
-        descriptor = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    handle = os.fdopen(descriptor, "w", encoding="utf-8")
-    handle.write(json.dumps({
-        "pid": os.getpid(),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }))
-    handle.flush()
-    return handle
+        handle.seek(0, os.SEEK_END)
+        if handle.tell() == 0:
+            handle.write(" ")
+            handle.flush()
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt  # pylint: disable=import-outside-toplevel
 
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl  # pylint: disable=import-outside-toplevel
 
-def process_is_alive(pid: int) -> bool:
-    if pid < 1:
-        return False
-    if os.name == "nt":
-        import ctypes  # pylint: disable=import-outside-toplevel
-
-        process_query_limited_information = 0x1000
-        handle = ctypes.windll.kernel32.OpenProcess(
-            process_query_limited_information, False, pid
-        )
-        if not handle:
-            return False
-        ctypes.windll.kernel32.CloseHandle(handle)
-        return True
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        handle.seek(0)
+        handle.truncate()
+        handle.write(json.dumps({
+            "pid": os.getpid(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }))
+        handle.flush()
+        return handle
+    except (OSError, BlockingIOError) as error:
+        handle.close()
+        raise FileExistsError(str(lock_path)) from error
 
 
 def classify_error(error: Exception) -> str:
@@ -242,7 +254,13 @@ async def replace_insecure_clients(app) -> None:
     await old_download.aclose()
 
 
-async def download_queue(queue: list[dict], xhs_dir: Path, media_dir: Path, delay: float) -> dict:
+async def download_queue(
+    queue: list[dict],
+    xhs_dir: Path,
+    media_dir: Path,
+    delay: float,
+    safety_stop_path: Path | None = None,
+) -> dict:
     sys.path.insert(0, str(xhs_dir))
     from source import XHS  # pylint: disable=import-outside-toplevel
 
@@ -268,6 +286,9 @@ async def download_queue(queue: list[dict], xhs_dir: Path, media_dir: Path, dela
     safety_stopped = False
     try:
         for index, item in enumerate(queue):
+            if safety_stop_path is not None and safety_stop_path.exists():
+                safety_stopped = True
+                break
             diagnostics = io.StringIO()
             before = has_cached_media(media_dir, item["note_id"])
             caught_error = None
@@ -287,6 +308,7 @@ async def download_queue(queue: list[dict], xhs_dir: Path, media_dir: Path, dela
             if safety_limit_detected(diagnostics.getvalue(), caught_error):
                 status = "safety-stop"
                 safety_stopped = True
+                write_safety_stop(safety_stop_path)
             result = {"note_id": item["note_id"], "status": status}
             if error_type:
                 result["error_type"] = error_type
@@ -296,6 +318,9 @@ async def download_queue(queue: list[dict], xhs_dir: Path, media_dir: Path, dela
                 break
             if index + 1 < len(queue) and delay > 0:
                 await asyncio.sleep(delay)
+                if safety_stop_path is not None and safety_stop_path.exists():
+                    safety_stopped = True
+                    break
     finally:
         await app.__aexit__(None, None, None)
     return {"results": results, "safety_stopped": safety_stopped}
@@ -339,7 +364,9 @@ def main() -> None:
             queue = build_pending_queue(
                 catalog, curation, media_dir, args.max_items, published_since=published_since
             )
-        outcome = asyncio.run(download_queue(queue, xhs_dir, media_dir, args.delay)) if queue else {
+        outcome = asyncio.run(
+            download_queue(queue, xhs_dir, media_dir, args.delay, safety_stop_path)
+        ) if queue else {
             "results": [],
             "safety_stopped": False,
         }
@@ -355,18 +382,11 @@ def main() -> None:
         report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps({key: value for key, value in report.items() if key != "results"}, ensure_ascii=False))
         if outcome["safety_stopped"]:
-            if safety_stop_path is not None:
-                safety_stop_path.parent.mkdir(parents=True, exist_ok=True)
-                safety_stop_path.write_text(
-                    json.dumps({"stopped_at": datetime.now(timezone.utc).isoformat(), "reason": "platform-safety-limit"}),
-                    encoding="utf-8",
-                )
+            write_safety_stop(safety_stop_path)
             raise SystemExit(2)
     finally:
         if lock_handle is not None:
             lock_handle.close()
-        if lock_path is not None:
-            lock_path.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

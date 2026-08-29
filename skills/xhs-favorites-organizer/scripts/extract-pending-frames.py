@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-total-frames", type=int, default=60)
     parser.add_argument("--max-total-bytes", type=int, default=20 * 1024 * 1024)
     parser.add_argument("--max-wall-seconds", type=float, default=120)
+    parser.add_argument("--note-id", action="append", default=[])
     parser.add_argument("--review-pages-only", action="store_true")
     parser.add_argument(
         "--force",
@@ -169,6 +170,22 @@ def catalog_note_ids(catalog: dict, published_since: str | None = None) -> set[s
                 continue
         selected.add(note_id)
     return selected
+
+
+def requested_note_scope(
+    requested_note_ids: list[str], allowed_note_ids: set[str]
+) -> set[str]:
+    requested = set(requested_note_ids)
+    if not requested:
+        return set(allowed_note_ids)
+    if not all(
+        isinstance(note_id, str) and NOTE_ID.fullmatch(note_id)
+        for note_id in requested
+    ):
+        raise ValueError("--note-id must use a supported note identifier")
+    if requested - allowed_note_ids:
+        raise ValueError("--note-id is outside the catalog scope")
+    return requested
 
 
 def run(command: list[str], timeout: int = 900) -> None:
@@ -387,7 +404,11 @@ def main() -> None:
         if args.config:
             config = json.loads(Path(args.config).resolve().read_text(encoding="utf-8-sig"))
             published_since = config.get("published_since")
-        allowed_note_ids = catalog_note_ids(catalog, published_since)
+        allowed_note_ids = requested_note_scope(
+            args.note_id, catalog_note_ids(catalog, published_since)
+        )
+    elif args.note_id:
+        raise ValueError("--note-id requires --catalog")
     queue = build_frame_queue(
         media_dir,
         curation,

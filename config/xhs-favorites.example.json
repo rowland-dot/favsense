@@ -16,9 +16,19 @@
     "max_visual_wall_seconds": 120,
     "strategy": "audio-first-visual-on-demand"
   },
+  "diandian": {
+    "enabled": false,
+    "skill_path": "skills/xhs-diandian-summarize-note"
+  },
   "knowledge_base": "knowledge-base",
   "domain_profile": "config/domain-profiles/software.json",
   "curation_file": "skills/xhs-favorites-organizer/references/skills-board-curation.json",
+  "curation_quality": {
+    "publish_only_accepted": true,
+    "audit_file": ".xhs-favorites/curation-audit.json",
+    "baseline_file": ".xhs-favorites/published-baseline.json",
+    "scope_file": ".xhs-favorites/curation-scope.json"
+  },
   "public_stats": { "frame_evidence_count": 0 },
   "publish": {
     "enabled": false,

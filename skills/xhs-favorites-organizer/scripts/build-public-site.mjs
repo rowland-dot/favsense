@@ -1,11 +1,24 @@
 #!/usr/bin/env node
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { open, readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeSensitiveText } from "./sensitive-data.mjs";
 import { collectVideoEvidenceStats } from "./evidence-stats.mjs";
 import { resolveCategoryPolicy } from "./category-policy.mjs";
+import { curationRevision } from "./curation-revision.mjs";
+import {
+  currentFormalRevisions,
+  formalCurationDecision,
+  formalContentKind,
+  isPublishableCuration,
+  loadFormalPointSummary,
+  loadCurationAudit,
+  publicEvidenceStatus
+} from "./curation-quality.mjs";
+import { confirmedSkillResource } from "./resource-quality.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
+import { atomicWriteTextFile } from "./public-tree-policy.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const workspace = resolve(scriptDir, "../../..");
@@ -53,32 +66,39 @@ const paths = {
   profile: profilePath,
   resources: arg("resources", configuredPath(resourceIndex.registry_file, "skills/xhs-favorites-organizer/references/software-resources.json")),
   videoAnalysis: arg("video-analysis", resolve(workspace, ".xhs-favorites/video-analysis")),
-  summaries: arg("summaries", resolve(workspace, "knowledge-base/05-Skills成果/Skills面板逐篇总结与总汇.md")),
+  diandian: arg("diandian-dir", resolve(workspace, ".xhs-favorites/diandian-summaries")),
+  diandianReport: arg("diandian-report", resolve(workspace, ".xhs-favorites/diandian-rerun-report.json")),
   output: arg("output", resolve(workspace, "site/data/knowledge.json"))
 };
+const promptVersionIndex = process.argv.indexOf("--diandian-prompt-version");
+const explicitPromptVersion = promptVersionIndex >= 0
+  ? String(process.argv[promptVersionIndex + 1] || "")
+  : "";
+if (explicitPromptVersion && !/^[a-f0-9]{64}$/.test(explicitPromptVersion)) {
+  throw new Error("DianDian prompt version is invalid");
+}
+const expectedPromptVersion = explicitPromptVersion;
+const buildVersionIndex = process.argv.indexOf("--build-version");
+const buildVersion = buildVersionIndex >= 0 ? String(process.argv[buildVersionIndex + 1] || "") : "";
+if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) throw new Error("--build-version must be a 64-character lowercase SHA-256");
+const effectiveDateIndex = process.argv.indexOf("--effective-date");
+const effectiveDate = effectiveDateIndex >= 0 ? String(process.argv[effectiveDateIndex + 1] || "") : new Date().toISOString().slice(0, 10);
+const effectiveDateValue = new Date(`${effectiveDate}T00:00:00.000Z`);
+if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate) || Number.isNaN(effectiveDateValue.getTime()) || effectiveDateValue.toISOString().slice(0, 10) !== effectiveDate) throw new Error("--effective-date must be a real YYYY-MM-DD");
 
 const [catalog, curation] = await Promise.all([
   parseJson(paths.catalog),
   parseJson(paths.curation)
 ]);
+const {
+  policy: curationQuality,
+  audit: curationAudit,
+  baselineIds: curationBaselineIds,
+  baselineRevisions: curationBaselineRevisions
+} = loadCurationAudit(workspace, config);
 const resourceRegistry = profile.features?.resource_index
   ? await parseJson(paths.resources)
   : { verified_at: "", resources: [] };
-
-let summaryMarkdown = "";
-try {
-  summaryMarkdown = await readFile(paths.summaries, "utf8");
-} catch {
-  // The public repository ships generated data. A private Markdown vault is optional.
-}
-
-function plainText(markdown) {
-  return markdown
-    .replace(/\[([^\]]+)]\([^\)]+\)/g, "$1")
-    .replace(/[*_`>#]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function titleFromText(value) {
   const normalized = String(value || "").replace(/\s+/g, " ").trim();
@@ -94,8 +114,8 @@ function titleFromText(value) {
   return title.length > 52 ? `${title.slice(0, 51)}…` : title;
 }
 
-function displayTitle(raw, entry, deepSummary, noteId) {
-  const candidates = [raw.title, deepSummary?.heading, entry.tools?.[0], raw.description, entry.summary];
+function displayTitle(raw, entry, noteId) {
+  const candidates = [raw.title, entry.tools?.[0], raw.description, entry.summary];
   for (const candidate of candidates) {
     const title = titleFromText(candidate);
     if (title) return title;
@@ -112,31 +132,21 @@ function publicSourceUrl(title, author) {
   return `https://www.xiaohongshu.com/search_result?${params.toString()}`;
 }
 
-function extractDeepSummaries(markdown) {
-  const sections = [];
-  const pattern = /^## (\d{2})\.\s+([^\n]+)\n+([\s\S]*?)(?=^## \d{2}\.|^---$|^## 总汇：|(?![\s\S]))/gm;
-  for (const match of markdown.matchAll(pattern)) {
-    sections.push({ number: Number(match[1]), heading: plainText(match[2]), text: plainText(match[3]) });
-  }
-  return sections;
-}
-
-const deepSummaries = extractDeepSummaries(summaryMarkdown);
-const curatedIds = Object.keys(curation);
-const deepSummaryById = new Map(
-  curatedIds.map((noteId, index) => [noteId, deepSummaries[index] || null])
-);
 const field = (value, path) => String(path || "").split(".").filter(Boolean).reduce((current, key) => current?.[key], value);
 const rawResources = resourceRegistry[resourceIndex.collection || "resources"] || [];
 const resources = rawResources.map((raw, index) => {
   const mapping = resourceIndex.mapping || {};
   const name = String(field(raw, mapping.name || "name") || "").trim();
   if (!name) throw new Error(`Resource ${index + 1} is missing a name.`);
+  const type = String(field(raw, mapping.type || "type") || "未分类");
   const actions = (resourceIndex.actions || []).map((action) => ({
     label: action.label,
     url: String(field(raw, action.field) || "")
   })).filter((action) => action.url);
-  const attributes = (resourceIndex.fields || []).map((attribute) => ({
+  const fieldsByType = resourceIndex.fields_by_type || {};
+  const typeFields = Object.hasOwn(fieldsByType, type) ? fieldsByType[type] : [];
+  if (!Array.isArray(typeFields)) throw new Error(`Resource fields for ${type} must be an array.`);
+  const attributes = [...(resourceIndex.fields || []), ...typeFields].map((attribute) => ({
     label: String(attribute.label || ""),
     value: String(field(raw, attribute.field) || "")
   })).filter((attribute) => attribute.label && attribute.value);
@@ -148,10 +158,10 @@ const resources = rawResources.map((raw, index) => {
     ? Number(rawMetricNumeric)
     : null;
   return {
-    id: `resource-${index + 1}`,
+    id: String(raw.id || `resource-${index + 1}`),
     name,
     aliases: field(raw, mapping.aliases || "aliases") || [],
-    type: String(field(raw, mapping.type || "type") || "未分类"),
+    type,
     description: String(field(raw, mapping.description || "description") || ""),
     metric: String(field(raw, mapping.metric || "metric") || ""),
     metricNumeric,
@@ -161,9 +171,12 @@ const resources = rawResources.map((raw, index) => {
   };
 });
 const resourceByAlias = new Map();
-for (const resource of resources) {
+const rawResourceByAlias = new Map();
+for (const [index, resource] of resources.entries()) {
+  const raw = rawResources[index];
   for (const alias of [resource.name, ...(resource.aliases || [])]) {
     resourceByAlias.set(String(alias).toLocaleLowerCase("zh-CN"), resource);
+    rawResourceByAlias.set(String(alias).toLocaleLowerCase("zh-CN"), raw);
   }
 }
 
@@ -226,11 +239,90 @@ function fallbackEntry(raw) {
   };
 }
 
-const rawNotes = catalog.notes || {};
+const rawNotes = Object.fromEntries(
+  Object.entries(catalog.notes || {})
+);
+async function loadDiandianRunStates(path, noteIds) {
+  let handle;
+  try {
+    handle = await open(path, "r");
+    const metadata = await handle.stat();
+    if (metadata.size > 512 * 1024) throw new Error("DianDian rerun report is too large");
+    const buffer = Buffer.alloc(metadata.size + 1);
+    let bytesRead = 0;
+    while (bytesRead < buffer.length) {
+      const chunk = await handle.read(buffer, bytesRead, buffer.length - bytesRead, bytesRead);
+      if (!chunk.bytesRead) break;
+      bytesRead += chunk.bytesRead;
+    }
+    if (bytesRead > metadata.size) throw new Error("DianDian rerun report changed while reading");
+    const report = JSON.parse(buffer.subarray(0, bytesRead).toString("utf8").replace(/^\uFEFF/, ""));
+    const unresolved = Array.isArray(report?.unresolved)
+      ? report.unresolved
+      : Object.entries(report?.unresolved || {}).map(([note_id, entry]) => ({ ...entry, note_id }));
+    if (unresolved.length > 5000) throw new Error("DianDian rerun report contains too many entries");
+    const states = new Map();
+    for (const entry of unresolved) {
+      const noteId = String(entry?.note_id || "");
+      if (!/^[a-f0-9]{24}$/.test(noteId) || !noteIds.has(noteId)) continue;
+      const reason = String(entry?.reason || "");
+      const summaryState = entry?.summary_status === "batch_aborted"
+        || (!entry?.summary_status && ["batch-aborted", "summary-plan-abandoned"].includes(reason))
+        ? "batch_aborted"
+        : entry?.summary_status === "failed"
+          ? "failed"
+          : entry?.status === "unresolved"
+            ? "stale"
+            : "";
+      if (!summaryState) continue;
+      const summaryReasonCode = summaryState === "batch_aborted"
+        ? "batch_aborted"
+        : summaryState === "stale"
+          ? "unknown_legacy"
+        : reason === "transport-failed"
+          ? "transport_failed"
+          : reason === "safety-halt"
+            ? "safety_signal"
+            : "contract_invalid";
+      states.set(noteId, { summaryState, summaryReasonCode });
+    }
+    return states;
+  } catch (error) {
+    if (error?.code === "ENOENT") return new Map();
+    throw error;
+  } finally {
+    await handle?.close();
+  }
+}
+const diandianRunStateById = await loadDiandianRunStates(paths.diandianReport, new Set(Object.keys(rawNotes)));
+const diandianById = new Map(Object.keys(rawNotes)
+  .map((noteId) => [noteId, loadFormalPointSummary(paths.diandian, noteId, expectedPromptVersion)])
+  .filter(([, summary]) => summary));
 const evidenceStats = await collectVideoEvidenceStats(paths.videoAnalysis, config.public_stats, Object.keys(rawNotes));
 const frameVerifiedNoteIds = new Set(evidenceStats.verifiedNoteIds);
 const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
-  const isCurated = Object.hasOwn(curation, noteId);
+  const hasCuration = Object.hasOwn(curation, noteId);
+  const candidateEntry = hasCuration ? curation[noteId] : fallbackEntry(raw);
+  const candidateResources = [...new Map((candidateEntry.tools || [])
+    .map(resourceForTool).filter(Boolean).map((resource) => [resource.id, resource])).values()];
+  const candidateKind = classify(candidateEntry, candidateResources);
+  const rawCandidateResources = (candidateEntry.tools || [])
+    .map((tool) => rawResourceByAlias.get(String(tool).toLocaleLowerCase("zh-CN"))).filter(Boolean);
+  const confirmedResource = candidateKind === "Skill"
+    ? confirmedSkillResource(rawCandidateResources, { today: effectiveDate, maxAgeDays: 30 })
+    : null;
+  const currentRevisions = currentFormalRevisions(raw, candidateEntry, confirmedResource, expectedPromptVersion);
+  const isCurated = hasCuration
+    && isPublishableCuration(
+      noteId,
+      raw,
+      curation,
+      curationQuality,
+      curationAudit,
+      curationBaselineIds,
+      curationBaselineRevisions,
+      { config, resources: resourceRegistry, ...(currentRevisions ? { currentRevisions } : {}) }
+    );
   const isFrameVerified = frameVerifiedNoteIds.has(noteId);
   const entry = isCurated ? curation[noteId] : fallbackEntry(raw);
   const categoryPolicy = resolveCategoryPolicy({
@@ -243,7 +335,44 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const matchedResources = [...new Map(
     (entry.tools || []).map(resourceForTool).filter(Boolean).map((resource) => [resource.name, resource])
   ).values()];
-  const title = displayTitle(raw, entry, deepSummaryById.get(noteId), noteId);
+  const title = displayTitle(raw, entry, noteId);
+  const diandian = diandianById.get(noteId);
+  const auditEntry = curationAudit?.notes?.[noteId];
+  const formalDecision = formalCurationDecision({
+    publishable: isCurated,
+    auditEntry,
+    currentRevisions,
+    point: diandian,
+    kind: candidateKind,
+    resource: confirmedResource,
+  });
+  const publicDiandian = formalDecision.summary_source === "point" ? diandian : null;
+  const formalSummaryReasonCode = String(formalDecision.reason_code || "");
+  const runState = diandianRunStateById.get(noteId);
+  const summaryState = runState?.summaryState || (diandian
+    ? (["content_changed", "provider_changed", "prompt_changed", "summary_changed"].includes(formalSummaryReasonCode)
+        ? "stale"
+        : "captured")
+    : "not_started");
+  const summaryReasonCode = runState?.summaryReasonCode || formalSummaryReasonCode;
+  const curationStatus = formalDecision.accepted
+    ? "accepted"
+    : (auditEntry?.status === "rejected"
+        ? "rejected"
+        : (auditEntry?.status === "unavailable" ? "unavailable" : "pending_review"));
+  const projectedKind = formalContentKind(
+    profile,
+    candidateKind === "Skill" ? candidateKind : classify(entry, matchedResources),
+    formalDecision.accepted && Boolean(confirmedResource)
+  );
+  const projectedResources = candidateKind === "Skill"
+    ? matchedResources.filter((resource) => formalDecision.resource_ids.includes(resource.id))
+    : matchedResources;
+  const projectedTools = candidateKind === "Skill"
+    ? projectedResources.map((resource) => resource.name)
+    : entry.tools || [];
+  const publicSummary = String(entry.summary || "");
+  const publicDeepSummary = publicDiandian?.summary || publicSummary;
 
   return {
     id: noteId,
@@ -261,18 +390,25 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     suggestedCategory: categoryPolicy.suggestedCategory,
     sourceBoards: categoryPolicy.sourceBoards,
     themes: categoryPolicy.themes,
-    summary: entry.summary,
-    deepSummary: deepSummaryById.get(noteId)?.text || entry.summary,
+    summary: publicSummary,
+    deepSummary: publicDeepSummary,
+    deepSummarySource: publicDiandian ? "xiaohongshu-diandian" : (isCurated ? "curation" : "source-metadata"),
+    curationRevision: isCurated ? curationRevision(entry) : "",
+    summaryStatus: curationStatus,
+    curationStatus,
+    summaryReason: formalDecision.reason_code,
+    summaryState,
+    summaryReasonCode,
+    ...(candidateKind === "Skill" && projectedKind !== "Skill" ? { candidateKind } : {}),
+    reviewedAt: formalDecision.accepted || auditEntry?.status === "unavailable"
+      ? String(auditEntry?.reviewed_at || "")
+      : "",
     action: String(entry.action || "").trim(),
-    tools: entry.tools || [],
-    kind: classify(entry, matchedResources),
-    resources: matchedResources.map((resource) => resource.name),
-    evidence: {
-      method: isFrameVerified
-        ? "已结合本地视频证据核验内容"
-        : "目前依据原帖公开文字整理，视频内容尚未完整解读",
-      locallyAvailable: isFrameVerified
-    }
+    tools: projectedTools,
+    kind: projectedKind,
+    resources: projectedResources.map((resource) => resource.name),
+    resourceIds: formalDecision.resource_ids,
+    evidence: publicEvidenceStatus(noteId, curationAudit, isFrameVerified, formalDecision.accepted)
   };
 });
 
@@ -280,7 +416,7 @@ const categories = [...new Set(notes.map((note) => note.category))].map((name) =
   name,
   count: notes.filter((note) => note.category === name).length
 }));
-const sourceBoards = [...new Set(notes.flatMap((note) => rawNotes[note.id]?.source_boards || []))];
+const sourceBoards = [...new Set(notes.flatMap((note) => note.sourceBoards || []))];
 const fallbackBoard = config.boards.find((board) => board.id === config.legacy_source_board_id)
   || config.boards.find((board) => board.enabled);
 const visibleBoards = sourceBoards.length ? sourceBoards : [fallbackBoard?.name].filter(Boolean);
@@ -289,6 +425,7 @@ const verifiedNoteCount = notes.filter((note) => note.evidence.locallyAvailable)
 
 const output = {
   meta: {
+    buildVersion,
     title: profile.presentation?.title || "小红书收藏知识工作台",
     description: profile.presentation?.description || "把收藏转成可搜索、可核验、可行动的知识资产。",
     generatedAt: new Date().toISOString(),
@@ -317,6 +454,7 @@ const output = {
 };
 
 const serialized = `${JSON.stringify(output, null, 2)}\n`;
+const normalizedSerialized = normalizeSensitiveText(serialized);
 const forbidden = [
   /xsec_token\s*=/i,
   /\/user\/profile\//i,
@@ -324,9 +462,24 @@ const forbidden = [
   /["']?(?:cookie|cookies)["']?\s*[:=]\s*["'][^"']+/i
 ];
 for (const pattern of forbidden) {
-  if (pattern.test(serialized)) throw new Error(`Public data safety check failed: ${pattern}`);
+  if (pattern.test(normalizedSerialized)) throw new Error(`Public data safety check failed: ${pattern}`);
 }
 
-await mkdir(dirname(paths.output), { recursive: true });
-await writeFile(paths.output, serialized, "utf8");
+const privateIdentifiers = new Set([
+  config.legacy_source_board_id,
+  ...(config.boards || []).map((board) => board?.id),
+]);
+try {
+  const profileUrl = new URL(String(config.profile_url || ""));
+  const profileId = profileUrl.pathname.match(/^\/user\/profile\/([^/]+)$/)?.[1];
+  if (profileId) privateIdentifiers.add(profileId);
+} catch { /* an invalid profile URL is validated by the collection workflow */ }
+for (const identifier of privateIdentifiers) {
+  const privateValue = String(identifier || "").trim();
+  if (privateValue && normalizedSerialized.includes(normalizeSensitiveText(privateValue))) {
+    throw new Error("Public data safety check failed: private source identifier");
+  }
+}
+
+await atomicWriteTextFile(paths.output, serialized);
 console.log(JSON.stringify({ ok: true, notes: notes.length, resources: resources.length, output: paths.output }, null, 2));

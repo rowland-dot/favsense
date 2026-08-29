@@ -17,7 +17,7 @@ git status --short --ignored
 - `config/xhs-favorites.json`：包含个人主页、收藏夹和发布目标的私有配置；
 - `site/.local/`：本机回环服务地址。
 
-`site/data/knowledge.json` 是允许发布的网页数据。提交或发布前，请确认你愿意公开其中的帖子标题、作者名、原帖链接和 FavSense 生成的总结。原始视频、抽帧图片、浏览器登录态和访问令牌不会进入该文件。
+`site/data/knowledge.json` 是允许发布的网页数据。只有通过 current curation 与 accepted audit 的正式摘要可以进入；captured/pending 证据只留在本机 overlay。提交或发布前，请确认你愿意公开其中的帖子标题、作者名、安全原帖入口和 FavSense 生成的总结。原始视频、抽帧图片、浏览器登录态和访问令牌不会进入该文件。
 
 ## 2. 发布开源代码到 GitHub
 
@@ -158,13 +158,14 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
 
 1. 运行 `.\favsense.ps1 preview` 打开本地工作台；
 2. 在“同步设置”选择收藏夹并点击“开始整理”；
-3. FavSense 才会打开普通 Chrome，Tampermonkey 依次同步已启用的收藏夹；
-4. 本机更新 `.xhs-favorites/` 和 `knowledge-base/`；
-5. 构建器重建 `site/data/knowledge.json`；
-6. 最后一个收藏夹完成后，发布器把 `site/` 镜像到 Space、排除 `site/.local/`，并确保 Space 使用 `header: mini`；
-7. Hugging Face 刷新公网知识库。关闭本地工作台后，回环服务随之停止。
+3. FavSense 才会通过 SOP 动态 CDP 通道在现有扫描浏览器中打开业务标签，Tampermonkey 依次同步已启用的收藏夹；
+4. 本机先原子保存核心 catalog；点点、离线证据、candidate、resource 和 audit 分别到达 captured、pending 或 accepted 等真实终态；
+5. curation 质量门通过后，双输出协调器构建共享 `build_version` 的 `knowledge-base/` 与 `site/data/knowledge.json` staging；
+6. 两份 staging 全部通过 schema/隐私检查后才交换 live；构建失败设置 `held_previous` 并保留同一上一版；
+7. 若本轮显式启用发布且不是 local-only，发布器把 `site/` 镜像到 Space、排除 `site/.local/`，并确保 Space 使用 `header: mini`；同一运行最多发布一次；
+8. Hugging Face 刷新公网知识库。关闭本地工作台后，回环服务随之停止。
 
-发布失败不会撤销本地整理结果。失败信息写入本次运行状态，下次同步可再次发布。没有内容变化时，发布器返回 `unchanged`，不会产生空提交。
+发布失败不会撤销本地整理结果：本地保留新 build version，远端保持上一版，状态为 `publish_failed` + `held_previous`。失败信息写入本次运行状态，下次用户主动运行可再次处理。没有内容变化时，发布器返回 `unchanged`，不会产生空提交。发布前不会因“最后一个收藏夹完成”而提前构建或发布。
 
 ## 5. 数据到底保存在哪里
 
@@ -181,7 +182,7 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
 
 ## 6. 为什么默认不使用 Docker
 
-Static Space 已能完整承载当前网页，而且没有容器休眠、临时磁盘和服务维护成本。需要跨设备保存的少量个人状态通过 HF OAuth 写入私有 Dataset，不需要为了一个 JSON 文件持续运行付费容器。小红书采集依赖普通 Chrome 中的扫码登录态，本机运行最稳定，也更符合最小暴露原则。
+Static Space 已能完整承载当前网页，而且没有容器休眠、临时磁盘和服务维护成本。需要跨设备保存的少量个人状态通过 HF OAuth 写入私有 Dataset，不需要为了一个 JSON 文件持续运行付费容器。小红书采集依赖 SOP 扫描浏览器中的扫码登录态；SOP 是唯一 profile 与 Chrome 进程所有者，FavSense 只消费其私有动态 CDP 通道，不与主浏览器共享，也不再创建第二个 profile。
 
 只有在需要以下能力时才考虑 Docker Space：
 
@@ -204,7 +205,7 @@ Hugging Face 官方 `huggingface/hub-sync` Action 可以在 GitHub `main` 更新
 - 手动发布提示认证失败：重新登录 Hugging Face Git 凭据，并确认 Token 对目标 Space 有写权限。
 - 本地有新卡片但公网没变化：查看 `.xhs-favorites/runs/` 最新状态中的 `publish` 字段。
 - “开始整理”没有出现：请确认当前地址是 `http://127.0.0.1:8766`，并通过 `.\favsense.ps1 preview` 启动本地工作台。
-- 点击后没有打开 Chrome：确认普通 Chrome 已安装且小红书登录有效，然后查看设置页显示的本机错误信息。
+- 点击后没有在 SOP 扫描浏览器出现标签：先运行 SOP 的 `启动扫描浏览器.bat`，确认该窗口保持开启；首次运行先在该窗口安装 Tampermonkey、登录小红书，再运行一次 `setup` 完成用户脚本安装。不要改用主浏览器或另建 profile。
 - 网页更新了但数据不对：先执行 `npm.cmd run release:check`，再检查 `site/data/knowledge.json`。
 
 官方参考：[Static HTML Spaces](https://huggingface.co/docs/hub/spaces-sdks-static)、[Space OAuth](https://huggingface.co/docs/hub/spaces-oauth)、[Hugging Face JavaScript Hub API](https://huggingface.co/docs/huggingface.js/en/hub/README)、[Spaces 配置](https://huggingface.co/docs/hub/spaces-config-reference)、[GitHub Actions 同步](https://huggingface.co/docs/hub/repositories-github-actions)。

@@ -1,17 +1,47 @@
-import { resourceGroup, resourceSortsForGroup, sortResources } from "./resource-utils.mjs";
-import { validateLocalBridgeConfig, validateLocalBridgeSession } from "./local-bridge-utils.mjs";
+import { resourceGroup, resourceSortsForGroup, sortResources, validateResourceIndex } from "./resource-utils.mjs";
+import {
+  validateLocalBridgeBoards,
+  validateLocalBridgeConfig,
+  validateLocalNoteOrganizationStatus,
+  validateLocalBridgeSession,
+  validateLocalBridgeSyncStatus,
+  validateOrganizationStatusContract,
+  normalizeLocalBridgeDiagnostic
+} from "./local-bridge-utils.mjs";
 import { hasHuggingFaceMiniHeader, resolveHuggingFaceHeaderLayout } from "./huggingface-layout.mjs";
 import {
   MAX_DESCRIPTION_LENGTH,
+  PERSONAL_DATA_VERSION,
   loadPersonalData,
   mergePersonalData,
   relatedResourceNames,
   savePersonalData,
-  serializePersonalData
+  serializePersonalData,
+  validatePersonalDataPayload
 } from "./personal-store.mjs";
 const DATA_URL = new URL("./data/knowledge.json", import.meta.url);
 let hfPersonalSync = null;
 let hfHostViewportBaseline = null;
+let dialogScrollLock = null;
+
+function lockDialogBackground() {
+  if (dialogScrollLock) return;
+  const scrollY = Math.max(0, Number(window.scrollY) || 0);
+  dialogScrollLock = { scrollY, bodyTop: document.body.style.top };
+  document.documentElement.classList.add("dialog-scroll-lock");
+  document.body.classList.add("dialog-scroll-lock");
+  document.body.style.top = `-${scrollY}px`;
+}
+
+function unlockDialogBackground() {
+  if (!dialogScrollLock) return;
+  const { scrollY, bodyTop } = dialogScrollLock;
+  dialogScrollLock = null;
+  document.documentElement.classList.remove("dialog-scroll-lock");
+  document.body.classList.remove("dialog-scroll-lock");
+  document.body.style.top = bodyTop;
+  window.scrollTo({ left: 0, top: scrollY, behavior: "instant" });
+}
 
 function configureHostLayout() {
   const configuredHeader = String(window.FAVSENSE_CONFIG?.huggingFaceHeader || "default").toLowerCase();
@@ -34,6 +64,96 @@ function configureHostLayout() {
 configureHostLayout();
 window.addEventListener("resize", configureHostLayout, { passive: true });
 window.visualViewport?.addEventListener("resize", configureHostLayout, { passive: true });
+
+function emptyKnowledgeData() {
+  return {
+    meta: {
+      noteCount: 0,
+      frameEvidenceCount: 0,
+      verifiedNoteCount: 0,
+      resourceCount: 0,
+      resourceIndexEnabled: false,
+      kindLabels: {},
+      resourceIndex: {
+        groups: [],
+        sorts: [{ id: "name-asc", label: "按名称", field: "name", type: "text", direction: "asc" }]
+      }
+    },
+    categories: [],
+    notes: [],
+    resources: []
+  };
+}
+
+function isRecord(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isStringArray(value) {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function validateKnowledgeData(value) {
+  const invalid = () => { throw new Error("知识数据格式无效或不完整"); };
+  if (!isRecord(value) || !isRecord(value.meta)) invalid();
+  if (!Array.isArray(value.notes) || !Array.isArray(value.categories) || !Array.isArray(value.resources)) invalid();
+  if (!isRecord(value.meta.kindLabels) || !isRecord(value.meta.resourceIndex)) invalid();
+  try { validateResourceIndex(value.meta.resourceIndex); } catch { invalid(); }
+  for (const note of value.notes) {
+    if (!isRecord(note) || ![note.id, note.title, note.category, note.kind].every((item) => typeof item === "string" && item)) invalid();
+    if (typeof note.publishedAt !== "string") invalid();
+    if (![note.themes, note.tools, note.resources].every(isStringArray)) invalid();
+    if (!isRecord(note.evidence) || typeof note.evidence.method !== "string") invalid();
+  }
+  for (const category of value.categories) {
+    if (!isRecord(category) || typeof category.name !== "string" || !Number.isFinite(category.count)) invalid();
+  }
+  for (const resource of value.resources) {
+    if (!isRecord(resource) || ![resource.name, resource.type, resource.description].every((item) => typeof item === "string")) invalid();
+    if (!isStringArray(resource.aliases) || !Array.isArray(resource.actions) || !Array.isArray(resource.attributes)) invalid();
+    if (!resource.actions.every((action) => isRecord(action) && typeof action.label === "string" && typeof action.url === "string")) invalid();
+    if (!resource.attributes.every((attribute) => isRecord(attribute) && typeof attribute.label === "string" && typeof attribute.value === "string")) invalid();
+  }
+  return value;
+}
+
+function knowledgeLoadErrorMessage(error, currentLocation = window.location) {
+  const message = String(error?.message || "");
+  if (error?.name === "SyntaxError" || /格式无效|JSON/i.test(message)) {
+    return "知识数据文件格式损坏或不完整。可以继续打开“同步设置”；修复数据后请重新加载页面。";
+  }
+  const httpStatus = message.match(/^HTTP\s+(\d{3})$/i)?.[1];
+  if (httpStatus) {
+    return `知识数据服务暂时不可用（HTTP ${httpStatus}）。可以继续打开“同步设置”；本机服务连接后，收藏夹管理和手动整理仍可使用。请稍后重新加载。`;
+  }
+  if (String(currentLocation?.protocol || "").toLowerCase() === "file:") {
+    return "浏览器无法直接读取知识数据。请通过 FavSense 本地预览打开站点；同步设置仍可在本地服务中使用。";
+  }
+  return "知识数据暂时没有加载成功。可以继续打开“同步设置”，并在网络或本地服务恢复后重新加载页面。";
+}
+
+function safeStorageGet(key, fallback = "") {
+  try {
+    return localStorage.getItem(key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function safeStorageSet(key, value, failureMessage) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    showToast(failureMessage);
+    return false;
+  }
+}
+
+function savedLayoutPreference() {
+  const value = safeStorageGet("xhs-kb-layout", "grid");
+  return ["grid", "list"].includes(value) ? value : "grid";
+}
 
 const elements = {
   notesGrid: document.querySelector("#notes-grid"),
@@ -80,7 +200,9 @@ const elements = {
 };
 
 const state = {
-  data: null,
+  data: emptyKnowledgeData(),
+  knowledgeReady: false,
+  personalStoreReady: false,
   view: "notes",
   query: "",
   resourceQuery: "",
@@ -95,15 +217,23 @@ const state = {
   descriptionOverrides: {},
   editingDescriptionId: null,
   cloud: { available: false, authenticated: false, username: "", repository: "", ready: false, oauth: null },
-  sort: "curated",
-  layout: localStorage.getItem("xhs-kb-layout") || "grid",
+  sort: "newest",
+  layout: savedLayoutPreference(),
   localBridge: null,
+  statusContract: null,
   boards: [],
   boardUpdatePending: false,
   manualSync: { state: "idle" },
   manualSyncStartedHere: false,
+  noteOrganizationStatus: new Map(),
+  noteOrganizationPending: new Set(),
   manualSyncPoll: 0
 };
+
+function sopBrowserReady() {
+  return state.localBridge?.browserSession?.owner === "sop-cdp"
+    && state.localBridge.browserSession.ready === true;
+}
 
 function bookmarkIcon() {
   return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5c0-1.1.9-2 2-2h7c1.1 0 2 .9 2 2v17L12 18l-5.5 3.5v-17Z" /></svg>';
@@ -115,15 +245,20 @@ function validNoteIds() {
 
 function personalData() {
   return {
+    version: PERSONAL_DATA_VERSION,
     bookmarks: [...state.bookmarks],
-    bookmarkStates: state.bookmarkStates,
-    descriptionOverrides: state.descriptionOverrides
+    bookmarkStates: Object.fromEntries(Object.entries(state.bookmarkStates).map(([id, entry]) => [id, { ...entry }])),
+    descriptionOverrides: Object.fromEntries(Object.entries(state.descriptionOverrides).map(([id, entry]) => [id, { ...entry }]))
   };
 }
 
-function persistPersonalData() {
+function persistPersonalData(candidate = personalData()) {
+  if (!state.knowledgeReady || !state.personalStoreReady) {
+    showToast("知识数据或个人存储尚未就绪，个人数据未被读取或更改");
+    return false;
+  }
   try {
-    const saved = savePersonalData(localStorage, personalData(), validNoteIds());
+    const saved = savePersonalData(localStorage, candidate, validNoteIds());
     state.bookmarks = new Set(saved.bookmarks);
     state.bookmarkStates = saved.bookmarkStates;
     state.descriptionOverrides = saved.descriptionOverrides;
@@ -138,7 +273,12 @@ function persistPersonalData() {
 
 function noteDescription(note) {
   const override = state.descriptionOverrides[note.id];
-  return (!override?.deleted && override?.description) || note.deepSummary || note.summary;
+  if (!override?.deleted && override?.description) return override.description;
+  const curationStatus = String(
+    note.curationStatus || note.curation_status || note.summaryStatus || note.summary_status || ""
+  );
+  if (curationStatus === "accepted") return note.summary || "";
+  return note.deepSummary || note.summary;
 }
 
 function renderPersonalControls() {
@@ -208,11 +348,12 @@ async function initCloudSync() {
 
     const remote = await hfPersonalSync.loadHfPersonalData(state.cloud);
     const merged = mergePersonalData(remote || {}, personalData(), validNoteIds());
-    state.bookmarks = new Set(merged.bookmarks);
-    state.bookmarkStates = merged.bookmarkStates;
-    state.descriptionOverrides = merged.descriptionOverrides;
     state.cloud.ready = true;
-    persistPersonalData();
+    if (!persistPersonalData(merged)) {
+      state.cloud.ready = false;
+      renderCloudStatus("浏览器无法保存合并后的个人数据；HF 同步已停止。请先导出当前备份。");
+      return;
+    }
     renderNotes();
     renderResources();
   } catch {
@@ -242,6 +383,142 @@ function categoryAccent(category) {
 
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
+}
+
+function splitLongSummaryParagraph(text, maxLength = 180) {
+  if (text.length <= maxLength) return [text];
+  const sentences = text.match(/[^。！？!?；;]+[。！？!?；;]?/g)?.map((item) => item.trim()).filter(Boolean) || [];
+  if (sentences.length < 2) return [text];
+  return sentences.reduce((paragraphs, sentence) => {
+    const last = paragraphs.at(-1) || "";
+    if (!last || last.length + sentence.length > maxLength) return [...paragraphs, sentence];
+    return [...paragraphs.slice(0, -1), `${last}${sentence}`];
+  }, []);
+}
+
+function summaryTokens(value) {
+  const normalized = String(value ?? "").replace(/\r\n?/g, "\n").trim();
+  if (!normalized) return [];
+  const knownSectionHeading = /^(?:核心(?:结论|逻辑|思路|要点)|主要内容|具体方法|实操方法|操作步骤|三步实操方法|案例与价值|适用场景|注意事项|风险提醒|补充提醒|总结)$/;
+  const numberedMarker = /(?:^|[\s：:；;。])\d{1,2}\s*[、，.)．]\s*/g;
+  let expanded = (normalized.match(numberedMarker) || []).length >= 2
+    ? normalized.replace(/([^\n])\s+(?=\d{1,2}\s*[、，.)．]\s*)/g, "$1\n")
+    : normalized;
+  expanded = expanded.replace(
+    /(^|\s)(核心(?:结论|逻辑|思路|要点)|主要内容|具体方法|实操方法|操作步骤|三步实操方法|案例与价值|适用场景|注意事项|风险提醒|补充提醒|总结)(?=\s)/g,
+    "$1\n$2\n",
+  ).replace(/\n{3,}/g, "\n\n").trim();
+  return expanded.split("\n").flatMap((rawLine) => {
+    const line = rawLine.trim();
+    if (!line) return [{ type: "break", text: "" }];
+    const markdownHeading = line.match(/^#{1,6}\s+(.+)$/);
+    const emphasizedHeading = line.match(/^\*\*([^*]+)\*\*[：:]?$/);
+    const shortHeading = line.length <= 36 && /[：:]$/.test(line);
+    if (markdownHeading || emphasizedHeading || shortHeading || knownSectionHeading.test(line)) {
+      return [{ type: "heading", text: (markdownHeading?.[1] || emphasizedHeading?.[1] || line).replace(/[：:]$/, "").trim() }];
+    }
+    const ordered = line.match(/^(\d{1,2})\s*[、，.)．]\s*(.+)$/);
+    if (ordered) return [{ type: "ordered", number: Number(ordered[1]), text: ordered[2].trim() }];
+    const unordered = line.match(/^(?:[-*•·]|[（(]?[A-Za-z][)）.、])\s*(.+)$/);
+    if (unordered) return [{ type: "unordered", text: unordered[1].trim() }];
+    return splitLongSummaryParagraph(line).map((text) => ({ type: "paragraph", text }));
+  });
+}
+
+function formatSummaryHtml(value) {
+  const blocks = [];
+  let list = null;
+  const flushList = () => {
+    if (!list) return;
+    const start = list.type === "ordered" && list.start !== 1 ? ` start="${list.start}"` : "";
+    const tag = list.type === "ordered" ? "ol" : "ul";
+    blocks.push(`<${tag}${start}>${list.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</${tag}>`);
+    list = null;
+  };
+  for (const token of summaryTokens(value)) {
+    if (["ordered", "unordered"].includes(token.type)) {
+      if (!list || list.type !== token.type) {
+        flushList();
+        list = { type: token.type, start: token.number || 1, items: [] };
+      }
+      list = { ...list, items: [...list.items, token.text] };
+      continue;
+    }
+    flushList();
+    if (token.type === "heading") blocks.push(`<h4>${escapeHtml(token.text)}</h4>`);
+    if (token.type === "paragraph") blocks.push(`<p>${escapeHtml(token.text)}</p>`);
+  }
+  flushList();
+  return blocks.join("");
+}
+
+function summarySourcePresentation(note) {
+  const summaryStatus = String(
+    note.summaryState || note.summary_state || note.summaryStatus || note.summary_status || "not_started"
+  );
+  const reason = String(
+    note.summaryReasonCode || note.summary_reason_code || note.summaryReason || note.summary_reason || ""
+  );
+  const curationStatus = String(
+    note.curationStatus || note.curation_status || note.summaryStatus || note.summary_status || ""
+  );
+  if (curationStatus === "unavailable") return {
+    label: "已完成（原帖不可访问）",
+    tone: "metadata",
+    explanation: "原帖可能已被作者隐藏或删除；已保留现有记录并结束补证，不作为正式核验结果发布。"
+  };
+  if (curationStatus === "rejected") return {
+    label: "总结未通过审核",
+    tone: "warning",
+    explanation: "当前证据或质量门不足，因此不会作为正式总结展示；后续获得新证据时会重新审核。"
+  };
+  if (summaryStatus === "failed") return {
+    label: "本篇总结失败，可在下次继续",
+    tone: "warning",
+    explanation: "核心收藏已保存；本篇深度总结已尝试但未完成。"
+  };
+  if (summaryStatus === "batch_aborted") return {
+    label: "本次未尝试，可继续整理",
+    tone: "warning",
+    explanation: "核心收藏已保存；本轮在处理本篇前已经停止。"
+  };
+  if (summaryStatus === "stale" && reason === "unknown_legacy") return {
+    label: "历史整理状态待确认，需重新整理",
+    tone: "warning",
+    explanation: "核心收藏已保留；旧版记录无法确认是否曾完成总结。"
+  };
+  if (summaryStatus === "stale") return {
+    label: reason === "evidence_changed"
+        ? "证据已变化，需重新核验"
+        : "正文已变化，需重新核验",
+    tone: "warning",
+    explanation: "历史整理结果仍保留，但不会作为当前正式总结展示。"
+  };
+  if (note.deepSummarySource === "xiaohongshu-diandian") return {
+    label: "点点 AI 深度总结",
+    tone: "diandian",
+    explanation: "这份内容来自点点 AI 对原帖的总结，并已通过当前知识卡的整理检查。"
+  };
+  if (summaryStatus === "captured" && reason === "audit_pending") return {
+    label: "证据未补齐，暂不发布",
+    tone: "warning",
+    explanation: "该条已完成复核，但正文、媒体或官方资源证据仍不完整；补齐前只展示原帖公开信息。"
+  };
+  if (summaryStatus === "captured") return {
+    label: "总结已保存，尚未完成证据核验",
+    tone: "warning",
+    explanation: "点点总结已安全保存在本机；证据核验完成前不会替换当前公开内容。"
+  };
+  if (note.deepSummarySource === "curation") return {
+    label: "使用其他证据整理",
+    tone: "evidence",
+    explanation: "未获得可用于这张卡的点点总结；当前内容根据已记录的其他证据整理。"
+  };
+  return {
+    label: "尚未开始深度整理",
+    tone: "metadata",
+    explanation: "核心收藏已保存；这张卡尚未完成深度总结。"
+  };
 }
 
 function safeUrl(value, allowedHosts = null) {
@@ -292,6 +569,18 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => elements.toast.classList.remove("is-visible"), 2200);
 }
 
+function renderKnowledgeLoadError(error) {
+  elements.resultCount.textContent = "0";
+  elements.activeFilterLabel.textContent = "知识数据暂不可用";
+  elements.emptyState.hidden = true;
+  elements.notesGrid.innerHTML = `
+    <div class="empty-state knowledge-load-error" role="alert">
+      <span>知识卡暂时无法显示</span>
+      <p>${escapeHtml(knowledgeLoadErrorMessage(error))}</p>
+      <button type="button" data-retry-knowledge>重新加载知识数据</button>
+    </div>`;
+}
+
 async function localBridgeRequest(path, options = {}) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 10000);
@@ -307,7 +596,9 @@ async function localBridgeRequest(path, options = {}) {
       }
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload.ok !== true) throw new Error(payload.error || `HTTP ${response.status}`);
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(normalizeLocalBridgeDiagnostic(payload.error) || `HTTP ${response.status}`);
+    }
     return payload;
   } catch (error) {
     if (error.name === "AbortError") throw new Error("本机同步服务响应超时");
@@ -341,21 +632,67 @@ function renderBoardManager() {
 
 function renderManualSync(status = state.manualSync) {
   state.manualSync = status;
-  const active = ["starting", "running"].includes(status.state);
-  const completed = status.state === "completed";
-  const failed = status.state === "failed";
+  const v2 = status.schema_version === 2 && status.phases;
+  const active = v2
+    ? Object.values(status.phases).some((phase) => phase.status === "running")
+    : ["starting", "running"].includes(status.state);
+  const completed = v2
+    ? ["organization_ready", "published"].includes(status.state)
+    : status.state === "completed";
+  const failed = status.state === "failed" && !active;
+  const safetyStopped = ["safety-stopped", "safety_stopped"].includes(status.state);
   elements.manualSyncControl.classList.toggle("is-running", active);
   elements.manualSyncControl.classList.toggle("is-complete", completed);
-  elements.manualSyncControl.classList.toggle("is-failed", failed);
-  elements.manualSyncStart.disabled = active;
-  elements.manualSyncStart.textContent = active ? "整理中…" : (completed || failed ? "再次整理" : "开始整理");
+  elements.manualSyncControl.classList.toggle("is-failed", failed || safetyStopped);
+  elements.manualSyncStart.disabled = active || !sopBrowserReady();
+  elements.manualSyncStart.textContent = active
+    ? "整理中…"
+    : (safetyStopped ? "检查后重试" : (completed || failed ? "再次整理" : "开始整理"));
+  const singleNoteButton = elements.dialogContent.querySelector("[data-summarize-note]");
+  if (singleNoteButton) singleNoteButton.disabled = active || !sopBrowserReady();
 
-  if (status.state === "starting") {
-    elements.manualSyncTitle.textContent = "正在打开普通 Chrome";
-    elements.manualSyncDetail.textContent = "请保持小红书登录；扫描与整理进度会自动回到这里。";
+  if (v2) {
+    const copy = state.statusContract?.copy || {};
+    const phases = status.phases;
+    if (safetyStopped) {
+      elements.manualSyncTitle.textContent = copy.safety_stopped;
+    } else if (phases.core.status === "running") {
+      elements.manualSyncTitle.textContent = copy.core_running;
+    } else if (phases.core.status === "not_started") {
+      elements.manualSyncTitle.textContent = copy.core_not_started;
+    } else if (phases.core.status === "failed") {
+      elements.manualSyncTitle.textContent = copy.core_failed;
+    } else if (phases.build.status === "failed") {
+      elements.manualSyncTitle.textContent = copy.build_failed;
+    } else if (phases.publish.status === "failed") {
+      elements.manualSyncTitle.textContent = copy.publish_failed;
+    } else if (phases.publish.status === "unchanged") {
+      elements.manualSyncTitle.textContent = copy.publish_unchanged;
+    } else if (phases.summary.status === "failed") {
+      elements.manualSyncTitle.textContent = copy.summary_failed;
+    } else if (phases.summary.status === "batch_aborted") {
+      elements.manualSyncTitle.textContent = copy.summary_batch_aborted;
+    } else if (["missing", "partial", "blocked"].includes(phases.evidence.status)) {
+      elements.manualSyncTitle.textContent = copy.evidence_missing;
+    } else if (phases.summary.status === "not_started") {
+      elements.manualSyncTitle.textContent = copy.summary_not_started;
+    } else {
+      elements.manualSyncTitle.textContent = copy.core_completed;
+    }
+    elements.manualSyncDetail.textContent = phases.core.status === "completed"
+      ? `${copy.core_completed}；已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`
+      : `已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`;
+  } else if (status.state === "starting") {
+    elements.manualSyncTitle.textContent = "正在使用 SOP 小红书扫描浏览器";
+    elements.manualSyncDetail.textContent = "请在 SOP 扫描浏览器中保持小红书登录；扫描与整理进度会自动回到这里。";
   } else if (status.state === "running") {
-    elements.manualSyncTitle.textContent = status.current_board ? `正在整理「${status.current_board}」` : "正在整理收藏";
-    elements.manualSyncDetail.textContent = `已完成 ${status.processed_boards || 0} / ${status.board_count || state.boards.length} 个收藏夹，请保持 Chrome 窗口开启。`;
+    if (status.summary_plan_pending) {
+      elements.manualSyncTitle.textContent = "核心入库完成，正在确认深度整理";
+      elements.manualSyncDetail.textContent = "本地知识库已保留；正在确认本轮点点 AI 计划，请保持 SOP 扫描浏览器开启。";
+    } else {
+      elements.manualSyncTitle.textContent = status.current_board ? `正在整理「${status.current_board}」` : "正在整理收藏";
+      elements.manualSyncDetail.textContent = `已完成 ${status.processed_boards || 0} / ${status.board_count || state.boards.length} 个收藏夹，请保持 SOP 扫描浏览器开启。`;
+    }
   } else if (completed) {
     elements.manualSyncTitle.textContent = "本次整理完成";
     const publishMessage = status.publish_status === "published"
@@ -365,23 +702,50 @@ function renderManualSync(status = state.manualSync) {
         : "";
     elements.manualSyncDetail.textContent = `共扫描 ${status.scanned || 0} 条，新增 ${status.new || 0} 条；本地知识库与网页已经更新${publishMessage}。`;
   } else if (failed) {
-    elements.manualSyncTitle.textContent = "本次整理未完成";
-    elements.manualSyncDetail.textContent = status.error || "请检查 Chrome 登录状态后再次整理。";
+    elements.manualSyncTitle.textContent = status.core_completed === true
+      ? "核心整理已完成，点点增强未完成"
+      : "本次整理未完成";
+    elements.manualSyncDetail.textContent = normalizeLocalBridgeDiagnostic(status.error)
+      || "请检查 SOP 扫描浏览器的登录状态后再次整理。";
+  } else if (safetyStopped) {
+    elements.manualSyncTitle.textContent = "已因小红书安全限制停止";
+    elements.manualSyncDetail.textContent = normalizeLocalBridgeDiagnostic(status.error)
+      || "核心入库结果已经保留。请先在 SOP 扫描浏览器中完成验证或等待访问恢复，再由你手动重试；系统不会自动重试。";
   } else {
     elements.manualSyncTitle.textContent = "准备好后再开始";
-    elements.manualSyncDetail.textContent = "点击一次即可同步已开启的收藏夹、增量去重，并更新知识库与公开网页。";
+    elements.manualSyncDetail.textContent = sopBrowserReady()
+      ? "点击一次即可同步已开启的收藏夹、增量去重，并更新知识库与公开网页。"
+      : "SOP 扫描浏览器未就绪。请先启动并登录该浏览器；FavSense 不会改用主浏览器或另建登录窗口。";
   }
 }
 
 async function refreshManualSyncStatus() {
-  const status = await localBridgeRequest("/sync/status");
+  const status = validateLocalBridgeSyncStatus(await localBridgeRequest("/sync/status"), state.statusContract);
   renderManualSync(status);
-  if (!["starting", "running"].includes(status.state)) {
+  const v2 = status.schema_version === 2 && status.phases;
+  const active = v2
+    ? Object.values(status.phases).some((phase) => phase.status === "running")
+    : ["starting", "running"].includes(status.state);
+  if (!active) {
     window.clearInterval(state.manualSyncPoll);
     state.manualSyncPoll = 0;
-    if (status.state === "completed" && state.manualSyncStartedHere) {
+    const corePreserved = v2
+      ? status.phases.core.status === "completed"
+      : (status.state === "completed" || status.core_completed === true);
+    if (corePreserved && state.manualSyncStartedHere) {
       state.manualSyncStartedHere = false;
-      showToast("整理完成，正在刷新知识库");
+      const refreshMessage = ["safety-stopped", "safety_stopped"].includes(status.state)
+        ? "核心整理结果已保留；已因小红书安全限制停止，正在刷新知识库"
+        : v2 && status.phases.build.status === "failed"
+          ? "核心收藏已保存；构建失败，已保留上一版"
+          : v2 && status.phases.publish.status === "failed"
+            ? "本地整理已保留；发布失败，远端仍为上一版"
+            : v2 && status.state === "organization_partial"
+              ? "核心收藏已保存；部分整理未完成，正在刷新可用结果"
+        : status.core_completed === true && status.state !== "completed"
+          ? "核心整理完成，点点增强未完成；正在刷新知识库"
+          : "整理完成，正在刷新知识库";
+      showToast(refreshMessage);
       window.setTimeout(() => location.reload(), 900);
     }
   }
@@ -400,18 +764,44 @@ function watchManualSync() {
 }
 
 async function startManualSync() {
-  if (!state.localBridge || ["starting", "running"].includes(state.manualSync.state)) return;
+  if (!state.localBridge || !sopBrowserReady() || ["starting", "running"].includes(state.manualSync.state)) return;
   elements.manualSyncStart.disabled = true;
   renderManualSync({ state: "starting" });
   try {
-    const status = await localBridgeRequest("/sync/start", { method: "POST", body: "{}" });
+    const status = validateLocalBridgeSyncStatus(
+      await localBridgeRequest("/sync/start", { method: "POST", body: "{}" }), state.statusContract
+    );
     state.manualSyncStartedHere = true;
     renderManualSync(status);
     watchManualSync();
-    showToast("已打开 Chrome，开始整理收藏");
+    showToast("已在 SOP 扫描浏览器中开始整理收藏");
   } catch (error) {
     renderManualSync({ state: "failed", error: error.message });
     showToast("没有开始整理");
+  }
+}
+
+async function startSingleNoteSync(noteId) {
+  if (!state.localBridge?.diandianAvailable || !sopBrowserReady() || ["starting", "running"].includes(state.manualSync.state)) return false;
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(String(noteId || ""))) {
+    showToast("这张卡无法开始本机校验");
+    return false;
+  }
+  renderManualSync({ state: "starting" });
+  try {
+    const status = validateLocalBridgeSyncStatus(await localBridgeRequest("/sync/start", {
+      method: "POST",
+      body: JSON.stringify({ note_id: noteId })
+    }), state.statusContract);
+    state.manualSyncStartedHere = true;
+    renderManualSync(status);
+    watchManualSync();
+    showToast("已在 SOP 扫描浏览器中仅校验并重新总结这张卡；不会发布");
+    return true;
+  } catch (error) {
+    renderManualSync({ state: "failed", error: error.message });
+    showToast("没有开始这张卡的本机校验");
+    return false;
   }
 }
 
@@ -421,10 +811,15 @@ async function initBoardManager() {
     if (!runtimeResponse.ok) throw new Error("本机同步服务尚未连接");
     state.localBridge = validateLocalBridgeConfig(await runtimeResponse.json());
     const session = await localBridgeRequest("/local-session");
-    state.localBridge.token = validateLocalBridgeSession(session);
+    const validatedSession = validateLocalBridgeSession(session);
+    state.localBridge.token = validatedSession.token;
+    state.localBridge.browserSession = validatedSession.browserSession;
+    state.localBridge.diandianAvailable = session.diandian_available === true;
     const payload = await localBridgeRequest("/boards");
-    state.boards = payload.boards;
+    state.boards = validateLocalBridgeBoards(payload.boards);
     renderBoardManager();
+    const openNote = state.data?.notes.find((note) => note.id === elements.dialogContent.dataset.noteId);
+    if (elements.dialog.open && openNote) renderDetail(openNote);
     elements.manualSyncControl.hidden = false;
     const syncStatus = await refreshManualSyncStatus();
     if (["starting", "running"].includes(syncStatus.state)) watchManualSync();
@@ -457,7 +852,7 @@ function filteredNotes() {
 function renderCategories() {
   const buttons = [{ name: "all", label: "全部主题", count: state.data.notes.length }, ...state.data.categories.map((item) => ({ ...item, label: item.name }))];
   elements.categoryList.innerHTML = buttons.map((item) => `
-    <button class="category-button ${state.category === item.name ? "is-active" : ""}" style="--accent:${categoryAccent(item.name)}" type="button" data-category="${escapeHtml(item.name)}">
+    <button class="category-button ${state.category === item.name ? "is-active" : ""}" style="--accent:${categoryAccent(item.name)}" type="button" data-category="${escapeHtml(item.name)}" aria-pressed="${state.category === item.name}">
       <span class="category-name"><i aria-hidden="true"></i>${escapeHtml(item.label)}</span><span>${item.count}</span>
     </button>
   `).join("");
@@ -465,7 +860,7 @@ function renderCategories() {
   const kinds = [...new Set(state.data.notes.map((note) => note.kind))];
   const kindDescriptions = state.data.meta.kindLabels || {};
   elements.kindFilter.innerHTML = [{ value: "all", label: "全部" }, ...kinds.map((value) => ({ value, label: value }))].map((item) => `
-    <button class="kind-button ${state.kind === item.value ? "is-active" : ""}" type="button" data-kind="${escapeHtml(item.value)}" title="${escapeHtml(kindDescriptions[item.value] || "显示全部内容形态")}">${escapeHtml(item.label)}</button>
+    <button class="kind-button ${state.kind === item.value ? "is-active" : ""}" type="button" data-kind="${escapeHtml(item.value)}" aria-pressed="${state.kind === item.value}" title="${escapeHtml(kindDescriptions[item.value] || "显示全部内容形态")}">${escapeHtml(item.label)}</button>
   `).join("");
 
 }
@@ -473,6 +868,8 @@ function renderCategories() {
 function noteCard(note) {
   const tools = note.tools.slice(0, 4).map((tool) => `<span class="tool-chip">${escapeHtml(tool)}</span>`).join("");
   const bookmarked = state.bookmarks.has(note.id);
+  const summarySource = summarySourcePresentation(note);
+  const personallyEdited = Boolean(state.descriptionOverrides[note.id] && !state.descriptionOverrides[note.id].deleted);
   return `
     <article class="note-card" style="--accent:${categoryAccent(note.category)}" data-note-id="${escapeHtml(note.id)}" data-kind="${escapeHtml(note.kind)}">
       <div class="card-strip">
@@ -481,7 +878,8 @@ function noteCard(note) {
       </div>
       <div class="card-body">
         <h3 class="card-title">${escapeHtml(note.title)}</h3>
-        <p class="card-summary">${escapeHtml(noteDescription(note))}</p>
+        <p class="card-summary-source card-summary-source--${summarySource.tone}"><i aria-hidden="true"></i>${personallyEdited ? "个人修订 · " : ""}${escapeHtml(summarySource.label)}</p>
+        <div class="card-summary structured-summary structured-summary--card">${formatSummaryHtml(noteDescription(note))}</div>
         <div class="tools-row">${tools}</div>
       </div>
       <footer class="card-footer">
@@ -518,7 +916,7 @@ function resourceCard(resource) {
       <h3>${escapeHtml(resource.name)}</h3>
       <p class="resource-description">${escapeHtml(resource.description)}</p>
       ${attributes ? `<div class="resource-attributes">${attributes}</div>` : ""}
-      <div class="resource-actions">${actions.map((action) => `<a href="${action.url}" target="_blank" rel="noreferrer">${escapeHtml(action.label)}</a>`).join("")}</div>
+      <div class="resource-actions">${actions.map((action) => `<a href="${action.url}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(`${resource.name} ${action.label}`)}">${escapeHtml(action.label)}</a>`).join("")}</div>
     </article>
   `;
 }
@@ -564,9 +962,16 @@ function renderResourceSortOptions() {
 function descriptionSection(note) {
   const override = state.descriptionOverrides[note.id]?.deleted ? null : state.descriptionOverrides[note.id];
   const heading = note.kind === "Note" ? "原帖摘要" : "核心结论";
+  const summarySource = summarySourcePresentation(note);
+  const provenance = `
+    <div class="summary-provenance summary-provenance--${summarySource.tone}">
+      <strong>${escapeHtml(summarySource.label)}</strong>
+      <span>${override ? "正文已使用你的个人修订。原系统内容：" : ""}${escapeHtml(summarySource.explanation)}</span>
+    </div>`;
   if (state.editingDescriptionId === note.id) {
     return `
       <section class="detail-section">
+        ${provenance}
         <form class="description-editor" data-description-form="${escapeHtml(note.id)}">
           <label for="description-${escapeHtml(note.id)}">知识卡描述</label>
           <textarea id="description-${escapeHtml(note.id)}" name="description" maxlength="${MAX_DESCRIPTION_LENGTH}" rows="8">${escapeHtml(noteDescription(note))}</textarea>
@@ -585,9 +990,25 @@ function descriptionSection(note) {
         <h3>${heading}</h3>
         <button type="button" data-edit-description="${escapeHtml(note.id)}">编辑描述</button>
       </div>
-      <p>${escapeHtml(noteDescription(note))}</p>
+      ${provenance}
+      <div class="structured-summary">${formatSummaryHtml(noteDescription(note))}</div>
       ${override ? '<span class="personal-edit-label">已使用你的个人修订</span>' : ""}
     </section>`;
+}
+
+function isLocalWorkbenchLocation(locationValue = window.location) {
+  const protocol = String(locationValue?.protocol || "").toLowerCase();
+  const hostname = String(locationValue?.hostname || "").toLowerCase();
+  return protocol === "file:"
+    || hostname === "127.0.0.1"
+    || hostname === "localhost"
+    || hostname === "[::1]";
+}
+
+async function initStatusContract() {
+  const response = await fetch("./organization-status-contract.json", { cache: "no-store" });
+  if (!response.ok) throw new Error("整理状态契约不可用");
+  state.statusContract = validateOrganizationStatusContract(await response.json());
 }
 
 function renderDetail(note) {
@@ -597,10 +1018,23 @@ function renderDetail(note) {
   const resourceHtml = matchedResources.length ? `
     <section class="detail-section"><h3>${escapeHtml(radar.detail_label || "相关资源")}</h3><div class="detail-resources">
       ${matchedResources.map((resource) => {
-        const action = resource.actions.find((item) => safeUrl(item.url) !== "#");
-        return `<div class="detail-resource"><strong>${escapeHtml(resource.name)}</strong><span>${escapeHtml(resource.metricIcon || radar.metric?.icon || "◆")} ${escapeHtml(resource.metric || radar.metric?.missing || "暂无数据")}</span>${action ? `<a href="${safeUrl(action.url)}" target="_blank" rel="noreferrer">${escapeHtml(action.label)}</a>` : ""}</div>`;
+        const actions = resource.actions
+          .map((action) => ({ ...action, url: safeUrl(action.url) }))
+          .filter((action) => action.url !== "#");
+        const attributes = (resource.attributes || []).map((attribute) => `
+          <span><small>${escapeHtml(attribute.label)}</small>${escapeHtml(attribute.value)}</span>
+        `).join("");
+        return `<div class="detail-resource"><strong>${escapeHtml(resource.name)}</strong><span>${escapeHtml(resource.metricIcon || radar.metric?.icon || "◆")} ${escapeHtml(resource.metric || radar.metric?.missing || "暂无数据")}</span><div class="detail-resource-actions">${actions.map((action) => `<a href="${action.url}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(`${resource.name} ${action.label}`)}">${escapeHtml(action.label)}</a>`).join("")}</div>${attributes ? `<div class="resource-attributes detail-resource-attributes">${attributes}</div>` : ""}</div>`;
       }).join("")}
     </div></section>
+  ` : "";
+  const localOrganization = state.noteOrganizationStatus?.get(note.id);
+  const localOrganizationHtml = localOrganization ? `
+    <section class="detail-section pending-evidence-overlay" role="status" aria-label="本机补证内容">
+      <div class="pending-evidence-heading"><span>仅本机</span><strong>${escapeHtml(state.statusContract.copy.summary_captured)}</strong></div>
+      <div class="structured-summary">${formatSummaryHtml(localOrganization.display_summary)}</div>
+      <p>证据：${localOrganization.evidence_methods.map((evidence) => evidence.method === "point" ? "点点总结" : escapeHtml(evidence.method)).join(" · ")}。当前证据尚未满足发布门槛，不会进入公开知识库。</p>
+    </section>
   ` : "";
   const actionHtml = note.kind === "Note" || !String(note.action || "").trim() ? "" : `
     <section class="detail-section"><h3>具体用法</h3><div class="action-box"><span>下一步</span><p>${escapeHtml(note.action)}</p></div></section>
@@ -612,39 +1046,84 @@ function renderDetail(note) {
   const categorySuggestionHtml = note.suggestedCategory && note.suggestedCategory !== note.category ? `
     <p class="category-suggestion"><span>内容建议分类</span>${escapeHtml(note.suggestedCategory)}<small>当前仍按收藏夹“${escapeHtml(note.category)}”归档</small></p>
   ` : "";
+  const sourceActionHtml = state.localBridge && sopBrowserReady()
+    ? `<button type="button" data-open-source-note="${escapeHtml(note.id)}">打开原帖</button>`
+    : state.localBridge
+      ? '<button type="button" disabled title="请先启动并登录 SOP 扫描浏览器">SOP 扫描浏览器未就绪</button>'
+    : isLocalWorkbenchLocation()
+      ? '<button type="button" disabled title="请先启动 FavSense 本地服务">请先启动 FavSense 本地服务</button>'
+      : `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">在小红书搜索原帖</a>`;
+  const singleNoteActionHtml = state.localBridge?.diandianAvailable && sopBrowserReady() ? `
+    <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${["starting", "running"].includes(state.manualSync.state) ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
+  ` : state.localBridge
+    ? '<button type="button" disabled title="请检查点点 Skill 设置">点点总结当前不可用</button>'
+    : "";
 
   elements.dialog.style.setProperty("--accent", categoryAccent(note.category));
   elements.dialogContent.dataset.noteId = note.id;
   elements.dialogContent.innerHTML = `
     <p class="detail-kicker"><i></i> ${escapeHtml(note.category)} · ${escapeHtml(note.kind)}</p>
-    <h2 class="detail-title">${escapeHtml(note.title)}</h2>
+    <h2 class="detail-title" id="detail-title">${escapeHtml(note.title)}</h2>
     <div class="detail-meta"><span>${escapeHtml(note.author || "作者未记录")}</span><span>${escapeHtml(formatDate(note.publishedAt))}</span></div>
     ${categorySuggestionHtml}
+    ${localOrganizationHtml}
     ${descriptionSection(note)}
     ${actionHtml}
     ${resourceHtml}
     ${tagsHtml}
     <section class="detail-section"><h3>整理依据</h3><p>${escapeHtml(note.evidence.method)}。原视频和分析画面只保存在本机，不进入公开页面。</p></section>
     <footer class="detail-footer">
-      <a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">在小红书搜索原帖</a>
+      ${sourceActionHtml}
+      ${singleNoteActionHtml}
       <button type="button" data-copy-note="${escapeHtml(note.id)}">复制卡片链接</button>
       <button class="detail-bookmark ${state.bookmarks.has(note.id) ? "is-active" : ""}" type="button" data-bookmark-note="${escapeHtml(note.id)}" aria-pressed="${state.bookmarks.has(note.id)}">${bookmarkIcon()} ${state.bookmarks.has(note.id) ? "已加书签" : "添加书签"}</button>
     </footer>
   `;
 }
 
+async function loadLocalNoteOrganizationStatus(note) {
+  if (
+    !state.localBridge
+    || !state.statusContract
+    || note.summaryStatus === "accepted"
+    || note.summaryStatus === "unavailable"
+    || state.noteOrganizationStatus.has(note.id)
+    || state.noteOrganizationPending.has(note.id)
+  ) return;
+  state.noteOrganizationPending.add(note.id);
+  try {
+    const payload = await localBridgeRequest("/notes/organization-status", {
+      method: "POST",
+      body: JSON.stringify({ note_id: note.id })
+    });
+    const status = validateLocalNoteOrganizationStatus(payload, state.statusContract);
+    if (status.note_id !== note.id) throw new Error("本机单篇整理状态不匹配");
+    state.noteOrganizationStatus.set(note.id, status);
+    if (elements.dialog.open && elements.dialogContent.dataset.noteId === note.id) renderDetail(note);
+  } catch {
+    // A missing or stale private overlay must not replace the published safe fallback.
+  } finally {
+    state.noteOrganizationPending.delete(note.id);
+  }
+}
+
 function openNote(noteId, updateHash = true) {
   const note = state.data.notes.find((item) => item.id === noteId);
   if (!note) return;
   renderDetail(note);
-  if (typeof elements.dialog.showModal === "function") elements.dialog.showModal();
-  else elements.dialog.setAttribute("open", "");
+  if (!elements.dialog.open) {
+    if (typeof elements.dialog.showModal === "function") elements.dialog.showModal();
+    else elements.dialog.setAttribute("open", "");
+  }
+  lockDialogBackground();
+  if (typeof loadLocalNoteOrganizationStatus === "function") void loadLocalNoteOrganizationStatus(note);
   if (updateHash) history.replaceState(null, "", `#note=${encodeURIComponent(noteId)}`);
 }
 
 function closeDialog() {
   state.editingDescriptionId = null;
   if (elements.dialog.open) elements.dialog.close();
+  unlockDialogBackground();
   history.replaceState(null, "", location.pathname + location.search);
 }
 
@@ -661,7 +1140,12 @@ function clearFilters() {
 function setView(view) {
   state.view = view;
   document.querySelectorAll("[data-panel]").forEach((panel) => { panel.hidden = panel.dataset.panel !== view; });
-  document.querySelectorAll("[data-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.view === view));
+  document.querySelectorAll("[data-view]").forEach((button) => {
+    const selected = button.dataset.view === view;
+    button.classList.toggle("is-active", selected);
+    if (selected) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
   updateHeroVisibility();
   if (view === "resources") renderResources();
   const destination = view === "notes" ? elements.hero : document.querySelector(`[data-panel="${view}"]`);
@@ -676,10 +1160,12 @@ function updateHeroVisibility() {
 function toggleBookmark(noteId) {
   if (!validNoteIds().has(noteId)) return;
   const adding = !state.bookmarks.has(noteId);
-  if (adding) state.bookmarks.add(noteId);
-  else state.bookmarks.delete(noteId);
-  state.bookmarkStates[noteId] = { bookmarked: adding, updatedAt: new Date().toISOString() };
-  if (!persistPersonalData()) return;
+  const candidate = personalData();
+  candidate.bookmarks = adding
+    ? [...new Set([...candidate.bookmarks, noteId])]
+    : candidate.bookmarks.filter((id) => id !== noteId);
+  candidate.bookmarkStates[noteId] = { bookmarked: adding, updatedAt: new Date().toISOString() };
+  if (!persistPersonalData(candidate)) return;
   renderNotes();
   renderResources();
   const openNote = state.data.notes.find((note) => note.id === elements.dialogContent.dataset.noteId);
@@ -688,6 +1174,10 @@ function toggleBookmark(noteId) {
 }
 
 function exportPersonalData() {
+  if (!state.knowledgeReady || !state.personalStoreReady) {
+    showToast("知识数据或个人存储尚未就绪，无法安全导出个人数据");
+    return;
+  }
   const blob = new Blob([serializePersonalData(personalData(), validNoteIds())], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -700,13 +1190,11 @@ function exportPersonalData() {
 
 async function importPersonalData(file) {
   if (!file) return;
+  if (!state.knowledgeReady || !state.personalStoreReady) throw new Error("知识数据或个人存储尚未就绪，未导入任何个人数据");
   if (file.size > 256 * 1024) throw new Error("备份文件不能超过 256 KB");
-  const incoming = JSON.parse(await file.text());
+  const incoming = validatePersonalDataPayload(JSON.parse(await file.text()));
   const merged = mergePersonalData(personalData(), incoming, validNoteIds());
-  state.bookmarks = new Set(merged.bookmarks);
-  state.bookmarkStates = merged.bookmarkStates;
-  state.descriptionOverrides = merged.descriptionOverrides;
-  if (!persistPersonalData()) return;
+  if (!persistPersonalData(merged)) return;
   renderNotes();
   renderResources();
   showToast("书签与个人修订已导入");
@@ -714,6 +1202,11 @@ async function importPersonalData(file) {
 
 function bindEvents() {
   document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
+  document.querySelector("[data-home-link]")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    setView("notes");
+    history.replaceState(null, "", location.pathname + location.search);
+  });
   elements.categoryList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-category]");
     if (!button) return;
@@ -752,6 +1245,7 @@ function bindEvents() {
     const board = state.boards.find((item) => item.id === toggle.dataset.boardToggle);
     if (!board) return;
     const enabled = toggle.checked;
+    const restoreFocus = document.activeElement === toggle;
     state.boardUpdatePending = true;
     elements.boardList.querySelectorAll("[data-board-toggle]").forEach((input) => { input.disabled = true; });
     elements.boardManagerStatus.textContent = `正在更新「${board.name}」…`;
@@ -760,13 +1254,13 @@ function bindEvents() {
         method: "POST",
         body: JSON.stringify({ board_id: board.id, enabled })
       });
-      state.boards = payload.boards;
+      state.boards = validateLocalBridgeBoards(payload.boards);
       elements.boardManagerStatus.textContent = "设置已保存；下次点击“开始整理”时会使用新的收藏夹范围。";
       showToast(enabled ? `整理时将纳入「${board.name}」` : `已忽略「${board.name}」`);
     } catch (error) {
       try {
         const authoritative = await localBridgeRequest("/boards");
-        state.boards = authoritative.boards;
+        state.boards = validateLocalBridgeBoards(authoritative.boards);
         const current = state.boards.find((item) => item.id === board.id);
         elements.boardManagerStatus.textContent = `连接出现异常，已重新读取本机设置：「${board.name}」当前${current?.enabled ? "开启" : "关闭"}。`;
         showToast(`已重新读取「${board.name}」状态`);
@@ -778,16 +1272,26 @@ function bindEvents() {
     } finally {
       state.boardUpdatePending = false;
       renderBoardManager();
+      if (restoreFocus) {
+        [...elements.boardList.querySelectorAll("[data-board-toggle]")]
+          .find((input) => input.dataset.boardToggle === board.id)
+          ?.focus({ preventScroll: true });
+      }
     }
   });
   elements.sortSelect.addEventListener("change", () => { state.sort = elements.sortSelect.value; renderNotes(); });
   elements.viewToggle.addEventListener("click", () => {
-    state.layout = state.layout === "grid" ? "list" : "grid";
-    localStorage.setItem("xhs-kb-layout", state.layout);
+    const nextLayout = state.layout === "grid" ? "list" : "grid";
+    if (!safeStorageSet("xhs-kb-layout", nextLayout, "浏览器无法保存视图设置，布局没有更改")) return;
+    state.layout = nextLayout;
     elements.viewToggle.setAttribute("aria-label", state.layout === "grid" ? "切换列表视图" : "切换卡片视图");
     renderNotes();
   });
   elements.notesGrid.addEventListener("click", (event) => {
+    if (event.target.closest("[data-retry-knowledge]")) {
+      window.location.reload();
+      return;
+    }
     const bookmarkButton = event.target.closest("[data-bookmark-note]");
     if (bookmarkButton) {
       event.stopPropagation();
@@ -818,12 +1322,37 @@ function bindEvents() {
     }
     if (event.target.closest("[data-restore-description]")) {
       const noteId = elements.dialogContent.dataset.noteId;
-      state.descriptionOverrides[noteId] = { description: "", deleted: true, updatedAt: new Date().toISOString() };
+      const candidate = personalData();
+      candidate.descriptionOverrides[noteId] = { description: "", deleted: true, updatedAt: new Date().toISOString() };
+      if (!persistPersonalData(candidate)) return;
       state.editingDescriptionId = null;
-      persistPersonalData();
       renderNotes();
       renderDetail(state.data.notes.find((note) => note.id === noteId));
       showToast("已恢复系统版本");
+      return;
+    }
+    const summarizeButton = event.target.closest("[data-summarize-note]");
+    if (summarizeButton) {
+      summarizeButton.disabled = true;
+      await startSingleNoteSync(summarizeButton.dataset.summarizeNote);
+      summarizeButton.disabled = ["starting", "running"].includes(state.manualSync.state);
+      return;
+    }
+    const sourceButton = event.target.closest("[data-open-source-note]");
+    if (sourceButton) {
+      if (!sopBrowserReady()) return;
+      sourceButton.disabled = true;
+      try {
+        await localBridgeRequest("/notes/open", {
+          method: "POST",
+          body: JSON.stringify({ note_id: sourceButton.dataset.openSourceNote })
+        });
+        showToast("已在 SOP 扫描浏览器中定位原帖");
+      } catch (error) {
+        showToast(`没有打开原帖：${error.message}`);
+      } finally {
+        sourceButton.disabled = false;
+      }
       return;
     }
     const copyButton = event.target.closest("[data-copy-note]");
@@ -842,9 +1371,10 @@ function bindEvents() {
       return;
     }
     const noteId = form.dataset.descriptionForm;
-    state.descriptionOverrides[noteId] = { description, deleted: false, updatedAt: new Date().toISOString() };
+    const candidate = personalData();
+    candidate.descriptionOverrides[noteId] = { description, deleted: false, updatedAt: new Date().toISOString() };
+    if (!persistPersonalData(candidate)) return;
     state.editingDescriptionId = null;
-    persistPersonalData();
     renderNotes();
     renderDetail(state.data.notes.find((note) => note.id === noteId));
     showToast(state.cloud.authenticated ? "描述已保存并等待私有同步" : "描述已保存到当前浏览器");
@@ -869,12 +1399,15 @@ function bindEvents() {
   });
   document.querySelector("#dialog-close").addEventListener("click", closeDialog);
   elements.dialog.addEventListener("click", (event) => { if (event.target === elements.dialog) closeDialog(); });
-  elements.dialog.addEventListener("close", () => history.replaceState(null, "", location.pathname + location.search));
+  elements.dialog.addEventListener("close", () => {
+    unlockDialogBackground();
+    history.replaceState(null, "", location.pathname + location.search);
+  });
   document.querySelector("#empty-clear").addEventListener("click", clearFilters);
   document.querySelector("#theme-toggle").addEventListener("click", () => {
     const dark = document.documentElement.dataset.theme !== "dark";
+    if (!safeStorageSet("xhs-kb-theme-xhs", dark ? "dark" : "light", "浏览器无法保存主题设置，主题没有更改")) return;
     document.documentElement.dataset.theme = dark ? "dark" : "light";
-    localStorage.setItem("xhs-kb-theme-xhs", dark ? "dark" : "light");
     updateThemeToggle();
   });
   document.addEventListener("keydown", (event) => {
@@ -895,24 +1428,48 @@ function updateThemeToggle() {
 }
 
 async function init() {
-  const savedTheme = localStorage.getItem("xhs-kb-theme-xhs");
+  const savedTheme = safeStorageGet("xhs-kb-theme-xhs");
   document.documentElement.dataset.theme = savedTheme === "dark" ? "dark" : "light";
   updateThemeToggle();
   updateHeroVisibility();
+  bindEvents();
+  await initStatusContract();
+  const boardManagerReady = initBoardManager();
 
   try {
     const response = await fetch(DATA_URL);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    state.data = await response.json();
+    state.data = validateKnowledgeData(await response.json());
+    state.knowledgeReady = true;
   } catch (error) {
-    elements.notesGrid.innerHTML = `<div class="empty-state"><span>知识数据没有加载成功</span><p>${escapeHtml(error.message)}。请通过本地 HTTP 服务打开站点，而不是直接双击 HTML。</p></div>`;
+    state.knowledgeReady = false;
+    for (const control of [elements.personalExport, elements.personalImport, elements.personalImportInput]) {
+      control.disabled = true;
+      control.title = "知识数据加载成功后才可安全使用个人数据";
+    }
+    renderCategories();
+    renderResourceControls();
+    renderPersonalControls();
+    renderResources();
+    renderKnowledgeLoadError(error);
+    await boardManagerReady;
     return;
   }
 
-  const storedPersonalData = loadPersonalData(localStorage, validNoteIds());
-  state.bookmarks = new Set(storedPersonalData.bookmarks);
-  state.bookmarkStates = storedPersonalData.bookmarkStates;
-  state.descriptionOverrides = storedPersonalData.descriptionOverrides;
+  try {
+    const storedPersonalData = loadPersonalData(localStorage, validNoteIds());
+    state.bookmarks = new Set(storedPersonalData.bookmarks);
+    state.bookmarkStates = storedPersonalData.bookmarkStates;
+    state.descriptionOverrides = storedPersonalData.descriptionOverrides;
+    state.personalStoreReady = true;
+  } catch {
+    state.personalStoreReady = false;
+    for (const control of [elements.personalExport, elements.personalImport, elements.personalImportInput]) {
+      control.disabled = true;
+      control.title = "个人存储无法安全读取；请先修复或清理损坏数据，再重新加载";
+    }
+    showToast("个人存储无法安全读取，已切换为只读模式且不会覆盖原数据");
+  }
 
   const configuredRepository = window.FAVSENSE_CONFIG?.repositoryUrl
     || window.huggingface?.variables?.GITHUB_REPOSITORY_URL
@@ -948,25 +1505,29 @@ async function init() {
   document.querySelector("#resource-description").textContent = radar.description || "集中查看资源的用途、适用条件与可靠来源。";
   elements.resourceSearch.placeholder = radar.search_placeholder || "搜索资源名称、类型或用途…";
   document.querySelector("#resource-filter-label").textContent = radar.filter_label || "类型";
-  document.title = `FavSense · 拾光台 · ${state.data.meta.title}`;
+  const pageTitle = String(state.data.meta.title || "").trim() || "小红书收藏知识工作台";
+  document.title = `FavSense · 拾光台 · ${pageTitle}`;
+  const pageDescription = String(state.data.meta.description || "").trim()
+    || "把小红书收藏整理成可搜索、可复核、可行动的知识库。";
   const description = document.querySelector('meta[name="description"]');
-  if (description) description.content = state.data.meta.description;
-  document.querySelector("#hero-eyebrow").textContent = state.data.meta.hero?.eyebrow || `本期片场 · ${state.data.meta.sourceBoard}`;
+  if (description) description.content = pageDescription;
+  const sourceBoard = String(state.data.meta.sourceBoard || "").trim() || "收藏知识库";
+  document.querySelector("#hero-eyebrow").textContent = state.data.meta.hero?.eyebrow || `本期片场 · ${sourceBoard}`;
   document.querySelector("#hero-from").textContent = state.data.meta.hero?.from || "收藏过";
   document.querySelector("#hero-to").textContent = state.data.meta.hero?.to || "判断过";
-  document.querySelector("#hero-intro").textContent = state.data.meta.hero?.intro || state.data.meta.description;
+  document.querySelector("#hero-intro").textContent = state.data.meta.hero?.intro || pageDescription;
   if (!state.data.meta.resourceIndexEnabled) {
     document.querySelector("#resources-nav").hidden = true;
     document.querySelector("#proof-resources-cell").hidden = true;
   }
 
+  elements.sortSelect.value = state.sort;
   renderCategories();
   renderNotes();
   renderResourceControls();
   renderPersonalControls();
   renderResources();
-  bindEvents();
-  await Promise.all([initBoardManager(), initCloudSync()]);
+  await Promise.all([boardManagerReady, state.personalStoreReady ? initCloudSync() : Promise.resolve()]);
 
   const noteId = new URLSearchParams(location.hash.slice(1)).get("note");
   if (noteId) openNote(noteId, false);

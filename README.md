@@ -42,7 +42,7 @@ FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整
 
 项目由两层组成：
 
-- **本地私有层**：普通 Chrome、Tampermonkey 和临时本地服务负责用户主动发起的只读同步；Cookie、临时 Token、原始视频和个人收藏配置不进入 Git。
+- **本地私有层**：FavSense 复用相邻 `SOP - 小红书` 项目唯一的扫描浏览器、动态 CDP 通道和其中的 Tampermonkey；临时本地服务负责用户主动发起的只读同步。FavSense 不创建第二个 profile，也不借用主浏览器；Cookie、临时 Token、原始视频和个人收藏配置不进入 Git。
 - **公开展示层**：零后端静态网页展示原创总结、领域资源、权威来源和下一步行动，可免费部署到 Hugging Face Static Space。
 
 ## 网页功能
@@ -58,6 +58,12 @@ FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整
 - 深色模式、响应式移动端与键盘操作；
 - 公开网页不包含登录态、个人主页、收藏夹 ID、视频文件或帧图片。
 
+## 整理结果怎样变成可信知识
+
+每次点击“开始整理”只启动一次本地运行。核心目录保存完成时先显示“核心收藏已保存”；点点回复原子保存后是 `captured`，缺证据、资源或语义审核时保持 `pending`，只有当前 revision 与质量门全部匹配时才是 `accepted`。本机详情可以通过鉴权的“待审核证据” overlay 查看清理后的 captured 内容，公开页面和正式知识库不会直接采用 raw 点点回复。
+
+关键词只会产生 `candidateKind="Skill"`。公开 `confirmed Skill` 必须是 accepted，并恰好关联一个完整、当前、已核验的官方资源；详情同时显示官方仓库、下载 ZIP 和其他安全动作。最后一个收藏夹完成只建立核心 checkpoint；curation 完成后才构建一个共享版本的知识库与网页快照，验证成功后按配置最多发布一次。构建或发布失败会保留上一可用版本并显示真实阶段状态。
+
 ## 推荐：让 Agent 直接安装
 
 推荐使用能够操作本机终端和文件的 coding Agent 完成安装，例如 **Codex、Claude Code**，或其他遵循 `AGENTS.md` / `CLAUDE.md` 的 Agent。这样 Agent 可以自动检查依赖、复制公开配置模板、运行安装入口并执行发布检查，用户不需要逐条搬运命令。
@@ -67,13 +73,13 @@ FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整
 ```text
 请安装并配置这个仓库中的 FavSense。先完整阅读 AGENTS.md 和
 skills/xhs-favorites-organizer/SKILL.md，遵守隐私与只读边界；检查 Windows、
-Node.js、Python、Chrome 和 Tampermonkey 依赖；根据示例创建我的私有配置，
+Node.js、Git、uv、Google Chrome 和 Tampermonkey 依赖；根据示例创建我的私有配置，
 引导我只填写无法自动发现的主页与收藏夹信息；运行 favsense.ps1 setup，
 完成测试并启动本地预览。不要读取、输出或提交 Cookie、Token、收藏夹 ID、
 原始视频、抽帧或 knowledge-base。遇到验证码、300031 或访问频繁立即停止。
 ```
 
-Agent 能完成本机环境检查和配置；出于浏览器安全边界，首次扫码登录、Tampermonkey 的最终安装确认和“开始整理”按钮仍由用户在普通浏览器中操作。安装后的同步、去重、知识库构建和网页生成均独立运行，不依赖 Codex、Claude 或任何模型服务，也不会创建每日或开机整理任务。
+Agent 能完成本机环境检查和配置；出于浏览器安全边界，首次扫码登录、Tampermonkey 的最终安装确认和“开始整理”按钮仍由用户在 SOP 扫描浏览器或本地工作台中操作。安装后的同步、去重、知识库构建和网页生成均独立运行，不依赖 Codex、Claude 或任何模型服务，也不会创建每日或开机整理任务。
 
 ## 快速预览
 
@@ -97,7 +103,7 @@ npm run release:check
 
 ## 配置自己的收藏同步
 
-要求：Windows、普通 Chrome、Tampermonkey、Node.js 20+、Python 3.11+。
+要求：Windows、Google Chrome、Tampermonkey、Node.js 20+、Git、[uv](https://docs.astral.sh/uv/)，以及相邻的 `SOP - 小红书` 项目。setup 会用 uv 在 `.xhs-tools/` 中隔离准备 Python 3.12 和固定版本的详情读取器，不修改全局 Python 环境。SOP 的扫描浏览器是唯一的小红书登录浏览器；FavSense 只读取 SOP 的私有端口登记并在该浏览器中创建临时标签，不创建第二个 profile，也不借用主浏览器。
 
 ```powershell
 Copy-Item ".\config\xhs-favorites.example.json" ".\config\xhs-favorites.json"
@@ -105,9 +111,24 @@ Copy-Item ".\config\xhs-favorites.example.json" ".\config\xhs-favorites.json"
 
 编辑私有配置中的个人主页并提供至少一个初始收藏夹。首次及以后每轮整理都会从个人收藏页自动补齐新增收藏夹并同步名称变更。
 
-`published_since` 控制内容发布日期下限，格式为 `YYYY-MM-DD`。构建知识库、媒体下载、音频转写和按需视觉分析都会使用同一范围；发布日期缺失或早于下限的笔记不会进入整理结果。示例默认从 `2026-01-01` 开始。
+`published_since` 控制深度处理的内容发布日期下限，格式为 `YYYY-MM-DD`。媒体下载、音频转写和按需视觉分析使用这一范围；它不会从知识库或网页中隐藏 catalog 已保存的历史收藏。示例默认从 `2026-01-01` 开始。
 
-视频整理默认使用“音频优先、视觉按需升级”。首次启用离线转写：
+先完成下面的同步 setup；它会准备离线转写所依赖的固定版本 Python 运行时。
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
+  ".\skills\xhs-favorites-organizer\scripts\setup-autosync.ps1" `
+  -Workspace "." -Config ".\config\xhs-favorites.json" `
+  -SopRuntime "..\SOP - 小红书"
+```
+
+安装命令不会创建 Windows 每日任务或开机启动项；升级时会删除旧版 `FavSense-Daily` 任务。`-SopRuntime` 省略时会按上述相邻目录自动解析。setup 先复用已经运行的 SOP 扫描浏览器；若通道未启动，只允许调用 SOP 自己的 `启动扫描浏览器.bat` 一次。首次运行时，它在同一个 SOP 窗口中打开 Tampermonkey 官方商店页和小红书登录页。请在该窗口安装扩展并扫码登录，然后再次运行同一条 setup 命令。
+
+只有检测到 SOP 扫描浏览器的 profile 已安装 Tampermonkey 后，setup 才会先核对并准备已审查提交 `d805ebdd3db53f68137bc2b7a6ed118ce572d09b` 的 XHS-Downloader 运行时。下载、锁文件安装或版本核对失败会在生成 Bridge token 和十分钟安装能力之前停止；已有但版本不符或工作树包含修改或未跟踪文件的 checkout 不会被覆盖。运行时就绪后，setup 才启动本机服务，并通过同一个动态 CDP 通道打开用户脚本安装页。不要保存或分享该临时地址；不要把主浏览器 profile 或 Cookie 复制到任一项目。
+
+在 Tampermonkey 安装页确认安装后，运行本地工作台，在“同步设置”中选择收藏夹并点击“开始整理”。只有这次点击会让桥接服务在 SOP 扫描浏览器中新建业务标签并开始读取；关闭工作台后本地桥接服务会停止，但 SOP 浏览器仍由用户持有并保持登录。
+
+视频整理默认使用“音频优先、视觉按需升级”。setup 完成后，首次启用离线转写：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
@@ -125,19 +146,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
 
 工作任务默认先离线转写音频，不自动批量抽帧。长视频按可续跑时间窗处理：只要语音已经说出 Skill、仓库或所缺事实，就立刻停止剩余音频并进入官方核验；仍有缺口才继续下一段。只有语音没有给出明确名称、音频过少或讲解明确要求查看屏幕时，才在复核转写后追加 `-PrepareVisualEvidence`。该开关每次只处理一个条目的一个 30 秒低密度画面窗口，并受总帧数、磁盘字节和执行时间三重预算约束；找到目标后不再检查余下画面，未找到才从记录的下一个时间点继续。每 0.5 秒抽帧只用于仍未解决的局部时间段。临时 WAV 默认在转写后删除，原视频、转写和帧始终保留在 Git 忽略的私有目录中。
 
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
-  ".\skills\xhs-favorites-organizer\scripts\setup-autosync.ps1" `
-  -Workspace "." -Config ".\config\xhs-favorites.json"
-```
+私有配置显式开启 `diandian.enabled` 并加载 v1.2 CDP transport 后，仍然只需这一个按钮：系统先完成确定性的同步、去重和核心 checkpoint，再由 Tampermonkey 为每篇笔记分享并复制一次临时签名链接；本机 Bridge 只在内存中核对该链接，随后通过 SOP 动态 CDP 通道在同一个扫描浏览器中新建空白目标页。外部 Skill 的 `ask(session, plain_note_url, spec=...)` 负责真实鼠标聚焦和原生输入，Bridge 负责导航、登录/验证码/`300031`/频率限制检查、严格的新回复与稳定性证明、私有保存确认以及成功后的关页。任一步失败都会保留诊断页并停止当前及剩余批次，不重试轰炸，也不伪造总结。点点回复经过逐篇质量门、评论检查、资源核验和内容哈希绑定后才可能进入正式输出；最终双输出快照只构建一次。
 
-安装命令会启动本机服务用于完成首次安装，但不会创建 Windows 每日任务或开机启动项；升级时会删除旧版 `FavSense-Daily` 任务。命令完成后，在装有 Tampermonkey 的普通 Chrome 中打开：
+`diandian.skill_path` 指定点点单篇总结 Skill 的安装目录，开启点点时必须显式填写。公开配置模板指向仓库随附的 `skills/xhs-diandian-summarize-note`；也可以在 Git 忽略的私有配置中填写一个版本化的本机绝对路径，把 Skill 作为独立知识资产管理。桥接会核对 `SKILL.md`、`release.json`、`runtime/browser-contract.json`、API 1 保存器，以及 v1.2 精确声明的 `scripts/cdp_transport.py` 和 `ask` 签名。v1.1 可被旧链路兼容加载，但不会暴露本机 CDP“重新总结”能力；路径、版本、transport 或契约错误时会 fail closed，不会从网页内容动态加载可执行路径。
 
-```text
-http://127.0.0.1:47631/xhs-favorites.user.js
-```
-
-在 Tampermonkey 安装页确认安装后，运行本地工作台，在“同步设置”中选择收藏夹并点击“开始整理”。只有这次点击会打开小红书并开始读取；关闭工作台后本地桥接服务会停止。
+Tampermonkey 脚本含本机桥接凭据与收藏夹映射；请关闭该脚本的云同步与导出分享。若曾同步或导出，重新运行 setup 并重装脚本以轮换凭据。
 
 Windows 用户也可以使用统一入口：
 
@@ -159,13 +172,15 @@ node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs"
 
 主动整理本身不依赖 Codex、Claude 或其他 Agent。Agent 只作为可选的二次策展者，并统一读写项目内的开放 JSON/Markdown 数据。
 
+本地卡片的“打开原帖”会把稳定笔记 ID 交给桥接服务，由 Bridge 在现有 SOP 扫描浏览器中打开来源收藏夹，再使用当前页面的实时签名精确定位原帖；本地工作台不会在主浏览器另开小红书标签。公开/Hugging Face 页面不保存签名链接，因此显示安全的“在小红书搜索原帖”入口。
+
 网页中的收录数、深度解读数、可复核画面数和资源数不是手工展示值：构建器从当前 catalog、`.xhs-favorites/video-analysis/` 的本机证据文件以及领域资源注册表重新计算。每次主动整理完成后都会重建网页数据；画面路径和原始文件不会进入公开 JSON。
 
 `setup-autosync.ps1` 会为本机网页生成 Git 忽略的 `site/.local/bridge.json`，其中只有回环服务地址，不包含 token。“开始整理”和收藏夹开关只在本机工作台显示；部署到 GitHub 或 Hugging Face 后不会获得本机触发能力。关闭收藏夹只停止后续采集，不会删除已经整理的知识卡。
 
 ## 小红书来源与领域配置
 
-当前采集适配器只连接小红书：普通 Chrome 中的用户脚本读取你有权访问的收藏面板，本地桥接服务增量去重并重建知识库。采集层不包含软件、GitHub 或健身规则。
+当前采集适配器只连接小红书：SOP 扫描浏览器中的 FavSense 用户脚本读取你有权访问的收藏面板，本地桥接服务增量去重并重建知识库。采集层不包含软件、GitHub 或健身规则。
 
 `config/xhs-favorites.json` 通过两个路径决定整理方式：
 
@@ -205,7 +220,7 @@ git push -u origin main
 
 ## 发布到 Hugging Face Spaces
 
-Hugging Face 不是只有项目介绍页：FavSense 会把 `site/` 作为完整、可交互的公网知识库发布。小红书登录、采集、视频证据和 Obsidian 完整库留在本机；用户主动整理完最后一个已启用收藏夹后，可把新的脱敏网页数据同步到 Space。
+Hugging Face 不是只有项目介绍页：FavSense 会把 `site/` 作为完整、可交互的公网知识库发布。小红书登录、采集、视频证据和 Obsidian 完整库留在本机；用户主动整理的最终 curation 与双输出快照验证成功后，才可把新的脱敏网页数据同步到 Space，同一运行最多一次。
 
 ```json
 {
@@ -264,7 +279,7 @@ AGENTS.md / CLAUDE.md                 跨 Agent 的安全协作规则
 
 - 只处理本人有权访问的收藏和公开内容；不点赞、不评论、不发布、不取消收藏。
 - 不绕过验证码、安全限制或平台风控。
-- 不读取、导出或持久化 Chrome Cookie。
+- FavSense 代码不读取、导出、复制、打印或提交 Chrome Cookie；登录态只由 Chrome 自身保存在 SOP 项目 Git 忽略的扫描 profile 中。
 - 小红书内容版权属于原作者；公开演示只包含链接、必要元数据和本项目原创总结，不发布下载的视频或抽帧图片。
 - GitHub Star 是核验日期当时的快照，不代表安全性或推荐结论。
 

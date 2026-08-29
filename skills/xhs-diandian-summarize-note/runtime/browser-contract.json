@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "ai_chat_url": "https://www.xiaohongshu.com/ai_chat",
+  "prompt": "总结",
+  "selectors": {
+    "share_controls": [
+      ".share-icon-container",
+      "[aria-label*=\"分享\"]",
+      "[title*=\"分享\"]",
+      "button"
+    ],
+    "unlabeled_share_controls": [
+      ".share-icon-container"
+    ],
+    "share_menu_items": [
+      "[role=\"menuitem\"]",
+      "[class*=\"menu\"]",
+      "[class*=\"popover\"]",
+      "[class*=\"share\"] button",
+      "button",
+      "span"
+    ],
+    "copy_action_text": "复制链接",
+    "share_action_text": "分享",
+    "input_placeholders": [
+      "与点点对话，获取更丰富的信息",
+      "搜索或者输入任何问题"
+    ],
+    "input_controls": [
+      "textarea"
+    ],
+    "selected_note_card": ".xhs-ai-selected-note-card",
+    "assistant_message": ".ai-message",
+    "finished_message_class": "ai-message-finished"
+  },
+  "timings_ms": {
+    "page_dom_stable": 1500,
+    "note_context_stable": 2000,
+    "prompt_stable": 500,
+    "reply_text_stable": 2000,
+    "success_dwell": 1500,
+    "between_notes": 3000,
+    "share_control_wait": 20000,
+    "share_menu_wait": 10000,
+    "share_worker_wait": 30000,
+    "ai_worker_wait": 30000,
+    "clipboard_read_wait": 5000,
+    "share_result_wait": 45000,
+    "single_note_wait": 480000,
+    "worker_probe_interval": 600,
+    "input_wait": 30000,
+    "context_wait": 30000,
+    "paste_acceptance_wait": 10000,
+    "submit_acceptance_wait": 30000,
+    "response_wait": 300000,
+    "reply_settle_wait": 30000,
+    "save_ack_wait": 30000
+  },
+  "minimum_summary_chars": 20
+}
