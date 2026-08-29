@@ -12,10 +12,6 @@ const publisher = path.resolve(
 const privateConfigFixture = path.resolve(
   "skills/xhs-favorites-organizer/test-fixtures/publisher-private-config.json"
 );
-const rootCredentialFixture = path.resolve(
-  "skills/xhs-favorites-organizer/test-fixtures/publisher-root-credential.json"
-);
-
 test("public JSON may contain the deliberate token-free Xiaohongshu search fallback", () => {
   assert.doesNotThrow(() => assertPublicTextSafe(JSON.stringify({
     sourceUrl: "https://www.xiaohongshu.com/search_result?keyword=example&source=web_search_result_notes",
@@ -42,6 +38,12 @@ async function createRemoteFixture(root) {
     "utf8"
   );
   await writeFile(path.join(seed, ".editorconfig"), "root = true\n", "utf8");
+  await mkdir(path.join(seed, "config"), { recursive: true });
+  await writeFile(
+    path.join(seed, "config", "xhs-favorites.example.json"),
+    JSON.stringify({ token: "YOUR_HF_TOKEN" }),
+    "utf8"
+  );
   await writeFile(path.join(seed, "site", "index.html"), "old", "utf8");
   await writeFile(path.join(seed, "site", "stale.js"), "stale", "utf8");
   git(["add", "."], seed);
@@ -255,17 +257,18 @@ test("publisher refuses secret-like files inside the public site", async () => {
   assert.match(result.stderr, /secret-like public file/);
 });
 
-test("publisher refuses a credential-shaped file already present at the Space repository root", async () => {
+test("publisher refuses sensitive content in the Space README it updates", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "favsense-publish-root-secret-"));
   const remote = await createRemoteFixture(root);
   const seed = path.join(root, "seed");
   await writeFile(
-    path.join(seed, "debug.json"),
-    await readFile(rootCredentialFixture, "utf8"),
+    path.join(seed, "README.md"),
+    "---\ntitle: Existing Space\nsdk: static\napp_file: site/index.html\n---\n\n"
+      + "password: fixture-credential-that-must-never-publish\n",
     "utf8"
   );
-  git(["add", "debug.json"], seed);
-  git(["commit", "-m", "add unsafe root fixture"], seed);
+  git(["add", "README.md"], seed);
+  git(["commit", "-m", "add unsafe README fixture"], seed);
   git(["push", "origin", "main"], seed);
 
   const workspace = path.join(root, "workspace");

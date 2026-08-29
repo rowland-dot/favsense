@@ -8,7 +8,7 @@ import {
   readFrozenSiteManifest,
   siteTreeManifest,
 } from "./build-organization-snapshot.mjs";
-import { validatePublicTree } from "./public-tree-policy.mjs";
+import { assertPublicTextSafe, validatePublicTree } from "./public-tree-policy.mjs";
 
 function readOption(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
@@ -94,8 +94,13 @@ async function loadPrivateIdentifiers(configPath) {
   }
 }
 
-async function ensureMiniHeader(readmePath) {
+async function ensureMiniHeader(readmePath, privateIdentifiers) {
+  const metadata = await lstat(readmePath);
+  if (!metadata.isFile() || metadata.isSymbolicLink()) {
+    throw new Error("Space README.md must be a plain file");
+  }
   const readme = await readFile(readmePath, "utf8");
+  assertPublicTextSafe(readme, "README.md", privateIdentifiers);
   const frontMatter = readme.match(/^(---\r?\n)([\s\S]*?)(\r?\n---(?:\r?\n|$))/);
   if (!frontMatter) throw new Error("Space README.md must begin with YAML front matter");
 
@@ -192,11 +197,6 @@ async function main() {
   const checkout = path.join(temporary, "space");
   try {
     runGit(["clone", "--depth", "1", "--branch", branch, repository, checkout], workspace);
-    await validatePublicTree(checkout, {
-      privateIdentifiers,
-      excludedRootNames: [".git"],
-      allowedRootTextNames: [".editorconfig", ".gitattributes", ".gitignore", "LICENSE"],
-    });
     const targetSite = path.join(checkout, "site");
     await rm(targetSite, { recursive: true, force: true });
     await cp(publicSite, targetSite, {
@@ -215,12 +215,7 @@ async function main() {
       }
     }
     await validatePublicTree(targetSite, { privateIdentifiers });
-    await ensureMiniHeader(path.join(checkout, "README.md"));
-    await validatePublicTree(checkout, {
-      privateIdentifiers,
-      excludedRootNames: [".git"],
-      allowedRootTextNames: [".editorconfig", ".gitattributes", ".gitignore", "LICENSE"],
-    });
+    await ensureMiniHeader(path.join(checkout, "README.md"), privateIdentifiers);
 
     runGit(["add", "-A", "--", "site", "README.md"], checkout);
     const diff = runGit(["diff", "--cached", "--quiet"], checkout, [0, 1]);
