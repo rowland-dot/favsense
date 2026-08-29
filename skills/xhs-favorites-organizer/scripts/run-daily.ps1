@@ -3,6 +3,7 @@ param(
     [Parameter()][string]$Workspace = (Get-Location).Path,
     [Parameter()][string]$Config = (Join-Path (Get-Location).Path 'config\xhs-favorites.json'),
     [Parameter()][ValidateSet('daily', 'history')][string]$Mode = 'daily',
+    [Parameter()][string]$NoteId = '',
     [Parameter()][int]$Port = 47631,
     [Parameter()][string]$SopRuntime = ''
 )
@@ -33,8 +34,15 @@ $headers = @{
     'X-XHS-Bridge-Token' = $token
     'Origin' = 'http://127.0.0.1:8766'
 }
+if ($NoteId -and $NoteId -notmatch '^[a-f0-9]{24}$') {
+    throw 'NoteId must use a supported note identifier.'
+}
 $bridgeMode = if ($Mode -eq 'history') { 'history' } else { 'incremental' }
-$body = @{ mode = $bridgeMode } | ConvertTo-Json -Compress
+$body = if ($NoteId) {
+    @{ note_id = $NoteId } | ConvertTo-Json -Compress
+} else {
+    @{ mode = $bridgeMode } | ConvertTo-Json -Compress
+}
 $status = Invoke-RestMethod `
     -Uri "http://127.0.0.1:$Port/sync/start" `
     -Method Post `
@@ -42,4 +50,5 @@ $status = Invoke-RestMethod `
     -ContentType 'application/json' `
     -Body $body `
     -TimeoutSec 15
-Write-Output "FavSense requested a user-triggered $bridgeMode sync in the shared SOP scanner browser. Monitor progress in the local workbench."
+$requestLabel = if ($NoteId) { 'single-note validation' } else { "$bridgeMode sync" }
+Write-Output "FavSense requested a user-triggered $requestLabel in the shared SOP scanner browser. Monitor progress in the local workbench."

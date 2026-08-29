@@ -108,6 +108,7 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 状态只有：
 
 - `accepted`：证据与资源核验均满足本标准，可以发布；
+- `unavailable`：原帖已无法访问，保留此前记录并结束补证；这是已完成但不可发布的终态，必须记录 `source_unavailable` 方法和具体原因；
 - `pending`：缺少正文、实体、仓库或其他关键证据；收藏仍以原始公开摘要留在本地界面，但不得使用候选深度总结或未经核验的资源结论；
 - `rejected`：不在范围、重复、用户排除或不应进入知识库。
 

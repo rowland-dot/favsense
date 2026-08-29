@@ -50,7 +50,7 @@ test("running phases keep polling until the terminal organization state", async 
 for (const [name, expected] of [
   ["summary-failed", "本篇总结失败，可在下次继续"],
   ["batch-aborted", "本次未尝试，可继续整理"],
-  ["stale", "正文已变化，等待重新审核"],
+  ["stale", "正文已变化，需重新核验"],
 ]) {
   test(`${name} exposes its distinct note recovery state`, async ({ page }) => {
     await scenario(page, name);
@@ -77,8 +77,8 @@ test("local note detail shows captured summary as pending review without publish
   await scenario(page, "success");
   await page.goto("/");
   await page.getByRole("button", { name: "查看总结" }).nth(1).click();
-  const overlay = page.getByRole("status", { name: "本机待审核证据" });
-  await expect(overlay).toContainText("总结已捕获，等待审核");
+  const overlay = page.getByRole("status", { name: "本机补证内容" });
+  await expect(overlay).toContainText("总结已保存，尚未完成证据核验");
   await expect(overlay).toContainText("Captured private synthetic summary");
   await expect(overlay).toContainText("点点总结");
 });
@@ -88,6 +88,6 @@ test("public origin never mounts or requests the private pending overlay", async
   page.on("request", (request) => requests.push(request.url()));
   await page.goto("http://127.0.0.1:8767/");
   await page.getByRole("button", { name: "查看总结" }).nth(1).click();
-  await expect(page.getByText("待审核证据", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("补证内容", { exact: true })).toHaveCount(0);
   expect(requests.some((url) => url.includes("/notes/organization-status"))).toBe(false);
 });

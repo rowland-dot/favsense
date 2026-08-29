@@ -462,6 +462,11 @@ function summarySourcePresentation(note) {
   const curationStatus = String(
     note.curationStatus || note.curation_status || note.summaryStatus || note.summary_status || ""
   );
+  if (curationStatus === "unavailable") return {
+    label: "已完成（原帖不可访问）",
+    tone: "metadata",
+    explanation: "原帖可能已被作者隐藏或删除；已保留现有记录并结束补证，不作为正式核验结果发布。"
+  };
   if (curationStatus === "rejected") return {
     label: "总结未通过审核",
     tone: "warning",
@@ -478,14 +483,14 @@ function summarySourcePresentation(note) {
     explanation: "核心收藏已保存；本轮在处理本篇前已经停止。"
   };
   if (summaryStatus === "stale" && reason === "unknown_legacy") return {
-    label: "历史整理状态待确认，等待重新整理",
+    label: "历史整理状态待确认，需重新整理",
     tone: "warning",
     explanation: "核心收藏已保留；旧版记录无法确认是否曾完成总结。"
   };
   if (summaryStatus === "stale") return {
     label: reason === "evidence_changed"
-        ? "证据已变化，等待重新审核"
-        : "正文已变化，等待重新审核",
+        ? "证据已变化，需重新核验"
+        : "正文已变化，需重新核验",
     tone: "warning",
     explanation: "历史整理结果仍保留，但不会作为当前正式总结展示。"
   };
@@ -494,10 +499,15 @@ function summarySourcePresentation(note) {
     tone: "diandian",
     explanation: "这份内容来自点点 AI 对原帖的总结，并已通过当前知识卡的整理检查。"
   };
-  if (summaryStatus === "captured") return {
-    label: "总结已捕获，等待审核",
+  if (summaryStatus === "captured" && reason === "audit_pending") return {
+    label: "证据未补齐，暂不发布",
     tone: "warning",
-    explanation: "点点总结已安全保存在本机；审核通过前不会替换当前公开内容。"
+    explanation: "该条已完成复核，但正文、媒体或官方资源证据仍不完整；补齐前只展示原帖公开信息。"
+  };
+  if (summaryStatus === "captured") return {
+    label: "总结已保存，尚未完成证据核验",
+    tone: "warning",
+    explanation: "点点总结已安全保存在本机；证据核验完成前不会替换当前公开内容。"
   };
   if (note.deepSummarySource === "curation") return {
     label: "使用其他证据整理",
@@ -906,7 +916,7 @@ function resourceCard(resource) {
       <h3>${escapeHtml(resource.name)}</h3>
       <p class="resource-description">${escapeHtml(resource.description)}</p>
       ${attributes ? `<div class="resource-attributes">${attributes}</div>` : ""}
-      <div class="resource-actions">${actions.map((action) => `<a href="${action.url}" target="_blank" rel="noreferrer">${escapeHtml(action.label)}</a>`).join("")}</div>
+      <div class="resource-actions">${actions.map((action) => `<a href="${action.url}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(`${resource.name} ${action.label}`)}">${escapeHtml(action.label)}</a>`).join("")}</div>
     </article>
   `;
 }
@@ -1020,10 +1030,10 @@ function renderDetail(note) {
   ` : "";
   const localOrganization = state.noteOrganizationStatus?.get(note.id);
   const localOrganizationHtml = localOrganization ? `
-    <section class="detail-section pending-evidence-overlay" role="status" aria-label="本机待审核证据">
+    <section class="detail-section pending-evidence-overlay" role="status" aria-label="本机补证内容">
       <div class="pending-evidence-heading"><span>仅本机</span><strong>${escapeHtml(state.statusContract.copy.summary_captured)}</strong></div>
       <div class="structured-summary">${formatSummaryHtml(localOrganization.display_summary)}</div>
-      <p>证据：${localOrganization.evidence_methods.map((evidence) => evidence.method === "point" ? "点点总结" : escapeHtml(evidence.method)).join(" · ")}。尚未通过审核，不会进入公开知识库。</p>
+      <p>证据：${localOrganization.evidence_methods.map((evidence) => evidence.method === "point" ? "点点总结" : escapeHtml(evidence.method)).join(" · ")}。当前证据尚未满足发布门槛，不会进入公开知识库。</p>
     </section>
   ` : "";
   const actionHtml = note.kind === "Note" || !String(note.action || "").trim() ? "" : `
@@ -1076,6 +1086,7 @@ async function loadLocalNoteOrganizationStatus(note) {
     !state.localBridge
     || !state.statusContract
     || note.summaryStatus === "accepted"
+    || note.summaryStatus === "unavailable"
     || state.noteOrganizationStatus.has(note.id)
     || state.noteOrganizationPending.has(note.id)
   ) return;

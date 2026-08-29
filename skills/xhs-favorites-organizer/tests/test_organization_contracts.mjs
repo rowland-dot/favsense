@@ -200,6 +200,16 @@ test("curation pipeline preserves only revision-current accepted work and requir
   });
   assert.equal(accepted.curation["note-a"].review_status, "accepted");
   assert.equal(curationRevision(accepted.curation["note-a"]), curationRevision(current));
+  const unavailable = await runCurationPipeline({
+    ...input,
+    priorCandidates: [{ id: "note-a", ...current }],
+    current_curation: {},
+    current_audit: { notes: { "note-a": { status: "unavailable" } } },
+  });
+  assert.equal(unavailable.curation["note-a"].review_status, "unavailable");
+  assert.equal(unavailable.curation["note-a"].review_reason_code, "source_unavailable");
+  assert.equal(unavailable.counts.unavailable, 1);
+  assert.equal(unavailable.counts.pending, 0);
   await assert.rejects(
     runCurationPipeline(input, { review: async () => [{ id: "outside", status: "accepted" }] }),
     /CURATION_REVIEW_SCOPE_INVALID/,

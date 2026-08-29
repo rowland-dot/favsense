@@ -721,6 +721,8 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
     failed: summarySourcePresentation({ summaryState: "failed" }),
     aborted: summarySourcePresentation({ summaryState: "batch_aborted" }),
     captured: summarySourcePresentation({ summaryState: "captured" }),
+    evidenceBlocked: summarySourcePresentation({ summaryState: "captured", summaryReasonCode: "audit_pending", curationStatus: "pending_review" }),
+    unavailable: summarySourcePresentation({ summaryState: "captured", summaryReasonCode: "source_unavailable", curationStatus: "unavailable" }),
     rejected: summarySourcePresentation({ summaryState: "captured", curationStatus: "rejected" }),
     rejectedFailed: summarySourcePresentation({ summaryState: "failed", curationStatus: "rejected" }),
     stale: summarySourcePresentation({ summaryState: "stale", summaryReasonCode: "content_changed" }),
@@ -736,11 +738,14 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
   assert.equal(result.metadata.label, "尚未开始深度整理");
   assert.equal(result.failed.label, "本篇总结失败，可在下次继续");
   assert.equal(result.aborted.label, "本次未尝试，可继续整理");
-  assert.equal(result.captured.label, "总结已捕获，等待审核");
+  assert.equal(result.captured.label, "总结已保存，尚未完成证据核验");
+  assert.equal(result.evidenceBlocked.label, "证据未补齐，暂不发布");
+  assert.equal(result.unavailable.label, "已完成（原帖不可访问）");
+  assert.match(result.evidenceBlocked.explanation, /已完成复核/);
   assert.equal(result.rejected.label, "总结未通过审核");
   assert.equal(result.rejectedFailed.label, "总结未通过审核");
-  assert.equal(result.stale.label, "正文已变化，等待重新审核");
-  assert.equal(result.legacyStale.label, "历史整理状态待确认，等待重新整理");
+  assert.equal(result.stale.label, "正文已变化，需重新核验");
+  assert.equal(result.legacyStale.label, "历史整理状态待确认，需重新整理");
   assert.equal(result.legacyStale.explanation, "核心收藏已保留；旧版记录无法确认是否曾完成总结。");
   assert.match(result.formatted, /<h4>执行步骤<\/h4>/);
   assert.match(result.formatted, /<h4>补充说明<\/h4>/);
@@ -4989,6 +4994,9 @@ test("FavSense reuses the exact SOP scanner browser channel and remains user-tri
   assert.doesNotMatch(start, /chrome\.exe|\.xhs-favorites[\\/]browser-profile|DevToolsActivePort|--user-data-dir/i);
   assert.doesNotMatch(bridge, /\.xhs-favorites[\\/]browser-profile|DevToolsActivePort|--user-data-dir/i);
   assert.match(daily, /\/sync\/start/);
+  assert.match(daily, /\[string\]\$NoteId/);
+  assert.match(daily, /@\{ note_id = \$NoteId \}/);
+  assert.match(daily, /NoteId -notmatch '\^\[a-f0-9\]\{24\}\$'/);
   assert.match(daily, /-SopRuntime \$sopRuntimePath/);
   assert.doesNotMatch(daily, /Start-Process|chrome\.exe|xiaohongshu\.com\/board|browser-profile|DevToolsActivePort/);
   assert.doesNotMatch([setup, xhsSetup, start, daily].join("\n"), /Storage\.getCookies|Network\.getAllCookies|Cookies?\b/);

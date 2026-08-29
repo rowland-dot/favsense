@@ -28,3 +28,23 @@ test("primary controls keep a 44px pointer target across public and manager view
     }
   }
 });
+
+test("resource actions stay compact while preserving their pointer targets", async ({ page }) => {
+  await page.goto("http://127.0.0.1:8767");
+  await page.getByRole("button", { name: "资源索引", exact: true }).click();
+  const actions = page.locator(".resource-card").first().locator(".resource-actions a");
+  expect(await actions.count()).toBeGreaterThan(0);
+  const styles = await actions.evaluateAll((links) => links.map((link) => {
+    const style = getComputedStyle(link);
+    const rect = link.getBoundingClientRect();
+    return {
+      flexGrow: style.flexGrow,
+      borderRadius: Number.parseFloat(style.borderRadius),
+      width: rect.width,
+      height: rect.height,
+    };
+  }));
+  expect(styles.every(({ flexGrow, borderRadius, height }) =>
+    flexGrow === "0" && borderRadius >= 20 && height >= 44
+  )).toBe(true);
+});

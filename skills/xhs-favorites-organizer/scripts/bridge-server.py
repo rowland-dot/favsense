@@ -678,7 +678,7 @@ def parse_curation_pipeline_result(source: str) -> dict:
         or value.get("ok") is not True
         or value.get("outcome") != "ready_for_safe_build"
         or not isinstance(counts, dict)
-        or set(counts) != {"accepted", "pending", "rejected", "resource_pending"}
+        or set(counts) != {"accepted", "unavailable", "pending", "rejected", "resource_pending"}
         or any(not isinstance(item, int) or isinstance(item, bool) or item < 0 or item > 10_000_000 for item in counts.values())
     ):
         raise ValueError("curation result contract is invalid")

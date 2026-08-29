@@ -11,6 +11,7 @@ import { prepareReview } from "../scripts/prepare-curation-review.mjs";
 import {
   acceptedRevisionsCurrent,
   currentFormalRevisions,
+  formalCurationDecision,
   isPublishableCuration,
   loadFormalPointSummary,
   publicEvidenceStatus
@@ -568,7 +569,7 @@ test("producer evidence must be successful, revision-bound, and tool-versioned t
   }
 });
 
-test("successful revision-bound OCR evidence prepares and merges as image_ocr", () => {
+test("successful revision-bound video frame OCR prepares and merges as image_ocr", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-formal-ocr-evidence-"));
   const noteId = "d".repeat(24);
   const contentSha256 = "a".repeat(64);
@@ -583,7 +584,7 @@ test("successful revision-bound OCR evidence prepares and merges as image_ocr", 
     kind: "Note"
   };
   const catalog = { notes: { [noteId]: {
-    type: "图文",
+    type: "视频",
     title: "具体图文标题",
     description: "当前公开简介",
     content_sha256: contentSha256,
@@ -987,7 +988,7 @@ test("review merge publishes only accepted candidates and keeps pending work pri
   });
   assert.deepEqual(Object.keys(merged.curation), ["accepted"]);
   assert.equal(merged.audit.notes.pending.status, "pending");
-  assert.deepEqual(merged.counts, { accepted: 1, pending: 1, rejected: 0 });
+  assert.deepEqual(merged.counts, { accepted: 1, unavailable: 0, pending: 1, rejected: 0 });
   const current = currentFormalRevisions(
     { content_sha256: "a".repeat(64) },
     merged.curation.accepted
@@ -1312,7 +1313,7 @@ test("review merge validates status first, stores bounded non-accepted skeletons
       }
     ] }
   });
-  assert.deepEqual(merged.counts, { accepted: 0, pending: 1, rejected: 1 });
+  assert.deepEqual(merged.counts, { accepted: 0, unavailable: 0, pending: 1, rejected: 1 });
   assert.deepEqual(Object.keys(merged.curation), []);
   assert.deepEqual(merged.candidates.rejected, {
     title: "",
@@ -1363,6 +1364,82 @@ test("review merge validates status first, stores bounded non-accepted skeletons
       }
     }] }
   }), /pending final audit failed quality validation/);
+});
+
+test("an unavailable source is a completed unpublished terminal state", () => {
+  const unavailableAudit = {
+    status: "unavailable",
+    reviewed_at: "2026-08-29",
+    evidence_methods: ["description", "source_unavailable"],
+    comments_checked: false,
+    claims_supported: false,
+    resource_status: "not_applicable",
+    unresolved_facts: ["comments-unchecked"],
+    reason: "原帖当前不可访问，保留现有记录并结束补证。"
+  };
+  const input = {
+    catalog: { notes: { unavailable: {
+      type: "视频",
+      description: "此前保存的公开简介",
+      source_boards: ["主题甲"]
+    } } },
+    config: { boards: [{ name: "主题甲", category: "主题甲" }] },
+    resources: { resources: [] },
+    scopeIds: ["unavailable"],
+    curation: {},
+    audit: { notes: { unavailable: unavailableAudit } }
+  };
+
+  const quality = auditCuration(input);
+  assert.equal(quality.fatal.length, 0);
+  assert.deepEqual(quality.report.totals, {
+    scoped: 1, accepted: 0, unavailable: 1, pending: 0, rejected: 0, invalid: 0
+  });
+  assert.deepEqual(formalCurationDecision({
+    publishable: false,
+    auditEntry: unavailableAudit
+  }), {
+    accepted: false,
+    reason_code: "source_unavailable",
+    summary_source: "metadata",
+    content_sha256: "",
+    evidence_sha256: "",
+    resource_ids: []
+  });
+  assert.deepEqual(publicEvidenceStatus("unavailable", input.audit), {
+    method: "原帖当前不可访问，已保留此前记录并结束补证",
+    locallyAvailable: false
+  });
+
+  const merged = mergeResults({
+    catalog: input.catalog,
+    config: input.config,
+    resources: input.resources,
+    scope: { note_ids: ["unavailable"] },
+    candidates: { unavailable: { title: "保留的旧记录" } },
+    audit: { notes: {} },
+    curation: { unavailable: { summary: "must be removed" } },
+    review: { items: [{
+      note_id: "unavailable",
+      candidate: { title: "保留的旧记录" },
+      audit: unavailableAudit
+    }] }
+  });
+  assert.deepEqual(merged.counts, {
+    accepted: 0, unavailable: 1, pending: 0, rejected: 0
+  });
+  assert.equal(merged.audit.notes.unavailable.status, "unavailable");
+  assert.equal(Object.hasOwn(merged.curation, "unavailable"), false);
+
+  const initialized = initializeAudit({
+    items: [{
+      note_id: "unavailable",
+      public_text: "原帖重新进入普通证据准备",
+      blockers: ["comments-unchecked"],
+      tool_checks: []
+    }]
+  }, merged.audit, merged.curation, "2026-08-30");
+  assert.equal(initialized.notes.unavailable.status, "unavailable");
 });
 
 test("review merge preserves an explained category override", () => {
@@ -1425,6 +1502,7 @@ test("curation merge CLI recovers a mid-participant crash before reading live in
     assert.deepEqual(JSON.parse(result.stdout), {
       ok: true,
       accepted: 0,
+      unavailable: 0,
       pending: 0,
       rejected: 1
     });
@@ -1595,6 +1673,10 @@ test("accepted audit is exposed as verified without leaking private evidence", (
   const audit = { notes: { current: { status: "accepted", evidence_methods: ["audio_transcript", "comments"] } } };
   assert.deepEqual(publicEvidenceStatus("current", audit, false, true), {
     method: "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+    locallyAvailable: true
+  });
+  assert.deepEqual(publicEvidenceStatus("current", audit, true, true), {
+    method: "已结合本地视频证据核验内容",
     locallyAvailable: true
   });
 });

@@ -31,7 +31,7 @@ function exactReviewSet(review, candidates) {
   const actual = review.map((item) => clean(item?.id)).sort();
   if (actual.length !== expected.length || new Set(actual).size !== actual.length || actual.join("\n") !== expected.join("\n")) throw new Error("CURATION_REVIEW_SCOPE_INVALID");
   for (const item of review) {
-    if (!item || typeof item !== "object" || Array.isArray(item) || !["accepted", "pending", "rejected"].includes(item.status)) throw new Error("CURATION_REVIEW_INVALID");
+    if (!item || typeof item !== "object" || Array.isArray(item) || !["accepted", "unavailable", "pending", "rejected"].includes(item.status)) throw new Error("CURATION_REVIEW_INVALID");
   }
   return review;
 }
@@ -92,8 +92,11 @@ export async function runCurationPipeline(input = {}, hooks = {}) {
       verification_snapshot_sha256: resource.verification_snapshot_sha256,
       resource_fresh: resource.status === "verified",
     };
-    if (previous && acceptedRevisionsCurrent(auditNotes[candidate.id], current)) passthrough.push({ id: candidate.id, status: "accepted", reason_code: "" });
-    else remaining.push(candidate);
+    if (auditNotes[candidate.id]?.status === "unavailable") {
+      passthrough.push({ id: candidate.id, status: "unavailable", reason_code: "source_unavailable" });
+    } else if (previous && acceptedRevisionsCurrent(auditNotes[candidate.id], current)) {
+      passthrough.push({ id: candidate.id, status: "accepted", reason_code: "" });
+    } else remaining.push(candidate);
   }
   const supplied = typeof hooks.review === "function"
     ? exactReviewSet(await hooks.review(remaining, packets), remaining)
@@ -105,9 +108,10 @@ export async function runCurationPipeline(input = {}, hooks = {}) {
     return [candidate.id, { ...candidate, review_status: decision.status, review_reason_code: decision.reason_code || "" }];
   }));
   stage("validate");
-  const counts = { accepted: 0, pending: 0, rejected: 0, resource_pending: 0 };
+  const counts = { accepted: 0, unavailable: 0, pending: 0, rejected: 0, resource_pending: 0 };
   for (const entry of Object.values(curation)) {
     if (entry.review_status === "accepted") counts.accepted += 1;
+    else if (entry.review_status === "unavailable") counts.unavailable += 1;
     else if (entry.review_status === "rejected") counts.rejected += 1;
     else counts.pending += 1;
     if (entry.resource_assessment.status !== "verified" && entry.tools.length) counts.resource_pending += 1;

@@ -71,6 +71,7 @@ export function initializeAudit(review, existingAudit, curation, reviewedAt) {
     const sameCurationRevision = Object.hasOwn(curation, item.note_id)
       && /^[a-f0-9]{64}$/.test(String(existing?.curation_sha256 || ""))
       && existing.curation_sha256 === curationRevision(curation[item.note_id]);
+    if (existing?.status === "unavailable") continue;
     if (existing?.status === "accepted" && sameCurationRevision && sameDiandianRevision) continue;
     notes[item.note_id] = pendingRecord(item, reviewedAt);
   }
@@ -89,7 +90,7 @@ function main() {
   fs.mkdirSync(path.dirname(output), { recursive: true });
   fs.writeFileSync(output, `${JSON.stringify(result, null, 2)}\n`, "utf8");
   const scoped = new Set(readJson(options.review, "review").items.map((item) => item.note_id));
-  const counts = { accepted: 0, pending: 0, rejected: 0 };
+  const counts = { accepted: 0, unavailable: 0, pending: 0, rejected: 0 };
   for (const [noteId, note] of Object.entries(result.notes)) if (scoped.has(noteId) && counts[note.status] !== undefined) counts[note.status] += 1;
   process.stdout.write(`${JSON.stringify(counts)}\n`);
 }

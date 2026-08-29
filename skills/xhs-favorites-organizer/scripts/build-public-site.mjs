@@ -357,7 +357,9 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const summaryReasonCode = runState?.summaryReasonCode || formalSummaryReasonCode;
   const curationStatus = formalDecision.accepted
     ? "accepted"
-    : (auditEntry?.status === "rejected" ? "rejected" : "pending_review");
+    : (auditEntry?.status === "rejected"
+        ? "rejected"
+        : (auditEntry?.status === "unavailable" ? "unavailable" : "pending_review"));
   const projectedKind = formalContentKind(
     profile,
     candidateKind === "Skill" ? candidateKind : classify(entry, matchedResources),
@@ -398,7 +400,9 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     summaryState,
     summaryReasonCode,
     ...(candidateKind === "Skill" && projectedKind !== "Skill" ? { candidateKind } : {}),
-    reviewedAt: formalDecision.accepted ? String(auditEntry?.reviewed_at || "") : "",
+    reviewedAt: formalDecision.accepted || auditEntry?.status === "unavailable"
+      ? String(auditEntry?.reviewed_at || "")
+      : "",
     action: String(entry.action || "").trim(),
     tools: projectedTools,
     kind: projectedKind,

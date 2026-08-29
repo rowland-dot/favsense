@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-08-04",
+  "verified_at": "2026-08-29",
   "resources": [
     {
       "name": "AnySearch Skill",
@@ -924,6 +924,171 @@
       "stars": "官方网站",
       "usage_note": "AI 原生应用部署与托管产品。先用不含密钥和私人数据的小型项目试跑；浏览器授权前核对项目名和部署类型，并在正式采用前确认多服务、后台任务、数据服务、GPU、扩展性和 SLA 限制。",
       "verified_at": "2026-08-26"
+    },
+    {
+      "id": "github-dietrichgebert-ponytail",
+      "name": "ponytail",
+      "aliases": [
+        "Ponytail",
+        "马尾辫",
+        "马尾辫 Skill",
+        "RedSkill"
+      ],
+      "type": "Agent Skill",
+      "canonical_repo": "DietrichGebert/ponytail",
+      "repo": "https://github.com/DietrichGebert/ponytail",
+      "download": "https://github.com/DietrichGebert/ponytail/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "skill_manifest": "skills/ponytail/SKILL.md",
+      "verified_at": "2026-08-27",
+      "stars_numeric": 112054,
+      "compatibility": [
+        "Claude Code",
+        "Codex"
+      ],
+      "compatibility_evidence": [
+        "README.md"
+      ],
+      "status": "verified",
+      "usage_note": "先审查插件 hooks 与 Node 依赖，再在测试分支用同一任务对比代码量、正确性和测试完整性；94% 是官方基准中的单任务上限，不是普遍保证。",
+      "source_urls": [
+        "https://github.com/DietrichGebert/ponytail",
+        "https://github.com/DietrichGebert/ponytail/blob/main/README.md",
+        "https://github.com/DietrichGebert/ponytail/blob/main/skills/ponytail/SKILL.md",
+        "https://github.com/DietrichGebert/ponytail/blob/main/LICENSE",
+        "https://github.com/DietrichGebert/ponytail/archive/refs/heads/main.zip"
+      ],
+      "resource_identity_sha256": "0622f3727afcd034fc4eb5133479391764e2436706896483e11925cf3f14992b",
+      "verification_snapshot_sha256": "8b3c9523d5a2db08d417666d0c1d4963fd91467daf9f131068eab7fc0c093ab5"
+    },
+    {
+      "name": "Pixelle-Video",
+      "aliases": [
+        "PixelleVideo"
+      ],
+      "type": "开源 AI 视频生成工具",
+      "canonical_repo": "ATH-MaaS/Pixelle-Video",
+      "default_branch": "main",
+      "repo": "https://github.com/ATH-MaaS/Pixelle-Video",
+      "download": "https://github.com/ATH-MaaS/Pixelle-Video/archive/refs/heads/main.zip",
+      "releases": "https://github.com/ATH-MaaS/Pixelle-Video/releases",
+      "license": "Apache-2.0",
+      "verified_at": "2026-08-27",
+      "stars_numeric": 27337,
+      "status": "verified",
+      "usage_note": "Apache-2.0；会调用第三方模型、TTS、图像或视频服务。只用测试凭据和自有素材，先核对供应商费用、素材版权、网络访问与本地缓存。",
+      "source_urls": [
+        "https://github.com/ATH-MaaS/Pixelle-Video",
+        "https://github.com/ATH-MaaS/Pixelle-Video/blob/main/README.md",
+        "https://github.com/ATH-MaaS/Pixelle-Video/blob/main/LICENSE",
+        "https://github.com/ATH-MaaS/Pixelle-Video/releases",
+        "https://github.com/ATH-MaaS/Pixelle-Video/archive/refs/heads/main.zip"
+      ]
+    },
+    {
+      "id": "github-firecrawl-anydoc",
+      "name": "anydoc",
+      "aliases": [
+        "anydoc",
+        "convert-documents-to-markdown"
+      ],
+      "type": "Agent Skill",
+      "canonical_repo": "firecrawl/anydoc",
+      "repo": "https://github.com/firecrawl/anydoc",
+      "download": "https://github.com/firecrawl/anydoc/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "skill_manifest": "skills/convert-documents-to-markdown/SKILL.md",
+      "verified_at": "2026-08-27",
+      "stars_numeric": 18538,
+      "compatibility": [
+        "Claude Code",
+        "Codex"
+      ],
+      "compatibility_evidence": [
+        "README.md"
+      ],
+      "status": "verified",
+      "usage_note": "MIT；首次 npx 使用会下载预编译包。扫描或纯图片 PDF 不受本地转换支持，需要另行受控文字识别；先用无敏感内容的样本文档验证格式保真。",
+      "source_urls": [
+        "https://github.com/firecrawl/anydoc",
+        "https://github.com/firecrawl/anydoc/blob/main/README.md",
+        "https://github.com/firecrawl/anydoc/blob/main/skills/convert-documents-to-markdown/SKILL.md",
+        "https://github.com/firecrawl/anydoc/blob/main/LICENSE",
+        "https://github.com/firecrawl/anydoc/archive/refs/heads/main.zip"
+      ],
+      "resource_identity_sha256": "05761bf19e87d44199be6c63616571e1499025edb623f20d1f6a035eeee896f6",
+      "verification_snapshot_sha256": "3e9cc580dba0d83b2a466f8e40631f8a4aaa48c4ecab1cc2bfc8451e91761d6b"
+    },
+    {
+      "name": "MoneyPrinterTurbo",
+      "aliases": [
+        "印钞机",
+        "Money Printer Turbo"
+      ],
+      "type": "开源 AI 视频生成工具",
+      "canonical_repo": "harry0703/MoneyPrinterTurbo",
+      "default_branch": "main",
+      "repo": "https://github.com/harry0703/MoneyPrinterTurbo",
+      "download": "https://github.com/harry0703/MoneyPrinterTurbo/archive/refs/heads/main.zip",
+      "releases": "https://github.com/harry0703/MoneyPrinterTurbo/releases",
+      "license": "MIT",
+      "verified_at": "2026-08-28",
+      "stars_numeric": 117620,
+      "status": "verified",
+      "usage_note": "项目会调用文本、语音和素材服务生成视频；只用自有或已授权素材，在隔离环境审查第三方 API、凭据、网络访问、缓存与输出版权，不采信批量产量或收益承诺。",
+      "source_urls": [
+        "https://github.com/harry0703/MoneyPrinterTurbo",
+        "https://github.com/harry0703/MoneyPrinterTurbo/blob/main/README.md",
+        "https://github.com/harry0703/MoneyPrinterTurbo/blob/main/LICENSE",
+        "https://github.com/harry0703/MoneyPrinterTurbo/releases",
+        "https://github.com/harry0703/MoneyPrinterTurbo/archive/refs/heads/main.zip"
+      ]
+    },
+    {
+      "name": "TrendRadar",
+      "aliases": [
+        "Trend Radar"
+      ],
+      "type": "热点聚合与舆情监控工具",
+      "canonical_repo": "sansan0/TrendRadar",
+      "default_branch": "master",
+      "repo": "https://github.com/sansan0/TrendRadar",
+      "download": "https://github.com/sansan0/TrendRadar/archive/refs/heads/master.zip",
+      "license": "GPL-3.0",
+      "verified_at": "2026-08-29",
+      "stars_numeric": 61897,
+      "status": "verified",
+      "usage_note": "GPL-3.0；支持多平台热点、RSS、AI 分析和多种推送渠道。启用前只配置必要来源，审查第三方模型、消息推送、邮箱和 MCP 的凭据与数据外发范围。",
+      "source_urls": [
+        "https://github.com/sansan0/TrendRadar",
+        "https://github.com/sansan0/TrendRadar/blob/master/README.md",
+        "https://github.com/sansan0/TrendRadar/blob/master/LICENSE",
+        "https://github.com/sansan0/TrendRadar/archive/refs/heads/master.zip"
+      ]
+    },
+    {
+      "name": "speech-to-speech",
+      "aliases": [
+        "Hugging Face speech-to-speech"
+      ],
+      "type": "本地语音 Agent 框架",
+      "canonical_repo": "huggingface/speech-to-speech",
+      "default_branch": "main",
+      "repo": "https://github.com/huggingface/speech-to-speech",
+      "download": "https://github.com/huggingface/speech-to-speech/archive/refs/heads/main.zip",
+      "releases": "https://github.com/huggingface/speech-to-speech/releases",
+      "license": "Apache-2.0",
+      "verified_at": "2026-08-29",
+      "stars_numeric": 12919,
+      "status": "verified",
+      "usage_note": "Apache-2.0；本地语音 Agent 由 VAD、语音识别、语言模型和语音合成组成。使用前核对模型下载、麦克风、网络后端、显存与语音数据留存范围。",
+      "source_urls": [
+        "https://github.com/huggingface/speech-to-speech",
+        "https://github.com/huggingface/speech-to-speech/blob/main/README.md",
+        "https://github.com/huggingface/speech-to-speech/blob/main/LICENSE",
+        "https://github.com/huggingface/speech-to-speech/releases",
+        "https://github.com/huggingface/speech-to-speech/archive/refs/heads/main.zip"
+      ]
     }
   ]
 }

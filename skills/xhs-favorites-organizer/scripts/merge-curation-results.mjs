@@ -18,7 +18,7 @@ import { executeJournaledTransaction, recoverJournaledTransaction } from "./jour
 import { acquireOrganizationMutationLock } from "./organization-mutation-lock.mjs";
 
 const NOTE_ID = /^[A-Za-z0-9_-]{1,128}$/;
-const ALLOWED_STATUS = new Set(["accepted", "pending", "rejected"]);
+const ALLOWED_STATUS = new Set(["accepted", "unavailable", "pending", "rejected"]);
 const JOURNAL_NAME = /^\.organization-tx-(curation-review-[A-Za-z0-9_-]{1,63})$/;
 const LEGACY_STAGING_NAME = /^\.curation-review-staging-[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const SAFE_CLI_ERRORS = new Set([
@@ -135,6 +135,9 @@ function validateAudit(value) {
   if (clean(value.diandian_summary_sha256)) result.diandian_summary_sha256 = clean(value.diandian_summary_sha256);
   if (status === "accepted" && unresolved.length) throw new Error("accepted audit cannot contain unresolved facts");
   if (status === "pending" && !result.reason && !unresolved.length) throw new Error("pending audit requires a reason or unresolved fact");
+  if (status === "unavailable" && (!result.reason || !methods.includes("source_unavailable"))) {
+    throw new Error("unavailable audit requires source-unavailable evidence and a reason");
+  }
   if (containsCredentialShape(result)) throw new Error("audit contains private source data");
   return result;
 }
@@ -312,7 +315,7 @@ export function mergeResults({
   if (requirePacketBinding && evidenceById.size !== scopeIds.size) {
     throw new Error("review packet set does not match the review scope");
   }
-  const counts = { accepted: 0, pending: 0, rejected: 0 };
+  const counts = { accepted: 0, unavailable: 0, pending: 0, rejected: 0 };
   for (const item of items) {
     const noteId = clean(item?.note_id);
     if (!NOTE_ID.test(noteId) || !catalogIds.has(noteId) || !scopeIds.has(noteId)) throw new Error("review contains an unknown, invalid, or out-of-scope note ID");

@@ -265,6 +265,7 @@ export function formalContentKind(profile, candidateKind, accepted = false) {
 
 function revisionReason(auditEntry, current) {
   if (auditEntry?.status === "rejected") return "audit_rejected";
+  if (auditEntry?.status === "unavailable") return "source_unavailable";
   if (!auditEntry || auditEntry.status !== "accepted") return "audit_pending";
   if (auditEntry.content_sha256 !== current?.content_sha256) return "content_changed";
   if (auditEntry.evidence_sha256 !== current?.evidence_sha256) return "evidence_changed";
@@ -279,9 +280,12 @@ export function formalCurationDecision({
   kind = "",
   resource = null,
 } = {}) {
+  const baseReason = auditEntry?.status === "rejected"
+    ? "audit_rejected"
+    : (auditEntry?.status === "unavailable" ? "source_unavailable" : "audit_pending");
   const base = {
     accepted: false,
-    reason_code: auditEntry?.status === "rejected" ? "audit_rejected" : "audit_pending",
+    reason_code: baseReason,
     summary_source: "metadata",
     content_sha256: clean(currentRevisions?.content_sha256),
     evidence_sha256: clean(currentRevisions?.evidence_sha256),
@@ -314,6 +318,18 @@ export function formalCurationDecision({
 }
 
 export function publicEvidenceStatus(noteId, audit, isFrameVerified = false, acceptedAuditIsCurrent = false) {
+  if (audit?.notes?.[noteId]?.status === "unavailable") {
+    return {
+      method: "原帖当前不可访问，已保留此前记录并结束补证",
+      locallyAvailable: false
+    };
+  }
+  if (isFrameVerified) {
+    return {
+      method: "已结合本地视频证据核验内容",
+      locallyAvailable: true
+    };
+  }
   if (acceptedAuditIsCurrent) {
     return {
       method: "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
@@ -321,9 +337,7 @@ export function publicEvidenceStatus(noteId, audit, isFrameVerified = false, acc
     };
   }
   return {
-    method: isFrameVerified
-      ? "已结合本地视频证据核验内容"
-      : "目前依据原帖公开文字整理，媒体内容尚未完整解读",
-    locallyAvailable: Boolean(isFrameVerified)
+    method: "目前依据原帖公开文字整理，媒体内容尚未完整解读",
+    locallyAvailable: false
   };
 }

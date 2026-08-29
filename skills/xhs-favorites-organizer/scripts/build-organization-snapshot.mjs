@@ -182,7 +182,7 @@ export function effectiveCuration(current, bundle) {
   ) throw new Error("SNAPSHOT_CURATION_BUNDLE_INVALID");
   const result = Object.fromEntries(Object.entries(current).filter(([id]) => safeId(id)));
   for (const [id, entry] of Object.entries(bundle.curation)) {
-    if (!safeId(id) || !entry || typeof entry !== "object" || Array.isArray(entry) || !["accepted", "pending", "rejected"].includes(entry.review_status)) {
+    if (!safeId(id) || !entry || typeof entry !== "object" || Array.isArray(entry) || !["accepted", "unavailable", "pending", "rejected"].includes(entry.review_status)) {
       throw new Error("SNAPSHOT_CURATION_BUNDLE_INVALID");
     }
     if (entry.review_status === "accepted") result[id] = entry;

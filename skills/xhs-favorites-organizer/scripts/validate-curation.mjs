@@ -15,7 +15,7 @@ const GENERIC_TEXT = [
 ];
 const EVIDENCE_METHODS = new Set([
   "description", "comments", "audio_transcript", "visual_ocr", "image_ocr", "image_review",
-  "video_analysis", "diandian_summary", "official_source"
+  "video_analysis", "diandian_summary", "official_source", "source_unavailable"
 ]);
 
 function clean(value) {
@@ -90,7 +90,7 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
   const report = {
     version: 1,
     scope: requestedIds ? { mode: "explicit-note-ids", requested: requestedIds.length } : { mode: "published-date", from, to },
-    totals: { scoped: scoped.length, accepted: 0, pending: 0, rejected: 0, invalid: 0 },
+    totals: { scoped: scoped.length, accepted: 0, unavailable: 0, pending: 0, rejected: 0, invalid: 0 },
     notes: {}
   };
   const fatal = [];
@@ -113,7 +113,7 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
       continue;
     }
     const status = clean(review.status);
-    if (!["accepted", "pending", "rejected"].includes(status)) errors.push("status-invalid");
+    if (!["accepted", "unavailable", "pending", "rejected"].includes(status)) errors.push("status-invalid");
     if (!ISO_DATE.test(clean(review.reviewed_at))) errors.push("reviewed-at-missing");
     const methods = Array.isArray(review.evidence_methods) ? [...new Set(review.evidence_methods.map(clean).filter(Boolean))] : [];
     for (const method of methods) if (!EVIDENCE_METHODS.has(method)) errors.push(`evidence-method-invalid:${method}`);
@@ -130,7 +130,7 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
       }
       if (review.claims_supported !== true) errors.push("claims-not-supported");
       if ((review.unresolved_facts || []).length) errors.push("accepted-has-unresolved-facts");
-      if (note.type === "视频" && !methods.some((method) => ["audio_transcript", "visual_ocr", "video_analysis", "diandian_summary"].includes(method))) {
+      if (note.type === "视频" && !methods.some((method) => ["audio_transcript", "visual_ocr", "image_ocr", "video_analysis", "diandian_summary"].includes(method))) {
         errors.push("video-body-evidence-missing");
       }
       if (note.type === "图文" && !methods.some((method) => ["image_ocr", "image_review", "diandian_summary"].includes(method))) {
@@ -161,6 +161,9 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
     } else {
       if (!clean(review.reason)) errors.push(`${status}-reason-missing`);
       if (entry) errors.push(`${status}-must-not-be-published`);
+      if (status === "unavailable" && !methods.includes("source_unavailable")) {
+        errors.push("source-unavailable-method-missing");
+      }
     }
 
     const finalStatus = errors.length ? "invalid" : status;
