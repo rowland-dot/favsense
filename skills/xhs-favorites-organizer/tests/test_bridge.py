@@ -2808,6 +2808,17 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 self.assertIn("核心整理结果已保留", status["error"])
                 self.assertNotEqual(status["error"], BRIDGE.DIANDIAN_HALT_DIAGNOSTICS["transport-failed"])
 
+    def test_share_step_halt_messages_never_ask_for_the_foreground(self):
+        # A run must finish with the scan browser behind other windows, so no
+        # stop message may tell the operator to bring it to the front.
+        for reason in (
+            "share-control-timeout",
+            "share-menu-timeout",
+            "share-service-request-failed",
+        ):
+            with self.subTest(reason=reason):
+                self.assertNotIn("前台", BRIDGE.DIANDIAN_HALT_DIAGNOSTICS[reason])
+
     def test_userscript_halt_endpoint_preserves_a_strict_non_safety_reason(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

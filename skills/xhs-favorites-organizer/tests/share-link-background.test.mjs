@@ -195,6 +195,15 @@ test("a failed request to the local sync service during the share click stops wi
   }
 });
 
+test("the userscript version is newer than the release that shipped the foreground wording", async () => {
+  // The script has no update URL, so the fix only reaches users if Tampermonkey sees a higher version.
+  const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
+  const version = template.match(/^\/\/ @version\s+(\S+)$/m)?.[1].split(".").map(Number);
+  const shipped = [3, 0, 2];
+  const newer = version.findIndex((part, i) => part !== shipped[i]);
+  assert.ok(newer !== -1 && version[newer] > shipped[newer], `@version ${version.join(".")} must exceed 3.0.2`);
+});
+
 test("a safety stop reported by the local sync service is not relabelled as a service failure", async () => {
   const worker = await runShareWorker({ clickReply: { status: 500, body: { ok: false, error: "xhs-safety-stop" } } });
   const result = await worker.requestCopy();

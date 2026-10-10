@@ -4814,7 +4814,7 @@ test("long board IDs derive collision-resistant run IDs consistently", async () 
 
 test("userscript metadata identifies the exact-note workflow release", async () => {
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  assert.equal(template.match(/^\/\/ @version\s+(\S+)$/m)?.[1], "3.0.2");
+  assert.equal(template.match(/^\/\/ @version\s+(\S+)$/m)?.[1], "3.0.3");
 });
 
 test("userscript metadata covers the exact Xiaohongshu page opened by setup", async () => {

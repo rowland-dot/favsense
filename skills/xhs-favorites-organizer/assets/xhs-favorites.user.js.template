@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小红书收藏知识库按需整理
 // @namespace    local.xhs-favorites-organizer
-// @version      3.0.2
+// @version      3.0.3
 // @description  用户主动触发后，刷新收藏夹、按需调用点点 AI 深度总结，再整理到本地知识库
 // @match        https://www.xiaohongshu.com/board/*
 // @match        https://www.xiaohongshu.com/user/profile/*
