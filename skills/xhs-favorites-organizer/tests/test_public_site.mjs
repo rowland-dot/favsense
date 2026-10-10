@@ -4242,7 +4242,8 @@ async function runMountedCdpController({
   endpointResponse,
   endpointStatus = 200,
   channelUnavailable = false,
-  shareFailure = false
+  shareFailure = false,
+  shareFailureCode = "share-link-unavailable"
 } = {}) {
   const contract = structuredClone(TEST_DIANDIAN_CONTRACT);
   contract.cdp_enabled = true;
@@ -4276,7 +4277,7 @@ async function runMountedCdpController({
       });
       if (message.type === "share-probe") respond({ type: "share-ready" });
       if (message.type === "copy-link") respond(shareFailure
-        ? { type: "share-failed", error: "share-link-unavailable" }
+        ? { type: "share-failed", error: shareFailureCode }
         : {
             type: "share-link",
             url: `https://www.xiaohongshu.com/discovery/item/${message.note_id}?xsec_token=private-${message.note_id}&xsec_source=pc_share`
@@ -4504,6 +4505,17 @@ test("CDP mode keeps a failed source tab open and durably halts before posting a
   );
   assert.equal(result.openedTabs.length, 1, "the next source note must not open");
   assert.equal(result.openedTabs[0].closed, false, "the failed source tab must remain for diagnosis");
+});
+
+test("CDP mode reports the specific share step that failed instead of a generic transport failure", async () => {
+  for (const code of ["share-control-timeout", "share-menu-timeout", "share-service-request-failed"]) {
+    const result = await runMountedCdpController({ shareFailure: true, shareFailureCode: code });
+    assert.deepEqual({ ...result.result }, { saved: 0, skipped: 0, halted: true, reason: code });
+    assert.deepEqual(
+      result.requests.filter((request) => request.pathname === "/sync/diandian-halt").map((request) => request.body.reason),
+      [code]
+    );
+  }
 });
 
 test("CDP mode omits the AI match and cannot start the page worker defensively", async () => {

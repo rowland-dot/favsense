@@ -2772,6 +2772,42 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             report = json.loads(bridge.diandian_report_path.read_text(encoding="utf-8"))
             self.assertEqual({entry["note_id"] for entry in report["unresolved"]}, {current_id, remaining_id})
 
+    def test_userscript_halt_endpoint_names_each_failed_share_step(self):
+        for reason in (
+            "share-control-timeout",
+            "share-menu-timeout",
+            "share-service-request-failed",
+        ):
+            with self.subTest(reason=reason), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                note_id = "y" * 24
+                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+                bridge.state_dir = root
+                bridge.manual_sync_path = root / "manual-sync.json"
+                bridge.diandian_report_path = root / "diandian-rerun-report.json"
+                bridge.boards = {"board": "Board"}
+                bridge.summary_plans = {"manual_board": {note_id}}
+                BRIDGE.atomic_json(bridge.manual_sync_path, {
+                    "batch": "manual",
+                    "state": "running",
+                    "run_board_ids": ["board"],
+                    "summary_pending": 1,
+                    "summary_failed": 0,
+                })
+
+                result = bridge.halt_diandian_run({
+                    "run_id": "manual_board",
+                    "board_id": "board",
+                    "reason": reason,
+                    "note_id": note_id,
+                })
+                status = bridge.manual_sync_status()
+
+                self.assertEqual(result["reason"], reason)
+                self.assertEqual(status["summary_halt_reason"], reason)
+                self.assertIn("核心整理结果已保留", status["error"])
+                self.assertNotEqual(status["error"], BRIDGE.DIANDIAN_HALT_DIAGNOSTICS["transport-failed"])
+
     def test_userscript_halt_endpoint_preserves_a_strict_non_safety_reason(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
