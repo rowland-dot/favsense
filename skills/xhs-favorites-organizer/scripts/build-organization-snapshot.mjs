@@ -191,6 +191,12 @@ export function effectiveCuration(current, bundle) {
   return result;
 }
 
+// The sealed candidate of every scoped note that is not accepted. The formal curation drops them, but
+// the builders still need each one's sealed kind and revisions to say why the note is not accepted.
+export function unacceptedCandidates(bundle) {
+  return Object.fromEntries(Object.entries(bundle?.curation || {}).filter(([, entry]) => entry?.review_status !== "accepted"));
+}
+
 export function curationGenerationDigest(formalSource, bundleSource) {
   const preimage = {
     schema_version: 1,
@@ -582,6 +588,7 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
     diandian: join(inputRoot, "diandian-summaries"),
     report: join(inputRoot, "diandian-rerun-report.json"),
     video: join(inputRoot, "video-analysis"),
+    candidates: join(inputRoot, "sealed-candidates.json"),
     audit: join(inputRoot, "curation-audit.json"),
     baseline: join(inputRoot, "curation-baseline.json"),
   };
@@ -623,6 +630,7 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
   }
   await writeFile(paths.config, `${JSON.stringify(config)}\n`, { encoding: "utf8", flag: "wx" });
   await writeFile(paths.curation, `${JSON.stringify(effectiveCurationValue)}\n`, { encoding: "utf8", flag: "wx" });
+  await writeFile(paths.candidates, `${JSON.stringify(unacceptedCandidates(JSON.parse(captured.bundleSource.toString("utf8"))))}\n`, { encoding: "utf8", flag: "wx" });
   const promptVersion = entries.get("diandian-prompt-version");
   return {
     ...paths,
@@ -721,12 +729,12 @@ async function runCli() {
       },
       buildKnowledgeBase: async ({ target, buildVersion }) => {
         const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate, ...(frozen.promptVersion ? ["--diandian-prompt-version", frozen.promptVersion] : [])];
-        runBuilder(join(scriptDir, "build-knowledge-base.mjs"), [...shared, "--output", target, "--diandian-dir", frozen.diandian, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
+        runBuilder(join(scriptDir, "build-knowledge-base.mjs"), ["--candidates", frozen.candidates, ...shared, "--output", target, "--diandian-dir", frozen.diandian, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
         await writeFile(join(target, "build.json"), `${JSON.stringify({ schema_version: 1, build_version: buildVersion })}\n`, "utf8");
       },
       buildPublicSite: async ({ target, buildVersion }) => {
         const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate, ...(frozen.promptVersion ? ["--diandian-prompt-version", frozen.promptVersion] : [])];
-        runBuilder(join(scriptDir, "build-public-site.mjs"), [...shared, "--output", target, "--build-version", buildVersion, "--diandian-dir", frozen.diandian, "--diandian-report", frozen.report, "--video-analysis", frozen.video, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
+        runBuilder(join(scriptDir, "build-public-site.mjs"), ["--candidates", frozen.candidates, ...shared, "--output", target, "--build-version", buildVersion, "--diandian-dir", frozen.diandian, "--diandian-report", frozen.report, "--video-analysis", frozen.video, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
       },
     });
     process.stdout.write(`${JSON.stringify(result)}\n`);

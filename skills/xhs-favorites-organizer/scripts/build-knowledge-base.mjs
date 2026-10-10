@@ -13,6 +13,7 @@ import {
   isPublishableCuration,
   loadCurationAudit,
   loadFormalPointSummary,
+  sealedCandidateFor,
 } from "./curation-quality.mjs";
 import { confirmedSkillResource } from "./resource-quality.mjs";
 
@@ -637,6 +638,7 @@ function main() {
   const catalog = readJson(options.catalog, "catalog");
   const config = readJson(options.config, "config");
   const curated = readJson(options.curation, "curation");
+  const sealedCandidates = options.candidates ? readJson(options.candidates, "sealed candidates") : {};
   const profilePath = options.profile
     ? path.resolve(options.profile)
     : path.resolve(workspace, config.domain_profile || "config/domain-profiles/software.json");
@@ -680,7 +682,9 @@ function main() {
     : "";
   const notes = Object.entries(catalog.notes ?? {}).map(([id, note]) => {
     const hasCuration = Object.hasOwn(curated, id);
-    const candidateEntry = hasCuration ? curated[id] : fallback(note, profile);
+    const candidateEntry = hasCuration
+      ? curated[id]
+      : (sealedCandidateFor(sealedCandidates, id) ?? fallback(note, profile));
     const candidateKind = clean(candidateEntry.kind || profile.fallback?.default_kind || profile.classification?.default || "Note");
     const matchingResources = (candidateEntry.tools || [])
       .map((tool) => resourceByAlias.get(clean(tool).toLocaleLowerCase("zh-CN"))).filter(Boolean);

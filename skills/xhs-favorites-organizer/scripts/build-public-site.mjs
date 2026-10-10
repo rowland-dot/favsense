@@ -14,7 +14,8 @@ import {
   isPublishableCuration,
   loadFormalPointSummary,
   loadCurationAudit,
-  publicEvidenceStatus
+  publicEvidenceStatus,
+  sealedCandidateFor
 } from "./curation-quality.mjs";
 import { confirmedSkillResource } from "./resource-quality.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
@@ -67,6 +68,7 @@ const paths = {
   resources: arg("resources", configuredPath(resourceIndex.registry_file, "skills/xhs-favorites-organizer/references/software-resources.json")),
   videoAnalysis: arg("video-analysis", resolve(workspace, ".xhs-favorites/video-analysis")),
   diandian: arg("diandian-dir", resolve(workspace, ".xhs-favorites/diandian-summaries")),
+  candidates: arg("candidates", ""),
   diandianReport: arg("diandian-report", resolve(workspace, ".xhs-favorites/diandian-rerun-report.json")),
   output: arg("output", resolve(workspace, "site/data/knowledge.json"))
 };
@@ -86,9 +88,10 @@ const effectiveDate = effectiveDateIndex >= 0 ? String(process.argv[effectiveDat
 const effectiveDateValue = new Date(`${effectiveDate}T00:00:00.000Z`);
 if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate) || Number.isNaN(effectiveDateValue.getTime()) || effectiveDateValue.toISOString().slice(0, 10) !== effectiveDate) throw new Error("--effective-date must be a real YYYY-MM-DD");
 
-const [catalog, curation] = await Promise.all([
+const [catalog, curation, sealedCandidates] = await Promise.all([
   parseJson(paths.catalog),
-  parseJson(paths.curation)
+  parseJson(paths.curation),
+  paths.candidates ? parseJson(paths.candidates) : {}
 ]);
 const {
   policy: curationQuality,
@@ -302,7 +305,9 @@ const evidenceStats = await collectVideoEvidenceStats(paths.videoAnalysis, confi
 const frameVerifiedNoteIds = new Set(evidenceStats.verifiedNoteIds);
 const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const hasCuration = Object.hasOwn(curation, noteId);
-  const candidateEntry = hasCuration ? curation[noteId] : fallbackEntry(raw);
+  const candidateEntry = hasCuration
+    ? curation[noteId]
+    : (sealedCandidateFor(sealedCandidates, noteId) ?? fallbackEntry(raw));
   const candidateResources = [...new Map((candidateEntry.tools || [])
     .map(resourceForTool).filter(Boolean).map((resource) => [resource.id, resource])).values()];
   const candidateKind = classify(candidateEntry, candidateResources);

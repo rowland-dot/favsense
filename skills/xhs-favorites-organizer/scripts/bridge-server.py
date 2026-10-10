@@ -6334,6 +6334,15 @@ class Bridge:
                 "result_sha256": hashlib.sha256(public_text.encode("utf-8")).hexdigest(),
             })
             point = self.saved_diandian_record(note_id)
+            # A summary saved after a note was reviewed is not new evidence for it: an accepted audit
+            # that never listed the summary is rebuilt without it, so its evidence version still matches.
+            audit_methods = audit_entry.get("evidence_methods") if isinstance(audit_entry, dict) else None
+            audit_used_summary = "diandian_summary" in (audit_methods if isinstance(audit_methods, list) else []) or any(
+                isinstance(dependency, dict) and dependency.get("method") == "diandian_summary"
+                for dependency in (audited_dependencies if isinstance(audited_dependencies, list) else [])
+            )
+            if isinstance(audit_entry, dict) and audit_entry.get("status") == "accepted" and not audit_used_summary:
+                point = None
             if point is not None:
                 methods.append({
                     "method": "diandian_summary", "provider": point["provider"],
