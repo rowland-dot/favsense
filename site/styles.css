@@ -352,6 +352,8 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .manual-sync-button:hover:not(:disabled) { transform: translateY(-1px); }
 .manual-sync-button:focus-visible { outline: 3px solid var(--cobalt-dark); outline-offset: 3px; }
 .manual-sync-button:disabled { cursor: wait; opacity: .55; }
+.manual-sync-actions { display: grid; gap: 8px; }
+.manual-sync-button.is-secondary { background: transparent; color: var(--ink); }
 @keyframes sync-pulse { 50% { transform: scale(.72); opacity: .6; } }
 @media (prefers-reduced-motion: reduce) { .manual-sync-control.is-running .manual-sync-label i { animation: none; } }
 .board-manager-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 20px; border-bottom: 1px solid var(--line); background: var(--surface-soft); }

@@ -183,6 +183,7 @@ const elements = {
   boardManagerStatus: document.querySelector("#board-manager-status"),
   manualSyncControl: document.querySelector("#manual-sync-control"),
   manualSyncStart: document.querySelector("#manual-sync-start"),
+  manualSyncLocalRebuild: document.querySelector("#manual-sync-local-rebuild"),
   manualSyncTitle: document.querySelector("#manual-sync-title"),
   manualSyncDetail: document.querySelector("#manual-sync-detail"),
   personalBookmarkCount: document.querySelector("#personal-bookmark-count"),
@@ -645,6 +646,8 @@ function renderManualSync(status = state.manualSync) {
   elements.manualSyncControl.classList.toggle("is-complete", completed);
   elements.manualSyncControl.classList.toggle("is-failed", failed || safetyStopped);
   elements.manualSyncStart.disabled = active || !sopBrowserReady();
+  elements.manualSyncLocalRebuild.disabled = active;
+  elements.manualSyncLocalRebuild.textContent = active && v2 && status.phases.core.status === "not_required" ? "重建中…" : "仅本地重建";
   elements.manualSyncStart.textContent = active
     ? "整理中…"
     : (safetyStopped ? "检查后重试" : (completed || failed ? "再次整理" : "开始整理"));
@@ -656,6 +659,8 @@ function renderManualSync(status = state.manualSync) {
     const phases = status.phases;
     if (safetyStopped) {
       elements.manualSyncTitle.textContent = copy.safety_stopped;
+    } else if (phases.core.status === "not_required" && active) {
+      elements.manualSyncTitle.textContent = copy.local_rebuild_running;
     } else if (phases.core.status === "running") {
       elements.manualSyncTitle.textContent = copy.core_running;
     } else if (phases.core.status === "not_started") {
@@ -676,12 +681,18 @@ function renderManualSync(status = state.manualSync) {
       elements.manualSyncTitle.textContent = copy.evidence_missing;
     } else if (phases.summary.status === "not_started") {
       elements.manualSyncTitle.textContent = copy.summary_not_started;
+    } else if (phases.core.status === "not_required") {
+      elements.manualSyncTitle.textContent = copy.local_rebuild_ready;
     } else {
       elements.manualSyncTitle.textContent = copy.core_completed;
     }
-    elements.manualSyncDetail.textContent = phases.core.status === "completed"
-      ? `${copy.core_completed}；已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`
-      : `已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`;
+    if (phases.core.status === "not_required") {
+      elements.manualSyncDetail.textContent = copy.local_rebuild_detail;
+    } else {
+      elements.manualSyncDetail.textContent = phases.core.status === "completed"
+        ? `${copy.core_completed}；已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`
+        : `已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`;
+    }
   } else if (status.state === "starting") {
     elements.manualSyncTitle.textContent = "正在使用 SOP 小红书扫描浏览器";
     elements.manualSyncDetail.textContent = "请在 SOP 扫描浏览器中保持小红书登录；扫描与整理进度会自动回到这里。";
@@ -730,7 +741,7 @@ async function refreshManualSyncStatus() {
     window.clearInterval(state.manualSyncPoll);
     state.manualSyncPoll = 0;
     const corePreserved = v2
-      ? status.phases.core.status === "completed"
+      ? ["completed", "not_required"].includes(status.phases.core.status)
       : (status.state === "completed" || status.core_completed === true);
     if (corePreserved && state.manualSyncStartedHere) {
       state.manualSyncStartedHere = false;
@@ -778,6 +789,23 @@ async function startManualSync() {
   } catch (error) {
     renderManualSync({ state: "failed", error: error.message });
     showToast("没有开始整理");
+  }
+}
+
+async function startLocalRebuild() {
+  if (!state.localBridge || elements.manualSyncLocalRebuild.disabled) return;
+  elements.manualSyncLocalRebuild.disabled = true;
+  try {
+    const status = validateLocalBridgeSyncStatus(
+      await localBridgeRequest("/sync/local-rebuild", { method: "POST", body: "{}" }), state.statusContract
+    );
+    state.manualSyncStartedHere = true;
+    renderManualSync(status);
+    watchManualSync();
+    showToast("已开始本地重建；不会访问小红书");
+  } catch (error) {
+    renderManualSync({ state: "failed", error: error.message });
+    showToast("没有开始本地重建");
   }
 }
 
@@ -1381,6 +1409,7 @@ function bindEvents() {
   });
   elements.personalExport.addEventListener("click", exportPersonalData);
   elements.manualSyncStart.addEventListener("click", startManualSync);
+  elements.manualSyncLocalRebuild.addEventListener("click", startLocalRebuild);
   elements.personalImport.addEventListener("click", () => elements.personalImportInput.click());
   elements.personalImportInput.addEventListener("change", async () => {
     try { await importPersonalData(elements.personalImportInput.files?.[0]); }

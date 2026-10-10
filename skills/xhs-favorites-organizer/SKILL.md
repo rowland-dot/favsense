@@ -106,6 +106,10 @@ node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs" `
 
 当私有配置中的 `publish.enabled` 为 `true` 时，最后一个收藏夹完成只形成核心 checkpoint；Bridge 必须等待冻结范围内的总结、证据、候选、资源与 curation 状态确定，再为正式知识库和公开数据构建一个共享 `build_version` 的最终快照。两个 staging 输出全部验证并原子交换成功后，才允许调用 `publish-huggingface.mjs`，同一运行最多发布一次。发布会排除 `site/.local/`，并仅把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，保留其余元数据与正文。发布凭据必须来自系统 Git 凭据管理器，不能写入配置、脚本或仓库；构建失败保留上一对本地快照，发布失败保留本地新快照与远端上一版。
 
+无论点点是否启用，也无论最后一个收藏夹的总结计划是否为空或被放弃，一轮同步在最后一个收藏夹的总结阶段到达终态后，都恰好执行一次上述最终构建（安全停止与点点 halt 除外）。
+
+本地“同步设置”页的“仅本地重建”（桥接 `POST /sync/local-rebuild`，需要本机凭据与工作台 Origin）复用同一条最终构建与发布链路，但不接触小红书：不打开扫描浏览器、不抓详情、不下载媒体、不调用点点。它冻结当前完整 catalog，使用自己的运行标识（`localrebuild…`）和独立记录 `.xhs-favorites/local-rebuild.json`，不改写上一轮同步的 manual-sync 记录与 curation input / bundle；同步运行中拒绝，遗留安全停止不阻止它；状态里扫描与总结阶段显示“不需要”。
+
 本地预览：
 
 ```powershell
