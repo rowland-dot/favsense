@@ -6004,6 +6004,18 @@ class Bridge:
         note_ids = frozen_scope.get("note_ids") if isinstance(frozen_scope.get("note_ids"), list) else []
         catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
         notes = catalog.get("notes") if isinstance(catalog.get("notes"), dict) else {}
+        config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
+        quality = config.get("curation_quality") if isinstance(config.get("curation_quality"), dict) else {}
+        audit_path = resolve_workspace_path(
+            self.workspace,
+            str(quality.get("audit_file") or ".xhs-favorites/curation-audit.json"),
+            "audit_file",
+        )
+        try:
+            current_audit = json.loads(audit_path.read_text(encoding="utf-8-sig"))
+        except FileNotFoundError:
+            current_audit = {"schema_version": 2, "notes": {}}
+        audited_notes = current_audit.get("notes") if isinstance(current_audit, dict) else None
         scoped = []
         evidence = []
         for note_id in sorted(set(note_ids)):
@@ -6011,6 +6023,18 @@ class Bridge:
             if not isinstance(note, dict) or not NOTE_ID.fullmatch(note_id):
                 raise ValueError("sealed curation scope is unavailable")
             scoped.append({"id": note_id, **note})
+            audit_entry = audited_notes.get(note_id) if isinstance(audited_notes, dict) else None
+            audited_dependencies = audit_entry.get("evidence_dependencies") if isinstance(audit_entry, dict) else None
+            # Early transcripts carry only a status and the text, so they have no provenance of their
+            # own. Audits recorded them under a fixed provider and version, hashed over the text itself.
+            sealed_early_transcripts = {
+                dependency.get("result_sha256")
+                for dependency in (audited_dependencies if isinstance(audited_dependencies, list) else [])
+                if isinstance(dependency, dict)
+                and dependency.get("method") == "audio_transcript"
+                and dependency.get("provider") == "local-transcription"
+                and dependency.get("version") == "1"
+            }
             methods = []
             public_text = str(note.get("description") or "").strip()
             methods.append({
@@ -6023,15 +6047,30 @@ class Bridge:
                     "method": "diandian_summary", "provider": point["provider"],
                     "version": point["prompt_version"], "result_sha256": point["summary_sha256"],
                 })
-            for filename, method_name in (("transcription.json", "audio_transcript"), ("visual-ocr.json", "local_image_ocr")):
+            # Method names match the ones audits are sealed with (merge-curation-results.mjs).
+            for filename, method_name in (("transcription.json", "audio_transcript"), ("visual-ocr.json", "image_ocr")):
                 evidence_path = self.state_dir / "video-analysis" / note_id / filename
                 try:
                     local_evidence = json.loads(evidence_path.read_text(encoding="utf-8-sig"))
                 except (OSError, json.JSONDecodeError):
                     continue
+                if not isinstance(local_evidence, dict):
+                    continue
                 result_sha256 = local_evidence.get("result_sha256")
                 version = str(local_evidence.get("tool_version") or local_evidence.get("model") or "").strip()
                 provider = str(local_evidence.get("provider") or "configured-local-tool").strip()
+                early_text = local_evidence.get("text")
+                if (
+                    result_sha256 is None
+                    and filename == "transcription.json"
+                    and local_evidence.get("status") in {"transcribed", "partial"}
+                    and isinstance(early_text, str)
+                    and hashlib.sha256(early_text.encode("utf-8")).hexdigest() in sealed_early_transcripts
+                ):
+                    # Counted only where an audit sealed this exact text; one it never used is not
+                    # new evidence for the note, and an edited one no longer matches what was audited.
+                    result_sha256 = hashlib.sha256(early_text.encode("utf-8")).hexdigest()
+                    version, provider = "1", "local-transcription"
                 if isinstance(result_sha256, str) and re.fullmatch(r"[a-f0-9]{64}", result_sha256) and version and provider:
                     methods.append({"method": method_name, "provider": provider, "version": version, "result_sha256": result_sha256})
             evidence.append({
@@ -6049,17 +6088,6 @@ class Bridge:
         current_curation = json.loads(self.curation.read_text(encoding="utf-8-sig"))
         if not isinstance(current_curation, dict):
             raise ValueError("current curation is unavailable")
-        config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
-        quality = config.get("curation_quality") if isinstance(config.get("curation_quality"), dict) else {}
-        audit_path = resolve_workspace_path(
-            self.workspace,
-            str(quality.get("audit_file") or ".xhs-favorites/curation-audit.json"),
-            "audit_file",
-        )
-        try:
-            current_audit = json.loads(audit_path.read_text(encoding="utf-8-sig"))
-        except FileNotFoundError:
-            current_audit = {"schema_version": 2, "notes": {}}
         resources = (
             json.loads(self.resource_registry.read_text(encoding="utf-8-sig"))
             if self.resource_registry is not None

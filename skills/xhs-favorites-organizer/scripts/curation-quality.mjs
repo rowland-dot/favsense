@@ -291,8 +291,12 @@ export function formalCurationDecision({
     evidence_sha256: clean(currentRevisions?.evidence_sha256),
     resource_ids: [],
   };
+  // An accepted Skill whose resource check has expired is stale whether or not it can publish;
+  // without this the expiry surfaces as the generic audit_pending.
+  const skillWithoutFreshResource = clean(kind) === "Skill" && !clean(resource?.id);
+  if (skillWithoutFreshResource && auditEntry?.status === "accepted") return { ...base, reason_code: "resource_stale" };
   if (!publishable) return base;
-  if (clean(kind) === "Skill" && !clean(resource?.id)) return { ...base, reason_code: "resource_stale" };
+  if (skillWithoutFreshResource) return { ...base, reason_code: "resource_stale" };
   if (!auditEntry || !currentRevisions || !acceptedRevisionsCurrent(auditEntry, currentRevisions)) {
     return { ...base, reason_code: revisionReason(auditEntry, currentRevisions) };
   }

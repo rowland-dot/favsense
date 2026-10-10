@@ -17,6 +17,20 @@ export function stableResourceId(canonicalRepo) {
   return `github-${canonicalRepo.toLowerCase().replace("/", "-")}`;
 }
 
+// A non-Skill note has no resource to verify. The review step stores "verified" when it checked the
+// note's tools and "missing" otherwise, and seals that value into the audited candidate revision.
+// Sealing the same value again on rebuild is what lets an unchanged accepted note keep its audit.
+export function nonSkillResourceAssessment(auditResourceStatus) {
+  return {
+    status: clean(auditResourceStatus) === "verified" ? "verified" : "missing",
+    resource_id: "",
+    reason_code: "resource_not_applicable",
+    resource_identity_sha256: "",
+    verification_snapshot_sha256: "",
+    resource: null
+  };
+}
+
 export function resourceFreshness(resource, { today, maxAgeDays = 30 } = {}) {
   const current = utcDay(today); const verified = utcDay(resource?.verified_at);
   if (current === null || verified === null || verified > current || !Number.isSafeInteger(maxAgeDays) || maxAgeDays < 0) return "stale";

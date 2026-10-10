@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import json
 import os
@@ -537,6 +538,96 @@ class BridgeHelpersTest(unittest.TestCase):
             for hostile in ("NODE_OPTIONS", "NODE_PATH", "BRIDGE_TOKEN"):
                 self.assertNotIn(hostile, child_env)
             self.assertNotIn("PATH", child_env)
+
+    def test_curation_pipeline_input_matches_the_evidence_methods_audits_were_sealed_with(self):
+        # An accepted note keeps its audit only if the rebuild lists the same evidence the audit
+        # was sealed with. Early transcripts on disk carry only a status and the text, and the
+        # audit recorded them under a fixed provider and version; image text is recorded as image_ocr.
+        # An early transcript has no provenance of its own, so it counts only where an audit
+        # sealed that exact text; one the audit never used is not new evidence for that note.
+        def sha(text):
+            return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+        def early_dependency(text):
+            return {"method": "audio_transcript", "provider": "local-transcription", "version": "1", "result_sha256": sha(text)}
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            early, partial, failed, modern, image = ("e" * 24, "p" * 24, "f" * 24, "m" * 24, "i" * 24)
+            unused, edited = "u" * 24, "d" * 24
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.workspace = root
+            bridge.state_dir = root / ".xhs-favorites"
+            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge.catalog_path = bridge.state_dir / "catalog.json"
+            bridge.curation = root / "curation.json"
+            bridge.profile = root / "profile.json"
+            bridge.config_path = root / "config.json"
+            bridge.resource_registry = None
+            bridge.curation_pipeline = root / "run-curation-pipeline.mjs"
+            bridge.node = BRIDGE.resolve_node_executable()
+            bridge.saved_diandian_record = mock.Mock(return_value=None)
+            note_ids = [early, partial, failed, modern, image, unused, edited]
+            BRIDGE.atomic_json(bridge.state_dir / "curation-audit.json", {"schema_version": 2, "notes": {
+                early: {"status": "accepted", "evidence_dependencies": [early_dependency("早期转写正文")]},
+                partial: {"status": "accepted", "evidence_dependencies": [early_dependency("只转写了一部分")]},
+                unused: {"status": "accepted", "evidence_dependencies": []},
+                edited: {"status": "accepted", "evidence_dependencies": [early_dependency("审核时的旧正文")]},
+            }})
+            BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": "manual", "frozen_scope": {"note_ids": note_ids}})
+            BRIDGE.atomic_json(bridge.catalog_path, {"notes": {
+                note_id: {"note_id": note_id, "description": "Safe public text", "content_sha256": "a" * 64}
+                for note_id in note_ids
+            }})
+            BRIDGE.atomic_json(bridge.curation, {})
+            BRIDGE.atomic_json(bridge.profile, {"classification": {}})
+            BRIDGE.atomic_json(bridge.config_path, {"curation_quality": {}})
+
+            def write_artifact(note_id, filename, value):
+                target = bridge.state_dir / "video-analysis" / note_id / filename
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+
+            write_artifact(early, "transcription.json", {"status": "transcribed", "language": "zh", "text": "早期转写正文", "segments": []})
+            write_artifact(partial, "transcription.json", {"status": "partial", "text": "只转写了一部分"})
+            write_artifact(failed, "transcription.json", {"status": "failed", "text": ""})
+            write_artifact(unused, "transcription.json", {"status": "transcribed", "text": "审核没有用到的转写"})
+            write_artifact(edited, "transcription.json", {"status": "transcribed", "text": "审核之后被改过的正文"})
+            write_artifact(modern, "transcription.json", {
+                "schema_version": 1, "status": "transcribed", "method": "local_transcription",
+                "provider": "faster-whisper", "tool_version": "faster-whisper@1.2.1",
+                "content_sha256": "a" * 64, "result_sha256": sha("新格式转写正文"), "text": "新格式转写正文",
+            })
+            write_artifact(image, "visual-ocr.json", {
+                "schema_version": 1, "status": "extracted", "method": "local_image_ocr",
+                "provider": "human_frame_review", "tool_version": "codex-visual-review@2026-08-29",
+                "content_sha256": "a" * 64, "result_sha256": sha("画面文字"), "text": "画面文字",
+            })
+            ok = {"schema_version": 1, "ok": True, "outcome": "ready_for_safe_build",
+                  "counts": {"accepted": 0, "unavailable": 0, "pending": 5, "rejected": 0, "resource_pending": 0}}
+            with mock.patch.object(
+                BRIDGE, "run_bounded_subprocess",
+                return_value=SimpleNamespace(returncode=0, stdout=json.dumps(ok), stderr=""),
+            ):
+                bridge.run_curation_pipeline()
+
+            sent = json.loads((bridge.state_dir / "organization-transactions" / "manual-curation-input.json").read_text(encoding="utf-8"))
+            methods = {item["note_id"]: [m for m in item["methods"] if m["method"] != "public_text"] for item in sent["evidence"]}
+            self.assertEqual(methods[early], [
+                {"method": "audio_transcript", "provider": "local-transcription", "version": "1", "result_sha256": sha("早期转写正文")},
+            ])
+            self.assertEqual(methods[partial], [
+                {"method": "audio_transcript", "provider": "local-transcription", "version": "1", "result_sha256": sha("只转写了一部分")},
+            ])
+            self.assertEqual(methods[failed], [])
+            self.assertEqual(methods[unused], [])
+            self.assertEqual(methods[edited], [])
+            self.assertEqual(methods[modern], [
+                {"method": "audio_transcript", "provider": "faster-whisper", "version": "faster-whisper@1.2.1", "result_sha256": sha("新格式转写正文")},
+            ])
+            self.assertEqual(methods[image], [
+                {"method": "image_ocr", "provider": "human_frame_review", "version": "codex-visual-review@2026-08-29", "result_sha256": sha("画面文字")},
+            ])
 
     def test_manual_failure_turns_encoded_blank_diagnostics_into_actionable_guidance(self):
         with tempfile.TemporaryDirectory() as directory:
