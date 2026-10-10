@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小红书收藏知识库按需整理
 // @namespace    local.xhs-favorites-organizer
-// @version      3.0.2
+// @version      3.0.3
 // @description  用户主动触发后，刷新收藏夹、按需调用点点 AI 深度总结，再整理到本地知识库
 // @match        https://www.xiaohongshu.com/board/*
 // @match        https://www.xiaohongshu.com/user/profile/*
@@ -124,7 +124,7 @@ __DIANDIAN_MATCH_LINE__
     );
   }
 
-  async function waitUntil(predicate, timeout, failureMessage, interval = 250) {
+  async function waitUntil(predicate, timeout, failureMessage, interval = 250, failureCode = "") {
     const deadline = Date.now() + timeout;
     while (Date.now() < deadline) {
       assertSafePage();
@@ -132,7 +132,11 @@ __DIANDIAN_MATCH_LINE__
       if (value) return value;
       await sleep(interval);
     }
-    throw new Error(failureMessage);
+    // A hidden page delays its timers past the deadline; check once more before giving up.
+    assertSafePage();
+    const lateValue = predicate();
+    if (lateValue) return lateValue;
+    throw failureCode ? workflowError(failureCode, failureMessage) : new Error(failureMessage);
   }
 
   const SAFETY_SHELL_MESSAGE = /(?:^|\n)\s*(?:(?:请|需要)(?:先)?完成(?:验证码|滑块验证|安全验证|人机验证|验证)(?:[，,。！!\s]|$)|(?:访问|操作|请求)频繁(?:\s*300031)?(?:\s*$|[，,\s]+(?:请)?(?:稍后|过一会儿)(?:再试|重试))|(?:页面|账号|请求).{0,16}(?:触发|存在)(?:风控|安全限制)|(?:验证码|滑块验证|安全验证|安全限制|captcha)\s*$|(?:300031|(?:错误码|状态码|error[_ -]?code|status[_ -]?code)\s*[:=：]?\s*300031)\s*(?:$|[，,\s]+(?:请稍后|访问频繁|操作频繁|请求频繁)))/imu;
@@ -414,9 +418,12 @@ __DIANDIAN_MATCH_LINE__
     "note-not-on-board",
     "page-not-ready",
     "run-halted",
+    "share-control-timeout",
     "share-link-failed",
     "share-link-invalid",
     "share-link-unavailable",
+    "share-menu-timeout",
+    "share-service-request-failed",
     "share-worker-not-ready",
     "single-note-timeout",
     "stale-reply",
@@ -486,18 +493,23 @@ __DIANDIAN_MATCH_LINE__
         return null;
       }
       return now - stableSince >= PAGE_DOM_STABLE_MS ? current : null;
-    }, diandianTiming("share_control_wait"), "笔记页面的分享控件没有稳定显示", 100);
+    }, diandianTiming("share_control_wait"), "笔记页面的分享控件没有稳定显示", 100, "share-control-timeout");
   }
 
   async function clickVisibleAction(element, context, action) {
     if (DIANDIAN.cdp_enabled === true) {
-      await post("/sync/diandian-click", {
-        run_id: context.run_id,
-        board_id: context.board_id,
-        note_id: context.note_id,
-        worker_id: context.worker_id,
-        action,
-      }, 10000);
+      try {
+        await post("/sync/diandian-click", {
+          run_id: context.run_id,
+          board_id: context.board_id,
+          note_id: context.note_id,
+          worker_id: context.worker_id,
+          action,
+        }, 10000);
+      } catch (error) {
+        // The bridge names its own refusals (safety stop, native click codes); only an unreachable or failing service gets the generic code.
+        throw workflowError(failureReason(error, "share-service-request-failed"), "本地同步服务没有完成分享点击请求");
+      }
       return;
     }
     const bounds = element?.getBoundingClientRect?.();
@@ -536,7 +548,7 @@ __DIANDIAN_MATCH_LINE__
     ).find((element) => isVisible(element) && hasExactElementLabel(
       element,
       DIANDIAN.selectors.copy_action_text,
-    )), diandianTiming("share_menu_wait"), "分享菜单中没有找到复制链接");
+    )), diandianTiming("share_menu_wait"), "分享菜单中没有找到复制链接", 250, "share-menu-timeout");
     await clickVisibleAction(copyButton, context, "copy");
 
     const attributeCandidates = [
