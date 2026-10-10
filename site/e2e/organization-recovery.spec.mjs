@@ -33,6 +33,22 @@ test("build and publish failure transitions never claim full completion", async 
   await expect(organizationStatus).not.toContainText("本次整理完成，本地知识库与网页已经更新");
 });
 
+test("local-only rebuild never claims a scan or a summary and never starts a sync", async ({ page }) => {
+  await scenario(page, "local-rebuild");
+  const requested = [];
+  page.on("request", (request) => requested.push(new URL(request.url()).pathname));
+  await page.goto("/");
+  await page.getByRole("button", { name: "同步设置" }).click();
+  await page.getByRole("button", { name: "仅本地重建" }).click();
+  const organizationStatus = page.locator("#manual-sync-control");
+  await expect(organizationStatus).toContainText("本地重建完成，未访问小红书");
+  await expect(organizationStatus).toContainText("没有扫描收藏，也没有重新总结");
+  await expect(organizationStatus).not.toContainText("核心收藏已保存");
+  await expect(organizationStatus).not.toContainText("已扫描");
+  expect(requested).toContain("/sync/local-rebuild");
+  expect(requested).not.toContain("/sync/start");
+});
+
 test("running phases keep polling until the terminal organization state", async ({ page }) => {
   await scenario(page, "running-success");
   const statusResponses = [];

@@ -11,7 +11,7 @@ const token = "a".repeat(64);
 const testHeader = "favsense-synthetic-v1";
 const scenarios = new Set([
   "success", "running-success", "partial", "summary-failed", "batch-aborted", "stale",
-  "build-failed", "publish-failed", "safety-stopped",
+  "build-failed", "publish-failed", "safety-stopped", "local-rebuild",
 ]);
 let scenario = "success";
 let hasStarted = false;
@@ -79,6 +79,11 @@ function syncStatus() {
       },
     };
   }
+  if (scenario === "local-rebuild") return {
+    ...common, run_id: "localrebuild-fixture", state: "published",
+    phases: { ...common.phases, core: phase("not_required"), summary: phase("not_required"), evidence: phase("not_started"), publish: phase("published") },
+    counts: { scanned: 0, new: 0, summary_captured: 0, summary_failed: 0, summary_batch_aborted: 0, curation_accepted: 2, curation_pending: 0 },
+  };
   if (scenario === "build-failed") return { ...common, state: "failed", phases: { ...common.phases, build: phase("failed", "build_failed", "held_previous"), publish: phase("not_started") } };
   if (scenario === "publish-failed") return { ...common, state: "completed_with_warnings", phases: { ...common.phases, publish: phase("failed", "publish_failed", "held_previous") } };
   if (scenario === "safety-stopped") return { ...common, state: "safety_stopped", phases: { ...common.phases, summary: phase("safety_stopped", "safety_signal"), evidence: phase("safety_stopped", "safety_signal"), curation: phase("not_started"), build: phase("not_started"), publish: phase("not_started") } };
@@ -134,6 +139,10 @@ const bridge = createServer(async (request, response) => {
   if (request.headers["x-xhs-bridge-token"] !== token) return sendJson(response, 404, { ok: false });
   if (url.pathname === "/boards") return sendJson(response, 200, { ok: true, boards: [{ id: "synthetic", name: "Synthetic", enabled: true, available: true, advertised_count: 2, captured_count: 2 }] });
   if (url.pathname === "/sync/status") return sendJson(response, 200, hasStarted ? syncStatus() : { ok: true, state: "idle" });
+  if (url.pathname === "/sync/local-rebuild") {
+    hasStarted = true;
+    return sendJson(response, 200, syncStatus());
+  }
   if (url.pathname === "/sync/start") {
     hasStarted = true;
     if (scenario === "running-success") {
@@ -162,7 +171,7 @@ function listen(server, port) {
 }
 
 if (process.argv.includes("--help")) {
-  console.log("--scenario success|running-success|partial|summary-failed|batch-aborted|stale|build-failed|publish-failed|safety-stopped (UX-01..14 / VC-QA-01..15)");
+  console.log("--scenario success|running-success|partial|summary-failed|batch-aborted|stale|build-failed|publish-failed|safety-stopped|local-rebuild (UX-01..14 / VC-QA-01..15)");
   process.exit(0);
 }
 const scenarioIndex = process.argv.indexOf("--scenario");

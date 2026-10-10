@@ -70,7 +70,7 @@ def derive_overall_state(run):
         return "safety_stopped"
     if statuses.get("core") == "failed" or statuses.get("build") == "failed":
         return "failed"
-    if statuses.get("core") != "completed":
+    if statuses.get("core") not in {"completed", "not_required"}:
         return "failed"
     incomplete = {
         "summary": {"partial", "failed", "batch_aborted", "stale"},
@@ -168,11 +168,56 @@ def project_legacy_manual_state(value):
     return safe_public_projection(run)
 
 
+def project_local_rebuild_state(value):
+    """Project a local-only rebuild: nothing was scanned or summarized, so those phases say so."""
+    run_id = str(value.get("batch") or "local-rebuild")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", run_id):
+        run_id = "local-rebuild"
+    run = new_run_state(run_id)
+    run = transition_phase(run, "core", "not_required")
+    run = transition_phase(run, "summary", "not_required")
+    running = value.get("state") == "running"
+    current = value.get("phase")
+    failed_phase = value.get("failed_phase") if value.get("state") == "failed" else ""
+    accepted = max(0, int(value.get("curation_accepted", 0) or 0))
+    pending = max(0, int(value.get("curation_pending", 0) or 0))
+    run["counts"].update({"curation_accepted": accepted, "curation_pending": pending})
+    if running and current == "curation":
+        run = transition_phase(run, "curation", "running")
+    elif failed_phase == "curation":
+        run = transition_phase(run, "curation", "failed", "contract_invalid")
+    elif current in {"build", "publish"} or value.get("build_version") or failed_phase in {"build", "publish"}:
+        run = transition_phase(
+            run, "curation", "pending_review" if pending else "validated",
+            "audit_pending" if pending else "",
+        )
+    build_version = value.get("build_version")
+    if isinstance(build_version, str) and HASH.fullmatch(build_version):
+        run["build_version"] = build_version
+        run = transition_phase(run, "build", "succeeded")
+    elif running and current == "build":
+        run = transition_phase(run, "build", "running")
+    elif failed_phase == "build":
+        run = transition_phase(run, "build", "failed", "build_failed", "held_previous")
+    publish_status = value.get("publish_status")
+    if publish_status in {"published", "unchanged"}:
+        run = transition_phase(run, "publish", publish_status)
+    elif publish_status == "failed" or failed_phase == "publish":
+        run = transition_phase(run, "publish", "failed", "publish_failed", "held_previous")
+    elif running and current == "publish":
+        run = transition_phase(run, "publish", "running")
+    run["state"] = derive_overall_state(run)
+    return safe_public_projection(run)
+
+
 def visible_copy(run):
     contract = _contract()["copy"]
     phases = run.get("phases", {})
+    local_rebuild = phases.get("core", {}).get("status") == "not_required"
     if run.get("state") == "safety_stopped":
         return contract["safety_stopped"]
+    if local_rebuild and any(phase.get("status") == "running" for phase in phases.values()):
+        return contract["local_rebuild_running"]
     if phases.get("core", {}).get("status") == "not_started":
         return contract["core_not_started"]
     if phases.get("core", {}).get("status") == "running":
@@ -185,6 +230,8 @@ def visible_copy(run):
         return contract["publish_failed"]
     if phases.get("publish", {}).get("status") == "unchanged":
         return contract["publish_unchanged"]
+    if local_rebuild:
+        return contract["local_rebuild_ready"]
     return contract["core_completed"]
 
 

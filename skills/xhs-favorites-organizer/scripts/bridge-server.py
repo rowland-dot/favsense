@@ -2763,7 +2763,23 @@ class Bridge:
             getattr(self, "summary_plans", {}).pop(run_id, None)
         return state
 
+    def local_rebuild_status(self, local: dict) -> dict:
+        if local.get("state") == "running" and not self.local_rebuild_is_running(local) and not (
+            getattr(self, "processing_lock", None) and self.processing_lock.locked()
+        ):
+            local = self.update_local_rebuild(
+                local["batch"],
+                state="failed",
+                completed_at=datetime.now().astimezone().isoformat(),
+                failed_phase=str(local.get("phase") or "build"),
+                error="上一次本地重建未正常结束；请重新点击“仅本地重建”。",
+            )
+        return ORGANIZATION_STATE.project_local_rebuild_state(local)
+
     def manual_sync_status(self) -> dict:
+        local = self.read_local_rebuild()
+        if self.local_rebuild_is_latest_run(local):
+            return self.local_rebuild_status(local)
         with self.get_manual_sync_lock():
             value = self.read_manual_sync()
             processing_active = bool(
@@ -2865,6 +2881,8 @@ class Bridge:
             raise BridgeBusyError("a manual organization request is already starting")
         try:
             requested_board_ids, mode, target_note_id = self.normalize_manual_sync_request(payload)
+            if self.local_rebuild_is_running(self.read_local_rebuild()):
+                raise BridgeBusyError("a local rebuild is already running")
             self.manual_sync_status()
             current = self.read_manual_sync()
             if current.get("state") in {"starting", "running"}:
@@ -2932,6 +2950,204 @@ class Bridge:
         finally:
             self.trigger_lock.release()
 
+    def local_rebuild_path(self) -> Path:
+        return self.state_dir / "local-rebuild.json"
+
+    def get_local_rebuild_lock(self) -> threading.RLock:
+        lock = getattr(self, "_local_rebuild_lock", None)
+        if lock is None:
+            lock = threading.RLock()
+            self._local_rebuild_lock = lock
+        return lock
+
+    def read_local_rebuild(self) -> dict | None:
+        if not isinstance(getattr(self, "state_dir", None), Path):
+            return None
+        try:
+            value = json.loads(self.local_rebuild_path().read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        return value if isinstance(value, dict) else None
+
+    @staticmethod
+    def run_age_seconds(state: dict, *, unreadable: float) -> float:
+        try:
+            started = datetime.fromisoformat(str(state.get("started_at", "")))
+            return (datetime.now().astimezone() - started).total_seconds()
+        except (TypeError, ValueError):
+            return unreadable
+
+    def local_rebuild_is_running(self, local: dict | None) -> bool:
+        return (
+            local is not None
+            and local.get("state") == "running"
+            and self.run_age_seconds(local, unreadable=MANUAL_RUN_TIMEOUT_SECONDS) < MANUAL_RUN_TIMEOUT_SECONDS
+        )
+
+    def local_rebuild_is_latest_run(self, local: dict | None) -> bool:
+        """The workbench shows whichever of the last sync and the last rebuild began later."""
+        if local is None:
+            return False
+        manual = self.read_manual_sync()
+        try:
+            manual_started = datetime.fromisoformat(str(manual.get("started_at", "")))
+        except (TypeError, ValueError):
+            return True
+        try:
+            return datetime.fromisoformat(str(local.get("started_at", ""))) > manual_started
+        except (TypeError, ValueError):
+            return False
+
+    def update_local_rebuild(self, batch: str, **fields) -> dict:
+        with self.get_local_rebuild_lock():
+            state = self.read_local_rebuild()
+            if state is None or state.get("batch") != batch:
+                raise ValueError("local rebuild no longer owns this record")
+            state.update(fields)
+            atomic_json(self.local_rebuild_path(), state)
+            return state
+
+    def local_rebuild_scope(self) -> list[str]:
+        if not self.catalog_path.is_file():
+            raise ValueError("catalog is unavailable")
+        catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
+        notes = catalog.get("notes") if isinstance(catalog, dict) else None
+        note_ids = sorted(
+            str(note_id) for note_id in (notes if isinstance(notes, dict) else {})
+            if NOTE_ID.fullmatch(str(note_id))
+        )
+        if not note_ids:
+            raise ValueError("catalog has no notes to rebuild")
+        return note_ids
+
+    def trigger_local_rebuild(self) -> dict:
+        """Rebuild and publish from the catalog already on disk, without touching the platform."""
+        if not self.trigger_lock.acquire(blocking=False):
+            raise BridgeBusyError("a manual organization request is already starting")
+        try:
+            current = self.read_manual_sync()
+            if (
+                current.get("state") in {"starting", "running"}
+                and self.run_age_seconds(current, unreadable=0) < MANUAL_RUN_TIMEOUT_SECONDS
+            ):
+                raise BridgeBusyError("organization is already running in Chrome")
+            if self.local_rebuild_is_running(self.read_local_rebuild()):
+                raise BridgeBusyError("a local rebuild is already running")
+            if self.processing_lock.locked():
+                raise BridgeBusyError("organization is already processing a collection")
+            note_ids = self.local_rebuild_scope()
+            batch = f"localrebuild{datetime.now().astimezone():%Y%m%d%H%M%S%f}"
+            with self.get_local_rebuild_lock():
+                atomic_json(self.local_rebuild_path(), {
+                    "batch": batch,
+                    "state": "running",
+                    "run_mode": "local_rebuild",
+                    "started_at": datetime.now().astimezone().isoformat(),
+                    "phase": "curation",
+                    "note_ids": note_ids,
+                })
+            threads = getattr(self, "local_rebuild_threads", None)
+            if threads is None:
+                threads = {}
+                self.local_rebuild_threads = threads
+            try:
+                thread = threading.Thread(
+                    target=self.run_local_rebuild,
+                    args=(batch,),
+                    name="favsense-local-rebuild",
+                    daemon=True,
+                )
+                threads[batch] = thread
+                thread.start()
+            except Exception:
+                threads.pop(batch, None)
+                self.local_rebuild_path().unlink(missing_ok=True)
+                raise
+            return self.manual_sync_status()
+        finally:
+            self.trigger_lock.release()
+
+    def publish_local_rebuild(
+        self, batch: str, build_version: str, site_manifest_sha256: str
+    ) -> dict | None:
+        """Publish a rebuild's snapshot at most once for its run id."""
+        if self.publish_config is None:
+            return None
+        with publish_claim_lock(self.state_dir, batch):
+            with self.get_local_rebuild_lock():
+                state = self.read_local_rebuild()
+                if state is None or state.get("batch") != batch or state.get("publish_claimed_build_version"):
+                    return None
+                self.update_local_rebuild(
+                    batch,
+                    publish_claimed_build_version=build_version,
+                    publish_status="running",
+                )
+            try:
+                published = self.publish_public_site(build_version, site_manifest_sha256)
+            except Exception as error:  # noqa: BLE001
+                published = {"ok": False, "status": "failed", "error": sanitize_error(str(error))}
+            status = str(published.get("status") or "")
+            if status not in {"published", "unchanged"}:
+                status = "failed"
+            outcome = {"publish_status": status}
+            if status == "failed":
+                outcome["publish_error"] = sanitize_error(str(published.get("error") or "publish failed"))
+            self.update_local_rebuild(batch, **outcome)
+            return published
+
+    def run_local_rebuild(self, batch: str) -> None:
+        with self.get_local_rebuild_lock():
+            state = self.read_local_rebuild()
+            if (
+                state is None
+                or state.get("batch") != batch
+                or state.get("state") != "running"
+                or state.get("work_claimed")
+            ):
+                return
+            self.update_local_rebuild(batch, work_claimed=True)
+        result: dict = {}
+
+        def curation_counts() -> dict:
+            counts = result.get("curation", {}).get("counts")
+            counts = counts if isinstance(counts, dict) else {}
+            if not counts:
+                return {}
+            return {
+                "curation_accepted": max(0, int(counts.get("accepted", 0) or 0)),
+                "curation_pending": max(0, int(counts.get("pending", 0) or 0)),
+            }
+
+        try:
+            with self.processing_lock:
+                self.run_final_build(
+                    result,
+                    lambda build_version, site_manifest_sha256: self.publish_local_rebuild(
+                        batch, build_version, site_manifest_sha256
+                    ),
+                    scope={"batch": batch, "note_ids": state["note_ids"]},
+                    on_phase=lambda phase: self.update_local_rebuild(
+                        batch, phase=phase, **curation_counts()
+                    ),
+                )
+            self.update_local_rebuild(
+                batch,
+                state="completed",
+                completed_at=datetime.now().astimezone().isoformat(),
+                build_version=result["build_version"],
+                site_manifest_sha256=result["site_manifest_sha256"],
+                **curation_counts(),
+            )
+        except Exception as error:  # noqa: BLE001
+            self.update_local_rebuild(
+                batch,
+                state="failed",
+                completed_at=datetime.now().astimezone().isoformat(),
+                failed_phase=str(result.get("_finalize_failed_phase") or "build"),
+                error=sanitize_error(str(error)),
+            )
+
     def record_manual_result(self, run_id: str, board_id: str, result: dict) -> None:
         with self.get_manual_sync_lock():
             state = self.read_manual_sync()
@@ -2967,7 +3183,9 @@ class Bridge:
             if not isinstance(resolved_plans, list):
                 resolved_plans = []
             summary_plan_pending = bool(
-                getattr(self, "diandian_enabled", False)
+                # Every v2 run waits for its plan, even with DianDian off: the plan is where the
+                # run learns it has nothing left to summarize and owes its final build.
+                (getattr(self, "diandian_enabled", False) or getattr(self, "organization_status_v2_enabled", False))
                 and run_id not in resolved_plans
                 and run_id not in getattr(self, "summary_plans", {})
             )
@@ -2994,6 +3212,8 @@ class Bridge:
                     "state": "running",
                     "current_board": (
                         f"{self.boards[board_id]}：等待点点 AI 计划"
+                        if summary_plan_pending and getattr(self, "diandian_enabled", False)
+                        else f"{self.boards[board_id]}：正在完成本轮整理"
                         if summary_plan_pending
                         else f"{self.boards[board_id]}：点点 AI 深度整理"
                     ),
@@ -3714,11 +3934,41 @@ class Bridge:
                         return
                     atomic_json(self.manual_sync_path, state)
 
+    def run_final_build(
+        self,
+        result: dict,
+        publish_step,
+        *,
+        scope: dict | None = None,
+        should_stop=lambda: False,
+        on_phase=lambda phase: None,
+    ) -> dict | None:
+        """The one final build: curation, then the paired snapshot, then at most one publish.
+
+        Both a finished sync run and a local-only rebuild end here. `scope` carries the
+        rebuild's own batch and notes; a sync run leaves it empty and is read from its
+        manual-sync record. The phase being worked on is kept in `result` so a failure
+        can be reported against the right one.
+        """
+        scope = scope or {}
+        result["_finalize_failed_phase"] = "curation"
+        on_phase("curation")
+        result["curation"] = self.run_curation_pipeline(**scope)
+        result["_finalize_failed_phase"] = "build"
+        on_phase("build")
+        snapshot = self.build_organization_snapshot(**scope)
+        result["build_version"] = snapshot["build_version"]
+        result["site_manifest_sha256"] = snapshot["site_manifest_sha256"]
+        if should_stop():
+            return None
+        result["_finalize_failed_phase"] = "publish"
+        on_phase("publish")
+        return publish_step(result["build_version"], result["site_manifest_sha256"])
+
     def run_diandian_finalization(self, run_id: str, board_id: str) -> None:
         result: dict = {}
         publish = None
         error_message = ""
-        failure_phase = "build"
         try:
             with self.processing_lock:
                 if self.diandian_is_halted(run_id):
@@ -3730,24 +3980,30 @@ class Bridge:
                     if result.get("next_board_id"):
                         self.complete_manual_after_diandian(run_id, board_id, result, None, "")
                         return
-                    failure_phase = "curation"
-                    result["curation"] = self.run_curation_pipeline()
-                    failure_phase = "build"
-                    snapshot = self.build_organization_snapshot()
-                    result["build_version"] = snapshot["build_version"]
-                    result["site_manifest_sha256"] = snapshot["site_manifest_sha256"]
+                    publish = self.run_final_build(
+                        result,
+                        lambda build_version, site_manifest_sha256: self.publish_after_board(
+                            board_id,
+                            run_id,
+                            require_finalization_claim=True,
+                            build_version=build_version,
+                            site_manifest_sha256=site_manifest_sha256,
+                        ),
+                        should_stop=lambda: self.diandian_is_halted(run_id),
+                    )
                 else:
+                    result["_finalize_failed_phase"] = "build"
                     self.rebuild_knowledge_base()
-                if self.diandian_is_halted(run_id):
-                    return
-                failure_phase = "publish"
-                publish = self.publish_after_board(
-                    board_id,
-                    run_id,
-                    require_finalization_claim=True,
-                    build_version=result.get("build_version"),
-                    site_manifest_sha256=result.get("site_manifest_sha256"),
-                )
+                    if self.diandian_is_halted(run_id):
+                        return
+                    result["_finalize_failed_phase"] = "publish"
+                    publish = self.publish_after_board(
+                        board_id,
+                        run_id,
+                        require_finalization_claim=True,
+                        build_version=result.get("build_version"),
+                        site_manifest_sha256=result.get("site_manifest_sha256"),
+                    )
                 if publish is not None:
                     result["publish"] = publish
                     try:
@@ -3759,7 +4015,7 @@ class Bridge:
                     self.complete_manual_after_diandian(run_id, board_id, result, publish, "")
         except Exception as error:
             error_message = sanitize_error(str(error))
-            result["_finalize_failed_phase"] = failure_phase
+            result.setdefault("_finalize_failed_phase", "build")
             self.complete_manual_after_diandian(run_id, board_id, result, None, error_message)
         finally:
             with self.summary_run_lock(run_id):
@@ -3778,6 +4034,25 @@ class Bridge:
             "plan_complete": plan_complete,
             "finalization_started": active,
         }
+
+    def final_build_started(self, run_id: str) -> bool:
+        guard = getattr(self, "summary_locks_guard", None)
+        if guard is None:
+            return False
+        with guard:
+            return (
+                run_id in getattr(self, "summary_finalizing", set())
+                or run_id in getattr(self, "summary_finalized", set())
+            )
+
+    def final_build_is_due(self, state: dict, run_id: str, core_result: dict) -> bool:
+        """The last board has nothing left to summarize, so the run's final build is owed."""
+        return (
+            getattr(self, "organization_status_v2_enabled", False)
+            and not core_result.get("next_board_id")
+            and state.get("state") in {"starting", "running"}
+            and not self.diandian_is_halted(run_id)
+        )
 
     @staticmethod
     def append_unique_state_value(state: dict, key: str, value: str) -> bool:
@@ -3799,6 +4074,13 @@ class Bridge:
         abandoned: bool,
         enabled: bool,
     ) -> dict:
+        response = {"enabled": enabled, "note_ids": []}
+        if abandoned:
+            response["abandoned"] = True
+        if self.final_build_started(run_id):
+            # A repeated plan call must not rewrite state the finalizer already owns.
+            self.summary_plans.pop(run_id, None)
+            return response
         state = self.read_manual_sync()
         pending = set(self.summary_plans.get(run_id, set())) if abandoned else set()
         already_abandoned = not self.append_unique_state_value(
@@ -3818,6 +4100,7 @@ class Bridge:
             "summary_finalizing": False,
         })
         must_restore_core = abandoned or state.get("state") == "completed"
+        final_build_due = False
         if must_restore_core or getattr(self, "state_dir", None) is not None:
             try:
                 result = self.read_completed_core_result(run_id)
@@ -3825,12 +4108,13 @@ class Bridge:
                 if must_restore_core:
                     raise
             else:
-                self.apply_core_result_to_manual_state(state, run_id, board_id, result)
+                final_build_due = self.final_build_is_due(state, run_id, result)
+                if not final_build_due:
+                    self.apply_core_result_to_manual_state(state, run_id, board_id, result)
         atomic_json(self.manual_sync_path, state)
         self.summary_plans.pop(run_id, None)
-        response = {"enabled": enabled, "note_ids": []}
-        if abandoned:
-            response["abandoned"] = True
+        if final_build_due:
+            self._start_diandian_finalization(run_id, board_id)
         return response
 
     def diandian_summary_plan(self, payload: dict) -> dict:
@@ -5082,10 +5366,6 @@ class Bridge:
             "finalization_started": False,
         }
 
-    def finish_diandian_plan(self, run_id: str, board_id: str) -> dict:
-        with self.summary_run_lock(run_id):
-            return self.diandian_completion_state(run_id, board_id)
-
     def open_original_note(self, note_id: str) -> dict:
         if not NOTE_ID.fullmatch(note_id):
             raise ValueError("invalid note_id")
@@ -5940,16 +6220,24 @@ class Bridge:
             restore_file_snapshot(public_output, public_snapshot)
             raise
 
-    def build_organization_snapshot(self) -> dict:
-        manual = self.read_manual_sync()
-        frozen_scope = manual.get("frozen_scope") if isinstance(manual.get("frozen_scope"), dict) else {}
-        note_ids = frozen_scope.get("note_ids") if isinstance(frozen_scope.get("note_ids"), list) else None
+    def build_organization_snapshot(
+        self, *, batch: str | None = None, note_ids: list[str] | None = None
+    ) -> dict:
+        """Build the paired local snapshot for a run's sealed scope.
+
+        A sync run reads its batch and scope from the manual-sync record; a local rebuild
+        passes its own, so it never has to touch that record.
+        """
+        if batch is None:
+            manual = self.read_manual_sync()
+            frozen_scope = manual.get("frozen_scope") if isinstance(manual.get("frozen_scope"), dict) else {}
+            note_ids = frozen_scope.get("note_ids") if isinstance(frozen_scope.get("note_ids"), list) else None
+            batch = str(manual.get("batch") or "")
         if note_ids is None:
             catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
             note_ids = sorted(str(note_id) for note_id in catalog.get("notes", {}) if NOTE_ID.fullmatch(str(note_id)))
         note_ids = sorted(set(note_ids))
         sealed_scope_digest = hashlib.sha256(json.dumps(sorted(set(note_ids)), separators=(",", ":")).encode("utf-8")).hexdigest()
-        batch = str(manual.get("batch") or "")
         if not RUN_ID.fullmatch(batch):
             raise ValueError("curation generation batch is unavailable")
         curation_bundle = self.state_dir / "organization-transactions" / f"{batch}-curation-bundle.json"
@@ -5998,10 +6286,14 @@ class Bridge:
             raise RuntimeError(f"organization snapshot failed: {sanitize_error(completed.stderr)}")
         return parse_snapshot_build_result(completed.stdout)
 
-    def run_curation_pipeline(self) -> dict:
-        manual = self.read_manual_sync()
-        frozen_scope = manual.get("frozen_scope") if isinstance(manual.get("frozen_scope"), dict) else {}
-        note_ids = frozen_scope.get("note_ids") if isinstance(frozen_scope.get("note_ids"), list) else []
+    def run_curation_pipeline(
+        self, *, batch: str | None = None, note_ids: list[str] | None = None
+    ) -> dict:
+        if batch is None:
+            manual = self.read_manual_sync()
+            frozen_scope = manual.get("frozen_scope") if isinstance(manual.get("frozen_scope"), dict) else {}
+            note_ids = frozen_scope.get("note_ids") if isinstance(frozen_scope.get("note_ids"), list) else []
+            batch = str(manual.get("batch") or "manual")
         catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
         notes = catalog.get("notes") if isinstance(catalog.get("notes"), dict) else {}
         config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
@@ -6082,7 +6374,6 @@ class Bridge:
         transaction_root.mkdir(parents=True, exist_ok=True)
         if path_is_reparse_point(transaction_root):
             raise ValueError("curation transaction root is unsafe")
-        batch = str(manual.get("batch") or "manual")
         input_path = transaction_root / f"{batch}-curation-input.json"
         output_path = transaction_root / f"{batch}-curation-bundle.json"
         current_curation = json.loads(self.curation.read_text(encoding="utf-8-sig"))
@@ -6486,7 +6777,7 @@ def make_handler(bridge: Bridge):
                 self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
                 return
             if self.path not in {
-                "/import-sync", "/boards", "/sync/start", "/sync/failure", "/sync/discover",
+                "/import-sync", "/boards", "/sync/start", "/sync/local-rebuild", "/sync/failure", "/sync/discover",
                 "/sync/summary-plan", "/sync/diandian-result", "/sync/diandian-skip",
                 "/sync/diandian-halt", "/sync/diandian-click", "/sync/diandian-cdp", "/notes/open",
                 "/notes/organization-status",
@@ -6497,7 +6788,9 @@ def make_handler(bridge: Bridge):
             if not self.authorized():
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
-            if self.path in {"/boards", "/sync/start", "/notes/open", "/notes/organization-status"} and not is_manager_origin(self.headers.get("Origin")):
+            if self.path in {
+                "/boards", "/sync/start", "/sync/local-rebuild", "/notes/open", "/notes/organization-status",
+            } and not is_manager_origin(self.headers.get("Origin")):
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
             try:
@@ -6513,6 +6806,11 @@ def make_handler(bridge: Bridge):
                     return
                 if self.path == "/sync/start":
                     self.send_json(HTTPStatus.ACCEPTED, {"ok": True, **bridge.trigger_manual_sync(payload)})
+                    return
+                if self.path == "/sync/local-rebuild":
+                    if payload:
+                        raise ValueError("local rebuild request must be empty")
+                    self.send_json(HTTPStatus.ACCEPTED, {"ok": True, **bridge.trigger_local_rebuild()})
                     return
                 if self.path == "/install/complete":
                     if set(payload) != {"capability"}:
