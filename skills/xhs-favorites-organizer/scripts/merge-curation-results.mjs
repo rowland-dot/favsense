@@ -13,7 +13,7 @@ import {
   normalizeEvidencePacket,
   sealCandidateRevision
 } from "./normalize-evidence.mjs";
-import { confirmedSkillResource } from "./resource-quality.mjs";
+import { confirmedSkillResource, nonSkillResourceAssessment } from "./resource-quality.mjs";
 import { executeJournaledTransaction, recoverJournaledTransaction } from "./journaled-transaction.mjs";
 import { acquireOrganizationMutationLock } from "./organization-mutation-lock.mjs";
 
@@ -144,16 +144,7 @@ function validateAudit(value) {
 
 function resourceAssessment(candidate, auditEntry, resources, today) {
   const collection = Array.isArray(resources) ? resources : resources?.resources || [];
-  if (candidate.kind !== "Skill") {
-    return {
-      status: auditEntry.resource_status === "verified" ? "verified" : "missing",
-      resource_id: "",
-      reason_code: "resource_not_applicable",
-      resource_identity_sha256: "",
-      verification_snapshot_sha256: "",
-      resource: null
-    };
-  }
+  if (candidate.kind !== "Skill") return nonSkillResourceAssessment(auditEntry.resource_status);
   const names = new Set(candidate.tools.map((tool) => clean(tool).toLocaleLowerCase("zh-CN")));
   const matches = collection.filter((resource) => [resource?.name, ...(resource?.aliases || [])]
     .some((alias) => names.has(clean(alias).toLocaleLowerCase("zh-CN"))));

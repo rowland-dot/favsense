@@ -9,12 +9,12 @@ import { attachEvidenceToCandidates, normalizeEvidencePacket, sealCandidateRevis
 import { executeJournaledTransaction } from "./journaled-transaction.mjs";
 import { acceptedRevisionsCurrent } from "./curation-quality.mjs";
 import { curationRevision } from "./curation-revision.mjs";
-import { confirmedSkillResource } from "./resource-quality.mjs";
+import { confirmedSkillResource, nonSkillResourceAssessment } from "./resource-quality.mjs";
 
 const clean = (value) => String(value ?? "").normalize("NFC").trim();
 
 function registryAssessment(candidate, input) {
-  if (candidate.kind !== "Skill") return { status: "missing", resource_id: "", reason_code: "resource_not_applicable", resource_identity_sha256: "", verification_snapshot_sha256: "", resource: null };
+  if (candidate.kind !== "Skill") return nonSkillResourceAssessment(input.current_audit?.notes?.[candidate.id]?.resource_status);
   const collection = clean(input.profile?.resource_index?.collection || "resources");
   const resources = Array.isArray(input.resources?.[collection]) ? input.resources[collection] : [];
   const aliases = new Set((candidate.tools || []).map((tool) => clean(tool).toLocaleLowerCase("zh-CN")));
@@ -43,7 +43,7 @@ function exactAssessment(value) {
     || Object.keys(value).sort().join(",") !== keys.join(",")
     || !["verified", "candidate", "ambiguous", "missing", "stale"].includes(value.status)
   ) throw new Error("CURATION_RESOURCE_ASSESSMENT_INVALID");
-  const withSnapshot = ["verified", "stale"].includes(value.status);
+  const withSnapshot = ["verified", "stale"].includes(value.status) && value.reason_code !== "resource_not_applicable";
   if (
     withSnapshot !== Boolean(value.resource && typeof value.resource === "object" && !Array.isArray(value.resource))
     || withSnapshot !== Boolean(clean(value.resource_id))
@@ -114,7 +114,8 @@ export async function runCurationPipeline(input = {}, hooks = {}) {
     else if (entry.review_status === "unavailable") counts.unavailable += 1;
     else if (entry.review_status === "rejected") counts.rejected += 1;
     else counts.pending += 1;
-    if (entry.resource_assessment.status !== "verified" && entry.tools.length) counts.resource_pending += 1;
+    const { status, reason_code: reason } = entry.resource_assessment;
+    if ((status !== "verified" || reason === "resource_not_applicable") && entry.tools.length) counts.resource_pending += 1;
   }
   return { schema_version: 1, ok: true, outcome: "ready_for_safe_build", scope: { note_ids: scopeIds }, counts, candidates, evidence: packets, audit, curation, resource_assessments: assessment };
 }
