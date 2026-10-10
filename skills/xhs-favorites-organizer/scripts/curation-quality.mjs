@@ -25,6 +25,15 @@ function canonicalDependencies(value) {
   return normalized.sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
 }
 
+// The curation step seals a candidate for every note in scope, but only accepted ones reach the formal
+// curation file. The rest are handed to the builders separately so both judge a not-accepted note from
+// the same sealed kind and revisions instead of each guessing from the note text.
+export function sealedCandidateFor(candidates, noteId) {
+  if (!candidates || typeof candidates !== "object" || Array.isArray(candidates) || !Object.hasOwn(candidates, noteId)) return null;
+  const entry = candidates[noteId];
+  return entry && typeof entry === "object" && !Array.isArray(entry) ? entry : null;
+}
+
 export function acceptedRevisionsCurrent(auditEntry, current = {}) {
   if (!auditEntry || auditEntry.status !== "accepted") return false;
   if (!REVISION_KEYS.every((key) => HASH.test(clean(auditEntry[key])) && auditEntry[key] === current[key])) return false;
@@ -295,7 +304,14 @@ export function formalCurationDecision({
   // without this the expiry surfaces as the generic audit_pending.
   const skillWithoutFreshResource = clean(kind) === "Skill" && !clean(resource?.id);
   if (skillWithoutFreshResource && auditEntry?.status === "accepted") return { ...base, reason_code: "resource_stale" };
-  if (!publishable) return base;
+  if (!publishable) {
+    // An accepted note that cannot publish because its content or evidence moved says so,
+    // instead of the generic audit_pending.
+    if (auditEntry?.status === "accepted" && currentRevisions) {
+      return { ...base, reason_code: revisionReason(auditEntry, currentRevisions) };
+    }
+    return base;
+  }
   if (skillWithoutFreshResource) return { ...base, reason_code: "resource_stale" };
   if (!auditEntry || !currentRevisions || !acceptedRevisionsCurrent(auditEntry, currentRevisions)) {
     return { ...base, reason_code: revisionReason(auditEntry, currentRevisions) };

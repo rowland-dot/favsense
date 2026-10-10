@@ -629,6 +629,63 @@ class BridgeHelpersTest(unittest.TestCase):
                 {"method": "image_ocr", "provider": "human_frame_review", "version": "codex-visual-review@2026-08-29", "result_sha256": sha("画面文字")},
             ])
 
+    def test_curation_pipeline_input_adds_a_saved_point_summary_only_where_the_audit_used_one(self):
+        # A summary saved after a note was reviewed is not new evidence for it: an accepted audit that
+        # never listed the summary keeps its evidence version only if the rebuild leaves the summary out.
+        # Notes without an accepted audit, and audits that did use the summary, still count it.
+        def summary_dependency(sha):
+            return {"method": "diandian_summary", "provider": "xiaohongshu-diandian", "version": "v" * 64, "result_sha256": sha}
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            unused, used, no_audit, pending, legacy = ("u" * 24, "s" * 24, "n" * 24, "p" * 24, "l" * 24)
+            note_ids = [unused, used, no_audit, pending, legacy]
+            saved = {"provider": "xiaohongshu-diandian", "prompt_version": "v" * 64, "summary_sha256": "5" * 64}
+            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge.workspace = root
+            bridge.state_dir = root / ".xhs-favorites"
+            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge.catalog_path = bridge.state_dir / "catalog.json"
+            bridge.curation = root / "curation.json"
+            bridge.profile = root / "profile.json"
+            bridge.config_path = root / "config.json"
+            bridge.resource_registry = None
+            bridge.curation_pipeline = root / "run-curation-pipeline.mjs"
+            bridge.node = BRIDGE.resolve_node_executable()
+            bridge.saved_diandian_record = mock.Mock(return_value=saved)
+            BRIDGE.atomic_json(bridge.state_dir / "curation-audit.json", {"schema_version": 2, "notes": {
+                unused: {"status": "accepted", "evidence_methods": ["description", "comments"], "evidence_dependencies": []},
+                used: {"status": "accepted", "evidence_methods": ["description", "diandian_summary"],
+                       "evidence_dependencies": [summary_dependency("4" * 64)]},
+                pending: {"status": "pending", "evidence_methods": ["description"], "evidence_dependencies": []},
+                legacy: {"status": "accepted", "evidence_dependencies": [summary_dependency("5" * 64)]},
+            }})
+            BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": "manual", "frozen_scope": {"note_ids": note_ids}})
+            BRIDGE.atomic_json(bridge.catalog_path, {"notes": {
+                note_id: {"note_id": note_id, "description": "Safe public text", "content_sha256": "a" * 64}
+                for note_id in note_ids
+            }})
+            BRIDGE.atomic_json(bridge.curation, {})
+            BRIDGE.atomic_json(bridge.profile, {"classification": {}})
+            BRIDGE.atomic_json(bridge.config_path, {"curation_quality": {}})
+            ok = {"schema_version": 1, "ok": True, "outcome": "ready_for_safe_build",
+                  "counts": {"accepted": 0, "unavailable": 0, "pending": 5, "rejected": 0, "resource_pending": 0}}
+            with mock.patch.object(
+                BRIDGE, "run_bounded_subprocess",
+                return_value=SimpleNamespace(returncode=0, stdout=json.dumps(ok), stderr=""),
+            ):
+                bridge.run_curation_pipeline()
+
+            sent = json.loads((bridge.state_dir / "organization-transactions" / "manual-curation-input.json").read_text(encoding="utf-8"))
+            summary_methods = {
+                item["note_id"]: [m for m in item["methods"] if m["method"] == "diandian_summary"]
+                for item in sent["evidence"]
+            }
+            self.assertEqual(summary_methods[unused], [])
+            for counted in (used, no_audit, pending, legacy):
+                self.assertEqual(len(summary_methods[counted]), 1, counted)
+                self.assertEqual(summary_methods[counted][0]["result_sha256"], "5" * 64)
+
     def test_manual_failure_turns_encoded_blank_diagnostics_into_actionable_guidance(self):
         with tempfile.TemporaryDirectory() as directory:
             bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
