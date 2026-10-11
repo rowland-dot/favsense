@@ -152,16 +152,22 @@ function compatibilityStatement(text, compatibility) {
 export async function verifyGitHubResource(candidate, {
   fetch: fetchImpl,
   today,
+  now = Date.now,
   timeoutMs = 10_000,
   deadlineAt = Date.now() + DEFAULT_RESOURCE_DEADLINE_MS,
 } = {}) {
   if (
     typeof fetchImpl !== "function"
+    || typeof now !== "function"
+    || !Number.isFinite(now())
     || !/^\d{4}-\d{2}-\d{2}$/.test(String(today || ""))
     || !Number.isFinite(timeoutMs)
     || timeoutMs <= 0
     || !Number.isFinite(deadlineAt)
   ) throw new Error("RESOURCE_VERIFIER_INPUT_INVALID");
+  // The build judges freshness by the UTC calendar day (curation-standard.md), so a verification dated ahead of
+  // UTC today (e.g. a Sydney-morning run passing its local date) would look like it comes from the future and read as stale.
+  if (today > new Date(now()).toISOString().slice(0, 10)) throw new Error("RESOURCE_VERIFIER_DATE_AHEAD_OF_UTC");
   const fetchOfficialText = (url, maxBytes, accept) => {
     const remainingMs = Math.min(timeoutMs, deadlineAt - Date.now());
     if (remainingMs <= 0) throw new Error("RESOURCE_STAGE_TIMEOUT");

@@ -1,7 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { verifyGitHubResource } from "../scripts/verify-github-resources.mjs";
+
+const SCRIPT = fileURLToPath(new URL("../scripts/verify-github-resources.mjs", import.meta.url));
 
 const REPOSITORY = { full_name: "owner/repo", name: "repo", default_branch: "main", stargazers_count: 7, license: { spdx_id: "MIT" } };
 
@@ -19,10 +27,13 @@ function offlineFetch({ skill, readme }) {
   };
 }
 
-function verify({ skill, readme, hosts }) {
+// The clock is fixed so these tests do not depend on the real UTC date of the machine running them.
+const NOON_UTC_OCT_12 = () => Date.parse("2026-10-12T12:00:00Z");
+
+function verify({ skill, readme, hosts, today = "2026-10-12", now = NOON_UTC_OCT_12 }) {
   return verifyGitHubResource(
     { canonical_repo: "owner/repo", manifest_path: "SKILL.md", compatibility: hosts, compatibility_evidence: ["README.md"] },
-    { today: "2026-10-12", fetch: offlineFetch({ skill, readme }) },
+    { today, now, fetch: offlineFetch({ skill, readme }) },
   );
 }
 
@@ -218,4 +229,36 @@ test("explicit compatibility declarations keep their strict parsing", async () =
 test("a declaration line still wins over an unrelated sentence in the same file", async () => {
   const result = await verify({ skill: GOOD_SKILL, readme: "Compatibility: Codex\nBenchmarked with and without the skill in Codex.", hosts: ["Codex"] });
   assert.equal(result.status, "verified");
+});
+
+// ---- the verification date never runs ahead of the UTC calendar day the build uses ----
+
+// 2026-10-11 15:05 UTC is 2026-10-12 02:05 in Sydney: the evening run that wrote a date the build still saw as the future.
+const SYDNEY_MORNING_STILL_OCT_11_UTC = () => Date.parse("2026-10-11T15:05:00Z");
+
+test("a date later than the current UTC day is refused", async () => {
+  await assert.rejects(
+    verify({ skill: GOOD_SKILL, readme: CODEX_README, hosts: ["Codex"], today: "2026-10-12", now: SYDNEY_MORNING_STILL_OCT_11_UTC }),
+    /RESOURCE_VERIFIER_DATE_AHEAD_OF_UTC/,
+  );
+});
+
+test("the current UTC day is accepted and written as the verification date", async () => {
+  const result = await verify({ skill: GOOD_SKILL, readme: CODEX_README, hosts: ["Codex"], today: "2026-10-11", now: SYDNEY_MORNING_STILL_OCT_11_UTC });
+  assert.equal(result.verified_at, "2026-10-11");
+});
+
+test("the command line refuses a date later than the current UTC day and writes no output file", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "verifier-utc-"));
+  try {
+    const input = join(dir, "candidates.json");
+    const output = join(dir, "resources.json");
+    await writeFile(input, JSON.stringify([{ canonical_repo: "owner/repo", manifest_path: "SKILL.md", compatibility: ["Codex"], compatibility_evidence: ["README.md"] }]));
+    const run = spawnSync(process.execPath, [SCRIPT, "--input", input, "--output", output, "--today", "2999-01-01"], { encoding: "utf8" });
+    assert.notEqual(run.status, 0);
+    assert.match(run.stderr, /RESOURCE_VERIFIER_DATE_AHEAD_OF_UTC/);
+    assert.equal(existsSync(output), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
