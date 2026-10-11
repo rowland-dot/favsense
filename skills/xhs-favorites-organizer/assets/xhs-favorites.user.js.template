@@ -192,13 +192,45 @@ __DIANDIAN_MATCH_LINE__
           resolve(value);
         } catch (error) { reject(error); }
       },
-      onerror: () => reject(new Error("无法连接本地同步服务")),
-      ontimeout: () => reject(new Error("本地同步超时")),
+      onerror: () => reject(Object.assign(new Error("无法连接本地同步服务"), { transport: true })),
+      ontimeout: () => reject(Object.assign(new Error("本地同步超时"), { transport: true })),
     }));
   }
 
   const post = (path, payload, timeout) => request("POST", path, payload, timeout);
   const get = (path, timeout) => request("GET", path, undefined, timeout);
+
+  // A connection lost while the bridge is importing a board does not mean the import stopped. Ask the
+  // bridge for that run's status, within the import's own time limit, before reporting anything.
+  const STATUS_POLL_MS = 5000;
+  async function postImport(runId, payload, timeout) {
+    const deadline = Date.now() + timeout;
+    try {
+      return await post("/import-sync", payload, timeout);
+    } catch (error) {
+      if (!error.transport) throw error;
+      return await followImportStatus(runId, deadline, error);
+    }
+  }
+
+  async function followImportStatus(runId, deadline, transportError) {
+    while (true) {
+      let status;
+      try {
+        status = await get(`/status?run_id=${encodeURIComponent(runId)}`, 10000);
+      } catch {
+        // The bridge is unreachable, or it never started this run: nothing is left to wait for.
+        throw transportError;
+      }
+      if (status.state === "completed") return status;
+      if (status.state === "failed" || status.state === "safety-stopped") {
+        throw new Error(status.error || `本地服务返回 ${status.state}`);
+      }
+      if (status.state !== "running" || Date.now() >= deadline) throw transportError;
+      show("与本地同步服务的连接中断，但本地服务仍在处理这个收藏夹，继续等待");
+      await sleep(STATUS_POLL_MS);
+    }
+  }
   post("/install/complete", { capability: INSTALL_CAPABILITY }, 5000).catch(() => {});
 
   function cleanBoardName(anchor) {
@@ -1291,7 +1323,7 @@ __DIANDIAN_MATCH_LINE__
         ? `正在本机校验 ${board.name} 中的指定卡片`
         : `正在入库 ${board.name} 的 ${urls.length} 篇（含可用评论区线索）`);
       const timeout = mode === "history" ? 80 * 60 * 1000 : 30 * 60 * 1000;
-      coreResult = await post("/import-sync", { run_id: runId, board_id: board.id, urls }, timeout);
+      coreResult = await postImport(runId, { run_id: runId, board_id: board.id, urls }, timeout);
       try {
         summaryPlan = await createSummaryPlan(notes, board, runId);
         if (targetMode && (
