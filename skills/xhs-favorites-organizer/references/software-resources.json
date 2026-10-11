@@ -151,9 +151,18 @@
       "type": "上下文压缩库 / MCP",
       "repo": "https://github.com/headroomlabs-ai/headroom",
       "download": "https://github.com/headroomlabs-ai/headroom/archive/refs/heads/main.zip",
-      "stars": "62.8k",
-      "stars_numeric": 62800,
-      "usage_note": "评估压缩率时，应同时检查答案正确率是否下降。"
+      "stars": "74.9k",
+      "stars_numeric": 74886,
+      "usage_note": "Apache-2.0；评估压缩率时同时检查答案正确率是否下降，并确认压缩发生在本地还是外部服务。",
+      "canonical_repo": "headroomlabs-ai/headroom",
+      "default_branch": "main",
+      "license": "Apache-2.0",
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "source_urls": [
+        "https://github.com/headroomlabs-ai/headroom",
+        "https://docs.headroomlabs.ai/docs"
+      ]
     },
     {
       "name": "CocoIndex",
@@ -1088,6 +1097,839 @@
         "https://github.com/huggingface/speech-to-speech/blob/main/LICENSE",
         "https://github.com/huggingface/speech-to-speech/releases",
         "https://github.com/huggingface/speech-to-speech/archive/refs/heads/main.zip"
+      ]
+    },
+    {
+      "name": "oh-my-Mermaid",
+      "aliases": [
+        "oh-my-mermaid",
+        "omm"
+      ],
+      "type": "代码库架构图 CLI / Claude Code Skills",
+      "canonical_repo": "oh-my-mermaid/oh-my-mermaid",
+      "default_branch": "main",
+      "repo": "https://github.com/oh-my-mermaid/oh-my-mermaid",
+      "download": "https://github.com/oh-my-mermaid/oh-my-mermaid/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "2.8k",
+      "stars_numeric": 2814,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；npm 全局安装后用 omm setup 接入编码 Agent。云端分享（omm push）会把架构描述上传到 ohmymermaid.com，私有代码库先确认可上传范围。",
+      "source_urls": [
+        "https://github.com/oh-my-mermaid/oh-my-mermaid"
+      ]
+    },
+    {
+      "name": "Task Observer",
+      "aliases": [
+        "one-skill-to-rule-them-all",
+        "task-observer"
+      ],
+      "type": "Agent Skill（自我改进元 Skill）",
+      "canonical_repo": "rebelytics/one-skill-to-rule-them-all",
+      "default_branch": "main",
+      "repo": "https://github.com/rebelytics/one-skill-to-rule-them-all",
+      "download": "https://github.com/rebelytics/one-skill-to-rule-them-all/archive/refs/heads/main.zip",
+      "license": "CC-BY-4.0",
+      "stars": "3.2k",
+      "stars_numeric": 3236,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "CC-BY-4.0；会把观察记录写入本地工作区，改动 Skill 前需人工审核。",
+      "source_urls": [
+        "https://github.com/rebelytics/one-skill-to-rule-them-all",
+        "https://www.rebelytics.com/task-observer/"
+      ]
+    },
+    {
+      "name": "Variate",
+      "aliases": [
+        "Nutlope/variate"
+      ],
+      "type": "前端设计变体 Agent Skill",
+      "canonical_repo": "Nutlope/variate",
+      "default_branch": "master",
+      "repo": "https://github.com/Nutlope/variate",
+      "download": "https://github.com/Nutlope/variate/archive/refs/heads/master.zip",
+      "license": "MIT",
+      "stars": "212",
+      "stars_numeric": 212,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；为同一组件生成四个设计变体供比较，先在分支上试用并人工挑选。",
+      "source_urls": [
+        "https://github.com/Nutlope/variate",
+        "https://variate-skill.vercel.app"
+      ]
+    },
+    {
+      "name": "Minimalist Entrepreneur Skills",
+      "aliases": [
+        "slavingia/skills",
+        "Minimalist Entrepreneur"
+      ],
+      "type": "创业方法 Agent Skills 合集",
+      "canonical_repo": "slavingia/skills",
+      "default_branch": "main",
+      "repo": "https://github.com/slavingia/skills",
+      "download": "https://github.com/slavingia/skills/archive/refs/heads/main.zip",
+      "license": "未声明标准许可证",
+      "stars": "10.9k",
+      "stars_numeric": 10861,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "仓库未声明标准许可证；内容基于《The Minimalist Entrepreneur》，复用或分发前先确认授权。",
+      "source_urls": [
+        "https://github.com/slavingia/skills",
+        "https://minimalistentrepreneur.com"
+      ]
+    },
+    {
+      "name": "Find Skills",
+      "aliases": [
+        "find-skills",
+        "vercel-labs/skills"
+      ],
+      "type": "Skill 检索与安装 CLI（npx skills）",
+      "canonical_repo": "vercel-labs/skills",
+      "default_branch": "main",
+      "repo": "https://github.com/vercel-labs/skills",
+      "download": "https://github.com/vercel-labs/skills/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "33.6k",
+      "stars_numeric": 33633,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；find-skills 用于检索与安装第三方 Skill，安装前逐个审查来源与权限。",
+      "source_urls": [
+        "https://github.com/vercel-labs/skills",
+        "https://skills.sh"
+      ]
+    },
+    {
+      "name": "OmniRoute",
+      "aliases": [],
+      "type": "多模型路由 AI 网关",
+      "canonical_repo": "diegosouzapw/OmniRoute",
+      "default_branch": "release/v3.8.52",
+      "repo": "https://github.com/diegosouzapw/OmniRoute",
+      "download": "https://github.com/diegosouzapw/OmniRoute/archive/refs/heads/release/v3.8.52.zip",
+      "license": "MIT",
+      "stars": "74.9k",
+      "stars_numeric": 74875,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；聚合多家免费额度并自动切换，需遵守各提供商条款，API Key 只存本机并定期轮换。",
+      "source_urls": [
+        "https://github.com/diegosouzapw/OmniRoute",
+        "https://omniroute.online"
+      ]
+    },
+    {
+      "name": "Anakin",
+      "aliases": [
+        "Anakin-Inc/anakin"
+      ],
+      "type": "开源网页抓取 API",
+      "canonical_repo": "Anakin-Inc/anakin",
+      "default_branch": "master",
+      "repo": "https://github.com/Anakin-Inc/anakin",
+      "download": "https://github.com/Anakin-Inc/anakin/archive/refs/heads/master.zip",
+      "license": "AGPL-3.0",
+      "stars": "4.5k",
+      "stars_numeric": 4532,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "抓取前确认目标站点条款与 robots 规则，不用于绕过登录或付费墙。",
+      "source_urls": [
+        "https://github.com/Anakin-Inc/anakin",
+        "https://anakin.io"
+      ]
+    },
+    {
+      "name": "PriceAI",
+      "aliases": [
+        "dimthink/PriceAI"
+      ],
+      "type": "AI 订阅卡网比价工具",
+      "canonical_repo": "dimthink/PriceAI",
+      "default_branch": "main",
+      "repo": "https://github.com/dimthink/PriceAI",
+      "download": "https://github.com/dimthink/PriceAI/archive/refs/heads/main.zip",
+      "license": "未声明标准许可证",
+      "stars": "3.8k",
+      "stars_numeric": 3835,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "仓库未声明标准许可证；卡网渠道属第三方转售，购买前核对官方条款、账号安全与退款风险。",
+      "source_urls": [
+        "https://github.com/dimthink/PriceAI",
+        "https://priceai.cc"
+      ]
+    },
+    {
+      "name": "yao-open-prompts",
+      "aliases": [
+        "Yao-open-prompts"
+      ],
+      "type": "双语提示词库",
+      "canonical_repo": "yaojingang/yao-open-prompts",
+      "default_branch": "main",
+      "repo": "https://github.com/yaojingang/yao-open-prompts",
+      "download": "https://github.com/yaojingang/yao-open-prompts/archive/refs/heads/main.zip",
+      "license": "未声明标准许可证",
+      "stars": "2.9k",
+      "stars_numeric": 2916,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "仓库未声明标准许可证；模板复用前确认授权，并按自己的任务补齐上下文。",
+      "source_urls": [
+        "https://github.com/yaojingang/yao-open-prompts",
+        "https://yaojingang.github.io/yao-open-prompts/"
+      ]
+    },
+    {
+      "name": "Awesome-GPT-Image-2",
+      "aliases": [
+        "awesome-gpt-image-2"
+      ],
+      "type": "GPT Image 提示词与案例库",
+      "canonical_repo": "freestylefly/awesome-gpt-image-2",
+      "default_branch": "main",
+      "repo": "https://github.com/freestylefly/awesome-gpt-image-2",
+      "download": "https://github.com/freestylefly/awesome-gpt-image-2/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "34.3k",
+      "stars_numeric": 34259,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；同名仓库较多，以 freestylefly 版本为准；生成图涉及品牌或人像时自行确认版权与肖像授权。",
+      "source_urls": [
+        "https://github.com/freestylefly/awesome-gpt-image-2",
+        "https://gpt-image2.canghe.ai"
+      ]
+    },
+    {
+      "name": "FreeLLMAPI",
+      "aliases": [
+        "freellmapi"
+      ],
+      "type": "免费大模型额度聚合网关",
+      "canonical_repo": "tashfeenahmed/freellmapi",
+      "default_branch": "main",
+      "repo": "https://github.com/tashfeenahmed/freellmapi",
+      "download": "https://github.com/tashfeenahmed/freellmapi/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "32.8k",
+      "stars_numeric": 32800,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；聚合多家免费额度，需遵守各平台条款，不把生产或敏感数据发往免费层，密钥加密存储并可随时吊销。",
+      "source_urls": [
+        "https://github.com/tashfeenahmed/freellmapi",
+        "https://freellmapi.co"
+      ]
+    },
+    {
+      "name": "Refero Styles",
+      "aliases": [
+        "Refero Design",
+        "Refero"
+      ],
+      "type": "网站风格 DESIGN.md 库（托管）",
+      "website": "https://styles.refero.design/",
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "托管服务；下载的 DESIGN.md 作为设计约束放入项目，商用前确认风格参考的授权范围。",
+      "source_urls": [
+        "https://styles.refero.design/",
+        "https://refero.design/"
+      ]
+    },
+    {
+      "name": "Audio8_TTS",
+      "aliases": [
+        "Audio8 TTS",
+        "Audio8-TTS"
+      ],
+      "type": "轻量开源 TTS 模型",
+      "canonical_repo": "Edge0-AI/Audio8_TTS",
+      "default_branch": "master",
+      "repo": "https://github.com/Edge0-AI/Audio8_TTS",
+      "download": "https://github.com/Edge0-AI/Audio8_TTS/archive/refs/heads/master.zip",
+      "license": "Apache-2.0",
+      "stars": "1.6k",
+      "stars_numeric": 1603,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "Apache-2.0；0.1B 版本可在 CPU 运行并支持零样本音色克隆。只克隆本人或已获授权的声音，生成内容标注为合成语音。",
+      "source_urls": [
+        "https://github.com/Edge0-AI/Audio8_TTS"
+      ]
+    },
+    {
+      "name": "VidMuse",
+      "aliases": [
+        "VidMuse CLI",
+        "vidmuse-skills"
+      ],
+      "type": "AIGC 视频平台 Agent CLI / Skill",
+      "canonical_repo": "SandAI-org/vidmuse-skills",
+      "default_branch": "main",
+      "repo": "https://github.com/SandAI-org/vidmuse-skills",
+      "download": "https://github.com/SandAI-org/vidmuse-skills/archive/refs/heads/main.zip",
+      "license": "未声明标准许可证",
+      "stars": "13",
+      "stars_numeric": 13,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "Sand.ai 官方 VidMuse Agent 入口，仓库未声明标准许可证；安装脚本通过管道执行，先阅读仓库内镜像脚本再运行，并确认生成额度计费与素材版权。",
+      "source_urls": [
+        "https://github.com/SandAI-org/vidmuse-skills"
+      ]
+    },
+    {
+      "name": "Cola Skill",
+      "aliases": [
+        "colaskill"
+      ],
+      "type": "中文 Skill 市场（托管）",
+      "website": "https://colaskill.com/",
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "Cola（MARSWAVE）运营的 Skill 市场，部分功能需注册会员；复制安装前打开 Skill 原始来源审查权限与脚本。",
+      "source_urls": [
+        "https://colaskill.com/",
+        "https://docs.colaos.ai/en/skills/"
+      ]
+    },
+    {
+      "name": "Cloudflare Security Audit Skill",
+      "aliases": [
+        "security-audit-skill",
+        "cloudflare/security-audit-skill"
+      ],
+      "type": "安全审计 Agent Skill",
+      "canonical_repo": "cloudflare/security-audit-skill",
+      "default_branch": "main",
+      "repo": "https://github.com/cloudflare/security-audit-skill",
+      "download": "https://github.com/cloudflare/security-audit-skill/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "27.3k",
+      "stars_numeric": 27298,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；只对自有代码运行，审计结论需人工复核后再修复。",
+      "source_urls": [
+        "https://github.com/cloudflare/security-audit-skill"
+      ]
+    },
+    {
+      "name": "Open Code Review",
+      "aliases": [
+        "open-code-review",
+        "alibaba/open-code-review"
+      ],
+      "type": "代码审查工具",
+      "canonical_repo": "alibaba/open-code-review",
+      "default_branch": "main",
+      "repo": "https://github.com/alibaba/open-code-review",
+      "download": "https://github.com/alibaba/open-code-review/archive/refs/heads/main.zip",
+      "license": "Apache-2.0",
+      "stars": "45.8k",
+      "stars_numeric": 45789,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "Apache-2.0；接入外部模型前确认代码可发送范围，先在非关键仓库试跑。",
+      "source_urls": [
+        "https://github.com/alibaba/open-code-review",
+        "https://open-codereview.ai"
+      ]
+    },
+    {
+      "name": "BrowserSkill",
+      "aliases": [
+        "Tencent/BrowserSkill"
+      ],
+      "type": "浏览器自动化 CLI / 扩展",
+      "canonical_repo": "Tencent/BrowserSkill",
+      "default_branch": "main",
+      "repo": "https://github.com/Tencent/BrowserSkill",
+      "download": "https://github.com/Tencent/BrowserSkill/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "8.6k",
+      "stars_numeric": 8563,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；会使用已登录浏览器，限定站点与写操作，用独立浏览器配置测试。",
+      "source_urls": [
+        "https://github.com/Tencent/BrowserSkill"
+      ]
+    },
+    {
+      "name": "Google AX",
+      "aliases": [
+        "google/ax",
+        "AX"
+      ],
+      "type": "Agent 编排运行时",
+      "canonical_repo": "google/ax",
+      "default_branch": "main",
+      "repo": "https://github.com/google/ax",
+      "download": "https://github.com/google/ax/archive/refs/heads/main.zip",
+      "license": "Apache-2.0",
+      "stars": "13.4k",
+      "stars_numeric": 13409,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "Apache-2.0；先在沙箱或测试集群运行，限制并发与外部写权限。",
+      "source_urls": [
+        "https://github.com/google/ax",
+        "https://agentexecutor.io"
+      ]
+    },
+    {
+      "name": "GitDiagram",
+      "aliases": [
+        "gitdiagram",
+        "Git Diagram"
+      ],
+      "type": "仓库架构图在线工具",
+      "canonical_repo": "ahmedkhaleel2004/gitdiagram",
+      "default_branch": "main",
+      "repo": "https://github.com/ahmedkhaleel2004/gitdiagram",
+      "download": "https://github.com/ahmedkhaleel2004/gitdiagram/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "18.1k",
+      "stars_numeric": 18054,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；把 github.com 换成 gitdiagram.com 即可生成，私有仓库需授权，图为 AI 推断结果需对照代码。",
+      "source_urls": [
+        "https://github.com/ahmedkhaleel2004/gitdiagram",
+        "https://gitdiagram.com"
+      ]
+    },
+    {
+      "name": "Gitingest",
+      "aliases": [
+        "gitingest"
+      ],
+      "type": "仓库转 LLM 文本工具",
+      "canonical_repo": "coderamp-labs/gitingest",
+      "default_branch": "main",
+      "repo": "https://github.com/coderamp-labs/gitingest",
+      "download": "https://github.com/coderamp-labs/gitingest/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "15.9k",
+      "stars_numeric": 15892,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；把 github 换成 gitingest 获取文本摘要，私有代码优先用本地 CLI，粘贴给 AI 前检查是否含密钥。",
+      "source_urls": [
+        "https://github.com/coderamp-labs/gitingest",
+        "https://gitingest.com"
+      ]
+    },
+    {
+      "name": "archify",
+      "aliases": [
+        "Archify",
+        "tt-a1i/archify"
+      ],
+      "type": "架构图 Agent Skill",
+      "canonical_repo": "tt-a1i/archify",
+      "default_branch": "main",
+      "repo": "https://github.com/tt-a1i/archify",
+      "download": "https://github.com/tt-a1i/archify/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "81.6k",
+      "stars_numeric": 81556,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；生成交互式架构图，结论需对照代码核实。",
+      "source_urls": [
+        "https://github.com/tt-a1i/archify",
+        "https://archify.si"
+      ]
+    },
+    {
+      "name": "VoiceStudio",
+      "aliases": [
+        "Voice Studio",
+        "debpalash/VoiceStudio"
+      ],
+      "type": "本地语音克隆与配音工作台",
+      "canonical_repo": "debpalash/VoiceStudio",
+      "default_branch": "main",
+      "repo": "https://github.com/debpalash/VoiceStudio",
+      "download": "https://github.com/debpalash/VoiceStudio/archive/refs/heads/main.zip",
+      "license": "AGPL-3.0",
+      "stars": "56.9k",
+      "stars_numeric": 56914,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "AGPL-3.0；完全本地运行，只克隆本人或获授权的声音，二次分发注意 AGPL 义务。",
+      "source_urls": [
+        "https://github.com/debpalash/VoiceStudio",
+        "https://voicestudio.sh"
+      ]
+    },
+    {
+      "name": "scientific-agent-skills",
+      "aliases": [
+        "K-Dense-AI/scientific-agent-skills"
+      ],
+      "type": "科研 Agent Skills 合集",
+      "canonical_repo": "K-Dense-AI/scientific-agent-skills",
+      "default_branch": "main",
+      "repo": "https://github.com/K-Dense-AI/scientific-agent-skills",
+      "download": "https://github.com/K-Dense-AI/scientific-agent-skills/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "48.3k",
+      "stars_numeric": 48276,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；科研结论需人工复核，接入外部数据库前检查数据使用条款。",
+      "source_urls": [
+        "https://github.com/K-Dense-AI/scientific-agent-skills",
+        "https://arxiv.org/abs/2609.00065"
+      ]
+    },
+    {
+      "name": "Easel",
+      "aliases": [
+        "ZJU-REAL/Easel"
+      ],
+      "type": "开源社媒运营 AI Agent",
+      "canonical_repo": "ZJU-REAL/Easel",
+      "default_branch": "main",
+      "repo": "https://github.com/ZJU-REAL/Easel",
+      "download": "https://github.com/ZJU-REAL/Easel/archive/refs/heads/main.zip",
+      "license": "Apache-2.0",
+      "stars": "3.4k",
+      "stars_numeric": 3402,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "Apache-2.0；会拉取账号数据并跨平台发布，先关闭自动发布、只读测试；未配置联网搜索时输出的“事实”须逐条核对来源，遵守各平台规则。",
+      "source_urls": [
+        "https://github.com/ZJU-REAL/Easel",
+        "https://zju-real.github.io/Easel/"
+      ]
+    },
+    {
+      "name": "dbx",
+      "aliases": [
+        "t8y2/dbx"
+      ],
+      "type": "轻量数据库客户端",
+      "canonical_repo": "t8y2/dbx",
+      "default_branch": "main",
+      "repo": "https://github.com/t8y2/dbx",
+      "download": "https://github.com/t8y2/dbx/archive/refs/heads/main.zip",
+      "license": "Apache-2.0",
+      "stars": "25.6k",
+      "stars_numeric": 25571,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "Apache-2.0；先连测试库验证，接入 AI 助手生成 SQL 时用只读账号并在执行前人工审阅语句。",
+      "source_urls": [
+        "https://github.com/t8y2/dbx",
+        "https://dbxio.com"
+      ]
+    },
+    {
+      "name": "PaperClip",
+      "aliases": [
+        "Paperclip",
+        "paperclipai/paperclip"
+      ],
+      "type": "多 Agent 团队管理与编排应用",
+      "canonical_repo": "paperclipai/paperclip",
+      "default_branch": "master",
+      "repo": "https://github.com/paperclipai/paperclip",
+      "download": "https://github.com/paperclipai/paperclip/archive/refs/heads/master.zip",
+      "license": "MIT",
+      "stars": "99.5k",
+      "stars_numeric": 99532,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；为每个 Agent 设置预算上限与人工审批点，先在本地部署并用低风险任务试跑。",
+      "source_urls": [
+        "https://github.com/paperclipai/paperclip",
+        "https://paperclip.ing"
+      ]
+    },
+    {
+      "name": "OpenSEO",
+      "aliases": [
+        "open-seo",
+        "every-app/open-seo"
+      ],
+      "type": "开源 SEO 工具（Semrush/Ahrefs 替代）",
+      "canonical_repo": "every-app/open-seo",
+      "default_branch": "main",
+      "repo": "https://github.com/every-app/open-seo",
+      "download": "https://github.com/every-app/open-seo/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "23.0k",
+      "stars_numeric": 22953,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；可自托管，关键词与外链数据通过 DataForSEO 按量计费，先设好额度上限再接入 MCP。",
+      "source_urls": [
+        "https://github.com/every-app/open-seo",
+        "https://openseo.so"
+      ]
+    },
+    {
+      "name": "Compositor",
+      "aliases": [
+        "robbietilton/Compositor"
+      ],
+      "type": "开源 Mac 图像编辑器",
+      "canonical_repo": "robbietilton/Compositor",
+      "default_branch": "main",
+      "repo": "https://github.com/robbietilton/Compositor",
+      "download": "https://github.com/robbietilton/Compositor/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "15.3k",
+      "stars_numeric": 15346,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；官方定位为 Mac 上的 Photoshop 替代，Windows 用户不可用；处理商用素材前先用副本测试 PSD 等格式兼容性。",
+      "source_urls": [
+        "https://github.com/robbietilton/Compositor"
+      ]
+    },
+    {
+      "name": "小云雀",
+      "aliases": [
+        "小云雀AI",
+        "Xiaoyunque"
+      ],
+      "type": "字节跳动剪映 AI 内容创作 Agent（托管）",
+      "website": "https://xyq.jianying.com/",
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "剪映团队的托管产品，生成内容的商用授权、数字人肖像与计费以官方条款为准，上传商品图前确认图片版权。",
+      "source_urls": [
+        "https://xyq.jianying.com/",
+        "https://apps.apple.com/cn/app/id6746231056"
+      ]
+    },
+    {
+      "name": "百度一镜",
+      "aliases": [
+        "Baidu Yijing"
+      ],
+      "type": "百度电商数字人与商品视频平台（托管）",
+      "website": "https://yijing.baidu.com/",
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "百度官方托管平台，由慧播星升级而来；功能与收费以官网为准，生成视频上架前核对商品外观与宣传用语合规。",
+      "source_urls": [
+        "https://yijing.baidu.com/"
+      ]
+    },
+    {
+      "name": "MiniMax Design",
+      "aliases": [
+        "MiniMaxDesign"
+      ],
+      "type": "MiniMax 多模态 AI 创作平台（托管）",
+      "website": "https://design.minimax.io/",
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MiniMax 官方托管平台，按秒或按任务计费，价格以官网为准；生成广告前确认产品图、人物与音乐的商用授权。",
+      "source_urls": [
+        "https://design.minimax.io/"
+      ]
+    },
+    {
+      "name": "ClipCat",
+      "aliases": [
+        "Clipcat",
+        "clipcat-skill",
+        "Clipcat-ai/clipcat-skill"
+      ],
+      "type": "TikTok Shop 带货视频 CLI / Agent Skill",
+      "canonical_repo": "Clipcat-ai/clipcat-skill",
+      "default_branch": "main",
+      "repo": "https://github.com/Clipcat-ai/clipcat-skill",
+      "download": "https://github.com/Clipcat-ai/clipcat-skill/archive/refs/heads/main.zip",
+      "license": "未声明标准许可证",
+      "stars": "242",
+      "stars_numeric": 242,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "仓库未声明许可证；会调用 Clipcat 的数据与生成服务并可发布到 TikTok 账号，先关闭自动发布，复刻他人爆款时只借鉴结构、不搬运原素材。",
+      "source_urls": [
+        "https://github.com/Clipcat-ai/clipcat-skill",
+        "https://clipcat.ai"
+      ]
+    },
+    {
+      "name": "ChatCut",
+      "aliases": [
+        "chatcut"
+      ],
+      "type": "对话式 AI 视频剪辑桌面应用（托管）",
+      "website": "https://chatcut.io/",
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "官方桌面应用并提供 Agent 插件；视频生成模型按用量计费，上传素材前确认肖像与音乐授权。",
+      "source_urls": [
+        "https://chatcut.io/",
+        "https://github.com/ChatCut-Inc/agent-plugin"
+      ]
+    },
+    {
+      "name": "OpenMontage",
+      "aliases": [
+        "calesthio/OpenMontage"
+      ],
+      "type": "Agent 驱动的开源视频生产系统",
+      "canonical_repo": "calesthio/OpenMontage",
+      "default_branch": "main",
+      "repo": "https://github.com/calesthio/OpenMontage",
+      "download": "https://github.com/calesthio/OpenMontage/archive/refs/heads/main.zip",
+      "license": "AGPL-3.0",
+      "stars": "66.0k",
+      "stars_numeric": 66033,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "AGPL-3.0；运行在 Claude Code、Codex 等编码 Agent 中编排配音、配图与渲染工具，外部生成服务按各自计费，素材与音乐需确认授权。",
+      "source_urls": [
+        "https://github.com/calesthio/OpenMontage",
+        "https://www.openmontage.video/"
+      ]
+    },
+    {
+      "name": "vphone",
+      "aliases": [
+        "vphone-cli",
+        "Lakr233/vphone-cli"
+      ],
+      "type": "Mac 虚拟 iPhone 命令行工具",
+      "canonical_repo": "Lakr233/vphone-cli",
+      "default_branch": "main",
+      "repo": "https://github.com/Lakr233/vphone-cli",
+      "download": "https://github.com/Lakr233/vphone-cli/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "15.1k",
+      "stars_numeric": 15143,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；需要 Apple 芯片 Mac，属于研究用途的虚拟化方案，使用前核对 Apple 软件许可条款，测试账号与真实账号分开。",
+      "source_urls": [
+        "https://github.com/Lakr233/vphone-cli"
+      ]
+    },
+    {
+      "name": "Concat",
+      "aliases": [
+        "concat",
+        "jub0t/concat"
+      ],
+      "type": "开源本地多轨视频编辑器",
+      "canonical_repo": "jub0t/concat",
+      "default_branch": "main",
+      "repo": "https://github.com/jub0t/concat",
+      "download": "https://github.com/jub0t/concat/archive/refs/heads/main.zip",
+      "license": "AGPL-3.0",
+      "stars": "4.6k",
+      "stars_numeric": 4628,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "AGPL-3.0；本地运行、自带离线字幕与 TTS，二次分发或改造需遵守 AGPL 义务。",
+      "source_urls": [
+        "https://github.com/jub0t/concat",
+        "https://concatenate.pages.dev"
+      ]
+    },
+    {
+      "name": "Hello-Agents",
+      "aliases": [
+        "hello-agents",
+        "datawhalechina/hello-agents"
+      ],
+      "type": "Datawhale 开源智能体教程",
+      "canonical_repo": "datawhalechina/hello-agents",
+      "default_branch": "main",
+      "repo": "https://github.com/datawhalechina/hello-agents",
+      "download": "https://github.com/datawhalechina/hello-agents/archive/refs/heads/main.zip",
+      "license": "未声明标准许可证",
+      "stars": "82.4k",
+      "stars_numeric": 82434,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "仓库未声明标准许可证；配套代码调用的大模型 API 自行准备并控制费用，转载教程内容前确认授权。",
+      "source_urls": [
+        "https://github.com/datawhalechina/hello-agents",
+        "https://hello-agents.datawhale.cc"
+      ]
+    },
+    {
+      "name": "TencentDB Agent Memory",
+      "aliases": [
+        "Agent Memory",
+        "TencentCloud/TencentDB-Agent-Memory"
+      ],
+      "type": "Agent 分层记忆系统",
+      "canonical_repo": "TencentCloud/TencentDB-Agent-Memory",
+      "default_branch": "feat/server_team",
+      "repo": "https://github.com/TencentCloud/TencentDB-Agent-Memory",
+      "download": "https://github.com/TencentCloud/TencentDB-Agent-Memory/archive/refs/heads/feat/server_team.zip",
+      "license": "未声明标准许可证",
+      "stars": "27.9k",
+      "stars_numeric": 27887,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "腾讯云开源的 Agent 记忆层；先在本地或测试环境部署，确认写入记忆的数据范围与删除机制后再接入生产 Agent。",
+      "source_urls": [
+        "https://github.com/TencentCloud/TencentDB-Agent-Memory",
+        "https://tencentcloud.github.io/TencentDB-Agent-Memory/"
+      ]
+    },
+    {
+      "name": "钉钉悟空",
+      "aliases": [
+        "悟空",
+        "阿里悟空",
+        "DingTalk Wukong"
+      ],
+      "type": "钉钉 AI 工作平台（托管）",
+      "website": "https://wukong.dingtalk.com/",
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "钉钉推出、基于通义大模型的托管 AI 工作平台；选品、供应商和热搜词结果需人工复核，建站与 SEO 内容上线前核对事实与商标。",
+      "source_urls": [
+        "https://wukong.dingtalk.com/"
+      ]
+    },
+    {
+      "name": "Sealeap Amazon Skills",
+      "aliases": [
+        "sealeap-amazon-skills",
+        "xjli360/sealeap-amazon-skills",
+        "Sealeap Amazon Skill"
+      ],
+      "type": "跨境电商 Agent Skills 合集",
+      "canonical_repo": "xjli360/sealeap-amazon-skills",
+      "default_branch": "main",
+      "repo": "https://github.com/xjli360/sealeap-amazon-skills",
+      "download": "https://github.com/xjli360/sealeap-amazon-skills/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "252",
+      "stars_numeric": 252,
+      "verified_at": "2026-10-11",
+      "status": "verified",
+      "usage_note": "MIT；Sealeap 社区维护，含 amazon-official 目录（作者称来自官方授权材料）。逐个审阅要用的 Skill，核对广告与费率规则的日期，不批量安装。",
+      "source_urls": [
+        "https://github.com/xjli360/sealeap-amazon-skills",
+        "https://sealeap.cn/"
       ]
     }
   ]
