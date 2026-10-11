@@ -5341,8 +5341,8 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "原帖所称“马尾辫 Skill”可对应官方 Ponytail 项目：它要求 Agent 先复用现有能力、标准库和平台原生能力，再写最小实现；官方基准说明平均代码减少约 54%，94% 只是特定任务上限，不是普遍 token 保证。",
-    "action": "从官方仓库安装前先审查插件 hooks 与 Node 依赖，在测试分支用同一任务对比代码量、测试、正确性和可维护性，不把单任务上限当作成本承诺。",
+    "summary": "原帖推荐的“马尾辫 Skill”（帖中也写作 RedSkill）对应官方 Ponytail 项目（DietrichGebert/ponytail，MIT）：它要求 Agent 先复用仓库已有组件、标准库和平台原生能力，再写最小实现，同时不删减校验、错误处理与安全。帖中“省 80%–94% token”和日期选择器 404→23 行、颜色选择器 287→23 行是原帖说法；官方 2026-10-07 基准（Ponytail 5）给出的是相对无 Skill 基线代码约减少 53%、输出 token 约减少 45%、成本约减少 26%，94% 不是官方的普遍保证。",
+    "action": "只从官方仓库或其官方 npm 包安装；在 Codex 中先审查并信任它的两个生命周期 hooks，再在测试分支用同一任务对比有无该 Skill 的代码量、测试覆盖、正确性与可维护性，不把帖中 94% 当作成本承诺。",
     "themes": [
       "Ponytail",
       "Token管理",
@@ -5375,16 +5375,16 @@
       "resource_id": "github-dietrichgebert-ponytail",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "0622f3727afcd034fc4eb5133479391764e2436706896483e11925cf3f14992b",
-      "verification_snapshot_sha256": "8b3c9523d5a2db08d417666d0c1d4963fd91467daf9f131068eab7fc0c093ab5"
+      "verification_snapshot_sha256": "a8cd596dae06e134fd47b3f98a5edaf95b9c7abf17e104e4a7454d2d0de71948"
     },
     "resource_assessment": {
       "status": "verified",
       "resource_id": "github-dietrichgebert-ponytail",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "0622f3727afcd034fc4eb5133479391764e2436706896483e11925cf3f14992b",
-      "verification_snapshot_sha256": "8b3c9523d5a2db08d417666d0c1d4963fd91467daf9f131068eab7fc0c093ab5"
+      "verification_snapshot_sha256": "a8cd596dae06e134fd47b3f98a5edaf95b9c7abf17e104e4a7454d2d0de71948"
     },
-    "candidate_revision": "06c6949ecbab42408afc11a8944175b81525fd5ccc0080d462afde73e92c5bfe",
+    "candidate_revision": "87a78c370ba939af301ac8887b4f19d0c1bc4293211468bf793fe8e09846d9fe",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -5658,7 +5658,7 @@
     "category_override": false,
     "category_reason": "",
     "summary": "Firecrawl 官方 anydoc 是 MIT 的 Rust 文档转 Markdown 项目，提供 Node.js、Python、WASM 和 Agent Skill；它支持常见 Office、OpenDocument、RTF、EPUB、CSV 与文本型 PDF，但扫描或纯图片 PDF 不由本地转换器处理。",
-    "action": "从官方仓库安装后，用不含敏感内容的 Word、PPT、Excel 和文本型 PDF 验证格式保真；记录首次 npx 下载、输出路径与失败行为，扫描 PDF 另走受控 OCR。",
+    "action": "从官方仓库安装后，用不含敏感内容的 Word、PPT、Excel 和文本型 PDF 验证格式保真；记录首次 npx 下载、输出路径与失败行为。扫描 PDF 若启用官方可选 OCR，文件会上传到 Firecrawl Parse 云端，敏感文档应改走本地受控 OCR。",
     "themes": [
       "Agent Skill",
       "anydoc",
@@ -5691,16 +5691,16 @@
       "resource_id": "github-firecrawl-anydoc",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "05761bf19e87d44199be6c63616571e1499025edb623f20d1f6a035eeee896f6",
-      "verification_snapshot_sha256": "3e9cc580dba0d83b2a466f8e40631f8a4aaa48c4ecab1cc2bfc8451e91761d6b"
+      "verification_snapshot_sha256": "7f3b0f47688e7777bdde852c6e418364dd44dee687c1c0fbd03fd8fe88bea8f9"
     },
     "resource_assessment": {
       "status": "verified",
       "resource_id": "github-firecrawl-anydoc",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "05761bf19e87d44199be6c63616571e1499025edb623f20d1f6a035eeee896f6",
-      "verification_snapshot_sha256": "3e9cc580dba0d83b2a466f8e40631f8a4aaa48c4ecab1cc2bfc8451e91761d6b"
+      "verification_snapshot_sha256": "7f3b0f47688e7777bdde852c6e418364dd44dee687c1c0fbd03fd8fe88bea8f9"
     },
-    "candidate_revision": "3bc9965fade87fdb963e41c13c247ef2fcc9fb2fef959b27c9923bf2ce92b5eb",
+    "candidate_revision": "f3d07943cf43ff9e0a38fe77021066af95aeb04abaaae9afb94269b44fbcdda5",
     "review_status": "accepted",
     "review_reason_code": ""
   },

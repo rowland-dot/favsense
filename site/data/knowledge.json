@@ -1,9 +1,9 @@
 {
   "meta": {
-    "buildVersion": "19d0e3fcb82974bcd0bfdcba5e90b053824e3a622ee903387572e9d0d5425882",
+    "buildVersion": "ecaffafecaa1ca1921d3b493788d7110b45164aa956ae92cc89acaa03e8c2eb1",
     "title": "小红书收藏知识工作台",
     "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
-    "generatedAt": "2026-10-10T15:38:16.335Z",
+    "generatedAt": "2026-10-11T15:48:47.668Z",
     "source": "xiaohongshu",
     "sourceBoards": [
       "Skills",
@@ -34,9 +34,9 @@
       "intro": "收藏会先自动收录；完成解读的内容会整理成可搜索的总结、相关资源和具体用法。你只管收藏，拾光台负责把零散内容逐步变成有用的知识。"
     },
     "noteCount": 374,
-    "verifiedNoteCount": 341,
+    "verifiedNoteCount": 343,
     "categoryCount": 16,
-    "resourceCount": 126,
+    "resourceCount": 127,
     "resourceIndexEnabled": true,
     "resourcesVerifiedAt": "2026-08-29",
     "resourceIndex": {
@@ -184,7 +184,7 @@
     },
     "frameEvidenceCount": 9630,
     "evidenceStatsAutoUpdated": true,
-    "videoMethod": "341 条收藏已完成视频内容核验；其余条目目前按原帖公开文字展示",
+    "videoMethod": "343 条收藏已完成视频内容核验；其余条目目前按原帖公开文字展示",
     "kindLabels": {
       "Note": "观点、资讯与知识说明",
       "Tool": "可直接使用的工具",
@@ -8599,30 +8599,39 @@
       "category": "Skills",
       "categorySource": "source_board",
       "categoryReason": "",
-      "suggestedCategory": "Skills与工作流",
+      "suggestedCategory": "",
       "sourceBoards": [
         "Skills"
       ],
-      "themes": [],
-      "summary": "#Howto[话题]# #REDSkill[话题]# #howto用好AI[话题]# #howto用AI抢救一切[话题]# #howto入门codex[话题]# #agent[话题]# #ai工具[话题]# #ai教程[话题]# #省token[话题]# #skill推荐[话题]# @HOWTO薯 @科技薯",
-      "deepSummary": "#Howto[话题]# #REDSkill[话题]# #howto用好AI[话题]# #howto用AI抢救一切[话题]# #howto入门codex[话题]# #agent[话题]# #ai工具[话题]# #ai教程[话题]# #省token[话题]# #skill推荐[话题]# @HOWTO薯 @科技薯",
-      "deepSummarySource": "source-metadata",
-      "curationRevision": "",
-      "summaryStatus": "pending_review",
-      "curationStatus": "pending_review",
-      "summaryReason": "resource_stale",
+      "themes": [
+        "Ponytail",
+        "Token管理",
+        "代码复用"
+      ],
+      "summary": "原帖推荐的“马尾辫 Skill”（帖中也写作 RedSkill）对应官方 Ponytail 项目（DietrichGebert/ponytail，MIT）：它要求 Agent 先复用仓库已有组件、标准库和平台原生能力，再写最小实现，同时不删减校验、错误处理与安全。帖中“省 80%–94% token”和日期选择器 404→23 行、颜色选择器 287→23 行是原帖说法；官方 2026-10-07 基准（Ponytail 5）给出的是相对无 Skill 基线代码约减少 53%、输出 token 约减少 45%、成本约减少 26%，94% 不是官方的普遍保证。",
+      "deepSummary": "根据你分享的笔记，这是一篇关于 ​​RedSkill（马尾辫 skill）​​ 的 AI 工具推荐，核心内容是帮你大幅降低 AI 编程的 token 消耗。以下是总结：\n\n核心亮点\n​​省 token 效果惊人​​：能将 Codex 等 AI 编程工具的 token 消耗减少 ​​80% 到 94%​​，直接降低使用成本。 说明社区认可度很高。\n​​100% 安全​​：核心原理就是\"复用\"——复用已有的代码逻辑，而不是让 AI 从头生成，安全可控。\n效果展示\n\n笔记中用两个例子做了直观对比：\n\n​​日期选择器​​：基准线需要 404 行代码，装上 RedSkill 后只要 ​​23 行​​\n​​颜色选择器​​：从 287 行直接降到 ​​23 行​​\n安装方式\n\n非常简单——直接把 ​​GitHub 地址​​发给 Codex 或其他 AI 编程工具，就能自动安装，不需要复杂的配置。\n\n适合谁用\n\n一句话总结就是：​​让 AI 少写代码，多复用代码，省钱又高效​​。\n\n你可以去 GitHub 搜一下 RedSkill 或 马尾辫 skill 看看具体文档，体验一下效果。",
+      "deepSummarySource": "xiaohongshu-diandian",
+      "curationRevision": "4dd563aaf6741547b5d2bc02778638a288bcf6f52348b268330da73a536574f5",
+      "summaryStatus": "accepted",
+      "curationStatus": "accepted",
+      "summaryReason": "",
       "summaryState": "captured",
-      "summaryReasonCode": "resource_stale",
-      "candidateKind": "Skill",
-      "reviewedAt": "",
-      "action": "",
-      "tools": [],
-      "kind": "Tool",
-      "resources": [],
-      "resourceIds": [],
+      "summaryReasonCode": "",
+      "reviewedAt": "2026-10-11",
+      "action": "只从官方仓库或其官方 npm 包安装；在 Codex 中先审查并信任它的两个生命周期 hooks，再在测试分支用同一任务对比有无该 Skill 的代码量、测试覆盖、正确性与可维护性，不把帖中 94% 当作成本承诺。",
+      "tools": [
+        "ponytail"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "ponytail"
+      ],
+      "resourceIds": [
+        "github-dietrichgebert-ponytail"
+      ],
       "evidence": {
-        "method": "目前依据原帖公开文字整理，媒体内容尚未完整解读",
-        "locallyAvailable": false
+        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+        "locallyAvailable": true
       }
     },
     {
@@ -10962,30 +10971,39 @@
       "category": "Skills",
       "categorySource": "source_board",
       "categoryReason": "",
-      "suggestedCategory": "信息采集与搜索",
+      "suggestedCategory": "",
       "sourceBoards": [
         "Skills"
       ],
-      "themes": [],
-      "summary": "🔥上线不到一周，GitHub狂飙1.3万Star！ 这个开源神器，强到离谱！ 它就是FireCrawl团队最新力作—— 不管你是Word、PDF、还是PPT， 丢进去，秒变干净Markdown！⚡️ 全程本地跑，不联网、不依赖第三方， 速度还快得离谱，实测只需几毫秒！ 我拿一份好几页的Word试了试， 真·眨眼功夫，完整Markdown直接输出，毫无剪辑加速！ 还能一键本地部署， 或者挂载到大模型当技能用， 集成Agent、搓插件、写工具，全都能打！ 实用性和可玩性双双拉满",
-      "deepSummary": "🔥上线不到一周，GitHub狂飙1.3万Star！ 这个开源神器，强到离谱！ 它就是FireCrawl团队最新力作—— 不管你是Word、PDF、还是PPT， 丢进去，秒变干净Markdown！⚡️ 全程本地跑，不联网、不依赖第三方， 速度还快得离谱，实测只需几毫秒！ 我拿一份好几页的Word试了试， 真·眨眼功夫，完整Markdown直接输出，毫无剪辑加速！ 还能一键本地部署， 或者挂载到大模型当技能用， 集成Agent、搓插件、写工具，全都能打！ 实用性和可玩性双双拉满",
-      "deepSummarySource": "source-metadata",
-      "curationRevision": "",
-      "summaryStatus": "pending_review",
-      "curationStatus": "pending_review",
-      "summaryReason": "resource_stale",
+      "themes": [
+        "Agent Skill",
+        "anydoc",
+        "文档转Markdown"
+      ],
+      "summary": "Firecrawl 官方 anydoc 是 MIT 的 Rust 文档转 Markdown 项目，提供 Node.js、Python、WASM 和 Agent Skill；它支持常见 Office、OpenDocument、RTF、EPUB、CSV 与文本型 PDF，但扫描或纯图片 PDF 不由本地转换器处理。",
+      "deepSummary": "根据你分享的笔记，这是一篇关于开源项目 ​​anydoc​​ 的推荐内容，核心信息如下：\n\n项目背景\n出自 FireCrawl 团队，上线不到一周 GitHub Star 数飙升至 ​​1.3万​​，是当前开源界的热门项目。\n核心功能\n能将​​任意格式的文档​​（Word、PDF、PPT 等）一键转换为干净的 ​​Markdown​​ 格式。\n性能优势\n​​纯本地运行​​：不依赖任何第三方在线服务，不联网也能用。\n​​速度极快​​：实测只需几毫秒，几页的 Word 文档眨眼就能输出完整 Markdown，肉眼几乎看不到等待时间。\n部署与用途\n支持​​一键本地部署​​，也能作为技能挂载到大模型上。\n可集成到 ​​Agent 工作流​​、搓插件、写小工具，实用性和可玩性都很高。\n适合人群\n日常需要处理文档的普通用户\n想集成到大模型或 Agent 里的开发者\n喜欢折腾开源工具的程序员\n\n简单说就是一个​​本地跑、超快速、全格式转 Markdown​​ 的开源神器，作者强烈推荐给想自己用或搞开发的人。",
+      "deepSummarySource": "xiaohongshu-diandian",
+      "curationRevision": "237ff322c616e3ce4baebfa0ac958844e1e51d93129a5e42a4a8d81da1198732",
+      "summaryStatus": "accepted",
+      "curationStatus": "accepted",
+      "summaryReason": "",
       "summaryState": "captured",
-      "summaryReasonCode": "resource_stale",
-      "candidateKind": "Skill",
-      "reviewedAt": "",
-      "action": "",
-      "tools": [],
-      "kind": "Tool",
-      "resources": [],
-      "resourceIds": [],
+      "summaryReasonCode": "",
+      "reviewedAt": "2026-10-11",
+      "action": "从官方仓库安装后，用不含敏感内容的 Word、PPT、Excel 和文本型 PDF 验证格式保真；记录首次 npx 下载、输出路径与失败行为。扫描 PDF 若启用官方可选 OCR，文件会上传到 Firecrawl Parse 云端，敏感文档应改走本地受控 OCR。",
+      "tools": [
+        "anydoc"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "anydoc"
+      ],
+      "resourceIds": [
+        "github-firecrawl-anydoc"
+      ],
       "evidence": {
-        "method": "目前依据原帖公开文字整理，媒体内容尚未完整解读",
-        "locallyAvailable": false
+        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+        "locallyAvailable": true
       }
     },
     {
@@ -17914,7 +17932,7 @@
       "type": "Agent Skill",
       "description": "先审查插件 hooks 与 Node 依赖，再在测试分支用同一任务对比代码量、正确性和测试完整性；94% 是官方基准中的单任务上限，不是普遍保证。",
       "metric": "",
-      "metricNumeric": 112054,
+      "metricNumeric": 160882,
       "metricIcon": "",
       "attributes": [
         {
@@ -17927,7 +17945,7 @@
         },
         {
           "label": "核验日期",
-          "value": "2026-08-27"
+          "value": "2026-10-11"
         },
         {
           "label": "兼容性",
@@ -17978,7 +17996,7 @@
       "type": "Agent Skill",
       "description": "MIT；首次 npx 使用会下载预编译包。扫描或纯图片 PDF 不受本地转换支持，需要另行受控文字识别；先用无敏感内容的样本文档验证格式保真。",
       "metric": "",
-      "metricNumeric": 18538,
+      "metricNumeric": 22719,
       "metricIcon": "",
       "attributes": [
         {
@@ -17991,7 +18009,7 @@
         },
         {
           "label": "核验日期",
-          "value": "2026-08-27"
+          "value": "2026-10-11"
         },
         {
           "label": "兼容性",
@@ -18010,7 +18028,47 @@
       ]
     },
     {
-      "id": "resource-83",
+      "id": "github-aaravkashyap12-advise-project-approach",
+      "name": "advise-project-approach",
+      "aliases": [
+        "advise-project-approach"
+      ],
+      "type": "Agent Skill",
+      "description": "MIT；安装前先阅读 SKILL.md，确认它会读写哪些文件、是否联网。",
+      "metric": "",
+      "metricNumeric": 318,
+      "metricIcon": "",
+      "attributes": [
+        {
+          "label": "许可证",
+          "value": "MIT"
+        },
+        {
+          "label": "Skill manifest",
+          "value": "skills/advise-project-approach/SKILL.md"
+        },
+        {
+          "label": "核验日期",
+          "value": "2026-10-11"
+        },
+        {
+          "label": "兼容性",
+          "value": "Claude Code,Codex"
+        }
+      ],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/AaravKashyap12/advise-project-approach"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/AaravKashyap12/advise-project-approach/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-84",
       "name": "MoneyPrinterTurbo",
       "aliases": [
         "印钞机",
@@ -18034,7 +18092,7 @@
       ]
     },
     {
-      "id": "resource-84",
+      "id": "resource-85",
       "name": "TrendRadar",
       "aliases": [
         "Trend Radar"
@@ -18057,7 +18115,7 @@
       ]
     },
     {
-      "id": "resource-85",
+      "id": "resource-86",
       "name": "speech-to-speech",
       "aliases": [
         "Hugging Face speech-to-speech"
@@ -18080,7 +18138,7 @@
       ]
     },
     {
-      "id": "resource-86",
+      "id": "resource-87",
       "name": "oh-my-Mermaid",
       "aliases": [
         "oh-my-mermaid",
@@ -18104,7 +18162,7 @@
       ]
     },
     {
-      "id": "resource-87",
+      "id": "resource-88",
       "name": "Task Observer",
       "aliases": [
         "one-skill-to-rule-them-all",
@@ -18128,7 +18186,7 @@
       ]
     },
     {
-      "id": "resource-88",
+      "id": "resource-89",
       "name": "Variate",
       "aliases": [
         "Nutlope/variate"
@@ -18151,7 +18209,7 @@
       ]
     },
     {
-      "id": "resource-89",
+      "id": "resource-90",
       "name": "Minimalist Entrepreneur Skills",
       "aliases": [
         "slavingia/skills",
@@ -18175,7 +18233,7 @@
       ]
     },
     {
-      "id": "resource-90",
+      "id": "resource-91",
       "name": "Find Skills",
       "aliases": [
         "find-skills",
@@ -18199,7 +18257,7 @@
       ]
     },
     {
-      "id": "resource-91",
+      "id": "resource-92",
       "name": "OmniRoute",
       "aliases": [],
       "type": "多模型路由 AI 网关",
@@ -18220,7 +18278,7 @@
       ]
     },
     {
-      "id": "resource-92",
+      "id": "resource-93",
       "name": "Anakin",
       "aliases": [
         "Anakin-Inc/anakin"
@@ -18243,7 +18301,7 @@
       ]
     },
     {
-      "id": "resource-93",
+      "id": "resource-94",
       "name": "PriceAI",
       "aliases": [
         "dimthink/PriceAI"
@@ -18266,7 +18324,7 @@
       ]
     },
     {
-      "id": "resource-94",
+      "id": "resource-95",
       "name": "yao-open-prompts",
       "aliases": [
         "Yao-open-prompts"
@@ -18289,7 +18347,7 @@
       ]
     },
     {
-      "id": "resource-95",
+      "id": "resource-96",
       "name": "Awesome-GPT-Image-2",
       "aliases": [
         "awesome-gpt-image-2"
@@ -18312,7 +18370,7 @@
       ]
     },
     {
-      "id": "resource-96",
+      "id": "resource-97",
       "name": "FreeLLMAPI",
       "aliases": [
         "freellmapi"
@@ -18335,7 +18393,7 @@
       ]
     },
     {
-      "id": "resource-97",
+      "id": "resource-98",
       "name": "Refero Styles",
       "aliases": [
         "Refero Design",
@@ -18355,7 +18413,7 @@
       ]
     },
     {
-      "id": "resource-98",
+      "id": "resource-99",
       "name": "Audio8_TTS",
       "aliases": [
         "Audio8 TTS",
@@ -18379,7 +18437,7 @@
       ]
     },
     {
-      "id": "resource-99",
+      "id": "resource-100",
       "name": "VidMuse",
       "aliases": [
         "VidMuse CLI",
@@ -18403,7 +18461,7 @@
       ]
     },
     {
-      "id": "resource-100",
+      "id": "resource-101",
       "name": "Cola Skill",
       "aliases": [
         "colaskill"
@@ -18422,7 +18480,7 @@
       ]
     },
     {
-      "id": "resource-101",
+      "id": "resource-102",
       "name": "Cloudflare Security Audit Skill",
       "aliases": [
         "security-audit-skill",
@@ -18446,7 +18504,7 @@
       ]
     },
     {
-      "id": "resource-102",
+      "id": "resource-103",
       "name": "Open Code Review",
       "aliases": [
         "open-code-review",
@@ -18470,7 +18528,7 @@
       ]
     },
     {
-      "id": "resource-103",
+      "id": "resource-104",
       "name": "BrowserSkill",
       "aliases": [
         "Tencent/BrowserSkill"
@@ -18493,7 +18551,7 @@
       ]
     },
     {
-      "id": "resource-104",
+      "id": "resource-105",
       "name": "Google AX",
       "aliases": [
         "google/ax",
@@ -18517,7 +18575,7 @@
       ]
     },
     {
-      "id": "resource-105",
+      "id": "resource-106",
       "name": "GitDiagram",
       "aliases": [
         "gitdiagram",
@@ -18541,7 +18599,7 @@
       ]
     },
     {
-      "id": "resource-106",
+      "id": "resource-107",
       "name": "Gitingest",
       "aliases": [
         "gitingest"
@@ -18564,7 +18622,7 @@
       ]
     },
     {
-      "id": "resource-107",
+      "id": "resource-108",
       "name": "archify",
       "aliases": [
         "Archify",
@@ -18588,7 +18646,7 @@
       ]
     },
     {
-      "id": "resource-108",
+      "id": "resource-109",
       "name": "VoiceStudio",
       "aliases": [
         "Voice Studio",
@@ -18612,7 +18670,7 @@
       ]
     },
     {
-      "id": "resource-109",
+      "id": "resource-110",
       "name": "scientific-agent-skills",
       "aliases": [
         "K-Dense-AI/scientific-agent-skills"
@@ -18635,7 +18693,7 @@
       ]
     },
     {
-      "id": "resource-110",
+      "id": "resource-111",
       "name": "Easel",
       "aliases": [
         "ZJU-REAL/Easel"
@@ -18658,7 +18716,7 @@
       ]
     },
     {
-      "id": "resource-111",
+      "id": "resource-112",
       "name": "dbx",
       "aliases": [
         "t8y2/dbx"
@@ -18681,7 +18739,7 @@
       ]
     },
     {
-      "id": "resource-112",
+      "id": "resource-113",
       "name": "PaperClip",
       "aliases": [
         "Paperclip",
@@ -18705,7 +18763,7 @@
       ]
     },
     {
-      "id": "resource-113",
+      "id": "resource-114",
       "name": "OpenSEO",
       "aliases": [
         "open-seo",
@@ -18729,7 +18787,7 @@
       ]
     },
     {
-      "id": "resource-114",
+      "id": "resource-115",
       "name": "Compositor",
       "aliases": [
         "robbietilton/Compositor"
@@ -18752,7 +18810,7 @@
       ]
     },
     {
-      "id": "resource-115",
+      "id": "resource-116",
       "name": "小云雀",
       "aliases": [
         "小云雀AI",
@@ -18772,7 +18830,7 @@
       ]
     },
     {
-      "id": "resource-116",
+      "id": "resource-117",
       "name": "百度一镜",
       "aliases": [
         "Baidu Yijing"
@@ -18791,7 +18849,7 @@
       ]
     },
     {
-      "id": "resource-117",
+      "id": "resource-118",
       "name": "MiniMax Design",
       "aliases": [
         "MiniMaxDesign"
@@ -18810,7 +18868,7 @@
       ]
     },
     {
-      "id": "resource-118",
+      "id": "resource-119",
       "name": "ClipCat",
       "aliases": [
         "Clipcat",
@@ -18835,7 +18893,7 @@
       ]
     },
     {
-      "id": "resource-119",
+      "id": "resource-120",
       "name": "ChatCut",
       "aliases": [
         "chatcut"
@@ -18854,7 +18912,7 @@
       ]
     },
     {
-      "id": "resource-120",
+      "id": "resource-121",
       "name": "OpenMontage",
       "aliases": [
         "calesthio/OpenMontage"
@@ -18877,7 +18935,7 @@
       ]
     },
     {
-      "id": "resource-121",
+      "id": "resource-122",
       "name": "vphone",
       "aliases": [
         "vphone-cli",
@@ -18901,7 +18959,7 @@
       ]
     },
     {
-      "id": "resource-122",
+      "id": "resource-123",
       "name": "Concat",
       "aliases": [
         "concat",
@@ -18925,7 +18983,7 @@
       ]
     },
     {
-      "id": "resource-123",
+      "id": "resource-124",
       "name": "Hello-Agents",
       "aliases": [
         "hello-agents",
@@ -18949,7 +19007,7 @@
       ]
     },
     {
-      "id": "resource-124",
+      "id": "resource-125",
       "name": "TencentDB Agent Memory",
       "aliases": [
         "Agent Memory",
@@ -18973,7 +19031,7 @@
       ]
     },
     {
-      "id": "resource-125",
+      "id": "resource-126",
       "name": "钉钉悟空",
       "aliases": [
         "悟空",
@@ -18994,7 +19052,7 @@
       ]
     },
     {
-      "id": "resource-126",
+      "id": "resource-127",
       "name": "Sealeap Amazon Skills",
       "aliases": [
         "sealeap-amazon-skills",
