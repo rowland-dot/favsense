@@ -14314,5 +14314,3939 @@
     "candidate_revision": "225e4866de74001863e86c0316a7f53d0dd412745cb41fd71350188a8625f01b",
     "review_status": "accepted",
     "review_reason_code": ""
+  },
+  "6a7d016c00000000280006ea": {
+    "id": "6a7d016c00000000280006ea",
+    "content_sha256": "08256e9e9db3b174b9a154a6ad139733e1a5b1c956802db28b480c698e8f6b12",
+    "title": "用 Claude 做出高质量网站的 设计技能",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频把 AI 建站拆成设计方向、组件规则、信息布局、行业风格、动画、真实素材和移动端平台规则七层，每层交给一类设计 Skill（如 Frontend Design、shadcn、UI UX Pro Max、GSAP、Higgsfield），并给出营销页、数据后台、iPhone 应用三种组合；Skill 名称与效果来自原帖，未逐项核验官方来源。",
+    "action": "先判断项目类型和最薄弱的一层，只接入该层对应的一个 Skill，风格预设一次只选一套；每个 Skill 安装前核对官方仓库、许可证与权限，再用同一页面对比接入前后的成品。",
+    "themes": [
+      "AI建站",
+      "分层约束",
+      "设计Skill组合"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "f67849ac53c68b4e33ec2cc7ce77f61ad3c12fcb7e73513a4a07cd56ca4a533f",
+    "evidence_sha256": "e67a67e20ca62b45180a61f9502492f2a60b779d50be0a538b416704f7ca7892",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "d831c00e9ab5359a729840b0205b837742d7a0a4e09ad5cfd71518bee43843c1"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "4bf712105e1eefa872aede9f39d93698faaae3bd7c3ba6e3028af069bfe5d769"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "a0baa144847935b8ec3813548e6d1dfc86bdba649bbd71ddea01b3481296d0d9",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a991505000000000b0030c6": {
+    "id": "6a991505000000000b0030c6",
+    "content_sha256": "56d63c3c10b04209688784656702f8714928f44146abd963c0b194aa8eae0f01",
+    "title": "自动生成架构图！vibe coding神器",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "oh-my-Mermaid（MIT）是扫描代码库生成可交互 Mermaid 架构图的 CLI，可通过 omm setup 接入 Claude Code 等编码 Agent，并附带扫描、查看、推送三个 Skill；原帖称其能递归生成嵌套子图、20 秒出图并解决文档过期，“官方推荐必装”属于作者说法。",
+    "action": "在仓库副本上 npm 全局安装后对一个中型项目运行扫描，人工核对模块依赖是否与代码一致；私有代码在确认上传范围前不要使用 omm push 云端分享。",
+    "themes": [
+      "Vibe Coding",
+      "代码文档",
+      "架构图"
+    ],
+    "tools": [
+      "oh-my-Mermaid"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "584c21002ecda83b4460c60ca26b83d95c81d7e84e58293f89a9e5074fb7e3fd",
+    "evidence_sha256": "cd98a5150fe918d8bdb93a29a1ac22924c3f1611518d6192cfafce1e6b6a7f92",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "c19ce4d2755f17b442151bc04f27523f9d1df1c8262d8f292f10c87c0da67243"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "b6300b2482a1791115d2fe715a22ee5d9f5879225de5562a755f5071df4dd5d8"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "1c65c49f2f103b4d966f430e1bd46eabcbb292760287354fa75b13247707d83b",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9e86c90000000012034e7a": {
+    "id": "6a9e86c90000000012034e7a",
+    "content_sha256": "b2e1dcea37d0efc3cd97ff5bcc54ec63a6a0509662499fec5e52715baf50954c",
+    "title": "这波操作厉害了！一个配置让GitHub上的这个项目关注度飙升",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推荐开源项目 Headroom（Apache-2.0）：在提示词、工具输出和文件内容发送给大模型前先做压缩，以降低编码 Agent 的 token 消耗；原帖称代码搜索场景最多节省 92%、一行命令接入并兼容几十款工具，这些数字属于作者与项目宣传。",
+    "action": "在一个真实编码任务上对比开启前后的 token 用量与答案正确率，确认压缩不会丢失关键上下文后再接入日常工作流。",
+    "themes": [
+      "AI编程",
+      "Token成本",
+      "上下文压缩"
+    ],
+    "tools": [
+      "Headroom"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "9e1f0c499cdb05d61777da088316802ad08875b65bd4a4f4bc0298fb5dfa1a3f",
+    "evidence_sha256": "531aba3fa043a9b30b58d28026065b29b9bad4b0a4b91ebec96f3e842426abd9",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "eecdd90f2e56e3a6210ec153cbf98a31f280f8d3d02656f43660ed059e3f0950"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "4b8543457db59dd847d36d6ade9f118999e80e96278c68a71da0d1696da7dfe1"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "410cf5fec39838acdf0a26ab7d8daaecccb3beb2a343f6487f88cf9a43bbc188",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9e8c9e000000000b00e87b": {
+    "id": "6a9e8c9e000000000b00e87b",
+    "content_sha256": "ade2faecaf0b90f952ee9e6bf4dd73ceb03bd8e999945d855d71b091bf37a959",
+    "title": "这组新Skill，补齐Agent 6个关键能力",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频用六组 Skill 串起从验证到交付的链路：Task Observer 记录错误与纠正并提出 Skill 改进、Corey Haines 的 Marketing Skills 覆盖引导注册、付费墙和防流失、Karpathy Skills 约束编码边界与验收标准、OpenCLI 复用已登录账号操作上百个网站、Variate 为同一组件生成四版设计、Minimalist Entrepreneur Skills 要求先找到真实付费用户再开发。",
+    "action": "按当前瓶颈只接入一组：编码越界先上 Karpathy 规则，设计单一先用 Variate；OpenCLI 只用于自己的账号并限制写操作，Task Observer 的改进建议须人工审核后再落地。",
+    "themes": [
+      "Agent能力补齐",
+      "Skill组合",
+      "需求验证"
+    ],
+    "tools": [
+      "Marketing Skills",
+      "Minimalist Entrepreneur Skills",
+      "OpenCLI",
+      "Task Observer",
+      "Variate",
+      "andrej-karpathy-skills"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "4aa7b181a6683ecfb4b4a795511b01ae05e3f9e67a172c03471d27408b0b9a38",
+    "evidence_sha256": "36d229d75e1914ea69dcd5f3e0ff7e3aadee4c1653c5a025c4ce1f9afc91a07a",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "f132f182ab538badc6ba3b47e6b5de209a5eb595a34014b5a49b25612ac91721"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "38fb64259ab7992faffd4b8a5e70ad057fb9b77378b037a559e64b9fffeb142b"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "d1f8525fef2b33f1f1350fa2f9b5997b8e2a08c848ed69cfc2006a00ea58edf6",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa1ae74000000000e03f400": {
+    "id": "6aa1ae74000000000e03f400",
+    "content_sha256": "cf7750b981d1db51f7cc8ec46c827a7bbdf1cb69a6d866992f99a43289841f75",
+    "title": "装机顺序公开!AI写码效率起飞",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "图文视频按安装顺序推荐四个 AI 编程辅助项目：Graphify 把代码库建成知识图谱供按需查询，Ponytail 让 Agent 写更精简的代码，Find Skills 按任务检索并安装合适的 Skill，OmniRoute 在额度耗尽时自动切换模型提供商；“代码量省一半”“每月约 15.1 亿免费 token”属于作者转述的数据。",
+    "action": "先在一个仓库副本上依次接入 Graphify 和 Ponytail，对比同一任务的 token 与代码量；Find Skills 安装的第三方 Skill 逐个审查来源，OmniRoute 只接入自有密钥并核对各提供商条款。",
+    "themes": [
+      "AI编程效率",
+      "Token节省",
+      "模型路由"
+    ],
+    "tools": [
+      "Find Skills",
+      "Graphify",
+      "OmniRoute",
+      "ponytail"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "4c64bf3ad227eb4c255dc6cebca28323b1b31540bbfdea976aedc2e7087fb1a2",
+    "evidence_sha256": "88b31bc57097460850b55747971410e0f4aa2474124ca10955ba9636dce6a978",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "eec3c71e8b65042f1bf961d716d7cc489b6862a72d39f9d9c05301ab224c85f7"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "4e71ce46b070ec2ccd33ace6adb67acbfa13922ee69d865c46984f49229ec219"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "822443faef1e45d3129710f5a8d332e3a5c20b70eb579fb7fcd0d41a5d56ea0f",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa1fbcc000000000b00c764": {
+    "id": "6aa1fbcc000000000b00c764",
+    "content_sha256": "e5b9ac357caa1bef58337165ce755be9c4c9a6e3b64659c62a66cb32dddcf3a5",
+    "title": "开源爬虫 Crawl4AI：网站改版也不用改代码",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推荐开源爬虫框架 Crawl4AI，称其能识别页面结构变化、处理动态加载与常见反爬手段，网站改版时无需修改抓取代码，适合数据采集与爬虫新手；“不用改一行代码”和星标数属于原帖说法。",
+    "action": "用 Crawl4AI 对一个允许抓取的动态页面做小规模采集，检查输出的 Markdown 与结构化字段是否完整；遵守目标站点条款与 robots 规则，不用于绕过登录或付费限制。",
+    "themes": [
+      "反爬适配",
+      "开源爬虫",
+      "网页采集"
+    ],
+    "tools": [
+      "Crawl4AI"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "183749ee44c6dad1de7001007ea725e86d687fc1412761046968c0fc97f40322",
+    "evidence_sha256": "02b1083cbef7270d51c7a5b34f6019f6d3edf79a782004bef64dc11413a5782b",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "f0f57cee882723dc1da6b667cfad9bee9aad8dce83f73668078112013aac9767"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "d312612653ca464dbdb125395c33ae4f8afabfdc55e127305c09ee2584249466"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "28ac7ac1c073c2c0cab0b9acd520c9db12aef12324e0cde86ec350358e0ac7b8",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa24c0f000000002601540a": {
+    "id": "6aa24c0f000000002601540a",
+    "content_sha256": "ffc9e90bf6c00af49cf3b4655e1a65e22a45d4216ef0b70f5dc3ca627a35128c",
+    "title": "AI 建站总有股模板味？先给它这个文件",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者认为 AI 建站的“模板味”来自缺少设计约束，做法是先从 Refero Styles 挑一套接近产品气质的真实网站风格，下载其 DESIGN.md（排版、配色、间距、圆角、组件、布局密度与交互规则），放进项目让 Claude Code、Codex、Cursor 在写 UI 前读取，并让后续页面持续遵守同一套规则。",
+    "action": "在项目根目录放入一份 DESIGN.md 并在 Agent 指令中要求开发 UI 前先读取，用同一个页面对比放入前后的一致性；商用前确认所参考网站风格的授权范围。",
+    "themes": [
+      "AI建站",
+      "DESIGN.md",
+      "设计系统"
+    ],
+    "tools": [
+      "Refero Styles"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "4f3e353d1ac2d5c986897d7a18471b18bec1a18fab37c15d586ccd1362a75834",
+    "evidence_sha256": "f983cf687290cd70d292df1fe6d76dd8627acfc34c3589bcff0ba59e1d63014a",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "9268354323cae4726eda074df81f05b69506bead7871e0f97b3696b0f88262ac"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "df3f7f96827467bdcdf52da99a940029ffa96bd1fbda55e5d472c09eeabc48e0"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "40fdfb6b09cdb82ecfab6fc6b77f91277ce6124a70884ef541c8051bdb27c88d",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa34ed4000000002601fc9d": {
+    "id": "6aa34ed4000000002601fc9d",
+    "content_sha256": "768353d7b251ba643a5e1fcf32ff544c458ab0258283f7831e6d80be4a0ab8f6",
+    "title": "抓网页降成本写提示词，这三个项目快码住",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推荐三个开源项目：Anakin 是可自部署的网页抓取 API，把网页转成干净的 Markdown 或结构化 JSON；PriceAI 聚合上百个卡网渠道的 ChatGPT、Claude 等订阅报价并显示最低价与库存；yao-open-prompts 是覆盖工作、学习和营销场景的双语提示词库。",
+    "action": "Anakin 只抓取条款允许的页面；PriceAI 展示的是第三方转售渠道，购买前核对官方条款、账号安全与退款风险；提示词模板先在自己的任务上小样测试再固定使用。",
+    "themes": [
+      "提示词库",
+      "网页抓取",
+      "订阅比价"
+    ],
+    "tools": [
+      "Anakin",
+      "PriceAI",
+      "yao-open-prompts"
+    ],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "56a5bb7a986d44d36fc9d94b0b49b3b6a706ceaf001d4a2ab0f36b367faa1756",
+    "evidence_sha256": "796df3a4d610cac897dee4edf9ef3f7dd1f9472aa34b8f501be7032f08a1822c",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "1fc7f035fea593c2f91615603734c0b8d443922c693af925eced94e426f7de2f"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "2fc035b3885245b4381359f0789468758deecd39f31d6865442b3281d74d9e7c"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "7c3d587e745a686b943982b46d68e9d223a288742f7df6fac24f6316706ee141",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa3d1ca0000000011038002": {
+    "id": "6aa3d1ca0000000011038002",
+    "content_sha256": "f33396f7915c90a2e73fe023cff348b655ad1e663da6f7504416466edb04db5e",
+    "title": "设计圈开挂登顶榜首的 AI 生图神器",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推荐 GitHub 项目 Awesome-GPT-Image-2（freestylefly 版本，MIT）：收录五百多个按 UI、海报、电商、Logo、摄影等分类的生图案例与完整提示词，并把主体、光照、材质、版式拆成可组合的模板模块，用于减少反复“抽卡”；“趋势榜第一”属于原帖说法。",
+    "action": "从案例库挑一个与业务最接近的模板，替换主体与品牌变量后连续生成三次检查稳定性；同名仓库较多，以 freestylefly/awesome-gpt-image-2 为准，涉及品牌或人像时确认版权与授权。",
+    "themes": [
+      "AI生图",
+      "提示词模板",
+      "设计素材"
+    ],
+    "tools": [
+      "Awesome-GPT-Image-2"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "610fb6de356a9d3f3b3a38efbfc5d83b8564241d94f94246d16b411feae114b2",
+    "evidence_sha256": "fc6c1a92c721fd231cfa682b9f0b7bd22021f1dbcbe802059a5a0a86c3fc932e",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "16f7093afef563789cec1deeb333c2d26c753cf7527d49e83dbeadee572f60e7"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "e338aa250146d97f8eb11d6e7806b9d8656e02f86480b2bec41bbf1c12cdffe1"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "ea020c9aab0d8d21ea350f71c76a99facf92d54dc0e5097ab4bdbdbc717ba8df",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa4ec0c000000000d024ff1": {
+    "id": "6aa4ec0c000000000d024ff1",
+    "content_sha256": "9e7829527aead43ba4cf40b3137e47d17f92c8a89a7ff9f559f5773ac54740a0",
+    "title": "74亿Token：聚合免费大模型额度的开源项目",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍开源项目 FreeLLMAPI（MIT）：把 Google、Groq、Mistral、Cloudflare 等数十家平台的免费额度集中到一个 OpenAI 兼容接口，自动挑选可用模型、限速时切换下一家，并跟踪每个密钥的额度；“每月 74 亿 Token、635 个模型接口”是项目宣传口径。",
+    "action": "只接入自己申请的免费密钥并开启加密存储，先用非敏感测试请求核对切换与额度统计；遵守各平台免费层条款，不把生产或敏感数据发往免费层。",
+    "themes": [
+      "低成本开发",
+      "免费额度",
+      "模型路由"
+    ],
+    "tools": [
+      "FreeLLMAPI"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "357c66bcf94e104226403daee2f7cf14bfe0577c5c29f8c2b7d6befdfc740201",
+    "evidence_sha256": "53ec3313380e9221a6b3d94f39ead2918b749b3ae502b9daa32983a1e32a9431",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "d11aa27586ae17bc749637e18693c62595cc5e57d0284df585fd4c62f9b9a30f"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "4e27c9a18d0b3593ec231f70ab80129b1ff2c50fb019d078a7b7f158743bf00f"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "80db2172a8cf01859f78852bc9c38ea63d261a2006ec18c0c1b1e6b4d896d58f",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa76848000000002900fecd": {
+    "id": "6aa76848000000002900fecd",
+    "content_sha256": "80a4698705dd97bff3631d82af01d2514bc1e45a754ff9e1657105364665060a",
+    "title": "0.1B 参数的开源 TTS 模型 Audio8_TTS",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍开源文本转语音模型 Audio8_TTS（Edge0-AI，Apache-2.0）的 0.1B 版本：普通笔记本 CPU 即可运行、加载后内存约 0.6GB，支持零样本音色克隆和普通话、粤语、英语、日语等 11 种推荐语言，演示了上传一段声音后朗读新文案；适合播客、有声书和配音。",
+    "action": "在本地用 CPU 跑通官方 0.1B 示例，先用自己的声音做一次克隆测试并检查口音与停顿；只克隆本人或已获书面授权的声音，发布时注明为合成语音。",
+    "themes": [
+      "文本转语音",
+      "端侧模型",
+      "音色克隆"
+    ],
+    "tools": [
+      "Audio8_TTS"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "df312eadd47e0c8eac5ee4f97cb5baca552dfee19a51272c8e29daa4c546a0b1",
+    "evidence_sha256": "f2c1f5efd1e4e628a0b200d8076dd83952d8731ec3fc7f6cc90d2820697b4c55",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "43049bbed28968edec9298dfc1db53d534c9c1fbb92e1db290413a6836c4655c"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "9712cb90bb9a88aca53747b8114ec3c1932d7fabe58266ebefaf1bd8eb2d1e0c"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "f99b05a75f8b2afe726d4c0588084011b1da4f12fcd59a61f2d5c24603ca22fb",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa7ce4900000000110341a2": {
+    "id": "6aa7ce4900000000110341a2",
+    "content_sha256": "883023c297a566e169f115fad7173138c96e2e9db5a852cdfad75eacbd7567d0",
+    "title": "五个Claude Code插件，UI 不再一眼假",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者认为 Claude Code 做前端显得廉价，是因为默认审美缺参照、输出缺检查，推荐五个 Skill 分别补这两端：Taste Skill 拉取高端设计参考、Awesome Design 提供完整设计系统、Web Design Guidelines 按 Vercel 规则审查代码、Image to Code 把参考图转成代码、Playwright CLI 让 Claude 自己开浏览器截图检查；名称来自原帖，未逐项核验官方来源。",
+    "action": "先补“检查”这一端：让 Agent 在交付前用浏览器截图自查一次页面，再按需引入一个设计参照类 Skill；每个 Skill 安装前核对官方仓库、许可证与权限。",
+    "themes": [
+      "上线前检查",
+      "前端质感",
+      "设计参照"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "1bba063f787e321555bbc1a2dd2a115e99e56db8edff9041f1884557ac8840a5",
+    "evidence_sha256": "251c6c476457936e0ebe01aecffbd689300c1aecf05c45fe3242edd73455465f",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "f7207d658f104ba809a38af992d460bec76a3c52efece4be9a1ad8401192eac5"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "373650232b7f3b8fc0f6c4e29245d92d281d2314298c7785b8d5114332f810af"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "084d34a1a602efb32713e4fd5e662032518d368cc04da752da6b6eb851c30a26",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa9749b0000000029012c35": {
+    "id": "6aa9749b0000000029012c35",
+    "content_sha256": "57d1d29778f1b24b79b31b41848059f42cf0cddefac34a8f31d3744d9c0dd542",
+    "title": "这8个 GitHub 项目让 Agent 能力提升10倍",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频拆解八个给 Agent 补能力的开源项目：img2threejs 由产品图生成可交互 3D 模型、UI Skills 按风格匹配设计方案、SwiftUI Skills 指导原生 iOS 组件、Ouroboros 开发前追问需求、Chisel 限制输出只改指定部分、Reticle 打开浏览器实际走流程验收、Anti-Slop 检查 JS/TS 坏习惯、Caliper 对比带与不带 Skill 的效果和 Token；名称与能力来自原帖，未逐项核验官方来源。",
+    "action": "只挑一个解决眼前问题的环节试用，例如先用浏览器验收或需求追问；接入前核对该项目的官方仓库、支持的 Agent 与权限，并用同一任务对比接入前后的结果与 Token。",
+    "themes": [
+      "Agent能力",
+      "开发流程",
+      "开源项目盘点"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "1d5ad53231874002bc3a1d9d9e14273beb676b5db8d3e4102ef2934331884b11",
+    "evidence_sha256": "5e8b6be3f090d2b7c5a793bae666c0b052f0826fd11a258f459c6d3f35ceaa08",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "52f2892128fd250d99c9a656fec7d57550ea8fa9665c674d07d22724c2d68c41"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "85ee722a89ba561bfc69bda7748a7fa4d397c4e5a0028cea60fa5574af9d93e7"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "1e3d52bf8dcf2f022248386234bac25199335612490c5752511b8384e3c3b206",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aabb7c10000000026032f39": {
+    "id": "6aabb7c10000000026032f39",
+    "content_sha256": "c3117a0e53d1c785de1b733cb99ec3c68612797821e6f140b61f8db5bf489047",
+    "title": "告别手写提示词！把Agent变成视频工厂",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者用 Sand.ai 的 VidMuse 命令行与 Agent Skill 把 Codex 等助手变成 AIGC 视频工作室：由 Agent 写提示词并调用生图、生视频和音乐模型，完成剧情、人物、分镜到成片，从一张商品图做出带货视频，再在同一会话批量改出不同语言、人物和场景的版本，并把常用流程沉淀成个人 Skill。",
+    "action": "先阅读 vidmuse-skills 仓库内镜像的安装脚本再安装，用一张自有商品图做一条视频并检查分镜与字幕；批量多语言版本上线前人工核对翻译、肖像与素材授权，并确认生成额度计费。",
+    "themes": [
+      "AIGC视频",
+      "Agent工作流",
+      "带货视频"
+    ],
+    "tools": [
+      "VidMuse"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "599dbbe81fd8b160c5bc1b13f9600a20fcfe7c03255d83b4554aa815d0982e2c",
+    "evidence_sha256": "aca7750fa6a7a104ac4f26d6b739bde6e5ccf7a0abd10fad611a509274fe1b4c",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "1d362908568f8606014988193311a277853d66477ccb2015e94f2a8e58f5596d"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "817a69bd67e4a86df7dd1a4fb2547f3ff3c02531d0137f470eaab16b6e21efb4"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "1a57ba9a4847ce81bd825b6f414d644d32e99099191cd58567ca31c95733907a",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ab3cec80000000012039d02": {
+    "id": "6ab3cec80000000012039d02",
+    "content_sha256": "8d5ae7cc2b168f616c1e6818b782674e3ad1ffddaceac9bcb7c8a92f9dd8eed1",
+    "title": "不知道去哪里找Skill，去这个中文Skill市场",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推荐 Cola（MARSWAVE 运营）的中文 Skill 市场 Cola Skill：按创作设计、增长营销、一人公司、职场办公、电商运营等用途分类，每张卡片有中文介绍和热度数据，找到合适的 Skill 后复制安装提示词发给自己的 Agent 即可安装，例如写作风格蒸馏、简历优化、去 AI 味写作。",
+    "action": "用它按用途筛选候选 Skill，复制安装前先打开该 Skill 的原始来源查看脚本与权限；部分功能需注册会员，注意试用到期后的计费。",
+    "themes": [
+      "Skill市场",
+      "Skill检索",
+      "中文资源"
+    ],
+    "tools": [
+      "Cola Skill"
+    ],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "b562d8f6f6cb06c1fbe3e82d4b234bfa7656e4de77d1880777561d7a71fd8efc",
+    "evidence_sha256": "b5d943e283c39d1e694ff98f6bdcd4a0311b722e27272f5107fd13c4bfea6662",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "5818df7fedee6c06347832ee9cda55043d1ede61411030e7b85db6b4508555fe"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "fb09d5dba167465ebc23117605f5bff6d3ed1145c4020c9473a2b809cb60e467"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "5892f0e55105b0d54e0ab3aac60eefc2762d0392e04582e7251c56b8eece641a",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ab5111a000000000200fc4d": {
+    "id": "6ab5111a000000000200fc4d",
+    "content_sha256": "27402fedc4c45d3f7c595de0c5bad6835f44c5eaec66a759b4acfcbc65dca097",
+    "title": "大厂集体开源，四个AI硬货",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频盘点四个大厂开源项目：Cloudflare 的 security-audit-skill 让编码 Agent 分阶段做安全审计并独立复核结论，阿里巴巴的 Open Code Review 用确定性流水线加 LLM 做逐行代码审查，腾讯的 BrowserSkill 让 Agent 使用已登录的真实浏览器填表和抓数据，Google 的 AX 是 Agent 编排运行时；各自的一周涨星数属于原帖说法。",
+    "action": "按需求只试一个：审计类先在自有仓库运行并人工复核发现项，BrowserSkill 用独立浏览器配置并限制写操作，AX 先在沙箱环境运行；接入外部模型前确认代码可发送范围。",
+    "themes": [
+      "Agent编排",
+      "代码安全审计",
+      "大厂开源"
+    ],
+    "tools": [
+      "BrowserSkill",
+      "Cloudflare Security Audit Skill",
+      "Google AX",
+      "Open Code Review"
+    ],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "b943b1ba2143ca1f48fbc6578b5b6d7d21e3552415746d0f837e1d4aa44c6254",
+    "evidence_sha256": "6a65aa318970f7c00a05f19eb4f20f77a3e71748090d6c852b94dbaf1530dc7e",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "5b733a333e43cbb1ce496d915e611796afa6146a3ee3beed259b3b135c04d0f5"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "d29c73f9e8f574cc5fdb0be9ccdca07a96b02895d1fc4447100fa63df0a76da1"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "259afe0122127337d2d788def3c692e20095a3e83a492c011b4107f9c284f6f8",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aba1134000000001c02db36": {
+    "id": "6aba1134000000001c02db36",
+    "content_sha256": "1339dd0157d8ac1b351cdbf3405ffd4be83484e76c8b87bcb0797395b5668f1d",
+    "title": "GitHub技巧｜项目一键可视化！",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频分享两个“换域名即用”的读仓库工具：GitDiagram 为 GitHub 仓库生成 AI 推断的交互式架构图，帮助快速理解模块关系；Gitingest 把仓库信息、目录结构和文件内容整理成适合喂给 AI 的文本，并显示提取大小和 Token 数。",
+    "action": "读陌生开源项目时先用 GitDiagram 看模块关系、再用 Gitingest 生成文本交给 AI 提问，并对照源码核实结论；私有代码优先用 Gitingest 本地 CLI，粘贴前检查是否含密钥。",
+    "themes": [
+      "上下文提取",
+      "架构可视化",
+      "读源码"
+    ],
+    "tools": [
+      "GitDiagram",
+      "Gitingest"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "cc4e6076ffc1ce37cf3b4d4051205aaed1bacdcc9c6b702b6caa5105430b2c3e",
+    "evidence_sha256": "9a4e93d38242b42d1ef083f95bc65d41498fc94114713b20076af16c82a22c94",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "56b45797608765866f65542fc706d3a9240b9bf41b9a4f126b01e5aaeff7f343"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "4297a4d02de1260a83bcb05bf6e6b271fb6947d33737ed85200c501f5deb809f"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "a00395818a49ab72327adf356636587a8a7f1445a9faad3718aa882e66bebccb",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aba4445000000001c01e252": {
+    "id": "6aba4445000000001c01e252",
+    "content_sha256": "ed5c51067773fb9ed4b018fa4418e11846fced079aa865945b0154ab3d4f35f8",
+    "title": "本周GitHub Trending：6个让AI写代码更狠",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "盘点一周涨星最快的六个项目：archify 生成带交互的架构图与流程图并校验与代码一致，ponytail 让 Agent 先删需求再写最少代码，Awesome-GPT-Image-2 提供五百多个生图案例与模板，VoiceStudio 是完全本地的 ElevenLabs 替代品，Codex 是 OpenAI 官方终端编程助手，scientific-agent-skills 提供上百个科研 Skill；作者的结论是 AI 正从通用走向垂直专家。",
+    "action": "从与当前工作最相关的一个开始：写代码多用 ponytail 对比代码量，读架构用 archify 并对照源码；VoiceStudio 只克隆授权声音，科研 Skill 的结论需人工复核。",
+    "themes": [
+      "AI编程",
+      "GitHub Trending",
+      "垂直Agent"
+    ],
+    "tools": [
+      "Awesome-GPT-Image-2",
+      "Codex",
+      "VoiceStudio",
+      "archify",
+      "ponytail",
+      "scientific-agent-skills"
+    ],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "09e1aad154e8d7aadc4437d55dbd5c759568fffc49154580bd97b948f576f77c",
+    "evidence_sha256": "945ba3e4d7ba9dffc49ea18268d9d47d7e3204976a1dde7cba4bade0f1a7c5ce",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "020cf5f70eea3cc0617e32776d785bfa9adcb2bdbde91ea73dd23d228f576b46"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "21c3864d7e96f3db295a9a0d25c96a2d83f12f7a031209ccc568d5dda720143a"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "6bcb348e169f65e5748ad345e32d83a33d61816f620d17cc027a0aece320454f",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac0eed2000000001403a08a": {
+    "id": "6ac0eed2000000001403a08a",
+    "content_sha256": "538f37851fa78f83578436b0c1f80041478367a1f0066fb73a68111ca2060a38",
+    "title": "Easel社媒运营AI新神，挖的坑只能自己填",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "博主实测浙大团队开源的社媒运营 Agent Easel（ZJU-REAL/Easel，Apache-2.0）：账号定位、对标、热点、选题、脚本、做图做视频、拉取数据和复盘都能完成且速度快；但在未配置联网搜索时它不提示这一缺口，反而编造大量语气确定的“事实”。作者的结论是能力强但不可全信，需要使用者具备 AI 驾驭和环境配置能力。",
+    "action": "部署后先确认联网搜索是否已配置，并要求它为每条事实给出来源链接；关闭自动发布，用自己的账号做只读测试，脚本中的数据与案例逐条人工核对后再发布。",
+    "themes": [
+      "AI幻觉",
+      "人工审核",
+      "社媒运营"
+    ],
+    "tools": [
+      "Easel"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "2aec56ca434b93495ac44b6fe2ed5ae50e3a82941272a403d3e3d3778ee3ac1a",
+    "evidence_sha256": "51d2636ebfe1527c52c9300399b5481ccdf7b7ba3152798efeb662b97b2ccf4c",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "f46fa70f1ff41eea69e8bf0631b3b358dedb149b8827bc139cd5327bb4877af4"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "97b762c7fd18821c10bc191b9ecfdeca78de08da1c560927474529e140f6dae4"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "4663553acf6ac80b984d1cd13690ecb5d06459731ca320569812c22c9f8175de",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac21c89000000001b020f8f": {
+    "id": "6ac21c89000000001b020f8f",
+    "content_sha256": "f8401f651e35a6b7a617b793280887f8c69e1a97eabd8c4e5d775f8904be4a26",
+    "title": "AI的回答读不懂？别硬读，换个读法",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频转述 Karpathy 的“梯子”思路：读不懂 AI 输出时让它换表达方式，依次升级为受控语言文本（如 ASD-STE100，一句一事、短句、主动语态）、可视化图、可交互的 HTML 页面，最后是为话题定制的解说视频；理由是 AI 越强，人的工作越转向监督和理解，而定制输出的成本已经很低。",
+    "action": "下次遇到难懂的长回答，先要求它改写成短句、一句一事，再让它把流程画成图；关键概念需要反复看时让它生成一页可交互的 HTML 说明，并核对内容与原回答一致。",
+    "themes": [
+      "AI输出理解",
+      "Karpathy",
+      "可视化"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "2639a840bd90cd2b1b4efb0b69bba4be74069ca159aa8316d36e4cabd8097cbf",
+    "evidence_sha256": "f83ba28dc42d3e76c6f474482f81fb3c93e6a2019593be4cf9f33c9c09edd007",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "1a81e05d561cb595acf4267b9d8ca937e937844228aebcedf7db0789810a4065"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "c19976e38cac265543e1b70c47a05905ff4a5ad15f7a0c2c063211f388670f05",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac3c18f000000001c01f3ae": {
+    "id": "6ac3c18f000000001c01f3ae",
+    "content_sha256": "64ba4a91a98abaec7ccbfa3710ab8af88be8ea2fa6264768f9624062eb13dcd7",
+    "title": "GitHub每日AI项目推荐·第88期：dbx",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推荐开源数据库客户端 dbx（t8y2/dbx，Apache-2.0）：单个约 25MB 的文件、无需 Java 或 Python 环境，支持 MySQL、Redis、MongoDB 以及达梦、OceanBase、人大金仓、GBase 等一百多种数据库，内置 AI 助手用自然语言写 SQL，并有表格、图表和关系图，提供中文界面与文档。",
+    "action": "先连接一个测试库试用，AI 生成 SQL 时使用只读账号并在执行前人工审阅语句；接入外部大模型前确认表结构和数据可以发送出去。",
+    "themes": [
+      "国产数据库",
+      "数据库客户端",
+      "自然语言SQL"
+    ],
+    "tools": [
+      "dbx"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "cf168acc16acd313934036d65cfd63a4c0d011936061bd80edace4010a5b64af",
+    "evidence_sha256": "170d774a56f0657ec74e52e8e281bff4e0e756cde7f035cd09a43e3f6f5b9a15",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "69120f8742e9204b3e854aaf6519b4919be90b9053eb51f4bbdd2534de3e6df8"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "36e9ef23e407b8f544e7fc2ff7f55e83f2638564fe2e123845e20d968f708766"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "e4fcfc1db4498b72587345a07e9786236dc9f32939ce7b4fbd08d27776bcee44",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac49b6a000000000201005e": {
+    "id": "6ac49b6a000000000201005e",
+    "content_sha256": "64b09603a3b908a724d297685af8d37098ecd9a9bfaebf3459cacbc37c5ed79b",
+    "title": "多个AI agent怎么协作?PaperClip帮你搞定",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍开源项目 PaperClip（paperclipai/paperclip，MIT）：用组织架构的方式管理多个 AI 智能体，给每个 Agent 分配岗位、目标和预算，自动拆解推进任务，关键步骤需要人工审批，可接入多种大模型、查看每个 Agent 的工作过程并本地部署。",
+    "action": "本地部署后先搭一个两到三个 Agent 的小团队处理低风险调研任务，为每个 Agent 设定预算上限并开启关键步骤审批，观察成本和产出再决定是否扩大。",
+    "themes": [
+      "Agent编排",
+      "人工审批",
+      "多智能体"
+    ],
+    "tools": [
+      "PaperClip"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "ecc6b8e1b88be06d8144fbc676a3e75aee577d0077340357245e54033819eb21",
+    "evidence_sha256": "66c9138c9589eb3c4cc1e3bec2ac913042464c7ea96fbd35d70dc7898f8a7a6a",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "f6aca665a78d232c306126368418f54639a3dbd1daf5a832c6aff51dc14c6839"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "48c63e531466ef38bd84bca36ed33029568daf62d2377d91f8f8137d845664b2"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "3e88f2ea687291ceb4fdaf0ad4e0c56219b59cf7a310568a3eeae2eacde9f12f",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa91da50000000012036324": {
+    "id": "6aa91da50000000012036324",
+    "content_sha256": "a040224c6fc70992bd4c1a5a729ad68451b833d414c652e72c8d05422b5053b5",
+    "title": "免费做好seo了！OpenSEO",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推荐开源 SEO 工具 OpenSEO（every-app/open-seo，MIT），定位为 Semrush、Ahrefs 的开源替代：提供关键词查找、排名跟踪、竞品与外链分析，可自托管，数据通过 DataForSEO 按用量付费，并能经由 MCP 让 AI Agent 直接调用 SEO 数据。",
+    "action": "自托管后先在 DataForSEO 设置消费上限，用自己的站点跑一次关键词与外链报告，与 Search Console 数据对照；确认稳定后再通过 MCP 接入 Agent。",
+    "themes": [
+      "MCP",
+      "SEO工具",
+      "开源替代"
+    ],
+    "tools": [
+      "OpenSEO"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "479ca7acaa9f475e026236b3add9c9d36d914c8da231b13d7fa8c4a97e3e8206",
+    "evidence_sha256": "f1cc4bd3bf7d2ecaf80240788300d145e35f76f8dbb4e75e6a3e3bb4bd4e78e0",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "89f4d41a3c161b129c8c62ada949ab3e75d0806de4fd3ff0b647099d646839c4"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "9743b76dbb2753a00957fb76dc917aa0a1b957e7d752fca26cffdf31725302a0"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "1a98bd5bdc487f7e7abc24db8139409bf9e0445d9d610c716185e78b2d01e808",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ab630f20000000012037754": {
+    "id": "6ab630f20000000012037754",
+    "content_sha256": "eda20c17987d3687ff0c99b20625c40f981c309e79f3c00148bcde6f992b7c62",
+    "title": "用 AI 检查网站内容的 SEO/GEO 教程",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者把网站内容检查拆成两个有明确标准的任务：一是逐页检查标题、搜索简介、主标题、首段、常见问题和结构化数据是否对应、是否直接给出答案、信息是否有来源；二是把用户常问问题和 Search Console 查询词与已有页面对照，判断已回答、部分回答或未回答，并提醒相同关键词不等于同一个问题。AI 辅助判断后回到原文复核，最后形成逐页修改清单。作者使用的 AI 工具名为 Jev，未核实其来源。",
+    "action": "把两类检查标准写成清单，先抽十个页面让 AI 逐项判断，再人工回到原文核对，输出“哪一页、问题、原因、改法”的表格；用 Search Console 查询词补齐未回答的问题。",
+    "themes": [
+      "GEO",
+      "SEO内容检查",
+      "Search Console"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "c7533084dd8ae5c3a13ef7def35ad1f60d84d36ba8b0b27e044711f78bb79b66",
+    "evidence_sha256": "25db29edcf3e47075addb2000e9d5d990759ac2bc77059874c737bec3ed4e7f3",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "08d728af3072b9a8da88744927b03bb854a8fc7612a7f6b95e83063c3a1615fd"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "ab85aca54e9972a15c613903974d97f1bad9f04286400718ea04cc2769c09670"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "fb1b86a31768813352c715a48c954eb765990e9b34626ee521df4a45e0ce84fc",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6abde5fb000000001a02393f": {
+    "id": "6abde5fb000000001a02393f",
+    "content_sha256": "a54434f7ab3a94cba995fee40130c849e5ea9e5409dee988335c67d4e1327e77",
+    "title": "出海谷歌 SEO 完全指南（2027版 | 90分钟）",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "一门以 AI PPT 赛道为案例的谷歌 SEO 基础课：强调 AI 概览仍建立在抓取、索引和排名之上，SEO 同时带来自然流量和被 AI 答案引用的基础；讲解抓取索引机制、Search Console 与 Ahrefs DR，按关键词研究、页面 SEO、外链和技术 SEO 四个模块展开，并提醒不要堆砌关键词、不迷信关键词密度、要分析对手外链实力。",
+    "action": "选一个目标关键词，先拆解首页前几名页面的标题、结构和引用域名数量，再按“搜索结果承诺什么、页面交付什么”改写自己的落地页，并在 Search Console 跟踪展示与点击变化。",
+    "themes": [
+      "出海",
+      "谷歌SEO",
+      "页面优化"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "6f955d9c969fca0e941b53958f8efade045db59320c066ac70b72679638dfc17",
+    "evidence_sha256": "1433d2b12c0fa0db72a58991c7ab98b4ffb54dcce4f4a3722814c0018b9fd024",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "9eacacda92b9bd761fa4ba801543ec45b1738e41dc868be5cede0a52e446ec84"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "0173d352fa2b969f4aa8ffc4b52482459dc930ca4dc3edae33f928fbad063aab"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "de3c6ef0692acaba3c5444abfab6109ce8064aa1671449f7d99356e862835cef",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a466bb60000000008032d3c": {
+    "id": "6a466bb60000000008032d3c",
+    "content_sha256": "3fbf0fb6168453ace29926de43a1fdad9fe4cd9d0f6f99df813ffe879e3b9042",
+    "title": "做电商好用的 6 套 AI 提示词",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "分享六类电商生图提示词：商品主图、场景图、一图一卖点的详情页卖点图、预留文字区的活动海报、背景替换和局部质感优化，并给出卖点图、背景替换、局部优化的通用结构（商品与卖点、场景、风格、光线、画面比例）。",
+    "action": "用自己的一个商品按“商品名称 + 卖点 + 场景 + 风格 + 比例”的结构分别生成主图和一张卖点图，对比哪类提示词最稳定；活动价格与文案后期自行添加并核对与实际一致。",
+    "themes": [
+      "提示词模板",
+      "电商生图",
+      "详情页"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "bfb062a08925edd38fa5966cb86d86a8842e70a426378586fb7ed8c80e885b53",
+    "evidence_sha256": "6c68661d1395d9a41ec0376593fda0d7efcd66c5127e5736718cb2ec84706afd",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "2dc88dcfc16af3fd591b0e9687e6de459c0eafa015fde64234491251cccb33a0"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "05eaedb61653b870c9d64038b11412874c2bf66f3feffb0a28d4b04d0b8c2311"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "754d644a0f3dc2775dd34d5cde02f7013b40b5a822c81f4d9ca6eb6f01e0b5a0",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a7ee39a0000000028006c52": {
+    "id": "6a7ee39a0000000028006c52",
+    "content_sha256": "ac2ccd0055d1b5a60868217b4b378348769cc2d0a7f5ea20768d7c2d0188e02d",
+    "title": "坏了！不会设计也能做电商设计了",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者用 Codex 生成电商详情页：提供参考作品图和产品图，让它先分析视觉调性、版式和配色，给出每屏文案、画面描述和三个设计方向，反复确认方案后再逐屏生成，并在第二轮加入字号、边距、网格等规范；流程稳定后封装成 Skill，换产品时复用。",
+    "action": "选一个产品和两三张风格一致的参考图，先只让 Codex 输出方案不生图，确认每屏卖点后再逐屏生成；用两类不同产品测试后再封装为 Skill，并确认参考图仅作风格参考不直接复制。",
+    "themes": [
+      "Codex",
+      "流程封装",
+      "电商详情页"
+    ],
+    "tools": [
+      "Codex"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "53ea2401759a5a30b9ff0b5a0fc25413a4cd5056318835959f9eb7489647fdf5",
+    "evidence_sha256": "f775fc2ed85523dd76a1a196299e253e21d01946d5dd4ebb95913fed009a236d",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "7fac791ed54cf65610ac1624f12aba7d71cac3c2b28a7544d943e4d9f73e6d85"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "663aee1304ebcb4f12181d495144182c98456fe57f95cfbba417825ebfd12842"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "fdb9a1822bad68fb9cf7f05b52d77b6172a119aac76128a9736187f4e40d6d14",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a96c74d0000000012034829": {
+    "id": "6a96c74d0000000012034829",
+    "content_sha256": "23f0fb59d928554554133ba0106fe68ee0c2c25b59a178e30b56343a0bca680a",
+    "title": "howto提升vibecoding作品设计感",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者分享提升 vibe coding 作品设计感的思路：先在 Claude Directory、MotionSite 等案例站和一个前端组件汇总站找首屏、导航、表单等现成参考，并复制其提示词让 Agent 还原；再用自己做的 website design audit Skill 拆解网站的信息架构、排版、字体色彩和组件状态（分“给人看”和“给 AI 看”两种输出）；配色用 Huemint 调整后让 Agent 提取，图标和配图灵感从 Pinterest 找。站点与 Skill 名称来自原帖，未逐项核验。",
+    "action": "选一个喜欢的落地页，先让 Agent 按信息架构、间距、字体、配色、组件状态逐项拆解成文字说明，再据此还原自己的页面；复制第三方提示词或素材前确认授权，配色用工具锁定主色后再交给 Agent。",
+    "themes": [
+      "Vibe Coding",
+      "设计参考",
+      "设计拆解"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "9f75c04bdfe988d64d02400c9763df4cc826350189aab14bc15d0b143e86aaa8",
+    "evidence_sha256": "dd7b8399e5a904c134302a5b9983e3419aa07f2783f8228c6e67870e53f9eb3f",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "42f181b6b8a05c27d7a476e8a035f9743473cccdc1a950ed9eb3f085fd914abc"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "11840aa487a6a56feed767f7bac97a51539581e86d5da34db783f33ee8c0a77d"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "a8aeb28b2dc9708babcd2d31b13fd0dc8775d8a8d1332b72d4d212d89c0451b6",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa39b4c000000000d024355": {
+    "id": "6aa39b4c000000000d024355",
+    "content_sha256": "6f99197e399f1567698b701174c6eff1a0a80b77a2c02224a2fe2c703af7b91b",
+    "title": "Codex做电商图，这2个Skills怎么选",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者用 Codex 做电商图时先区分两种需求：已有参考方向时用“风格迁移”思路，借鉴同行的构图、氛围和信息层级，但用自己的产品、品牌和素材重建画面；要做整套详情页时先梳理目标人群、使用场景、需求理由和下单顾虑，确定卖点与页面顺序的大纲后逐页生成。两个 Skill 的来源原帖未给出，方法本身可独立复用。出图后必须人工核对产品外观、文字和参数。",
+    "action": "做详情页前先写一页大纲：卖给谁、用在哪、首图强调什么、第二张如何证明、参数与场景放哪里，确认后再逐页生成；每张图出图后对照实物核对外观、文字和参数，参考图只借鉴版式不搬素材。",
+    "themes": [
+      "Codex",
+      "人工复核",
+      "电商设计"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "fab9b19940e7782ca862df4de3639f6ec84a22b1578ed7d7e9715aa712e3e308",
+    "evidence_sha256": "03239859147b82f4c1dc271f9e528fdc8020c1945c16c1db80cc1b5ee0155195",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "c5a8d3c3ded078c4a77f52051447faa41ca6d406ebfdca6e2ec5f4e816f4abd4"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "140d4f00c0ee029ca81471b8214201d04931aeccb1854c9f997163fc33a183e6"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "c710ba42816ff249409446403c4aec1cea54edca94cde75f1d1a2ed95d5232a9",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa3caf1000000002900c2a3": {
+    "id": "6aa3caf1000000002900c2a3",
+    "content_sha256": "ce3de7169a414974a1ba82dbadf7e3a49db45bd8a35c07124cf0f105236b4efd",
+    "title": "AI 生图邪修 降低图片塑料感",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "教程认为 AI 图片显得像“高级塑料”是因为过于干净均匀，给出三招：用“原图模式、轻微肤色不均、自然皮肤纹理、雀斑和颗粒”等破坏性词替换“完美皮肤、4K、柔光”，并把全局平光改为侧光、局部光或硬光；提示词加入“闪光灯直闪”增强阴影与立体感；加入红蓝溢出、色差、动态模糊、镜头漏光等模拟普通镜头的瑕疵。",
+    "action": "拿一条现有人像提示词做对照实验：每次只加一招（瑕疵词与侧光、闪光灯直闪、镜头瑕疵），同一种子各生成几张，比较哪招最能降低 AI 感，再组合使用。",
+    "themes": [
+      "AI生图",
+      "提示词技巧",
+      "真实感"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "4bfe3db2ef558e83f4670441da87997c8ecd0d711a8b6214dfc0c193f0f085f4",
+    "evidence_sha256": "05560e7048dd73cd6f8f487748bd9dfe43c24970d8d7123ebe76819d153207c3",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "ce3948342d58fc50fc6735c0bf27a43180809dd1cc06669d8b8f62f82d876baa"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "1947a21796a74de0fa56dbb3adb38c0990997890349573a34a41c247796e6e51"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "21d51f5629e812272728e28089652854306c752ddff8d5c355cb16d9722f1aec",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aab6614000000002802fac7": {
+    "id": "6aab6614000000002802fac7",
+    "content_sha256": "85ed0fc804c5e3aaadef6909bdb03e9a6ac3b927427ea857c9c80e3109361d24",
+    "title": "6个高级Dashboard侧边栏设计，一次教会你",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频拆解六种后台侧边栏设计并附 AI 描述词：悬浮岛式（离开屏幕边缘、大圆角淡阴影）、浅色页面中唯一的深色侧栏、磨砂玻璃半透明加亮白描边、窄图标轨加二级栏的双层导航、默认窄轨悬停展开、按业务分组留白并在底部固定头像与用量信息且中间列表单独滚动。",
+    "action": "根据导航层级选型：入口少用悬浮岛或深色侧栏，模块多用双层图标轨，窄屏用悬停展开；把选中的样式写成具体描述（圆角、阴影、宽度、动效时长）交给 Agent 生成，并检查键盘可达性与对比度。",
+    "themes": [
+      "Dashboard设计",
+      "UI规范",
+      "侧边栏"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "c7f86298dee91a97038c444d5dc584e86d603a3df4ff2a28bce5688943b7513b",
+    "evidence_sha256": "9262823a186430017faacc2a35d6aed50af8b0290e460ca009bd4e613445fff4",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "8b588c79b7661bf6688fcc32063beaf9a67a2ee7c54c972f9de4e7e566b837ad"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "20c2e48caa863f176b4cd51b515645bb3788fe548ff192991ae7beb9408e7411"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "98e99b9edd838872281b569c29395e32b718865900b7feaa94b210dc46fe82ae",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ab3db25000000000b0053a2": {
+    "id": "6ab3db25000000000b0053a2",
+    "content_sha256": "db707b6c189bb7826a63daa1a6733dd77248da1e890e36bb5df3038d495f9622",
+    "title": "4个AI宝藏网站！",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "博主推荐四个网页设计灵感站，思路是找到喜欢的设计后把提示词交给 AI 复刻：一个专注滚动与鼠标交互动效（Motion Site），一个提供苹果风极简官网与落地页模板，一个收集全球网页设计大奖案例，一个收集反常规的实验性网页设计。后三个站名在转写中为 Framework、AWARDS、GALAXY，名称与网址未核实。",
+    "action": "先用动效类和大奖类站点各挑一个参考，把它的版式和动效写成具体描述再交给 Agent，避免直接复制他人代码与素材；商用前确认模板授权。",
+    "themes": [
+      "Vibe Coding",
+      "网页动效",
+      "设计灵感"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "c96312e5028a79b0f21ff86785ec9348107fe0f5714c54a9f739b4cf603fb880",
+    "evidence_sha256": "812d9371ea9bbdd6327a48c453747935925911bb3f120692bbefe7033862f192",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "84bc605aba92ad4b677a5cc9953b21cfc66e3f9f55838c0c447fad17192c013f"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "a14600a5786b924f77e6ad1e078f9e5551ed2c6a43b89f442d27b5f19372b1db"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "449f55bf1764d42db6aec0c432bedaec57098a9562be3056c3c030400192cead",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ab49798000000001c00c179": {
+    "id": "6ab49798000000001c00c179",
+    "content_sha256": "db07a2c353511f00bcb68ef05525f66a655ae96d29106aa4121194a044ad5c6a",
+    "title": "UI设计Skill+提示词让AI拥有高级审美",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者认为只说“高级、有设计感”会让 AI 按常见模板去猜，做法是先写一份提示词设计规范：页面给谁看与内容结构、视觉规范（如深色背景配荧光青柠、三张等宽卡片）、动效规范（哪个元素在什么条件下怎么动、持续多久），再交给一个 UI 设计 Skill 落实排版、留白、字体层级和交互细节。用同一 Skill 做出了活力风与黑白克制的旅行相册两种页面，结论是高级感来自视觉与动效的一致。所用 UI Skill 原帖只在评论区提供，未核实来源。",
+    "action": "下次让 Agent 做页面前先写三段规范：受众与内容、视觉（配色、版式、组件）、动效（触发条件、方式、时长与错开间隔），再让它生成；检查动效节奏是否与视觉气质一致，不一致就改规范而不是反复改提示词。",
+    "themes": [
+      "AI编程",
+      "动效",
+      "设计规范"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "71e38e3e5251cf9962bea40d2346e61b4ac5a95cb837369a6733143781637b91",
+    "evidence_sha256": "a1a1c7a8837e70b28a7cd2cbbd05d8d46e61478257d2c25e71e40f1700bc5843",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "5c7211a7673011217c998094c97f281a6fbc2f1c5a03fc858fad88f239798916"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "20442806c72f67b2a2f5dbbac89e1ae841beb55f0ec4471092f31fdef00d0350"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "9406f69eaa3357a75b09dbe5fd984d9b2092d4fbc5b853ede01b1f044e382806",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ab5f49b000000001303f84d": {
+    "id": "6ab5f49b000000001303f84d",
+    "content_sha256": "911ca99e62637ee443473068ac4be3584b26039d5ee3e3f5b250e742b3808ef4",
+    "title": "Ai图片转PSD干货教学：做成可复用Skill",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "教程针对 AI 拆 PSD 的三个痛点（产品边缘破碎、文字不可编辑、图层太粗）给出方法：把任意图片拆成文案、设计元素、产品主体、光影、场景五层；产品用“提取而非抠图”——先让 AI 生成纯色底产品再滤掉底色，多个不重叠产品可一起提取再分层；最后让 AI 组合输出 PSD，并把整段对话的步骤打包成可复用 Skill。",
+    "action": "用一张自己的电商图按五层结构试拆一次，重点检验纯色底提取后的产品边缘和文字是否可编辑；结果稳定后再把步骤整理成 Skill，并在 PS 中逐层核对。",
+    "themes": [
+      "PSD拆分",
+      "Skill封装",
+      "电商设计"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "8f99f34df327405d22323de249198b65033c391b5b53b442f4acd19c8b2f9573",
+    "evidence_sha256": "c843dc2c81301e7f781334e1347aef07526e2b6ab425a81539bd5972c128a3e3",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "ec2a49900371cb1c77e73510588a5d9858a95d26bb346faee41f83a94d31088a"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "c23d2a4df3de58fbc6fa6111fe855cdd0a14a9ea8571d11eae403bf95a436d94"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "9f46acdd7020c6165b92e4e51fc0c585d686016207c7aeb78496af6c19f3081d",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6abd11b500000000180123bb": {
+    "id": "6abd11b500000000180123bb",
+    "content_sha256": "dc32904615a336749fcc55d385345bb1920a65223243d8a4b4401a226c91128c",
+    "title": "电商skill搞定电商详情页",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "教程演示字节跳动剪映团队的 AI 创作 Agent 小云雀：在营销 Agent 中添加电商 Skill 后，上传产品原图并用对话要求生成详情页、样机图或电商海报，缺文案时可让 Agent 代写，生成后在画布中继续对话修改、反复出图而无需重复上传；“基于抖音数据的爆款开头和特效库”属于原帖说法。",
+    "action": "上传一张自有版权的产品图，先只生成一张详情页首屏，核对产品外观、文字与参数是否正确，再扩展到样机和海报；批量产出前确认素材的商用授权与平台广告规范。",
+    "themes": [
+      "AI设计Agent",
+      "批量出图",
+      "电商详情页"
+    ],
+    "tools": [
+      "小云雀"
+    ],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "269c621004eff30096354d05336e5096bdff2cc2ebb2f78841bb42ed49f06640",
+    "evidence_sha256": "d8e5b57c309ee7e954be7d0887624ba045c5867114edb16012449d437ec6ac5d",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "496cc9eae7e6c03778af6befb96ed01937e741e5cb7d8e7d13b85de7e29ae794"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "d33a7849bc043493ffb2387bc61b5d836ce35f6f311bc892dd3aa9a2e8dea885"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "f07cf0587d041f4205a9075db3e2ddf0708b7d3baa699fe0a40043cf409f96e5",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac7ad13000000001b02c88f": {
+    "id": "6ac7ad13000000001b02c88f",
+    "content_sha256": "e28f33181da99ddb216370c911f286f865976c1692b83c11593fc353c517f3e8",
+    "title": "PS平替免费开源软件Compositor",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍开源图像编辑器 Compositor（robbietilton/Compositor，MIT，官方定位为 Mac 上的 Photoshop 替代）：安装包约 11MB，提供曝光、对比度、高光阴影、色温饱和度、图层、曲线和锐化等核心功能并沿用 PS 快捷键，原帖称 1.4 版 GPU 渲染提速 10 倍；开发者背景和“Adobe 无能为力”属于作者说法。",
+    "action": "Mac 用户可用一张常修的照片对比 Compositor 与现有工具的调色和图层操作，先在副本上测试 PSD 等文件的导入导出；Windows 用户不适用。",
+    "themes": [
+      "Mac工具",
+      "图像编辑",
+      "开源替代"
+    ],
+    "tools": [
+      "Compositor"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "878271a3e329c196210d5aed4769f1c50b8fd3a4c7d73844f81f6ad1f0153d5f",
+    "evidence_sha256": "0149f89ab53f7650946b28ccd64f6968778e3369ff837b3902f06964fda774fd",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "4f9011bd947e3d92aa9f99dc731c0168a69fca4c83756b9fa4bc2e69d3d3ab8a"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "96ed2e3704ef0d326fbc79217997bcbe4fd93773835062c92c839326559ceb0b"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "397ac9cf5b30102ff43af300a3be80b3dd12062d4282ad1df029b26bd1f40d08",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a7e8b9600000000050228d1": {
+    "id": "6a7e8b9600000000050228d1",
+    "content_sha256": "e65c3ed3cfa923fc8961864bbd5ea5831cf39c1b961b7ecc37d93210b22c3132",
+    "title": "转化率捷径｜同行的详情页已经视频化了",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "推广内容：百度一镜（百度官方电商数字人与商品视频平台）推出商品图生视频功能，上传商品图并输入提示词即可生成商品视频，主打把拍摄成本从几千元降到很低并支持批量给全店商品做视频；转化率提升属于宣传说法。",
+    "action": "挑两三个销量相近的商品，用生成视频替换静态首图做小范围对照，观察停留与转化数据后再决定是否批量；上架前核对视频中的商品外观、卖点与广告用语合规。",
+    "themes": [
+      "AIGC",
+      "商品视频",
+      "电商转化"
+    ],
+    "tools": [
+      "百度一镜"
+    ],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "b8a5d9dcd4a7256009a886bcc720e75705516f8c4167f9a80dc4baff20aa4af8",
+    "evidence_sha256": "09c153d210bc144c6239d0493dd8308b1a1b8f3c6ca0101b0b1d85ce2d918239",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "71197e0d7d21070898869cc9a9fd10568f1e0635152771eae1a020a5ac711832"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "3e595469e5ef0c7f4e816cba265e0855633185fb4906e855a11c1efb6791e248"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "7a620fac597ce141413eb85de81008baf7807ce00265e90378f9870fe90e0d1d",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a805a31000000002402fefa": {
+    "id": "6a805a31000000002402fefa",
+    "content_sha256": "f16900616ada113599709197d4d9d31b1bcbf8d39363dd1805e0fac171dc29a2",
+    "title": "AI创作开源（1）获客型短视频",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者宣布把团队的获客型短视频 AI 脚本方法（执行流程、追问机制、逻辑梳理规则和脚本规范）以飞书文档形式开源：把文档交给 AI 按规则执行，AI 在对话中追问缺失的痛点和案例，先梳理逻辑结构经用户确认再生成完整脚本，约 10 到 15 分钟一条；开源理由是框架已内卷贬值，团队靠高客单定制服务盈利。“单月营收 30 万”属于作者自述，文档当时仍在内测。",
+    "action": "可借鉴“先追问、再确认逻辑、最后成稿”的结构：把自己的脚本规则写成文档交给 AI，要求它在痛点、案例不清时先提问，确认大纲后再写；营收数字不作为效果依据，实际以自己账号的数据评估。",
+    "themes": [
+      "AI写脚本",
+      "获客短视频",
+      "追问机制"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "58539ddb47eec63dc742809ec82ebefc9c34ff59f025783ecd85214bd6261264",
+    "evidence_sha256": "2bfaf9d1433d6f1e95c424a71f9d6e739fcd2b19558793bc39802fac7fbe3558",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "0bec86613b33ae767536a0b8916b19fa7a32c5952bf3c2d3d23cc1401bfaefb6"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "58827b223859f063f05c8e6a1a7c15df828b3bb16fffd2b95c7113a27e68e97e"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "9ad4ca4553eb5dd9876d8e759bc4288b28d09f2ede060395534aef68f70795f6",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a912e700000000028007814": {
+    "id": "6a912e700000000028007814",
+    "content_sha256": "6423458218f1bec34948e6d80c2ef57c62a406356064d9aa671f9e7ec9f78f0b",
+    "title": "0基础也能用AI做出TVC广告了",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者实测 MiniMax 官方创作平台 MiniMax Design：它把 H3 视频模型封装成按特效、MV、二次元、广告分类的 Skill 与模板；用“极简产品广告生成器”Skill 上传一张键盘照片，Agent 会先检查素材（发现指纹杂物并询问是否换图），再确认款式、时长、比例，自动写文案、补视觉锚定图和分镜表，最终生成 15 秒 TVC，全程未手写提示词；另有 3D 导演台调机位。价格（768P 约 0.23 元/秒、2K 约 0.4 元/秒）为原帖口径。",
+    "action": "用一张干净的自有产品图走一遍广告 Skill，重点检查分镜表与成片中的产品外形、文字是否保持一致；先按秒计费估算单条成本，正式投放前确认素材和音乐的商用授权。",
+    "themes": [
+      "AI广告",
+      "Agent引导创作",
+      "视频生成"
+    ],
+    "tools": [
+      "MiniMax Design"
+    ],
+    "kind": "Product",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "417cf18518865d3e2e2bc1b8d9d91c5f9c86172faf800c3733446a13be190f70",
+    "evidence_sha256": "ae218b8f507ea803a96ce5926691873af2c44e2d5e12eabe5c357e2357f75d42",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "3c76f404a3bc5208baf348b07006c5fbf1b4290cde0f607549974f480a33aebe"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "290fc20432ce2b656f3758e1cb700a16477590752b1b57db89aece6fa6ec5780"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "b0a8d5d44a714a2e8852b9a54a07f08882b13d539f7a92272971467b83ca933b",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a97d192000000002503733a": {
+    "id": "6a97d192000000002503733a",
+    "content_sha256": "51d92500d28ba208bf52299309fa378038eeb5efacc9c58261283782673d3fb6",
+    "title": "一部95分钟AI电影的人物一致性实战经验",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频拆解 AI 长片《Hell Grind》保持人物一致性的五个做法：全身图做无头版本并单独配高清面部特写，让五官只有一个来源；保留自然眼神光、避免环形灯等会带入后续场景的光源；人物设定图用灰色纯色背景、均匀柔光、哑光皮肤并保留毛孔纹理；流汗、受伤、换装等状态都从原始模板改出，只把变化区域贴回，不在同一张图上反复迭代；声音也建立固定参考音频和锁定音域口音语速的提示词，每个镜头只改情绪。影片规模与成本数字为原帖说法。",
+    "action": "为一个角色先做三件资产：无头全身图、中性背景的高清面部特写、固定参考音频与声音描述；之后每个新状态都从原图修改局部，并对比十个镜头中的五官与声音是否漂移。",
+    "themes": [
+      "AI视频",
+      "人物一致性",
+      "角色资产"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "54696d7dbc7b6fb26a2a24f698fe0d79c462018231f729f3e1f9587a7bdb4f0f",
+    "evidence_sha256": "ae386631a9cbbe05a2a97ffead5dc5004e8f6a27a605a393df2c7b49cf23b9f5",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "75e4dfef3ab86ca9b646745072307e2f18ddca61fc3ca95ca5ff35573cd5ba32"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "8ed9f8bf7e4fccd11d689ed7fe073ecc017b2c3ed747721dd8aa682abb6408cd"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "4ae3252128f18eb7aedc492a532033709c83e83c12d0869cd72fc7c8b840e2bc",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9bf0f1000000002502de90": {
+    "id": "6a9bf0f1000000002502de90",
+    "content_sha256": "301cff2ca953c6dcf85f8e8f5905b016c4a20e70e758ad81c642c87986d101b2",
+    "title": "本地部署 Stable Diffusion 的步骤与注意事项",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频主张付费 AI 绘画平台多基于开源的 Stable Diffusion，教人在本地部署：检查安装包完整性、用安装向导装主程序、把模型解压到 models 下的 ControlNet 等目录、启动后写提示词生成；关键提醒是安装路径、压缩包与模型目录必须全英文、无空格和特殊符号，且默认只带基础模型。视频用的整合安装包来自评论区引流领取，来源未核实，“不审查”等说法属于营销口径。",
+    "action": "从 Stable Diffusion 生态的官方项目页下载前端与模型并核对校验值，不使用来路不明的整合包；按纯英文路径安装，先用基础模型出图验证显卡环境，再按需导入其他模型并遵守其许可证。",
+    "themes": [
+      "Stable Diffusion",
+      "安装避坑",
+      "本地部署"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "3f8243081cdc8fc70a23b812555fcd3e7bae6521ce06321ab79b5b05798be4ef",
+    "evidence_sha256": "96becbdabceb95fca4af940bc042d09d7b2833d741412481bdb08b46eb382776",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "a45dce77fac79eee2b8022d4ffc353297087165e80f80a11b951e6c71e2e8317"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "af5d31bedc2afb9ab7ca2787ed28ab0c3e4dbce515f7aa8a97a9b0537f23fa06"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "249c8e989f82810034be0f9181f1eafc91608f022f6912be32393f6f92f471e2",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9d2d61000000002b00341d": {
+    "id": "6a9d2d61000000002b00341d",
+    "content_sha256": "d0bd92ee299b218b393fc8c3d2679cd57ed060e85d4263fbae975e2b1550d019",
+    "title": "ClipCat：一键复刻爆款带货视频",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者推荐 ClipCat（Clipcat-ai/clipcat-skill）：一个 CLI 加 SKILL.md 的带货视频工具，可让 Codex、Claude Code、WorkBuddy 等能执行命令的 Agent 查询 TikTok Shop 商品、店铺、达人与视频数据，拆解爆款的钩子、脚本和口播，用自己的产品复刻已验证的结构生成带货视频，并覆盖选品、写口播、生成、发布到复盘；“用过最牛”为作者评价，仓库未声明开源许可证。",
+    "action": "先只用它分析两三条同类爆款视频的钩子和结构，再用自有产品图生成一条做小范围投放对比；关闭自动发布，复刻时只借鉴结构不搬运他人素材，并核对其数据服务的计费方式。",
+    "themes": [
+      "TikTok Shop",
+      "带货视频",
+      "爆款拆解"
+    ],
+    "tools": [
+      "ClipCat"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "493d60eb326c394cf3891abecb2ac1755a6792dac56d48a4e2a44ea9a2fdb249",
+    "evidence_sha256": "2abb4e8570ca30dd6dd16bbc83b170759a76c4815de311efcb47789ad5a17860",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "905c45ec835a2e3de4d00226f19c8682175e6cf0fafbcf04c052a0c217ceaff9"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "6b0a2be02c4e6dfd0a9c9867d3224fa7928ddb8b0fde3bf19b42a8fbc4d68943"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "f25fb6372b96df0949189e26b6c573d565e3449709ae08ab425e80b5632014d2",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa28af20000000011035f62": {
+    "id": "6aa28af20000000011035f62",
+    "content_sha256": "13192438d1cf45cd44402b62f2dc58f303dfc412252a2477db49bf251215feae",
+    "title": "一句话让AI剪视频、创意动效，送完整提示词",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "教程用 ChatCut 桌面端配合 Codex（推荐 CLI 模式）通过对话剪视频：先按口播、MG 动画、数字人等类型用预置提示词让 AI 删除重复卡顿片段生成初稿，再用参考图或参考视频做四类特效，即发光大字加粒子散开、Logo 在手上出现后环绕身体旋转渐隐、调用 MiniMax H3 等视频模型替换背景并融合光影、用数字人替换口播形象并配音；每类都附可套用的提示词结构（时间段、参考、效果、音效）。",
+    "action": "拿一段自己的口播先让它出粗剪初稿，再只加一个特效并给出参考图与精确时间段，检查人物光影融合与音画同步；生成背景和数字人前确认肖像与模型计费。",
+    "themes": [
+      "AI剪辑",
+      "Codex",
+      "动效提示词"
+    ],
+    "tools": [
+      "ChatCut",
+      "Codex"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "48e31dc7b689c46ce5c85a0481f0fc2a180d42114ae1f52d6c3e72736bf79564",
+    "evidence_sha256": "300d1c83734654f4ed457163b03a38fbe9a6a43f9395e3e1354d0b63110b27ef",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "23c67c5e494fc607b607a6b66ca8d3ea428111ff31166f9e92203014dcbb06c9"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "5b624a7d439be6a0db69e512bddd06af0372910bb5835cb41415f91116d59e85"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "aa2b90aa6f991c13caac75c1e31729e80cc1c9d555e1b9caf68bf019addff138",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa39a6b000000001001cdee": {
+    "id": "6aa39a6b000000001001cdee",
+    "content_sha256": "aa1fe97dcf4b8c9c6170ed752fedbc3fbeaa7447da164d6ddd6797c26db43f8b",
+    "title": "分享我套路AI的方法，不然它只给你普通效果",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者主张用具体、极端、反直觉的指令代替模糊要求，让 AI 跳出平庸输出：用“禁止继承上一版”代替“再来几版”，用“允许裁切主体”代替“自然一点”，用“视觉中心放在三分之一处”代替“不要居中”，用“删掉 30% 非必要元素”代替“再美化一下”，用“做一个异常版”代替“太普通”，用“同一内容换不同规则”代替“再给几个方案”。",
+    "action": "下次修改设计稿时，把“再改改”类反馈改写成一条可执行规则（禁止继承、裁切、三分法、删减比例或换规则），每轮只改一条规则，比较输出差异。",
+    "themes": [
+      "AI设计",
+      "创意发散",
+      "提示词技巧"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "8b38a4e0ae97e7e310bc2b0ef7fd273051b167ff3d13a5476bfb00a5aec2e4c6",
+    "evidence_sha256": "940fc933994cd97081f1abf78f2355a04f57fe2f29eb3eaaa0c6e0b44f7bba22",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "58aab7068e3ae2c075237895de4b66e650c510a689e835b46ea81991427232bb"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "633022dfa8cbddf78efc4e68f3ac46ac894d530b9602e960f4400e4a0465b45d",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6abac6e2000000000a0236aa": {
+    "id": "6abac6e2000000000a0236aa",
+    "content_sha256": "9fcb32f412c476f5f591c64d4f25033b8da21e609eca54aaf032613656ad8ea2",
+    "title": "吊打99%付费！原来做AI视频能这么简单",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "教程认为同一提示词出图差距大，关键在 Midjourney 的风格控制：设置比例与版本后重点调风格化、怪异值、多样性（风格化拉到 500 增强氛围），用 Profile（P 值）切换电影叙事、角色定妆等风格，在主页 Try Style 套用社区风格只改色调氛围，并在 Personalize 中通过持续挑图训练专属 P 值；完整流程是用扣子等工具写提示词、Midjourney 出参考图、TapNow 细化人物、Seedance 生成视频。",
+    "action": "固定一条提示词，只改风格化数值和一个 P 值各出一组图，记录哪种组合最接近目标；花一段时间在 Personalize 里训练自己的 P 值后再用于正式项目，生成内容的商用以各平台条款为准。",
+    "themes": [
+      "AI视频流程",
+      "Midjourney",
+      "风格控制"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "cba006055bdf7df6f0d451ad81ee97d593df309d77c89868781423f1327fa059",
+    "evidence_sha256": "4185e89d6fe6921def48473f83818903101e15c339cb3fb80c21bb3a89f07fdd",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "96f6df1b99e7e60a1ece4be6b7eb875fb91c0f2edbf863390fc7609dd6543ef7"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "3fc5144496a20c83b073ee4ce076cce8c62b60b3721fbb2c1f2c36a6a7fac81b"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "abf60c6cff47d9103a610754f067c87a6176c987f15c57a3375dcd701e4a5f0c",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac0787f0000000015012f86": {
+    "id": "6ac0787f0000000015012f86",
+    "content_sha256": "e3f31bc14ff39542b19f5d297a6db35a6fb9007f0fee3a338ecd3e76fac73064",
+    "title": "五万多星开源项目，一句话自动出片",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍开源项目 OpenMontage（calesthio/OpenMontage，AGPL-3.0）：运行在 Claude Code 或 Codex 中，一句话即可完成查资料、写脚本、拆分镜、找图、配音、配乐和渲染；其设计是让编程助手只负责编排，把写稿、配图、语音、剪辑分别交给更合适的工具，形成可在本机运行的视频流水线。",
+    "action": "在已有编码 Agent 环境中拉取项目，先用一个一分钟的主题跑通全流程，逐项检查脚本事实、配图与音乐授权和外部服务费用，再决定是否替代现有剪辑订阅。",
+    "themes": [
+      "AI视频流水线",
+      "Agent编排",
+      "开源"
+    ],
+    "tools": [
+      "OpenMontage"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "59ada71736f24e10fd38fea0712be7de6336b399889267c13c09ec9358db524f",
+    "evidence_sha256": "169ab57654e749838e2f7158b8433c5cd72c1351c04ec9843269513428699fe6",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "ce02687b0776b9381d8589e1207310d67fb1634662a289d99f50395ede736475"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "d2b5e7116736c205cecddbf6bf4d3e2579c931cb66060b2c4c2a0f23ad438b00"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "9ba4f2655667cb2162f1a4e2b010f1df5790907c5790e49d6a8bf01d137e3f88",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac304d1000000001203c6b3": {
+    "id": "6ac304d1000000001203c6b3",
+    "content_sha256": "c9cd7733023357d007a3f7f5f4598f9d8e31a7da571f39e27db9d3270b873ceb",
+    "title": "如何发挥Opus5.5做视频的能力",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "博主在 Claude Code 中用 Opus 5.5 做 Remotion 视频的思考档位对比：同一提示词与旁白，分别以 medium、high、xhigh、max 生成四条并打乱盲看，结果一条都没猜对；成本上 medium 约 26 分钟 6 美元、max 三个多小时 31 美元。结论是档位只决定思考时长，画面主要由旁白和提示词决定，放开让模型自由发挥时 medium 也能出好效果；作者强调这只是四条视频的单次测试。",
+    "action": "做视频前先固定提示词与旁白，用 medium 档跑一版，确有不足再升档比较，并记录每档耗时与费用；把主要精力放在打磨旁白和画面描述上。",
+    "themes": [
+      "AI做视频",
+      "Opus思考档位",
+      "成本对比"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "1e857f31b17d5cd5496a3b112d66258c88610d4cb95129fa16f3e9a7b4cb29a5",
+    "evidence_sha256": "9f0aba36e92ffbb55ede30431b3727bd49da814d3242381a91ba0612cca4672e",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "32fe52f99b63f01ca65e2b8532e978a2c367edd9d11d5891344002bbb6db60d2"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "d9b4a7b234b6cb9ce8cb5a99f6910170a5fac4c69a3176b6c1731a1d212e4650"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "934e33692a461b673fcd9d02910b13879c8c684f6c241be2d8a980f6c39bf329",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9d5b26000000000d02627c": {
+    "id": "6a9d5b26000000000d02627c",
+    "content_sha256": "6f55ab168ee566b567d3aef3e7f35343377bbf938200d4835fc8acab903587d1",
+    "title": "GitHub每日AI项目推荐·第42期：vphone",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍开源项目 vphone（Lakr233/vphone-cli，MIT）：借助苹果虚拟化框架在 Apple 芯片的 Mac 上运行真系统 iPhone 虚拟机而非模拟器，可秒级克隆出多台干净设备，并支持远程截图、点按、滑动，让 AI 助手在真系统里自动走一遍 App 并回传卡住处的截图；要求 macOS 15 以上。",
+    "action": "在 Apple 芯片 Mac 上按官方步骤起一台虚拟机，克隆一份干净镜像后让 AI 助手按测试清单操作自己的 App；使用前核对 Apple 软件许可，测试中不登录真实个人账号。",
+    "themes": [
+      "AI自动化测试",
+      "iOS测试",
+      "虚拟化"
+    ],
+    "tools": [
+      "vphone"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "fa83879cfbb5e423e7c5d947ba6c55d13e02a1bb9bc6efb89cdf90fba12d483a",
+    "evidence_sha256": "bedf8762fcc5cab44011bcaeb61e6d390e5c7320db91871c7889082eb1ea6a03",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "f10d63a8461eeb06d58c76ce860164df62b8f0bc55f99ff55a6f04b958bd7c4b"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "d1f1f42b4d81f6021be3d0e5e7a3ec6db9c6cb9ae7362f0d28125f04e5e7b611"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "21ffe4fd7b3046107f24beeaabcdd585b6bb3beca941d8dcdcd302ade73dc7d6",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9e64dc0000000026009db1": {
+    "id": "6a9e64dc0000000026009db1",
+    "content_sha256": "cb800b1079a708426fbfa34560ebee094eeaa75e8d8bdc84c7afa405cbf30e76",
+    "title": "离线字幕 + 本地 TTS，开源多轨剪辑 Concat",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍开源本地视频编辑器 Concat（jub0t/concat，AGPL-3.0，定位为 CapCut 的开源替代）：Windows 与 Linux 可用，支持多轨编辑、分割修剪、转场与变速，内置离线自动字幕和本地文本转语音，无需注册、无水印、无订阅，适合重视隐私的基础剪辑。",
+    "action": "用一段自己的口播试剪：多轨拼接后生成离线字幕并抽查错字，再用本地 TTS 配一段旁白；需要二次分发或修改时遵守 AGPL 条款。",
+    "themes": [
+      "本地运行",
+      "离线字幕",
+      "视频剪辑"
+    ],
+    "tools": [
+      "Concat"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "045361597ba5b91fbf747889855eb53aff087086c3e9e11e466cb55362846cf0",
+    "evidence_sha256": "e727f383e1cd02787201d88f138f080a086c0555f3f8aea032c828a5b6ebb94d",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "0d6f4c124af5fbea080497062cd7c19a5567d05b5117ffa79328d08c451478f5"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "a6b20fd8cb28ac802d01ee4cff9ba945dfd361e37b782ac2d7bf60b7af6d8104"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "303f065e69b17431a613a8c8746c2d203101ef6372b4e9cf57b04b517e27b87b",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9eb12b0000000011034c08": {
+    "id": "6a9eb12b0000000011034c08",
+    "content_sha256": "bf8ab425bd914dc2746e97b491c3b370c073af5da53afedb7043a81871282fee",
+    "title": "AI决策拆解｜5个顾问角色",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频针对 AI 容易顺着用户前提点头的问题，借用 Karpathy 的 LLM Council 思路（多个模型互审后由主席汇总），改写成五个顾问角色：反对派假设方案全部失败找漏洞、追问派逐一挖出默认假设、机会派找遗漏的机会、外行人提跳出专业盲区的问题、执行者落到今天要做的一件事，最后由主席综合结论与下一步；“斯坦福研究”等引用为原帖转述。",
+    "action": "下次评估商业模式或产品方案时，按五个角色分别提问并要求每个角色只说本职观点，最后让主席列出共识、分歧和今天的第一步；重要决策再用不同模型交叉回答一次，减少单一模型的附和。",
+    "themes": [
+      "AI决策",
+      "LLM Council",
+      "多角色互审"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "3402a6de19bd37911f6af6064a08f11d07396551b7f11935339d631773cfab60",
+    "evidence_sha256": "c4416b404e83112e536c13333ef8e41761151e86821b9e9f6df21b089d1950f4",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "3fae9b4dfb4c4e83821646195e4021aec45d7267c3cc1870b89c178cf4e8d5b1"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "44c8483a2bc058d1a0dc4017aae08c9b6f9573f0277eb0c1494441390485b19b"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "8942ae8fe8c2ad97bd12ca13f4d0b0afe720589fbf57dd1edec05742d9ab4228",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa0f9af00000000280327e7": {
+    "id": "6aa0f9af00000000280327e7",
+    "content_sha256": "5348f1047b58e0a9686936ff7249af6bbdaa2c03e5a14adb7b4e51df39a8d829",
+    "title": "做自媒体必备6个skills！如何用AI起号",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频按自媒体流程介绍六类 Skill：跨 30 多个国内外平台按真人互动搜选题、懂运镜的视频生成、把书或长播客蒸馏成方法论并生成 Skill、内置 21 个工具覆盖选题到发布的工具集、由文字直接生成小红书九宫格与公众号封面、扫描 16 个平台近 30 天内容生成带出处的话题简报；各 Skill 的名称与仓库在证据中不完整，未逐项核验。",
+    "action": "按自己最耗时的环节只选一类先试，例如选题简报或封面生成；安装前逐个核对官方仓库、许可证与平台抓取合规，成品发布前人工核对事实与版权。",
+    "themes": [
+      "Skill候选",
+      "内容创作",
+      "自媒体工作流"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "1880800e8b05ca587e396b67a6481df82430c1f9c93df82783a4b1032d6ab6e7",
+    "evidence_sha256": "4c2bf7951db44cd1148b792fcdca01aa2e484757ce17f9a187547b9e5599f132",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "4b1110b5c84d5f8f15079d1db2b8344c087c39d01df8bff87b2668011147d3ef"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "101eceb58da793fe5f93388b116c0e8e234e14eb7fb0830acfc461eb1c86b68f"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "7a3df8acf3e42fff5525c2b8c68c84cbc16ce8cd6cdefca2829acf3767de2d6d",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a6afd1e000000000f006082": {
+    "id": "6a6afd1e000000000f006082",
+    "content_sha256": "2f224ba40a5df48750c5f89d2071115c4a6f5d9e941947191b199ae1bed599e4",
+    "title": "howto | Github 零基础终极教程",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "面向零基础的 GitHub 教程：介绍 GitHub 是什么及 OBS、Blender、ComfyUI 等代表项目；用 Trending、关键词搜索和浏览器翻译插件找资源；解释 Star、Fork、Watch、分支和 Pull Request；对比 Release 安装包、下载压缩包、git clone、Fork 四种用法；讲解 MIT、Apache、GPL 等常见许可证；并手把手用 AI 写代码、写 README、加许可证、做隐私与密钥安全检查后发布第一个开源项目。",
+    "action": "先注册账号并从 Trending 选一个感兴趣的项目，用 Release 或 clone 跑起来；开源自己的项目前，让 AI 检查是否含密码、Token、个人信息和本地绝对路径，并为项目选好许可证。",
+    "themes": [
+      "GitHub入门",
+      "开源发布",
+      "开源许可证"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "ec79059297e0691720ca219c8e41f1fb26341b485385bd04000adbbb30ab0545",
+    "evidence_sha256": "457e58996e3cec4d7d9044919cbed7be406f6613a910ef7ebad12e45ea10602f",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "d6e28116d593240305a45febc732828d7a580c270c76e73e8ea1d8a8714924a6"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "0b111a352736d88eb7a108629814574f6d9d57b0e55d0998745fd407d2a2b8c3"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "5ef6c7a4da33aab9912c94cf66c097476814e1c2754eba65323654b77c820133",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9430b30000000029035a35": {
+    "id": "6a9430b30000000029035a35",
+    "content_sha256": "ecf4618f0a32973870b74799609432164ca6b09c52d9d44a3be30bc2aa0a9e06",
+    "title": "7种主流Agent架构深度解析",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频先转述一条四阶段 Agent 学习路线（大模型与提示词、ReAct 与 CoT 等核心范式、记忆与工具、AutoGen/CrewAI 多智能体协作），再对比七种架构：单 Agent 便宜但长任务易幻觉，ReAct 透明但费 Token 易循环，Plan-and-Execute 稳定但初始计划错会一错到底，多 Agent 分工但通信易走样，Route + Skill 让模型做单选题、幻觉低但前期成本高，黑板系统适合异步协作但难调试，图工作流以 DAG 控制分支与重试、最适合生产。结论是按场景复杂度选型。",
+    "action": "给手头的 Agent 需求写下步骤数、是否需要并行与重试、可容忍的错误率，用这三项在七种架构中选型；先用单 Agent 或 ReAct 验证，再在生产链路中把关键流程固化为图工作流。",
+    "themes": [
+      "Agent架构",
+      "学习路线",
+      "架构选型"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "98f0abf4df07bc93da1458bbf3b42d20019909fcde8fe0e5ea508ea5097b7454",
+    "evidence_sha256": "522c1deb4524a04c5064987cb89160908cd38aa0d121a26c14033e921d238207",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "123689aed2045e8096abea18625407e0d1249d1cbb3bdd1ab016069796880f28"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "698fa73bf5564fe4efd64ec3a348e991871e14067e68d41911b466bd8e0d78e6"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "7399c5ef718a95d0710608e0bb76b806f9b7de71d22cd025df7b76984dbe3bec",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a979d2d000000000d0270fd": {
+    "id": "6a979d2d000000000d0270fd",
+    "content_sha256": "246815fda4e2d096b9788c62c788cc6e53a0bf97615850615ad1fd0fda6b7706",
+    "title": "00后用二手设备和AI在客厅完成基因组测序",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频讲述 Seth 为查明姐姐的罕见免疫病，用 eBay 二手的便携纳米孔测序仪 MinION 在家完成全基因组测序的故事：用 Dorado 深度学习碱基识别弥补廉价设备的噪声，用软件控制纳米孔实时比对、对非目标 DNA 反转电压“吐出”以省去化学探针，并用 Claude、EVO2、AlphaGenome 等模型在本地 Mac Studio 上解读数据；“100 美元完成测序”等数字属于原帖转述，医学结论需专业确认。",
+    "action": "把它当作“用 AI 软件替代昂贵硬件与专业人力”的案例来理解；涉及健康与基因数据的任何分析都应由医疗专业人员复核，个人基因数据只在本地处理。",
+    "themes": [
+      "AI生物科技",
+      "低成本创新",
+      "基因测序"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "fd8e115c60afb6f8afe2da33d57d543c2c6f9365096f54ae0c9771bccec239a3",
+    "evidence_sha256": "e16cebdb619ddaa8613dcb5ceafee7dbb7067564dc688dde229898900109bf22",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "eba2a12e5cc2406acadf1338f2399d1b75bf8b57cbf97381897507684188dece"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "90087773529e69852244827bed75022e1f29ae2d281885ccacfe84cc1f860723"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "e121f7e3e396990048a339e740fbbc5309452a6a4b457989b67500b2d25d5f93",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa5313f0000000029018445": {
+    "id": "6aa5313f0000000029018445",
+    "content_sha256": "1ba95040abf021d3733bfa6666ba6f465d6a6e02f5cc0e52bfdb55a0f964acf2",
+    "title": "77k星标的智能体教程 Hello-Agents",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推荐 Datawhale 的开源教程 Hello-Agents（datawhalechina/hello-agents，《从零开始构建智能体》）：覆盖智能体核心原理、从零构建 AI Native 智能体的全流程实战、多智能体综合项目与配套代码，并附求职面试指导，目标是让学习者从会用大模型进阶为能构建智能体系统。",
+    "action": "已会写提示词的读者可按章节顺序学习，每学完一章就运行配套代码并做出一个小 Agent；示例调用的模型 API 自行准备并设好费用上限。",
+    "themes": [
+      "Datawhale",
+      "开源课程",
+      "智能体教程"
+    ],
+    "tools": [
+      "Hello-Agents"
+    ],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "2578aadf97756828762d6bc04b88bfd39764c8f66c01729e1174270abf184977",
+    "evidence_sha256": "fa7f3845cdf0489d3996f84a5f9fc7aab9bded1644359a4154baef73b13c1dd7",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "97f904473108c3189039e88670f65bd1f167ae13ae9d4063cfbab7e21a86aaa0"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "ed9308db551e677a13ebb50a7f0833482c94a0b01e0d11a9f97e4edfee2396d5"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "bfd47ac8e0d02bcbe2757c0cd995116e3730c8dcd7517d31352f26ae63ab6b31",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aab8160000000002502c348": {
+    "id": "6aab8160000000002502c348",
+    "content_sha256": "9628425f53ce9f91683bfeeba88241bc0cfb7a67f2ae2716501cce57cbbff79d",
+    "title": "今天面了一个特别亮眼的男生，他很懂Agent",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "一篇面试官面经，借候选人回答总结 Agent 开发的三个认识：Agent 的核心是围绕目标持续决策，缺信息先追问，规划后自检，技术上用 ReAct 与 Plan-and-Execute 结合并按工具返回修正计划；容错的关键是让 Agent 知道何时承认做不到，工具失败返回结构化错误、低置信度触发降级提示、限制最大步数防死循环；最难的是信任，应定义目标、工具与边界而非写死每一步，并做好状态管理以便汇报进度、回滚和优雅退出。",
+    "action": "检查自己的 Agent：缺关键信息时是否会追问、工具失败时是否返回结构化错误而非编造、是否设置了最大步数和低置信度提示；逐项补上后用几个刁钻的测试请求验证。",
+    "themes": [
+      "Agent开发",
+      "容错设计",
+      "面试经验"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "6b06f97b62c91b77090797d6f32e0744d3ca30c78adbb66b6aaa41a6467629f7",
+    "evidence_sha256": "68c7004b466fa9cb03868da0967471e6101ab2b5bf1b3ea9a0087b85536dcc10",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "13dbb8151c01b27dd5b6ec123a33129e342e6788276993f583241ec4d60ea068"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "6c16ac0cd6f3b6492229340e0d2a714e0e22dde56c53c3ff1386b3be8c7f4513"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "9d64aad6539f828ffd2c3eea17c9150777e4b3a0ad883c66c47c77b8050da096",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aafa978000000002a02f619": {
+    "id": "6aafa978000000002a02f619",
+    "content_sha256": "c38993c104647c2fa4d331e218b3e56f656dcc75530ec875e8ceb3f819a92dc0",
+    "title": "腾讯开源 Agent 记忆系统 TencentDB Agent Memory",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍腾讯云开源的 TencentDB Agent Memory（TencentCloud/TencentDB-Agent-Memory）：不用扁平向量存储，而是漏斗式分层，L0 保留原始内容、L1 过滤噪音提炼原子信息、L2 沉淀精炼内容供 Agent 运行时召回，以减少 Token、提升推理速度并保持召回准确，支持本地部署，定位为 Agent 的通用长期记忆层；仓库未声明标准许可证。",
+    "action": "在测试环境部署后，用一批自己的对话或文档写入记忆，对比只召回精炼层与直接检索原文的答案质量和 Token 用量；接入前确认记忆的删除与权限机制，并核对许可证是否允许你的使用场景。",
+    "themes": [
+      "Agent记忆",
+      "分层存储",
+      "腾讯开源"
+    ],
+    "tools": [
+      "TencentDB Agent Memory"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "f2fddecb06126bb12b12a206c0e4af0138a070a19ee6a74ebb3de2b3f30a3527",
+    "evidence_sha256": "0c28416fc352d8e9b1f1df624464e65ad273b765886cfbdd8e3d1895db11811a",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "5344019342779c1e268bf5c78fe28f5f24e36b47dbc6f9d85caef470a40641d9"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "e9dd65ecabdc7b208210ac4102d08ebe7868f603ea14058bc5e8d6dbe76079a4"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "82db93799d2f2a8f30c16c27e76609fd4c7d92ea9b446e29096b31b5543c9326",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac32c95000000000a022b0c": {
+    "id": "6ac32c95000000000a022b0c",
+    "content_sha256": "fd68b156f29351f9ec0726692bc77a25fe75d3271ab64de457d34c901485c0ef",
+    "title": "大神卡帕西的4个提示词技巧，理解AI输出",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍 Karpathy 的四个让 AI 输出更易理解与审查的方法：用航空维修文档的 ASD-STE100 简化英语规范写作，精炼且不像单纯“简洁”那样丢信息；让模型画图表代替文字；生成可交互的即用即抛 HTML 页面来理清关系、做方案对比；按需生成 3Blue1Brown 风格的讲解视频。作者补充可在规范上叠加“同类概念对比”等要求，并建议自行测试找到最合适的方式。",
+    "action": "把一段难懂的 AI 回答依次要求改写为 ASD-STE100 风格条目、一张结构图和一页可交互 HTML，比较哪种最快让你看懂，再把有效的那种写进常用提示词。",
+    "themes": [
+      "AI输出理解",
+      "Karpathy",
+      "提示词技巧"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "acf57300b36ffaa0242e9cabb49de1bcd54d171d223e753ad7b9b67505e5db99",
+    "evidence_sha256": "6c98bd83cd0de111b25f487f8437cfa558db7f5a23bfacc9b477cb51a3c3b979",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "dfbe9845b08fb57267f63c98fd3ae8a8e56cc1a91ee10a504b35e2f90862a18a"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "26493cf6bcbf453e4114b14e70f732f6e4625ae90906c43b6d9e21887caa0d26"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "9c178fed011c7f055dbe9defb8cb5b13bcac6df11da86eacb3a46a39a2c0bd6d",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9fc6a50000000028035b43": {
+    "id": "6a9fc6a50000000028035b43",
+    "content_sha256": "4e6bd63e6953b51734f411a2a20031c3d9de6f3d7e8938e2d4bb31bb03feb763",
+    "title": "用 GPT-6 来重构真的太爽了，分享提示词",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "博主分享用 GPT-6 清理旧项目的做法：他认为上一代模型写出的代码过度防御、冗余难读，重构前先删除过时的计划与审查文档以免上下文误导，只保留符合事实的 README 与接口文档；再用一条提示词让模型挑出不合理与过度防御的设计，在不影响功能的前提下激进重构、必要时按第一性原理重新设计架构，并由外到内逐层审查功能与代码。",
+    "action": "选一个功能模块，先清理过时文档并确保有可运行的测试，再用这条审查提示词让模型列出拟删除的设计和理由，逐条确认后在单独分支重构，跑完测试再合并。",
+    "themes": [
+      "上下文清理",
+      "代码重构",
+      "提示词"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "88c60120f7dba341ea35b5840a8d6b98623371963962e2f05bcfa231a741122e",
+    "evidence_sha256": "ffd3c06e3368d573473b25340859b47fcc4578336e552075213c0aadf38cd71b",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "3ba77e319e7d27e9574ac2addbda96e6108c4fcc30c5c79011715b427a93ba9f"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "553b60dea106cd45b678c486ec65bb186716fd3971e93d9a708eb8eb993d1784"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "d5da9314f74ebbf079de718832b942366f82dfda79d5cb09755d021f01d52a87",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa15c1e0000000026030a2e": {
+    "id": "6aa15c1e0000000026030a2e",
+    "content_sha256": "38aa5ac40aa499b18402338a51f13e75666450f30323ec4b861557bdfa45dd74",
+    "title": "我发现还有很多人都没用上AI：零代码做App变现",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频给出零代码做付费 App 的五步工具链：用 ChatGPT 挖掘需求创意、用 Claude 整理成 MVP 方案、用一个无代码 App 搭建工具（转写为 NewlyAP，未核实）搭建应用、用 Canva 做 Logo、用 RevenueCat 加付费墙；“一周赚 1 万美元”属于吸睛说法，证据中没有收入依据。",
+    "action": "把这套流程当作 MVP 验证路径：先用 ChatGPT 与 Claude 写清一个具体痛点和最小功能，做出可点击原型后找十个目标用户试用，再决定是否接入付费墙；搭建工具选型前自行核实其官方来源与定价。",
+    "themes": [
+      "App变现",
+      "MVP验证",
+      "零代码开发"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "36a74efb576a0114c47f9308ed3ff3cd89891e18534543eb273c802569de8731",
+    "evidence_sha256": "90dcfbe500bac1deee4efbb2655e1d119dc9f8cdc13717cba6104effb65a3a5c",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "ff3f35d4b51605a715834ebec9d1d67b2d5bf6c35b042943fdea0704c19e7271"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "58d14e0ceb453056c690e52daa41dd606994b48fb2bcea30ef8164e318017146"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "a5665a81a6873d6fce65f27c3824e9ff156e43e789c641ae980928a9bf98688a",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a979426000000001001c00b": {
+    "id": "6a979426000000001001c00b",
+    "content_sha256": "b7c30100ae47ac3a034e1bedccf69915b1909d4f963fb52b373e0ea2074aabea",
+    "title": "人群推广截留实操，整理了详细步骤",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "淘宝人群推广截流竞品的设置步骤：营销目标选高效拉新、方案选进店拉新而非兴趣拉新，新客定义按成交周期（作者用 365 天），触达次数不限；清空系统推荐人群，手动添加价格相近或更高、近 30 天成交与投产较好的约 5 个竞品（可用关键词、细分市场、竞价探测或直接输入宝贝 ID）；开启商品详情页下方推荐位作为截流核心，预算 60 到 100 元起步，关闭站外投放。效果因店铺而异。",
+    "action": "按步骤建一个小预算截流计划，只加 3 到 5 个价格段相近的竞品，跑一周后对比点击率、加购和投产，再决定增删竞品或调整预算；后台选项名称以当前版本为准。",
+    "themes": [
+      "人群截流",
+      "淘宝推广",
+      "竞品投放"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "05bbf71953907616722d32a04bafb351927af54db9ade579987bc72e191ab987",
+    "evidence_sha256": "5d1811f631d346f6ba619a0cf31202a20da0d15f0fabae77f382f2920a9f0eb5",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "d81971848261e6e2c3887f3c257d37f2e90a376d684308e6b345db5191e2d7fe"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "fd1a83df4ce63a75d7849b2f1a2cf9d742f4b7d06622a1b89a7e103557cc4f60"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "317f112a708b8c939f87e68dc036bcf585df2e01d08180596cf5eb607cc74fa7",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9930cd0000000026014058": {
+    "id": "6a9930cd0000000026014058",
+    "content_sha256": "6c35bdb0b4cea03d8e0d7c33aafdd021bcb7aae8e2086e9473fea4955732a873",
+    "title": "人群推广有流量不成交其实第一步就错了",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者认为淘宝人群推广有流量不成交，多半是第一步人群选错：中小卖家不要用竞店或兴趣拉新这类泛流量，选同二级类目拉新；进入自定义后清空系统推荐人群，只加竞争店铺相似宝贝和本店核心人群；出价用智能出价、目标扩大新客规模，前期预算 60 到 100，关闭站外资源位并按需筛选地域。",
+    "action": "检查现有人群计划是否混入大量系统推荐泛人群，复制一个只保留竞争店铺相似宝贝和本店核心人群的计划，同预算并行跑一周，比较转化率和投产。",
+    "themes": [
+      "人群精准",
+      "淘宝推广",
+      "转化率"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "aab10de37b62ee9758e163cac85c96276964179af44c5c1d2b604dc4d5c4196d",
+    "evidence_sha256": "c1ed4f765e587d08a5f44bc6947bbea01ca8be9a144ad47f832c91b992ac2d4c",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "7742f00b4b136f5978841f710b7502bb74122cba67e481ffe93fe002a7339f35"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "476df5e354ec2af0a444e8509722e3ea0c2b2a569c555b8f8f427cd2b4dbdec3"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "7d08ac93e683ff810d2a5ad92f15e369dbe0cdd6da7e4fcce54cbceafbda2063",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a995ac9000000002900cc37": {
+    "id": "6a995ac9000000002900cc37",
+    "content_sha256": "d50b42448c3b183ab31ad709e16a3d34893b26b8b886d86166c44bede479259f",
+    "title": "直通车关键词出价公式：倒推基础出价",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频给出淘宝关键词推广的出价计算方式：最终出价 = 基础出价 × 分时折扣 × 人群溢价 × 卡位溢价，并据此倒推基础出价，例如目标最终出价 2 元、分时折扣 60%、人群与卡位各溢价 100% 时，基础出价约为 2 ÷ 0.6 ÷ 2 ÷ 2 ≈ 0.83 元；跑量太慢时提高分时折扣，太快时压低，以减少凭感觉反复改价。",
+    "action": "为核心词先定下可接受的最终点击单价，按公式倒推基础出价，再只用分时折扣微调节奏；每次调整后观察一天的展现与花费，避免一天多次改价。",
+    "themes": [
+      "关键词出价",
+      "推广成本",
+      "直通车"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "748d9d8b1012f969116937dbada06aa4476567a32cbee89d3b712259b7ccbede",
+    "evidence_sha256": "84f724252759e7bffebf80e6dd5947d5d4e048a2c2c00b4b89ce24e6813aef44",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "5db5bd08584a02a1325c7f35a7b939f1984b5aa9cc3729c74217d51c687a3d29"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "417ed65e8da7689fdc98973853dbbdc14d8ed4f06df2c7c6b7558cad42e1e202"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "5cb15c5c66ce4fb4f89df28996e23c763b443c0cb6a7723e53e2afdc411f47b1",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9b7611000000002601ba51": {
+    "id": "6a9b7611000000002601ba51",
+    "content_sha256": "b94626d24d2723a4694288beba140f6e009eb901e000f84fc9f36326fb5c8911",
+    "title": "高客单店铺，推广不要乱开，只要做这三个计划",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者认为高客单店铺推广是在做人群而非堆流量，计划过多会让人群标签冲突，只需三个核心计划：关键词推广定向基础人群中的 L4/L5 并用溢价控成本；系统推荐人群中的收割人群与 88VIP 人群分开建计划，可叠加契合的 VIP 人群；趋势明星用于放量但必须设置成本上限、跑不动再逐步提价；另可加一个“高效拉新 → 首购拉新”的人群计划，自定义添加品类破圈人群或类目咨询人群。详细文档为作者私信引流。",
+    "action": "盘点现有推广计划，合并人群重叠的计划，按三个核心计划重建并为趋势明星设成本上限；两周后对比整体投产与客单，确认标签是否更稳定。",
+    "themes": [
+      "人群标签",
+      "淘宝推广",
+      "高客单"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "9b7333ecc96491aabb3a523376219e7e4b3d7e44eb7df52ac8fd1a9f3dd3ad10",
+    "evidence_sha256": "55e67748d5b9c1bdaf93bcafc19d4efefdfb7e555b09ab59441fbaadffd782be",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "e32610d65f93397e203923bb7bea0d4162c52f293a39e4ba7d0bcf1b9690d8b1"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "37d8c8490f1573ce556f75e821097cb799a5b9a266590303f2f055274b4951a4"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "a8cd662c325bd4a0e528a1422c57ee170d6160177c7d54616b1eb255d2796872",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9e1620000000002601eade": {
+    "id": "6a9e1620000000002601eade",
+    "content_sha256": "3cfb35481587d004eb8ca09ceca4ff1c536fbe3894c7918a756aa3f75e139962",
+    "title": "淘宝无界的场景洞察，我建议系统关闭",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者演示淘宝无界后台“洞察 → 场景洞察”：可选行业 Top 或同层级优秀店铺与具体类目，查看各推广方式的 ROI、预算分配比例，甚至竞品的关键词预算分配并倒推点击成本与投产；他认为这会暴露老卖家的投放策略，建议关闭相关数据共享，而新卖家可借此学习同行打法；并举例生活电器内容营销占比已高、女鞋仍以关键词推广为主。",
+    "action": "老卖家先在后台核对店铺数据是否被纳入洞察及能否关闭；新卖家可用它对比自己与同层级店铺的推广结构，挑一个预算分配差异最大的方向小额测试。",
+    "themes": [
+      "数据洞察",
+      "淘宝无界",
+      "竞品分析"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "d8e45c05bf74e00f07ca8069acbd10515163f786eb71cb6b1534828c57ab6ef9",
+    "evidence_sha256": "69cf85b8b323a086b08680e5e5f172949b5485314cebecf01c3d2304374cf27b",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "dc65b0e5af38aeb7918dc950685647900aab611ab2b13b9ae033dec4512391c6"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "28b054372763cc37443f7ae4603e6d3b591ce4afce46bfc83a8477dbaf33e023"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "d7b871adb0c0d2dec5be58dc7f9a89fe0cd58c35f4df77474425d04a99a9deb2",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa42ae6000000002900e07b": {
+    "id": "6aa42ae6000000002900e07b",
+    "content_sha256": "34064137f8a2fd568fe68d95eef2bbdfdb45991507b87d9b9d64e591d7d96486",
+    "title": "万相台无界降低点击费用的方法",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "教程总结万相台无界的降费思路——流速越慢点击越便宜：全站推广预算下午就烧完时提高投产设置拉长消耗，并另开短视频计划用达摩盘圈选同行加购、收藏、搜索人群；关键词推广把单一大预算拆成多个计划；人群推广按促成交、首购、竞店等目标拆分，大商家用矩阵计划加手动计划避免多个最大化计划互相抢量。作者陪跑案例的点击、加购成本下降与投产提升属于自述数据。",
+    "action": "把一个日预算较大的关键词计划拆成三到五个小计划，保持总预算不变跑一周，对比点击单价、加购成本和投产；全站计划若过早烧完则先小幅提高投产目标观察消耗曲线。",
+    "themes": [
+      "万相台",
+      "点击成本",
+      "计划拆分"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "129e31c1a21242ef87f543b67f9cdcbef59f29dff0e8d5df63012d7fe3985b3a",
+    "evidence_sha256": "10cbeaba5348b5582626c03f1517a168d51fac92f6fd3dfd22dc11ce1f9d6ded",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "c96b79eedfa7f4f1dbbac76e6492c010cee8c8003825f9f4e14cc3732a3a15c5"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "8ae0b04e79e1b1e410e2cd767f8a77e3077efcf9f0582b48cea66024e0b9a01f"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "390926281d4920d200ee21f51cc1741431ac0fc6e1ae5b03f2502ba33448ebd9",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aad5b60000000002b011603": {
+    "id": "6aad5b60000000002b011603",
+    "content_sha256": "d5eda092a0902a879bff6331b7cc9963c05dd9e0ea901e389e043bd391c2830b",
+    "title": "千牛新功能，免费测主图提升点击率",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "教程介绍千牛后台素材中心的免费“通用测图”功能：创建测试任务上传多张主图，测试场域默认即可，想拉搜索流量时可改为搜索并把比例调到 90%；若整体点击率偏低，可用万相台的 AI 素材洞察查看分析与优化建议，再生成 5 到 8 张新图继续测试；“点击率最少提升 20%”属于作者说法。",
+    "action": "为一个主推款准备三到五张差异明显的主图（场景、卖点、构图各不同）放入通用测图，跑满一个测试周期后换用点击率最高的一张，并记录换图前后七天的点击率。",
+    "themes": [
+      "主图测试",
+      "千牛",
+      "点击率"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "9ac0bd40ce73f30975dd8449658403f1faf20a64fa6d4f464ee8243fc1470ab1",
+    "evidence_sha256": "69e70cc9d549db3631e4372b7fb33a96098d12edcb3d2dedc128d8fda4808dc2",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "cb8e7506898d385c1f2f987bbcbb38b7aaa32eb44163b682b99908b3a25ddb42"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "e8eb4053a3dc2af7a0f9077a4f47a26b634b86874f6f29968cec020ab68ce7c7"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "4f1c34a994c7073aa1f16323f8d2930f1c1a1fbb0ca47c52f09c1ec83eb46d0a",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a0ad895000000003502cea5": {
+    "id": "6a0ad895000000003502cea5",
+    "content_sha256": "1907246df44c618c167e1d019fc001847358121d5407269ca1d96b141fab4cba",
+    "title": "实测：1个人+AI跑通跨境电商全流程",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者用钉钉推出的 AI 工作平台钉钉悟空演示单人跑通跨境电商六步：分析品类增长与竞争、用 1688 选品技能生成候选清单（选中面向东南亚的压缩旅行收纳包）、查 1688 货源整理单价起订量与厂商排名、获取亚马逊热搜词并分成标题、卖点、FAQ 与广告词、用素材自动生成品牌独立站、再按热搜词逐页生成 SEO 内容；“效率提升 10 倍以上”为作者说法。",
+    "action": "用它先做选品与寻源两步，并人工核对供应商资质、样品质量与真实到岸成本；生成的独立站与 SEO 页面上线前检查事实、商标与重复内容，避免批量低质页面。",
+    "themes": [
+      "AI选品",
+      "独立站",
+      "跨境电商"
+    ],
+    "tools": [
+      "钉钉悟空"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "105aa7e32013fc108b56d426ac885ac9a731aff3d8ffec85433f7ed9b6869d8e",
+    "evidence_sha256": "dc703fc647694e04152548f6d7c066c3b83428dcdca3daa7518a7144e861d19b",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "154f5527d8febcc9b854b45fbc09822c3d1de16608d8477bf0e9c7cfc44d0a50"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "8114dee5202af24fb5fa02b7481baf11b7f64a4211b656a26eb4799e01375485"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "7a643d44f52dfe8bce6bd68319c76b0cb5f1186941e626c39086aef804b679a8",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a990e03000000002700a4e2": {
+    "id": "6a990e03000000002700a4e2",
+    "content_sha256": "d1415ed67f328b9fac35b51318582b30a01a892991ead4e5264f64d18fd7e457",
+    "title": "泡泡玛特火热背后，潮玩工作室大批倒闭",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "一篇潮玩行业分析：头部 IP 依旧强势，但 Labubu 二手价格大跌、直播间利润收窄，中小工作室面临海外订单毁约压货、开模与原料成本上升、产品同质化（大眼萌妹、转动眼球成标配）、原创 IP 孵化难而联名授权昂贵且多为一年一签等困境；能活下来的多是薄利多销的低价厂商和拥有自有工厂可接代工的供应链玩家。文中销量、毛利、海外收入等数字均为原帖引用，未独立核实。",
+    "action": "做潮玩或 IP 衍生品时，先评估开模与库存风险，海外订单务必签合同并收取定金；优先考虑自有供应链或小批量预售验证需求，而不是追逐跟风款。",
+    "themes": [
+      "IP运营",
+      "供应链",
+      "潮玩行业"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "2fee3b85061a71387a255f6fb010d59226c9c167be6aca3ec183c810bc930d80",
+    "evidence_sha256": "40ccc5e454d125ecd6f6ed71dca86511ce64a985684b9e2f71855e974f782527",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "1ff7194d4fe179de839538eb702ad4d1e6d7be6414416d39587aa86cc27a4048"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "8d5e961a96111ded259b81374c649c356f4a33df61c88b6fbbf86b88cc2a1c87"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "624ea3339d7d5c1fa37913959b4dba30eed820ad00cc65669e1b80b1047e1c2c",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a9f64af000000000b0357de": {
+    "id": "6a9f64af000000000b0357de",
+    "content_sha256": "0af09863c0dc94154dec1455d5c85cfa5eac775c008f09abdea2034d0239f056",
+    "title": "全网的跨境电商运营干货，被我做成了Skill",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者介绍 Sealeap 社区的开源 Skill 库 Sealeap Amazon Skills（GitHub 上为 xjli360/sealeap-amazon-skills，MIT；转写中的仓库路径有误）：新增一批据称来自亚马逊官方授权材料的 Skill，放在 amazon-official 目录，涵盖广告诊断、增长规划、品类与服饰广告等，同时把抖音、公众号上卖家博主的运营经验转成以神兽命名的 Skill，也可在 Sealeap 网站的 Skill Hub 下载，承诺永久免费并接受社区提交。",
+    "action": "按自己当前的问题（如 ACOS 偏高或广告结构混乱）只挑一两个对应 Skill 阅读并试用，核对其中规则与数据的日期是否仍适用于当前站点政策；第三方博主经验转成的 Skill 结论需自行验证后再执行。",
+    "themes": [
+      "Skill库",
+      "亚马逊运营",
+      "跨境电商"
+    ],
+    "tools": [
+      "Sealeap Amazon Skills"
+    ],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "f5094c2899d5ab06c56b28cf7f60c7011cea9114edc00e35e5be1495649c1d57",
+    "evidence_sha256": "253727ccae8a40413307c348d00df7821bfeb08c1cba8f1eb0ed002713a0f8ce",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "bd097edeaace9c0a10093136cb7e5acd55e7036d40f30208f2ba1f14944130bf"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "7e91304936ad0a0d5a95c34d346ecc4ca1122b95230b476b81afd3bb99fc265e"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "c3a70332685ac43e0fbf0ab5c275d52afb8337254cc207740177b2c4134af9cd",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a96752d000000002603bc19": {
+    "id": "6a96752d000000002603bc19",
+    "content_sha256": "3a6b9a20b1cb64bda24b3b7c966c4132ec6777ab2511e28339a865db3e977e6a",
+    "title": "AI做的虚拟IP，一个月卖货4000万",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "博主探访交个朋友团队的虚拟 IP 短视频带货：用一百多个刻意“不精致但真实”的 AI 数字人，配合服装、场景、动作库与真人实拍、空镜混剪，单条成本几毛钱并标注 AI 身份，月销售额据称接近 4000 万。博主拆出三层能力：用 AI 提升生产效率；把内容拆到人群、需求、场景、画面、金句等最小单元的拆解能力；以及把投放数据回流成规则和数据库、越跑越准的企业级循环，内部编排平台按“拆解、打标、沉淀、复用”运作。销售数字为原帖说法。",
+    "action": "先挑十条自己表现最好的视频，按人群、需求、场景、画面、金句逐项打标，找出共同公式再用于新脚本；使用数字人时按平台规则标注 AI 生成，并保留真人实拍部分以维持可信度。",
+    "themes": [
+      "AI数字人",
+      "内容拆解",
+      "数据闭环"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "bb2acd22e52fb2e08115360d0c0286b9dcdd093868ce52d08fa83219bec3e5ef",
+    "evidence_sha256": "f116cef4eacbd0791a1c2c9998f254fda19ed7cd0b96d0f27e3440ade66033e6",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "323ea14428eb8aca7971b4d4fe10ab18c0cce3f0f3ef9943cf73ce71bb98abcf"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "55d5abafdb4941385053b283f91ae53aff8cdd121b638db25e992bd98eb6ec7d"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "3d0cbc06f58dceb4d8142c9433f0d805bfea9b88be44098047eebdda07627e94",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa10c5b000000002802d1ae": {
+    "id": "6aa10c5b000000002802d1ae",
+    "content_sha256": "efac395c534eef1458e96a59d7fbe1687f8ee574e0a599b8af635decde43db42",
+    "title": "7条递进提示词挖掘潜力与副业机会",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "笔记给出七条递进提示词，把工资和工作经历交给 AI 做个人价值审计：找出十项被低估的技能及谁会付费；列出十种增收方式及启动成本、时间、难度和潜力；以企业战略家角色把能力包装成服务、咨询或数字产品；指出最该先做的一件事；找出薪资更高且自己能胜任的岗位与行业；设计每周不超过 5 小时的 AI 辅助副业；最后落成 90 天行动计划。",
+    "action": "按顺序逐条提问并提供真实的经历与收入，第四步只选一个方向，把第七步的 90 天计划拆成每周可检查的任务；涉及雇主保密信息与竞业限制的内容不要输入 AI。",
+    "themes": [
+      "个人增收",
+      "副业规划",
+      "提示词"
+    ],
+    "tools": [],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "1828a124a2b2423b8f38a6a865c64bac6a3cd363370a4f3be9f23e05787e21ac",
+    "evidence_sha256": "9b9978bde6642ce155405c376962718f90caea262a6b8faaca03bd360af06d05",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "9883e4c23b1fcfc0c09b9e01431f9c33450e5345285b93006f01506190e14207"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "c316003f99f1cad8d2c3c0f91bc5809f46fd580252a2bc9c38a1ec462712efea"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "360487754890aeac397648273a1f01764b0666fc9d64ab2b32d18162aba7e96c",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ab67d5a0000000015017984": {
+    "id": "6ab67d5a0000000015017984",
+    "content_sha256": "54444b252beda5acb04571065c921edd4fc7e8ac153c1a31690585b7316a285d",
+    "title": "调色神操作—宫崎骏动漫风",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "一个把普通照片调出宫崎骏动漫清新感的调色参数：对比度 +40、亮度 +100、饱和度 +50、锐化 +30、高光 +100、阴影 −30、色温 −40，最后亮度再 −40，适合光线较好的风景、街景和天空照片；所用修图软件在证据中未说明，数值需按软件刻度微调。",
+    "action": "拿一张光线充足、天空占比大的照片按顺序套用这组参数，再根据画面是否过曝回调亮度与高光，满意后存成预设复用。",
+    "themes": [
+      "修图参数",
+      "动漫风",
+      "手机调色"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "398bf5993de6ce1e3c59ea04a26316642a27566ffd8f4eaf241d1a26c4aaaa72",
+    "evidence_sha256": "fa9f6d9ecd31bd90ba059bfcb9dc70ade57cd8cd7e9aa1a0c0ddee1c2e946231",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "1bae43ad3ad10392dbc76b1b986bda95e8efbb9db4690fe81837e062dfc908f0"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "408172f8589094297082180334da55f37652bb42d4f95dbc4bb4b2e0d873a4e9"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "215ff5c6597db29934bda82330923ada2a1da3626fe10a844c8f64949702dc90",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6abdf574000000001400113d": {
+    "id": "6abdf574000000001400113d",
+    "content_sha256": "b6017259320763d5711658177559604092d6d36dd895428191f67b19484bc0c2",
+    "title": "4个万能古建筑拍照技巧，避开人群拍大片",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "以滕王阁为例的四个手机拍照技巧：退到台阶下方放大 3 倍、人物放在画面右下格以避开人流；蹲下放大 4 倍、人物放在中下格营造氛围；后退约 4 米、横向放大 4 倍、人物放右侧三分线兼顾建筑；夜景蹲拍、人物放在画面下方避免过暗模糊。核心是变焦、九宫格构图与机位高度配合。",
+    "action": "下次到景区先找台阶或低机位，打开九宫格辅助线，按“3 倍避人、4 倍蹲拍、4 倍三分线”各拍一组，对比哪种背景最干净。",
+    "themes": [
+      "手机摄影",
+      "旅行拍照",
+      "构图"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "e7fb9e1664ce1ae1b37500f3f970a254fd2fe08fef5760d1fcc20e0874e25a06",
+    "evidence_sha256": "152d273e1f3a7003a96843822dc2ada155e03bf548d264b773421fb1f6f84f1f",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "52f7b377c97d9a8a73e4b722717fba4ff22b69e9946d429ac5d0a9927cc7c70d"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "5528c65a5fd52623cf86b55386e1986e64f885564c8dec72244948499383af10"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "b8154eb80b5501bece83651ebe4fca7ff29b78f11cedebde96352b46e274a97a",
+    "review_status": "accepted",
+    "review_reason_code": ""
   }
 }
