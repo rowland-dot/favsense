@@ -1,4 +1,5 @@
 import { expectedResourceRevisions, stableResourceId } from "./resource-quality.mjs";
+import { load } from "js-yaml";
 import { readFile, rename, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -78,7 +79,44 @@ function normalizedCompatibilityList(value) {
 
 function isSkillManifest(text) {
   const frontmatter = text.match(/^---\r?\n([\s\S]{1,8192}?)\r?\n---(?:\r?\n|$)/);
-  return Boolean(frontmatter && /^name:\s*\S.+$/m.test(frontmatter[1]) && /^description:\s*\S.+$/m.test(frontmatter[1]));
+  if (!frontmatter) return false;
+  let fields;
+  try {
+    fields = load(frontmatter[1]);
+  } catch {
+    return false;
+  }
+  return ["name", "description"].every((key) => typeof fields?.[key] === "string" && fields[key].trim() !== "");
+}
+
+// Plain-English sentences that say a host is supported: the text after the cue, up to the end of the clause, must name the host.
+const SUPPORT_CUES = [
+  /\b(?:work|works|working)\s+with\b/gi,
+  /\bsupport(?:s|ed\s+(?:by|in|on))\b/gi,
+  /\bcan\s+be\s+loaded\s+by\b/gi,
+  /\b(?:needs?|requires?)\s+an?\s+(?:[\w-]+\s+)?host\b/gi,
+];
+
+function statesSupport(sentence, mentionsHost) {
+  for (const cue of SUPPORT_CUES) {
+    for (const match of sentence.matchAll(cue)) {
+      const clause = sentence.slice(match.index + match[0].length).split(/[;!?]|\sbut\s|\s[—–]\s/)[0];
+      if (mentionsHost.test(clause)) return true;
+    }
+  }
+  return false;
+}
+
+// A negation is a denial only when it negates a support statement naming the host or directly qualifies the host name.
+function deniesHost(sentence, escapedHost) {
+  const negation = "(?:not|never|cannot|can['’]t|won['’]t|doesn['’]t|isn['’]t|aren['’]t|don['’]t)";
+  const sameClause = "(?:(?!\\bbut\\b)[^,;()])*?";
+  return [
+    new RegExp(`\\b${negation}\\s+(?:[\\w'’-]+\\s+){0,2}?(?:support\\w*|compatible|work\\w*|run\\w*|load\\w*)\\b${sameClause}\\b${escapedHost}\\b`, "i"),
+    new RegExp(`\\b${escapedHost}\\s+(?:is|are)\\s+(?:not|never)\\s+(?:\\w+\\s+)?(?:support\\w*|compatible)`, "i"),
+    new RegExp(`\\b(?:not|never|no|without|except|excluding|excludes?)\\s+(?:(?:with|on|in|for|the)\\s+)?${escapedHost}\\b`, "i"),
+    new RegExp(`\\b(?:incompatible|unsupported)\\b${sameClause}\\b${escapedHost}\\b`, "i"),
+  ].some((pattern) => pattern.test(sentence));
 }
 
 function compatibilityStatement(text, compatibility) {
@@ -88,9 +126,17 @@ function compatibilityStatement(text, compatibility) {
   let supported = false;
   for (const line of text.split(/\r?\n/)) {
     if (!mentionsCompatibility.test(line)) continue;
-    if (negative.test(line)) return "negative";
     const declaration = line.match(/^\s*compatibility\s*:\s*(.+?)\s*$/i);
-    if (!declaration) continue;
+    if (!declaration) {
+      const prose = line.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[*`]/g, "");
+      for (const sentence of prose.split(/(?<=[.!?。])\s+/)) {
+        if (!mentionsCompatibility.test(sentence)) continue;
+        if (deniesHost(sentence, escaped)) return "negative";
+        if (statesSupport(sentence, mentionsCompatibility)) supported = true;
+      }
+      continue;
+    }
+    if (negative.test(line)) return "negative";
     const raw = declaration[1].replace(/^\[(.*)\]$/, "$1");
     const values = raw.split(",").map((item) => item.trim().replace(/^(["'])(.*)\1$/, "$2"));
     if (
