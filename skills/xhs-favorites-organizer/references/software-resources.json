@@ -949,7 +949,7 @@
       "download": "https://github.com/DietrichGebert/ponytail/archive/refs/heads/main.zip",
       "license": "MIT",
       "skill_manifest": "skills/ponytail/SKILL.md",
-      "verified_at": "2026-10-12",
+      "verified_at": "2026-10-11",
       "stars_numeric": 160882,
       "compatibility": [
         "Claude Code",
@@ -968,7 +968,7 @@
         "https://github.com/DietrichGebert/ponytail/archive/refs/heads/main.zip"
       ],
       "resource_identity_sha256": "0622f3727afcd034fc4eb5133479391764e2436706896483e11925cf3f14992b",
-      "verification_snapshot_sha256": "1cc2d5cfb792782d39b5d4f29d6bf0d63ad7828b96f43a331709f79859866228"
+      "verification_snapshot_sha256": "a8cd596dae06e134fd47b3f98a5edaf95b9c7abf17e104e4a7454d2d0de71948"
     },
     {
       "name": "Pixelle-Video",
@@ -1007,7 +1007,7 @@
       "download": "https://github.com/firecrawl/anydoc/archive/refs/heads/main.zip",
       "license": "MIT",
       "skill_manifest": "skills/convert-documents-to-markdown/SKILL.md",
-      "verified_at": "2026-10-12",
+      "verified_at": "2026-10-11",
       "stars_numeric": 22719,
       "compatibility": [
         "Claude Code",
@@ -1026,7 +1026,7 @@
         "https://github.com/firecrawl/anydoc/archive/refs/heads/main.zip"
       ],
       "resource_identity_sha256": "05761bf19e87d44199be6c63616571e1499025edb623f20d1f6a035eeee896f6",
-      "verification_snapshot_sha256": "5269b4a801aba52eae901045240529ccb55d040e0c2abbded2dcde42198c7e12"
+      "verification_snapshot_sha256": "7f3b0f47688e7777bdde852c6e418364dd44dee687c1c0fbd03fd8fe88bea8f9"
     },
     {
       "id": "github-aaravkashyap12-advise-project-approach",
@@ -1040,7 +1040,7 @@
       "download": "https://github.com/AaravKashyap12/advise-project-approach/archive/refs/heads/main.zip",
       "license": "MIT",
       "skill_manifest": "skills/advise-project-approach/SKILL.md",
-      "verified_at": "2026-10-12",
+      "verified_at": "2026-10-11",
       "stars_numeric": 318,
       "compatibility": [
         "Claude Code",
@@ -1059,7 +1059,7 @@
         "https://github.com/AaravKashyap12/advise-project-approach/archive/refs/heads/main.zip"
       ],
       "resource_identity_sha256": "c1fd36244a3a313f1ac8a560514f631e995697cfea05b97686f0260b84b67fdc",
-      "verification_snapshot_sha256": "c505fb70bf4392e220c4b6da7c7138496903d0c402fc0eee8004c89a32a06d07"
+      "verification_snapshot_sha256": "a8b2b64c80b0ff4a9d6456450d43e65299228393f6009a23825384ad8b0de799"
     },
     {
       "name": "MoneyPrinterTurbo",
