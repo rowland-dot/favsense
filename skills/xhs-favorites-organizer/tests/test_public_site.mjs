@@ -4396,6 +4396,7 @@ test("runBoard labels only an explicit safety reason as a Xiaohongshu safety sto
       if (path === "/import-sync") return { scanned: 1, new: 1, next_board_id: null };
       return { ok: true };
     }
+    async function postImport(runId, payload) { return post("/import-sync", payload); }
     async function createSummaryPlan() { return { enabled: true, note_ids: ["note-a"] }; }
     async function summarizePlannedNotes() {
       return { saved: 0, skipped: 0, halted: true, reason: ${JSON.stringify(reason)} };

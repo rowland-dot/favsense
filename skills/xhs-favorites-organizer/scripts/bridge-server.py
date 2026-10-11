@@ -566,6 +566,54 @@ def sanitize_manual_sync_error(value: object) -> str:
     return MANUAL_SYNC_FALLBACK_ERROR if cleaned == EMPTY_DIAGNOSTIC_ERROR else cleaned
 
 
+BRIDGE_LOG_NAME = "bridge.log"
+BRIDGE_LOG_MAX_BYTES = 256 * 1024
+# Run ids embed board ids, install paths embed capabilities, and tokens are long hex strings:
+# anything this long and made only of identifier characters is never written to the log.
+LOG_LONG_IDENTIFIER = re.compile(r"[A-Za-z0-9_-]{20,}")
+BRIDGE_LOG_LOCK = threading.Lock()
+
+
+def append_bridge_log(
+    state_dir: Path | None,
+    method: str,
+    path: str,
+    status: object,
+    error_type: str,
+    message: str,
+) -> None:
+    """Append one tab-separated failure line to the bridge's private, size-bounded log.
+
+    Fields: time, method, path (no query), status, exception type, sanitized message. The service
+    runs in a hidden window with its output discarded, so this file is the only trace of a failure.
+    """
+    if state_dir is None:
+        return
+
+    def plain(value: object) -> str:
+        return LOG_LONG_IDENTIFIER.sub("[id]", sanitize_error(str(value)))
+
+    line = "\t".join([
+        datetime.now().astimezone().isoformat(timespec="seconds"),
+        plain(method),
+        plain(str(path).split("?", 1)[0]),
+        plain(status),
+        plain(error_type),
+        plain(message),
+    ])
+    try:
+        with BRIDGE_LOG_LOCK:
+            state_dir.mkdir(parents=True, exist_ok=True)
+            log_path = state_dir / BRIDGE_LOG_NAME
+            if log_path.exists() and log_path.stat().st_size >= BRIDGE_LOG_MAX_BYTES:
+                os.replace(log_path, log_path.with_name(f"{BRIDGE_LOG_NAME}.1"))
+            with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(line + "\n")
+    except OSError:
+        # Writing the trace must never turn the failure it describes into a second failure.
+        return
+
+
 def normalize_diandian_halt_reason(value: object) -> str:
     reason = str(value or "").strip()
     reason = DIANDIAN_LEGACY_HALT_REASONS.get(reason, reason)
@@ -5427,7 +5475,7 @@ class Bridge:
             getattr(self, "processing_lock", None)
             and self.processing_lock.locked()
         ):
-            return self.manual_sync_status()
+            return {**self.manual_sync_status(), "recorded": False}
         with self.get_manual_sync_lock():
             state = self.read_manual_sync()
             batch = str(state.get("batch", ""))
@@ -5448,7 +5496,7 @@ class Bridge:
                 state.get("state") in MANUAL_TERMINAL_STATES
                 or isinstance(processed, list) and run_id in processed
             ):
-                return self.manual_sync_status()
+                return {**self.manual_sync_status(), "recorded": False}
             if not board_id and state.get("state") not in {"starting", "running"}:
                 raise ValueError("manual organization batch does not match")
             reported_error = normalize_sensitive_scan(
@@ -5476,7 +5524,7 @@ class Bridge:
                 )
                 state["summary_pending"] = 0
             atomic_json(self.manual_sync_path, state)
-        return self.manual_sync_status()
+        return {**self.manual_sync_status(), "recorded": True}
 
     def cache_missing_media(self, unique: dict[str, str]) -> dict:
         if not self.video_analysis_enabled:
@@ -5500,6 +5548,32 @@ class Bridge:
         if not urls:
             return {"queued": 0, "downloaded": 0, "safety_stopped": False}
         report = self.run_dir / f"media-{datetime.now().astimezone():%Y%m%d-%H%M%S-%f}.json"
+        try:
+            return self.run_media_downloader(urls, report, safety_stop)
+        except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired) as error:
+            # The board's notes are already committed by now, so a download problem is reported on
+            # the board's media block and the run goes on; the next run queues what is still missing.
+            if safety_stop.exists():
+                return {
+                    "queued": len(urls),
+                    "downloaded": 0,
+                    "safety_stopped": True,
+                    "state": "safety-stopped",
+                }
+            reason = sanitize_error(
+                str(error) if isinstance(error, RuntimeError) else "media downloader could not complete safely"
+            )
+            cause = error.__cause__ or error
+            append_bridge_log(self.state_dir, "INTERNAL", "media-download", "-", type(cause).__name__, reason)
+            return {
+                "queued": len(urls),
+                "downloaded": 0,
+                "safety_stopped": False,
+                "state": "failed",
+                "reason": reason,
+            }
+
+    def run_media_downloader(self, urls: list[str], report: Path, safety_stop: Path) -> dict:
         try:
             completed = run_bounded_subprocess(
                 [
@@ -6679,7 +6753,31 @@ def make_handler(bridge: Bridge):
             self.send_header("Vary", "Origin")
             self.end_headers()
 
+        def reply_failure(self, status: int, error: Exception, *, name_type: bool = False) -> None:
+            # Every failed request is answered with JSON and leaves one line in the private log.
+            text = f"{type(error).__name__}: {error}" if name_type else str(error)
+            message = sanitize_error(text)
+            append_bridge_log(
+                getattr(bridge, "state_dir", None),
+                self.command,
+                urlparse(self.path).path,
+                int(status),
+                type(error).__name__,
+                message,
+            )
+            try:
+                self.send_json(status, {"ok": False, "error": message})
+            except OSError:
+                # The client has gone away; there is nobody left to answer.
+                return
+
         def do_GET(self) -> None:  # noqa: N802
+            try:
+                self.route_get()
+            except Exception as error:  # noqa: BLE001
+                self.reply_failure(HTTPStatus.INTERNAL_SERVER_ERROR, error, name_type=True)
+
+        def route_get(self) -> None:
             if not self.valid_host():
                 self.send_json(HTTPStatus.BAD_REQUEST, {"ok": False})
                 return
@@ -6876,13 +6974,13 @@ def make_handler(bridge: Bridge):
                 status, result = bridge.import_sync(payload)
                 self.send_json(status, result)
             except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
-                self.send_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": sanitize_error(str(error))})
+                self.reply_failure(HTTPStatus.BAD_REQUEST, error)
             except BridgeBusyError as error:
-                self.send_json(HTTPStatus.CONFLICT, {"ok": False, "error": sanitize_error(str(error))})
-            except RuntimeError as error:
-                self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "error": sanitize_error(str(error))})
-            except OSError as error:
-                self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "error": sanitize_error(str(error))})
+                self.reply_failure(HTTPStatus.CONFLICT, error)
+            except (RuntimeError, OSError) as error:
+                self.reply_failure(HTTPStatus.INTERNAL_SERVER_ERROR, error)
+            except Exception as error:  # noqa: BLE001
+                self.reply_failure(HTTPStatus.INTERNAL_SERVER_ERROR, error, name_type=True)
 
     return Handler
 

@@ -167,6 +167,8 @@ python -m http.server 8000 --directory site
 - 协议或配置不匹配：先运行 `stop-autosync.ps1`，再运行 `setup-autosync.ps1`。
 - 页面无链接：检查 Tampermonkey 是否启用及页面是否为白名单面板。
 - 详情失败：本次不写新增详情，保留现有 catalog 和知识库；不循环请求。
+- 页面提示“无法连接本地同步服务”：Bridge 对每个请求都会回复 JSON，页面在导入请求断线时会改查该收藏夹的运行状态，仍在处理就继续等待（不超过导入本身的时限），不会提前上报失败。原因查看被 Git 忽略的 `.xhs-favorites/bridge.log`（有大小上限）：每个失败请求、未捕获异常和媒体下载失败各一行，只记录时间、方法、不含查询串的路径、状态码、异常类型和脱敏后的消息，不含 token、运行标识或收藏夹 ID。
+- 媒体下载失败（超时、崩溃、输出无效、另一个平台请求进程占用）：收藏夹仍按已提交的笔记完成，该收藏夹结果的 `media.state` 为 `failed` 并附脱敏原因，整轮继续下一个收藏夹；仍缺的视频由下一轮的待下载队列补上。下载器报告安全限制仍然停止整轮。
 
 逐篇深度整理必须执行 [curation-standard.md](references/curation-standard.md) 的证据、分类、资源与发布质量门；不得把“已抓取”或 `captured` 当成“已整理”。每轮冻结请求看板后封存稳定笔记集合，为范围内每篇建立私有审计记录，再运行确定性的 candidate → evidence → resource → audit → validate 链。只有 `accepted` 条目可以写入正式 curation 与公开站点；`pending` 必须说明缺失证据且不得发布，不能为了凑齐数量而降级标准。本机可通过鉴权的待审核 overlay 查看清理后的 captured 证据；公开站和正式知识库都不得直接消费 raw 点点记录。
 

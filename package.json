@@ -31,7 +31,7 @@
   "scripts": {
     "preview": "node scripts/serve-site.mjs",
     "preview:qa-fixture": "node scripts/serve-qa-fixture.mjs",
-    "test:site": "node --test skills/xhs-favorites-organizer/tests/test_public_site.mjs skills/xhs-favorites-organizer/tests/share-link-background.test.mjs",
+    "test:site": "node --test skills/xhs-favorites-organizer/tests/test_public_site.mjs skills/xhs-favorites-organizer/tests/share-link-background.test.mjs skills/xhs-favorites-organizer/tests/bridge-reply-and-media-failure.test.mjs",
     "test:publish": "node --test skills/xhs-favorites-organizer/tests/test_huggingface_publish.mjs",
     "test:knowledge": "node skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs && node --test skills/xhs-favorites-organizer/tests/test_formal_outputs.mjs",
     "test:curation": "node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs skills/xhs-favorites-organizer/tests/stable-curation-rebuild.test.mjs skills/xhs-favorites-organizer/tests/verify-github-resources.test.mjs skills/xhs-favorites-organizer/tests/reviewed-evidence-only-rebuild.test.mjs",
