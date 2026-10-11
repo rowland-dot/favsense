@@ -949,8 +949,8 @@
       "download": "https://github.com/DietrichGebert/ponytail/archive/refs/heads/main.zip",
       "license": "MIT",
       "skill_manifest": "skills/ponytail/SKILL.md",
-      "verified_at": "2026-08-27",
-      "stars_numeric": 112054,
+      "verified_at": "2026-10-12",
+      "stars_numeric": 160882,
       "compatibility": [
         "Claude Code",
         "Codex"
@@ -968,7 +968,7 @@
         "https://github.com/DietrichGebert/ponytail/archive/refs/heads/main.zip"
       ],
       "resource_identity_sha256": "0622f3727afcd034fc4eb5133479391764e2436706896483e11925cf3f14992b",
-      "verification_snapshot_sha256": "8b3c9523d5a2db08d417666d0c1d4963fd91467daf9f131068eab7fc0c093ab5"
+      "verification_snapshot_sha256": "1cc2d5cfb792782d39b5d4f29d6bf0d63ad7828b96f43a331709f79859866228"
     },
     {
       "name": "Pixelle-Video",
@@ -1007,8 +1007,8 @@
       "download": "https://github.com/firecrawl/anydoc/archive/refs/heads/main.zip",
       "license": "MIT",
       "skill_manifest": "skills/convert-documents-to-markdown/SKILL.md",
-      "verified_at": "2026-08-27",
-      "stars_numeric": 18538,
+      "verified_at": "2026-10-12",
+      "stars_numeric": 22719,
       "compatibility": [
         "Claude Code",
         "Codex"
@@ -1026,7 +1026,40 @@
         "https://github.com/firecrawl/anydoc/archive/refs/heads/main.zip"
       ],
       "resource_identity_sha256": "05761bf19e87d44199be6c63616571e1499025edb623f20d1f6a035eeee896f6",
-      "verification_snapshot_sha256": "3e9cc580dba0d83b2a466f8e40631f8a4aaa48c4ecab1cc2bfc8451e91761d6b"
+      "verification_snapshot_sha256": "5269b4a801aba52eae901045240529ccb55d040e0c2abbded2dcde42198c7e12"
+    },
+    {
+      "id": "github-aaravkashyap12-advise-project-approach",
+      "name": "advise-project-approach",
+      "aliases": [
+        "advise-project-approach"
+      ],
+      "type": "Agent Skill",
+      "canonical_repo": "AaravKashyap12/advise-project-approach",
+      "repo": "https://github.com/AaravKashyap12/advise-project-approach",
+      "download": "https://github.com/AaravKashyap12/advise-project-approach/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "skill_manifest": "skills/advise-project-approach/SKILL.md",
+      "verified_at": "2026-10-12",
+      "stars_numeric": 318,
+      "compatibility": [
+        "Claude Code",
+        "Codex"
+      ],
+      "compatibility_evidence": [
+        "README.md"
+      ],
+      "status": "verified",
+      "usage_note": "MIT；安装前先阅读 SKILL.md，确认它会读写哪些文件、是否联网。",
+      "source_urls": [
+        "https://github.com/AaravKashyap12/advise-project-approach",
+        "https://github.com/AaravKashyap12/advise-project-approach/blob/main/README.md",
+        "https://github.com/AaravKashyap12/advise-project-approach/blob/main/skills/advise-project-approach/SKILL.md",
+        "https://github.com/AaravKashyap12/advise-project-approach/blob/main/LICENSE",
+        "https://github.com/AaravKashyap12/advise-project-approach/archive/refs/heads/main.zip"
+      ],
+      "resource_identity_sha256": "c1fd36244a3a313f1ac8a560514f631e995697cfea05b97686f0260b84b67fdc",
+      "verification_snapshot_sha256": "c505fb70bf4392e220c4b6da7c7138496903d0c402fc0eee8004c89a32a06d07"
     },
     {
       "name": "MoneyPrinterTurbo",
