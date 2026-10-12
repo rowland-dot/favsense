@@ -159,8 +159,9 @@ test("site tree scan rejects a swapped file when file numbers are rounded", asyn
   }
 });
 
-test("input capture rejects a swapped input file when file numbers are rounded", async () => {
-  const { captureBuilderInputs } = await import("../scripts/build-organization-snapshot.mjs");
+// A minimal set of builder inputs. The catalog has a same-sized twin outside the root, so a swap of
+// the catalog is only visible through the file number.
+function inputCaptureFixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-exact-id-inputs-"));
   const outside = path.join(root, "outside");
   fs.mkdirSync(outside);
@@ -193,14 +194,65 @@ test("input capture rejects a swapped input file when file numbers are rounded",
     diandianReport: path.join(root, "report.json"),
     videoAnalysis: path.join(root, "video"),
   };
+  return { root, options, catalog: files.catalog, outsideCatalog };
+}
+
+test("input capture rejects a swapped input file when file numbers are rounded", async () => {
+  const { captureBuilderInputs } = await import("../scripts/build-organization-snapshot.mjs");
+  const { root, options, catalog, outsideCatalog } = inputCaptureFixture();
   const restoreIds = await simulateRoundedFileIds();
-  const swap = swapDuringRealpath(files.catalog, outsideCatalog);
+  const swap = swapDuringRealpath(catalog, outsideCatalog);
   try {
     await assert.rejects(captureBuilderInputs(options, "2026-10-13"), /SNAPSHOT_INPUT_CHANGED/);
     assert.equal(swap.didSwap(), true, "the swap must actually have happened");
   } finally {
     swap.restore();
     restoreIds();
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// The inputs are read side by side. When one read fails, the others must finish and close their
+// files before the failure is reported; otherwise the caller gets its error while files are still
+// open, and on Windows the folder cannot be removed (ENOTEMPTY). Reads are slowed here so the
+// others are certainly still running when the swapped catalog is rejected.
+test("input capture has closed every file it opened by the time it reports a swapped input", async () => {
+  const { captureBuilderInputs } = await import("../scripts/build-organization-snapshot.mjs");
+  const { root, options, catalog, outsideCatalog } = inputCaptureFixture();
+  const originalOpen = fsPromises.open;
+  const probe = await originalOpen(fileURLToPath(import.meta.url));
+  const handlePrototype = Object.getPrototypeOf(probe);
+  await probe.close();
+  const originalReadFile = handlePrototype.readFile;
+  const stillOpen = new Set();
+  fsPromises.open = async (...args) => {
+    const handle = await originalOpen(...args);
+    stillOpen.add(handle);
+    const close = handle.close.bind(handle);
+    handle.close = async () => { stillOpen.delete(handle); return close(); };
+    return handle;
+  };
+  handlePrototype.readFile = async function slowReadFile(...args) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    return originalReadFile.apply(this, args);
+  };
+  syncBuiltinESMExports();
+  const restoreIds = await simulateRoundedFileIds();
+  const swap = swapDuringRealpath(catalog, outsideCatalog);
+  try {
+    await assert.rejects(captureBuilderInputs(options, "2026-10-13"), /SNAPSHOT_INPUT_CHANGED/);
+    assert.equal(swap.didSwap(), true, "the swap must actually have happened");
+    assert.equal(stillOpen.size, 0, "files opened by the capture are still open after it reported the failure");
+  } finally {
+    swap.restore();
+    restoreIds();
+    fsPromises.open = originalOpen;
+    handlePrototype.readFile = originalReadFile;
+    syncBuiltinESMExports();
+    // If the capture leaked, let the leaked reads finish so cleanup cannot hide the assertion above.
+    for (let waited = 0; stillOpen.size > 0 && waited < 50; waited += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
     fs.rmSync(root, { recursive: true, force: true });
   }
 });

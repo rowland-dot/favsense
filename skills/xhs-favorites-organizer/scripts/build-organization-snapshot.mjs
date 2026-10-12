@@ -545,7 +545,10 @@ export async function captureBuilderInputs(options, effectiveDate) {
     ...(options.resources ? { resources: resolve(options.resources) } : {}),
   };
   for (const target of Object.values(fixed)) await assertPlainPath(root, target);
-  const core = await Promise.all([
+  // Every read is awaited to the end before a failure is reported. Promise.all would report the first
+  // failure at once and leave the other reads running with their files open, and on Windows an open
+  // file keeps its folder from being removed.
+  const settled = await Promise.allSettled([
     boundedFile(root, fixed.catalog, "catalog"),
     boundedFile(root, fixed.config, "config"),
     boundedFile(root, fixed.curation, "formal-curation"),
@@ -554,6 +557,9 @@ export async function captureBuilderInputs(options, effectiveDate) {
     ...(fixed.resources ? [boundedFile(root, fixed.resources, "resources")] : []),
     boundedFile(root, fixed.report, "diandian-report", { optional: true }),
   ]);
+  const failed = settled.find((result) => result.status === "rejected");
+  if (failed) throw failed.reason;
+  const core = settled.map((result) => result.value);
   const byName = new Map(core.map((entry) => [entry.name, entry]));
   let catalog;
   let config;
