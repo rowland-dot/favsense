@@ -5,17 +5,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { resolveCategoryPolicy } from "./category-policy.mjs";
-import {
-  currentFormalRevisions,
-  formalCurationDecision,
-  formalContentKind,
-  isPublishableCuration,
-  loadCurationAudit,
-  loadFormalPointSummary,
-  sealedCandidateFor,
-} from "./curation-quality.mjs";
-import { confirmedSkillResource } from "./resource-quality.mjs";
+import { loadCurationAudit, loadFormalPointSummary } from "./curation-quality.mjs";
+import { judgePublicNote, validateContentKindProfile } from "./public-judgement.mjs";
 import { worktreeBase } from "./worktree-base.mjs";
 
 const scriptPath = fileURLToPath(import.meta.url);
@@ -529,20 +520,6 @@ function inferredTitle(note) {
   return plain ? `${plain.slice(0, 42)}${plain.length > 42 ? "…" : ""}` : `无标题笔记 ${note.note_id}`;
 }
 
-function fallback(note, profile) {
-  const haystack = `${note.title ?? ""} ${note.description ?? ""} ${note.tags ?? ""}`;
-  const match = (profile.fallback?.rules || []).find((rule) => new RegExp(rule.pattern, "i").test(haystack));
-  const category = match?.category || profile.fallback?.default_category || "待分类";
-  const summary = clean(note.description).replace(/#[^#]+\[话题\]#/g, "").slice(0, 90) || "正文信息待补充。";
-  return {
-    category,
-    themes: [category],
-    summary,
-    action: "",
-    tools: []
-  };
-}
-
 function related(notes, current) {
   const currentThemes = new Set(current.curation.themes);
   return notes.filter((item) => item.id !== current.id).map((item) => ({
@@ -571,7 +548,7 @@ category: ${yaml(c.category)}
 category_source: ${yaml(c.categorySource)}
 suggested_category: ${yaml(c.suggestedCategory || "")}
 themes: [${c.themes.map(yaml).join(", ")}]
-content_kind: ${yaml(c.kind || "自动判断")}
+content_kind: ${yaml(c.kind)}
 published_at: ${yaml(note.published_at || "")}
 last_seen_at: ${yaml(note.last_seen_at || "")}
 ---
@@ -602,7 +579,7 @@ ${mdBody(item.deepSummary)}
 ` : ""}## 为什么值得看
 
 - 主题：${c.themes.map((v) => `#${md(v)}`).join(" ")}
-- 内容形态：${md(c.kind || "自动判断")}
+- 内容形态：${md(c.kind)}
 - 来源面板：${sourceBoards.map(md).join("、")}
 ${c.suggestedCategory ? `- 内容建议分类：${md(c.suggestedCategory)}（主分类仍按收藏夹归档）` : ""}
 
@@ -666,13 +643,7 @@ function main() {
   const effectiveDate = String(options["effective-date"] || new Date().toISOString().slice(0, 10));
   const effectiveDateValue = new Date(`${effectiveDate}T00:00:00.000Z`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate) || Number.isNaN(effectiveDateValue.getTime()) || effectiveDateValue.toISOString().slice(0, 10) !== effectiveDate) throw new Error("--effective-date must be a real YYYY-MM-DD");
-  const rawResources = resourceRegistry[profile.resource_index?.collection || "resources"] || [];
-  const resourceByAlias = new Map();
-  for (const resource of rawResources) {
-    for (const alias of [resource.name, ...(resource.aliases || [])]) {
-      resourceByAlias.set(clean(alias).toLocaleLowerCase("zh-CN"), resource);
-    }
-  }
+  validateContentKindProfile(profile);
   const {
     policy: curationQuality,
     audit: curationAudit,
@@ -683,70 +654,42 @@ function main() {
     ? normalizedDate(config.published_since, "published_since")
     : "";
   const notes = Object.entries(catalog.notes ?? {}).map(([id, note]) => {
-    const hasCuration = Object.hasOwn(curated, id);
-    const candidateEntry = hasCuration
-      ? curated[id]
-      : (sealedCandidateFor(sealedCandidates, id) ?? fallback(note, profile));
-    const candidateKind = clean(candidateEntry.kind || profile.fallback?.default_kind || profile.classification?.default || "Note");
-    const matchingResources = (candidateEntry.tools || [])
-      .map((tool) => resourceByAlias.get(clean(tool).toLocaleLowerCase("zh-CN"))).filter(Boolean);
-    const skillResource = candidateKind === "Skill"
-      ? confirmedSkillResource(matchingResources, { today: effectiveDate, maxAgeDays: 30 })
-      : null;
-    const currentRevisions = currentFormalRevisions(note, candidateEntry, skillResource, expectedPromptVersion);
-    const isCurated = hasCuration
-      && isPublishableCuration(
-        id,
-        note,
-        curated,
-        curationQuality,
-        curationAudit,
-        curationBaselineIds,
-        curationBaselineRevisions,
-        { config, resources: resourceRegistry, ...(currentRevisions ? { currentRevisions } : {}) }
-      );
-    const entry = { ...fallback(note, profile), ...(isCurated ? curated[id] : {}) };
-    const categoryPolicy = resolveCategoryPolicy({
-      entry,
+    const verdict = judgePublicNote({
+      noteId: id,
       note,
+      curation: curated,
+      sealedCandidates,
+      quality: {
+        policy: curationQuality,
+        audit: curationAudit,
+        baselineIds: curationBaselineIds,
+        baselineRevisions: curationBaselineRevisions
+      },
+      point: loadFormalPointSummary(diandianDirectory, id, expectedPromptVersion),
+      resourceRegistry,
       config,
       profile,
-      entryOrigin: isCurated ? "curation" : "content_rule"
+      effectiveDate,
+      promptVersion: expectedPromptVersion
     });
-    const curation = {
-      ...entry,
-      category: categoryPolicy.category,
-      categorySource: categoryPolicy.categorySource,
-      suggestedCategory: categoryPolicy.suggestedCategory,
-      categoryReason: categoryPolicy.categoryReason,
-      themes: categoryPolicy.themes
-    };
-    const point = loadFormalPointSummary(diandianDirectory, id, expectedPromptVersion);
-    const formalDecision = formalCurationDecision({
-      publishable: isCurated,
-      auditEntry: curationAudit?.notes?.[id],
-      currentRevisions,
-      point,
-      kind: candidateKind,
-      resource: skillResource,
-    });
-    const projectedCuration = candidateKind === "Skill"
-      ? {
-          ...curation,
-          kind: formalContentKind(profile, candidateKind, formalDecision.accepted && Boolean(skillResource)),
-          tools: formalDecision.accepted && skillResource ? [skillResource.name] : [],
-        }
-      : curation;
     return {
       id,
       note,
-      title: entry.title || inferredTitle(note),
-      curation: projectedCuration,
-      sourceBoards: categoryPolicy.sourceBoards,
-      deepSummary: formalDecision.summary_source === "point" ? point?.summary || null : null,
-      formalDecision,
-      candidateKind,
-      skillResource: formalDecision.accepted ? skillResource : null,
+      title: verdict.entry.title || inferredTitle(note),
+      curation: {
+        category: verdict.category,
+        categorySource: verdict.categorySource,
+        suggestedCategory: verdict.suggestedCategory,
+        categoryReason: verdict.categoryReason,
+        themes: verdict.themes,
+        summary: verdict.summary,
+        action: verdict.action,
+        tools: verdict.tools,
+        kind: verdict.kind
+      },
+      sourceBoards: verdict.sourceBoards,
+      deepSummary: verdict.summarySource === "point" ? verdict.deepSummary : null,
+      skillResource: verdict.skillResource,
     };
   }).sort((a, b) => (a.curation.category + a.title).localeCompare(b.curation.category + b.title, "zh-CN"));
   const safeNoteIds = new Map(notes.map((item) => [item.id, safeFileSegment(item.id, "note id")]));
@@ -819,7 +762,7 @@ function main() {
     .join("\n\n");
   atomicWrite(path.join(output, "04-行动与实验", "使用建议.md"), `# 使用建议\n\n> 系统从收藏中自动提取的应用方式，不是需要逐项完成的任务。需要时查阅即可。\n\n${suggestions}\n`);
 
-  const confirmedSkills = notes.filter((item) => item.formalDecision.accepted && item.skillResource);
+  const confirmedSkills = notes.filter((item) => item.skillResource);
   const skillRows = confirmedSkills.map((item) => {
     const resource = item.skillResource;
     return `| ${md(resource.name)} | ${md(resource.type)} | ${md(resource.repo)} | ${md(resource.download)} | ${md(resource.stars ?? resource.stars_numeric)} | ${md(resource.verified_at)} | ${md(resource.license)} | ${md(resource.skill_manifest)} | ${md((resource.compatibility || []).join("、"))} | ${md(resource.status)} |`;
