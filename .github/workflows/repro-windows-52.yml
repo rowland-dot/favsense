@@ -1,0 +1,62 @@
+name: Repro ERR_NO_BUFFER_SPACE (temporary, issue 52)
+
+# Temporary: runs the Windows release gate many times at once so at least one failure lands in a run that
+# has a connection log. Removed before the branch is merged.
+
+on:
+  push:
+    branches: [fix/windows-ci-connection-exhaustion]
+
+permissions:
+  contents: read
+
+jobs:
+  repro:
+    strategy:
+      fail-fast: false
+      matrix:
+        replica: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install locked Node dependencies
+        run: npm ci
+
+      - name: Install Chromium on Windows
+        run: npx.cmd playwright install chromium
+
+      - name: Run the complete release gate with the connection log
+        run: node scripts/connection-log.mjs --out ci-diagnostics -- npm run release:check
+
+      - name: Keep the connection log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: connection-log-${{ matrix.replica }}
+          path: ci-diagnostics/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Keep browser test traces when the release gate fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.replica }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
