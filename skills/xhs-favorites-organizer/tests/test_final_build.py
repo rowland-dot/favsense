@@ -303,9 +303,11 @@ class SnapshotCommandTest(unittest.TestCase):
                 command = self.final_build(root, scope)
                 self.assertNotIn("--kb-target", command)
                 self.assertFalse([part for part in command if "knowledge-base" in part], command)
+                # The bridge works on the resolved workspace path; the temp folder may be spelled with
+                # an 8.3 short name (RUNNER~1), so compare both sides resolved, not as written.
                 self.assertEqual(
-                    command[command.index("--public-target") + 1],
-                    str(root / "site" / "data" / "knowledge.json"),
+                    Path(command[command.index("--public-target") + 1]).resolve(),
+                    (root / "site" / "data" / "knowledge.json").resolve(),
                 )
 
     def test_a_private_config_that_still_names_a_knowledge_base_folder_does_not_stop_the_bridge_starting(self):
