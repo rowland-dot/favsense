@@ -3953,7 +3953,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
             def ask(guarded, note_url, *, spec, tries, sleep):
                 ask_entered.set()
-                ask_release.wait(timeout=2)
+                # The ask hangs until the test lets it go; it never lets itself go.
+                ask_release.wait(timeout=60)
                 try:
                     guarded.call("Input.insertText", text=note_url)
                     guarded.call("Input.insertText", text=" 总结")
@@ -3964,6 +3965,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 finally:
                     ask_exited.set()
 
+            self.addCleanup(ask_release.set)
             bridge.diandian_cdp_ask = ask
             result_holder = []
             request = {
@@ -3978,11 +3980,14 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 daemon=True,
             )
             worker.start()
-            self.assertTrue(ask_entered.wait(timeout=1))
-            finished_before_release = not worker.is_alive() or worker.join(timeout=0.25) is None and not worker.is_alive()
+            self.assertTrue(ask_entered.wait(timeout=10))
+            # What is proved is the order: the bridge returned while the ask was still hung. The
+            # wait is generous because it only bounds a failing test; a passing one returns at once.
+            worker.join(timeout=10)
+            finished_before_release = not worker.is_alive()
+            self.assertFalse(ask_exited.is_set(), "the ask was released before the bridge returned")
             ask_release.set()
-            worker.join(timeout=2)
-            self.assertTrue(ask_exited.wait(timeout=2))
+            self.assertTrue(ask_exited.wait(timeout=10))
 
             self.assertTrue(finished_before_release, "the bridge must not wait for a hung external ask")
             self.assertEqual(
