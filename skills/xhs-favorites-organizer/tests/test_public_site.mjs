@@ -323,8 +323,8 @@ test("public tree excludes private local roots case-insensitively and rejects ho
     await mkdir(resolve(work, ".locаl")); // Cyrillic а.
     await writeFile(resolve(work, ".locаl", "bridge.json"), "{}", "utf8");
     await assert.rejects(() => validatePublicTree(work), /printable ASCII/);
-    const publisher = await read("skills/xhs-favorites-organizer/scripts/publish-huggingface.mjs");
-    assert.match(publisher, /split\(path\.sep\)\[0\]\.toLowerCase\(\)\s*!==\s*"\.local"/);
+    // The publisher's own .local exclusion is asserted by behaviour (a real publish) in
+    // publisher-local-exclusion.test.mjs and test_huggingface_publish.mjs, not by source text.
   } finally {
     await rm(work, { recursive: true, force: true });
   }
