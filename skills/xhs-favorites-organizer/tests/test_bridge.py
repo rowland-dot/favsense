@@ -442,6 +442,9 @@ class BridgeHelpersTest(unittest.TestCase):
             command, options = calls[0]
             self.assertEqual(option(command, "--curation-bundle"), str(bundle))
             self.assertEqual(option(command, "--diandian-report"), str(bridge.diandian_report_path))
+            # The final build is the only formal build: it carries the private summaries folder and the
+            # frozen prompt version, and the snapshot step hands the same pair to both builders.
+            self.assertEqual(option(command, "--diandian-dir"), str(bridge.diandian_dir))
             self.assertEqual(
                 option(command, "--diandian-prompt-version"),
                 BRIDGE.diandian_prompt_version(bridge.diandian_release, bridge.diandian_browser_contract),
@@ -1999,11 +2002,13 @@ class BridgeHelpersTest(unittest.TestCase):
             rebuild_started = threading.Event()
             allow_rebuild = threading.Event()
 
-            def rebuild():
+            def final_build(**_scope):
                 rebuild_started.set()
                 self.assertTrue(allow_rebuild.wait(timeout=2))
+                return {"build_version": "a" * 64, "site_manifest_sha256": "b" * 64}
 
-            bridge.rebuild_knowledge_base = mock.Mock(side_effect=rebuild)
+            bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 1, "pending": 0}})
+            bridge.build_organization_snapshot = mock.Mock(side_effect=final_build)
             bridge.publish_after_board = mock.Mock(return_value={"ok": True, "status": "published"})
             bridge.write_status = mock.Mock()
             payload = {
@@ -2032,7 +2037,7 @@ class BridgeHelpersTest(unittest.TestCase):
 
             self.assertFalse(bridge.manual_sync_status()["summary_finalizing"])
             self.assertEqual(bridge.manual_sync_status()["state"], "completed")
-            self.assertEqual(bridge.rebuild_knowledge_base.call_count, 1)
+            self.assertEqual(bridge.build_organization_snapshot.call_count, 1)
             self.assertEqual(bridge.publish_after_board.call_count, 1)
 
     def test_v2_finalizer_projects_curation_build_and_publish_failures_truthfully(self):
@@ -3458,7 +3463,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.boards = {"board": "Board"}
             bridge.board_order = ["board"]
             bridge.published_since = None
-            bridge.rebuild_knowledge_base = mock.Mock()
             bridge.cache_missing_media = mock.Mock()
             BRIDGE.atomic_json(bridge.catalog_path, {
                 "version": 1,
@@ -3500,7 +3504,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             self.assertEqual(result["state"], "failed")
             self.assertEqual(bridge.catalog_path.read_bytes(), before)
             bounded.assert_called_once()
-            bridge.rebuild_knowledge_base.assert_not_called()
             bridge.cache_missing_media.assert_not_called()
 
     def test_cdp_waits_for_a_transient_card_and_retained_link_to_settle(self):
@@ -4510,7 +4513,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.summary_halted = set()
             bridge.summary_finalization_threads = {}
             bridge.publish_config = {"repository": "unused", "branch": "main"}
-            bridge.rebuild_knowledge_base = mock.Mock()
+            bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 1, "pending": 0}})
+            bridge.build_organization_snapshot = mock.Mock(
+                return_value={"build_version": "a" * 64, "site_manifest_sha256": "b" * 64}
+            )
             bridge.publish_public_site = mock.Mock(
                 return_value={"ok": True, "status": "published"}
             )
@@ -4784,7 +4790,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 })
 
             bridge.process_import = mock.Mock(side_effect=finish_import)
-            bridge.rebuild_knowledge_base = mock.Mock()
+            bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 1, "pending": 0}})
+            bridge.build_organization_snapshot = mock.Mock(
+                return_value={"build_version": "a" * 64, "site_manifest_sha256": "b" * 64}
+            )
             bridge.publish_after_board = mock.Mock(return_value=None)
 
             status, result = bridge.import_sync(payload)
@@ -4795,7 +4804,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             between_core_and_plan = bridge.manual_sync_status()
             self.assertEqual(between_core_and_plan["state"], "running")
             self.assertTrue(between_core_and_plan["summary_plan_pending"])
-            self.assertEqual(bridge.rebuild_knowledge_base.call_count, 0)
+            self.assertEqual(bridge.build_organization_snapshot.call_count, 0)
 
             plan = bridge.diandian_summary_plan({
                 "run_id": run_id,
@@ -4813,7 +4822,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "title": "第一篇",
                 "summary": "第一篇已经获得足够长并且可以通过边界校验的完整点点总结正文。",
             })
-            self.assertEqual(bridge.rebuild_knowledge_base.call_count, 0)
+            self.assertEqual(bridge.build_organization_snapshot.call_count, 0)
             self.assertEqual(bridge.manual_sync_status()["state"], "running")
             bridge.save_diandian_result({
                 "run_id": run_id,
@@ -4825,74 +4834,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
             bridge.summary_finalization_threads[run_id].join(timeout=2)
 
-            self.assertEqual(bridge.rebuild_knowledge_base.call_count, 1)
+            self.assertEqual(bridge.build_organization_snapshot.call_count, 1)
             self.assertEqual(bridge.manual_sync_status()["state"], "completed")
-
-    def test_rebuild_passes_same_private_summary_contract_to_both_builders(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.builder = root / "build-knowledge-base.mjs"
-            bridge.public_builder = root / "build-public-site.mjs"
-            bridge.catalog_path = root / "catalog.json"
-            bridge.config_path = root / "config.json"
-            bridge.curation = root / "curation.json"
-            bridge.profile = root / "profile.json"
-            bridge.knowledge_base = root / "knowledge-base"
-            bridge.workspace = root
-            bridge.diandian_dir = root / "private-summaries"
-            bridge.resource_registry = None
-            bridge.diandian_skill_path = root / "diandian-skill"
-            bridge.diandian_release = {"version": "1.2.0"}
-            bridge.diandian_browser_contract = {"enabled": True, "version": 1}
-            expected_prompt_version = BRIDGE.diandian_prompt_version(
-                bridge.diandian_release,
-                bridge.diandian_browser_contract,
-            )
-
-            with mock.patch.object(BRIDGE.subprocess, "run", return_value=mock.Mock(returncode=0)) as run:
-                bridge.rebuild_knowledge_base()
-
-            self.assertEqual(run.call_count, 2)
-            for call in run.call_args_list:
-                command = call.args[0]
-                position = command.index("--diandian-dir")
-                self.assertEqual(Path(command[position + 1]), bridge.diandian_dir)
-                prompt_position = command.index("--diandian-prompt-version")
-                self.assertEqual(command[prompt_position + 1], expected_prompt_version)
-
-    def test_rebuild_restores_previous_public_generation_when_knowledge_build_fails(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.builder = root / "build-knowledge-base.mjs"
-            bridge.public_builder = root / "build-public-site.mjs"
-            bridge.catalog_path = root / "catalog.json"
-            bridge.config_path = root / "config.json"
-            bridge.curation = root / "curation.json"
-            bridge.profile = root / "profile.json"
-            bridge.knowledge_base = root / "knowledge-base"
-            bridge.workspace = root
-            bridge.diandian_dir = root / "private-summaries"
-            bridge.resource_registry = None
-            public_output = root / "site" / "data" / "knowledge.json"
-            public_output.parent.mkdir(parents=True)
-            public_output.write_bytes(b"previous-public-generation")
-            calls = []
-
-            def run(command, **_kwargs):
-                calls.append(Path(command[1]).name)
-                if Path(command[1]) == bridge.public_builder:
-                    public_output.write_bytes(b"new-public-generation")
-                    return SimpleNamespace(returncode=0, stdout="", stderr="")
-                return SimpleNamespace(returncode=1, stdout="", stderr="injected failure")
-
-            with mock.patch.object(BRIDGE.subprocess, "run", side_effect=run):
-                with self.assertRaisesRegex(RuntimeError, "knowledge base build failed"):
-                    bridge.rebuild_knowledge_base()
-
-            self.assertEqual(calls, ["build-public-site.mjs", "build-knowledge-base.mjs"])
-            self.assertEqual(public_output.read_bytes(), b"previous-public-generation")
 
     def test_local_open_note_opens_the_lookup_in_the_shared_sop_browser(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -7094,9 +7037,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.process_import.assert_not_called()
             self.assertEqual(bridge.read_manual_sync(), terminal)
 
-    def test_no_pending_import_commits_local_generation_before_media_and_rolls_back_failure(self):
-        for generation_fails in (True, False):
-            with self.subTest(generation_fails=generation_fails), tempfile.TemporaryDirectory() as directory:
+    def test_no_pending_import_commits_source_tags_before_media_and_rolls_back_failure(self):
+        for tagging_fails in (True, False):
+            with self.subTest(tagging_fails=tagging_fails), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 note_id = "a" * 24
                 bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
@@ -7125,14 +7068,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 def tag_sources(board_id, note_ids):
                     events.append("tag")
                     original_tag(board_id, note_ids)
-
-                def rebuild():
-                    events.append("knowledge")
-                    if generation_fails:
-                        raise RuntimeError("injected generation failure")
+                    if tagging_fails:
+                        raise RuntimeError("injected tagging failure")
 
                 bridge.tag_catalog_sources = tag_sources
-                bridge.rebuild_knowledge_base = rebuild
                 bridge.cache_missing_media = mock.Mock(
                     side_effect=lambda _candidates: events.append("media") or {"state": "disabled"}
                 )
@@ -7144,14 +7083,14 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 result = json.loads(
                     (bridge.state_dir / "runs" / "manual_board.json").read_text(encoding="utf-8")
                 )
-                if generation_fails:
+                if tagging_fails:
                     self.assertEqual(result["state"], "failed")
                     self.assertEqual(bridge.catalog_path.read_bytes(), original_catalog)
-                    self.assertEqual(events, ["tag", "knowledge"])
+                    self.assertEqual(events, ["tag"])
                     bridge.cache_missing_media.assert_not_called()
                 else:
                     self.assertEqual(result["state"], "completed")
-                    self.assertEqual(events, ["tag", "knowledge", "media"])
+                    self.assertEqual(events, ["tag", "media"])
                     saved = json.loads(bridge.catalog_path.read_text(encoding="utf-8"))
                     self.assertEqual(saved["notes"][note_id]["source_board_ids"], ["board"])
 
@@ -7178,9 +7117,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 side_effect=lambda _candidates: events.append("media") or {"state": "disabled"}
             )
             bridge.tag_catalog_sources = mock.Mock()
-            bridge.rebuild_knowledge_base = mock.Mock(
-                side_effect=lambda: events.append("knowledge")
-            )
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.publish_after_board = mock.Mock(return_value=None)
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
@@ -7221,9 +7157,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             self.assertEqual(result["new"], 1)
             self.assertEqual(result["skipped"], 1)
             self.assertEqual(result["note_ids"], sorted([old_id, new_id]))
-            self.assertEqual(events, ["fetch", "organizer", "knowledge", "media"])
+            self.assertEqual(events, ["fetch", "organizer", "media"])
 
-    def test_import_restores_catalog_and_report_when_local_generation_fails(self):
+    def test_import_restores_catalog_and_report_when_source_tagging_fails(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             old_id = "o" * 24
@@ -7241,8 +7177,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.board_order = ["board"]
             bridge.published_since = None
             bridge.cache_missing_media = mock.Mock()
-            bridge.tag_catalog_sources = mock.Mock()
-            bridge.rebuild_knowledge_base = mock.Mock(side_effect=RuntimeError("injected generation failure"))
+            bridge.tag_catalog_sources = mock.Mock(side_effect=RuntimeError("injected tagging failure"))
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.publish_after_board = mock.Mock(return_value=None)
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
@@ -7304,7 +7239,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.published_since = None
             bridge.cache_missing_media = mock.Mock()
             bridge.tag_catalog_sources = mock.Mock()
-            bridge.rebuild_knowledge_base = mock.Mock()
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.publish_after_board = mock.Mock(return_value={"status": "published"})
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {}})
@@ -7347,7 +7281,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.cache_missing_media.assert_not_called()
             bridge.next_board_id.assert_not_called()
             bridge.publish_after_board.assert_not_called()
-            bridge.rebuild_knowledge_base.assert_called_once()
             self.assertEqual(organizer_inputs, [{
                 "notes": [{
                     "note_id": fetched_id,
@@ -7447,7 +7380,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.board_order = ["board"]
             bridge.published_since = None
             bridge.tag_catalog_sources = mock.Mock()
-            bridge.rebuild_knowledge_base = mock.Mock()
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.publish_after_board = mock.Mock(return_value={"status": "published"})
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
@@ -7595,7 +7527,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.publish_public_site = mock.Mock(return_value={"ok": True, "status": "published"})
             bridge.cache_missing_media = mock.Mock(return_value={"state": "not-started"})
             bridge.tag_catalog_sources = mock.Mock()
-            bridge.rebuild_knowledge_base = mock.Mock()
             run_id = bridge.manual_run_id(batch, board_id)
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
                 note_id: {"note_id": note_id, "comment_evidence_checked": True},

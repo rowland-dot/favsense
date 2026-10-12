@@ -3984,34 +3984,20 @@ class Bridge:
                 result = self.read_completed_core_result(run_id)
                 if self.diandian_is_halted(run_id):
                     return
-                if getattr(self, "organization_status_v2_enabled", False):
-                    if result.get("next_board_id"):
-                        self.complete_manual_after_diandian(run_id, board_id, result, None, "")
-                        return
-                    publish = self.run_final_build(
-                        result,
-                        lambda build_version, site_manifest_sha256: self.publish_after_board(
-                            board_id,
-                            run_id,
-                            require_finalization_claim=True,
-                            build_version=build_version,
-                            site_manifest_sha256=site_manifest_sha256,
-                        ),
-                        should_stop=lambda: self.diandian_is_halted(run_id),
-                    )
-                else:
-                    result["_finalize_failed_phase"] = "build"
-                    self.rebuild_knowledge_base()
-                    if self.diandian_is_halted(run_id):
-                        return
-                    result["_finalize_failed_phase"] = "publish"
-                    publish = self.publish_after_board(
+                if result.get("next_board_id"):
+                    self.complete_manual_after_diandian(run_id, board_id, result, None, "")
+                    return
+                publish = self.run_final_build(
+                    result,
+                    lambda build_version, site_manifest_sha256: self.publish_after_board(
                         board_id,
                         run_id,
                         require_finalization_claim=True,
-                        build_version=result.get("build_version"),
-                        site_manifest_sha256=result.get("site_manifest_sha256"),
-                    )
+                        build_version=build_version,
+                        site_manifest_sha256=site_manifest_sha256,
+                    ),
+                    should_stop=lambda: self.diandian_is_halted(run_id),
+                )
                 if publish is not None:
                     result["publish"] = publish
                     try:
@@ -6146,67 +6132,6 @@ class Bridge:
         if changed:
             atomic_json(self.catalog_path, catalog)
 
-    def rebuild_knowledge_base(self) -> None:
-        public_output = self.workspace / "site" / "data" / "knowledge.json"
-        public_snapshot = public_output.read_bytes() if public_output.exists() else None
-        prompt_version_args = []
-        if getattr(self, "diandian_skill_path", None) is not None:
-            prompt_version_args = [
-                "--diandian-prompt-version",
-                diandian_prompt_version(
-                    self.diandian_release,
-                    self.diandian_browser_contract,
-                ),
-            ]
-        public_builder_args = [
-            "node", str(self.public_builder),
-            "--config", str(self.config_path),
-            "--catalog", str(self.catalog_path),
-            "--curation", str(self.curation),
-            "--summaries", str(self.knowledge_base / "05-Skills成果" / "Skills面板逐篇总结与总汇.md"),
-            "--diandian-dir", str(self.diandian_dir),
-            *prompt_version_args,
-            "--output", str(public_output),
-        ]
-        if self.resource_registry is not None:
-            public_builder_args.extend(["--resources", str(self.resource_registry)])
-        try:
-            public_site = subprocess.run(
-                public_builder_args,
-                text=True,
-                encoding="utf-8",
-                capture_output=True,
-                cwd=self.workspace,
-                timeout=120,
-                check=False,
-            )
-            if public_site.returncode != 0:
-                raise RuntimeError(f"public site build failed: {sanitize_error(public_site.stderr)}")
-
-            built = subprocess.run(
-                [
-                    "node", str(self.builder),
-                    "--catalog", str(self.catalog_path),
-                    "--config", str(self.config_path),
-                    "--curation", str(self.curation),
-                    "--profile", str(self.profile),
-                    "--diandian-dir", str(self.diandian_dir),
-                    *prompt_version_args,
-                    "--output", str(self.knowledge_base),
-                ],
-                text=True,
-                encoding="utf-8",
-                capture_output=True,
-                cwd=self.workspace,
-                timeout=120,
-                check=False,
-            )
-            if built.returncode != 0:
-                raise RuntimeError(f"knowledge base build failed: {sanitize_error(built.stderr)}")
-        except Exception:
-            restore_file_snapshot(public_output, public_snapshot)
-            raise
-
     def build_organization_snapshot(
         self, *, batch: str | None = None, note_ids: list[str] | None = None
     ) -> dict:
@@ -6464,8 +6389,6 @@ class Bridge:
                 catalog_snapshot = self.catalog_path.read_bytes()
                 try:
                     self.tag_catalog_sources(board_id, set(unique))
-                    if not getattr(self, "organization_status_v2_enabled", False):
-                        self.rebuild_knowledge_base()
                 except Exception:
                     restore_file_snapshot(self.catalog_path, catalog_snapshot)
                     raise
@@ -6475,7 +6398,6 @@ class Bridge:
                 ))
                 safety_stopped = bool(media.get("safety_stopped"))
                 next_board_id = None if safety_stopped else self.next_board_id(board_id, run_id)
-                publish = None if safety_stopped or getattr(self, "organization_status_v2_enabled", False) else self.publish_after_board(board_id, run_id)
                 finish(
                     "safety-stopped" if safety_stopped else "completed",
                     new=0,
@@ -6486,7 +6408,6 @@ class Bridge:
                     next_board_id=next_board_id,
                     note_ids=sorted(unique),
                     error=PLATFORM_ACCESS.ROUND_STOP_MESSAGE if safety_stopped else None,
-                    publish=publish,
                 )
                 return
 
@@ -6561,8 +6482,6 @@ class Bridge:
                     if organized.returncode != 0:
                         raise RuntimeError(f"organizer failed: {sanitize_error(organized.stderr)}")
                     self.tag_catalog_sources(board_id, (known & set(unique)) | fetched_ids)
-                    if not getattr(self, "organization_status_v2_enabled", False):
-                        self.rebuild_knowledge_base()
                 except Exception:
                     restore_file_snapshot(self.catalog_path, catalog_snapshot)
                     restore_file_snapshot(report, report_snapshot)
@@ -6571,7 +6490,6 @@ class Bridge:
                 media = self.cache_missing_media(media_candidates)
                 safety_stopped = bool(media.get("safety_stopped"))
             next_board_id = None if safety_stopped else self.next_board_id(board_id, run_id)
-            publish = None if safety_stopped or getattr(self, "organization_status_v2_enabled", False) else self.publish_after_board(board_id, run_id)
             finish(
                 "safety-stopped" if safety_stopped else "completed",
                 new=0 if baseline else len(fetched_ids - known),
@@ -6583,7 +6501,6 @@ class Bridge:
                 next_board_id=next_board_id,
                 note_ids=sorted((known & set(unique)) | fetched_ids),
                 error=PLATFORM_ACCESS.ROUND_STOP_MESSAGE if safety_stopped else None,
-                publish=publish,
             )
             return
         except Exception as error:  # noqa: BLE001
