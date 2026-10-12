@@ -66,6 +66,11 @@ MAX_BODY_BYTES = 256 * 1024
 # and for the path check around it.
 PUBLISH_LOCK_WAIT_SECONDS = 240
 WINDOWS_SHARING_VIOLATION = 32
+WINDOWS_ACCESS_DENIED = 5
+# How long swapping a finished temporary file over its target waits for a reader that has the target
+# open (Windows refuses with error 5 or 32). Kept short on purpose: the busiest measured wait was a
+# quarter of a second, and this must not borrow the publish lock's four minutes.
+FILE_CLASH_WAIT_SECONDS = 2
 MAX_DETAIL_FETCH_BYTES = 32 * 1024 * 1024
 MAX_DETAIL_FETCH_ERROR_BYTES = 1024 * 1024
 MAX_RUN_BOARD_COUNT = 200
@@ -340,12 +345,41 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def replace_waiting(source: Path, target: Path) -> None:
+    """Swap `source` over `target`, waiting briefly while Windows says the target is in use.
+
+    Only "access denied" (5) and "sharing violation" (32) are waited on, and never for a target that
+    carries the read-only attribute, because there the refusal is real. Every other failure, and the
+    same refusal once the wait is over, is raised as it came.
+    """
+    deadline = None  # the clock is only read once a swap has actually been refused
+    while True:
+        try:
+            os.replace(source, target)
+            return
+        except PermissionError as error:
+            if getattr(error, "winerror", None) not in (WINDOWS_ACCESS_DENIED, WINDOWS_SHARING_VIOLATION):
+                raise
+            now = time.monotonic()
+            deadline = now + FILE_CLASH_WAIT_SECONDS if deadline is None else deadline
+            if now >= deadline or _is_read_only(target):
+                raise
+            time.sleep(0.01)
+
+
+def _is_read_only(path: Path) -> bool:
+    try:
+        return not os.stat(path).st_mode & stat.S_IWRITE
+    except OSError:
+        return False
+
+
 def atomic_json(path: Path, value: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
     try:
         temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        temporary.replace(path)
+        replace_waiting(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -504,7 +538,7 @@ def restore_file_snapshot(path: Path, snapshot: bytes | None) -> None:
     temporary = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.restore.tmp")
     try:
         temporary.write_bytes(snapshot)
-        temporary.replace(path)
+        replace_waiting(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -6007,7 +6041,7 @@ class Bridge:
         temporary = self.userscript.with_name(f"{self.userscript.name}.{os.getpid()}.tmp")
         try:
             temporary.write_text(userscript, encoding="utf-8")
-            temporary.replace(self.userscript)
+            replace_waiting(temporary, self.userscript)
         finally:
             temporary.unlink(missing_ok=True)
 
@@ -6025,7 +6059,7 @@ class Bridge:
                 temporary.write_text(userscript, encoding="utf-8")
                 atomic_json(self.config_path, updated)
                 try:
-                    temporary.replace(self.userscript)
+                    replace_waiting(temporary, self.userscript)
                 except OSError:
                     atomic_json(self.config_path, original)
                     raise
@@ -6147,7 +6181,7 @@ class Bridge:
                 temporary.write_text(userscript, encoding="utf-8")
                 atomic_json(self.config_path, config)
                 try:
-                    temporary.replace(self.userscript)
+                    replace_waiting(temporary, self.userscript)
                 except OSError:
                     atomic_json(self.config_path, original)
                     raise
@@ -7075,7 +7109,7 @@ def make_handler(bridge: Bridge):
                 if not status_path.exists():
                     self.send_json(HTTPStatus.NOT_FOUND, {"ok": False, "state": "not_started"})
                     return
-                status = json.loads(status_path.read_text(encoding="utf-8-sig"))
+                status = json.loads(ORGANIZATION_STATE.read_text_waiting(status_path))
                 self.send_json(HTTPStatus.OK, {"ok": True, **status})
                 return
             self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
