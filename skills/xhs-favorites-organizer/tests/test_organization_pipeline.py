@@ -2,7 +2,6 @@ import importlib.util
 import hashlib
 import json
 import pathlib
-import subprocess
 import tempfile
 import unittest
 from unittest import mock

@@ -1011,7 +1011,6 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge = make_bridge(root)
             bridge.diandian_enabled = False
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             batch = "manual20260812010101"
@@ -1414,7 +1413,6 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.diandian_cdp_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.diandian_dir.mkdir(parents=True)
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             batch = "manual20260812010101"
@@ -1456,7 +1454,6 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge = make_bridge(root)
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             bridge.saved_diandian_record = mock.Mock(return_value=None)
@@ -1485,7 +1482,6 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge = make_bridge(root)
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             bridge.saved_diandian_record = mock.Mock(return_value=None)
@@ -1516,7 +1512,6 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.diandian_dir.mkdir(parents=True)
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             batch = "manual20260812010101"
@@ -1560,7 +1555,6 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.diandian_dir.mkdir(parents=True)
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -1607,7 +1601,6 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.organization_status_v2_enabled = False
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.state_dir = root
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
@@ -1673,7 +1666,6 @@ class BridgeHelpersTest(unittest.TestCase):
             bridge.organization_status_v2_enabled = False
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.state_dir = root
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "First", "next": "Next"}
@@ -1708,10 +1700,6 @@ class BridgeHelpersTest(unittest.TestCase):
             second_id = "g" * 24
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.summary_plans = {"manual_board": {first_id, second_id}}
             bridge.boards = {"board": "出海电商"}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -1775,10 +1763,6 @@ class BridgeHelpersTest(unittest.TestCase):
             second_id = "j" * 24
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.summary_plans = {"manual_board": {first_id, second_id}}
             bridge.boards = {"board": "出海电商"}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -1851,8 +1835,6 @@ class BridgeHelpersTest(unittest.TestCase):
             succeeded_id = "s" * 24
             unresolved_id = "u" * 24
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
 
             bridge.record_diandian_succeeded(succeeded_id)
             bridge.record_diandian_unresolved(unresolved_id, "attachment-not-supported")
@@ -1911,14 +1893,8 @@ class BridgeHelpersTest(unittest.TestCase):
             note_id = "i" * 24
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.processing_lock = threading.Lock()
             bridge.summary_plans = {"manual_board": {note_id}}
             bridge.boards = {"board": "出海电商"}
-            bridge.board_order = ["board"]
             configure_point_v2(bridge, root, [note_id])
             bridge.diandian_save_record = lambda destination, title, summary_text, current_id: BRIDGE.atomic_json(destination, {
                 "version": 1,
@@ -1995,18 +1971,9 @@ class BridgeHelpersTest(unittest.TestCase):
             with self.subTest(failure_phase=failure_phase), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 bridge = make_bridge(root)
-                bridge.state_dir = root / ".xhs-favorites"
-                bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-                bridge.processing_lock = threading.Lock()
-                bridge.boards = {"board": "Board"}
-                bridge.board_order = ["board"]
                 bridge.organization_status_v2_enabled = True
                 bridge.summary_plans = {"manual_board": set()}
-                bridge.summary_locks = {}
-                bridge.summary_locks_guard = threading.Lock()
                 bridge.summary_finalizing = {"manual_board"}
-                bridge.summary_finalized = set()
-                bridge.summary_halted = set()
                 bridge.run_curation_pipeline = mock.Mock(return_value={
                     "counts": {"accepted": 1, "pending": 0},
                 })
@@ -2377,19 +2344,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.processing_lock = threading.Lock()
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
             bridge.organization_status_v2_enabled = True
             bridge.summary_plans = {"manual_board": set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
             bridge.summary_finalizing = {"manual_board"}
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
-            bridge.summary_publish_claimed = set()
             bridge.publish_config = {"repository": "synthetic"}
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 1, "pending": 0}})
@@ -2622,11 +2579,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 first_id: "First stable DianDian summary with enough safe content.",
                 second_id: "Second stable DianDian summary with enough safe content.",
             }
-            bridge = started_bridge(self)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -2652,12 +2605,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             )
             configure_point_v2(bridge, root, [first_id, second_id])
             bridge.summary_plans = {run_id: {first_id, second_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             bridge.diandian_completion_state = lambda current_run, current_board: {
                 "plan_complete": not bridge.summary_plans.get(current_run),
@@ -2771,12 +2718,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "title": "Old title",
                 "summary": "Old summary remains valid after transport failure.",
             }
-            bridge = started_bridge(self)
+            bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -2794,12 +2737,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "timings_ms": {"response_wait": 300_000, "reply_text_stable": 2_000, "success_dwell": 1_500},
             }
             bridge.summary_plans = {run_id: {current_id, remaining_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             BRIDGE.atomic_json(bridge.diandian_dir / f"{current_id}.json", old_record)
             old_bytes = (bridge.diandian_dir / f"{current_id}.json").read_bytes()
@@ -2868,7 +2805,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 bridge.state_dir = root
                 bridge.manual_sync_path = root / "manual-sync.json"
                 bridge.diandian_report_path = root / "diandian-rerun-report.json"
-                bridge.boards = {"board": "Board"}
                 bridge.summary_plans = {"manual_board": {note_id}}
                 BRIDGE.atomic_json(bridge.manual_sync_path, {
                     "batch": "manual",
@@ -2911,7 +2847,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.state_dir = root
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.diandian_report_path = root / "diandian-rerun-report.json"
-            bridge.boards = {"board": "Board"}
             bridge.summary_plans = {"manual_board": {note_id}}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -2989,10 +2924,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 ai_url = "https://www.xiaohongshu.com/ai_chat"
                 bridge = make_bridge(root)
                 bridge.organization_status_v2_enabled = False
-                bridge.state_dir = root / ".xhs-favorites"
-                bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-                bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-                bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
                 bridge.boards = {board_id: "Board"}
                 bridge.board_order = [board_id]
                 bridge.diandian_enabled = True
@@ -3015,12 +2946,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     },
                 }
                 bridge.summary_plans = {run_id: {note_id}}
-                bridge.summary_locks = {}
-                bridge.summary_locks_guard = threading.Lock()
-                bridge.summary_halted = set()
-                bridge.diandian_cdp_active = set()
-                bridge.diandian_cdp_results = {}
-                bridge.diandian_cdp_guard = threading.Lock()
                 bridge.diandian_sleep = mock.Mock()
                 BRIDGE.atomic_json(bridge.manual_sync_path, {
                     "batch": "manual",
@@ -3119,10 +3044,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             run_id = "manual_board"
             ai_url = "https://www.xiaohongshu.com/ai_chat"
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -3146,12 +3067,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             sleeps = []
             bridge.diandian_sleep = sleeps.append
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -3473,9 +3388,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge = make_bridge(root)
             bridge.state_dir = root
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             bridge.diandian_enabled = True
             bridge.saved_diandian_record = mock.Mock(return_value=None)
             bridge.record_diandian_succeeded_batch = mock.Mock()
@@ -3585,10 +3497,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             ai_url = "https://www.xiaohongshu.com/ai_chat"
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -3611,12 +3519,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -3705,10 +3607,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             ai_url = "https://www.xiaohongshu.com/ai_chat"
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -3735,12 +3633,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -3865,10 +3757,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             summary = "A committed stable DianDian summary with enough safe content."
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -3895,12 +3783,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             )
             configure_point_v2(bridge, root, [note_id])
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_completion_state = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -4000,10 +3882,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             ai_url = "https://www.xiaohongshu.com/ai_chat"
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -4030,12 +3908,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             bridge.diandian_save_record = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -4131,10 +4003,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             run_id = "manual_board"
             ai_url = "https://www.xiaohongshu.com/ai_chat"
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -4161,12 +4029,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -4245,16 +4107,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             old_run = f"{old_batch}_{board_id}"
             note_id = "z" * 24
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.summary_plans = {old_run: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
             bridge.diandian_save_record = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": old_batch,
@@ -4332,16 +4187,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             run_id = f"{batch}_{board_id}"
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.summary_plans = {run_id: set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": batch,
                 "state": "running",
@@ -4398,19 +4246,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             run_id = f"{batch}_{board_id}"
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
-            bridge.processing_lock = threading.Lock()
             bridge.summary_plans = {run_id: set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
             bridge.summary_finalizing = {run_id}
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
             bridge.summary_finalization_threads = {}
             bridge.publish_config = {"repository": "unused", "branch": "main"}
             bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 1, "pending": 0}})
@@ -4485,15 +4324,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             run_id = f"{batch}_{board_id}"
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.summary_plans = {run_id: set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_finalizing = set()
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
             BRIDGE.atomic_json(bridge.state_dir / "runs" / f"{run_id}.json", {
                 "run_id": run_id, "state": "completed",
             })
@@ -4514,15 +4346,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             run_id = f"{batch}_{board_id}"
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.summary_plans = {run_id: set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_finalizing = set()
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
             BRIDGE.atomic_json(bridge.state_dir / "runs" / f"{run_id}.json", {
                 "run_id": run_id, "state": "completed",
             })
@@ -4559,10 +4384,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 ai_url = "https://www.xiaohongshu.com/ai_chat"
                 bridge = make_bridge(root)
                 bridge.organization_status_v2_enabled = False
-                bridge.state_dir = root / ".xhs-favorites"
-                bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-                bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-                bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
                 bridge.boards = {board_id: "Board"}
                 bridge.board_order = [board_id]
                 bridge.diandian_enabled = True
@@ -4579,12 +4400,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     "timings_ms": {"response_wait": 300_000, "reply_text_stable": 2_000, "success_dwell": 1_500},
                 }
                 bridge.summary_plans = {run_id: {note_id}}
-                bridge.summary_locks = {}
-                bridge.summary_locks_guard = threading.Lock()
-                bridge.summary_halted = set()
-                bridge.diandian_cdp_active = set()
-                bridge.diandian_cdp_results = {}
-                bridge.diandian_cdp_guard = threading.Lock()
                 bridge.diandian_sleep = mock.Mock()
                 BRIDGE.atomic_json(bridge.manual_sync_path, {
                     "batch": "manual", "state": "running", "run_board_ids": [board_id], "summary_pending": 1,
@@ -4653,12 +4468,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.organization_status_v2_enabled = False
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / "summaries"
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.state_dir = root
-            bridge.processing_lock = BRIDGE.threading.Lock()
             bridge.boards = {"board": "出海电商"}
-            bridge.board_order = ["board"]
             configure_point_v2(bridge, root, [first_id, second_id])
             batch = "manual"
             run_id = bridge.manual_run_id(batch, "board")
@@ -5080,15 +4892,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.board_order = ["first"]
             bridge.boards = {"first": "First"}
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.config_path = root / "config.json"
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
             bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
 
@@ -5117,8 +4923,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.all_boards = fixture["configured_boards"]
             bridge.boards = {
@@ -5128,15 +4932,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             }
             bridge.board_order = list(bridge.boards)
             original_board_order = list(bridge.board_order)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.config_path = root / "config.json"
             bridge.config_path.write_text(
                 json.dumps({"version": 1, "boards": bridge.all_boards}),
                 encoding="utf-8",
             )
             original_config = bridge.config_path.read_text(encoding="utf-8")
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
             bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
 
@@ -5162,8 +4962,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             note_id = "t" * 24
             bridge = make_bridge(root)
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.catalog_path = root / "catalog.json"
             bridge.diandian_dir = root / "diandian-summaries"
@@ -5175,15 +4973,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             ]
             bridge.boards = {"eligible": "Eligible"}
             bridge.board_order = ["eligible"]
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.config_path = root / "config.json"
             bridge.config_path.write_text(
                 json.dumps({"version": 1, "boards": bridge.all_boards}),
                 encoding="utf-8",
             )
             original_config = bridge.config_path.read_bytes()
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
             bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
@@ -5223,18 +5017,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             batch = "manualforce"
             run_id = f"{batch}_{board_id}"
             bridge = make_bridge(root)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.catalog_path = bridge.state_dir / "catalog.json"
             bridge.diandian_enabled = True
             bridge.diandian_cdp_enabled = True
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
-            bridge.summary_plans = {}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
             bridge.diandian_save_record = BRIDGE.load_diandian_save_record(
                 DIANDIAN_SKILL_SOURCE / "scripts" / "save_diandian_summary.py"
             )
@@ -5282,7 +5068,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "summary_plan_pending": True,
                 "board_note_ids": {board_id: [note_id, other_id]},
             })
-            bridge.summary_plans = {}
             skipped = bridge.diandian_summary_plan({
                 "run_id": batch_run_id,
                 "board_id": board_id,
@@ -5455,7 +5240,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
-            bridge.summary_plans = {}
             bridge.saved_diandian_record = mock.Mock()
             bridge.record_diandian_succeeded_batch = mock.Mock()
             run_id = bridge.manual_run_id(batch, board_id)
@@ -5513,8 +5297,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             bridge = make_bridge(root)
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.all_boards = fixture["configured_boards"]
             bridge.boards = {
@@ -5523,9 +5305,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 if board["enabled"] and board["available"]
             }
             bridge.board_order = list(bridge.boards)
-            bridge.workspace = root
-            bridge.config_path = root / "config.json"
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
 
             with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
@@ -6242,9 +6021,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             batch = "manualterminal"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6279,10 +6055,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.processing_lock = threading.Lock()
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             batch = "manualactive"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6314,9 +6086,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             bridge = make_bridge(root)
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             batch = "manualterminal"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6348,9 +6117,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             bridge = make_bridge(root)
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             batch = "manualsafety"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6384,10 +6150,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             bridge = make_bridge(root)
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
             bridge.diandian_enabled = True
-            bridge.summary_plans = {}
             batch = "manualresponse"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6443,16 +6206,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = False
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.board_order = ["first"]
             bridge.boards = {"first": "First"}
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.config_path = root / "config.json"
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
             bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
             pending_ids = {"t" * 24, "u" * 24}
@@ -7224,17 +6980,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.catalog_path = root / "catalog.json"
             bridge.status_path = root / "bridge-status.json"
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.processing_lock = threading.Lock()
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
-            bridge.published_since = None
             bridge.publish_config = {"enabled": True}
-            bridge.summary_plans = {}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_finalizing = set()
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
             bridge.publish_public_site = mock.Mock(return_value={"ok": True, "status": "published"})
             bridge.cache_missing_media = mock.Mock(return_value={"state": "not-started"})
             bridge.tag_catalog_sources = mock.Mock()
