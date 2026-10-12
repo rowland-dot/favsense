@@ -12,6 +12,10 @@
 - 保持采集只读：不点赞、不评论、不发布、不取消收藏。
 - 小红书采集必须单页串行：任何时候只保留一个小红书页面；当前页面处理结束后立即关闭，再打开下一页，禁止累积后台页签。
 
+## 用户已委托的修复工作
+
+用户委托一批构建或修复工作后（例如“继续构建和修复”），Agent 在每个常规决策点直接采用推荐选项并继续：triage 结论、分支名、在已知无关的 CI 失败下合并、仅本地重建与发布、后续 issue 登记。不要为每一步发 `AskUserQuestion`。只有需要用户本人完成的动作（浏览器中确认安装脚本、登录、扫码）或超出委托范围的破坏性操作才停下。把每个选择和理由写进交付说明。用户 2026-10-12 原话：“Keep building and fixing and stop bugging me with so many questions that I dont even read and just click recommended anyways!!”
+
 ## 修改后验证
 
 ```powershell
