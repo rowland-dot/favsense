@@ -31,7 +31,7 @@ Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成�
 
 - `site/index.html`：Hugging Face Static Space 入口；
 - `site/data/knowledge.json`：只包含可公开的原创策展字段、无 Token 的小红书站内检索入口和 GitHub 核验，不包含个人主页、收藏夹 ID、Cookie、Token、视频或帧文件；
-- 每次本地桥接服务完成 catalog 与 Obsidian 重建后，同时运行 `build-public-site.mjs` 更新网页数据；
+- 网页数据与知识库由快照步骤一并生成并成对交换（同步的最终构建与“仅本地重建”）；
 - “同步设置”页通过仅信任固定工作台 Origin `http://127.0.0.1:8766` 的本机凭据接口管理全部收藏夹开关并主动触发整理；每轮开始时按稳定收藏夹 ID 合并名称变更和新增收藏夹，新收藏夹默认启用，暂时不可见的收藏夹保留历史但不扫描。“开始整理”只在本地桥接成功后出现。被 Git 忽略的 `site/.local/bridge.json` 只记录回环地址、不保存凭据，公共部署只显示本机连接说明；
 - 网页是纯 HTML/CSS/JavaScript，不依赖 Codex、Claude、后端服务或付费 Hugging Face 硬件。
 
@@ -83,17 +83,20 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
 
 一次性历史回溯使用 `-Mode history`。历史模式会谨慎滚动每个启用面板，最多读取 200 个可见条目；触发风控即停止。不得把历史模式设为每日任务。
 
-正式的本地重建由 Bridge 的 `rebuild_knowledge_base()` 统一编排，不访问平台网络，并把已验证 DianDian Skill 合同的冻结 `prompt_version` 同时传给知识库和网页 builder。不要直接运行缺少该值的底层 builder，否则含点点证据的正式总结会安全降级。仅在测试隔离环境中由 Bridge/整理编排器提供冻结值后，才可直接运行：
+正式知识库只由快照步骤写入（同步的最终构建与下文的“仅本地重建”），不访问平台网络，并把已验证 DianDian Skill 合同的冻结 `prompt_version` 同时传给知识库和网页 builder。Agent 改完策展后，用“仅本地重建”刷新正式输出。不要直接运行缺少该值的底层 builder，否则含点点证据的正式总结会安全降级。
+
+单独运行知识库构建器只能写到一个新建的目录；输出目录已存在（不论空或非空，包括正式知识库目录）时，构建器在写任何文件之前就拒绝。仅在测试隔离环境中由 Bridge/整理编排器提供冻结值后，才可直接运行：
 
 ```powershell
 $promptVersion = "<Bridge/整理编排器已验证并冻结的 64 位 prompt_version>"
+$newDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "favsense-kb-$([guid]::NewGuid())"
 node ".\skills\xhs-favorites-organizer\scripts\build-knowledge-base.mjs" `
   --catalog ".\.xhs-favorites\catalog.json" `
   --config ".\config\xhs-favorites.json" `
   --curation ".\skills\xhs-favorites-organizer\references\skills-board-curation.json" `
   --diandian-dir ".\.xhs-favorites\diandian-summaries" `
   --diandian-prompt-version $promptVersion `
-  --output ".\knowledge-base"
+  --output $newDirectory
 ```
 
 同一隔离重建中的公开网页数据必须使用完全相同的冻结值：
@@ -120,7 +123,7 @@ python -m http.server 8000 --directory site
 
 ## Agent 可选增强
 
-无论由 Claude、Codex 还是其他 Agent 执行，都只编辑 `references/*-curation.json` 的结构化策展字段，随后运行同一个构建器。不得让 Agent 创建每日或开机整理任务，也不得要求用户复制粘贴链接。
+无论由 Claude、Codex 还是其他 Agent 执行，都只编辑 `references/*-curation.json` 的结构化策展字段，随后用“仅本地重建”刷新正式输出（由快照步骤运行同一批构建器）。不得让 Agent 创建每日或开机整理任务，也不得要求用户复制粘贴链接。
 
 策展字段为：`category`、`themes`、`summary`、`action`、`tools`，以及可选人工覆盖字段 `kind`、`category_override`、`category_reason`。默认 `source-board-first`：收藏夹名称（或收藏夹配置的 `category`）是网页与知识库的主分类；内容规则和策展 `category` 只产生详情页建议并独立纳入搜索。仅在有明确语义依据时设置 `category_override: true` 跨收藏夹归档，并填写 `category_reason`；自动内容规则不得触发此覆盖。同一条目来自多个收藏夹时使用数值较高的 `category_priority`；不得把演示库的分类写死到其他用户的领域。系统自动完成分类和应用建议，不要求用户逐篇维护等级或处理状态；`kind` 省略时按当前领域配置自动判断。事实不充分时必须写“待确认”，不能从标题臆测工具名称。
 

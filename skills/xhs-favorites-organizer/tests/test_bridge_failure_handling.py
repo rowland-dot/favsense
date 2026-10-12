@@ -157,7 +157,6 @@ class MediaFailureTest(unittest.TestCase):
         bridge.next_board_id = mock.Mock(return_value="board2")
         bridge.publish_after_board = mock.Mock(return_value=None)
         bridge.tag_catalog_sources = mock.Mock()
-        bridge.rebuild_knowledge_base = mock.Mock()
         BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
             self.NOTE_ID: {
                 "note_id": self.NOTE_ID, "content_sha256": "a" * 64,

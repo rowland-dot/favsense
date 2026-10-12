@@ -110,7 +110,6 @@ class EveryStopLeavesARecordTests(unittest.TestCase):
             bridge.published_since = None
             bridge.cache_missing_media = mock.Mock()
             bridge.tag_catalog_sources = mock.Mock()
-            bridge.rebuild_knowledge_base = mock.Mock()
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.publish_after_board = mock.Mock(return_value=None)
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {}})

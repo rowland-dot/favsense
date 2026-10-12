@@ -52,7 +52,6 @@ def make_bridge(root: Path, known=(KNOWN_ID,)):
         return_value={"queued": 0, "downloaded": 0, "safety_stopped": False}
     )
     bridge.tag_catalog_sources = mock.Mock()
-    bridge.rebuild_knowledge_base = mock.Mock()
     bridge.next_board_id = mock.Mock(return_value=None)
     bridge.publish_after_board = mock.Mock(return_value=None)
     BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -32,6 +33,19 @@ test("second builder failure preserves both previous live outputs", async () => 
   assert.deepEqual(calls, ["kb", "public"]);
   assert.equal(JSON.parse(await readFile(join(paths.kbTarget, "build.json"), "utf8")).build_version, "old");
   assert.equal(JSON.parse(await readFile(paths.publicTarget, "utf8")).meta.buildVersion, "old");
+});
+
+test("the knowledge base builder is handed a staging path that does not exist yet", async () => {
+  // The builder only writes to a new directory, so the snapshot step must never create the target first.
+  const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
+  const paths = await fixture();
+  const seen = [];
+  const kb = async (options) => {
+    seen.push(existsSync(options.target));
+    await builder("kb", [])(options);
+  };
+  await buildOrganizationSnapshot({ ...paths, sealedScopeDigest: "a".repeat(64), curationInputDigest: "b".repeat(64), configDigest: "c".repeat(64), inputRevisionDigest: "d".repeat(64), effectiveDate: "2026-08-25", buildKnowledgeBase: kb, buildPublicSite: builder("public", []) });
+  assert.deepEqual(seen, [false]);
 });
 
 test("failure after the first swap rolls both participants back", async () => {

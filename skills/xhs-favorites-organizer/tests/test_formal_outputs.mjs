@@ -16,6 +16,9 @@ const sealResource = (resource) => Object.assign(resource, expectedResourceRevis
 test("accepted confirmed Skill produces the same safe formal outcome in KB and public JSON", async () => {
   const work = await mkdtemp(join(tmpdir(), "favsense-formal-output-"));
   const output = join(work, "knowledge-base");
+  // The builder only writes to a directory that does not exist yet, so each rebuild gets its own.
+  const staleOutput = join(work, "knowledge-base-stale");
+  const baselineOutput = join(work, "knowledge-base-baseline");
   const noteId = "synthetic-skill";
   const pointSummary = "Current accepted point summary for the synthetic confirmed Skill.";
   const pointSummarySha256 = createHash("sha256").update(pointSummary, "utf8").digest("hex");
@@ -135,11 +138,11 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
       prompt_version: stalePromptVersion, request_sha256: hex("8"), summary_sha256: pointSummarySha256,
       captured_at: "2026-08-23T00:00:00.000Z"
     }));
-    const staleKb = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"), ...common, "--diandian-dir", join(work, "point"), "--output", output], { cwd: root, encoding: "utf8" });
+    const staleKb = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"), ...common, "--diandian-dir", join(work, "point"), "--output", staleOutput], { cwd: root, encoding: "utf8" });
     assert.equal(staleKb.status, 0, staleKb.stderr || staleKb.stdout);
     const staleSite = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
     assert.equal(staleSite.status, 0, staleSite.stderr || staleSite.stdout);
-    const staleCard = await readFile(join(output, "02-知识卡片", `${noteId}.md`), "utf8");
+    const staleCard = await readFile(join(staleOutput, "02-知识卡片", `${noteId}.md`), "utf8");
     const stalePublic = JSON.parse(await readFile(paths.public, "utf8")).notes[0];
     assert.doesNotMatch(staleCard, new RegExp(pointSummary));
     assert.doesNotMatch(staleCard, new RegExp(curationEntry.summary));
@@ -153,11 +156,11 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
       note_ids: [noteId],
       curation_hashes: { [noteId]: staleRevision }
     }));
-    const baselineKb = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"), ...common, "--diandian-dir", join(work, "point"), "--output", output], { cwd: root, encoding: "utf8" });
+    const baselineKb = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"), ...common, "--diandian-dir", join(work, "point"), "--output", baselineOutput], { cwd: root, encoding: "utf8" });
     assert.equal(baselineKb.status, 0, baselineKb.stderr || baselineKb.stdout);
     const baselineSite = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
     assert.equal(baselineSite.status, 0, baselineSite.stderr || baselineSite.stdout);
-    const baselineCard = await readFile(join(output, "02-知识卡片", `${noteId}.md`), "utf8");
+    const baselineCard = await readFile(join(baselineOutput, "02-知识卡片", `${noteId}.md`), "utf8");
     const baselinePublic = JSON.parse(await readFile(paths.public, "utf8")).notes[0];
     assert.doesNotMatch(baselineCard, new RegExp(curationEntry.summary));
     assert.match(baselineCard, /Synthetic safe body/);
