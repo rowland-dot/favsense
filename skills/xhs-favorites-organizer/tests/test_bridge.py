@@ -7513,9 +7513,32 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
             resolved = BRIDGE.resolve_workspace_path(workspace, "config/profile.json", "domain_profile")
-            self.assertEqual(resolved, workspace / "config" / "profile.json")
+            # The bridge returns the canonical spelling of the folder, so the
+            # expectation is built from the canonical workspace too: the temp
+            # folder on the Windows CI runner is reached through an 8.3 short
+            # name (RUNNER~1) that resolve() expands.
+            self.assertEqual(resolved, workspace.resolve() / "config" / "profile.json")
             with self.assertRaises(ValueError):
                 BRIDGE.resolve_workspace_path(workspace, "../outside.json", "domain_profile")
+
+    @unittest.skipUnless(os.name == "nt", "8.3 short names exist only on Windows")
+    def test_configured_paths_in_a_short_named_workspace_resolve_to_the_long_name(self):
+        import ctypes
+
+        with tempfile.TemporaryDirectory() as directory:
+            long_workspace = Path(directory) / "workspace-with-a-long-folder-name"
+            long_workspace.mkdir()
+            buffer = ctypes.create_unicode_buffer(1024)
+            ctypes.windll.kernel32.GetShortPathNameW(str(long_workspace), buffer, 1024)
+            short_workspace = Path(buffer.value)
+            if not buffer.value or short_workspace.name.lower() == long_workspace.name.lower():
+                self.skipTest("this machine does not create 8.3 short names for new folders")
+            resolved = BRIDGE.resolve_workspace_path(short_workspace, "config/profile.json", "domain_profile")
+            self.assertEqual(resolved, long_workspace.resolve() / "config" / "profile.json")
+            with self.assertRaisesRegex(ValueError, "must stay inside the workspace"):
+                BRIDGE.resolve_workspace_path(short_workspace, "../outside.json", "domain_profile")
+            with self.assertRaisesRegex(ValueError, "must stay inside the workspace"):
+                BRIDGE.resolve_workspace_path(short_workspace, str(Path(directory).resolve() / "outside.json"), "domain_profile")
 
     def test_huggingface_publish_config_is_explicit_and_token_free(self):
         disabled = BRIDGE.normalize_publish_config({"version": 1})

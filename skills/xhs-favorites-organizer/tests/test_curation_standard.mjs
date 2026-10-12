@@ -613,6 +613,9 @@ test("successful revision-bound video frame OCR prepares and merges as image_ocr
     );
     assert.equal(executableProbe.status, 0);
     const pythonExecutable = executableProbe.stdout.trim();
+    // The extractor refuses an engine that is a symlink, and on Linux the
+    // interpreter path is one (python3 -> python3.12), so hand it the real file.
+    const engineExecutable = fs.realpathSync.native(pythonExecutable);
     const producer = spawnSync(pythonExecutable, [
       path.join(
         repositoryRoot,
@@ -620,7 +623,7 @@ test("successful revision-bound video frame OCR prepares and merges as image_ocr
       ),
       "--media-dir", mediaDirectory,
       "--analysis-dir", analysisDirectory,
-      "--engine", pythonExecutable,
+      "--engine", engineExecutable,
       "--catalog", catalogPath,
       "--note-id", noteId,
       "--report", reportPath
@@ -667,6 +670,52 @@ test("successful revision-bound video frame OCR prepares and merges as image_ocr
       )),
       true
     );
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("image text extraction refuses a symlinked engine and leaves no artifact", (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-symlinked-ocr-engine-"));
+  try {
+    const noteId = "e".repeat(24);
+    const mediaDirectory = path.join(directory, "media");
+    const analysisDirectory = path.join(directory, "analysis");
+    const catalogPath = path.join(directory, "catalog.json");
+    const reportPath = path.join(directory, "report.json");
+    fs.mkdirSync(mediaDirectory, { recursive: true });
+    fs.writeFileSync(path.join(mediaDirectory, `${noteId}.jpg`), "import sys\nsys.stdout.write('text')\n", "utf8");
+    writeJson(catalogPath, { notes: { [noteId]: {
+      type: "视频", title: "t", description: "d", content_sha256: "a".repeat(64),
+      source_boards: ["主题甲"], comment_evidence_checked: true
+    } } });
+    const pythonCommand = process.env.PYTHON
+      || (process.platform === "win32" ? "python" : "python3");
+    const probe = spawnSync(pythonCommand, ["-c", "import sys; print(sys.executable)"], { encoding: "utf8", windowsHide: true });
+    assert.equal(probe.status, 0);
+    const realEngine = fs.realpathSync.native(probe.stdout.trim());
+    const linkedEngine = path.join(directory, process.platform === "win32" ? "engine-link.exe" : "engine-link");
+    try {
+      fs.symlinkSync(realEngine, linkedEngine, "file");
+    } catch (error) {
+      if (error.code === "EPERM" || error.code === "EACCES") {
+        t.skip("creating symlinks is not permitted on this machine");
+        return;
+      }
+      throw error;
+    }
+    const producer = spawnSync(realEngine, [
+      path.join(repositoryRoot, "skills/xhs-favorites-organizer/scripts/extract-pending-image-text.py"),
+      "--media-dir", mediaDirectory,
+      "--analysis-dir", analysisDirectory,
+      "--engine", linkedEngine,
+      "--catalog", catalogPath,
+      "--note-id", noteId,
+      "--report", reportPath
+    ], { encoding: "utf8", windowsHide: true });
+    assert.equal(producer.status, 0, producer.stderr);
+    assert.equal(JSON.parse(fs.readFileSync(reportPath, "utf8")).status, "ocr_unavailable");
+    assert.equal(fs.existsSync(path.join(analysisDirectory, noteId, "visual-ocr.json")), false);
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }

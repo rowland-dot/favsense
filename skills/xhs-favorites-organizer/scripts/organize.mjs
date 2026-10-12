@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { contentRevision } from "./content-revision.mjs";
+import { worktreeBase } from "./worktree-base.mjs";
 
 const ID_KEYS = ["note_id", "noteId", "id"];
 const TITLE_KEYS = ["display_title", "displayTitle", "title", "name"];
@@ -447,9 +448,10 @@ function requireIgnoredPrivatePaths(catalogPath, outputPath) {
   }
   const repositoryRoot = path.resolve(repository.stdout.trim());
 
+  const base = worktreeBase(markerRoot, repositoryRoot);
   const targets = [resolvedCatalog, outputPath ? path.resolve(outputPath) : undefined].filter(Boolean);
   for (const target of targets) {
-    const relativeTarget = path.relative(repositoryRoot, target);
+    const relativeTarget = path.relative(base, target);
     if (relativeTarget === "" || relativeTarget.startsWith(`..${path.sep}`) || path.isAbsolute(relativeTarget)) {
       throw new Error("Private output must stay inside the detected Git worktree.");
     }

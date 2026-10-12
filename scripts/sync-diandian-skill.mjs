@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import { realpathSync } from "node:fs";
 import {
   copyFile,
   lstat,
@@ -230,10 +231,13 @@ function gitResult(cwd, args) {
 }
 
 function assertPrivateConfig(configPath) {
-  const repository = gitResult(dirname(configPath), ["rev-parse", "--show-toplevel"]);
+  // Git reports its root in canonical form (long names), so measure the config
+  // from its canonical folder too; an 8.3 short spelling must not look outside.
+  const directory = realpathSync.native(dirname(configPath));
+  const repository = gitResult(directory, ["rev-parse", "--show-toplevel"]);
   if (repository.status !== 0) return;
   const root = repository.stdout.trim();
-  const relativeConfig = publicPath(relative(root, configPath));
+  const relativeConfig = publicPath(relative(root, join(directory, basename(configPath))));
   const ignored = gitResult(root, ["check-ignore", "--quiet", "--", relativeConfig]);
   if (ignored.status !== 0) {
     throw new Error("refusing to write a private absolute Skill path into a tracked configuration file");

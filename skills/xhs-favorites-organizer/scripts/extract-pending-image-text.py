@@ -257,7 +257,11 @@ def _run_engine(command, popen_factory=subprocess.Popen, *, timeout=60, max_byte
             returncode = process.wait(timeout=2)
         except subprocess.TimeoutExpired:
             returncode = 1
-    if job:
+    if job or os.name != "nt":
+        # The engine has exited; stop whatever it left behind (closing the job
+        # on Windows, killing the engine's process group on POSIX) before
+        # waiting on readers, since a descendant holding the pipes would
+        # otherwise make a successful run look timed out.
         _stop_process_tree(process, job)
         job = None
     for reader in readers:
