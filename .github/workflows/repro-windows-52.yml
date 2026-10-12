@@ -1,8 +1,10 @@
 name: Repro ERR_NO_BUFFER_SPACE (temporary, issue 52)
 
-# Temporary: runs the Windows release gate many times at once so at least one failure lands in a run that
-# has a connection log. "plain" replicas run the gate exactly as CI did before the logger existed, to show
-# whether the logger itself changes the outcome. Removed before the branch is merged.
+# Temporary: runs the Windows release gate many times at once so a failure lands in a run that has evidence.
+# Earlier rounds: the plain gate reproduced the failure (a browser request refused with ERR_NO_BUFFER_SPACE,
+# 1 of 20 runs) while the gate under a once-per-second connection logger did not (0 of 92). The modes below
+# find out whether the logger's sampling rate, or merely wrapping the gate, is what hides it.
+# Removed before the branch is merged.
 
 on:
   push:
@@ -16,8 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: [logged, plain]
-        replica: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        mode: [plain, logged15, nosample]
+        replica: [1, 2, 3, 4, 5, 6, 7, 8]
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
@@ -42,19 +44,23 @@ jobs:
       - name: Install Chromium on Windows
         run: npx.cmd playwright install chromium
 
-      - name: Run the complete release gate with the connection log
-        if: matrix.mode == 'logged'
-        run: node scripts/connection-log.mjs --out ci-diagnostics -- npm run release:check
-
-      - name: Run the complete release gate without the connection log
+      - name: Run the gate plain
         if: matrix.mode == 'plain'
         run: npm run release:check
 
+      - name: Run the gate under the logger sampling every 15 seconds
+        if: matrix.mode == 'logged15'
+        run: node scripts/connection-log.mjs --out ci-diagnostics --interval-ms 15000 -- npm run release:check
+
+      - name: Run the gate under the logger with no sampling between start and end
+        if: matrix.mode == 'nosample'
+        run: node scripts/connection-log.mjs --out ci-diagnostics --interval-ms 3600000 -- npm run release:check
+
       - name: Keep the connection log
-        if: always() && matrix.mode == 'logged'
+        if: always() && matrix.mode != 'plain'
         uses: actions/upload-artifact@v4
         with:
-          name: connection-log-${{ matrix.replica }}-${{ github.run_attempt }}
+          name: connection-log-${{ matrix.mode }}-${{ matrix.replica }}-${{ github.run_attempt }}
           path: ci-diagnostics/
           if-no-files-found: ignore
           retention-days: 14
