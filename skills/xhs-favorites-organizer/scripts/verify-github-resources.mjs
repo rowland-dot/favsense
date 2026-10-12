@@ -97,13 +97,24 @@ const SUPPORT_CUES = [
   /\b(?:needs?|requires?)\s+an?\s+(?:[\w-]+\s+)?host\b/gi,
 ];
 
-function statesSupport(sentence, mentionsHost) {
+function statesSupport(sentence, mentionsHost, escapedHost) {
   for (const cue of SUPPORT_CUES) {
     for (const match of sentence.matchAll(cue)) {
       const clause = sentence.slice(match.index + match[0].length).split(/[;!?]|\sbut\s|\s[—–]\s/)[0];
       if (mentionsHost.test(clause)) return true;
     }
   }
+  // Owner ruling 2026-10-13 (issue #57): Chinese support phrases count. Their negations (不支持, 暂不支持 ...) are
+  // caught by deniesHost, which runs before this function.
+  const chineseClause = "[^，。；！？]*?";
+  if (new RegExp(`(?:支持|适用于|可用于)${chineseClause}\\b${escapedHost}\\b`).test(sentence)) return true;
+  if (new RegExp(`\\b${escapedHost}\\b\\s*也能用`).test(sentence)) return true;
+  // Owner ruling 2026-10-13: "a <host> skill" counts, and only that exact shape: article or 一个, the host, singular "skill", not negated.
+  const hostSkill = sentence.match(new RegExp(`(\\b(?:not|never|isn['’]t)\\s+)?(?:\\ban?\\b|一个)\\s*${escapedHost}\\s+skill(?![\\w/-])`, "i"));
+  if (hostSkill && !hostSkill[1]) return true;
+  // Owner ruling 2026-10-13: after "works with any host that supports <standard> —" the list that follows names the hosts.
+  const standardList = sentence.match(/\bworks?\s+with\s+any\s+(?:[\w-]+\s+)?host\s+that\s+supports?\b[^—–]*\s[—–]\s(.*)$/i);
+  if (standardList && mentionsHost.test(standardList[1].split(/[;!?]|\sbut\s/)[0])) return true;
   return false;
 }
 
@@ -116,6 +127,9 @@ function deniesHost(sentence, escapedHost) {
     new RegExp(`\\b${escapedHost}\\s+(?:is|are)\\s+(?:not|never)\\s+(?:\\w+\\s+)?(?:support\\w*|compatible)`, "i"),
     new RegExp(`\\b(?:not|never|no|without|except|excluding|excludes?)\\s+(?:(?:with|on|in|for|the)\\s+)?${escapedHost}\\b`, "i"),
     new RegExp(`\\b(?:incompatible|unsupported)\\b${sameClause}\\b${escapedHost}\\b`, "i"),
+    // The Chinese denials that mirror the Chinese support phrases above.
+    new RegExp(`(?:不|无法|未能?|没有)(?:支持|适用于|可用于|用于|兼容)[^，。；！？]*?\\b${escapedHost}\\b`),
+    new RegExp(`\\b${escapedHost}\\b\\s*(?:暂|目前|尚|还)?(?:不|无法|没有)(?:支持|适用|可用|能用|兼容)`),
   ].some((pattern) => pattern.test(sentence));
 }
 
@@ -132,7 +146,7 @@ function compatibilityStatement(text, compatibility) {
       for (const sentence of prose.split(/(?<=[.!?。])\s+/)) {
         if (!mentionsCompatibility.test(sentence)) continue;
         if (deniesHost(sentence, escaped)) return "negative";
-        if (statesSupport(sentence, mentionsCompatibility)) supported = true;
+        if (statesSupport(sentence, mentionsCompatibility, escaped)) supported = true;
       }
       continue;
     }
