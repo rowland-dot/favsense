@@ -63,6 +63,7 @@
     "detail_label": "相关资源",
     "registry_file": "skills/xhs-favorites-organizer/references/software-resources.json",
     "collection": "resources",
+    "verification_max_age_days": 30,
     "mapping": {
       "name": "name", "aliases": "aliases", "type": "type", "description": "usage_note",
       "metric": "stars", "metric_numeric": "stars_numeric", "metric_icon": "metric_icon"

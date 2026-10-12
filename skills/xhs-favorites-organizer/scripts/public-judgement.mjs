@@ -10,7 +10,7 @@ import {
   isPublishableCuration,
   sealedCandidateFor,
 } from "./curation-quality.mjs";
-import { confirmedSkillResource } from "./resource-quality.mjs";
+import { confirmedSkillResource, verificationMaxAgeDays } from "./resource-quality.mjs";
 
 // Both builders check the profile once at start-up; the judgement relies on it being well formed.
 export function validateContentKindProfile(value) {
@@ -123,6 +123,8 @@ export function judgePublicNote({
   effectiveDate,
   promptVersion = "",
 }) {
+  // Resolved for every note, so a broken limit is reported whatever kind the note turns out to be.
+  const maxAgeDays = verificationMaxAgeDays(profile);
   const matchResources = resourceLookup(profile, resourceRegistry);
   // The entry the note is judged from: its reviewed entry, else the candidate sealed for it, else
   // what the note says about itself.
@@ -134,7 +136,7 @@ export function judgePublicNote({
   const confirmedResource = candidateKind === "Skill"
     ? confirmedSkillResource(candidateResources.map((resource) => resource.raw), {
       today: effectiveDate,
-      maxAgeDays: profile.resource_index?.verification_max_age_days,
+      maxAgeDays,
     })
     : null;
   const currentRevisions = currentFormalRevisions(note, candidateEntry, confirmedResource, promptVersion);

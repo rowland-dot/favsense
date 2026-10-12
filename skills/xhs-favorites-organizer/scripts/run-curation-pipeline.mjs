@@ -9,17 +9,17 @@ import { attachEvidenceToCandidates, normalizeEvidencePacket, sealCandidateRevis
 import { executeJournaledTransaction } from "./journaled-transaction.mjs";
 import { acceptedRevisionsCurrent } from "./curation-quality.mjs";
 import { curationRevision } from "./curation-revision.mjs";
-import { confirmedSkillResource, nonSkillResourceAssessment } from "./resource-quality.mjs";
+import { confirmedSkillResource, nonSkillResourceAssessment, verificationMaxAgeDays } from "./resource-quality.mjs";
 
 const clean = (value) => String(value ?? "").normalize("NFC").trim();
 
-function registryAssessment(candidate, input) {
+function registryAssessment(candidate, input, maxAgeDays) {
   if (candidate.kind !== "Skill") return nonSkillResourceAssessment(input.current_audit?.notes?.[candidate.id]?.resource_status);
   const collection = clean(input.profile?.resource_index?.collection || "resources");
   const resources = Array.isArray(input.resources?.[collection]) ? input.resources[collection] : [];
   const aliases = new Set((candidate.tools || []).map((tool) => clean(tool).toLocaleLowerCase("zh-CN")));
   const matches = resources.filter((resource) => [resource?.name, ...(resource?.aliases || [])].some((alias) => aliases.has(clean(alias).toLocaleLowerCase("zh-CN"))));
-  const verified = confirmedSkillResource(matches, { today: input.effective_date, maxAgeDays: input.profile?.resource_index?.verification_max_age_days });
+  const verified = confirmedSkillResource(matches, { today: input.effective_date, maxAgeDays });
   return verified
     ? { status: "verified", resource_id: verified.id, reason_code: "", resource_identity_sha256: verified.resource_identity_sha256, verification_snapshot_sha256: verified.verification_snapshot_sha256, resource: verified }
     : { status: "missing", resource_id: "", reason_code: "resource_ambiguous", resource_identity_sha256: "", verification_snapshot_sha256: "", resource: null };
@@ -54,6 +54,7 @@ function exactAssessment(value) {
 }
 
 export async function runCurationPipeline(input = {}, hooks = {}) {
+  const maxAgeDays = verificationMaxAgeDays(input.profile);
   const stage = (name) => hooks.onStage?.(name);
   stage("scope");
   const scopeIds = [...new Set(input.scope?.note_ids || [])].sort();
@@ -68,7 +69,7 @@ export async function runCurationPipeline(input = {}, hooks = {}) {
   stage("resource_assessment");
   const assessment = typeof hooks.assessResource === "function"
     ? await Promise.all(attached.map((candidate) => hooks.assessResource(candidate)))
-    : attached.map((candidate) => registryAssessment(candidate, input));
+    : attached.map((candidate) => registryAssessment(candidate, input, maxAgeDays));
   assessment.forEach(exactAssessment);
   stage("candidate_seal");
   const candidates = attached.map((candidate, index) => sealCandidateRevision(candidate, assessment[index]));
