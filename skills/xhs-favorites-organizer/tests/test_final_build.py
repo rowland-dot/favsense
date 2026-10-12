@@ -261,6 +261,66 @@ class RunAlwaysEndsWithOneFinalBuildTest(unittest.TestCase):
             self.assertEqual(run.bridge.read_manual_sync()["state"], "safety-stopped")
 
 
+# The refusal from the snapshot step, plus a board id as a stand-in for any identifier the log must not keep.
+SNAPSHOT_REFUSAL = (
+    "organization snapshot failed: organization-snapshot: SNAPSHOT_PUBLISH_MANIFEST_MISMATCH "
+    "board " + "f" * 24
+)
+
+
+class FinalBuildFailureReachesTheServiceLogTest(unittest.TestCase):
+    """The workbench shows no error text, so a failed final build must leave one line in bridge.log."""
+
+    def failing_snapshot(self, run: FakeRun) -> None:
+        run.bridge.build_organization_snapshot = mock.Mock(side_effect=RuntimeError(SNAPSHOT_REFUSAL))
+
+    def assert_one_sanitized_build_failure_line(self, bridge) -> None:
+        text = (bridge.state_dir / BRIDGE.BRIDGE_LOG_NAME).read_text(encoding="utf-8")
+        (line,) = text.splitlines()
+        time, method, path, phase, error_type, message = line.split("\t")
+        self.assertRegex(time, r"^\d{4}-\d{2}-\d{2}T")
+        self.assertEqual((method, path, phase, error_type), ("INTERNAL", "final-build", "build", "RuntimeError"))
+        self.assertIn("SNAPSHOT_PUBLISH_MANIFEST_MISMATCH", message)
+        self.assertNotIn("f" * 24, line)
+        # Whatever else remains must not contain an identifier-shaped run, once the error code is set aside.
+        self.assertIsNone(
+            BRIDGE.LOG_LONG_IDENTIFIER.search(line.replace("SNAPSHOT_PUBLISH_MANIFEST_MISMATCH", "")), line
+        )
+
+    def test_a_failed_sync_final_build_writes_one_line(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = FakeRun(Path(directory), ["first"], diandian_enabled=True)
+            self.failing_snapshot(run)
+            notes = [note_id("a")]
+            run.core_done("first", notes)
+            run.plan("first", notes)
+            run.wait_for_finalizer("first")
+
+            self.assert_one_sanitized_build_failure_line(run.bridge)
+
+    def test_a_failed_local_rebuild_final_build_writes_one_line(self):
+        with tempfile.TemporaryDirectory() as directory:
+            rebuild = LocalRebuildTest()
+            run = rebuild.prepared(Path(directory))
+            self.failing_snapshot(run)
+            rebuild.rebuild(run)
+
+            self.assert_one_sanitized_build_failure_line(run.bridge)
+            rebuild.doCleanups()
+
+    def test_a_logging_failure_does_not_turn_the_build_failure_into_a_second_one(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = FakeRun(Path(directory), ["first"], diandian_enabled=True)
+            self.failing_snapshot(run)
+            (run.bridge.state_dir / BRIDGE.BRIDGE_LOG_NAME).mkdir()  # a folder where the log file belongs
+            notes = [note_id("a")]
+            run.core_done("first", notes)
+            run.plan("first", notes)
+            run.wait_for_finalizer("first")
+
+            self.assertEqual(run.bridge.read_manual_sync()["state"], "failed")
+
+
 class SnapshotCommandTest(unittest.TestCase):
     """The web data is the only formal output: the snapshot step is never told about a knowledge base."""
 

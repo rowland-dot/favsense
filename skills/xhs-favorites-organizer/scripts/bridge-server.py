@@ -602,6 +602,9 @@ BRIDGE_LOG_MAX_BYTES = 256 * 1024
 # Run ids embed board ids, install paths embed capabilities, and tokens are long hex strings:
 # anything this long and made only of identifier characters is never written to the log.
 LOG_LONG_IDENTIFIER = re.compile(r"[A-Za-z0-9_-]{20,}")
+# An error code such as SNAPSHOT_PUBLISH_MANIFEST_MISMATCH is upper-case words joined by underscores: no
+# digits and no lower case, so it cannot be a hex token, a run id or a capability, and the log keeps it.
+LOG_ERROR_CODE = re.compile(r"[A-Z]+(?:_[A-Z]+)+")
 BRIDGE_LOG_LOCK = threading.Lock()
 
 
@@ -622,7 +625,10 @@ def append_bridge_log(
         return
 
     def plain(value: object) -> str:
-        return LOG_LONG_IDENTIFIER.sub("[id]", sanitize_error(str(value)))
+        return LOG_LONG_IDENTIFIER.sub(
+            lambda match: match.group(0) if LOG_ERROR_CODE.fullmatch(match.group(0)) else "[id]",
+            sanitize_error(str(value)),
+        )
 
     line = "\t".join([
         datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -3200,6 +3206,7 @@ class Bridge:
                 failed_phase=str(result.get("_finalize_failed_phase") or "build"),
                 error=sanitize_error(str(error)),
             )
+            self.log_final_build_failure(result, error)
 
     def record_manual_result(self, run_id: str, board_id: str, result: dict) -> None:
         with self.get_manual_sync_lock():
@@ -3849,6 +3856,15 @@ class Bridge:
                         ),
                     )
 
+    def log_final_build_failure(self, result: dict, error: Exception) -> None:
+        """The run record keeps the error only in bookkeeping the workbench never shows, so the failed
+        phase and error also leave one line in the service log."""
+        append_bridge_log(
+            self.state_dir, "INTERNAL", "final-build",
+            str(result.get("_finalize_failed_phase") or "build"),
+            type(error).__name__, str(error),
+        )
+
     def run_final_build(
         self,
         result: dict,
@@ -3917,6 +3933,7 @@ class Bridge:
         except Exception as error:
             error_message = sanitize_error(str(error))
             result.setdefault("_finalize_failed_phase", "build")
+            self.log_final_build_failure(result, error)
             self.complete_manual_after_diandian(run_id, board_id, result, None, error_message)
         finally:
             with self.summary_run_lock(run_id):
