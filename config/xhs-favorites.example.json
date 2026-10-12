@@ -16,6 +16,11 @@
     "max_visual_wall_seconds": 120,
     "strategy": "audio-first-visual-on-demand"
   },
+  "image_ocr": {
+    "enabled": false,
+    "engine": ".xhs-tools/ocr/bin/YOUR_OCR_ENGINE.exe",
+    "output_encoding": "utf-8"
+  },
   "diandian": {
     "enabled": false,
     "skill_path": "skills/xhs-diandian-summarize-note"

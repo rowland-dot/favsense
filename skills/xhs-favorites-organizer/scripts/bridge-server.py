@@ -47,6 +47,13 @@ if PLATFORM_ACCESS_SPEC is None or PLATFORM_ACCESS_SPEC.loader is None:
 PLATFORM_ACCESS = importlib.util.module_from_spec(PLATFORM_ACCESS_SPEC)
 PLATFORM_ACCESS_SPEC.loader.exec_module(PLATFORM_ACCESS)
 
+CACHED_IMAGES_PATH = Path(__file__).with_name("cached_images.py")
+CACHED_IMAGES_SPEC = importlib.util.spec_from_file_location("favsense_cached_images", CACHED_IMAGES_PATH)
+if CACHED_IMAGES_SPEC is None or CACHED_IMAGES_SPEC.loader is None:
+    raise RuntimeError("cached image naming rule is unavailable")
+CACHED_IMAGES = importlib.util.module_from_spec(CACHED_IMAGES_SPEC)
+CACHED_IMAGES_SPEC.loader.exec_module(CACHED_IMAGES)
+
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 47631
@@ -4772,10 +4779,21 @@ class Bridge:
                 return False
 
         cached_video = cached_media_file(media_dir / f"{note_id}.mp4")
-        cached_image = any(
-            cached_media_file(media_dir / f"{note_id}{suffix}")
-            for suffix in (".jpg", ".jpeg", ".png", ".webp")
-        )
+        def has_cached_image() -> bool:
+            # Which cached files are this note's images (`<id>.jpg`, `<id>_<page>.jpeg`) is decided in cached_images.py.
+            if not media_dir_plain:
+                return False
+            try:
+                return any(
+                    (page := CACHED_IMAGES.image_page(path.name)) is not None
+                    and page[0] == note_id
+                    and cached_media_file(path)
+                    for path in media_dir.iterdir()
+                )
+            except OSError:
+                return False
+
+        cached_image = has_cached_image()
         if not cached_video and not cached_image:
             outcome = {**base, "reason_code": "evidence_missing"}
             if not self.record_evidence_fallback(
