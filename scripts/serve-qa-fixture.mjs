@@ -21,11 +21,14 @@ const leftoverStop = { date: "2026-08-29", phase: "media_or_detail", phase_label
 const leftoverActive = () => scenario === "legacy-safety-stop" && !stopCleared;
 
 const knowledge = {
-  meta: { noteCount: 2, frameEvidenceCount: 0, verifiedNoteCount: 1, resourceCount: 1, resourceIndexEnabled: true, kindLabels: { Other: "其他", Skill: "Skill" }, resourceIndex: { groups: [{ label: "Skills", pattern: "Agent Skill" }], default_group: "其他", sorts: [{ id: "name-asc", label: "按名称", field: "name", type: "text", direction: "asc" }] } },
-  categories: [{ name: "Synthetic", count: 2 }],
+  meta: { noteCount: 4, frameEvidenceCount: 0, verifiedNoteCount: 1, resourceCount: 1, resourceIndexEnabled: true, kindLabels: { Other: "其他", Skill: "Skill" }, resourceIndex: { groups: [{ label: "Skills", pattern: "Agent Skill" }], default_group: "其他", sorts: [{ id: "name-asc", label: "按名称", field: "name", type: "text", direction: "asc" }] } },
+  categories: [{ name: "Synthetic", count: 4 }],
   notes: [
     { id: "note-accepted", title: "Verified synthetic Skill", category: "Synthetic", kind: "Skill", publishedAt: "2026-08-23", summary: "Accepted synthetic summary.", summaryStatus: "accepted", summaryReason: "", themes: ["testing"], tools: ["Official synthetic Skill"], resources: ["Official synthetic Skill"], evidence: { method: "curation", label: "已审核" }, reviewedAt: "2026-08-23" },
     { id: "note-pending", title: "Pending synthetic note", category: "Synthetic", kind: "Other", candidateKind: "Skill", publishedAt: "2026-08-23", summary: "Safe metadata fallback.", summaryStatus: "pending_review", summaryReason: "audit_pending", summaryState: "captured", summaryReasonCode: "", themes: [], tools: [], resources: [], evidence: { method: "source-metadata", label: "待审核" } },
+    // Older than the two notes above so the existing first/second card assumptions hold; they put the 点点 and other-evidence source labels on screen.
+    { id: "note-diandian", title: "Diandian synthetic note", category: "Synthetic", kind: "Other", publishedAt: "2026-08-20", summary: "Diandian synthetic summary.", summaryStatus: "accepted", summaryReason: "", deepSummarySource: "xiaohongshu-diandian", themes: [], tools: [], resources: [], evidence: { method: "point", label: "已审核" }, reviewedAt: "2026-08-20" },
+    { id: "note-evidence", title: "Evidence synthetic note", category: "Synthetic", kind: "Other", publishedAt: "2026-08-19", summary: "Other-evidence synthetic summary.", summaryStatus: "accepted", summaryReason: "", deepSummarySource: "curation", themes: [], tools: [], resources: [], evidence: { method: "curation", label: "已审核" }, reviewedAt: "2026-08-19" },
   ],
   resources: [{
     id: "github-owner-repo",
