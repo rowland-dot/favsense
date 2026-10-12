@@ -44,6 +44,11 @@ function isStableNoteId(value) {
     && !UNSAFE_OBJECT_KEYS.has(value);
 }
 
+// File identity is compared on exact (bigint) values. Ordinary Number values lose the low bits of a
+// 64-bit Windows file number, so two different files can read back as the same file. Both sides of
+// every comparison must come from a call that passes EXACT; a Number never equals a BigInt.
+const EXACT = { bigint: true };
+
 function sameFileIdentity(left, right) {
   return left.dev === right.dev && left.ino === right.ino;
 }
@@ -54,7 +59,7 @@ function containedEvidenceFile(root, noteId, filename, maxBytes, nested) {
   const parts = nested ? [noteId] : [];
   let current = base;
   try {
-    const rootMetadata = fs.lstatSync(base);
+    const rootMetadata = fs.lstatSync(base, EXACT);
     if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink()) {
       throw new Error("unsafe root");
     }
@@ -62,7 +67,7 @@ function containedEvidenceFile(root, noteId, filename, maxBytes, nested) {
     for (const part of parts) {
       current = path.join(current, part);
       if (!fs.existsSync(current)) return null;
-      const metadata = fs.lstatSync(current);
+      const metadata = fs.lstatSync(current, EXACT);
       if (!metadata.isDirectory() || metadata.isSymbolicLink()) {
         throw new Error("unsafe directory");
       }
@@ -77,11 +82,11 @@ function containedEvidenceFile(root, noteId, filename, maxBytes, nested) {
       || relativeTarget.startsWith(`..${path.sep}`)
       || !fs.existsSync(target)
     ) return null;
-    const metadata = fs.lstatSync(target);
+    const metadata = fs.lstatSync(target, EXACT);
     if (!metadata.isFile() || metadata.isSymbolicLink()) {
       throw new Error("unsafe file");
     }
-    if (metadata.size > maxBytes) return null;
+    if (metadata.size > BigInt(maxBytes)) return null;
     bindings.push({ filename: target, metadata, directory: false });
     const realBase = fs.realpathSync.native(base);
     const realTarget = fs.realpathSync.native(target);
@@ -104,15 +109,15 @@ function readContainedText(binding) {
   try {
     const noFollow = process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW || 0);
     descriptor = fs.openSync(binding.target, fs.constants.O_RDONLY | noFollow);
-    const opened = fs.fstatSync(descriptor);
+    const opened = fs.fstatSync(descriptor, EXACT);
     const expectedTarget = binding.bindings.at(-1).metadata;
-    if (!opened.isFile() || !sameFileIdentity(opened, expectedTarget) || opened.size > binding.maxBytes) {
+    if (!opened.isFile() || !sameFileIdentity(opened, expectedTarget) || opened.size > BigInt(binding.maxBytes)) {
       throw new Error("opened evidence identity changed");
     }
     const text = fs.readFileSync(descriptor, "utf8");
     if (Buffer.byteLength(text, "utf8") > binding.maxBytes) return null;
     for (const item of binding.bindings) {
-      const current = fs.lstatSync(item.filename);
+      const current = fs.lstatSync(item.filename, EXACT);
       if (
         current.isSymbolicLink()
         || (item.directory ? !current.isDirectory() : !current.isFile())
@@ -127,7 +132,7 @@ function readContainedText(binding) {
       || relativeTarget === ".."
       || relativeTarget.startsWith(`..${path.sep}`)
     ) throw new Error("evidence escaped root");
-    const after = fs.fstatSync(descriptor);
+    const after = fs.fstatSync(descriptor, EXACT);
     if (!sameFileIdentity(after, opened)) throw new Error("opened evidence identity changed");
     return text;
   } catch {

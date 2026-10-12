@@ -2,9 +2,12 @@ import { randomUUID } from "node:crypto";
 import { lstat, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+// Folder identity is compared on exact (bigint) values. Ordinary Number values round the 64-bit
+// Windows file number, so a different folder could read back as the same one. Every folder that is
+// compared goes through this function, so both sides are always bigint.
 async function metadata(path) {
   try {
-    return await lstat(path);
+    return await lstat(path, { bigint: true });
   } catch (error) {
     if (error.code === "ENOENT") return null;
     throw error;
