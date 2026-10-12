@@ -39,6 +39,13 @@ if ORGANIZATION_STATE_SPEC is None or ORGANIZATION_STATE_SPEC.loader is None:
 ORGANIZATION_STATE = importlib.util.module_from_spec(ORGANIZATION_STATE_SPEC)
 ORGANIZATION_STATE_SPEC.loader.exec_module(ORGANIZATION_STATE)
 
+PLATFORM_ACCESS_PATH = Path(__file__).with_name("platform_access.py")
+PLATFORM_ACCESS_SPEC = importlib.util.spec_from_file_location("favsense_platform_access", PLATFORM_ACCESS_PATH)
+if PLATFORM_ACCESS_SPEC is None or PLATFORM_ACCESS_SPEC.loader is None:
+    raise RuntimeError("platform access permission is unavailable")
+PLATFORM_ACCESS = importlib.util.module_from_spec(PLATFORM_ACCESS_SPEC)
+PLATFORM_ACCESS_SPEC.loader.exec_module(PLATFORM_ACCESS)
+
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 47631
@@ -97,14 +104,7 @@ USERSCRIPT_INSTALL_PATH = re.compile(
 USERSCRIPT_INSTALL_TTL_SECONDS = 10 * 60
 MANUAL_TERMINAL_STATES = frozenset({"completed", "failed", "safety-stopped"})
 DIANDIAN_SAFETY_STOP_REASON = "xhs-safety-stop"
-PLATFORM_SAFETY_SIGNAL = re.compile(
-    r"(?:300031|验证码|滑块(?:验证)?|请完成(?:安全)?验证|访问频繁|操作频繁|"
-    r"请求频繁|安全验证|安全限制|captcha|too\s+many\s+requests|"
-    r"http(?:/[\d.]+)?\s*429|status[_\s-]*(?:code)?\s*[:=]?\s*429|"
-    r"(?:状态码|错误码)\s*[:：=]?\s*429|"
-    r"[\"']?(?:code|status)[\"']?\s*[:=]\s*429)",
-    re.IGNORECASE,
-)
+PLATFORM_SAFETY_SIGNAL = PLATFORM_ACCESS.SAFETY_SIGNAL
 DIANDIAN_LEGACY_HALT_REASONS = {
     "diandian-cdp-failed": "transport-failed",
 }
@@ -223,6 +223,36 @@ DETAIL_TEXT_LIMITS = {
     "share_count": 64,
     "liked_count": 64,
 }
+
+
+IMPORT_RESULT_FIELDS = (
+    "pending", "new", "skipped", "failures", "baseline", "report", "media",
+    "next_board_id", "note_ids", "error", "publish",
+)
+
+
+def import_result(base: dict, state: str, **fields) -> dict:
+    """The final result of one collection import.
+
+    Every way an import can end goes through here, so every ending carries every field.
+    A figure the ending did not establish is null: it is never written as zero.
+    """
+    unexpected = set(fields) - set(IMPORT_RESULT_FIELDS)
+    if unexpected:
+        raise ValueError(f"unexpected import result fields: {sorted(unexpected)}")
+    return {
+        **base,
+        "state": state,
+        "completed_at": datetime.now().astimezone().isoformat(),
+        **{name: fields.get(name) for name in IMPORT_RESULT_FIELDS},
+    }
+
+
+def add_known_count(total: object, addition: object) -> int | None:
+    """Add two counts; once either is unknown (null) the total stays unknown."""
+    if total is None or addition is None:
+        return None
+    return int(total or 0) + int(addition or 0)
 
 
 class BridgeBusyError(RuntimeError):
@@ -1647,20 +1677,7 @@ def diandian_control_point_expression(
         "'[class*=\"share-popup\" i],[class*=\"share_popup\" i],"
         "[data-testid*=\"share\" i][role=\"dialog\"]');"
         "return !!scope&&visible(scope);};"
-        "const challenge=[...document.querySelectorAll("
-        "'[class*=\"captcha\" i],[id*=\"captcha\" i],[class*=\"geetest\" i],"
-        "[id*=\"geetest\" i],[data-testid*=\"captcha\" i],[data-testid*=\"verify\" i],"
-        "iframe[src*=\"captcha\" i]')].some(visible);"
-        "const warning=[...document.querySelectorAll("
-        "'[role=\"alert\"],[role=\"dialog\"],[aria-modal=\"true\"]')].filter(visible)"
-        ".some(e=>/(?:验证码|访问频繁|操作频繁|请求频繁|安全限制|300031|captcha)/i"
-        ".test(e.innerText||e.textContent||''));"
-        "const structured=[...document.querySelectorAll("
-        "'script[type=\"application/json\"],script#__INITIAL_STATE__')]"
-        ".some(e=>/[\"'](?:error[_-]?code|status[_-]?code|code|status)[\"']"
-        "\\s*[:=]\\s*[\"']?300031\\b/i.test(e.textContent||''));"
-        "if(challenge||warning||structured)"
-        "return {found:false,safety:true,location_matches:true};"
+        + PLATFORM_ACCESS.injected_page_check_js() +
         "let element=null;"
         "if(action==='share'){"
         "for(const selector of selectors.share_controls){"
@@ -2824,7 +2841,51 @@ class Bridge:
             )
         return ORGANIZATION_STATE.project_local_rebuild_state(local)
 
+    def active_round_started_at(self) -> str | None:
+        """When the organization round now running began, or None when no round is running."""
+        if not isinstance(getattr(self, "manual_sync_path", None), Path):
+            return None
+        state = self.read_manual_sync()
+        if state.get("state") not in {"starting", "running"}:
+            return None
+        started = state.get("started_at")
+        return started if isinstance(started, str) else None
+
+    def record_platform_stop(self, phase: str) -> None:
+        """Leave the record that makes this stop the next round's leftover. Never overwrites an earlier one."""
+        state_dir = getattr(self, "state_dir", None)
+        if not isinstance(state_dir, Path):
+            return
+        try:
+            PLATFORM_ACCESS.write_stop(PLATFORM_ACCESS.stop_path(state_dir), phase)
+        except OSError as error:
+            append_bridge_log(
+                state_dir, "INTERNAL", "safety-stop-record", "-", type(error).__name__,
+                "the safety stop could not be recorded",
+            )
+
+    def stop_in_current_round(self) -> bool:
+        """True when the latest round recorded a stop of its own; a leftover from earlier does not count."""
+        state_dir = getattr(self, "state_dir", None)
+        if not isinstance(state_dir, Path) or not isinstance(getattr(self, "manual_sync_path", None), Path):
+            return False
+        return PLATFORM_ACCESS.stop_in_round(state_dir, self.read_manual_sync().get("started_at"))
+
+    def legacy_safety_stop(self) -> dict | None:
+        """The safety stop an earlier round left behind and the operator has not cleared."""
+        state_dir = getattr(self, "state_dir", None)
+        if not isinstance(state_dir, Path):
+            return None
+        return PLATFORM_ACCESS.legacy_stop(state_dir, self.active_round_started_at())
+
     def manual_sync_status(self) -> dict:
+        status = self.project_manual_sync_status()
+        leftover = self.legacy_safety_stop()
+        if leftover is not None:
+            status = {**status, "legacy_safety_stop": PLATFORM_ACCESS.public_view(leftover)}
+        return status
+
+    def project_manual_sync_status(self) -> dict:
         local = self.read_local_rebuild()
         if self.local_rebuild_is_latest_run(local):
             return self.local_rebuild_status(local)
@@ -2924,7 +2985,7 @@ class Bridge:
             return False
         return True
 
-    def trigger_manual_sync(self, payload: dict | None = None) -> dict:
+    def trigger_manual_sync(self, payload: dict | None = None, *, clear_legacy: bool = False) -> dict:
         if not self.trigger_lock.acquire(blocking=False):
             raise BridgeBusyError("a manual organization request is already starting")
         try:
@@ -2943,6 +3004,17 @@ class Bridge:
                     raise BridgeBusyError("organization is already running in Chrome")
             if self.processing_lock.locked():
                 raise BridgeBusyError("organization is already processing a collection")
+            leftover = self.legacy_safety_stop()
+            if leftover is not None and clear_legacy:
+                PLATFORM_ACCESS.clear_stop(self.state_dir)
+            elif leftover is not None:
+                # Refused before a round exists: no manual-sync record, no scan browser tab, no platform request.
+                return {
+                    "refused": True,
+                    "state": "legacy-safety-stop",
+                    "error": PLATFORM_ACCESS.legacy_message(leftover),
+                    "legacy_safety_stop": PLATFORM_ACCESS.public_view(leftover),
+                }
 
             batch = f"manual{datetime.now().astimezone():%Y%m%d%H%M%S%f}"
             run_board_ids = requested_board_ids or list(self.board_order)
@@ -2997,6 +3069,13 @@ class Bridge:
             return self.manual_sync_status()
         finally:
             self.trigger_lock.release()
+
+    def clear_safety_stop(self) -> dict:
+        """The operator's confirmation that platform access is back: archive the leftover stop, start a round."""
+        if self.legacy_safety_stop() is None:
+            return {"cleared": False, "started": False, "status": self.manual_sync_status()}
+        status = self.trigger_manual_sync(clear_legacy=True)
+        return {"cleared": True, "started": True, "status": status}
 
     def local_rebuild_path(self) -> Path:
         return self.state_dir / "local-rebuild.json"
@@ -3210,7 +3289,7 @@ class Bridge:
                 return
             processed.append(run_id)
             state["scanned"] = int(state.get("scanned", 0) or 0) + int(result.get("scanned", 0) or 0)
-            state["new"] = int(state.get("new", 0) or 0) + int(result.get("new", 0) or 0)
+            state["new"] = add_known_count(state.get("new", 0), result.get("new", 0))
             state["processed_run_ids"] = processed
             state["processed_boards"] = len(processed)
             result_note_ids = result.get("note_ids")
@@ -4460,7 +4539,7 @@ class Bridge:
                 "safety-stopped", "safety_stopped"
             }:
                 return {**base, "reason_code": "safety_stopped"}
-        if (self.state_dir / "media-download-safety-stop.json").exists():
+        if self.stop_in_current_round():
             return {**base, "reason_code": "safety_stopped"}
 
         try:
@@ -4588,9 +4667,7 @@ class Bridge:
     def fallback_safety_stopped(self) -> bool:
         try:
             with self.get_manual_sync_lock():
-                if (
-                    self.state_dir / "media-download-safety-stop.json"
-                ).exists():
+                if self.stop_in_current_round():
                     return True
                 state_path = require_plain_file(
                     self.manual_sync_path, "manual safety state"
@@ -4649,6 +4726,8 @@ class Bridge:
     ) -> dict:
         if not safety:
             reason = normalize_diandian_halt_reason(reason)
+        else:
+            self.record_platform_stop("diandian")
         self.revoke_diandian_cdp_inputs(run_id)
         guard = getattr(self, "summary_locks_guard", None)
         if guard is None:
@@ -5503,6 +5582,8 @@ class Bridge:
                 payload.get("error") or "Chrome could not finish the collection"
             )
             safety_stopped = reported_error == DIANDIAN_SAFETY_STOP_REASON
+            if safety_stopped:
+                self.record_platform_stop("page")
             state.update({
                 "state": "safety-stopped" if safety_stopped else "failed",
                 "completed_at": datetime.now().astimezone().isoformat(),
@@ -5534,8 +5615,8 @@ class Bridge:
                 "safety_stopped": False,
                 "state": "disabled",
             }
-        safety_stop = self.state_dir / "media-download-safety-stop.json"
-        if safety_stop.exists():
+        safety_stop = PLATFORM_ACCESS.stop_path(self.state_dir)
+        if PLATFORM_ACCESS.record_exists(safety_stop):
             return {
                 "queued": 0,
                 "downloaded": 0,
@@ -5553,7 +5634,7 @@ class Bridge:
         except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired) as error:
             # The board's notes are already committed by now, so a download problem is reported on
             # the board's media block and the run goes on; the next run queues what is still missing.
-            if safety_stop.exists():
+            if PLATFORM_ACCESS.record_exists(safety_stop):
                 return {
                     "queued": len(urls),
                     "downloaded": 0,
@@ -5604,7 +5685,9 @@ class Bridge:
             raise RuntimeError("media downloader returned an invalid result")
         if outcome.get("state") == "busy":
             raise RuntimeError("another platform request worker is already active")
-        safety_stopped = safety_stop.exists() or outcome.get("safety_stopped") is True
+        safety_stopped = PLATFORM_ACCESS.record_exists(safety_stop) or outcome.get("safety_stopped") is True
+        if safety_stopped:
+            self.record_platform_stop("media")
         if completed.returncode not in ({2} if safety_stopped else {0}):
             raise RuntimeError("media downloader failed")
         downloaded = outcome.get("downloaded", 0)
@@ -6497,6 +6580,18 @@ class Bridge:
 
     def process_import(self, run_id: str, board_id: str, unique: dict[str, str]) -> None:
         started_at = datetime.now().astimezone().isoformat()
+        base = {
+            "run_id": run_id,
+            "started_at": started_at,
+            "scanned": len(unique),
+            "board_id": board_id,
+            "board_name": getattr(self, "boards", {}).get(board_id),
+        }
+        pending_count = None
+
+        def finish(state: str, **fields) -> None:
+            self.write_status(import_result(base, state, pending=pending_count, **fields))
+
         try:
             baseline = not self.catalog_path.exists()
             known = read_catalog_ids(self.catalog_path)
@@ -6510,36 +6605,29 @@ class Bridge:
                 or not isinstance(existing_notes.get(note_id), dict)
                 or existing_notes[note_id].get("comment_evidence_checked") is not True
             ]
-            status = {
-                "run_id": run_id,
-                "state": "running",
-                "started_at": started_at,
-                "scanned": len(unique),
-                "pending": len(pending),
-                "board_id": board_id,
-                "board_name": self.boards[board_id],
-            }
-            self.write_status(status)
+            pending_count = len(pending)
+            self.write_status({**base, "state": "running", "pending": pending_count})
 
-            safety_stop_path = self.state_dir / "media-download-safety-stop.json"
-            if safety_stop_path.exists():
-                result = {
-                    **status,
-                    "state": "safety-stopped",
-                    "completed_at": datetime.now().astimezone().isoformat(),
-                    "new": 0,
-                    "baseline": baseline,
-                    "report": None,
-                    "media": {
+            safety_stop_path = PLATFORM_ACCESS.stop_path(self.state_dir)
+            if PLATFORM_ACCESS.record_exists(safety_stop_path):
+                # A stop is already on record for this round: no platform request is made. Nothing was
+                # fetched, so how many of the pending notes are new is unknown, not zero.
+                gaps = [{"note_id": note_id, "reason": "safety stop"} for note_id, _ in pending]
+                finish(
+                    "safety-stopped",
+                    new=None,
+                    skipped=len(gaps),
+                    failures=gaps,
+                    baseline=baseline,
+                    media={
                         "queued": 0,
                         "downloaded": 0,
                         "safety_stopped": True,
                         "state": "safety-stopped",
                     },
-                    "next_board_id": None,
-                    "error": "小红书触发安全限制，已停止本轮且不会继续重试",
-                }
-                self.write_status(result)
+                    note_ids=sorted(known & set(unique)),
+                    error=PLATFORM_ACCESS.ROUND_STOP_MESSAGE,
+                )
                 return
 
             if not pending:
@@ -6558,42 +6646,18 @@ class Bridge:
                 safety_stopped = bool(media.get("safety_stopped"))
                 next_board_id = None if safety_stopped else self.next_board_id(board_id, run_id)
                 publish = None if safety_stopped or getattr(self, "organization_status_v2_enabled", False) else self.publish_after_board(board_id, run_id)
-                result = {
-                    **status,
-                    "state": "safety-stopped" if safety_stopped else "completed",
-                    "completed_at": datetime.now().astimezone().isoformat(),
-                    "new": 0,
-                    "baseline": False,
-                    "report": None,
-                    "media": media,
-                    "next_board_id": next_board_id,
-                    "note_ids": sorted(unique),
-                }
-                if safety_stopped:
-                    result["error"] = "小红书触发安全限制，已停止本轮且不会继续重试"
-                if publish is not None:
-                    result["publish"] = publish
-                self.write_status(result)
-                return
-
-            if safety_stop_path.exists():
-                result = {
-                    **status,
-                    "state": "safety-stopped",
-                    "completed_at": datetime.now().astimezone().isoformat(),
-                    "new": 0,
-                    "baseline": baseline,
-                    "report": None,
-                    "media": {
-                        "queued": 0,
-                        "downloaded": 0,
-                        "safety_stopped": True,
-                        "state": "safety-stopped",
-                    },
-                    "next_board_id": None,
-                    "error": "小红书触发安全限制，已停止本轮且不会继续重试",
-                }
-                self.write_status(result)
+                finish(
+                    "safety-stopped" if safety_stopped else "completed",
+                    new=0,
+                    skipped=0,
+                    failures=[],
+                    baseline=False,
+                    media=media,
+                    next_board_id=next_board_id,
+                    note_ids=sorted(unique),
+                    error=PLATFORM_ACCESS.ROUND_STOP_MESSAGE if safety_stopped else None,
+                    publish=publish,
+                )
                 return
 
             fetch = run_bounded_subprocess(
@@ -6620,10 +6684,7 @@ class Bridge:
                 failure.get("reason") == "safety stop" for failure in failures
             )
             if safety_stopped:
-                atomic_json(safety_stop_path, {
-                    "stopped_at": datetime.now(timezone.utc).isoformat(),
-                    "reason": "platform-safety-limit",
-                })
+                PLATFORM_ACCESS.write_stop(safety_stop_path, "detail")
 
             catalog_notes = dict(existing_notes)
             catalog_notes.update({note["note_id"]: note for note in fetched_notes})
@@ -6681,35 +6742,22 @@ class Bridge:
                 safety_stopped = bool(media.get("safety_stopped"))
             next_board_id = None if safety_stopped else self.next_board_id(board_id, run_id)
             publish = None if safety_stopped or getattr(self, "organization_status_v2_enabled", False) else self.publish_after_board(board_id, run_id)
-
-            result = {
-                **status,
-                "state": "safety-stopped" if safety_stopped else "completed",
-                "completed_at": datetime.now().astimezone().isoformat(),
-                "new": 0 if baseline else len(fetched_ids - known),
-                "skipped": len(failures),
-                "failures": failures,
-                "baseline": baseline,
-                "report": str(report) if fetched_notes or not safety_stopped else None,
-                "media": media,
-                "next_board_id": next_board_id,
-                "note_ids": sorted((known & set(unique)) | fetched_ids),
-            }
-            if safety_stopped:
-                result["error"] = "小红书触发安全限制，已停止本轮且不会继续重试"
-            if publish is not None:
-                result["publish"] = publish
-            self.write_status(result)
+            finish(
+                "safety-stopped" if safety_stopped else "completed",
+                new=0 if baseline else len(fetched_ids - known),
+                skipped=len(failures),
+                failures=failures,
+                baseline=baseline,
+                report=str(report) if fetched_notes or not safety_stopped else None,
+                media=media,
+                next_board_id=next_board_id,
+                note_ids=sorted((known & set(unique)) | fetched_ids),
+                error=PLATFORM_ACCESS.ROUND_STOP_MESSAGE if safety_stopped else None,
+                publish=publish,
+            )
             return
         except Exception as error:  # noqa: BLE001
-            result = {
-                "run_id": run_id,
-                "state": "failed",
-                "started_at": started_at,
-                "completed_at": datetime.now().astimezone().isoformat(),
-                "error": sanitize_error(str(error)),
-            }
-            self.write_status(result)
+            finish("failed", error=sanitize_error(str(error)))
             return
 
 
@@ -6884,7 +6932,8 @@ def make_handler(bridge: Bridge):
                 self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
                 return
             if self.path not in {
-                "/import-sync", "/boards", "/sync/start", "/sync/local-rebuild", "/sync/failure", "/sync/discover",
+                "/import-sync", "/boards", "/sync/start", "/sync/local-rebuild", "/sync/safety-stop/clear",
+                "/sync/failure", "/sync/discover",
                 "/sync/summary-plan", "/sync/diandian-result", "/sync/diandian-skip",
                 "/sync/diandian-halt", "/sync/diandian-click", "/sync/diandian-cdp", "/notes/open",
                 "/notes/organization-status",
@@ -6896,7 +6945,8 @@ def make_handler(bridge: Bridge):
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
             if self.path in {
-                "/boards", "/sync/start", "/sync/local-rebuild", "/notes/open", "/notes/organization-status",
+                "/boards", "/sync/start", "/sync/local-rebuild", "/sync/safety-stop/clear",
+                "/notes/open", "/notes/organization-status",
             } and not is_manager_origin(self.headers.get("Origin")):
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
@@ -6912,12 +6962,34 @@ def make_handler(bridge: Bridge):
                     self.send_json(HTTPStatus.OK, {"ok": True, "boards": boards})
                     return
                 if self.path == "/sync/start":
-                    self.send_json(HTTPStatus.ACCEPTED, {"ok": True, **bridge.trigger_manual_sync(payload)})
+                    started = bridge.trigger_manual_sync(payload)
+                    if started.get("refused") is True:
+                        refusal = {key: value for key, value in started.items() if key != "refused"}
+                        append_bridge_log(
+                            getattr(bridge, "state_dir", None),
+                            self.command,
+                            urlparse(self.path).path,
+                            int(HTTPStatus.CONFLICT),
+                            "LegacySafetyStop",
+                            sanitize_error(str(refusal.get("error", ""))),
+                        )
+                        self.send_json(HTTPStatus.CONFLICT, {"ok": False, **refusal})
+                        return
+                    self.send_json(HTTPStatus.ACCEPTED, {"ok": True, **started})
                     return
                 if self.path == "/sync/local-rebuild":
                     if payload:
                         raise ValueError("local rebuild request must be empty")
                     self.send_json(HTTPStatus.ACCEPTED, {"ok": True, **bridge.trigger_local_rebuild()})
+                    return
+                if self.path == "/sync/safety-stop/clear":
+                    if payload:
+                        raise ValueError("safety stop clear request must be empty")
+                    cleared = bridge.clear_safety_stop()
+                    self.send_json(
+                        HTTPStatus.ACCEPTED if cleared.get("started") else HTTPStatus.OK,
+                        {"ok": True, **cleared},
+                    )
                     return
                 if self.path == "/install/complete":
                     if set(payload) != {"capability"}:

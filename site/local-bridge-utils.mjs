@@ -83,8 +83,28 @@ const SYNC_SHORT_TEXT = new Set([
 ]);
 const SYNC_ALLOWED_KEYS = new Set([
   "ok", "state", ...SYNC_NUMBERS, ...SYNC_BOOLEANS, ...SYNC_SHORT_TEXT,
-  "error", "summary_finalize_error"
+  "error", "summary_finalize_error", "legacy_safety_stop"
 ]);
+// A count the bridge could not determine is null (shown as unknown), never a made-up zero.
+const SYNC_NULLABLE_NUMBERS = new Set(["new"]);
+const LEFTOVER_STOP_PHASES = new Set(["detail", "media", "page", "diandian", "media_or_detail", "unknown"]);
+
+// The safety stop an earlier round left behind and the operator has not cleared yet.
+export function validateLegacySafetyStop(value) {
+  if (
+    !value
+    || typeof value !== "object"
+    || Array.isArray(value)
+    || Object.keys(value).sort().join(",") !== "date,phase,phase_label"
+    || !(value.date === null || (typeof value.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.date)))
+    || typeof value.phase !== "string"
+    || !LEFTOVER_STOP_PHASES.has(value.phase)
+    || typeof value.phase_label !== "string"
+    || !value.phase_label.trim()
+    || value.phase_label.length > 20
+  ) throw new Error("本机安全停止记录不可用");
+  return { date: value.date, phase: value.phase, phase_label: value.phase_label };
+}
 
 export function normalizeLocalBridgeDiagnostic(value) {
   if (typeof value !== "string" || value.length > 1500) return "";
@@ -176,8 +196,10 @@ export function validateLocalNoteOrganizationStatus(value, sourceContract) {
 
 function validateV2SyncStatus(value, sourceContract) {
   const contract = organizationContract(sourceContract);
-  const keys = Object.keys(value).sort().join(",");
+  const { legacy_safety_stop: leftoverStop, ...organizationKeys } = value;
+  const keys = Object.keys(organizationKeys).sort().join(",");
   if (keys !== "build_version,counts,ok,phases,run_id,schema_version,state") throw new Error("本机整理状态不可用");
+  const leftover = "legacy_safety_stop" in value ? validateLegacySafetyStop(leftoverStop) : null;
   if (value.ok !== true || value.schema_version !== 2 || !contract.overall_states.includes(value.state)) throw new Error("本机整理状态不可用");
   if (typeof value.run_id !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(value.run_id)) throw new Error("本机整理状态不可用");
   if (typeof value.build_version !== "string" || (value.build_version && !/^[a-f0-9]{64}$/.test(value.build_version))) throw new Error("本机整理状态不可用");
@@ -194,8 +216,11 @@ function validateV2SyncStatus(value, sourceContract) {
   }
   const countKeys = ["scanned", "new", "summary_captured", "summary_failed", "summary_batch_aborted", "curation_accepted", "curation_pending"];
   if (!value.counts || Object.keys(value.counts).sort().join(",") !== [...countKeys].sort().join(",")) throw new Error("本机整理状态不可用");
-  for (const key of countKeys) if (!Number.isSafeInteger(value.counts[key]) || value.counts[key] < 0 || value.counts[key] > 10_000_000) throw new Error("本机整理状态不可用");
-  return { ...value, phases, counts: { ...value.counts } };
+  for (const key of countKeys) {
+    const unknown = SYNC_NULLABLE_NUMBERS.has(key) && value.counts[key] === null;
+    if (!unknown && (!Number.isSafeInteger(value.counts[key]) || value.counts[key] < 0 || value.counts[key] > 10_000_000)) throw new Error("本机整理状态不可用");
+  }
+  return { ...value, phases, counts: { ...value.counts }, ...(leftover ? { legacy_safety_stop: leftover } : {}) };
 }
 
 export function validateLocalBridgeSyncStatus(value, contract = null) {
@@ -205,7 +230,10 @@ export function validateLocalBridgeSyncStatus(value, contract = null) {
   if (contract) {
     if (value.schema_version === 2) return validateV2SyncStatus(value, contract);
     if (value.state === "completed") {
-      return { ok: true, schema_version: 2, state: "completed_with_warnings", reason_code: "unknown_legacy", legacy: true };
+      return {
+        ok: true, schema_version: 2, state: "completed_with_warnings", reason_code: "unknown_legacy", legacy: true,
+        ...("legacy_safety_stop" in value ? { legacy_safety_stop: validateLegacySafetyStop(value.legacy_safety_stop) } : {})
+      };
     }
     const legacy = validateLocalBridgeSyncStatus(value);
     return { ...legacy, schema_version: 2, state: "completed_with_warnings", reason_code: "unknown_legacy", legacy: true };
@@ -214,6 +242,7 @@ export function validateLocalBridgeSyncStatus(value, contract = null) {
     throw new Error("本机整理状态不可用");
   }
   for (const key of SYNC_NUMBERS) {
+    if (key in value && SYNC_NULLABLE_NUMBERS.has(key) && value[key] === null) continue;
     if (key in value && (!Number.isSafeInteger(value[key]) || value[key] < 0 || value[key] > 10_000_000)) {
       throw new Error("本机整理状态不可用");
     }
@@ -228,6 +257,7 @@ export function validateLocalBridgeSyncStatus(value, contract = null) {
   }
 
   const status = { ...value };
+  if ("legacy_safety_stop" in status) status.legacy_safety_stop = validateLegacySafetyStop(status.legacy_safety_stop);
   for (const key of ["error", "summary_finalize_error"]) {
     if (!(key in status)) continue;
     if (typeof status[key] !== "string" || status[key].length > 1500) {

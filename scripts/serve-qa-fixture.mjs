@@ -11,11 +11,14 @@ const token = "a".repeat(64);
 const testHeader = "favsense-synthetic-v1";
 const scenarios = new Set([
   "success", "running-success", "partial", "summary-failed", "batch-aborted", "stale",
-  "build-failed", "publish-failed", "safety-stopped", "local-rebuild",
+  "build-failed", "publish-failed", "safety-stopped", "local-rebuild", "legacy-safety-stop",
 ]);
 let scenario = "success";
 let hasStarted = false;
 let statusReads = 0;
+let stopCleared = false;
+const leftoverStop = { date: "2026-08-29", phase: "media_or_detail", phase_label: "媒体或详情" };
+const leftoverActive = () => scenario === "legacy-safety-stop" && !stopCleared;
 
 const knowledge = {
   meta: { noteCount: 2, frameEvidenceCount: 0, verifiedNoteCount: 1, resourceCount: 1, resourceIndexEnabled: true, kindLabels: { Other: "其他", Skill: "Skill" }, resourceIndex: { groups: [{ label: "Skills", pattern: "Agent Skill" }], default_group: "其他", sorts: [{ id: "name-asc", label: "按名称", field: "name", type: "text", direction: "asc" }] } },
@@ -109,7 +112,7 @@ function staticServer({ manager }) {
     if (url.pathname === "/__health") return sendJson(response, 200, { ok: true });
     if (manager && url.pathname === "/__test/reset" && request.method === "POST") {
       if (request.headers["x-favsense-test"] !== testHeader) return sendJson(response, 403, { ok: false });
-      scenario = "success"; hasStarted = false; statusReads = 0;
+      scenario = "success"; hasStarted = false; statusReads = 0; stopCleared = false;
       return sendJson(response, 200, { ok: true });
     }
     if (manager && url.pathname === "/__test/scenario" && request.method === "POST") {
@@ -117,7 +120,7 @@ function staticServer({ manager }) {
       let raw = ""; for await (const chunk of request) raw += chunk;
       const next = JSON.parse(raw || "{}").scenario;
       if (!scenarios.has(next)) return sendJson(response, 400, { ok: false });
-      scenario = next; hasStarted = false; statusReads = 0; return sendJson(response, 200, { ok: true });
+      scenario = next; hasStarted = false; statusReads = 0; stopCleared = false; return sendJson(response, 200, { ok: true });
     }
     if (manager && url.pathname === "/.local/bridge.json") return sendJson(response, 200, { baseUrl: "http://127.0.0.1:8768" });
     if (!manager && url.pathname === "/.local/bridge.json") return sendJson(response, 404, { ok: false });
@@ -138,12 +141,22 @@ const bridge = createServer(async (request, response) => {
   if (url.pathname === "/local-session") return sendJson(response, 200, { ok: true, protocol_version: 11, token, browser_session: { owner: "sop-cdp", ready: true }, diandian_available: true });
   if (request.headers["x-xhs-bridge-token"] !== token) return sendJson(response, 404, { ok: false });
   if (url.pathname === "/boards") return sendJson(response, 200, { ok: true, boards: [{ id: "synthetic", name: "Synthetic", enabled: true, available: true, advertised_count: 2, captured_count: 2 }] });
-  if (url.pathname === "/sync/status") return sendJson(response, 200, hasStarted ? syncStatus() : { ok: true, state: "idle" });
+  if (url.pathname === "/sync/status") {
+    const status = hasStarted ? syncStatus() : { ok: true, state: "idle" };
+    return sendJson(response, 200, leftoverActive() ? { ...status, legacy_safety_stop: leftoverStop } : status);
+  }
+  if (url.pathname === "/sync/safety-stop/clear") {
+    // Same answer the real bridge gives: nothing to clear is a no-op, otherwise the stop is archived and a round starts.
+    if (!leftoverActive()) return sendJson(response, 200, { ok: true, cleared: false, started: false, status: hasStarted ? syncStatus() : { ok: true, state: "idle" } });
+    stopCleared = true; hasStarted = true;
+    return sendJson(response, 200, { ok: true, cleared: true, started: true, status: syncStatus() });
+  }
   if (url.pathname === "/sync/local-rebuild") {
     hasStarted = true;
     return sendJson(response, 200, syncStatus());
   }
   if (url.pathname === "/sync/start") {
+    if (leftoverActive()) return sendJson(response, 409, { ok: false, state: "legacy-safety-stop", error: `${leftoverStop.date} 的安全停止尚未清除`, legacy_safety_stop: leftoverStop });
     hasStarted = true;
     if (scenario === "running-success") {
       const currentReads = statusReads;
@@ -171,7 +184,7 @@ function listen(server, port) {
 }
 
 if (process.argv.includes("--help")) {
-  console.log("--scenario success|running-success|partial|summary-failed|batch-aborted|stale|build-failed|publish-failed|safety-stopped|local-rebuild (UX-01..14 / VC-QA-01..15)");
+  console.log("--scenario success|running-success|partial|summary-failed|batch-aborted|stale|build-failed|publish-failed|safety-stopped|local-rebuild|legacy-safety-stop (UX-01..14 / VC-QA-01..15)");
   process.exit(0);
 }
 const scenarioIndex = process.argv.indexOf("--scenario");

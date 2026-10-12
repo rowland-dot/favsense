@@ -1,0 +1,63 @@
+{
+  "description": "One table for every copy of the rule that recognises a Xiaohongshu block. Each copy is tested only against the cases of the context it reads; inside one context the expected answer is the same for every case that shares a text. The same sentence can be a block in one context and ordinary content in another, which is why the table says why.",
+  "contexts": {
+    "failure-output": {
+      "read_by": "Python: platform_access.SAFETY_SIGNAL, used by the detail fetcher, the media downloader and the DianDian page check",
+      "input": "What a request that produced no usable note left behind: the page text, the process output, the exception message."
+    },
+    "diagnostic-output": {
+      "read_by": "Python: platform_access.STRUCTURED_SAFETY_SIGNAL",
+      "input": "The process output of a request that DID return a note. The note may talk about anything, so only a structured block code counts."
+    },
+    "page-shell": {
+      "read_by": "Userscript: SAFETY_SHELL_MESSAGE in assertSafePage",
+      "input": "Text of a visible alert or dialog on a board page. Board pages carry note text, so only a line shaped like the platform's own prompt counts."
+    },
+    "page-script": {
+      "read_by": "Userscript: STRUCTURED_SAFETY_CODE, and the bridge's injected page check",
+      "input": "Text of a JSON script element in the page. Only a block code under a status or error key counts, never words inside note content."
+    },
+    "dialog-text": {
+      "read_by": "Bridge: the page check injected before the share step (platform_access.injected_page_check_js)",
+      "input": "Text of a visible alert or dialog on a note page the share step opened itself. Any block word in it stops the step."
+    }
+  },
+  "cases": [
+    {"id": "failure-captcha-in-prose", "context": "failure-output", "text": "这个工具可以自动识别验证码", "blocked": true, "why": "A request that returned no note and whose page mentions a captcha is treated as blocked; the loose rule only runs when nothing usable came back."},
+    {"id": "failure-http-429", "context": "failure-output", "text": "HTTP/1.1 429 Too Many Requests", "blocked": true, "why": "A rate-limit status line in a failed request's output is the platform refusing the request."},
+    {"id": "failure-too-frequent", "context": "failure-output", "text": "访问频繁，请稍后再试", "blocked": true, "why": "The platform's own too-frequent prompt."},
+    {"id": "failure-code-300031", "context": "failure-output", "text": "{\"code\": 300031}", "blocked": true, "why": "300031 is the platform's block code."},
+    {"id": "failure-complete-verification", "context": "failure-output", "text": "请完成安全验证", "blocked": true, "why": "The platform asking for a verification step."},
+    {"id": "failure-captcha-word", "context": "failure-output", "text": "captcha required", "blocked": true, "why": "An English captcha prompt."},
+    {"id": "failure-status-code-429", "context": "failure-output", "text": "status code: 429", "blocked": true, "why": "A rate-limit status code printed by the request layer."},
+    {"id": "failure-plain-unavailable", "context": "failure-output", "text": "detail unavailable", "blocked": false, "why": "A note that cannot be read is a gap, not a block."},
+    {"id": "failure-429-likes", "context": "failure-output", "text": "这篇内容有 429 个赞", "blocked": false, "why": "429 as a number inside prose is not a status code."},
+    {"id": "failure-429-episode", "context": "failure-output", "text": "episode 429", "blocked": false, "why": "429 as an episode number is not a status code."},
+
+    {"id": "diagnostic-captcha-in-prose", "context": "diagnostic-output", "text": "这个工具可以自动识别验证码", "blocked": false, "why": "The note itself came back fine and may be about captchas; prose is not a block when a note was extracted."},
+    {"id": "diagnostic-http-429", "context": "diagnostic-output", "text": "HTTP/1.1 429 Too Many Requests", "blocked": true, "why": "A rate-limit status line in the diagnostics is structured evidence even when a note came back."},
+    {"id": "diagnostic-too-frequent", "context": "diagnostic-output", "text": "访问频繁，请稍后再试", "blocked": false, "why": "A prose prompt alone does not override a note that was extracted."},
+    {"id": "diagnostic-code-300031", "context": "diagnostic-output", "text": "{\"code\": 300031}", "blocked": true, "why": "A structured block code counts whatever else came back."},
+    {"id": "diagnostic-error-code-300031", "context": "diagnostic-output", "text": "错误码 300031", "blocked": true, "why": "A labelled block code counts whatever else came back."},
+    {"id": "diagnostic-429-likes", "context": "diagnostic-output", "text": "这篇内容有 429 个赞", "blocked": false, "why": "429 as a number inside prose is not a status code."},
+
+    {"id": "shell-captcha-in-prose", "context": "page-shell", "text": "这个工具可以自动识别验证码", "blocked": false, "why": "In a page that carries note text, a sentence about captchas is content; only a line shaped like the platform's prompt counts."},
+    {"id": "shell-http-429", "context": "page-shell", "text": "HTTP/1.1 429 Too Many Requests", "blocked": false, "why": "A protocol status line is not text the platform shows in a prompt; on a page it is note content or a technical aside."},
+    {"id": "shell-too-frequent", "context": "page-shell", "text": "访问频繁，请稍后再试", "blocked": true, "why": "The platform's own too-frequent prompt, shaped as a whole line."},
+    {"id": "shell-complete-captcha", "context": "page-shell", "text": "请完成验证码", "blocked": true, "why": "The platform asking for a captcha, shaped as a whole line."},
+    {"id": "shell-captcha-alone", "context": "page-shell", "text": "验证码", "blocked": true, "why": "A prompt consisting only of the word."},
+    {"id": "shell-block-code-alone", "context": "page-shell", "text": "300031", "blocked": true, "why": "The bare block code as a whole line."},
+    {"id": "shell-captcha-tutorial", "context": "page-shell", "text": "新手教程：如何通过验证码", "blocked": false, "why": "A sentence that merely ends in the word is note content."},
+
+    {"id": "script-code-300031", "context": "page-script", "text": "{\"code\": 300031, \"msg\": \"x\"}", "blocked": true, "why": "The block code under a code key."},
+    {"id": "script-status-300031", "context": "page-script", "text": "{\"status\":\"300031\"}", "blocked": true, "why": "The block code under a status key."},
+    {"id": "script-code-zero", "context": "page-script", "text": "{\"code\": 0, \"title\": \"300031 号文件\"}", "blocked": false, "why": "The digits inside a title are content; the code key says success."},
+    {"id": "script-code-in-note-text", "context": "page-script", "text": "{\"note\": {\"desc\": \"错误码 300031 怎么解决\"}}", "blocked": false, "why": "A note describing the error code is not the platform raising it."},
+
+    {"id": "dialog-captcha-in-prose", "context": "dialog-text", "text": "这个工具可以自动识别验证码", "blocked": true, "why": "The share step opens the note page itself, so a visible dialog that mentions a captcha is treated as the platform stopping it."},
+    {"id": "dialog-http-429", "context": "dialog-text", "text": "HTTP/1.1 429 Too Many Requests", "blocked": false, "why": "A protocol status line is not text the platform shows in a dialog."},
+    {"id": "dialog-too-frequent", "context": "dialog-text", "text": "访问频繁，请稍后再试", "blocked": true, "why": "The platform's own too-frequent prompt."},
+    {"id": "dialog-block-code", "context": "dialog-text", "text": "300031", "blocked": true, "why": "The block code shown in a dialog."},
+    {"id": "dialog-share-copied", "context": "dialog-text", "text": "分享链接已复制", "blocked": false, "why": "An ordinary share confirmation."}
+  ]
+}

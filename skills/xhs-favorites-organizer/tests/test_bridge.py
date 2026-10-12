@@ -7593,7 +7593,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
             bridge.publish_public_site.assert_not_called()
             core_result = json.loads((root / "runs" / f"{run_id}.json").read_text(encoding="utf-8"))
-            self.assertNotIn("publish", core_result)
+            # Every import result carries a publish field; here it must say nothing was published.
+            self.assertIsNone(core_result["publish"])
             public_status = bridge.manual_sync_status()
             self.assertNotIn("target_note_id", public_status)
             self.assertNotIn("local_only", public_status)

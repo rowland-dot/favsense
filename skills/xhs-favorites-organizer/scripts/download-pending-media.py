@@ -4,6 +4,7 @@ import argparse
 import asyncio
 from contextlib import redirect_stdout
 from datetime import datetime, timezone
+import importlib.util
 import io
 import json
 import os
@@ -17,20 +18,14 @@ from urllib.parse import urlparse
 NOTE_ID = re.compile(r"^[a-f0-9]{24}$")
 NOTE_PATH = re.compile(r"^/(?:explore|discovery/item)/([a-f0-9]{24})$")
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-SAFETY_LIMIT = re.compile(
-    r"(?:300031|验证码|滑块(?:验证)?|请完成(?:安全)?验证|访问频繁|操作频繁|"
-    r"请求频繁|安全验证|安全限制|captcha|too\s+many\s+requests|"
-    r"http(?:/[\d.]+)?\s*429|status[_\s-]*(?:code)?\s*[:=]?\s*429|"
-    r"(?:状态码|错误码)\s*[:：=]?\s*429|"
-    r"[\"']?(?:code|status)[\"']?\s*[:=]\s*429)",
-    re.IGNORECASE,
+PLATFORM_ACCESS_SPEC = importlib.util.spec_from_file_location(
+    "favsense_platform_access", Path(__file__).with_name("platform_access.py")
 )
-STRUCTURED_SAFETY_LIMIT = re.compile(
-    r"(?:[\"']?(?:error[_-]?code|code|status)[\"']?\s*[:=]\s*[\"']?(?:300031|429)\b|"
-    r"http(?:/[\d.]+)?\s*429|status[_\s-]*(?:code)?\s*[:=]?\s*429|"
-    r"(?:状态码|错误码)\s*[:：=]?\s*(?:300031|429))",
-    re.IGNORECASE,
-)
+PLATFORM_ACCESS = importlib.util.module_from_spec(PLATFORM_ACCESS_SPEC)
+PLATFORM_ACCESS_SPEC.loader.exec_module(PLATFORM_ACCESS)
+# The block-recognition rule and the stop record belong to the platform access permission module.
+SAFETY_LIMIT = PLATFORM_ACCESS.SAFETY_SIGNAL
+STRUCTURED_SAFETY_LIMIT = PLATFORM_ACCESS.STRUCTURED_SAFETY_SIGNAL
 PINNED_XHS_COMMIT = "d805ebdd3db53f68137bc2b7a6ed118ce572d09b"
 
 
@@ -64,18 +59,7 @@ def safety_limit_detected(output: str, error: Exception | None = None) -> bool:
 
 
 def write_safety_stop(path: Path | None) -> None:
-    if path is None:
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    except FileExistsError:
-        return
-    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-        json.dump({
-            "stopped_at": datetime.now(timezone.utc).isoformat(),
-            "reason": "platform-safety-limit",
-        }, handle)
+    PLATFORM_ACCESS.write_stop(path, "media")
 
 
 def acquire_single_flight(lock_path: Path | None):
@@ -286,7 +270,7 @@ async def download_queue(
     safety_stopped = False
     try:
         for index, item in enumerate(queue):
-            if safety_stop_path is not None and safety_stop_path.exists():
+            if PLATFORM_ACCESS.record_exists(safety_stop_path):
                 safety_stopped = True
                 break
             diagnostics = io.StringIO()
@@ -318,7 +302,7 @@ async def download_queue(
                 break
             if index + 1 < len(queue) and delay > 0:
                 await asyncio.sleep(delay)
-                if safety_stop_path is not None and safety_stop_path.exists():
+                if PLATFORM_ACCESS.record_exists(safety_stop_path):
                     safety_stopped = True
                     break
     finally:
@@ -335,7 +319,7 @@ def main() -> None:
     report_path = Path(args.report).resolve()
     lock_path = Path(args.lock_file).resolve() if args.lock_file else None
     safety_stop_path = Path(args.safety_stop_file).resolve() if args.safety_stop_file else None
-    if safety_stop_path is not None and safety_stop_path.exists():
+    if PLATFORM_ACCESS.record_exists(safety_stop_path):
         print(json.dumps({"queued": 0, "downloaded": 0, "safety_stopped": True, "state": "safety-stopped"}))
         raise SystemExit(2)
     try:

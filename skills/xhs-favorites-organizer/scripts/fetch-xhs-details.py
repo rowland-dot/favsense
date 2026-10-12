@@ -4,6 +4,7 @@ import argparse
 import asyncio
 from contextlib import redirect_stdout
 from datetime import datetime, timezone
+import importlib.util
 import io
 import json
 import os
@@ -16,23 +17,15 @@ from urllib.parse import urlparse
 
 NOTE_PATH = re.compile(r"^/(?:explore|discovery/item)/([A-Za-z0-9_-]{1,128})$")
 PINNED_XHS_COMMIT = "d805ebdd3db53f68137bc2b7a6ed118ce572d09b"
-SAFETY_SIGNAL = re.compile(
-    r"(?:300031|验证码|滑块(?:验证)?|请完成(?:安全)?验证|访问频繁|操作频繁|"
-    r"请求频繁|安全验证|安全限制|captcha|too\s+many\s+requests|"
-    r"http(?:/[\d.]+)?\s*429|status[_\s-]*(?:code)?\s*[:=]?\s*429|"
-    r"(?:状态码|错误码)\s*[:：=]?\s*429|"
-    r"[\"']?(?:code|status)[\"']?\s*[:=]\s*429)",
-    re.IGNORECASE,
+PLATFORM_ACCESS_SPEC = importlib.util.spec_from_file_location(
+    "favsense_platform_access", Path(__file__).with_name("platform_access.py")
 )
-STRUCTURED_SAFETY_SIGNAL = re.compile(
-    r"(?:[\"']?(?:error[_-]?code|code|status)[\"']?\s*[:=]\s*[\"']?(?:300031|429)\b|"
-    r"http(?:/[\d.]+)?\s*429|status[_\s-]*(?:code)?\s*[:=]?\s*429|"
-    r"(?:状态码|错误码)\s*[:：=]?\s*(?:300031|429))",
-    re.IGNORECASE,
-)
-SAFETY_STATE_MESSAGE_KEYS = frozenset({
-    "error", "errormessage", "errmsg", "message", "toast", "riskmessage", "verifymessage",
-})
+PLATFORM_ACCESS = importlib.util.module_from_spec(PLATFORM_ACCESS_SPEC)
+PLATFORM_ACCESS_SPEC.loader.exec_module(PLATFORM_ACCESS)
+# The block-recognition rule and the stop record belong to the platform access permission module.
+SAFETY_SIGNAL = PLATFORM_ACCESS.SAFETY_SIGNAL
+STRUCTURED_SAFETY_SIGNAL = PLATFORM_ACCESS.STRUCTURED_SAFETY_SIGNAL
+state_contains_safety_limit = PLATFORM_ACCESS.state_contains_safety_limit
 
 
 def parse_args() -> argparse.Namespace:
@@ -83,18 +76,7 @@ def acquire_single_flight(lock_path: Path | None):
 
 
 def write_safety_stop(path: Path | None) -> None:
-    if path is None:
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    except FileExistsError:
-        return
-    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-        json.dump({
-            "stopped_at": datetime.now(timezone.utc).isoformat(),
-            "reason": "platform-safety-limit",
-        }, handle)
+    PLATFORM_ACCESS.write_stop(path, "detail")
 
 
 def validate_urls(text: str, max_items: int) -> list[tuple[str, str]]:
@@ -234,24 +216,6 @@ def note_and_comments_from_state(state: dict, note_id: str) -> tuple[dict, objec
     return {}, []
 
 
-def state_contains_safety_limit(value: object) -> bool:
-    if isinstance(value, list):
-        return any(state_contains_safety_limit(item) for item in value)
-    if not isinstance(value, dict):
-        return False
-    for key, child in value.items():
-        normalized_key = re.sub(r"[^a-z]", "", str(key).lower())
-        if normalized_key in {"code", "status", "errorcode", "statuscode"} and str(child).strip() in {"300031", "429"}:
-            return True
-        if normalized_key in SAFETY_STATE_MESSAGE_KEYS and SAFETY_SIGNAL.search(str(child or "")):
-            return True
-        if normalized_key in {"note", "notedata", "notedetailmap", "comments", "commentdata"}:
-            continue
-        if state_contains_safety_limit(child):
-            return True
-    return False
-
-
 def normalize(raw: dict, note_id: str, comments=None) -> dict:
     for key in ("作品ID", "笔记ID", "note_id", "noteId"):
         identity = raw.get(key)
@@ -348,7 +312,7 @@ async def fetch(
     delay: float,
     safety_stop_path: Path | None = None,
 ) -> tuple[list[dict], list[dict]]:
-    if safety_stop_path is not None and safety_stop_path.exists():
+    if PLATFORM_ACCESS.record_exists(safety_stop_path):
         return [], [
             {"note_id": note_id, "reason": "safety stop"}
             for _, note_id in urls
@@ -368,7 +332,7 @@ async def fetch(
     await app.__aenter__()
     try:
         for index, (url, note_id) in enumerate(urls):
-            if safety_stop_path is not None and safety_stop_path.exists():
+            if PLATFORM_ACCESS.record_exists(safety_stop_path):
                 failures.extend(
                     {"note_id": remaining_id, "reason": "safety stop"}
                     for _, remaining_id in urls[index:]
@@ -388,7 +352,7 @@ async def fetch(
                     break
             if index + 1 < len(urls) and delay > 0:
                 await asyncio.sleep(delay)
-                if safety_stop_path is not None and safety_stop_path.exists():
+                if PLATFORM_ACCESS.record_exists(safety_stop_path):
                     failures.extend(
                         {"note_id": remaining_id, "reason": "safety stop"}
                         for _, remaining_id in urls[index + 1:]
@@ -411,7 +375,7 @@ def main() -> None:
         raise ValueError("--delay must be between 0 and 60 seconds")
     verify_checkout(xhs_dir)
     urls = validate_urls(sys.stdin.read(), args.max_items)
-    if safety_stop_path is not None and safety_stop_path.exists():
+    if PLATFORM_ACCESS.record_exists(safety_stop_path):
         json.dump({
             "notes": [],
             "failures": [
