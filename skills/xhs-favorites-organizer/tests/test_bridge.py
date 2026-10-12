@@ -2300,7 +2300,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             outcomes = [json.loads(path.read_text(encoding="utf-8")) for path in results]
             self.assertEqual(sum(outcome is not None for outcome in outcomes), 1)
             self.assertEqual(len(list(published.glob("*.json"))), 1)
-            state = json.loads((state_dir / "manual-sync.json").read_text(encoding="utf-8"))
+            record = json.loads((state_dir / "manual-sync.json").read_text(encoding="utf-8"))
+            self.assertEqual(record["schema_version"], 2)
+            state = record["bookkeeping"]
             self.assertEqual(state["published_build_version"], build_version)
             self.assertEqual(state["published_site_manifest_sha256"], site_manifest_sha256)
 
@@ -4454,7 +4456,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             def tracking_atomic(path, value):
                 if (
                     Path(path) == bridge.manual_sync_path
-                    and value.get("state") == "completed"
+                    and value.get("bookkeeping", value).get("state") == "completed"
                     and threading.current_thread().name == "test-finalization-complete"
                 ):
                     complete_commit.set()

@@ -175,5 +175,71 @@ class OfflineRunnerTests(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(
+    os.name == "nt" and shutil.which("powershell.exe"),
+    "the offline analysis runner is a Windows PowerShell script",
+)
+class OfflineRunnerScopeTests(unittest.TestCase):
+    """The runner finds the round's sealed notes whichever way the round record is stored."""
+
+    def run_runner_for(self, record_of):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            state_dir = workspace / ".xhs-favorites"
+            (state_dir / "media").mkdir(parents=True)
+            (state_dir / "media" / f"{NOTE_ID}.jpg").write_bytes(b"image")
+            (workspace / "tools").mkdir()
+            (workspace / "tools" / "ocr-engine.cmd").write_text("@echo off\r\necho recognised\r\n", encoding="utf-8")
+            (workspace / "config").mkdir()
+            config = workspace / "config" / "xhs-favorites.json"
+            config.write_text(json.dumps({
+                "curation_file": "curation.json",
+                "image_ocr": {"enabled": True, "engine": "tools/ocr-engine.cmd"},
+            }), encoding="utf-8")
+            (workspace / "curation.json").write_text("{}", encoding="utf-8")
+            (state_dir / "catalog.json").write_text(json.dumps({
+                "version": 1, "notes": {NOTE_ID: {"note_id": NOTE_ID, "content_sha256": "b" * 64}},
+            }), encoding="utf-8")
+            (state_dir / "manual-sync.json").write_text(json.dumps(record_of()), encoding="utf-8")
+            environment = {
+                **os.environ,
+                "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", ""),
+            }
+            completed = subprocess.run(
+                [
+                    shutil.which("powershell.exe"), "-NoProfile", "-NonInteractive",
+                    "-ExecutionPolicy", "Bypass", "-File", str(RUNNER),
+                    "-Workspace", str(workspace), "-Config", str(config),
+                ],
+                capture_output=True, text=True, timeout=90, env=environment,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout)
+            report = json.loads((state_dir / "image-ocr-status.json").read_text(encoding="utf-8"))
+            return [record["note_id"] for record in report["records"]]
+
+    def test_an_old_single_level_round_gives_the_runner_its_sealed_notes(self):
+        legacy = {"state": "safety-stopped", "frozen_scope": {"note_ids": [NOTE_ID]}}
+        self.assertEqual(self.run_runner_for(lambda: legacy), [NOTE_ID])
+
+    def test_a_staged_round_gives_the_runner_its_sealed_notes(self):
+        state = load("xhs_state_offline_work", "organization_state.py")
+
+        def staged():
+            record = state.apply_event(None, "round_started", {
+                "batch": "manual20261012090000", "started_at": ROUND_START,
+                "run_board_ids": ["b1"], "mode": "incremental",
+            })
+            return state.apply_event(record, "board_imported", {
+                "run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "A",
+                "outcome": "safety-stopped", "scanned": 1, "new": None, "note_ids": [NOTE_ID],
+                "config_sha256": "c" * 64,
+            })
+
+        record = staged()
+        self.assertIn("frozen_scope", record["bookkeeping"])
+        self.assertNotIn("frozen_scope", record)
+        self.assertEqual(self.run_runner_for(staged), [NOTE_ID])
+
+
 if __name__ == "__main__":
     unittest.main()

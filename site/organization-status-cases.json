@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "note": "Event sequences for the organization run state, shared by the Python and the page tests. Each case feeds the events to an empty record in order, then compares the public status.",
+  "cases": [
+    {
+      "name": "everything completes and publishes",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "completed", "scanned": 30, "new": 4, "note_ids": ["n1", "n2"], "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": false, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+        ["summary_plan_empty", {"run_id": "manual20261012090000_b1", "abandoned": false, "already_abandoned": false, "pending_count": 0, "core": null}],
+        ["finalization_started", {"board_name": "收藏夹A"}],
+        ["publish_claimed", {"build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}],
+        ["publish_recorded", {"status": "published", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}],
+        ["finalization_finished", {"error": "", "failed_phase": "", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "curation_counts": {"accepted": 2, "pending": 0}, "completed": true, "board_name": "收藏夹A", "next_board_id": "", "publish_status": "published"}]
+      ],
+      "expect": {
+        "state": "published",
+        "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "phases": {
+          "core": ["completed", ""], "summary": ["not_required", ""], "evidence": ["ready", ""],
+          "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["published", ""]
+        },
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 2, "curation_pending": 0},
+        "copy_key": "core_completed"
+      }
+    },
+    {
+      "name": "safety stop while the core import runs",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "safety-stopped", "scanned": 30, "new": null, "note_ids": ["n1"], "error": "小红书触发安全限制，已停止本轮且不会继续重试", "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": false, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}]
+      ],
+      "expect": {
+        "state": "safety_stopped",
+        "build_version": "",
+        "phases": {
+          "core": ["safety_stopped", "safety_signal"], "summary": ["not_started", ""], "evidence": ["not_started", ""],
+          "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 30, "new": null, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "copy_key": "safety_stopped"
+      }
+    },
+    {
+      "name": "safety stop while summaries run",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "completed", "scanned": 30, "new": 4, "note_ids": ["n1", "n2", "n3"], "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": true, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+        ["summary_planned", {"run_id": "manual20261012090000_b1", "board_name": "收藏夹A", "planned": 3}],
+        ["summary_progress", {"summarized_delta": 1, "failed_delta": 0, "pending": 2}],
+        ["summary_halted", {"run_id": "manual20261012090000_b1", "safety": true, "reason": "xhs-safety-stop", "attempted": 1, "remaining": 1, "error": "Xiaohongshu safety stop detected; core import was preserved."}]
+      ],
+      "expect": {
+        "state": "safety_stopped",
+        "build_version": "",
+        "phases": {
+          "core": ["completed", ""], "summary": ["safety_stopped", "safety_signal"], "evidence": ["missing", "evidence_missing"],
+          "curation": ["pending_review", "audit_pending"], "build": ["not_started", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 1, "summary_failed": 1, "summary_batch_aborted": 1, "curation_accepted": 0, "curation_pending": 0},
+        "copy_key": "safety_stopped"
+      }
+    },
+    {
+      "name": "core done and the summary batch aborted",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "completed", "scanned": 30, "new": 4, "note_ids": ["n1", "n2"], "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": true, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+        ["summary_planned", {"run_id": "manual20261012090000_b1", "board_name": "收藏夹A", "planned": 2}],
+        ["summary_plan_empty", {"run_id": "manual20261012090000_b1", "abandoned": true, "already_abandoned": false, "pending_count": 2, "core": null}],
+        ["finalization_started", {"board_name": "收藏夹A"}],
+        ["finalization_finished", {"error": "", "failed_phase": "", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "curation_counts": {"accepted": 1, "pending": 0}, "completed": true, "board_name": "收藏夹A", "next_board_id": ""}]
+      ],
+      "expect": {
+        "state": "organization_partial",
+        "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "phases": {
+          "core": ["completed", ""], "summary": ["batch_aborted", "batch_aborted"], "evidence": ["missing", "evidence_missing"],
+          "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 2, "curation_accepted": 1, "curation_pending": 0},
+        "copy_key": "summary_batch_aborted"
+      }
+    },
+    {
+      "name": "one note's summary fails",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "completed", "scanned": 30, "new": 4, "note_ids": ["n1"], "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": true, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+        ["summary_planned", {"run_id": "manual20261012090000_b1", "board_name": "收藏夹A", "planned": 1}],
+        ["summary_progress", {"summarized_delta": 0, "failed_delta": 1, "pending": 0}],
+        ["finalization_started", {"board_name": "收藏夹A"}],
+        ["finalization_finished", {"error": "", "failed_phase": "", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "curation_counts": {"accepted": 0, "pending": 1}, "completed": true, "board_name": "收藏夹A", "next_board_id": ""}]
+      ],
+      "expect": {
+        "state": "organization_partial",
+        "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "phases": {
+          "core": ["completed", ""], "summary": ["failed", "contract_invalid"], "evidence": ["missing", "evidence_missing"],
+          "curation": ["pending_review", "audit_pending"], "build": ["succeeded", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 1, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 1},
+        "copy_key": "summary_failed"
+      }
+    },
+    {
+      "name": "some summaries saved and the rest not attempted leaves the evidence short",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "completed", "scanned": 30, "new": 4, "note_ids": ["n1", "n2", "n3"], "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": true, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+        ["summary_planned", {"run_id": "manual20261012090000_b1", "board_name": "收藏夹A", "planned": 3}],
+        ["summary_progress", {"summarized_delta": 1, "failed_delta": 0, "pending": 2}],
+        ["summary_plan_empty", {"run_id": "manual20261012090000_b1", "abandoned": true, "already_abandoned": false, "pending_count": 2, "core": null}],
+        ["finalization_started", {"board_name": "收藏夹A"}],
+        ["finalization_finished", {"error": "", "failed_phase": "", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "curation_counts": {"accepted": 1, "pending": 2}, "completed": true, "board_name": "收藏夹A", "next_board_id": ""}]
+      ],
+      "expect": {
+        "state": "organization_partial",
+        "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "phases": {
+          "core": ["completed", ""], "summary": ["partial", "batch_aborted"], "evidence": ["missing", "evidence_missing"],
+          "curation": ["pending_review", "audit_pending"], "build": ["succeeded", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 1, "summary_failed": 0, "summary_batch_aborted": 2, "curation_accepted": 1, "curation_pending": 2},
+        "copy_key": "evidence_missing"
+      }
+    },
+    {
+      "name": "build fails and the previous version stays",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "completed", "scanned": 30, "new": 4, "note_ids": ["n1"], "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": false, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+        ["summary_plan_empty", {"run_id": "manual20261012090000_b1", "abandoned": false, "already_abandoned": false, "pending_count": 0, "core": null}],
+        ["finalization_started", {"board_name": "收藏夹A"}],
+        ["finalization_finished", {"error": "synthetic build failure", "failed_phase": "build", "completed": true, "board_name": "收藏夹A", "next_board_id": ""}]
+      ],
+      "expect": {
+        "state": "failed",
+        "build_version": "",
+        "phases": {
+          "core": ["completed", ""], "summary": ["not_required", ""], "evidence": ["ready", ""],
+          "curation": ["pending_review", "audit_pending"], "build": ["failed", "build_failed"], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "copy_key": "build_failed"
+      }
+    },
+    {
+      "name": "publish fails and the local result is kept",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "completed", "scanned": 30, "new": 4, "note_ids": ["n1"], "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": false, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+        ["summary_plan_empty", {"run_id": "manual20261012090000_b1", "abandoned": false, "already_abandoned": false, "pending_count": 0, "core": null}],
+        ["finalization_started", {"board_name": "收藏夹A"}],
+        ["publish_claimed", {"build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}],
+        ["publish_recorded", {"status": "failed", "error": "remote refused", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}],
+        ["finalization_finished", {"error": "", "failed_phase": "", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "curation_counts": {"accepted": 1, "pending": 0}, "completed": true, "board_name": "收藏夹A", "next_board_id": "", "publish_status": "failed"}]
+      ],
+      "expect": {
+        "state": "completed_with_warnings",
+        "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "phases": {
+          "core": ["completed", ""], "summary": ["not_required", ""], "evidence": ["ready", ""],
+          "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["failed", "publish_failed"]
+        },
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 1, "curation_pending": 0},
+        "copy_key": "publish_failed"
+      }
+    },
+    {
+      "name": "publish finds nothing new",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "completed", "scanned": 30, "new": 0, "note_ids": ["n1"], "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": false, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+        ["summary_plan_empty", {"run_id": "manual20261012090000_b1", "abandoned": false, "already_abandoned": false, "pending_count": 0, "core": null}],
+        ["finalization_started", {"board_name": "收藏夹A"}],
+        ["publish_claimed", {"build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}],
+        ["publish_recorded", {"status": "unchanged", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}],
+        ["finalization_finished", {"error": "", "failed_phase": "", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "curation_counts": {"accepted": 1, "pending": 0}, "completed": true, "board_name": "收藏夹A", "next_board_id": "", "publish_status": "unchanged"}]
+      ],
+      "expect": {
+        "state": "published",
+        "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "phases": {
+          "core": ["completed", ""], "summary": ["not_required", ""], "evidence": ["ready", ""],
+          "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["unchanged", ""]
+        },
+        "counts": {"scanned": 30, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 1, "curation_pending": 0},
+        "copy_key": "publish_unchanged"
+      }
+    },
+    {
+      "name": "the round never heard from the page and expired",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["run_expired", {"error": "Chrome 已打开，但未检测到 Tampermonkey 响应；请确认脚本已启用后重试。", "halted_run_ids": ["manual20261012090000_b1"], "pending": 0}]
+      ],
+      "expect": {
+        "state": "failed",
+        "build_version": "",
+        "phases": {
+          "core": ["failed", "contract_invalid"], "summary": ["not_started", ""], "evidence": ["not_started", ""],
+          "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "copy_key": "core_failed"
+      }
+    },
+    {
+      "name": "local rebuild in progress",
+      "events": [
+        ["rebuild_started", {"batch": "localrebuild20261012100000", "started_at": "2026-10-12T10:00:00+10:00", "note_ids": ["n1", "n2"]}],
+        ["rebuild_claimed", {"batch": "localrebuild20261012100000"}],
+        ["rebuild_phase", {"batch": "localrebuild20261012100000", "phase": "build", "curation_accepted": 2, "curation_pending": 0}]
+      ],
+      "expect": {
+        "state": "core_completed",
+        "build_version": "",
+        "phases": {
+          "core": ["not_required", ""], "summary": ["not_required", ""], "evidence": ["not_started", ""],
+          "curation": ["validated", ""], "build": ["running", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 2, "curation_pending": 0},
+        "copy_key": "local_rebuild_running"
+      }
+    },
+    {
+      "name": "local rebuild finished without publishing",
+      "events": [
+        ["rebuild_started", {"batch": "localrebuild20261012100000", "started_at": "2026-10-12T10:00:00+10:00", "note_ids": ["n1", "n2"]}],
+        ["rebuild_claimed", {"batch": "localrebuild20261012100000"}],
+        ["rebuild_phase", {"batch": "localrebuild20261012100000", "phase": "build", "curation_accepted": 2, "curation_pending": 0}],
+        ["rebuild_completed", {"batch": "localrebuild20261012100000", "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "site_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "curation_accepted": 2, "curation_pending": 0}]
+      ],
+      "expect": {
+        "state": "organization_ready",
+        "build_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "phases": {
+          "core": ["not_required", ""], "summary": ["not_required", ""], "evidence": ["not_started", ""],
+          "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 2, "curation_pending": 0},
+        "copy_key": "local_rebuild_ready"
+      }
+    }
+  ]
+}

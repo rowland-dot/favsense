@@ -668,43 +668,11 @@ function renderManualSync(status = state.manualSync) {
 
   if (v2) {
     const copy = state.statusContract?.copy || {};
-    const phases = status.phases;
-    if (safetyStopped) {
-      elements.manualSyncTitle.textContent = copy.safety_stopped;
-    } else if (phases.core.status === "not_required" && active) {
-      elements.manualSyncTitle.textContent = copy.local_rebuild_running;
-    } else if (phases.core.status === "running") {
-      elements.manualSyncTitle.textContent = copy.core_running;
-    } else if (phases.core.status === "not_started") {
-      elements.manualSyncTitle.textContent = copy.core_not_started;
-    } else if (phases.core.status === "failed") {
-      elements.manualSyncTitle.textContent = copy.core_failed;
-    } else if (phases.build.status === "failed") {
-      elements.manualSyncTitle.textContent = copy.build_failed;
-    } else if (phases.publish.status === "failed") {
-      elements.manualSyncTitle.textContent = copy.publish_failed;
-    } else if (phases.publish.status === "unchanged") {
-      elements.manualSyncTitle.textContent = copy.publish_unchanged;
-    } else if (phases.summary.status === "failed") {
-      elements.manualSyncTitle.textContent = copy.summary_failed;
-    } else if (phases.summary.status === "batch_aborted") {
-      elements.manualSyncTitle.textContent = copy.summary_batch_aborted;
-    } else if (["missing", "partial", "blocked"].includes(phases.evidence.status)) {
-      elements.manualSyncTitle.textContent = copy.evidence_missing;
-    } else if (phases.summary.status === "not_started") {
-      elements.manualSyncTitle.textContent = copy.summary_not_started;
-    } else if (phases.core.status === "not_required") {
-      elements.manualSyncTitle.textContent = copy.local_rebuild_ready;
-    } else {
-      elements.manualSyncTitle.textContent = copy.core_completed;
-    }
-    if (phases.core.status === "not_required") {
-      elements.manualSyncDetail.textContent = copy.local_rebuild_detail;
-    } else {
-      elements.manualSyncDetail.textContent = phases.core.status === "completed"
-        ? `${copy.core_completed}；已扫描 ${status.counts.scanned} 条，新增 ${countText(status.counts.new)} 条。`
-        : `已扫描 ${status.counts.scanned} 条，新增 ${countText(status.counts.new)} 条。`;
-    }
+    // The server chose the sentence; the page only shows the contract's wording for its key.
+    elements.manualSyncTitle.textContent = copy[status.copy_key] || "";
+    elements.manualSyncDetail.textContent = status.copy_key.startsWith("local_rebuild")
+      ? copy.local_rebuild_detail
+      : `已扫描 ${status.counts.scanned} 条，新增 ${countText(status.counts.new)} 条。`;
   } else if (status.state === "starting") {
     elements.manualSyncTitle.textContent = "正在使用 SOP 小红书扫描浏览器";
     elements.manualSyncDetail.textContent = "请在 SOP 扫描浏览器中保持小红书登录；扫描与整理进度会自动回到这里。";
@@ -776,17 +744,13 @@ async function refreshManualSyncStatus() {
       : (status.state === "completed" || status.core_completed === true);
     if (corePreserved && state.manualSyncStartedHere) {
       state.manualSyncStartedHere = false;
-      const refreshMessage = ["safety-stopped", "safety_stopped"].includes(status.state)
-        ? "核心整理结果已保留；已因小红书安全限制停止，正在刷新知识库"
-        : v2 && status.phases.build.status === "failed"
-          ? "核心收藏已保存；构建失败，已保留上一版"
-          : v2 && status.phases.publish.status === "failed"
-            ? "本地整理已保留；发布失败，远端仍为上一版"
-            : v2 && status.state === "organization_partial"
-              ? "核心收藏已保存；部分整理未完成，正在刷新可用结果"
-        : status.core_completed === true && status.state !== "completed"
-          ? "核心整理完成，点点增强未完成；正在刷新知识库"
-          : "整理完成，正在刷新知识库";
+      const refreshMessage = v2
+        ? state.statusContract?.copy?.[status.copy_key] || ""
+        : ["safety-stopped", "safety_stopped"].includes(status.state)
+          ? "核心整理结果已保留；已因小红书安全限制停止，正在刷新知识库"
+          : status.core_completed === true && status.state !== "completed"
+            ? "核心整理完成，点点增强未完成；正在刷新知识库"
+            : "整理完成，正在刷新知识库";
       showToast(refreshMessage);
       window.setTimeout(() => location.reload(), 900);
     }

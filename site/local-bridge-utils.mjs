@@ -194,11 +194,22 @@ export function validateLocalNoteOrganizationStatus(value, sourceContract) {
   };
 }
 
+// The sentence the server chose for a run, as the status contract words it.
+export function syncStatusCopy(status, sourceContract) {
+  const contract = organizationContract(sourceContract);
+  if (typeof status?.copy_key !== "string" || !Object.hasOwn(contract.copy, status.copy_key)) {
+    throw new Error("本机整理状态不可用");
+  }
+  return contract.copy[status.copy_key];
+}
+
 function validateV2SyncStatus(value, sourceContract) {
   const contract = organizationContract(sourceContract);
   const { legacy_safety_stop: leftoverStop, ...organizationKeys } = value;
   const keys = Object.keys(organizationKeys).sort().join(",");
-  if (keys !== "build_version,counts,ok,phases,run_id,schema_version,state") throw new Error("本机整理状态不可用");
+  if (keys !== "build_version,copy_key,counts,ok,phases,run_id,schema_version,state") throw new Error("本机整理状态不可用");
+  // The server picks the sentence; the page only accepts a key the contract actually has.
+  if (typeof value.copy_key !== "string" || !Object.hasOwn(contract.copy, value.copy_key)) throw new Error("本机整理状态不可用");
   const leftover = "legacy_safety_stop" in value ? validateLegacySafetyStop(leftoverStop) : null;
   if (value.ok !== true || value.schema_version !== 2 || !contract.overall_states.includes(value.state)) throw new Error("本机整理状态不可用");
   if (typeof value.run_id !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(value.run_id)) throw new Error("本机整理状态不可用");
