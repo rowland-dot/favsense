@@ -1,9 +1,9 @@
 {
   "meta": {
-    "buildVersion": "ecaffafecaa1ca1921d3b493788d7110b45164aa956ae92cc89acaa03e8c2eb1",
+    "buildVersion": "fa28098c09aeb7373417ff8c4ce42af3ab5295e1d960ec8954df696231eaecfa",
     "title": "小红书收藏知识工作台",
     "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
-    "generatedAt": "2026-10-11T15:48:47.668Z",
+    "generatedAt": "2026-10-12T16:21:20.416Z",
     "source": "xiaohongshu",
     "sourceBoards": [
       "Skills",
@@ -33,10 +33,10 @@
       "to": "判断过",
       "intro": "收藏会先自动收录；完成解读的内容会整理成可搜索的总结、相关资源和具体用法。你只管收藏，拾光台负责把零散内容逐步变成有用的知识。"
     },
-    "noteCount": 374,
-    "verifiedNoteCount": 343,
+    "noteCount": 377,
+    "verifiedNoteCount": 348,
     "categoryCount": 16,
-    "resourceCount": 127,
+    "resourceCount": 130,
     "resourceIndexEnabled": true,
     "resourcesVerifiedAt": "2026-08-29",
     "resourceIndex": {
@@ -51,6 +51,7 @@
       "detail_label": "相关资源",
       "registry_file": "skills/xhs-favorites-organizer/references/software-resources.json",
       "collection": "resources",
+      "verification_max_age_days": 30,
       "mapping": {
         "name": "name",
         "aliases": "aliases",
@@ -184,7 +185,7 @@
     },
     "frameEvidenceCount": 9630,
     "evidenceStatsAutoUpdated": true,
-    "videoMethod": "343 条收藏已完成视频内容核验；其余条目目前按原帖公开文字展示",
+    "videoMethod": "348 条收藏已完成视频内容核验；其余条目目前按原帖公开文字展示",
     "kindLabels": {
       "Note": "观点、资讯与知识说明",
       "Tool": "可直接使用的工具",
@@ -196,7 +197,7 @@
   "categories": [
     {
       "name": "Skills",
-      "count": 153
+      "count": 154
     },
     {
       "name": "AI电商",
@@ -212,11 +213,11 @@
     },
     {
       "name": "AI设计",
-      "count": 20
+      "count": 21
     },
     {
       "name": "AI视频生成",
-      "count": 66
+      "count": 67
     },
     {
       "name": "AI基础知识",
@@ -12797,29 +12798,39 @@
       "category": "Skills",
       "categorySource": "source_board",
       "categoryReason": "",
-      "suggestedCategory": "Skills与工作流",
+      "suggestedCategory": "",
       "sourceBoards": [
         "Skills"
       ],
-      "themes": [],
-      "summary": "AI开发最浪费时间的情况：写到一半，才发现 GitHub 已经有成熟方案。 这两个 Skill 会先查现成产品、开源项目和成本；找不到成熟解法，再从论文中筛选可验证路线。 #好视频扶持计划[话题]# #howto入门vibecoding[话题]# #AI进化生活howto[话题]# #agent[话题]# #Codex[话题]#",
-      "deepSummary": "AI开发最浪费时间的情况：写到一半，才发现 GitHub 已经有成熟方案。 这两个 Skill 会先查现成产品、开源项目和成本；找不到成熟解法，再从论文中筛选可验证路线。 #好视频扶持计划[话题]# #howto入门vibecoding[话题]# #AI进化生活howto[话题]# #agent[话题]# #Codex[话题]#",
-      "deepSummarySource": "source-metadata",
-      "curationRevision": "",
-      "summaryStatus": "pending_review",
-      "curationStatus": "pending_review",
-      "summaryReason": "audit_pending",
+      "themes": [
+        "Agent Skills",
+        "先例检索",
+        "方案调研"
+      ],
+      "summary": "视频介绍两个让编码 Agent 动手前先找现成解法的 Skill。advise-project-approach（AaravKashyap12/advise-project-approach）先判断是全新项目还是给现有产品加功能，需求不清时追问给谁用、要完成什么和预算，未回答的部分写成假设，再检索付费产品与开源项目；它不只按 GitHub Star 排名，而是区分候选方案里哪些能力适合你、哪些设计只服务于对方的规模，并按开发期、首批用户和增长期分阶段估算成本。网上没有成熟方案时接第二个 Skill：音频里读作“Neuroarchive”，对应官方项目 NeuroArxiv（UditAkhourii/neuroarxiv，MIT），它检索 arXiv 论文，每篇论文用独立上下文单独阅读，再汇总成一个带出处的方案；两个仓库都声明支持 Claude Code 与 Codex。视频里的 Sendbird、Stream 价格和给 Skills 做自动更新的案例是作者举例，未单独核实。",
+      "deepSummary": "根据你引用的笔记，这是一条关于​​提升 AI 开发效率​​的视频内容，核心是介绍两个让 AI 在写代码前先\"找方案\"的 Skill。以下是总结：\n\n核心痛点\n\n让 AI 写功能时，经常写到一半才发现 GitHub 上早就有成熟方案，白白浪费时间和 Token。\n\n两个 Skill 分别做什么\n​​advise-project-approach​​：先判断项目阶段（全新项目还是给现有产品加功能），追问用户目标、使用对象和预算，再去搜索付费工具和开源项目。它不会只看 GitHub Star 排名，而是把每个候选方案拆成\"适合你的部分\"和\"只服务于对方规模的部分\"，并分阶段计算成本，避免后期成本失控。\n​​neuro archive​​：当网上没有成熟方案可参考时，去 arXiv 搜索公开论文，用多个子 Agent 并行分析每篇论文的问题、方法和限制，最后由主 Agent 比较证据并选定方案，减少长上下文互相干扰。\n实际案例\n\n团队想给 Skills 做自动更新，最初打算开发一个网页来上传和同步。运行第一个 Skill 后，发现现阶段不需要完整网站，已有的 Skills CLI 配合 GitHub 就能搞定。但遇到自动拉取的安全风险时，第一个 Skill 停下来了，接上第二个 Skill 去查论文，最终从一篇关于软件包系统的研究中找到方法，实现了一个终端 CLI，发布方只需两条命令就能完成发布和更新。\n\n先加一句\"写代码之前先告诉我已经有哪些方案，",
+      "deepSummarySource": "xiaohongshu-diandian",
+      "curationRevision": "e2f65531944fb7e7eed627a43e6aeafca69a3d9a22c66df778d5a59b5396b2c3",
+      "summaryStatus": "accepted",
+      "curationStatus": "accepted",
+      "summaryReason": "",
       "summaryState": "captured",
-      "summaryReasonCode": "audit_pending",
-      "reviewedAt": "",
-      "action": "",
-      "tools": [],
-      "kind": "Tool",
-      "resources": [],
+      "summaryReasonCode": "",
+      "reviewedAt": "2026-10-13",
+      "action": "下一个要加的功能，先在 Claude Code 或 Codex 里用 advise-project-approach 跑一遍，检查它列出的现成方案和分阶段成本是否站得住，再决定自研范围；只有确实找不到现成实现、需要做算法或架构选择时再调用 NeuroArxiv，并逐条核对它引用论文的局限。两者都从官方仓库安装，NeuroArxiv 会为每篇论文单独调用一次模型，先用小问题试一次看用量。",
+      "tools": [
+        "Neuroarchive",
+        "advise-project-approach"
+      ],
+      "kind": "Workflow",
+      "resources": [
+        "NeuroArxiv",
+        "advise-project-approach"
+      ],
       "resourceIds": [],
       "evidence": {
-        "method": "目前依据原帖公开文字整理，媒体内容尚未完整解读",
-        "locallyAvailable": false
+        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+        "locallyAvailable": true
       }
     },
     {
@@ -16127,29 +16138,167 @@
       "category": "AI音乐",
       "categorySource": "source_board",
       "categoryReason": "",
-      "suggestedCategory": "其他软件与 AI",
+      "suggestedCategory": "",
       "sourceBoards": [
         "AI音乐"
       ],
-      "themes": [],
-      "summary": "#AI新手村[话题]# #AI工具[话题]# #音乐人[话题]# #作曲[话题]# #ai[话题]# #音乐制作[话题]# #音乐制作人[话题]# #ai音乐[话题]# #音乐热爱者[话题]#",
-      "deepSummary": "#AI新手村[话题]# #AI工具[话题]# #音乐人[话题]# #作曲[话题]# #ai[话题]# #音乐制作[话题]# #音乐制作人[话题]# #ai音乐[话题]# #音乐热爱者[话题]#",
-      "deepSummarySource": "source-metadata",
-      "curationRevision": "",
-      "summaryStatus": "pending_review",
-      "curationStatus": "pending_review",
-      "summaryReason": "audit_pending",
+      "themes": [
+        "AI音乐",
+        "Suno",
+        "提示词"
+      ],
+      "summary": "视频讲用 Suno 写歌时减少“AI 塑料味”的三个做法（作者经验，未经官方核实）：一是在歌词前加结构标签，如 [Verse]、[Chorus]、[Guitar Solo]，用标签而不是在提示词里写长句来控制段落，避免主歌就飙高音、副歌乱飘；二是在风格提示里加 raw acoustic、live performance 这类词，压住默认偏重的混响与电音，人声吞字时再加 clear vocals；三是某一段跑调或乱唱时不整首重做，而是把时间轴拖到出问题前一秒，用 Extend 从那里续写，只改一小段、少花积分。“50 积分出神曲、5000 积分全是塑料味”是作者的夸张对比，结尾的“爆款音乐人词典”是引流资料。",
+      "deepSummary": "根据你引用的笔记，这是一篇关于 ​​Suno​​（AI 音乐工具）的实操教程，核心主题是\"为什么别人 50 积分能出神曲，你砸 5000 积分却全是 AI 塑料味\"，并拆解了 3 套提升音乐质量的方法。\n\n以下是完整总结：\n\n核心问题：AI 音乐的\"塑料味\"从哪来\n\nSuno 本质上是一个被海量音频喂大的\"概率盲盒\"，你塞词进去它就吐曲子。但系统默认会拉满混响和电音，导致人声吞字、副歌乱飘、结构崩盘，听起来就像\"修音修过头的网红主播\"。",
+      "deepSummarySource": "xiaohongshu-diandian",
+      "curationRevision": "62f2ba2f476c2ca4a2497b17a6059697d3f17bda291df003d78a9386cc678c18",
+      "summaryStatus": "accepted",
+      "curationStatus": "accepted",
+      "summaryReason": "",
       "summaryState": "captured",
-      "summaryReasonCode": "audit_pending",
-      "reviewedAt": "",
-      "action": "",
+      "summaryReasonCode": "",
+      "reviewedAt": "2026-10-13",
+      "action": "下次用 Suno 写歌，先给同一段歌词加 [Verse]、[Chorus] 结构标签生成一版，再在风格提示里加 raw acoustic、live performance 和 clear vocals 生成第二版，对比副歌位置和吐字清晰度；遇到局部跑调时用 Extend 从出问题前一秒续写，记下每种做法花掉的积分，只保留确实有效的标签组合。",
       "tools": [],
-      "kind": "Tool",
+      "kind": "Note",
       "resources": [],
       "resourceIds": [],
       "evidence": {
-        "method": "目前依据原帖公开文字整理，媒体内容尚未完整解读",
-        "locallyAvailable": false
+        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6ac34fd40000000018005b2a",
+      "number": 375,
+      "title": "Anthropic 新规：你对Skills的认知都已过时",
+      "author": "马丁没有早晨",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Anthropic+%E6%96%B0%E8%A7%84%EF%BC%9A%E4%BD%A0%E5%AF%B9Skills%E7%9A%84%E8%AE%A4%E7%9F%A5%E9%83%BD%E5%B7%B2%E8%BF%87%E6%97%B6+%E9%A9%AC%E4%B8%81%E6%B2%A1%E6%9C%89%E6%97%A9%E6%99%A8&source=web_search_result_notes",
+      "publishedAt": "2026-10-06_00:30:00",
+      "likes": "375",
+      "collections": "609",
+      "mediaType": "视频",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [
+        "Skills"
+      ],
+      "themes": [
+        "Agent Skills",
+        "Claude",
+        "Skill编写"
+      ],
+      "summary": "视频拆解 Anthropic 官方文档《Skill authoring best practices》中的几条写法（帖子称“新规、旧认知已过时”，实为官方最佳实践指南）：超过 100 行的参考文件在顶部加目录，因为 Claude 预览文件时可能只读一部分；所有参考文件直接从 SKILL.md 链接、只保持一层，避免嵌套引用被 head -100 式预览截断；按任务的脆弱程度选择高、中、低三档自由度，越容易出错、越要求一致的步骤越应写成固定脚本；在计划使用的 Haiku、Sonnet、Opus 上分别测试；顺序重要的复杂流程配可逐项勾选的检查清单，质量关键任务加“检查、修复、再检查”的反馈循环；不假设依赖已安装，写明安装命令。视频里“重要规则在第 100 行之后就等于不存在”是作者的夸张说法，官方只说预览时可能读不全。",
+      "deepSummary": "根据你引用的笔记，这是一期关于 ​​Anthropic 对 Claude Skills 新实践规则​​的拆解视频，核心内容是：如果你之前按旧方式写的 Skill 输出时好时坏，问题可能不在提示词不够长，而是没跟上最新规则。\n\n以下是核心要点总结：\n\n核心规则更新\n​​超过 100 行的参考文件必须加目录​​：Claude 会先读前 100 行判断是否需要继续读，如果重要规则在 100 行之后且没有目录，模型可能直接忽略。解决方法是在文件顶部加一个目录（索引），让模型能跳转到需要的部分。\n​​保持一层嵌套​​：如果 skill.md 指向 advanced.md，而 advanced.md 又指向 details.md，模型可能只预览到 details.md 的一部分。正确做法是所有参考文件都​​直接从 skill.md 链接​​，保持一层深度。\n​​复杂流程配检查清单​​：对于顺序重要的任务（比如先查数据再生成报告），把步骤写成清单让 Claude 逐条打勾执行；但如果顺序不重要，就不要加清单，保留自由度。\n设计原则\n​​不同任务用不同写法​​：代码审查、客户报告、数据库迁移不应该用同一种结构。高自由度任务保留判断空间，低自由度任务用脚本和固定顺序保证一致性。\n​​在多个模型上测试​​：Haiku、Sonnet、Opus 需要的详细程度不同，旧模型有效的冗长规则在更强的推理模型上反而可能变成干扰。\n环境配置\n​​别假设本机环境​​：把依赖、安装命令和文件布局写清楚，让队友拿到 Skill 当天就能跑通。\n附赠工具\n\n笔记简介里还附了一条​​审计提示词​​，可以自动根据这些规则检查你的 Skill，并告诉你需要修改什么。\n\n简单说就是：​​目录 + 一层嵌套 + 按需检查清单 + 多模型测试 + 明确环境依赖​​，这套组合拳能让你的 Skill 在不同模型下都更稳定。\n\n#Claude #Anthropic #ClaudeCode #AI工作流 #skills",
+      "deepSummarySource": "xiaohongshu-diandian",
+      "curationRevision": "62003849549db8e69a122487b6ec82f330ac686717edb6827994c964d75ff8fe",
+      "summaryStatus": "accepted",
+      "curationStatus": "accepted",
+      "summaryReason": "",
+      "summaryState": "captured",
+      "summaryReasonCode": "",
+      "reviewedAt": "2026-10-13",
+      "action": "挑一个自己最常用的 Skill 对照官方清单逐项检查：SKILL.md 是否少于 500 行、参考文件是否都从 SKILL.md 一层直达、超过 100 行的参考文件是否有目录、依赖与安装命令是否写明、关键步骤是否有可重跑的检查；再用同一组三个真实任务分别在 Haiku 和 Opus 上各跑一次，记下哪一步需要补充说明、哪一步说明过多。",
+      "tools": [],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "evidence": {
+        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6ac85743000000001402cc7a",
+      "number": 376,
+      "title": "给 Mac 修图软件做了个中文版！开源免费✨",
+      "author": "哇哇叫",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%BB%99+Mac+%E4%BF%AE%E5%9B%BE%E8%BD%AF%E4%BB%B6%E5%81%9A%E4%BA%86%E4%B8%AA%E4%B8%AD%E6%96%87%E7%89%88%EF%BC%81%E5%BC%80%E6%BA%90%E5%85%8D%E8%B4%B9%E2%9C%A8+%E5%93%87%E5%93%87%E5%8F%AB&source=web_search_result_notes",
+      "publishedAt": "2026-10-09_13:53:55",
+      "likes": "51",
+      "collections": "87",
+      "mediaType": "图文",
+      "category": "AI设计",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [
+        "AI设计"
+      ],
+      "themes": [
+        "Mac工具",
+        "图像编辑",
+        "软件汉化"
+      ],
+      "summary": "作者把 Robbie Tilton 开发的免费开源 Mac 修图软件 Compositor（原帖称其为前 Apple 设计师）做成非官方社区中文版并开源（Wawajiao-Wwj/Compositor-Chinese，MIT）：基于原版 1.4.7 和社区已有的中文本地化方案，简体与繁体各 1,160 条翻译，菜单、图层、蒙版、滤镜等界面汉化，⌘F 可用中文搜索命令，以独立应用安装、可与英文原版并存并保留 .comp 工程格式。官方仓库确认只支持 Apple 芯片 Mac、macOS 26 及以上；发布包为本地签名、未经 Apple 公证，也不随原版自动更新。帖中的界面图是示意图，不是实际编辑截图。",
+      "deepSummary": "根据你引用的笔记，这是一篇关于 ​​Compositor 中文版​​的分享，核心内容总结如下：\n\n软件背景\n\nCompositor 是一款由前 Apple 设计师 Robbie Tilton 开发的 Mac 修图软件，免费且开源，支持图层、蒙版、选区、滤镜、图片合成等常用功能，操作逻辑接近 Photoshop，被视为一款 PS 平替。\n\n中文版亮点\n​​双语言支持​​：简体中文 / 繁体中文，每种语言包含 1,160 条翻译\n​​全面中文化​​：图层、蒙版、滤镜、菜单等界面元素均已汉化\n​​中文搜索​​：支持按中文输入快速查找命令（⌘F）\n​​独立安装​​：不覆盖英文原版，可与原版并存\n​​完全免费​​：项目源码公开，社区维护\n兼容信息\n支持 ​​Apple 芯片 Mac​​\n需要 ​​macOS 26 或以上​​ 系统\n当前版本为 ​​v1.4.7-zh.1​​（非官方社区中文构建）\n获取方式\n​​GitHub 仓库​​：Wawajiao-Wwj/Compositor-Chinese\n​​项目官网​​：Compositor-Chinese 官网\n\n博主也欢迎大家体验、反馈问题，并在 GitHub 上给项目点个 Star。整体来说，这是一个对中文用户非常友好的开源修图工具汉化项目。",
+      "deepSummarySource": "xiaohongshu-diandian",
+      "curationRevision": "0d70ca78e3543a7bb6308c711a6a4e8829d2abc0c1fdb03bf0f8c3461cb0b442",
+      "summaryStatus": "accepted",
+      "curationStatus": "accepted",
+      "summaryReason": "",
+      "summaryState": "captured",
+      "summaryReasonCode": "",
+      "reviewedAt": "2026-10-13",
+      "action": "Apple 芯片且 macOS 26 以上的 Mac 用户，从官方仓库 Release 下载 v1.4.7-zh.1 压缩包，先用同一页的 SHA256SUMS.txt 核对文件，再与原版并存安装；首次打开按系统提示确认开发者来源，用一张常修的图试图层、蒙版和 ⌘F 中文命令搜索，漏译到仓库 Issues 反馈。Intel Mac 或更低系统版本不适用。",
+      "tools": [
+        "Compositor 中文版"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "Compositor 中文版"
+      ],
+      "resourceIds": [],
+      "evidence": {
+        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+        "locallyAvailable": true
+      }
+    },
+    {
+      "id": "6ac90e9a000000001501686d",
+      "number": 377,
+      "title": "GitHub每日AI项目推荐·第93期",
+      "author": "AI大事纪",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=GitHub%E6%AF%8F%E6%97%A5AI%E9%A1%B9%E7%9B%AE%E6%8E%A8%E8%8D%90%C2%B7%E7%AC%AC93%E6%9C%9F+AI%E5%A4%A7%E4%BA%8B%E7%BA%AA&source=web_search_result_notes",
+      "publishedAt": "2026-10-10_09:00:13",
+      "likes": "20",
+      "collections": "52",
+      "mediaType": "视频",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
+      "themes": [
+        "声音设计",
+        "开源模型",
+        "语音合成"
+      ],
+      "summary": "视频推荐开源语音生成项目 VoxCPM（OpenBMB/VoxCPM，Apache-2.0，代码与权重公开、可商用），由面壁智能（ModelBest）与清华相关团队发布：当前版本 VoxCPM2 为 2B 参数、用超过 200 万小时语音训练，可只用文字描述生成新音色（性别、年龄、语气、语速等），也能用一段参考音频克隆音色，支持 30 种语言和四川话、粤语、东北话、河南话、天津话等 9 种中文方言，输出 48kHz 音频。帖中“一秒声音不到三分之一秒生成”和“8G 显存就够”对应官方 RTX 4090 上实时率约 0.3、显存约 8GB；帖称 M 系列 Mac 也跑得动，官方只说明 Apple 芯片可用 MPS 运行，并给出 M4 Pro 上 llama.cpp 版实时率约 1.76，即慢于实时。官方明令禁止用于冒充他人、诈骗或虚假信息。",
+      "deepSummary": "根据你引用的笔记，这是一期 ​​GitHub 每日 AI 项目推荐​​，推荐的项目是 ​​VoxCPM​​，核心内容总结如下：\n\n项目概述\n​​是什么​​：VoxCPM 是一个由 面壁智能 和清华大学联合开发的语音生成模型，目前在 GitHub 上已获得 3.8 万颗星。\n​​核心用途​​：做视频或播客时不想自己配音，只需打一行字描述想要的声音，AI 就能替你\"开口\"。\n核心功能\n​​声音自由定制​​：通过文字描述即可生成声音，男女老少、温柔或急躁等风格都能调，无需懂音频技术。\n​​多语言与方言支持​​：支持 30 种语言，方言涵盖 9 种（如四川话、粤语、东北话、河南话、天津话等），发音地道。\n​​录音棚级音质​​：基于 200 万小时声音数据训练，音质出色，生成速度快（一秒的声音不到三分之一秒就能生成）。\n​​本地可运行​​：8GB 显存即可在自家电脑跑起来，Apple M 系列芯片的 Mac 也能流畅运行。\n开源与使用规范\n​​代码和权重全公开​​，可以免费拿去用。\n官方制定了使用规则，​​明确禁止用来冒充他人​​，避免滥用风险。\n适合谁用\n\n笔记作者判断，​**​做视频、",
+      "deepSummarySource": "xiaohongshu-diandian",
+      "curationRevision": "00c0972d0369005a55693342ad18b53c4e19ecf8cc46a0a8d692dd9ba7918250",
+      "summaryStatus": "accepted",
+      "curationStatus": "accepted",
+      "summaryReason": "",
+      "summaryState": "captured",
+      "summaryReasonCode": "",
+      "reviewedAt": "2026-10-13",
+      "action": "有约 8GB 显存的 NVIDIA 显卡时，按官方说明安装后先跑通“声音设计”示例，用同一段配音文案比较三到四种音色描述的效果，每种多生成两三次（官方提示结果会有波动）；需要克隆时只用本人或已获书面授权的声音，成品标注为 AI 合成。Mac 用户先实测一段文案的生成耗时，再决定是否用于批量配音。",
+      "tools": [
+        "VoxCPM"
+      ],
+      "kind": "Tool",
+      "resources": [
+        "VoxCPM"
+      ],
+      "resourceIds": [],
+      "evidence": {
+        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+        "locallyAvailable": true
       }
     }
   ],
@@ -19073,6 +19222,81 @@
         {
           "label": "下载 ZIP",
           "url": "https://github.com/xjli360/sealeap-amazon-skills/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-128",
+      "name": "VoxCPM",
+      "aliases": [
+        "VoxCPM2",
+        "Vox CPM",
+        "OpenBMB/VoxCPM"
+      ],
+      "type": "开源 TTS 与声音设计模型",
+      "description": "Apache-2.0，代码与权重公开、可商用；VoxCPM2 为 2B 参数、30 种语言加 9 种中文方言、48kHz 输出，官方标注约 8GB 显存、RTX 4090 上 RTF 约 0.3。官方明令禁止用于冒充、诈骗或虚假信息，只克隆本人或已授权的声音并标注为合成语音。",
+      "metric": "39.1k",
+      "metricNumeric": 39141,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/OpenBMB/VoxCPM"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/OpenBMB/VoxCPM/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-129",
+      "name": "Compositor 中文版",
+      "aliases": [
+        "Compositor-Chinese",
+        "Wawajiao-Wwj/Compositor-Chinese",
+        "Compositor Chinese"
+      ],
+      "type": "开源 Mac 图像编辑器（非官方社区中文构建）",
+      "description": "MIT；基于 Compositor 1.4.7 的非官方社区中文构建，仅支持 Apple 芯片与 macOS 26 及以上；发布包本地签名、未经 Apple 公证，不随原版自动更新，安装前核对 Release 中的 SHA256SUMS。",
+      "metric": "16",
+      "metricNumeric": 16,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/Wawajiao-Wwj/Compositor-Chinese"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/Wawajiao-Wwj/Compositor-Chinese/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "resource-130",
+      "name": "NeuroArxiv",
+      "aliases": [
+        "neuroarxiv",
+        "UditAkhourii/neuroarxiv",
+        "Neuroarchive"
+      ],
+      "type": "arXiv 先例检索 Agent Skill / CLI",
+      "description": "MIT；官方说明支持 Claude Code 与 Codex CLI，会联网读取 arXiv 论文并为每篇论文单独调用一次模型，消耗随论文数增加；把它的结论当作带出处的建议，落地前自己核对被引论文的限制。",
+      "metric": "435",
+      "metricNumeric": 435,
+      "metricIcon": "",
+      "attributes": [],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/UditAkhourii/neuroarxiv"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/UditAkhourii/neuroarxiv/archive/refs/heads/master.zip"
         }
       ]
     }
