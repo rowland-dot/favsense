@@ -418,9 +418,12 @@ class RunnerEncodingTests(unittest.TestCase):
             (state_dir / "media" / f"{NOTE_A}_1.jpeg").write_bytes(b"image")
             (workspace / "tools").mkdir()
             # An engine that, like the real one, writes Chinese in the Windows code page rather than UTF-8.
+            # cmd reads a batch file in the console's OEM code page, not UTF-8 or the Python default, so the file
+            # stays pure ASCII: it calls `python`, which resolves to this interpreter because its folder is put
+            # first on PATH below. (Writing this interpreter's own path into the file broke on a Chinese folder name.)
             program = "import sys; sys.stdout.buffer.write('\\u4e2d\\u6587'.encode('gbk'))"
             (workspace / "tools" / "ocr-engine.cmd").write_text(
-                f'@echo off\r\n"{sys.executable}" -c "{program}"\r\n', encoding="ascii", newline=""
+                f'@echo off\r\npython -c "{program}"\r\n', encoding="ascii", newline=""
             )
             (workspace / "config").mkdir()
             ocr = {"enabled": True, "engine": "tools/ocr-engine.cmd"}
