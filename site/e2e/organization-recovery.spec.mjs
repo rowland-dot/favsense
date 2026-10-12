@@ -63,6 +63,25 @@ test("running phases keep polling until the terminal organization state", async 
   await expect(page.getByRole("button", { name: "再次整理" })).toBeEnabled({ timeout: 8000 });
 });
 
+// The workbench is opened (or refreshed) while a round is already running: nothing is clicked here.
+for (const name of ["resume-core-running", "resume-summary-running"]) {
+  test(`${name}: a workbench opened mid-round keeps polling until the round ends`, async ({ page }) => {
+    await scenario(page, name);
+    const statusResponses = [];
+    page.on("response", (response) => {
+      if (response.url().includes("/sync/status")) statusResponses.push(response.status());
+    });
+    await page.goto("/");
+    await page.getByRole("button", { name: "同步设置" }).click();
+    const control = page.locator("#manual-sync-control");
+    await expect(page.getByRole("button", { name: "整理中…" })).toBeDisabled();
+    await expect(control).not.toContainText("本次整理未完成");
+    await expect.poll(() => statusResponses.length, { timeout: 7000 }).toBeGreaterThanOrEqual(2);
+    await expect(page.getByRole("button", { name: "再次整理" })).toBeEnabled({ timeout: 8000 });
+    await expect(control).toContainText("内容无变化，无需发布");
+  });
+}
+
 for (const [name, expected] of [
   ["summary-failed", "本篇总结失败，可在下次继续"],
   ["batch-aborted", "本次未尝试，可继续整理"],

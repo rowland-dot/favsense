@@ -216,6 +216,39 @@
       }
     },
     {
+      "name": "the core import of the first board is running",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}]
+      ],
+      "expect": {
+        "state": "core_running",
+        "build_version": "",
+        "phases": {
+          "core": ["running", ""], "summary": ["not_started", ""], "evidence": ["not_started", ""],
+          "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "copy_key": "core_running"
+      }
+    },
+    {
+      "name": "the round has just started and no board is known yet",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}]
+      ],
+      "expect": {
+        "state": "core_running",
+        "build_version": "",
+        "phases": {
+          "core": ["running", ""], "summary": ["not_started", ""], "evidence": ["not_started", ""],
+          "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "copy_key": "core_running"
+      }
+    },
+    {
       "name": "local rebuild in progress",
       "events": [
         ["rebuild_started", {"batch": "localrebuild20261012100000", "started_at": "2026-10-12T10:00:00+10:00", "note_ids": ["n1", "n2"]}],
