@@ -72,7 +72,7 @@ def derive_overall_state(run):
     if statuses.get("core") == "failed" or statuses.get("build") == "failed":
         return "failed"
     if statuses.get("core") not in {"completed", "not_required"}:
-        return "failed"
+        return "core_running"
     incomplete = {
         "summary": {"partial", "failed", "batch_aborted", "stale"},
         "evidence": {"missing", "partial", "blocked"},

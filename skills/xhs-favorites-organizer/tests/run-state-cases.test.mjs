@@ -62,7 +62,8 @@ test("a status without a sentence key, or with a key the contract does not have,
 
 test("the workbench title is the contract sentence the server chose, for every case", () => {
   const readySource = sourceBetween("function sopBrowserReady()", "\nfunction bookmarkIcon");
-  const renderSource = sourceBetween("function renderManualSync(status = state.manualSync)", "function reportStartRefusal");
+  // From the shared "is a round running" check, which the render function calls.
+  const renderSource = sourceBetween("function manualSyncRunning(", "function reportStartRefusal");
   for (const entry of table.cases) {
     const textNode = () => ({ textContent: "", disabled: false });
     const elements = {
@@ -99,6 +100,7 @@ test("the page no longer picks a title or a bubble from the phase states", () =>
 
 test("the end-of-run bubble is the contract sentence the server chose", async () => {
   const refreshSource = sourceBetween("async function refreshManualSyncStatus()", "\nfunction watchManualSync");
+  const runningCheck = sourceBetween("function manualSyncRunning(", "\nfunction renderManualSync");
   for (const entry of table.cases) {
     const terminal = validateLocalBridgeSyncStatus(statusFor(entry.expect), contract);
     const running = Object.values(terminal.phases).some((phase) => phase.status === "running");
@@ -115,6 +117,7 @@ test("the end-of-run bubble is the contract sentence the server chose", async ()
       function validateLocalBridgeSyncStatus(value) { return value; }
       function renderManualSync() {}
       function showToast(message) { events.push(["toast", message]); }
+      ${runningCheck}
       ${refreshSource}
       (async () => { await refreshManualSyncStatus(); return JSON.stringify(events); })();
     `, { terminal, contract }));

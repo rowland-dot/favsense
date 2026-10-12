@@ -31,13 +31,13 @@ class OrganizationPipelineTests(unittest.TestCase):
     def test_core_not_started_and_running_are_not_reported_as_completed(self):
         state = load_state_module()
         run = state.new_run_state("fixture-run")
-        self.assertEqual(run["state"], "failed")
+        self.assertEqual(run["state"], "core_running")
         self.assertEqual(state.visible_copy(run), "核心收藏尚未保存")
         run = state.transition_phase(run, "core", "running")
-        self.assertEqual(run["state"], "failed")
+        self.assertEqual(run["state"], "core_running")
         self.assertEqual(state.visible_copy(run), "正在保存核心收藏")
         run = state.transition_phase(run, "summary", "failed", "transport_failed")
-        self.assertEqual(run["state"], "failed")
+        self.assertEqual(run["state"], "core_running")
         self.assertNotEqual(state.visible_copy(run), "核心收藏已保存")
 
     def test_legacy_finalization_projects_a_running_phase_until_build_finishes(self):
