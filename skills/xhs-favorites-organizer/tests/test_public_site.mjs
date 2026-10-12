@@ -1534,8 +1534,9 @@ test("automatic content rules cannot override a source board", () => {
 
 test("content kind supports an explicit curated override", async () => {
   const builder = await read("skills/xhs-favorites-organizer/scripts/build-public-site.mjs");
+  const judgement = await read("skills/xhs-favorites-organizer/scripts/public-judgement.mjs");
   const schema = await read("skills/xhs-favorites-organizer/references/organization-schema.md");
-  assert.match(builder, /if \(entry\.kind !== undefined\)/);
+  assert.match(judgement, /if \(entry\.kind !== undefined\)/);
   assert.doesNotMatch(builder, /Invalid priority for|entry\.priority|priorityLabels/);
   assert.match(schema, /可选的内容形态人工覆盖值/);
   assert.match(schema, /当前 `domain_profile` 的 `content_kinds`/);
