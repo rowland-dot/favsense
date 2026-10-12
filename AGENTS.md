@@ -12,18 +12,6 @@
 - 保持采集只读：不点赞、不评论、不发布、不取消收藏。
 - 小红书采集必须单页串行：任何时候只保留一个小红书页面；当前页面处理结束后立即关闭，再打开下一页，禁止累积后台页签。
 
-## Hugging Face 托管例外（项目例外）
-
-- **例外内容**：公开网页（`site/`，不含 `.local/`）继续发布到 Hugging Face Static Space，仅作静态托管，不涉及模型调用。
-- **来源**：所有者 2026-10-12 的裁定，见 issue #41。
-- **覆盖的全局规则**：所有者全局规则 `discipline-subscription-only-model-access` 第 5 条：
-
-  > Hugging Face is excluded outright — for vetting, inference, hosting or any other purpose, on every project
-
-- **理由**：避免后续 Agent 因这条全局规则误删或迁移发布链路。
-- **仍然排除**：任何 Hugging Face 模型调用、推理、模型核验，以及把 Hugging Face 作为模型访问的后备。
-- **现状事实（是否在例外内：待所有者裁定，裁定前不得删除，也不得扩展）**：Space 上还有一项不调用模型、但超出静态托管的功能。`site/hf-personal-sync.mjs` 通过 HF OAuth 登录（`contribute-repos` 权限），用 `@huggingface/hub` 把书签和个人修订写入用户自己的私有 Dataset；`site/hf-sync-guard.mjs` 在每次读写前确认该 Dataset 仍为私有；发布器 `skills/xhs-favorites-organizer/scripts/publish-huggingface.mjs` 每次发布都在 Space README 中写入 `hf_oauth: true` 与 `hf_oauth_scopes: contribute-repos`。
-
 ## 用户已委托的修复工作
 
 用户委托一批构建或修复工作后（例如“继续构建和修复”），Agent 在每个常规决策点直接采用推荐选项并继续：triage 结论、分支名、在已知无关的 CI 失败下合并、仅本地重建与发布、后续 issue 登记。不要为每一步发 `AskUserQuestion`。只有需要用户本人完成的动作（浏览器中确认安装脚本、登录、扫码）或超出委托范围的破坏性操作才停下。把每个选择和理由写进交付说明。用户 2026-10-12 原话：“Keep building and fixing and stop bugging me with so many questions that I dont even read and just click recommended anyways!!”

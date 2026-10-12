@@ -8,8 +8,6 @@
 
 私人状态在 `.xhs-favorites/`，面板白名单在 `config/xhs-favorites.json`。旧版的 `knowledge-base/` 已停止生成，若仍在磁盘上可手动删除。不得把 `xsec_token`、Cookie 或浏览器会话信息写入任何文件或回复。
 
-公开网页发布到 Hugging Face 是所有者对全局规则的项目例外，范围与限制见 `AGENTS.md` 的“Hugging Face 托管例外”一节。
-
 ## Agent skills
 
 ### Issue tracker
