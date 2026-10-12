@@ -112,7 +112,7 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一篇关于​​跨境电商 AI 工作流​​的干货分享，作者把跨境运营拆成了 17 个 AI Skill，并串联成一套可执行的 SOP。",
+    "summary": "作者把跨境电商运营拆成 17 个 Skill 串成的 SOP：主线是市场判断、产品机会、竞品价格、1688 拿货价、平台费用、Listing、广告测试和净利润复盘八步，跑顺后再加多平台同步、供应链优化、国际物流、一件代发和持续复盘；图中把每一步对应到 Market Research Reports、Ali1688 Sourcing、Marketplace Fee Reconciliation 等具体 Skill 名称。",
     "action": "先把核心八步定义为带输入输出的数据契约，再按模块逐个核对来源、许可、所需数据和权限；只在单模块通过隔离测试后接入下一步，扩展链路留到核心链路能够复现利润结果之后。",
     "themes": [
       "供应链与物流",
@@ -125,13 +125,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "a46202fce581a29fb2061f643fc4abbcbf78d594d2efc3922a7b4a5e4609ebbf",
-    "evidence_sha256": "3a3d97f78fd2662bbec80e7c0b4ebee71fcff8dd1651c1b5a355f6efb1692e03",
+    "evidence_sha256": "eecd2a8b606449ba47656f84936e26fbc380ffbb3dc5bf3505728d486e44cd3f",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "d925d7879ae1495500717040a71fd5db82b0516a1d5233015139a16ac85dde72"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "051cbc50b17f0d1b13a6457344db667a769db5353fb90114b60f4a50f5ab56da"
       },
       {
         "method": "public_text",
@@ -154,7 +160,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "913704b11b47a71eaca95edb8950fdbe3740562b19e0a42c885e80cf175ffd4e",
+    "candidate_revision": "bb73001944ca222c1b4e3b1dce85dcf9f2f4152d0a4e2864e619fc65a2f8884b",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -165,8 +171,8 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "抱歉，我目前无法直接访问小红书链接来获取该笔记的具体内容，因此无法为您总结。 如果您希望我帮您总结，可以尝试以下方式： ​​复制笔记正文​​：把笔记的文字内容直接粘贴发给我。 ​​截图发送​​：如果笔记中有图片或关键信息，可以截图发给我。 ​​告诉我笔记主题​​：如果您记得笔记大概讲了什么，也可以简单描述一下，我来帮您梳理要点。 另外，如果您是想了解小红书运营规则、流量算法或内容创作技巧，我也可以结合站内最新信息为您提供实用建议。 您还有其他需要总结的内容吗？",
-    "action": "先按业务问题选择一种能力，再为候选 Skill 核对唯一官方来源、维护状态、许可、依赖和最小权限；",
+    "summary": "图文列出跨境卖家在 Codex 里常装的 9 个调研类 Skill：market-research 做市场验证，amazon-product-search-api-skill 扫关键词下的竞品和价格带，amazon-product-api-skill 与 amazon-scraper 把页面数据建成竞品表，amazon-reviews-api-skill 与 reddit-insights 挖评论和讨论里的痛点，tiktok-crawling 看内容趋势，agent-browser 代为操作网页，price-tracker 监控多平台价格。帖子只给名称，没有给出仓库来源。",
+    "action": "先按业务问题只选一种能力试用，为候选 Skill 找到唯一官方来源并核对维护状态、许可、依赖和所需权限；涉及爬取页面或代操作网页的 Skill，先确认平台条款再用。",
     "themes": [
       "Skill 清单",
       "出海电商",
@@ -178,13 +184,13 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "d2b092bd30791863df653de29934cede7b3ba523bca15a6ad7cd154b7de7d22c",
-    "evidence_sha256": "4037cd225da90ef829555da13658fef22ea06b41bfb0c5811e010846dca93516",
+    "evidence_sha256": "4a133433560e17715d5f3d627dc6a49742f229db0f2ddb9fb92ab078b01cd2f7",
     "evidence_dependencies": [
       {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "3f89558591f125caea5ac560e414ad30347985253a7c7a03689cd1ae7fdf2a00"
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "bf7dd82b1404d3a185da8a257f40fbf03dfc041fb94317c325d4aed5467a5e0f"
       },
       {
         "method": "public_text",
@@ -207,7 +213,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "322515990a1fe66d77351077284fa4bc94317046ebdb69ef59ec751a65770210",
+    "candidate_revision": "9302c2f769f4cbcc9fedf6c12edbb054083f8d045e9cca1e6dea2672357f48f7",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -218,8 +224,8 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "我把1000+爆文浓缩成一套【爆文知识库】 做这套「内容创作选题册」， 是因为读了很多爆款创作的书籍都提到了一点。 爆款是重复的。 这其实是给后来的入局者们一个信心。 爆款是有规律的，它并非天才创作者的灵光乍现。 所以我集合了六大头部赛道的优质内容，并按书中以及自我实践中总结下来的经验对爆文进行拆解与总结。 拆解1篇爆文、10篇爆文、100篇爆文， 那隐藏在千变万幻的爆文中不变的骨骼框架， 必将被你窥见。至此，爆款易如反掌。",
-    "action": "参考账号增粉路径，制定适合自己赛道的内容发布与选题计划并持续执行。",
+    "summary": "作者把六大赛道约千篇小红书爆文拆成一套订阅制“爆文知识库”：飞书多维表格记录每篇的标题、选题与文案分析、粉丝数和互动数据等 12 项信息（不含原文案和封面），另按赛道出涵盖选题、目标人群、痛点、钩子等 11 个模块的分析报告，素材每周更新、报告每月迭代。",
+    "action": "先按图中健身减脂报告的痛点占比和标题公式，自己拆 10 篇本赛道低粉爆文，验证这 11 个模块是否适用后再决定是否订阅；只借鉴选题和结构，不复制他人文案。",
     "themes": [
       "内容策略",
       "粉丝增长",
@@ -230,13 +236,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "4fea80c03cb47dbbfdfb9b90f73d564f29d5a62977c40cb8b4eda68ec5c128e9",
-    "evidence_sha256": "b10f740e24f3eebffc56bdc1251b86b11b387691d5396395b65ab11da57169b7",
+    "evidence_sha256": "1134e2dfe39d58c31ec7354545e1d97affb15342d9d3c1719e8aec83c2623596",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "a97cd6bf8fedb87ee59b01115187b7ebe23885c2ae8fb670e27972f611b52b38"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "0b717d6a71e9f2e1c263aef6a954b5cd3aaee4b42f6e6d30c74aab387d15c7db"
       },
       {
         "method": "public_text",
@@ -259,7 +271,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "b47bc6f9881c2678d9a7cec2c463e8104181b67296b73bce2b499d06c3b3f36d",
+    "candidate_revision": "639864be0f41708cd2b0f52a259be1d6ed952fb8fac0a2e861a2c358a2e4cafc",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -270,25 +282,31 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一篇关于​​如何从零搭建 AI + 小红书工作流​​的干货分享，核心观点是：拉开差距的不是用了哪个 AI 工具，而是有没有把经验写成 AI 能读、能跑、能复用的工作流。 以下是核心内容总结： 核心框架：三块缺一不可 ​​知识库​​：AI 读什么、记什么。不是把文档丢进去就完事，而是要按业务线分层、带来源验证、有索引能精准调用的知识卡片。 ​​Skills​​：把判断写成 AI 能执行的动作。用 Markdown 文件写，通篇大白话，没有代码。",
-    "action": "评估AI+知识付费结合的适用场景与变现可行性。",
+    "summary": "小红书运营者讲如何把自己的判断标准写成 AI 工作流，拆成三块：分经营中枢、共享层、业务线三层并配索引文件的知识库；一条只解决一个问题、用大白话 Markdown 写的 Skill；以及把每次出错按“错误、根因、解法、规则”四个字段写回系统的反馈机制。",
+    "action": "挑一个反复出错的审稿环节，按图中列的触发条件、前置资料、执行步骤、禁写内容和输出前自检写一条只做这件事的 Skill，之后每次人工改稿按四个字段补一条规则。",
     "themes": [
-      "AI变现",
-      "内容创业",
-      "知识付费"
+      "Skill写法",
+      "反馈机制",
+      "知识库"
     ],
     "tools": [],
-    "kind": "Note",
+    "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "3d21c6d5a5f2cc13126bc779db68f9db1e636d9f1774f5947be89880ca34aeed",
-    "evidence_sha256": "005547e6e34855ae780e781802aac2e04f509071451308ceb4d3f0928f2f1242",
+    "candidate_seed_revision": "1fd06d6f5f0215889b9424ae713a32913bbd6ebd1c78430560029428f8b591de",
+    "evidence_sha256": "9715ef904ad3f680d54d11e240d9fe7309f24ccd436b584051f8827911313ece",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "a202d2b70c95a53b86a7f26af4032cf41858e1a0b005e487897eb790d4cc2887"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "4c47e7aaca402dc95ef8f50173d3b01a056500c10028edd8c09b72d28baf6c29"
       },
       {
         "method": "public_text",
@@ -311,7 +329,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "c864a95efa4acc070016beba497f0da0a362056f8d00d26c9db55da89d860da2",
+    "candidate_revision": "cad2dadbfd800149eee76def468fd761359b4411367529cb9abe7e960cb3902c",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -1885,25 +1903,25 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "抱歉，我目前无法直接访问或抓取该小红书链接的具体内容。 如果你能​​复制粘贴笔记的标题和正文​​，或者​​截图发给我​​，我就能立刻帮你做详细总结！",
-    "action": "通读这 10 个工具清单，筛选出与当前健康追踪体系互补的工具，挑出最多 2 个进行为期一周的实测评估。",
+    "summary": "图文整理淘宝关键词推广（原直通车）的实操设置：何时适合开（产品测过、有基础销量和评价、已有搜索或老客成交），以及日限额 50 元的小预算计划、新品先用智能出价跑一周再按有转化的词建手动计划、标准计划选 5 到 10 个长尾词并按系统出价一半起步、测图测款等步骤，逐项给出出价、人群溢价、资源位和投放时段设置。",
+    "action": "按图中新品计划先用 50 到 70 元日预算跑一周，从流量智选报告记下有转化的关键词，再建手动出价计划；每次只改出价或人群溢价中的一项并对照投产比，基础销量和评价只用合规方式积累，不刷单。",
     "themes": [
-      "fitness",
-      "nutrition",
-      "wellness-tools"
+      "关键词推广",
+      "淘宝运营",
+      "直通车"
     ],
     "tools": [],
-    "kind": "Note",
+    "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "7c318a4a91cafacf44f4959ffa05201ab8899f8c3ef26ec04175a35340bf2c4f",
-    "evidence_sha256": "6764ebbee6d090b0494256416d5bb72bcd6dfd7846679d0217f8bd1f3db11a86",
+    "candidate_seed_revision": "54b86abbdb7a99b5136d29c0ad51d23d2ec821c6dfc250ef6b3bba081d3844d8",
+    "evidence_sha256": "744152e548a45818202012170a02076df64774e19f21aac2c275ec8955997132",
     "evidence_dependencies": [
       {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "cfdd2be3c0f01983c3ec0b2eaf56276f6877ea76d7961309555ba86e3e71f89d"
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "c801f030d7e1a6c942911a6731b36c5248edad930c7dbf6547d24a2330e28d07"
       },
       {
         "method": "public_text",
@@ -1926,7 +1944,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "7a10823c1061029e8670d375cfa7ba04ef09bd826ffc2ea339c9e49dfffe3e02",
+    "candidate_revision": "cc96ba1c82e99b29716cf3be6bac32271aa17c7c3500d33ab04191423df4e7cd",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -2110,25 +2128,31 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一篇关于​​小红书 × 淘宝天猫「红猫计划」​​的推广介绍，核心内容是帮助淘系商家实现\"种草在小红书、成交在淘宝\"的链路打通。以下是总结： 产品是什么 ​​红猫计划​​是小红书推出的广告产品，用户在小红书看到笔记后，点击可直接跳转淘宝/天猫完成成交，小红书负责种草，淘宝负责成交，链路更短、转化更高效。",
-    "action": "评估课程内容与自身目标匹配度；若需系统学习 AI 工具应用，可在有效期内报名 1V1 辅导。",
+    "summary": "小红书营销顾问介绍“红猫计划”：淘宝、天猫商家在小红书聚光投放笔记，用户点击直接跳转淘系店铺成交。准入条件是类目在开放范围内、淘宝综合评分或天猫综合星级不低于 4.5；下单可选 CID 商家直投（在聚光下单、可累代理返点）或 UD（经阿里妈妈 UniDesk 下单），投放主体与店铺主体不一致时要备好鲜章承诺函。",
+    "action": "先核对自己店铺的类目和综合评分是否达标，再按是否已在用阿里投流工具在 CID 和 UD 之间选一种；这是引导私信咨询的推广帖，开通条件和名额以聚光后台审核为准。",
     "themes": [
-      "1对1辅导",
-      "AI教育",
-      "学习规划"
+      "小红书投放",
+      "淘宝天猫",
+      "红猫计划"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "9e1845bfa126976ec28e03c630778ee68ad2fb5a02aa97ba23a829f43c6a56a0",
-    "evidence_sha256": "fbe3bea08591256fdee8727a0a8063750cbcad98a9dcef8483a4a1b7e5b1731a",
+    "evidence_sha256": "41fb1373c4e755673f06fd4f4e7f33c74eace45d7e8f3666d8aba1f1d719b024",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "7604eecd4e69b7e0f6c4129e6e3b40fd5cad4307394c02673257d1578a0054be"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "01e38d98310e87bea7ac0123c82d123541b0b1c4cd802c994ed6ce1c93d60430"
       },
       {
         "method": "public_text",
@@ -2151,7 +2175,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "72bd09466f171bbed7bb63eecc7f92d2c1a5ba1c92624983f845974c8065398f",
+    "candidate_revision": "081538dd5b421edbc65017bf0f461f798d2020fcd859698878ed7c8c7eccaf80",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -2441,13 +2465,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "e1fd082f37e6df862620cff9a5329321f79fb03d2e53c6bf70b3751c808d629c",
-    "evidence_sha256": "418e0a6df5a5a1323c8a468cfb98390cf1d1070b273a71b63a50f27784585332",
+    "evidence_sha256": "53d3d030cbb1084840f430208206dd6e23e6c866cf5add448a6ef6c6161b164c",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "ed2a6cb8ec6cfc60ec30a865f385ab08925817443f3d914a6ddd7f01ec74b4de"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "cb77a3b5fcaf903434c240a3e0a6fc2d757dfb1d70d73b53c1296f022bd15c61"
       },
       {
         "method": "public_text",
@@ -2470,7 +2500,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "402ce5c78ce519bc74b99bc6eb8a94f0e34f6698076222c1aa28b3739d813672",
+    "candidate_revision": "aba1005a98a93fc69121f7c4951ad36d2c264f6b3be75382ba16fad2c5a1fb8e",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -2493,13 +2523,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "7808af2c567efcaf6cec1bebaa3714ae3ceb47239dcd9f54f5e4181f3fbbbc71",
-    "evidence_sha256": "853fb0d8064c58e85365f8e528d386e2b18a8008d956de84a9ffed8b11a7e209",
+    "evidence_sha256": "69eb3f1655b1101765a66d518a334d540bd1f6a8bdfe0c2dec01fac298875d71",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "a689dc693689d95a922e58d6dae4b895abe4d21c24110b4477712ddee94e3018"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "351b313fc41c08ba147784389a1b503c43babe8d26d904ad9830a43150807a27"
       },
       {
         "method": "public_text",
@@ -2522,7 +2558,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "f661a77b63e221fca4c8ee995826093f5387953b6cd9687b98abe3c170996342",
+    "candidate_revision": "2b70abbd41605960121b1bcf5525ca6a4b3caa9778fe9592621d65bcc8062223",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -2649,13 +2685,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "1114f5c0baad274baa66fece4404dea2bc3f9f3a02f59e508d1b434e2f146755",
-    "evidence_sha256": "a1fe43aa22f0848e6dacbb7a509870d528fd3375d21ef4ee6261028a4b19cac4",
+    "evidence_sha256": "466908e638b962d20f00517e19bffd4376fb88c45e2d9fa1b9a3b52550c5d770",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "d9936629ec313164fef27aa6d27dfd2fc18476745b324316df57ad34fffc6409"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "54b13284b1741b82d80c67b1fe8406cfc8fe324b5969972c0bf72dcc038d6a2c"
       },
       {
         "method": "public_text",
@@ -2678,7 +2720,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "704027517da114111939252e78cea90c8a384f012b91803e290e3f50091cea32",
+    "candidate_revision": "5ef93a7b3463743bb2be135d6396ae63bd4f7793c80eca8023f571f330f50971",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -2753,13 +2795,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "d33c411d4aac77f6b71a67fd85f62f120f4aafd11b559c1e5d6264216332c7cf",
-    "evidence_sha256": "091096d5b0f1a2db1f1079fc57934f4d92cb65b4e6471edb2915d3aaf199bdd8",
+    "evidence_sha256": "adb73a87cd71b35baa4fa9df874eef62c072c6b397d7c67f2fb662b3545cc77a",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "88ee47975ea5ace1ed73adf33cd19d8acddb8d413b6f8d0bbdac16f3b6c3ab9c"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "fadc843e8de254acb4ea2f5fb7849160b48b3cdbd9e05f55ab0a5881f1985bf2"
       },
       {
         "method": "public_text",
@@ -2782,7 +2830,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "db604587feedecc202ed470de64574820b9f8865001a0ab08996a8a8ab324700",
+    "candidate_revision": "e8bf81f993279194b27e97dd622aba47390f5d210dac8ae645330e3c8cf38ebc",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -2805,13 +2853,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "60a4c6c97dbd4628b26f22adbce2210ad1c927e227758cad5a25fdc2a0e32024",
-    "evidence_sha256": "fc556b3ab58cfb3005f7e2393913d009e50970dd816717223b5cf0695e1eda83",
+    "evidence_sha256": "357bfb72db0e9774c8c69aff2b2fd1da784f212f8c6cb35f93c3d00fd32238d4",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "997f6bc758dd6b739d015e08c14ae60e0b25acb2241f977f7327ba558801adff"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "99dc924faa07b1ef57091acdac16d96f2598efbdf5d60293c12f9068994fe717"
       },
       {
         "method": "public_text",
@@ -2834,7 +2888,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "99221e798deedd8f88e9d0877d271a438fb95956274cfdc9fbf2995d7e13fdad",
+    "candidate_revision": "15c1553d8050948045b8523d7d7cc170efc1b0bf0e8db335552734232951e4c8",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -3661,13 +3715,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "09897216c47d24a3a22274c81fd2db726381219abe9bb981881bbf5d116539ef",
-    "evidence_sha256": "ff869e995df1af987ce537342274c3e859db19a5cbe15350e601f142dc56106e",
+    "evidence_sha256": "9c49179e723c4c65eb3410cda87b0d472dfff0551b09444ae655f1fa9729f5ba",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "8b0cd5c1f744e6d089cde023006dcd5cae1d9bd3a43a5b54270ca36b09443b78"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "671c6ac4b4b2898f39fa8c00620ce2c2db133bd7078c4e8aab5478042e1b5a65"
       },
       {
         "method": "public_text",
@@ -3690,7 +3750,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "94d45c5b8cb65ebaf97ed976d68e17caf441043db4f6223baff1f1ecea81dcbb",
+    "candidate_revision": "ac0793f68ae4f214dd526bd839f94df8f0a496f1c053bb70f988a4d16ae6fc3a",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4295,13 +4355,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "44b5775bccc8a21081a73d2d8be3a09feee7711688adf103fcc78706a2de8aab",
-    "evidence_sha256": "17015475e690ef47c5fc3ac3cde53bd757d86df45281eb03ff6bacd0c86258ee",
+    "evidence_sha256": "383bf30e8efb0d4abd6837c5d18c545b4b9b6e18e7c006e86ff9899bea639da5",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "89eeff1237961721ea172921e6a69ca0910964f9d22c38dcf22d56b8fbbcaf32"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "1f2142133a3071484e7b1a04b4057c4c3924dae31848a27fa57b2b781ff2036d"
       },
       {
         "method": "public_text",
@@ -4324,7 +4390,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "61520fbc62511a16063f655adbcba3bc91e3e7edfcf3baee1131e9c36e433212",
+    "candidate_revision": "8eb2ac605e20ca402ba3b2d2923ec1baa0727cafeb1f53d8bf620f96729581d7",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4347,13 +4413,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "68c5626fa279ab2f1be3a2e8d4a2e5b777b2dd87d628dc5045a06a2acb4425d7",
-    "evidence_sha256": "4bbeec5efe549ad5a48fc1b9b5d26c068de4a3ff49c08f31830fd60fee2452c9",
+    "evidence_sha256": "2b79c5d97555c7a0334ff4aa4d7513f5fc280d7edd6ef5337b2b21b9453bd65e",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "bfcb1c278fd15b9cb364d031e7a7bba9748f5ff45d267a2014f43a1f7778668d"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "7e0ecac8b4c66db4fefef75a830accef1f882dafbecceb4aecefb0c7c0d96fcb"
       },
       {
         "method": "public_text",
@@ -4376,7 +4448,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "c821e9aab17a15e33fc9ea984e174c253a8940475cfd751a946bcadbeded1a8f",
+    "candidate_revision": "d0b2d71b9b5edda7de9807e4f913e108863914af96afbcccede26185af7cf4fd",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4613,13 +4685,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "2a296064f19cc8412719619524b208f91ce373e9afa8accdc1c5f17cc2430ef6",
-    "evidence_sha256": "6b519034a07443e840c98d33b2d0f38ce1a2723be07cf5e31ea89e4e791936a1",
+    "evidence_sha256": "8a96b65e21e6cc5fe5076558bc247b3a2daf95a695b7f38712cb5e9692227da5",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "49f2acc32d784c8858726e4b1ac3387c0a981d6acdda176581487df8bd5a243d"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "dd6f19db29fc241240afd7e539604263a2d96956eff7a0ca9cdf8333980aa13c"
       },
       {
         "method": "public_text",
@@ -4642,7 +4720,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "9e0ba02947a60eb25f577ccc49684d1c418c342832c7d526565f35d661e5dbdf",
+    "candidate_revision": "dbf690e48c84ed3cd657935cd48c69170c9fa36c540944de9c2993208ff9ad6a",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4721,13 +4799,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "01a44f8b8c010cd0059513465c690fe20c99e1ae865d5673954027de51528c38",
-    "evidence_sha256": "f37c757efaac4d5c44e85b932172b98862f36b6ec6f2bf224dc4435cd325b0ea",
+    "evidence_sha256": "ecb9cab32145ab3336c85c25d94b6dbf9ce2768bebb35769e5748efe1695ca8a",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "ea4b0f62f1a857f4138b2f200545dd4b3f7c91fa8140b5b59bb37a58ebae1314"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "e40768a072b2c74815f945a8ed81e350387b769d31b24b4cbe1400d9949156fa"
       },
       {
         "method": "public_text",
@@ -4750,7 +4834,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "59f8299ffcf252e372009dbe307a41dd9d480abe6197e0d383329294657f7842",
+    "candidate_revision": "7004e00f799cb6dd4cde51a67e0a58b2430f36d2ba6104279f9957f23b526a71",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4773,13 +4857,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "1cb32cf5f4b38ddf89e0312506b715b5e5ea9407f04e8bbad720c3d63b5a9cab",
-    "evidence_sha256": "ef9c01ec319a960a25e8a5fee5c09bee5ded2418fb0679ae767a4174e76d666d",
+    "evidence_sha256": "aa9a1808ace7f3d8dc72882775e774a6ddc86839c99fe9d4c6baaf9cb9f4f071",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "7562e7dc49292bb5117e9f31827e569372a256bcabfb2971f663836a99381436"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "7091d227f23ec8c5af3348da9325d3acc60acfa231ea71023391e91958f8e9a8"
       },
       {
         "method": "public_text",
@@ -4802,7 +4892,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "5e096d0cab5bc16442ece1266dd5c1ceb056f75e05a1c88c8ef839fa7b4c26b8",
+    "candidate_revision": "3053b1fd1856a67241563694c94499a37f9e423a3724eceae7e7547f2bd5aa03",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -4963,58 +5053,6 @@
       "verification_snapshot_sha256": ""
     },
     "candidate_revision": "ee5145a3210b3839ae1d8f06f9cf748b34c3d5999afba49d99c9cc7818763eb9",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "67c81ab6000000002901724c": {
-    "id": "67c81ab6000000002901724c",
-    "content_sha256": "60768c1f5b8fe70e063bf41bea39049c0bfce3fb6f6d26c429aa71e8f9758eb8",
-    "title": "客服外包竟然这么便宜了！？",
-    "category": "",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "图文是“幻想客服”电商客服外包广告，主要用规模招聘、集中设备、标准流程和弹性排班解释低价，并列出按咨询量分档的报价；价格、在线时长和服务质量均为商家自述。",
-    "action": "若评估外包，至少对比三家并核对合同、响应指标、数据保密、账号权限、退款与退出交接；先用低权限短周期试运行，不只按月费选择。",
-    "themes": [
-      "供应商评估",
-      "客服外包",
-      "数据保密"
-    ],
-    "tools": [],
-    "kind": "Note",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "28f56ba0c70ed995f12a2f53b666bb787d3120273c39333ace942a29780dcb2c",
-    "evidence_sha256": "004aae31f945a96408c738ec500d88b24e59d62538d77137e8a46361c48d7822",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "50b7c57c3705671e1628f3f74c7f1216e716d283b88ef8d0b4cf29c8b884e68e"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "d18911ef5f7d5c37a27cbd73b1e408b19311bdcb0ca57bb3963f840b209e1587"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "a44f313e8781b10141fde23bc23dab16ab6c1167b4ff2d7d6c2650ed232af116",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -5897,13 +5935,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "6183e11ae7a090213b27aa9471e2eec4bb08bdbf1d3044aa4a0762099b3ef7a2",
-    "evidence_sha256": "2557e91a835187d2819fef8725cc3a0201ce355cd2b63d915c337d97dcc76a9e",
+    "evidence_sha256": "be9f6f8c3686fa03456d12871b44407784960f5d89c94c592916f77379a47898",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "854facd1bfb292a1cf3d6a5ad74a5073708dbed366c574848e7b0082925caf6c"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "8e2817c919888a705efb4129686073ff45c7b1b2088d3c9a30730c87f6ffe962"
       },
       {
         "method": "public_text",
@@ -5926,7 +5970,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "1f66a38e33e863498c45a723a07a9ca6ba7e0e6154b8b231b32bcb1154c418ba",
+    "candidate_revision": "e22dfa883bf271e2e329a6fdef9eddbe603977468dee5a9097a7e6cbfe3945f4",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -6309,13 +6353,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "047074bbc291359ffd62a36d4881f7306f39cebda517921abe69999626a9b953",
-    "evidence_sha256": "d5438130e5d8aabf759dd8ad595195740cc860823be01d5b6a38c78ded32f99c",
+    "evidence_sha256": "9fa1a8366333bc653cc143f6ee6e82984099b2b792f50e9756c3559ff7b59edc",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "ebe30c3d8a2cc2474dca6ac40eded1dc11894193a9352c4aa71fb43bb9d4aec9"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "e52c0055223aee764eb1a3d1901e9a1de7fc1c3314589b6df52fe12a82957d1f"
       },
       {
         "method": "public_text",
@@ -6338,7 +6388,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "d88126fe96c4b3eb597b6135aaa84b783e25bfa57e6041250033f8853e710868",
+    "candidate_revision": "826a00a4b500327bf6efc2cc755dfe21b268c517e1648dd6ec24b369d1d09d64",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -6749,13 +6799,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "5a733bf2b4da3acf5530624bf2c06fac452eab0b1dc5e8c1a7760aa3f2067994",
-    "evidence_sha256": "2243fc70e0139afbecfef477af429c02055987aab4db13a821510aecfdeee6ed",
+    "evidence_sha256": "cb0cc29dbe6e8f0ee9014faf7d0a64e430d00b9416bf8c06ad20290f90e4b5f8",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "5020d50374878feea1bd7310476f0bb45976e884d01951dee7cab7409af5cddb"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "d0bc1a69e5ac245bd0defabeb505bd7e9f640eb76b08c1024dcc02f3ad3980a0"
       },
       {
         "method": "public_text",
@@ -6778,7 +6834,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "f6aeabb3a3dcd55b74cb1232a8d73761513f12c405f493896a1c1dc48090600c",
+    "candidate_revision": "36bb00d3ed06a28aa5b248aa4c558f7650937964585a4b6095fdb435aab7f6f6",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -6789,8 +6845,8 @@
     "category": "Content Automation",
     "category_override": false,
     "category_reason": "",
-    "summary": "RedBox 是基于 OpenClaw 构建的 AI 内容系统，自动抓取 YouTube 视频、AI 生成文案与 SEO 优化，形成「采集-生成-发布」一体化工作流。",
-    "action": "参考其「采集-生成-发布」架构，评估能否用 OpenClaw 技能复现类似内容自动化流程。",
+    "summary": "RedBox（GitHub 仓库 Jamailar/RedBox）自称“小红书版 OpenClaw”的本地 AI 创作工作台：浏览器插件采集小红书笔记、YouTube 视频和网页内容进本地多空间知识库，AI 辅助仿写、生成封面与标题组，RedClaw 负责定时发布等长周期任务；需要自己配置模型的 Endpoint 和 Key。",
+    "action": "先只用采集和本地知识库整理对标笔记；自动定时发布、目标账号克隆等功能涉及平台规则和账号风险，确认合规前不要开启。",
     "themes": [
       "content-workflow",
       "data-collection",
@@ -6801,13 +6857,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "ad1cadc44e84badaba112075c65fc053e31677dd3d6927cc8b94c5f4cd681eca",
-    "evidence_sha256": "e70cef366d93ac1f2b58c7bb4bb4a701dc7ce664a3e3a3d161af8259d7ced61f",
+    "evidence_sha256": "b7d4a285e85472e9ab4da97e3831973d232b9adc42a8b3c409c9b4f5eeae9521",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "bfbe966a7e08bb5d81b4fa0da41b6d980e3689fe757114201e8514fd8a563e06"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "e5b536d4fac5fa83861385a246b1b58a370c0f4dcc638498a5bf60d586ceb940"
       },
       {
         "method": "public_text",
@@ -6830,7 +6892,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "b59b866f775800f16bafb83689c71c99590292aaf88b08cf978bad3ed97aa7af",
+    "candidate_revision": "df4406a78b905e0f9790ec4c87e1e7dc421ad9809ca9f4db07cc17b0a3751f72",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -6905,13 +6967,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "199409c720d3e531598e9a00f5567b1d391fdda2335c2d3b7ea37b11a3443e17",
-    "evidence_sha256": "3d727d6d39cb98a869ef03408ddea46fd3d3b5e307a1d3821d4d1dbc66bdaee2",
+    "evidence_sha256": "128a701d703d2118509d47a67604d0ece586eecb8f4792d22543884c30d2f242",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "b6d9f89af08a2d62d67aed7b8fbb3d1e9f1d014ffce9491dfe92b0886b6b0c5d"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "777d9b2371433d21a23c26c2c64b6e8cf90e9179e9939b4dc720652f9b89e69b"
       },
       {
         "method": "public_text",
@@ -6934,7 +7002,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "b463402827e42fb2d70ea03d2197c0f14943f126d10910f0ec956025ea3da0d2",
+    "candidate_revision": "39973011ed53e7e5eb957d0da99f7250ebf06a54459a0048d741728c61afe7e2",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -6957,13 +7025,13 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "b33c84347991f900d5f9c87dc60d63f1f3cd3dbf3489f5bcc04b84786c07f067",
-    "evidence_sha256": "f748e0f7eac4831e20eebeb82d236e1c2c5f610bd127632e40bf8a34a335a629",
+    "evidence_sha256": "2481db6cf406b2fbfab37129b6804988d2ad2b7c5ddeb2b5b60f33a8ecf663ed",
     "evidence_dependencies": [
       {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "9e4b7f3af0d57938c0591ce12d42d395713230dfb1e0a7f9dd5c65d8d692b78a"
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "2f954a5b0dd8009715c175373a69521dfcc158cbd19c167b7b2846fb41f1bdce"
       },
       {
         "method": "public_text",
@@ -6986,7 +7054,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "66edb2fd238fe4b26e8e3b0c79a5f1c92d23f1a4b337ce36cce252f17d92e233",
+    "candidate_revision": "079ff1a5d09477482a8bac48c48d2294afac338f2270a0ad89eef102ace65176",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -8141,8 +8209,8 @@
     "category": "AI工具",
     "category_override": false,
     "category_reason": "",
-    "summary": "介绍 Karpathy 的 LLM Wiki 最新进展，以及 YC 的 Garry Tan 开发的 gbrain（10.1k Stars）和 OpenClaw、HermesAgent 等 AI Agent 技能工具，可结合 Obsidian 构建知识工作流",
-    "action": "Star gbrain 仓库，关注 OpenClaw 与 HermesAgent，结合 Obsidian 搭建本地 Agent 技能工作流",
+    "summary": "GBrain（garrytan/gbrain）是 Garry Tan 为 OpenClaw 和 Hermes Agent 做的智能体记忆系统，用 Postgres/PGLite 混合检索取代 Karpathy LLM Wiki 的 index.md 目录，带 26 个 Skill 和 21 个定时任务，按“准备资料、Ingest 建页并关联人物公司、Query 查询、定时维护”运行；每页分 AI 总结和只追加的证据时间轴，便于溯源。",
+    "action": "先在测试库按图中流程只摄入几篇 PDF 或文章，检查生成页面的证据时间轴能否溯源；安装时 Agent 会自行拉代码并索要 API Key，批量摄入很耗 Token，确认权限和成本后再接入私人笔记。",
     "themes": [
       "Agent Skill",
       "LLM",
@@ -8153,13 +8221,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "a927fe6faf3519028bb33d62066fbef5e32a312e97c165c3aefa7120d0c6342a",
-    "evidence_sha256": "0dbbe36081a4fe3ed4f2ab45ad05ddef9afc7fe3a33165d8aafc22b8af95f690",
+    "evidence_sha256": "60b1018050f831b6d1b9ac2f9dc24072c6c81cf02b3f273021850fc3595c5bad",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "f9ab56a8bf578d43ae53ff710257656346171399462d027dbaf0720b7d6c294a"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "25eef74ebd50600458e6593082338d4d83e761fc4904a258598ec28b9af1cf7d"
       },
       {
         "method": "public_text",
@@ -8182,7 +8256,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "e3362481ae39faa6599fb38aa5785b90bdeb4a98a2c2cf0ba3f883c63621714a",
+    "candidate_revision": "554d62aebc195683cf3db85d94be26d3d97ad5023474d04d393e8f0214e2a1bb",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -8193,24 +8267,31 @@
     "category": "AI工具推荐",
     "category_override": false,
     "category_reason": "",
-    "summary": "作者分享以OpenClaw为核心工具探索副业变现的思路与想法（无详细图文内容）。",
-    "action": "关注后续更新，参考OpenClaw在副业场景的应用思路。",
+    "summary": "作者在一台闲置旧笔记本上隔离运行 OpenClaw 数月，总结四条教训：模型质量决定上限，先用好模型跑通再降本；复杂 Skill 要人工照 SKILL.md 安装配置，ClawHub 社区 Skill 没有统一审核，装前要读源码；记忆要第一天按 SOUL.md、MEMORY.md 等分层配好；投入带教的深度决定 Agent 的表现。",
+    "action": "给 OpenClaw 单独一台机器或隔离账户，装任何 ClawHub Skill 前先读它的 SKILL.md 和源码；第一天就在 SOUL.md 写明何时写入 MEMORY.md 和每日摘要，一周后对照记忆文件检查它是否记住了被纠正过的规则。",
     "themes": [
-      "AI副业",
-      "创业工具"
+      "Agent记忆",
+      "OpenClaw",
+      "Skill安全"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "d294161b7f6257342bf181494a31da7532ec891c100c737ecf2221a0365262cb",
-    "evidence_sha256": "853f811f39cc82a4af532dd0e49888a999296b68fc17ba68bf650b4f377226ea",
+    "evidence_sha256": "9eacbd04820717d942eda4e736b6c0fc803b142527e722470838a89f358a9257",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "bc038a4a55b4c3af3a76337b7654fdb732efd0bdd7d287b8d46bca498af59e0d"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "470b62873b8b3f26d25513ad3ac5d412677cecc008b9f2031b881bd3124e50d9"
       },
       {
         "method": "public_text",
@@ -8233,7 +8314,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "c8997616a445e733bf7ff27188bd5fd888219b4f8e9b31f3020191ab50dd4fe9",
+    "candidate_revision": "9586e32a5819b3562c27def435556a493f825ae133575c4d8cced81139c4c371",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -8393,59 +8474,6 @@
     "review_status": "accepted",
     "review_reason_code": ""
   },
-  "691459f3000000000d036ad0": {
-    "id": "691459f3000000000d036ad0",
-    "content_sha256": "54971dcf158a9ee653864e1d59cb0dd8ed4fe1d03039378b2baf3afbafe391ed",
-    "title": "五款亚马逊工具的分阶段组合",
-    "category": "",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "目录长文把 Jungle Scout、Helium 10、SellerSprite、Viral Launch 和 AMZScout 分配到选品、关键词与 Listing、经营诊断、竞品监控和机会判断等环节，并建议按阶段组合使用。已核对这些产品仍有与上述方向相关的官方能力，但目录中的细分功能没有逐项得到当前官方材料支持，而且该图文的图片正文缺失。",
-    "action": "选择同一关键词或商品，在五个产品中记录相同日期、市场范围、数据口径、成本和关键结果；购买或长期采用前逐项核对当前官方功能，并以业务结果比较准确性与投入产出。",
-    "themes": [
-      "亚马逊工具栈",
-      "出海电商",
-      "竞品与运营",
-      "选品与关键词"
-    ],
-    "tools": [],
-    "kind": "Note",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "e5e11b1915ffc5836e4859d2d6e16ac803430e3accba2a30d01c8e495592475c",
-    "evidence_sha256": "a9b8856bac28e219f459ad707eb5bc38f38a5c2373973a7adc0969176fc611f7",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "1a3073d1a8c2a02f74ec1f4c51ddf42b1cbcfc0eeeeb4e04bc3b821b350bfd6e"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "fb8409a137b0f7dd8922384201163869dbd426eef329dd22a3d8082eeeb18081"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "837aaca1b670797dd1cff32673d6b8b2291a31f4005499512f1fecd77b862440",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
   "6a5e0769000000000f01f367": {
     "id": "6a5e0769000000000f01f367",
     "content_sha256": "3130e92649b5351a03a62482e8a4f31e6e520843668e567a4ee7f7b0f38b0fc3",
@@ -8453,7 +8481,7 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "图文评测 Nexscope Amazon Skills。官方材料可确认该开源包包含 53 个兼容多种代理环境的 Amazon Skills，并明确不提供实时市场数据；图文也指出多数内容是方法与指令，只有少数目录带可执行脚本。评测重点覆盖产品、关键词、竞品、FBA 费用和 PPC 五类能力，结论是价值主要在于把已有数据和分析方法结构化，而不是自动获得搜索量、点击成本、排名、转化或实时商品数据。图中的 FBA 计算示例使用旧费率假设，不能直接用于当前决策。",
+    "summary": "图文实测 GitHub 仓库 nexscope-ai/Amazon-Skills：53 个 Amazon 运营 Skill，可装进 Codex、Claude Code、Cursor 等，但只有 5 个目录带执行脚本，其余主要是 SKILL.md 方法说明，本身不接实时搜索量、销量或 CPC。作者测了选品、关键词、竞品、FBA 费用和 PPC 五个：关键词能拓长尾词但没有搜索量，FBA 计算器用的是 2024 年费率，结论是它适合整理已有数据，替代不了数据工具。",
     "action": "先隔离测试产品、关键词、竞品、FBA 和 PPC 五项：缺数据时必须明确询问，所有结论记录来源，所有计算保留可复现公式；更新费用表后再与 Seller Central 当前结果对照，其他 Skills 通过同一门禁后再采用。",
     "themes": [
       "Amazon Skills",
@@ -8466,13 +8494,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "1f447d8adee89a93ca87e96530e66eaad170f21c2d21ca5e8b16da49112e5d04",
-    "evidence_sha256": "1b5d16b3c92781b04f032fabcd5863552228e70fc8cfdd9fbfaa2e17524a7084",
+    "evidence_sha256": "2d9c0476d82a74721603b2a38c38e36063ed094e23e984ae322cccfd8794b07c",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "da9bde86a4a89afcd4392397d8abf3f8b4392ba6a271372e012accb31989876a"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "5ee6bb11e4f0dd055133f498c72417afc941848450b481977226091b2f8d043f"
       },
       {
         "method": "public_text",
@@ -8495,7 +8529,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "e9f271ac5005c91714658b98b27bd4e79b806a621443b745a0b389a4a214c0a3",
+    "candidate_revision": "f8d92be9f76ec1ef67712464baea7293f73ff62ed1195a11911a7843c0c0e855",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -14168,8 +14202,8 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "GitNexus 是一个零服务器代码智能引擎，通过知识图谱追踪 GitHub 仓库中的所有关系（非仅描述），支持 Web UI 聊天、CLI 和 MCP 三种接入方式，为 Claude Code、Codex、Cursor 等 AI Agent 提供完整代码架构视图，使小模型也能获得大模型级别的代码理解能力。现有 29.5k stars、3.4k forks。",
-    "action": "通过 MCP 接入 GitNexus，为 Claude Code 或 Codex 提供目标仓库的知识图谱，解决 Agent 因缺少依赖关系上下文而导致的盲目编辑和调用链断裂问题；也可直接用 Web UI 快速问答任意公开仓库。",
+    "summary": "GitNexus（画面中的 GitHub 仓库 abhigyanpatwari/GitNexus）自称零服务器的代码智能引擎：为整个代码库建知识图谱，记录函数调用、导入和类继承关系，再让 Claude Code、Codex、Cursor 等编程智能体通过 MCP 直接查询，减少因不了解依赖关系而改坏代码；网页界面可直接和任意仓库对话，CLI 加 MCP 用于接入智能体。",
+    "action": "先用网页界面对一个自己熟悉的公开仓库提问，核对它给出的调用链是否准确；准确再通过 CLI 和 MCP 接入 Claude Code 或 Codex，改代码前让智能体先查一遍依赖关系。",
     "themes": [
       "Code Intelligence",
       "GitHub Analysis",
@@ -14180,13 +14214,13 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "4ec6ad3a37d6d7c05a4be2c38daf025e4ba6830268c7b3b0d6bf26622d6c3400",
-    "evidence_sha256": "12152780794549a6f19f2ab7a9abe171c6d5ee950f1850bf9b22b6757bdcb62e",
+    "evidence_sha256": "b4a4d02008053c827f623027cd51709ad26ab14268e84617c2805aef12cb6a81",
     "evidence_dependencies": [
       {
         "method": "image_ocr",
         "provider": "configured-local-engine",
         "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
-        "result_sha256": "6b03aecf8f32fc8ad879764b02ec52518590b9944d0ad87dfe204561594412d7"
+        "result_sha256": "bee41cb5405bb3ce1d62dde2481159fb3ed4eaf64e96db9a4df1023b065d7d3d"
       },
       {
         "method": "public_text",
@@ -14209,7 +14243,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "73949cfb72b3f8ecd53f7b272565cc7371edad11a460a3666013c0cf133994ae",
+    "candidate_revision": "97bcd5e79541a49c74c8864f1ad9af69170b277fac12771cd79846a9dbb7806d",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -14220,7 +14254,7 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "精选 Anthropic、OpenAI、Vercel 出品的 10 个前端/设计/UI Agent Skills，涵盖 landing page 生成（frontend-skill）、设计规范落地（frontend-design、web-design-guidelines）、Figma 转代码（figma-implement-design）、React/Next.js 最佳实践（react-best-practices）、UI 自动化测试（playwright、webapp-testing）、画布设计（canvas",
+    "summary": "视频推荐 10 个面向前端、产品和 UI 的 Agent Skill，标注出自 Anthropic、OpenAI、Vercel：frontend-skill 和 frontend-design 做落地页与强风格页面，figma-implement-design 把设计稿转代码，web-design-guidelines 做 UI 审查，react-best-practices 提升 React/Next.js 实现质量，playwright 和 webapp-testing 验证真实浏览器行为，canvas-design 做视觉探索，brand-guidelines 保持品牌一致，vercel-deploy-claimable 做完即部署预览。",
     "action": "按项目阶段按需安装：UI/视觉类选 frontend-skill + brand-guidelines；设计还原选 figma-implement-design + web-design-guidelines；开发质量选 react-best-practices；测试覆盖选 playwright + webapp-testing；部署选 vercel-deploy-claimable。",
     "themes": [
       "Agent Skills",
@@ -14232,13 +14266,13 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "615b568e2a61d78fcd5f90d684eca42109c57303c1003059753e3b2955030f77",
-    "evidence_sha256": "bec824447ce77a783bf9386aeb87a4c470424877d64365684b6afd95b6c2798d",
+    "evidence_sha256": "0c6bab40db0addb4200c31cb998c31ad41d47d5cda4586e5aed94bbb4854d857",
     "evidence_dependencies": [
       {
         "method": "image_ocr",
         "provider": "configured-local-engine",
         "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
-        "result_sha256": "91f3b8928d34bd1bd5f6c8f35c2626ba4f8720c3060fefd183f25ccdcb60b283"
+        "result_sha256": "fc0646091ade799130ecd72bc92cd0c83926fd53b66b4135ed28f86c1c7e1101"
       },
       {
         "method": "public_text",
@@ -14261,7 +14295,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "288ed0815b5c41baf8030ec09eacea756ae9c237f271c50dba11a6391532060a",
+    "candidate_revision": "b7953153c099465d045cf82962a30507bb8011414c13ba9f22fb7963c8d13780",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -17274,13 +17308,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "6b06f97b62c91b77090797d6f32e0744d3ca30c78adbb66b6aaa41a6467629f7",
-    "evidence_sha256": "68c7004b466fa9cb03868da0967471e6101ab2b5bf1b3ea9a0087b85536dcc10",
+    "evidence_sha256": "a6d5fd3ca061b7a852de4ab3a0994f171fccdd277eee1df4390f2f2f5a898439",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "13dbb8151c01b27dd5b6ec123a33129e342e6788276993f583241ec4d60ea068"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "6c215787b966957a4ab2585d15941bf46bfd21a37081995acea1a265956f6bcf"
       },
       {
         "method": "public_text",
@@ -17303,7 +17343,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "9d64aad6539f828ffd2c3eea17c9150777e4b3a0ad883c66c47c77b8050da096",
+    "candidate_revision": "1f5e35ca130d81be56f22844c1714ef4b4aabbaad7cdbaa2b5a03cf901d10131",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -18328,13 +18368,19 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "dd4930d861c18459913752a2bd2f4222547d1ffadef6bb437f0ee963a7ffd3ff",
-    "evidence_sha256": "8be4c4c9b8c2019f4a6aa712fbf801793ff4e6a01006c77d04b9927ef7b663b0",
+    "evidence_sha256": "ffe43ebfc551c9dec053d9fa9a6d3154604c773e50a9a38e643f0657865ecebf",
     "evidence_dependencies": [
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
         "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
         "result_sha256": "2f99163f4a2f8f3c684f44629864b38a9c92879e4ea57435a78c53789d6c1352"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "configured-local-engine",
+        "version": "local-ocr;engine_sha256=7e42bce993fa26aa9033b28d2a9a4239463d60ecb8398343709a6a38311be8be",
+        "result_sha256": "a01603c138b666656d055d78fdc07541b56fb82736e8e7102fe2f55339289cd2"
       },
       {
         "method": "public_text",
@@ -18357,7 +18403,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "b302371c3bb9cd87d73f46dd12d75ec2b6625fa4b1fa3b1ce7dba96ec1e7b32f",
+    "candidate_revision": "27920a6a2eb08c1c0c4d331a659894b7b8f331cb164ba639f6d6a261dbffc766",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -18537,6 +18583,126 @@
       "verification_snapshot_sha256": ""
     },
     "candidate_revision": "75ebbd2547f9ddc37bc4b86f085ccab5367849bc7ec8095a6d43e2bb4ec4cd90",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa4beef0000000028028cc2": {
+    "id": "6aa4beef0000000028028cc2",
+    "content_sha256": "42206c5811ae28a17b354d25666d7d7a29e902579535b9f49eaa84633d38fa61",
+    "title": "技术书读完就忘？让 AI 替你记住",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "book-to-skill（官方仓库 virgiliojr94/book-to-skill）把技术书或文档文件夹蒸馏成一个 Agent Skill：主文件放核心框架和章节索引，每章一个按需加载的文件，另配术语表、模式库和速查表。原帖称常驻约 5K token、比直接塞整本书省 24 到 51 倍、转换一本约 1 美元；官方说明能在多种宿主使用，这里核验后只确认 Codex。",
+    "action": "先在 Codex 里用一份没有版权顾虑的内部文档转换一次，抽查生成的章节文件是否忠于原文；受版权保护的书只给自己用，不要分享生成的技能。",
+    "themes": [
+      "Skill",
+      "技术文档",
+      "知识蒸馏"
+    ],
+    "tools": [
+      "book-to-skill"
+    ],
+    "kind": "Skill",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "09a3495875a0bbc5c07904fdd65fdd93566b8ecd012ffa5659d9bd5dcccc8b1c",
+    "evidence_sha256": "904f7dd015a76dbc06695b67cb08fc113884b20d195edaf487b8312a1c6a035b",
+    "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "618cc325d7205f488fdfcab344d4f57aa599a4dea0db7c71006f7070d4f89f78"
+      },
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "feda55e3a429b24a04769e00ec3238f22b5955001c0f7298c3ef1c449076e60b"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "409018c8f3b47fd052be2673a0bd3a377def54f67265dce11af176fcd1b2303f"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "github-virgiliojr94-book-to-skill",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "c32d695f6d43a461daae42d209833cc5094b002105bd7efc17ef95144599155f",
+      "verification_snapshot_sha256": "d094b08f16265c8178b05e3986e889bcb5ab80d1bd2da1d46d6b16ea45c0651b"
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "github-virgiliojr94-book-to-skill",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "c32d695f6d43a461daae42d209833cc5094b002105bd7efc17ef95144599155f",
+      "verification_snapshot_sha256": "d094b08f16265c8178b05e3986e889bcb5ab80d1bd2da1d46d6b16ea45c0651b"
+    },
+    "candidate_revision": "d7cebd60f9dc5de64388c8551b829c014a7fc8edf48352eff1e5af67a76699ae",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa96fb0000000000d024e21": {
+    "id": "6aa96fb0000000000d024e21",
+    "content_sha256": "dc587a6ea61b9defdd94e8e1decb43dc8958f3ab8efdea74f315b485a18386a4",
+    "title": "离谱 GPT6全自动剪辑！今天直接把skill开源",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "博主 Holland 开源的剪辑 Skill HollandCut（官方仓库 heloraai/hollandcut），可在 Codex 或 Claude Code 中使用：给 AI 原始口播素材和视频稿，它删掉重复录的废句、加字幕和图形动画，并列出需要补图的位置让你上传；官方说明依赖 FFmpeg、whisper.cpp 和 Remotion，开剪前先出提案等用户确认。",
+    "action": "先拿一段几分钟、不含隐私的口播用 lite 档试跑，核对被删的句子和字幕错字；确认本机装齐带 libx264 的 FFmpeg、whisper.cpp 模型和 Node.js，公司商用前查清 Remotion 的许可条件。",
+    "themes": [
+      "AI剪辑",
+      "Skill",
+      "口播剪辑"
+    ],
+    "tools": [
+      "HollandCut"
+    ],
+    "kind": "Skill",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "17ec8deaa42ac0ce68f785215ca73966f9c23677eb21eb91488f7ef6702782cb",
+    "evidence_sha256": "0ed524ed493313b5f79526b94a0d37792b2c760bf4b3341345aaeaad128b3cbb",
+    "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "5a4fbbc92e2ec2eca2bfcf87e8e616a7d273c079d3a29eddf77f4c0b494e3122"
+      },
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "e2fceeae9197af34c41649518ecf6d2a66276515c41c6f92bdc90512ef366df3"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "833cf7b1fbc8126021e61a7a9014d6d59b6dfa43c5017b9e019bdbaa4598264e"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "github-heloraai-hollandcut",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "3c770675904aeb4286d5cf674cba237afccf2f75ac6cca0aa7fb9edddcd27707",
+      "verification_snapshot_sha256": "fb41e9fd3c541a1cdffec99304114ebab4c0c141dc7a310ebc190bb50bc5a4dc"
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "github-heloraai-hollandcut",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "3c770675904aeb4286d5cf674cba237afccf2f75ac6cca0aa7fb9edddcd27707",
+      "verification_snapshot_sha256": "fb41e9fd3c541a1cdffec99304114ebab4c0c141dc7a310ebc190bb50bc5a4dc"
+    },
+    "candidate_revision": "b2dfc3e8602a519417ed697167fef6878d52ad16bf55201ce7073216dcf696a6",
     "review_status": "accepted",
     "review_reason_code": ""
   }
