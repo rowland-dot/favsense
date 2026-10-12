@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
 
 jobs:
   release-check:
@@ -62,4 +63,6 @@ jobs:
 
       - name: Verify PR development lifecycle
         if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/verify-development-lifecycle.mjs
