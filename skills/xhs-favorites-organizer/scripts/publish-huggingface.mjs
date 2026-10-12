@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { cp, lstat, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -199,12 +199,14 @@ async function main() {
     runGit(["clone", "--depth", "1", "--branch", branch, repository, checkout], workspace);
     const targetSite = path.join(checkout, "site");
     await rm(targetSite, { recursive: true, force: true });
-    await cp(publicSite, targetSite, {
-      recursive: true,
-      filter(source) {
-        return path.relative(publicSite, source).split(path.sep)[0].toLowerCase() !== ".local";
-      },
-    });
+    // Copy entry by entry rather than filtering fs.cp: on Windows with Node 20 the
+    // filter receives \\?\-prefixed paths, so a path.relative() check never matched
+    // and the private .local directory was published.
+    await mkdir(targetSite, { recursive: true });
+    for (const name of await readdir(publicSite)) {
+      if (name.toLowerCase() === ".local") continue;
+      await cp(path.join(publicSite, name), path.join(targetSite, name), { recursive: true });
+    }
     if (frozenManifest) {
       const copiedManifest = await siteTreeManifest(targetSite, buildVersion);
       if (

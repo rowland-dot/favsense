@@ -309,7 +309,7 @@ test("publisher validates a cloned README before following or rewriting it", {
   );
 
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /symbolic link|redirected/i);
+  assert.match(result.stderr, /Space README\.md must be a plain file/);
   assert.equal(await readFile(victim, "utf8"), victimBytes);
 });
 
