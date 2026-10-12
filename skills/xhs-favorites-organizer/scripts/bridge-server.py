@@ -28,6 +28,7 @@ import tempfile
 import threading
 import time
 import unicodedata
+import uuid
 from urllib.parse import parse_qs, quote, unquote, urlencode, urlparse
 from urllib.request import ProxyHandler, Request, build_opener, urlopen
 
@@ -262,6 +263,35 @@ class BridgeBusyError(RuntimeError):
 
 class CDPTransportError(RuntimeError):
     pass
+
+
+# Query keys that mark a page as one FavSense navigated for a sync round. A page carrying any of them
+# and left over from an earlier round is FavSense's to close; a page without them never is.
+SYNC_PAGE_QUERY_KEYS = frozenset({"xhs_kb_sync", "xhs_kb_worker", "xhs_kb_share_worker"})
+PAGE_ID = re.compile(r"^[A-Za-z0-9._-]{1,200}$")
+PAGE_FAILURE_CODE = re.compile(r"^[a-z][a-z0-9-]{2,79}$")
+PAGE_RESULT_FIELDS = frozenset({"worker_id", "stage", "ok", "url", "error"})
+
+
+class PageTask:
+    """One job the sync service gave the run page: copy a note's share link, or run the DianDian chat.
+
+    The page asks for its job by the worker id in its address and reports back once. The signed link
+    in `url` and in the outcome lives only here, in memory, until the driver takes it.
+    """
+
+    __slots__ = ("stage", "run_id", "board_id", "note_id", "title", "batch", "url", "event", "outcome")
+
+    def __init__(self, stage, run_id, board_id, note_id, title, batch, url=None) -> None:
+        self.stage = stage
+        self.run_id = run_id
+        self.board_id = board_id
+        self.note_id = note_id
+        self.title = title
+        self.batch = batch
+        self.url = url
+        self.event = threading.Event()
+        self.outcome: dict | None = None
 
 
 def is_manager_origin(value: str | None) -> bool:
@@ -1501,6 +1531,17 @@ class CDPTarget:
         self._connection = connection
         self.session = CDPSession(connection)
         self.closed = False
+        self.released = False
+
+    def release(self) -> None:
+        """Let go of the connection and leave the page open. The run page outlives every step."""
+        if self.released or self.closed:
+            return
+        self.released = True
+        try:
+            self._connection.close()
+        except Exception:  # noqa: BLE001 - the page is already gone or the socket already shut
+            pass
 
     def close(self) -> None:
         if self.closed:
@@ -1536,31 +1577,6 @@ def validate_sop_target_response(value: object, endpoint: DevToolsEndpoint) -> t
     ):
         raise RuntimeError("SOP DevTools target websocket is invalid")
     return target_id, parsed._replace(netloc=f"127.0.0.1:{endpoint.port}").geturl()
-
-
-def open_sop_cdp_target(port_file: Path, initial_url: str = "about:blank") -> CDPTarget:
-    if initial_url != "about:blank":
-        raise ValueError("new CDP targets must start at about:blank")
-    endpoint = read_sop_devtools_endpoint(port_file)
-    value = loopback_devtools_json(
-        endpoint,
-        f"/json/new?{quote(initial_url, safe='')}",
-        method="PUT",
-    )
-    target_id, safe_websocket_url = validate_sop_target_response(value, endpoint)
-    try:
-        from websockets.sync.client import connect
-
-        connection = connect(
-            safe_websocket_url,
-            proxy=None,
-            open_timeout=5,
-            close_timeout=5,
-            max_size=1024 * 1024,
-        )
-    except (ImportError, OSError, RuntimeError) as error:
-        raise RuntimeError("SOP DevTools target could not be connected") from error
-    return CDPTarget(endpoint, target_id, connection)
 
 
 @contextmanager
@@ -2505,6 +2521,7 @@ class Bridge:
         self.token_path = self.state_dir / "bridge-token"
         self.status_path = self.state_dir / "bridge-status.json"
         self.manual_sync_path = self.state_dir / "manual-sync.json"
+        self.open_note_page_path = self.state_dir / "open-note-page.json"
         self.catalog_path = self.state_dir / "catalog.json"
         self.diandian_dir = self.state_dir / "diandian-summaries"
         self.diandian_report_path = self.state_dir / "diandian-rerun-report.json"
@@ -2671,6 +2688,13 @@ class Bridge:
             tuple[str, str], tuple[str, str]
         ] = {}
         self.diandian_sleep = time.sleep
+        # One browser page serves a whole round. Everything that needs the signed links of a round's
+        # notes lives here, in memory only: the links are taken by the driver of that run, and every
+        # path that ends or halts the run clears whatever is left.
+        self.page_tasks_guard = threading.Lock()
+        self.page_tasks: dict[str, PageTask] = {}
+        self.run_note_links: dict[str, dict[str, str]] = {}
+        self.summary_drivers: dict[str, threading.Thread] = {}
 
     @staticmethod
     def manual_run_id(batch: str, board_id: str) -> str:
@@ -2853,6 +2877,7 @@ class Bridge:
             self.summary_halted.update(run_ids)
         for run_id in run_ids:
             self.summary_plans.pop(run_id, None)
+            self.clear_run_secrets(run_id)
         return self.report_run_event(
             "run_expired", error=error, halted_run_ids=halted_runs, pending=pending,
         )
@@ -2955,6 +2980,96 @@ class Bridge:
             )
         return {"id": target_id}
 
+    def list_sop_browser_pages(self) -> list[dict]:
+        """The pages the scan browser has open, reduced to id, address and kind."""
+        endpoint = read_sop_devtools_endpoint(self.sop_port_file)
+        values = loopback_devtools_json(endpoint, "/json/list")
+        if not isinstance(values, list) or len(values) > 1000:
+            raise RuntimeError("SOP DevTools target list is invalid")
+        pages = []
+        for value in values:
+            if not isinstance(value, dict) or value.get("type") != "page":
+                continue
+            page_id, url = value.get("id"), value.get("url")
+            if isinstance(page_id, str) and PAGE_ID.fullmatch(page_id) and isinstance(url, str):
+                pages.append({"id": page_id, "url": url, "type": "page"})
+        return pages
+
+    def close_sop_browser_page(self, page_id: str) -> None:
+        if not isinstance(page_id, str) or not PAGE_ID.fullmatch(page_id):
+            raise ValueError("browser page id is invalid")
+        endpoint = read_sop_devtools_endpoint(self.sop_port_file)
+        loopback_devtools_action(endpoint, f"/json/close/{quote(page_id, safe='')}")
+
+    def attach_run_page(self, run_id: str) -> CDPTarget:
+        """Connect to the page this round works in. Release the target afterwards; the page stays open."""
+        page_id = self.read_manual_sync().get("run_page_id")
+        if not isinstance(page_id, str) or not PAGE_ID.fullmatch(page_id):
+            raise CDPTransportError("the run page is unknown")
+        try:
+            endpoint = read_sop_devtools_endpoint(self.sop_port_file)
+            values = loopback_devtools_json(endpoint, "/json/list")
+            entry = next((
+                value for value in (values if isinstance(values, list) else [])
+                if isinstance(value, dict) and value.get("type") == "page" and value.get("id") == page_id
+            ), None)
+            if entry is None:
+                raise RuntimeError("the run page is gone")
+            _, websocket_url = validate_sop_target_response(entry, endpoint)
+            from websockets.sync.client import connect
+
+            connection = connect(
+                websocket_url,
+                proxy=None,
+                open_timeout=5,
+                close_timeout=5,
+                max_size=1024 * 1024,
+            )
+        except (ImportError, OSError, RuntimeError, ValueError, TimeoutError, LookupError) as error:
+            raise CDPTransportError("the run page could not be connected") from error
+        return CDPTarget(endpoint, page_id, connection)
+
+    def close_run_page(self) -> None:
+        """Close the page of a round that ended normally, and forget it."""
+        page_id = self.read_manual_sync().get("run_page_id")
+        if not isinstance(page_id, str):
+            return
+        try:
+            self.close_sop_browser_page(page_id)
+        except (OSError, RuntimeError, ValueError) as error:
+            # The record keeps the id, so the next round tries again.
+            append_bridge_log(self.state_dir, "INTERNAL", "run-page-close", "-", type(error).__name__, str(error))
+            return
+        with self.get_manual_sync_lock():
+            self.report_run_event("run_page_closed", page_id=page_id)
+
+    def close_leftover_run_pages(self, recorded_page_id: object) -> None:
+        """Before a round opens its page, close the pages earlier rounds left behind.
+
+        Only three kinds are FavSense's: a page whose address carries a sync marker, the page the
+        previous round recorded (a failed round keeps one, and the DianDian address cannot be marked),
+        and the page "open original" recorded. Every other Xiaohongshu page belongs to someone else
+        and is neither closed nor moved.
+        """
+        try:
+            pages = self.list_sop_browser_pages()
+        except (OSError, RuntimeError, ValueError) as error:
+            append_bridge_log(self.state_dir, "INTERNAL", "run-page-cleanup", "-", type(error).__name__, str(error))
+            return
+        owned_page_ids = {recorded_page_id, self.recorded_open_note_page_id()}
+        for page in pages:
+            parsed = urlparse(page["url"])
+            marked = (
+                parsed.hostname == "www.xiaohongshu.com"
+                and bool(SYNC_PAGE_QUERY_KEYS & set(parse_qs(parsed.query)))
+            )
+            if not marked and page["id"] not in owned_page_ids:
+                continue
+            try:
+                self.close_sop_browser_page(page["id"])
+            except (OSError, RuntimeError, ValueError) as error:
+                append_bridge_log(self.state_dir, "INTERNAL", "run-page-cleanup", "-", type(error).__name__, str(error))
+
     def browser_session_ready(self) -> bool:
         try:
             read_sop_devtools_endpoint(self.sop_port_file)
@@ -2995,6 +3110,8 @@ class Bridge:
 
             batch = f"manual{datetime.now().astimezone():%Y%m%d%H%M%S%f}"
             run_board_ids = requested_board_ids or list(self.board_order)
+            # The page an earlier round left open is read before the new record replaces it.
+            self.close_leftover_run_pages(self.read_manual_sync().get("run_page_id"))
             with self.get_manual_sync_lock():
                 self.report_run_event(
                     "round_started",
@@ -3014,7 +3131,7 @@ class Bridge:
             })
             url = parsed_profile._replace(query=urlencode(query, doseq=True)).geturl()
             try:
-                self.open_sop_browser_page(url)
+                opened = self.open_sop_browser_page(url)
             except (RuntimeError, ValueError) as error:
                 message = sanitize_error(str(error))
                 with self.get_manual_sync_lock():
@@ -3022,6 +3139,11 @@ class Bridge:
                     if current.get("batch") == batch:
                         self.report_run_event("start_failed", error=message)
                 raise RuntimeError(message) from error
+            page_id = opened.get("id") if isinstance(opened, dict) else None
+            if isinstance(page_id, str) and PAGE_ID.fullmatch(page_id):
+                with self.get_manual_sync_lock():
+                    if self.read_manual_sync().get("batch") == batch:
+                        self.report_run_event("run_page_opened", page_id=page_id)
             return self.manual_sync_status()
         finally:
             self.trigger_lock.release()
@@ -4023,10 +4145,45 @@ class Bridge:
         )
         self.summary_plans.pop(run_id, None)
         if final_build_due:
+            # The last board has nothing left to summarize: the round's work in the browser is over.
+            self.close_run_page()
             self._start_diandian_finalization(run_id, board_id)
         return response
 
     def diandian_summary_plan(self, payload: dict) -> dict:
+        """Settle which notes of a board get a DianDian summary, and start moving the run page through them.
+
+        The answer says `driven` when this service now owns the rest of the board (it holds the notes'
+        signed links); the board page then does nothing more and the sync service moves the page on.
+        """
+        if set(payload) not in ({"run_id", "board_id", "note_ids"}, {"run_id", "board_id", "note_ids", "titles"}):
+            raise ValueError("DianDian plan contains unsupported fields")
+        titles = payload.get("titles", {})
+        if (
+            not isinstance(titles, dict)
+            or len(titles) > 200
+            or not all(
+                isinstance(note_id, str) and NOTE_ID.fullmatch(note_id) and isinstance(title, str)
+                for note_id, title in titles.items()
+            )
+        ):
+            raise ValueError("DianDian plan titles are invalid")
+        titles = {note_id: " ".join(title.split())[:200] for note_id, title in titles.items()}
+        run_id = payload.get("run_id")
+        try:
+            result = self._diandian_summary_plan({key: value for key, value in payload.items() if key != "titles"})
+        except BaseException:
+            self.clear_run_secrets(run_id)
+            raise
+        note_ids = result.get("note_ids")
+        if result.get("enabled") is True and note_ids:
+            if self.start_summary_driver(run_id, payload.get("board_id"), list(note_ids), titles):
+                return {**result, "driven": True}
+        # Not driven: nothing here needs the signed links, so none is kept.
+        self.clear_run_secrets(run_id)
+        return result
+
+    def _diandian_summary_plan(self, payload: dict) -> dict:
         if set(payload) != {"run_id", "board_id", "note_ids"}:
             raise ValueError("DianDian plan contains unsupported fields")
         run_id = payload.get("run_id")
@@ -4133,8 +4290,315 @@ class Bridge:
                 self.summary_plans[run_id] = set(planned)
                 return {"enabled": True, "note_ids": planned}
 
-    def open_cdp_target(self, initial_url: str = "about:blank") -> CDPTarget:
-        return open_sop_cdp_target(self.sop_port_file, initial_url)
+    # --- The round's single page ---------------------------------------------------------------
+    #
+    # A round works in one browser page. The user script scans a board in it and hands over the
+    # summary plan; from then on this service moves the page: to a note (whose own copy of the user
+    # script copies the share link and reports it), to the DianDian chat, to the next note, and at the
+    # end to the next board or closed. Nothing else is ever opened.
+
+    def keep_run_note_links(self, run_id: str, links: dict[str, str]) -> None:
+        """Hold this board's signed links in memory for its summary driver. They are never written anywhere."""
+        if not self.diandian_enabled:
+            return
+        with self.page_tasks_guard:
+            self.run_note_links[run_id] = dict(links)
+
+    def clear_run_secrets(self, run_id: str) -> None:
+        """Forget every signed link and page job of a run: it ended, stopped, expired or never needed them."""
+        if not isinstance(run_id, str):
+            return
+        with self.page_tasks_guard:
+            self.run_note_links.pop(run_id, None)
+            for worker_id in [
+                worker_id for worker_id, task in self.page_tasks.items() if task.run_id == run_id
+            ]:
+                self.page_tasks.pop(worker_id, None)
+
+    def register_page_task(
+        self,
+        worker_id: str,
+        stage: str,
+        *,
+        run_id: str,
+        board_id: str,
+        note_id: str,
+        title: str,
+        batch: str,
+        url: str | None = None,
+    ) -> PageTask:
+        if not WORKER_ID.fullmatch(worker_id) or stage not in {"share", "ai"}:
+            raise ValueError("page task is invalid")
+        task = PageTask(stage, run_id, board_id, note_id, title, batch, url)
+        with self.page_tasks_guard:
+            if worker_id in self.page_tasks:
+                raise ValueError("page task is already registered")
+            self.page_tasks[worker_id] = task
+        return task
+
+    def drop_page_task(self, worker_id: str) -> None:
+        with self.page_tasks_guard:
+            self.page_tasks.pop(worker_id, None)
+
+    def find_page_task(self, worker_id: object) -> PageTask:
+        if not isinstance(worker_id, str) or not WORKER_ID.fullmatch(worker_id):
+            raise ValueError("page worker id is invalid")
+        with self.page_tasks_guard:
+            task = self.page_tasks.get(worker_id)
+        if task is None:
+            raise ValueError("page has no task")
+        return task
+
+    def page_task(self, worker_id: str) -> dict:
+        """What a page asks for when it loads with a worker id in its address."""
+        task = self.find_page_task(worker_id)
+        public = {
+            "stage": task.stage,
+            "run_id": task.run_id,
+            "board_id": task.board_id,
+            "note_id": task.note_id,
+            "title": task.title,
+            "batch": task.batch,
+        }
+        if task.stage == "ai":
+            public["url"] = task.url
+        return public
+
+    def record_page_result(self, payload: dict) -> dict:
+        """A page reports the one job it was given. A share result carries the signed link for the driver only."""
+        if (
+            not isinstance(payload, dict)
+            or not {"worker_id", "stage", "ok"} <= set(payload)
+            or not set(payload) <= PAGE_RESULT_FIELDS
+            or not isinstance(payload["ok"], bool)
+        ):
+            raise ValueError("page result is invalid")
+        task = self.find_page_task(payload["worker_id"])
+        if payload["stage"] != task.stage:
+            raise ValueError("page result does not match its task")
+        if payload["ok"]:
+            if "error" in payload:
+                raise ValueError("page result is invalid")
+            if task.stage == "share":
+                signed_url = payload.get("url")
+                canonical_signed_note_url(signed_url, task.note_id)
+                outcome = {"ok": True, "url": signed_url}
+            else:
+                if "url" in payload:
+                    raise ValueError("page result is invalid")
+                outcome = {"ok": True}
+        else:
+            error = payload.get("error")
+            if "url" in payload or not isinstance(error, str) or not PAGE_FAILURE_CODE.fullmatch(error):
+                raise ValueError("page result is invalid")
+            outcome = {"ok": False, "error": error}
+        with self.page_tasks_guard:
+            if task.event.is_set():
+                raise ValueError("page result was already reported")
+            task.outcome = outcome
+            task.event.set()
+        return {"recorded": True}
+
+    def timing_seconds(self, name: str, default_ms: int) -> float:
+        spec = self.diandian_cdp_spec if isinstance(self.diandian_cdp_spec, dict) else {}
+        timings = spec.get("timings_ms") if isinstance(spec.get("timings_ms"), dict) else {}
+        value = timings.get(name)
+        milliseconds = value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else default_ms
+        return milliseconds / 1000
+
+    def wait_for_page_task(self, run_id: str, task: PageTask, seconds: float) -> bool:
+        """True when the page reported; False when the time ran out or the run was halted meanwhile."""
+        deadline = time.monotonic() + seconds
+        while True:
+            if task.event.wait(timeout=max(0.0, min(0.2, deadline - time.monotonic()))):
+                return True
+            if self.diandian_is_halted(run_id) or time.monotonic() >= deadline:
+                return task.event.is_set()
+
+    def navigate_run_page(self, run_id: str, url: str) -> None:
+        target = self.attach_run_page(run_id)
+        try:
+            result = target.session.call("Page.navigate", url=url)
+        finally:
+            target.release()
+        if isinstance(result, dict) and result.get("errorText"):
+            raise CDPTransportError("the run page could not navigate")
+
+    def start_summary_driver(
+        self, run_id: str, board_id: str, note_ids: list[str], titles: dict[str, str]
+    ) -> bool:
+        """Start moving the run page through this board's planned notes. False when there is nothing to move with."""
+        with self.page_tasks_guard:
+            running = self.summary_drivers.get(run_id)
+            if running is not None and running.is_alive():
+                return True
+            links = self.run_note_links.pop(run_id, None)
+            if not links:
+                return False
+            thread = threading.Thread(
+                target=self.drive_board_summaries,
+                args=(run_id, board_id, list(note_ids), links, titles),
+                name="favsense-summary-driver",
+                daemon=True,
+            )
+            self.summary_drivers[run_id] = thread
+        thread.start()
+        return True
+
+    def drive_board_summaries(
+        self,
+        run_id: str,
+        board_id: str,
+        note_ids: list[str],
+        links: dict[str, str],
+        titles: dict[str, str],
+    ) -> None:
+        try:
+            for index, note_id in enumerate(note_ids):
+                if self.diandian_is_halted(run_id):
+                    return
+                title = titles.get(note_id) or f"小红书收藏 {note_id[-8:]}"
+                if not self.drive_note_summary(run_id, board_id, note_id, links.pop(note_id, None), title):
+                    return
+                if index + 1 < len(note_ids):
+                    self.diandian_sleep(self.timing_seconds("between_notes", 1_000))
+            if not self.diandian_is_halted(run_id):
+                self.leave_board_page(run_id, board_id)
+        except Exception as error:  # noqa: BLE001 - an unexpected failure is a failed step, never a silent one
+            append_bridge_log(
+                self.state_dir, "INTERNAL", "summary-driver", "-", type(error).__name__, str(error),
+            )
+            try:
+                self.halt_driven_step(run_id, board_id, None, "transport-failed")
+            except Exception as halt_error:  # noqa: BLE001
+                append_bridge_log(
+                    self.state_dir, "INTERNAL", "summary-driver", "-", type(halt_error).__name__, str(halt_error),
+                )
+        finally:
+            links.clear()
+            self.clear_run_secrets(run_id)
+
+    def halt_driven_step(self, run_id: str, board_id: str, note_id: str | None, reason: str) -> dict:
+        """Stop the round at the step that failed; the page stays exactly where it failed."""
+        if reason == DIANDIAN_SAFETY_STOP_REASON:
+            return self.halt_diandian_cdp_run(
+                run_id, board_id, reason=reason, safety=True, failed_note_id=note_id,
+            )
+        try:
+            reason = normalize_diandian_halt_reason(reason)
+        except ValueError:
+            reason = "transport-failed"
+        if reason == "transport-failed":
+            return self.halt_diandian_transport_failure(run_id, board_id, failed_note_id=note_id)
+        return self.halt_diandian_cdp_run(
+            run_id, board_id, reason=reason, safety=False, failed_note_id=note_id,
+        )
+
+    def drive_note_summary(
+        self, run_id: str, board_id: str, note_id: str, link: str | None, title: str
+    ) -> bool:
+        """One note: share link on its own page, then the DianDian chat in the same page. True when it was saved."""
+        if link is None:
+            self.halt_driven_step(run_id, board_id, note_id, "share-link-unavailable")
+            return False
+        signed_url = self.share_note_link(run_id, board_id, note_id, link, title)
+        if signed_url is None:
+            return False
+        if self.diandian_cdp_enabled:
+            result = self.run_diandian_cdp({
+                "run_id": run_id, "board_id": board_id, "note_id": note_id,
+                "title": title, "url": signed_url,
+            })
+            return result.get("saved") is True and result.get("halted") is not True
+        return self.summarize_on_chat_page(run_id, board_id, note_id, signed_url, title)
+
+    def share_note_link(
+        self, run_id: str, board_id: str, note_id: str, link: str, title: str
+    ) -> str | None:
+        worker_id = str(uuid.uuid4())
+        task = self.register_page_task(
+            worker_id, "share", run_id=run_id, board_id=board_id, note_id=note_id, title=title,
+            batch=str(self.read_manual_sync().get("batch", "")),
+        )
+        try:
+            try:
+                self.navigate_run_page(
+                    run_id, f"{link}{'&' if '?' in link else '?'}xhs_kb_share_worker={worker_id}",
+                )
+            except (CDPTransportError, OSError, RuntimeError):
+                self.halt_driven_step(run_id, board_id, note_id, "transport-failed")
+                return None
+            if not self.wait_for_page_task(run_id, task, self.timing_seconds("share_result_wait", 30_000)):
+                if not self.diandian_is_halted(run_id):
+                    self.halt_driven_step(run_id, board_id, note_id, "share-worker-not-ready")
+                return None
+            outcome = task.outcome or {}
+            if outcome.get("ok") is True and isinstance(outcome.get("url"), str):
+                return outcome["url"]
+            error = str(outcome.get("error") or "share-link-failed")
+            reason = error if error == DIANDIAN_SAFETY_STOP_REASON or error in DIANDIAN_HALT_DIAGNOSTICS else "share-link-failed"
+            self.halt_driven_step(run_id, board_id, note_id, reason)
+            return None
+        finally:
+            self.drop_page_task(worker_id)
+
+    def summarize_on_chat_page(
+        self, run_id: str, board_id: str, note_id: str, signed_url: str, title: str
+    ) -> bool:
+        """The DianDian chat without the external browser step: the page's own user script does the chat."""
+        ai_url = str((self.diandian_cdp_spec or {}).get("ai_chat_url", ""))
+        worker_id = str(uuid.uuid4())
+        task = self.register_page_task(
+            worker_id, "ai", run_id=run_id, board_id=board_id, note_id=note_id, title=title,
+            batch=str(self.read_manual_sync().get("batch", "")), url=signed_url,
+        )
+        try:
+            try:
+                self.navigate_run_page(
+                    run_id, f"{ai_url}{'&' if '?' in ai_url else '?'}xhs_kb_worker={worker_id}",
+                )
+            except (CDPTransportError, OSError, RuntimeError):
+                self.halt_driven_step(run_id, board_id, note_id, "transport-failed")
+                return False
+            if not self.wait_for_page_task(run_id, task, self.timing_seconds("single_note_wait", 480_000)):
+                if not self.diandian_is_halted(run_id):
+                    self.halt_driven_step(run_id, board_id, note_id, "single-note-timeout")
+                return False
+            outcome = task.outcome or {}
+            if outcome.get("ok") is True:
+                if note_id in self.summary_plans.get(run_id, set()):
+                    self.halt_driven_step(run_id, board_id, note_id, "submit-unconfirmed")
+                    return False
+                return True
+            error = str(outcome.get("error") or "diandian-ai-failed")
+            if error == DIANDIAN_SAFETY_STOP_REASON:
+                self.halt_driven_step(run_id, board_id, note_id, error)
+                return False
+            # An ordinary failure: this note is recorded as failed and the rest of the board's plan is dropped.
+            self.skip_diandian_result({
+                "run_id": run_id, "board_id": board_id, "note_id": note_id, "reason": error,
+            })
+            self.diandian_summary_plan({"run_id": run_id, "board_id": board_id, "note_ids": []})
+            return False
+        finally:
+            self.drop_page_task(worker_id)
+
+    def leave_board_page(self, run_id: str, board_id: str) -> None:
+        """A board's summaries are done: the page goes to the next board, or the round ends and it is closed."""
+        state = self.read_manual_sync()
+        next_board_id = self.next_board_id(board_id, run_id)
+        if next_board_id is None:
+            self.close_run_page()
+            return
+        if state.get("state") not in {"starting", "running"}:
+            return
+        query = urlencode({
+            "source": "web_user_page",
+            "xhs_kb_sync": "1",
+            "xhs_kb_batch": str(state.get("batch", "")),
+            "xhs_kb_mode": str(state.get("run_mode", "incremental")),
+        })
+        self.navigate_run_page(run_id, f"https://www.xiaohongshu.com/board/{next_board_id}?{query}")
 
     def revoke_diandian_cdp_inputs(self, run_id: str) -> None:
         guard = self.diandian_cdp_guard
@@ -4495,6 +4959,7 @@ class Bridge:
         else:
             self.record_platform_stop("diandian")
         self.revoke_diandian_cdp_inputs(run_id)
+        self.clear_run_secrets(run_id)
         guard = self.summary_locks_guard
         with self.summary_run_lock(run_id):
             with self.get_manual_sync_lock():
@@ -4827,18 +5292,8 @@ class Bridge:
                 if pending is None or note_id not in pending:
                     raise ValueError("note_id was not planned for DianDian summarization")
 
-            try:
-                target = self.open_cdp_target("about:blank")
-            except (
-                OSError,
-                RuntimeError,
-                TimeoutError,
-                LookupError,
-                json.JSONDecodeError,
-            ) as error:
-                raise CDPTransportError(
-                    "DianDian CDP target could not be opened"
-                ) from error
+            # The round's one page: it is on the note's page now and goes to the DianDian chat from there.
+            target = self.attach_run_page(run_id)
             session = target.session
             spec = self.diandian_cdp_spec
             if not isinstance(spec, dict):
@@ -4846,6 +5301,10 @@ class Bridge:
             ai_url = str(spec.get("ai_chat_url", ""))
             state_expression = ai_page_state_expression(spec)
             ensure_run_active()
+            try:
+                previous_href = read_ai_page_state(session, state_expression)["href"]
+            except RuntimeError:
+                previous_href = ""
             session.call("Page.navigate", url=ai_url)
             timings = spec.get("timings_ms")
             if not isinstance(timings, dict):
@@ -4858,7 +5317,12 @@ class Bridge:
             for attempt in range(ready_tries):
                 ensure_run_active()
                 ready_state = read_ai_page_state(session, state_expression)
-                if ready_state["href"] == "about:blank":
+                # Right after the navigate command the page may still be the one it came from.
+                if ready_state["href"] == "about:blank" or (
+                    previous_href
+                    and ready_state["href"] == previous_href
+                    and urlparse(previous_href).path != urlparse(ai_url).path
+                ):
                     if attempt + 1 < ready_tries:
                         sleep(0.5)
                     continue
@@ -4985,7 +5449,6 @@ class Bridge:
             validate_ai_page_state(final_state, ai_url)
             if final_state["last"].strip() != summary:
                 raise DiandianPageStop("unstable-reply")
-            target.close()
             completion = self.diandian_completion_state(run_id, board_id)
             result = {"saved": saved["saved"], **completion, "halted": False}
             with guard:
@@ -5031,6 +5494,8 @@ class Bridge:
                 completed[key] = result
             return dict(result)
         finally:
+            if target is not None:
+                target.release()
             with guard:
                 self.diandian_cdp_active.discard(key)
                 if cancellation_registered:
@@ -5233,10 +5698,45 @@ class Bridge:
             raise ValueError("note source board is unavailable")
 
         query = urlencode({"source": "web_user_page", "xhs_kb_open_note": note_id})
-        self.open_sop_browser_page(
-            f"https://www.xiaohongshu.com/board/{board_id}?{query}"
-        )
+        # One lookup page at a time: the previous one is closed first, and the trigger lock keeps a
+        # round start (which closes it too) and a second click from opening pages at the same moment.
+        if not self.trigger_lock.acquire(blocking=False):
+            raise BridgeBusyError("another request is already opening a page")
+        try:
+            self.manual_sync_status()
+            if self.round_is_running():
+                raise BridgeBusyError("organization is already running in Chrome")
+            self.close_open_note_page()
+            opened = self.open_sop_browser_page(
+                f"https://www.xiaohongshu.com/board/{board_id}?{query}"
+            )
+            page_id = opened.get("id") if isinstance(opened, dict) else None
+            if isinstance(page_id, str) and PAGE_ID.fullmatch(page_id):
+                atomic_json(self.open_note_page_path, {"page_id": page_id})
+        finally:
+            self.trigger_lock.release()
         return {"status": "opened"}
+
+    def round_is_running(self) -> bool:
+        current = self.read_manual_sync()
+        return current.get("state") in {"starting", "running"} and (
+            self.run_age_seconds(current, unreadable=0) < MANUAL_RUN_TIMEOUT_SECONDS
+        )
+
+    def recorded_open_note_page_id(self) -> str | None:
+        """The page "open original" last opened, or None. Its record holds nothing but this id."""
+        try:
+            record = json.loads(self.open_note_page_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        page_id = record.get("page_id") if isinstance(record, dict) else None
+        return page_id if isinstance(page_id, str) and PAGE_ID.fullmatch(page_id) else None
+
+    def close_open_note_page(self) -> None:
+        """Close the page "open original" last opened, unless the browser no longer has it."""
+        page_id = self.recorded_open_note_page_id()
+        if page_id is not None and page_id in {page["id"] for page in self.list_sop_browser_pages()}:
+            self.close_sop_browser_page(page_id)
 
     def note_organization_status(self, note_id: str) -> dict:
         if not isinstance(note_id, str) or not NOTE_ID.fullmatch(note_id):
@@ -5720,13 +6220,22 @@ class Bridge:
             board_id = payload["board_id"]
             self.record_manual_started(run_id, board_id)
             run_status_path = self.state_dir / "runs" / f"{run_id}.json"
+            self.keep_run_note_links(run_id, unique)
             if run_status_path.exists():
                 existing = json.loads(run_status_path.read_text(encoding="utf-8-sig"))
+                if existing.get("state") != "completed":
+                    self.clear_run_secrets(run_id)
                 self.record_manual_result(run_id, board_id, existing)
                 ok = existing.get("state") == "completed"
                 return (HTTPStatus.OK if ok else HTTPStatus.CONFLICT), {"ok": ok, **existing}
-            self.process_import(run_id, board_id, unique)
-            result = json.loads(run_status_path.read_text(encoding="utf-8-sig"))
+            try:
+                self.process_import(run_id, board_id, unique)
+                result = json.loads(run_status_path.read_text(encoding="utf-8-sig"))
+            except BaseException:
+                self.clear_run_secrets(run_id)
+                raise
+            if result.get("state") != "completed":
+                self.clear_run_secrets(run_id)
             self.record_manual_result(run_id, board_id, result)
             if not self.summary_plans.get(run_id):
                 self.summary_plans.pop(run_id, None)
@@ -6522,6 +7031,17 @@ def make_handler(bridge: Bridge):
                     return
                 self.send_json(HTTPStatus.OK, {"ok": True, "board": context})
                 return
+            if parsed.path == "/sync/page-task":
+                if not self.authorized():
+                    self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
+                    return
+                try:
+                    task = bridge.page_task(parse_qs(parsed.query).get("worker_id", [""])[0])
+                except ValueError as error:
+                    self.send_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": sanitize_error(str(error))})
+                    return
+                self.send_json(HTTPStatus.OK, {"ok": True, "task": task})
+                return
             if parsed.path == "/sync/status":
                 if not self.authorized() or not is_manager_origin(self.headers.get("Origin")):
                     self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
@@ -6582,7 +7102,7 @@ def make_handler(bridge: Bridge):
                 "/import-sync", "/boards", "/sync/start", "/sync/local-rebuild", "/sync/safety-stop/clear",
                 "/sync/failure", "/sync/discover",
                 "/sync/summary-plan", "/sync/diandian-result", "/sync/diandian-skip",
-                "/sync/diandian-halt", "/sync/diandian-click", "/sync/diandian-cdp", "/notes/open",
+                "/sync/diandian-halt", "/sync/diandian-click", "/sync/page-result", "/notes/open",
                 "/notes/organization-status",
                 "/install/complete",
             }:
@@ -6671,8 +7191,8 @@ def make_handler(bridge: Bridge):
                 if self.path == "/sync/diandian-click":
                     self.send_json(HTTPStatus.OK, {"ok": True, **bridge.click_diandian_control(payload)})
                     return
-                if self.path == "/sync/diandian-cdp":
-                    self.send_json(HTTPStatus.OK, {"ok": True, **bridge.run_diandian_cdp(payload)})
+                if self.path == "/sync/page-result":
+                    self.send_json(HTTPStatus.OK, {"ok": True, **bridge.record_page_result(payload)})
                     return
                 if self.path == "/notes/open":
                     if set(payload) != {"note_id"}:

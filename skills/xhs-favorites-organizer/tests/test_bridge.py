@@ -800,22 +800,29 @@ class BridgeHelpersTest(unittest.TestCase):
         connection = mock.MagicMock()
         fake_connect = mock.Mock(return_value=connection)
         fake_client = SimpleNamespace(connect=fake_connect)
-        target_payload = {
+        page_listing = [{
             "id": "target-id",
+            "type": "page",
+            "url": "https://www.xiaohongshu.com/explore",
             "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/target-id",
-        }
+        }]
+        bridge = started_bridge(self)
+        BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": "manual", "state": "running", "run_page_id": "target-id"})
         with mock.patch.object(
             BRIDGE, "read_sop_devtools_endpoint", return_value=endpoint
         ), mock.patch.object(
-            BRIDGE, "loopback_devtools_json", return_value=target_payload
+            BRIDGE, "loopback_devtools_json", return_value=page_listing
         ), mock.patch.dict(
             "sys.modules", {"websockets.sync.client": fake_client}
         ):
-            target = BRIDGE.open_sop_cdp_target(Path("port-file"))
+            target = bridge.attach_run_page("manual_board")
 
         fake_connect.assert_called_once()
         self.assertIsNone(fake_connect.call_args.kwargs["proxy"])
         self.assertIs(target._connection, connection)
+        target.release()
+        connection.close.assert_called_once()
+        self.assertFalse(target.closed, "letting go of the connection must not close the page")
 
     def test_existing_sop_note_session_accepts_only_one_exact_xiaohongshu_page(self):
         endpoint = BRIDGE.DevToolsEndpoint(9224, "/devtools/browser/browser-id")
@@ -2554,7 +2561,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             bridge.diandian_save_record.assert_not_called()
             bridge.saved_diandian_record.assert_not_called()
 
-    def test_cdp_summary_uses_a_fresh_target_and_saves_before_close_without_persisting_url(self):
+    def test_cdp_summary_works_in_the_run_page_and_saves_before_letting_go_without_persisting_url(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             first_id = "c" * 24
@@ -2641,15 +2648,18 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             class FakeTarget:
                 def __init__(self):
                     self.session = FakeSession()
-                    self.closed = False
+                    self.released = False
 
-                def close(self):
+                def release(self):
                     expected = first_id if len(targets) == 1 else second_id
                     self.assert_saved = bridge.saved_diandian_record(expected)
-                    self.closed = True
+                    self.released = True
 
-            def open_target(initial_url):
-                self.assertEqual(initial_url, "about:blank")
+                def close(self):
+                    raise AssertionError("the run page stays open between notes")
+
+            def attach_page(attached_run_id):
+                self.assertEqual(attached_run_id, run_id)
                 target = FakeTarget()
                 targets.append(target)
                 return target
@@ -2667,7 +2677,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 session._session.finished = summaries[note_id]
                 return session._session.finished
 
-            bridge.open_cdp_target = open_target
+            bridge.attach_run_page = attach_page
             bridge.diandian_cdp_ask = mock.Mock(side_effect=ask)
 
             for note_id in (first_id, second_id):
@@ -2681,7 +2691,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 self.assertTrue(result["saved"], result)
 
             self.assertEqual(len(targets), 2)
-            self.assertTrue(all(target.closed and target.assert_saved for target in targets))
+            self.assertTrue(all(target.released and target.assert_saved for target in targets))
             self.assertTrue(all(target.session.calls[0] == ("Page.navigate", {"url": ai_url}) for target in targets))
             self.assertFalse(any(
                 "cookie" in method.casefold() or method.startswith("Storage.")
@@ -2747,8 +2757,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     "input_ready": True, "msgs": 0, "fin": 0, "last": "",
                 })),
             )
-            target = SimpleNamespace(session=session, close=mock.Mock())
-            bridge.open_cdp_target = mock.Mock(return_value=target)
+            target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+            bridge.attach_run_page = mock.Mock(return_value=target)
             bridge.diandian_cdp_ask = mock.Mock(
                 side_effect=BRIDGE.CDPTransportError(
                     "private URL must never escape"
@@ -2767,9 +2777,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
             self.assertEqual(first, duplicate)
             self.assertEqual(first, {"saved": False, "halted": True, "reason": "transport-failed"})
-            bridge.open_cdp_target.assert_called_once_with("about:blank")
+            bridge.attach_run_page.assert_called_once_with(run_id)
             bridge.diandian_cdp_ask.assert_called_once()
             target.close.assert_not_called()
+            target.release.assert_called_once()
             self.assertEqual((bridge.diandian_dir / f"{current_id}.json").read_bytes(), old_bytes)
             self.assertNotIn(run_id, bridge.summary_plans)
             status = bridge.manual_sync_status()
@@ -2963,8 +2974,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                         "last": "",
                     })),
                 )
-                target = SimpleNamespace(session=session, close=mock.Mock())
-                bridge.open_cdp_target = mock.Mock(return_value=target)
+                target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+                bridge.attach_run_page = mock.Mock(return_value=target)
                 bridge.diandian_cdp_ask = mock.Mock(side_effect=external_error)
                 if stage == "preflight":
                     session.evaluate.side_effect = external_error
@@ -3073,7 +3084,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "summary_pending": 1,
             })
 
+            note_page = f"https://www.xiaohongshu.com/discovery/item/{note_id}"
+
             class DelayedComposerSession:
+                """The page starts on the note's page; right after the navigate command it may still be there, then blank."""
+
                 def __init__(self):
                     self.evaluations = 0
 
@@ -3083,10 +3098,14 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 def evaluate(self, expression):
                     self.evaluations += 1
                     return json.dumps({
-                        "href": "about:blank" if self.evaluations == 1 else ai_url,
+                        "href": (
+                            note_page if self.evaluations <= 2
+                            else "about:blank" if self.evaluations == 3
+                            else ai_url
+                        ),
                         "body": "DianDian chat is ready",
                         "ready": "complete",
-                        "input_ready": self.evaluations >= 3,
+                        "input_ready": self.evaluations >= 5,
                         "cards": 0,
                         "msgs": 0,
                         "fin": 0,
@@ -3095,8 +3114,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     })
 
             session = DelayedComposerSession()
-            target = SimpleNamespace(session=session, close=mock.Mock())
-            bridge.open_cdp_target = mock.Mock(return_value=target)
+            target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+            bridge.attach_run_page = mock.Mock(return_value=target)
             bridge.diandian_cdp_ask = mock.Mock(
                 side_effect=BRIDGE.CDPTransportError(
                     "stop after readiness proof"
@@ -3113,8 +3132,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
             self.assertEqual(result["reason"], "transport-failed")
             bridge.diandian_cdp_ask.assert_called_once()
-            self.assertGreaterEqual(session.evaluations, 4)
-            self.assertEqual(sleeps[:3], [0.5, 0.5, 0.0])
+            self.assertGreaterEqual(session.evaluations, 6)
+            self.assertEqual(sleeps[:4], [0.5, 0.5, 0.5, 0.0])
             target.close.assert_not_called()
 
     def test_ai_page_validation_accepts_only_a_canonical_conversation_id_query(self):
@@ -3546,8 +3565,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     })
 
             session = FakeSession()
-            target = SimpleNamespace(session=session, close=mock.Mock())
-            bridge.open_cdp_target = mock.Mock(return_value=target)
+            target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+            bridge.attach_run_page = mock.Mock(return_value=target)
             transport_entered = threading.Event()
             transport_released = threading.Event()
 
@@ -3662,8 +3681,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     })
 
             session = FakeSession()
-            target = SimpleNamespace(session=session, close=mock.Mock())
-            bridge.open_cdp_target = mock.Mock(return_value=target)
+            target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+            bridge.attach_run_page = mock.Mock(return_value=target)
             snapshot_taken = threading.Event()
             release_halt = threading.Event()
             ask_entered = threading.Event()
@@ -3811,8 +3830,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     })
 
             session = FakeSession()
-            target = SimpleNamespace(session=session, close=mock.Mock())
-            bridge.open_cdp_target = mock.Mock(return_value=target)
+            target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+            bridge.attach_run_page = mock.Mock(return_value=target)
             dwell_entered = threading.Event()
             dwell_released = threading.Event()
 
@@ -3937,8 +3956,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     })
 
             session = FakeSession()
-            target = SimpleNamespace(session=session, close=mock.Mock())
-            bridge.open_cdp_target = mock.Mock(return_value=target)
+            target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+            bridge.attach_run_page = mock.Mock(return_value=target)
             ask_entered = threading.Event()
             ask_release = threading.Event()
             ask_exited = threading.Event()
@@ -4065,8 +4084,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     self.target()
 
             session = FakeSession()
-            target = SimpleNamespace(session=session, close=mock.Mock())
-            bridge.open_cdp_target = mock.Mock(return_value=target)
+            target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+            bridge.attach_run_page = mock.Mock(return_value=target)
             ask_called = mock.Mock()
 
             def ask(guarded, note_url, *, spec, tries, sleep):
@@ -4408,8 +4427,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                         "input_ready": True, "msgs": msgs, "fin": fin, "last": "stale" if fin else "",
                     })),
                 )
-                target = SimpleNamespace(session=session, close=mock.Mock())
-                bridge.open_cdp_target = mock.Mock(return_value=target)
+                target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+                bridge.attach_run_page = mock.Mock(return_value=target)
                 bridge.diandian_cdp_ask = mock.Mock()
 
                 result = bridge.run_diandian_cdp({
@@ -4505,6 +4524,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 return_value={"build_version": "a" * 64, "site_manifest_sha256": "b" * 64}
             )
             bridge.publish_after_board = mock.Mock(return_value=None)
+            # This test saves the summaries itself, in place of the driver that would move the page.
+            bridge.start_summary_driver = mock.Mock(return_value=False)
 
             status, result = bridge.import_sync(payload)
 
@@ -4778,17 +4799,48 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 BRIDGE.read_sop_devtools_endpoint(port_file)
             endpoint_access.assert_not_called()
 
-    def test_diandian_cdp_target_uses_the_same_dynamic_sop_port_registry(self):
+    def test_the_run_page_is_found_through_the_same_dynamic_sop_port_registry_and_must_exist(self):
         bridge = started_bridge(self)
         bridge.sop_port_file = Path("dynamic-cdp-port.txt")
-        target = object()
-        with mock.patch.object(
-            BRIDGE, "open_sop_cdp_target", return_value=target
-        ) as open_target:
-            result = bridge.open_cdp_target("about:blank")
+        endpoint = BRIDGE.DevToolsEndpoint(9224, "/devtools/browser/browser-id")
 
-        self.assertIs(result, target)
-        open_target.assert_called_once_with(bridge.sop_port_file, "about:blank")
+        with self.assertRaises(BRIDGE.CDPTransportError):
+            bridge.attach_run_page("manual_board")  # no page was ever recorded for the round
+
+        BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": "manual", "state": "running", "run_page_id": "gone-id"})
+        with mock.patch.object(
+            BRIDGE, "read_sop_devtools_endpoint", return_value=endpoint
+        ) as read_endpoint, mock.patch.object(
+            BRIDGE, "loopback_devtools_json", return_value=[]
+        ), self.assertRaises(BRIDGE.CDPTransportError):
+            bridge.attach_run_page("manual_board")
+        read_endpoint.assert_called_once_with(bridge.sop_port_file)
+
+    def test_pages_are_listed_and_closed_through_the_scan_browser_endpoint_only_by_valid_id(self):
+        bridge = started_bridge(self)
+        endpoint = BRIDGE.DevToolsEndpoint(9224, "/devtools/browser/browser-id")
+        listing = [
+            {"id": "keep-1", "type": "page", "url": "https://www.xiaohongshu.com/explore", "title": "private"},
+            {"id": "worker", "type": "service_worker", "url": "https://www.xiaohongshu.com/sw.js"},
+            {"id": "bad id", "type": "page", "url": "https://www.xiaohongshu.com/x"},
+        ]
+        closed = []
+        with mock.patch.object(
+            BRIDGE, "read_sop_devtools_endpoint", return_value=endpoint
+        ), mock.patch.object(
+            BRIDGE, "loopback_devtools_json", return_value=listing
+        ), mock.patch.object(
+            BRIDGE, "loopback_devtools_action",
+            side_effect=lambda active_endpoint, path, method="GET": closed.append((active_endpoint.port, path)),
+        ):
+            self.assertEqual(
+                bridge.list_sop_browser_pages(),
+                [{"id": "keep-1", "url": "https://www.xiaohongshu.com/explore", "type": "page"}],
+            )
+            bridge.close_sop_browser_page("keep-1")
+            with self.assertRaises(ValueError):
+                bridge.close_sop_browser_page("../etc")
+        self.assertEqual(closed, [(9224, "/json/close/keep-1")])
 
     def test_cdp_session_exposes_only_call_and_evaluate_without_cookie_or_storage_access(self):
         class FakeConnection:
@@ -5419,59 +5471,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 self.assertEqual(status, BRIDGE.HTTPStatus.UNAUTHORIZED)
                 self.assertEqual(body, {"ok": False})
             bridge.trigger_manual_sync.assert_not_called()
-        finally:
-            server.shutdown()
-            server.server_close()
-            thread.join(timeout=2)
-
-    def test_cdp_summary_http_route_is_authenticated_and_forwards_only_the_exact_transient_payload(self):
-        token = "a" * 64
-        note_id = "z" * 24
-        payload = {
-            "run_id": "manual_board",
-            "board_id": "board",
-            "note_id": note_id,
-            "title": "Title",
-            "url": f"https://www.xiaohongshu.com/discovery/item/{note_id}?xsec_token=private",
-        }
-        bridge = SimpleNamespace(
-            port=0,
-            token=token,
-            run_diandian_cdp=mock.Mock(return_value={
-                "saved": True,
-                "halted": False,
-                "plan_complete": False,
-                "finalization_started": False,
-            }),
-        )
-        server = BRIDGE.ThreadingHTTPServer((BRIDGE.HOST, 0), BRIDGE.make_handler(bridge))
-        bridge.port = server.server_address[1]
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-
-        def post(supplied_token):
-            request = Request(
-                f"http://{BRIDGE.HOST}:{bridge.port}/sync/diandian-cdp",
-                data=json.dumps(payload).encode("utf-8"),
-                headers={
-                    "Content-Type": "application/json",
-                    "X-XHS-Bridge-Token": supplied_token,
-                },
-                method="POST",
-            )
-            try:
-                with urlopen(request, timeout=2) as response:
-                    return response.status, json.loads(response.read().decode("utf-8"))
-            except HTTPError as error:
-                return error.code, json.loads(error.read().decode("utf-8"))
-
-        try:
-            status, body = post(token)
-            self.assertEqual(status, BRIDGE.HTTPStatus.OK)
-            self.assertTrue(body["saved"])
-            bridge.run_diandian_cdp.assert_called_once_with(payload)
-            self.assertEqual(post("b" * 64), (BRIDGE.HTTPStatus.UNAUTHORIZED, {"ok": False}))
-            bridge.run_diandian_cdp.assert_called_once()
         finally:
             server.shutdown()
             server.server_close()
