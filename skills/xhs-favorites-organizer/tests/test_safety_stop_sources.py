@@ -10,9 +10,11 @@ import json
 from pathlib import Path
 import sys
 import tempfile
-import threading
 import unittest
 from unittest import mock
+
+import bridge_support
+from bridge_support import ScriptRunnerDouble, completed
 
 
 SCRIPTS = Path(__file__).parents[1] / "scripts"
@@ -39,21 +41,9 @@ def read_record(state_dir: Path) -> dict:
     return json.loads((state_dir / STOP_NAME).read_text(encoding="utf-8"))
 
 
-def bridge_with_round(root: Path):
-    bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-    bridge.trigger_lock = threading.Lock()
-    bridge.processing_lock = threading.Lock()
-    bridge.state_dir = root / ".xhs-favorites"
-    bridge.state_dir.mkdir(parents=True, exist_ok=True)
-    bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-    bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-    bridge.workspace = root
-    bridge.config_path = root / "config.json"
-    bridge.boards = {"board": "Board"}
-    bridge.board_order = ["board"]
-    bridge.summary_plans = {}
-    bridge.port = 47631
-    bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
+def bridge_with_round(root: Path, **options):
+    bridge = bridge_support.make_bridge(BRIDGE, root, **options)
+    bridge.organization_status_v2_enabled = False
     bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
     return bridge
 
@@ -99,30 +89,17 @@ class ScriptsWriteTheirOwnPhaseTests(unittest.TestCase):
 class EveryStopLeavesARecordTests(unittest.TestCase):
     def test_a_stop_found_while_fetching_details_is_recorded_as_detail(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            bridge = bridge_with_round(root)
-            bridge.status_path = bridge.state_dir / "bridge-status.json"
-            bridge.catalog_path = root / "catalog.json"
-            bridge.python = Path("python")
-            bridge.fetcher = Path("fetch-xhs-details.py")
-            bridge.xhs_dir = root / "xhs"
-            bridge.organizer = Path("organize.mjs")
-            bridge.published_since = None
+            # The fetcher process is replaced, so it leaves no record of its own; the bridge must.
+            payload = json.dumps({"notes": [], "failures": [{"note_id": NOTE_ID, "reason": "safety stop"}]})
+            bridge = bridge_with_round(Path(directory), script_runner=ScriptRunnerDouble(completed(payload)))
             bridge.cache_missing_media = mock.Mock()
             bridge.tag_catalog_sources = mock.Mock()
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.publish_after_board = mock.Mock(return_value=None)
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {}})
-            # The fetcher process is replaced, so it leaves no record of its own; the bridge must.
-            payload = json.dumps({"notes": [], "failures": [{"note_id": NOTE_ID, "reason": "safety stop"}]})
-            completed = mock.Mock(returncode=0, stdout=payload, stderr="")
-            with (
-                mock.patch.object(BRIDGE, "run_bounded_subprocess", return_value=completed),
-                mock.patch.object(BRIDGE.subprocess, "run"),
-            ):
-                bridge.process_import("manual_board", "board", {
-                    NOTE_ID: f"https://www.xiaohongshu.com/explore/{NOTE_ID}",
-                })
+            bridge.process_import("manual_board", "board", {
+                NOTE_ID: f"https://www.xiaohongshu.com/explore/{NOTE_ID}",
+            })
             self.assertEqual(read_record(bridge.state_dir)["phase"], "detail")
             refused = next_start(bridge)
             bridge.open_sop_browser_page.assert_not_called()
@@ -139,17 +116,14 @@ class EveryStopLeavesARecordTests(unittest.TestCase):
                 "raise SystemExit(2)\n",
                 encoding="utf-8",
             )
-            bridge = bridge_with_round(root)
-            bridge.curation = root / "curation.json"
-            bridge.curation.write_text("{}", encoding="utf-8")
-            bridge.media_dir = bridge.state_dir / "media"
-            bridge.media_dir.mkdir(parents=True)
-            bridge.run_dir = bridge.state_dir / "runs"
-            bridge.run_dir.mkdir(parents=True)
+            # A real child process, so this one gets the production runner.
+            bridge = bridge_with_round(
+                root, script_runner=BRIDGE.BoundedScriptRunner(),
+                config={"video_analysis": {"enabled": True}},
+            )
+            bridge.run_dir.mkdir(parents=True, exist_ok=True)
             bridge.python = Path(sys.executable)
             bridge.media_fetcher = fake_media
-            bridge.xhs_dir = root / "xhs"
-            bridge.video_analysis_enabled = True
             result = bridge.cache_missing_media({NOTE_ID: f"https://www.xiaohongshu.com/explore/{NOTE_ID}"})
             self.assertTrue(result["safety_stopped"])
             self.assertEqual(read_record(bridge.state_dir)["phase"], "media")

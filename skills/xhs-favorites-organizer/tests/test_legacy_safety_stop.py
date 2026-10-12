@@ -16,6 +16,8 @@ from unittest import mock
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+import bridge_support
+
 
 MODULE_PATH = Path(__file__).parents[1] / "scripts" / "bridge-server.py"
 SPEC = importlib.util.spec_from_file_location("xhs_bridge_legacy_stop", MODULE_PATH)
@@ -34,18 +36,7 @@ COUNT_FIELDS = {
 
 
 def make_bridge(root: Path, *, v2: bool = False):
-    bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-    bridge.trigger_lock = threading.Lock()
-    bridge.processing_lock = threading.Lock()
-    bridge.manual_sync_path = root / "manual-sync.json"
-    bridge.board_order = ["first"]
-    bridge.boards = {"first": "First"}
-    bridge.workspace = root
-    bridge.state_dir = root / ".xhs-favorites"
-    bridge.state_dir.mkdir(parents=True, exist_ok=True)
-    bridge.config_path = root / "config.json"
-    bridge.port = 47631
-    bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
+    bridge = bridge_support.make_bridge(BRIDGE, root)
     bridge.organization_status_v2_enabled = v2
     bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
     return bridge
@@ -224,13 +215,14 @@ class ClearTests(unittest.TestCase):
     def test_clearing_when_nothing_is_recorded_changes_nothing_and_says_so(self):
         with tempfile.TemporaryDirectory() as directory:
             bridge = make_bridge(Path(directory))
+            before = sorted(path.name for path in bridge.state_dir.iterdir())
             reply = bridge.clear_safety_stop()
             self.assertIs(reply["cleared"], False)
             self.assertIs(reply["started"], False)
             self.assertEqual(reply["status"]["state"], "idle")
             bridge.open_sop_browser_page.assert_not_called()
             self.assertFalse(bridge.manual_sync_path.exists())
-            self.assertEqual(list(bridge.state_dir.iterdir()), [])
+            self.assertEqual(sorted(path.name for path in bridge.state_dir.iterdir()), before)
 
     def test_clearing_does_not_touch_the_record_while_a_round_is_running(self):
         with tempfile.TemporaryDirectory() as directory:

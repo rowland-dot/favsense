@@ -2,10 +2,11 @@ import importlib.util
 import hashlib
 import json
 import pathlib
-import subprocess
 import tempfile
 import unittest
 from unittest import mock
+
+from bridge_support import ScriptRunnerDouble, completed, make_bridge, started_bridge
 
 
 SCRIPT = pathlib.Path(__file__).parents[1] / "scripts" / "organization_state.py"
@@ -125,7 +126,7 @@ class OrganizationPipelineTests(unittest.TestCase):
 
     def test_bridge_stops_the_point_batch_before_dispatching_transport_fallback(self):
         bridge_module = load_bridge_module()
-        bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
+        bridge = started_bridge(self, bridge_module)
         events = []
         bridge.halt_diandian_cdp_run = lambda *args, **kwargs: (
             events.append("halt") or {"halted": True, "reason": "transport-failed"}
@@ -144,7 +145,7 @@ class OrganizationPipelineTests(unittest.TestCase):
 
     def test_bridge_does_not_dispatch_fallback_after_a_safety_halt_wins(self):
         bridge_module = load_bridge_module()
-        bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
+        bridge = started_bridge(self, bridge_module)
         bridge.halt_diandian_cdp_run = mock.Mock(return_value={
             "halted": True,
             "reason": bridge_module.DIANDIAN_SAFETY_STOP_REASON,
@@ -160,7 +161,7 @@ class OrganizationPipelineTests(unittest.TestCase):
 
     def test_bridge_fallback_receives_a_durable_safety_cancellation_probe(self):
         bridge_module = load_bridge_module()
-        bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
+        bridge = started_bridge(self, bridge_module)
         bridge.halt_diandian_cdp_run = mock.Mock(return_value={
             "halted": True,
             "reason": "transport-failed",
@@ -186,9 +187,7 @@ class OrganizationPipelineTests(unittest.TestCase):
     def test_bridge_fallback_cancellation_probe_observes_the_media_safety_marker(self):
         bridge_module = load_bridge_module()
         with tempfile.TemporaryDirectory() as temporary:
-            bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
-            bridge.state_dir = pathlib.Path(temporary)
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(bridge_module, pathlib.Path(temporary))
             bridge.manual_sync_path.write_text(
                 json.dumps({"state": "failed", "started_at": "2026-10-12T09:00:00+00:00"}),
                 encoding="utf-8",
@@ -209,7 +208,7 @@ class OrganizationPipelineTests(unittest.TestCase):
 
     def test_client_transport_halt_routes_through_the_offline_fallback_boundary(self):
         bridge_module = load_bridge_module()
-        bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
+        bridge = started_bridge(self, bridge_module)
         bridge.get_manual_sync_lock = mock.Mock(
             return_value=bridge_module.nullcontext()
         )
@@ -243,23 +242,16 @@ class OrganizationPipelineTests(unittest.TestCase):
         bridge_module = load_bridge_module()
         with tempfile.TemporaryDirectory() as temporary:
             workspace = pathlib.Path(temporary)
-            bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
+            runner = ScriptRunnerDouble()
+            bridge = make_bridge(
+                bridge_module, workspace, script_runner=runner,
+                config={"video_analysis": {"enabled": True}},
+            )
             note_id = "a" * 24
-            bridge.workspace = workspace
-            bridge.state_dir = workspace / ".xhs-favorites"
-            bridge.media_dir = bridge.state_dir / "media"
-            bridge.media_dir.mkdir(parents=True)
+            bridge.media_dir.mkdir(parents=True, exist_ok=True)
             (bridge.media_dir / f"{note_id}.mp4").write_bytes(b"cached")
-            bridge.config_path = workspace / "config.json"
-            bridge.config_path.write_text("{}", encoding="utf-8")
-            bridge.video_analysis_enabled = True
-            bridge.image_ocr_enabled = False
-            bridge.video_analysis_runner = workspace / "run-video-analysis.ps1"
-            bridge.video_analysis_runner.write_text("", encoding="utf-8")
             bridge.powershell = workspace / "powershell.exe"
             bridge.powershell.write_bytes(b"tool")
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge._summary_report_lock = __import__("threading").RLock()
             bridge.trusted_content_sha256 = lambda candidate: "b" * 64
             transcript = bridge.state_dir / "video-analysis" / note_id / "transcription.json"
             transcript_text = "可信的本地转写正文"
@@ -280,14 +272,12 @@ class OrganizationPipelineTests(unittest.TestCase):
                     "text": transcript_text,
                 }), encoding="utf-8")
                 self.assertIn(note_id, command)
-                return subprocess.CompletedProcess(command, 0, "{}", "")
+                return completed("{}")
 
-            with mock.patch.object(
-                bridge_module, "run_bounded_subprocess", side_effect=run_offline
-            ) as runner:
-                result = bridge.dispatch_evidence_fallback(note_id, "transport-failed")
+            runner.respond = run_offline
+            result = bridge.dispatch_evidence_fallback(note_id, "transport-failed")
 
-            runner.assert_called_once()
+            self.assertEqual(len(runner.calls), 1)
             self.assertEqual(result["evidence_status"], "ready")
             self.assertEqual(result["curation_status"], "pending_review")
             self.assertEqual(result["methods"], ["audio_transcript"])
@@ -296,24 +286,17 @@ class OrganizationPipelineTests(unittest.TestCase):
         bridge_module = load_bridge_module()
         with tempfile.TemporaryDirectory() as temporary:
             workspace = pathlib.Path(temporary)
-            bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
+            runner = ScriptRunnerDouble()
+            bridge = make_bridge(
+                bridge_module, workspace, script_runner=runner,
+                config={"video_analysis": {"enabled": True}},
+            )
             note_id = "a" * 24
-            bridge.workspace = workspace
-            bridge.state_dir = workspace / ".xhs-favorites"
-            bridge.media_dir = bridge.state_dir / "media"
-            bridge.media_dir.mkdir(parents=True)
+            bridge.media_dir.mkdir(parents=True, exist_ok=True)
             video = bridge.media_dir / f"{note_id}.mp4"
             video.write_bytes(b"cached")
-            bridge.config_path = workspace / "config.json"
-            bridge.config_path.write_text("{}", encoding="utf-8")
-            bridge.video_analysis_enabled = True
-            bridge.image_ocr_enabled = False
-            bridge.video_analysis_runner = workspace / "run-video-analysis.ps1"
-            bridge.video_analysis_runner.write_text("", encoding="utf-8")
             bridge.powershell = workspace / "powershell.exe"
             bridge.powershell.write_bytes(b"tool")
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge._summary_report_lock = __import__("threading").RLock()
             bridge.trusted_content_sha256 = lambda candidate: "b" * 64
             transcript = bridge.state_dir / "video-analysis" / note_id / "transcription.json"
 
@@ -329,62 +312,50 @@ class OrganizationPipelineTests(unittest.TestCase):
                     "result_sha256": "c" * 64,
                     "text": "正文与结果哈希不匹配",
                 }), encoding="utf-8")
-                return subprocess.CompletedProcess(command, 0, "{}", "")
+                return completed("{}")
 
-            with mock.patch.object(
-                bridge_module,
-                "run_bounded_subprocess",
-                side_effect=write_tampered_artifact,
-            ):
-                tampered = bridge.dispatch_evidence_fallback(
-                    note_id, "transport-failed"
-                )
+            runner.respond = write_tampered_artifact
+            tampered = bridge.dispatch_evidence_fallback(
+                note_id, "transport-failed"
+            )
             self.assertEqual(tampered["evidence_status"], "missing")
             self.assertEqual(tampered["methods"], [])
 
-            with (
-                mock.patch.object(
-                    bridge_module,
-                    "path_is_reparse_point",
-                    side_effect=lambda path: pathlib.Path(path) == video,
-                ),
-                mock.patch.object(bridge_module, "run_bounded_subprocess") as runner,
+            runner.calls.clear()
+            with mock.patch.object(
+                bridge_module,
+                "path_is_reparse_point",
+                side_effect=lambda path: pathlib.Path(path) == video,
             ):
                 reparse = bridge.dispatch_evidence_fallback(
                     note_id, "transport-failed"
                 )
-            runner.assert_not_called()
+            self.assertEqual(runner.calls, [])
             self.assertEqual(reparse["reason_code"], "evidence_missing")
 
-            with (
-                mock.patch.object(
-                    bridge_module,
-                    "path_is_reparse_point",
-                    side_effect=lambda path: pathlib.Path(path) == bridge.media_dir,
-                ),
-                mock.patch.object(bridge_module, "run_bounded_subprocess") as runner,
+            with mock.patch.object(
+                bridge_module,
+                "path_is_reparse_point",
+                side_effect=lambda path: pathlib.Path(path) == bridge.media_dir,
             ):
                 redirected_directory = bridge.dispatch_evidence_fallback(
                     note_id, "transport-failed"
                 )
-            runner.assert_not_called()
+            self.assertEqual(runner.calls, [])
             self.assertEqual(
                 redirected_directory["reason_code"], "evidence_missing"
             )
 
-            with (
-                mock.patch.object(
-                    bridge_module,
-                    "path_is_reparse_point",
-                    side_effect=lambda path: pathlib.Path(path)
-                    == bridge.video_analysis_runner,
-                ),
-                mock.patch.object(bridge_module, "run_bounded_subprocess") as runner,
+            with mock.patch.object(
+                bridge_module,
+                "path_is_reparse_point",
+                side_effect=lambda path: pathlib.Path(path)
+                == bridge.video_analysis_runner,
             ):
                 redirected_runner = bridge.dispatch_evidence_fallback(
                     note_id, "transport-failed"
                 )
-            runner.assert_not_called()
+            self.assertEqual(runner.calls, [])
             self.assertEqual(
                 redirected_runner["reason_code"], "evidence_tool_unavailable"
             )
@@ -392,39 +363,39 @@ class OrganizationPipelineTests(unittest.TestCase):
     def test_bridge_safety_or_non_transport_failure_never_dispatches_fallback(self):
         bridge_module = load_bridge_module()
         with tempfile.TemporaryDirectory() as temporary:
-            state_dir = pathlib.Path(temporary)
-            bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
-            bridge.state_dir = state_dir
-            bridge.manual_sync_path = state_dir / "manual-sync.json"
-            with mock.patch.object(bridge_module, "run_bounded_subprocess") as runner:
-                safety = bridge.dispatch_evidence_fallback(
-                    "a" * 24, bridge_module.DIANDIAN_SAFETY_STOP_REASON
-                )
-                invalid = bridge.dispatch_evidence_fallback(
-                    "a" * 24, "invalid-summary"
-                )
-                bridge.manual_sync_path.write_text(
-                    json.dumps({"state": "safety-stopped"}), encoding="utf-8"
-                )
-                persisted_safety = bridge.dispatch_evidence_fallback(
-                    "a" * 24, "transport-failed"
-                )
-                bridge.manual_sync_path.write_text(
-                    json.dumps({"state": "failed", "started_at": "2026-10-12T09:00:00+00:00"}),
-                    encoding="utf-8",
-                )
-                (state_dir / "media-download-safety-stop.json").write_text(
-                    json.dumps({
-                        "stopped_at": "2026-10-12T09:30:00+00:00",
-                        "reason": "platform-safety-limit",
-                        "phase": "media",
-                    }),
-                    encoding="utf-8",
-                )
-                marker_safety = bridge.dispatch_evidence_fallback(
-                    "a" * 24, "transport-failed"
-                )
-            runner.assert_not_called()
+            runner = ScriptRunnerDouble()
+            bridge = make_bridge(
+                bridge_module, pathlib.Path(temporary), script_runner=runner
+            )
+            state_dir = bridge.state_dir
+            safety = bridge.dispatch_evidence_fallback(
+                "a" * 24, bridge_module.DIANDIAN_SAFETY_STOP_REASON
+            )
+            invalid = bridge.dispatch_evidence_fallback(
+                "a" * 24, "invalid-summary"
+            )
+            bridge.manual_sync_path.write_text(
+                json.dumps({"state": "safety-stopped"}), encoding="utf-8"
+            )
+            persisted_safety = bridge.dispatch_evidence_fallback(
+                "a" * 24, "transport-failed"
+            )
+            bridge.manual_sync_path.write_text(
+                json.dumps({"state": "failed", "started_at": "2026-10-12T09:00:00+00:00"}),
+                encoding="utf-8",
+            )
+            (state_dir / "media-download-safety-stop.json").write_text(
+                json.dumps({
+                    "stopped_at": "2026-10-12T09:30:00+00:00",
+                    "reason": "platform-safety-limit",
+                    "phase": "media",
+                }),
+                encoding="utf-8",
+            )
+            marker_safety = bridge.dispatch_evidence_fallback(
+                "a" * 24, "transport-failed"
+            )
+            self.assertEqual(runner.calls, [])
             self.assertEqual(safety["reason_code"], "safety_stopped")
             self.assertEqual(invalid["reason_code"], "fallback_not_allowed")
             self.assertEqual(persisted_safety["reason_code"], "safety_stopped")
@@ -433,41 +404,34 @@ class OrganizationPipelineTests(unittest.TestCase):
     def test_bridge_fails_closed_when_the_manual_safety_state_is_unreadable(self):
         bridge_module = load_bridge_module()
         with tempfile.TemporaryDirectory() as temporary:
-            state_dir = pathlib.Path(temporary)
-            bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
-            bridge.state_dir = state_dir
-            bridge.manual_sync_path = state_dir / "manual-sync.json"
+            runner = ScriptRunnerDouble()
+            bridge = make_bridge(
+                bridge_module, pathlib.Path(temporary), script_runner=runner
+            )
             bridge.manual_sync_path.write_text("{", encoding="utf-8")
 
-            with mock.patch.object(bridge_module, "run_bounded_subprocess") as runner:
-                result = bridge.dispatch_evidence_fallback(
-                    "a" * 24, "transport-failed"
-                )
+            result = bridge.dispatch_evidence_fallback(
+                "a" * 24, "transport-failed"
+            )
 
-            runner.assert_not_called()
+            self.assertEqual(runner.calls, [])
             self.assertEqual(result["reason_code"], "safety_state_unavailable")
 
     def test_bridge_records_exact_missing_reason_without_running_an_ocr_tool(self):
         bridge_module = load_bridge_module()
         with tempfile.TemporaryDirectory() as temporary:
-            workspace = pathlib.Path(temporary)
-            bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
+            runner = ScriptRunnerDouble()
+            bridge = make_bridge(
+                bridge_module, pathlib.Path(temporary), script_runner=runner,
+                config={"image_ocr": {"enabled": True}},
+            )
             note_id = "a" * 24
-            bridge.workspace = workspace
-            bridge.state_dir = workspace / ".xhs-favorites"
-            bridge.media_dir = bridge.state_dir / "media"
-            bridge.media_dir.mkdir(parents=True)
+            bridge.media_dir.mkdir(parents=True, exist_ok=True)
             (bridge.media_dir / f"{note_id}.jpg").write_bytes(b"cached")
-            bridge.video_analysis_enabled = False
-            bridge.image_ocr_enabled = True
-            bridge.image_ocr_engine = None
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge._summary_report_lock = __import__("threading").RLock()
 
-            with mock.patch.object(bridge_module, "run_bounded_subprocess") as runner:
-                result = bridge.dispatch_evidence_fallback(note_id, "transport-failed")
+            result = bridge.dispatch_evidence_fallback(note_id, "transport-failed")
 
-            runner.assert_not_called()
+            self.assertEqual(runner.calls, [])
             self.assertEqual(result["evidence_status"], "missing")
             self.assertEqual(result["curation_status"], "pending_review")
             self.assertEqual(result["reason_code"], "ocr_unavailable")

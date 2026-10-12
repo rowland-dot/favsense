@@ -13,6 +13,8 @@ from unittest import mock
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+import bridge_support
+
 
 MODULE_PATH = Path(__file__).parents[1] / "scripts" / "bridge-server.py"
 SPEC = importlib.util.spec_from_file_location("xhs_bridge_failure_handling", MODULE_PATH)
@@ -136,24 +138,9 @@ class MediaFailureTest(unittest.TestCase):
     NOTE_ID = "a" * 24
 
     def make_bridge(self, root):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-        bridge.workspace = root
-        bridge.state_dir = root / ".xhs-favorites"
-        bridge.status_path = bridge.state_dir / "bridge-status.json"
-        bridge.catalog_path = root / "catalog.json"
-        bridge.boards = {"board": "Board"}
-        bridge.board_order = ["board", "board2"]
-        bridge.published_since = None
-        bridge.video_analysis_enabled = True
-        bridge.curation = root / "curation.json"
-        bridge.curation.write_text("{}", encoding="utf-8")
-        bridge.media_dir = root / "media"
-        bridge.media_dir.mkdir()
-        bridge.run_dir = root / "runs"
-        bridge.run_dir.mkdir()
-        bridge.python = Path("python.exe")
-        bridge.media_fetcher = Path("download-pending-media.py")
-        bridge.xhs_dir = root / "xhs"
+        bridge = bridge_support.make_bridge(
+            BRIDGE, root, config={"video_analysis": {"enabled": True}}
+        )
         bridge.next_board_id = mock.Mock(return_value="board2")
         bridge.publish_after_board = mock.Mock(return_value=None)
         bridge.tag_catalog_sources = mock.Mock()
@@ -165,17 +152,18 @@ class MediaFailureTest(unittest.TestCase):
         }})
         return bridge
 
-    def run_board(self, bridge, **patch):
-        with mock.patch.object(BRIDGE, "run_bounded_subprocess", **patch):
-            bridge.process_import("manual_board", "board", {
-                self.NOTE_ID: f"https://www.xiaohongshu.com/explore/{self.NOTE_ID}",
-            })
+    def run_board(self, bridge, respond):
+        """The downloader answers with `respond`: a result, an exception to raise, or a function."""
+        bridge.script_runner.respond = respond
+        bridge.process_import("manual_board", "board", {
+            self.NOTE_ID: f"https://www.xiaohongshu.com/explore/{self.NOTE_ID}",
+        })
         return json.loads((bridge.state_dir / "runs" / "manual_board.json").read_text(encoding="utf-8"))
 
     def test_a_downloader_timeout_does_not_fail_the_board(self):
         with tempfile.TemporaryDirectory() as directory:
             bridge = self.make_bridge(Path(directory))
-            result = self.run_board(bridge, side_effect=subprocess.TimeoutExpired("downloader", 60))
+            result = self.run_board(bridge, subprocess.TimeoutExpired("downloader", 60))
             log = (bridge.state_dir / "bridge.log").read_text(encoding="utf-8")
         self.assertEqual(result["state"], "completed")
         self.assertEqual(result["next_board_id"], "board2")
@@ -196,7 +184,7 @@ class MediaFailureTest(unittest.TestCase):
         for name, completed in cases.items():
             with self.subTest(name), tempfile.TemporaryDirectory() as directory:
                 bridge = self.make_bridge(Path(directory))
-                result = self.run_board(bridge, return_value=completed)
+                result = self.run_board(bridge, completed)
                 self.assertEqual(result["state"], "completed")
                 self.assertEqual(result["next_board_id"], "board2")
                 self.assertEqual(result["media"]["state"], "failed")
@@ -207,7 +195,7 @@ class MediaFailureTest(unittest.TestCase):
             completed = SimpleNamespace(
                 returncode=2, stdout=json.dumps({"downloaded": 0, "safety_stopped": True}), stderr="",
             )
-            result = self.run_board(bridge, return_value=completed)
+            result = self.run_board(bridge, completed)
         self.assertEqual(result["state"], "safety-stopped")
         self.assertIsNone(result["next_board_id"])
         self.assertIs(result["media"]["safety_stopped"], True)
@@ -220,19 +208,15 @@ class MediaFailureTest(unittest.TestCase):
                 (bridge.state_dir / "media-download-safety-stop.json").write_text("{}", encoding="utf-8")
                 raise subprocess.TimeoutExpired("downloader", 60)
 
-            result = self.run_board(bridge, side_effect=crash_after_marker)
+            result = self.run_board(bridge, crash_after_marker)
         self.assertEqual(result["state"], "safety-stopped")
         self.assertIsNone(result["next_board_id"])
 
 
 class FailureReportRecordedFlagTest(unittest.TestCase):
     def make_bridge(self, root):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-        bridge.manual_sync_path = root / "manual-sync.json"
-        bridge.processing_lock = threading.Lock()
-        bridge.boards = {"board": "Board"}
-        bridge.board_order = ["board"]
-        bridge.summary_plans = {}
+        bridge = bridge_support.make_bridge(BRIDGE, root)
+        bridge.organization_status_v2_enabled = False
         batch = "manualflag"
         run_id = bridge.manual_run_id(batch, "board")
         BRIDGE.atomic_json(bridge.manual_sync_path, {

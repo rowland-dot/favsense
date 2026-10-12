@@ -12,6 +12,8 @@ from unittest import mock
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+import bridge_support
+
 
 MODULE_PATH = Path(__file__).parents[1] / "scripts" / "bridge-server.py"
 SPEC = importlib.util.spec_from_file_location("xhs_bridge_final_build", MODULE_PATH)
@@ -40,29 +42,19 @@ class FakeRun:
         self.root = root
         self.batch = "manual20261011000000"
         self.boards = boards
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-        bridge.workspace = root
-        bridge.state_dir = root / ".xhs-favorites"
-        bridge.catalog_path = bridge.state_dir / "catalog.json"
-        bridge.config_path = root / "xhs-favorites.json"
-        bridge.config_path.write_text("{}", encoding="utf-8")
-        bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-        bridge.status_path = bridge.state_dir / "bridge-status.json"
-        bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-        bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-        bridge.organization_status_v2_enabled = True
+        bridge = bridge_support.make_bridge(BRIDGE, root, config={
+            "boards": [
+                {"id": board, "name": board.upper(), "enabled": True, "advertised_count": 1}
+                for board in boards
+            ],
+            "publish": {
+                "enabled": True,
+                "provider": "huggingface",
+                "repository": "https://huggingface.co/spaces/example/favsense",
+                "branch": "main",
+            },
+        })
         bridge.diandian_enabled = diandian_enabled
-        bridge.boards = {board: board.upper() for board in boards}
-        bridge.board_order = list(boards)
-        bridge.processing_lock = threading.Lock()
-        bridge.trigger_lock = threading.Lock()
-        bridge.summary_plans = {}
-        bridge.summary_locks = {}
-        bridge.summary_locks_guard = threading.Lock()
-        bridge.summary_finalizing = set()
-        bridge.summary_finalized = set()
-        bridge.summary_halted = set()
-        bridge.publish_config = {"repository": "unused", "branch": "main"}
         bridge.run_curation_pipeline = mock.Mock(
             return_value={"counts": {"accepted": 1, "pending": 0}}
         )

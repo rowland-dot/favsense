@@ -10,6 +10,8 @@ import json
 import pathlib
 import unittest
 
+import bridge_support
+
 
 SCRIPT = pathlib.Path(__file__).parents[1] / "scripts" / "organization_state.py"
 
@@ -116,12 +118,7 @@ PUBLIC_KEYS = {"schema_version", "run_id", "state", "build_version", "phases", "
 class RecordFileTests(unittest.TestCase):
     def bridge(self, directory):
         module = load_bridge_module()
-        bridge = module.Bridge.__new__(module.Bridge)
-        bridge.state_dir = pathlib.Path(directory)
-        bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-        bridge.organization_status_v2_enabled = True
-        bridge.processing_lock = module.threading.Lock()
-        return module, bridge
+        return module, bridge_support.make_bridge(module, pathlib.Path(directory))
 
     def test_an_old_single_level_round_is_converted_when_read_and_the_file_is_left_alone(self):
         import tempfile

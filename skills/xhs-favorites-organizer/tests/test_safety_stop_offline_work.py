@@ -15,7 +15,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest import mock
+
+import bridge_support
+from bridge_support import ScriptRunnerDouble, completed
 
 
 SCRIPTS = Path(__file__).parents[1] / "scripts"
@@ -40,25 +42,15 @@ THIS_ROUND = {
 }
 
 
-def bridge_with_cached_video(root: Path):
-    bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-    bridge.workspace = root
-    bridge.state_dir = root / ".xhs-favorites"
-    bridge.media_dir = bridge.state_dir / "media"
-    bridge.media_dir.mkdir(parents=True)
+def bridge_with_cached_video(root: Path, runner=None):
+    bridge = bridge_support.make_bridge(
+        BRIDGE, root, script_runner=runner, config={"video_analysis": {"enabled": True}}
+    )
+    bridge.media_dir.mkdir(parents=True, exist_ok=True)
     (bridge.media_dir / f"{NOTE_ID}.mp4").write_bytes(b"cached")
-    bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
     BRIDGE.atomic_json(bridge.manual_sync_path, {"state": "failed", "started_at": ROUND_START})
-    bridge.config_path = root / "config.json"
-    bridge.config_path.write_text("{}", encoding="utf-8")
-    bridge.video_analysis_enabled = True
-    bridge.image_ocr_enabled = False
-    bridge.video_analysis_runner = root / "run-video-analysis.ps1"
-    bridge.video_analysis_runner.write_text("", encoding="utf-8")
     bridge.powershell = root / "powershell.exe"
     bridge.powershell.write_bytes(b"tool")
-    bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-    bridge._summary_report_lock = __import__("threading").RLock()
     bridge.trusted_content_sha256 = lambda candidate: "b" * 64
     return bridge
 
@@ -79,7 +71,7 @@ def offline_run_writing_a_transcript(bridge):
             "result_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
             "text": text,
         }), encoding="utf-8")
-        return subprocess.CompletedProcess(command, 0, "{}", "")
+        return completed("{}")
 
     return run
 
@@ -87,24 +79,23 @@ def offline_run_writing_a_transcript(bridge):
 class EvidenceFallbackTests(unittest.TestCase):
     def test_a_leftover_stop_does_not_cancel_offline_transcription_of_cached_media(self):
         with tempfile.TemporaryDirectory() as directory:
-            bridge = bridge_with_cached_video(Path(directory))
+            runner = ScriptRunnerDouble()
+            bridge = bridge_with_cached_video(Path(directory), runner)
+            runner.respond = offline_run_writing_a_transcript(bridge)
             BRIDGE.atomic_json(bridge.state_dir / STOP_NAME, LEFTOVER)
             self.assertFalse(bridge.fallback_safety_stopped())
-            with mock.patch.object(
-                BRIDGE, "run_bounded_subprocess", side_effect=offline_run_writing_a_transcript(bridge)
-            ) as runner:
-                result = bridge.dispatch_evidence_fallback(NOTE_ID, "transport-failed")
-            runner.assert_called_once()
+            result = bridge.dispatch_evidence_fallback(NOTE_ID, "transport-failed")
+            self.assertEqual(len(runner.calls), 1)
             self.assertEqual(result["evidence_status"], "ready")
 
     def test_a_stop_raised_in_the_current_round_cancels_the_evidence_step(self):
         with tempfile.TemporaryDirectory() as directory:
-            bridge = bridge_with_cached_video(Path(directory))
+            runner = ScriptRunnerDouble()
+            bridge = bridge_with_cached_video(Path(directory), runner)
             BRIDGE.atomic_json(bridge.state_dir / STOP_NAME, THIS_ROUND)
             self.assertTrue(bridge.fallback_safety_stopped())
-            with mock.patch.object(BRIDGE, "run_bounded_subprocess") as runner:
-                result = bridge.dispatch_evidence_fallback(NOTE_ID, "transport-failed")
-            runner.assert_not_called()
+            result = bridge.dispatch_evidence_fallback(NOTE_ID, "transport-failed")
+            self.assertEqual(runner.calls, [])
             self.assertEqual(result["reason_code"], "safety_stopped")
 
     def test_an_unreadable_record_is_never_taken_for_this_round_so_it_does_not_cancel_offline_work(self):
@@ -118,15 +109,13 @@ class PlatformContactTests(unittest.TestCase):
     def test_any_record_still_blocks_a_media_download(self):
         for name, record in (("leftover", LEFTOVER), ("this round", THIS_ROUND)):
             with self.subTest(record=name), tempfile.TemporaryDirectory() as directory:
-                bridge = bridge_with_cached_video(Path(directory))
-                bridge.video_analysis_enabled = True
-                bridge.curation = Path(directory) / "curation.json"
+                runner = ScriptRunnerDouble()
+                bridge = bridge_with_cached_video(Path(directory), runner)
                 BRIDGE.atomic_json(bridge.state_dir / STOP_NAME, record)
-                with mock.patch.object(BRIDGE, "run_bounded_subprocess") as downloader:
-                    result = bridge.cache_missing_media({
-                        NOTE_ID: f"https://www.xiaohongshu.com/explore/{NOTE_ID}",
-                    })
-                downloader.assert_not_called()
+                result = bridge.cache_missing_media({
+                    NOTE_ID: f"https://www.xiaohongshu.com/explore/{NOTE_ID}",
+                })
+                self.assertEqual(runner.calls, [])
                 self.assertTrue(result["safety_stopped"])
 
 

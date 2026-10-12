@@ -2396,6 +2396,38 @@ def run_bounded_subprocess(
     )
 
 
+class BoundedScriptRunner:
+    """The production script runner: each helper script is a child process with bounded output.
+
+    The sync service runs every helper script through one runner handed to it at start. A caller
+    gives the command, the standard input, the working folder, the environment, the timeout and a
+    limit for each output pipe, and gets back what `run_bounded_subprocess` returns.
+    """
+
+    def run(
+        self,
+        command: list[str],
+        *,
+        input_text: str,
+        cwd: Path,
+        env: dict[str, str] | None,
+        timeout: float,
+        stdout_limit: int,
+        stderr_limit: int,
+        cancelled=None,
+    ) -> subprocess.CompletedProcess[str]:
+        return run_bounded_subprocess(
+            command,
+            input_text=input_text,
+            cwd=cwd,
+            env=env,
+            timeout=timeout,
+            stdout_limit=stdout_limit,
+            stderr_limit=stderr_limit,
+            cancelled=cancelled,
+        )
+
+
 class Bridge:
     def __init__(
         self,
@@ -2404,7 +2436,9 @@ class Bridge:
         config_path: Path,
         sop_runtime: Path,
         port: int,
+        script_runner=None,
     ) -> None:
+        self.script_runner = script_runner if script_runner is not None else BoundedScriptRunner()
         raw_workspace = require_plain_directory(workspace, "workspace")
         raw_skill_dir = require_plain_directory(skill_dir, "Skill directory")
         raw_config_path = require_plain_file(config_path, "configuration")
@@ -2596,6 +2630,8 @@ class Bridge:
         self.processing_lock = threading.Lock()
         self.trigger_lock = threading.Lock()
         self._manual_sync_lock = threading.RLock()
+        self._local_rebuild_lock = threading.RLock()
+        self.local_rebuild_threads: dict[str, threading.Thread] = {}
         self.summary_plans: dict[str, set[str]] = {}
         self.summary_locks: dict[str, threading.RLock] = {}
         self.summary_locks_guard = threading.Lock()
@@ -2630,7 +2666,7 @@ class Bridge:
     def single_note_run_target(self, note_id: object) -> tuple[str, str]:
         if not isinstance(note_id, str) or not NOTE_ID.fullmatch(note_id):
             raise ValueError("single-note validation note_id is invalid")
-        if not getattr(self, "diandian_cdp_enabled", False):
+        if not self.diandian_cdp_enabled:
             raise ValueError("DianDian CDP summarization is unavailable")
         if not self.catalog_path.is_file():
             raise ValueError("catalog is unavailable")
@@ -2692,7 +2728,7 @@ class Bridge:
             raise ValueError("invalid organization batch")
         scoped = state.get("run_board_ids")
         if scoped is None:
-            return list(getattr(self, "board_order", self.boards))
+            return list(self.board_order)
         if (
             not isinstance(scoped, list)
             or not scoped
@@ -2719,11 +2755,7 @@ class Bridge:
         )
 
     def get_manual_sync_lock(self) -> threading.RLock:
-        lock = getattr(self, "_manual_sync_lock", None)
-        if lock is None:
-            lock = threading.RLock()
-            self._manual_sync_lock = lock
-        return lock
+        return self._manual_sync_lock
 
     def manual_state_owns_run(
         self,
@@ -2735,7 +2767,7 @@ class Bridge:
         scoped = state.get("run_board_ids")
         return bool(
             batch
-            and board_id in getattr(self, "boards", {})
+            and board_id in self.boards
             and run_id == self.manual_run_id(batch, board_id)
             and (scoped is None or isinstance(scoped, list) and board_id in scoped)
         )
@@ -2760,7 +2792,7 @@ class Bridge:
             return set()
         run_ids = {
             self.manual_run_id(batch, board_id)
-            for board_id in getattr(self, "boards", {})
+            for board_id in self.boards
             if self.manual_state_owns_run(
                 {**state, "run_board_ids": state.get("run_board_ids")},
                 self.manual_run_id(batch, board_id),
@@ -2773,12 +2805,12 @@ class Bridge:
                 value for value in processed
                 if isinstance(value, str) and RUN_ID.fullmatch(value)
             )
-        plans = getattr(self, "summary_plans", {})
+        plans = self.summary_plans
         run_ids.update(
             run_id for run_id in plans
             if any(
                 run_id == self.manual_run_id(batch, board_id)
-                for board_id in getattr(self, "boards", {})
+                for board_id in self.boards
             )
         )
         return run_ids
@@ -2792,7 +2824,7 @@ class Bridge:
             if run_id not in halted_runs:
                 halted_runs.append(run_id)
         pending_by_run = {
-            run_id: set(getattr(self, "summary_plans", {}).get(run_id, set()))
+            run_id: set(self.summary_plans.get(run_id, set()))
             for run_id in run_ids
         }
         for note_ids in pending_by_run.values():
@@ -2800,25 +2832,17 @@ class Bridge:
                 note_ids, "batch-aborted", "batch_aborted"
             )
         pending = sum(len(note_ids) for note_ids in pending_by_run.values())
-        guard = getattr(self, "summary_locks_guard", None)
-        if guard is None:
-            guard = threading.Lock()
-            self.summary_locks_guard = guard
-        with guard:
-            halted = getattr(self, "summary_halted", None)
-            if halted is None:
-                halted = set()
-                self.summary_halted = halted
-            halted.update(run_ids)
+        with self.summary_locks_guard:
+            self.summary_halted.update(run_ids)
         for run_id in run_ids:
-            getattr(self, "summary_plans", {}).pop(run_id, None)
+            self.summary_plans.pop(run_id, None)
         return self.report_run_event(
             "run_expired", error=error, halted_run_ids=halted_runs, pending=pending,
         )
 
     def local_rebuild_status(self, local: dict) -> dict:
         if local.get("state") == "running" and not self.local_rebuild_is_running(local) and not (
-            getattr(self, "processing_lock", None) and self.processing_lock.locked()
+            self.processing_lock.locked()
         ):
             local = self.report_rebuild_event(
                 "rebuild_failed",
@@ -2830,8 +2854,6 @@ class Bridge:
 
     def active_round_started_at(self) -> str | None:
         """When the organization round now running began, or None when no round is running."""
-        if not isinstance(getattr(self, "manual_sync_path", None), Path):
-            return None
         state = self.read_manual_sync()
         if state.get("state") not in {"starting", "running"}:
             return None
@@ -2840,30 +2862,21 @@ class Bridge:
 
     def record_platform_stop(self, phase: str) -> None:
         """Leave the record that makes this stop the next round's leftover. Never overwrites an earlier one."""
-        state_dir = getattr(self, "state_dir", None)
-        if not isinstance(state_dir, Path):
-            return
         try:
-            PLATFORM_ACCESS.write_stop(PLATFORM_ACCESS.stop_path(state_dir), phase)
+            PLATFORM_ACCESS.write_stop(PLATFORM_ACCESS.stop_path(self.state_dir), phase)
         except OSError as error:
             append_bridge_log(
-                state_dir, "INTERNAL", "safety-stop-record", "-", type(error).__name__,
+                self.state_dir, "INTERNAL", "safety-stop-record", "-", type(error).__name__,
                 "the safety stop could not be recorded",
             )
 
     def stop_in_current_round(self) -> bool:
         """True when the latest round recorded a stop of its own; a leftover from earlier does not count."""
-        state_dir = getattr(self, "state_dir", None)
-        if not isinstance(state_dir, Path) or not isinstance(getattr(self, "manual_sync_path", None), Path):
-            return False
-        return PLATFORM_ACCESS.stop_in_round(state_dir, self.read_manual_sync().get("started_at"))
+        return PLATFORM_ACCESS.stop_in_round(self.state_dir, self.read_manual_sync().get("started_at"))
 
     def legacy_safety_stop(self) -> dict | None:
         """The safety stop an earlier round left behind and the operator has not cleared."""
-        state_dir = getattr(self, "state_dir", None)
-        if not isinstance(state_dir, Path):
-            return None
-        return PLATFORM_ACCESS.legacy_stop(state_dir, self.active_round_started_at())
+        return PLATFORM_ACCESS.legacy_stop(self.state_dir, self.active_round_started_at())
 
     def manual_sync_status(self) -> dict:
         status = self.project_manual_sync_status()
@@ -2878,10 +2891,7 @@ class Bridge:
             return self.local_rebuild_status(local)
         with self.get_manual_sync_lock():
             value = self.read_manual_sync()
-            processing_active = bool(
-                getattr(self, "processing_lock", None)
-                and self.processing_lock.locked()
-            )
+            processing_active = self.processing_lock.locked()
             if value.get("state") == "starting":
                 try:
                     started = datetime.fromisoformat(str(value.get("started_at", "")))
@@ -2943,7 +2953,7 @@ class Bridge:
                 )
             except ValueError:
                 public.pop("summary_halt_reason")
-        if getattr(self, "organization_status_v2_enabled", False) and value.get("state") != "idle":
+        if self.organization_status_v2_enabled and value.get("state") != "idle":
             return ORGANIZATION_STATE.public_status(value)
         return public
 
@@ -3045,15 +3055,9 @@ class Bridge:
         return self.state_dir / "local-rebuild.json"
 
     def get_local_rebuild_lock(self) -> threading.RLock:
-        lock = getattr(self, "_local_rebuild_lock", None)
-        if lock is None:
-            lock = threading.RLock()
-            self._local_rebuild_lock = lock
-        return lock
+        return self._local_rebuild_lock
 
     def read_local_rebuild(self) -> dict | None:
-        if not isinstance(getattr(self, "state_dir", None), Path):
-            return None
         record = ORGANIZATION_STATE.load_record(self.local_rebuild_path())
         return None if record is None else ORGANIZATION_STATE.working_view(record)
 
@@ -3129,10 +3133,6 @@ class Bridge:
                 started_at=datetime.now().astimezone().isoformat(),
                 note_ids=note_ids,
             )
-            threads = getattr(self, "local_rebuild_threads", None)
-            if threads is None:
-                threads = {}
-                self.local_rebuild_threads = threads
             try:
                 thread = threading.Thread(
                     target=self.run_local_rebuild,
@@ -3140,10 +3140,10 @@ class Bridge:
                     name="favsense-local-rebuild",
                     daemon=True,
                 )
-                threads[batch] = thread
+                self.local_rebuild_threads[batch] = thread
                 thread.start()
             except Exception:
-                threads.pop(batch, None)
+                self.local_rebuild_threads.pop(batch, None)
                 ORGANIZATION_STATE.discard_record(self.local_rebuild_path())
                 raise
             return self.manual_sync_status()
@@ -3244,16 +3244,16 @@ class Bridge:
                 processed = []
             if run_id in processed:
                 return
-            summary_pending = bool(getattr(self, "summary_plans", {}).get(run_id))
+            summary_pending = bool(self.summary_plans.get(run_id))
             resolved_plans = state.get("summary_plan_resolved_run_ids")
             if not isinstance(resolved_plans, list):
                 resolved_plans = []
             summary_plan_pending = bool(
                 # Every v2 run waits for its plan, even with DianDian off: the plan is where the
                 # run learns it has nothing left to summarize and owes its final build.
-                (getattr(self, "diandian_enabled", False) or getattr(self, "organization_status_v2_enabled", False))
+                (self.diandian_enabled or self.organization_status_v2_enabled)
                 and run_id not in resolved_plans
-                and run_id not in getattr(self, "summary_plans", {})
+                and run_id not in self.summary_plans
             )
             outcome = result.get("state")
             error = ""
@@ -3281,7 +3281,7 @@ class Bridge:
                 error=error,
                 summary_pending=summary_pending,
                 summary_plan_pending=summary_plan_pending,
-                diandian_enabled=getattr(self, "diandian_enabled", False),
+                diandian_enabled=self.diandian_enabled,
                 config_sha256=lambda: hashlib.sha256(self.config_path.read_bytes()).hexdigest(),
                 core=core,
             )
@@ -3376,38 +3376,16 @@ class Bridge:
         return target_note_id
 
     def summary_run_lock(self, run_id: str) -> threading.RLock:
-        guard = getattr(self, "summary_locks_guard", None)
-        if guard is None:
-            guard = threading.Lock()
-            self.summary_locks_guard = guard
+        guard = self.summary_locks_guard
         with guard:
-            locks = getattr(self, "summary_locks", None)
-            if locks is None:
-                locks = {}
-                self.summary_locks = locks
+            locks = self.summary_locks
             return locks.setdefault(run_id, threading.RLock())
 
     def summary_report_path(self) -> Path:
-        path = getattr(self, "diandian_report_path", None)
-        if isinstance(path, Path):
-            return path
-        state_dir = getattr(self, "state_dir", None)
-        if isinstance(state_dir, Path):
-            path = state_dir / "diandian-rerun-report.json"
-        else:
-            diandian_dir = getattr(self, "diandian_dir", None)
-            if not isinstance(diandian_dir, Path):
-                raise RuntimeError("DianDian report path is unavailable")
-            path = diandian_dir.parent / "diandian-rerun-report.json"
-        self.diandian_report_path = path
-        return path
+        return self.diandian_report_path
 
     def get_summary_report_lock(self) -> threading.RLock:
-        lock = getattr(self, "_summary_report_lock", None)
-        if lock is None:
-            lock = threading.RLock()
-            self._summary_report_lock = lock
-        return lock
+        return self._summary_report_lock
 
     def read_diandian_report(self) -> dict:
         path = self.summary_report_path()
@@ -3553,12 +3531,6 @@ class Bridge:
             atomic_json(self.summary_report_path(), report)
 
     def clear_diandian_unresolved(self, note_id: str) -> None:
-        path = getattr(self, "diandian_report_path", None)
-        if not isinstance(path, Path):
-            state_dir = getattr(self, "state_dir", None)
-            diandian_dir = getattr(self, "diandian_dir", None)
-            if not isinstance(state_dir, Path) and not isinstance(diandian_dir, Path):
-                return
         with self.get_summary_report_lock():
             report = self.read_diandian_report()
             remaining = [
@@ -3669,18 +3641,14 @@ class Bridge:
             )
 
     def finalization_is_active(self, run_id: str) -> bool:
-        guard = getattr(self, "summary_locks_guard", None)
-        if guard is None:
-            return False
+        guard = self.summary_locks_guard
         with guard:
-            return run_id in getattr(self, "summary_finalizing", set())
+            return run_id in self.summary_finalizing
 
     def diandian_is_halted(self, run_id: str) -> bool:
-        guard = getattr(self, "summary_locks_guard", None)
-        if guard is not None:
-            with guard:
-                if run_id in getattr(self, "summary_halted", set()):
-                    return True
+        with self.summary_locks_guard:
+            if run_id in self.summary_halted:
+                return True
         halted_runs = self.read_manual_sync().get("summary_halted_run_ids")
         return isinstance(halted_runs, list) and run_id in halted_runs
 
@@ -3738,17 +3706,10 @@ class Bridge:
                             if state.get("publish_status") == "running":
                                 self.report_run_event("publish_outcome_unknown")
                             return False
-                    guard = getattr(self, "summary_locks_guard", None)
-                    if guard is None:
-                        guard = threading.Lock()
-                        self.summary_locks_guard = guard
-                    with guard:
-                        if run_id in getattr(self, "summary_halted", set()):
+                    with self.summary_locks_guard:
+                        if run_id in self.summary_halted:
                             return False
-                        memory_claims = getattr(self, "summary_publish_claimed", None)
-                        if memory_claims is None:
-                            memory_claims = set()
-                            self.summary_publish_claimed = memory_claims
+                        memory_claims = self.summary_publish_claimed
                         if run_id in memory_claims:
                             return False
                         if build_version is not None:
@@ -3821,33 +3782,17 @@ class Bridge:
             raise BridgeBusyError("DianDian summary plan is still pending")
         if self.diandian_is_halted(run_id):
             return False
-        state_dir = getattr(self, "state_dir", None)
-        status_path = state_dir / "runs" / f"{run_id}.json" if isinstance(state_dir, Path) else None
-        if status_path is None or not status_path.is_file():
+        status_path = self.state_dir / "runs" / f"{run_id}.json"
+        if not status_path.is_file():
             self.summary_plans.pop(run_id, None)
-            guard = getattr(self, "summary_locks_guard", None)
-            if guard is not None:
-                with guard:
-                    finalized = getattr(self, "summary_finalized", None)
-                    if finalized is None:
-                        finalized = set()
-                        self.summary_finalized = finalized
-                    finalized.add(run_id)
+            with self.summary_locks_guard:
+                self.summary_finalized.add(run_id)
             return False
 
-        guard = getattr(self, "summary_locks_guard", None)
-        if guard is None:
-            self.summary_locks_guard = threading.Lock()
-            guard = self.summary_locks_guard
+        guard = self.summary_locks_guard
         with guard:
-            finalizing = getattr(self, "summary_finalizing", None)
-            if finalizing is None:
-                finalizing = set()
-                self.summary_finalizing = finalizing
-            finalized = getattr(self, "summary_finalized", None)
-            if finalized is None:
-                finalized = set()
-                self.summary_finalized = finalized
+            finalizing = self.summary_finalizing
+            finalized = self.summary_finalized
             if run_id in finalizing or run_id in finalized:
                 return run_id in finalizing
             finalizing.add(run_id)
@@ -3862,10 +3807,7 @@ class Bridge:
                 return False
             state_snapshot = ORGANIZATION_STATE.snapshot_record(self.manual_sync_path)
             self.report_run_event("finalization_started", board_name=self.boards[board_id])
-        threads = getattr(self, "summary_finalization_threads", None)
-        if threads is None:
-            threads = {}
-            self.summary_finalization_threads = threads
+        threads = self.summary_finalization_threads
         try:
             thread = threading.Thread(
                 target=self.run_diandian_finalization,
@@ -3912,14 +3854,11 @@ class Bridge:
                 batch = str(state.get("batch", ""))
                 next_board_id = str(result.get("next_board_id") or "")
                 curation_counts = result.get("curation", {}).get("counts")
-                guard = getattr(self, "summary_locks_guard", None)
-                if guard is None:
-                    guard = threading.Lock()
-                    self.summary_locks_guard = guard
+                guard = self.summary_locks_guard
                 with guard:
                     halted_runs = state.get("summary_halted_run_ids")
                     if (
-                        run_id in getattr(self, "summary_halted", set())
+                        run_id in self.summary_halted
                         or isinstance(halted_runs, list) and run_id in halted_runs
                     ):
                         return
@@ -4030,19 +3969,17 @@ class Bridge:
         }
 
     def final_build_started(self, run_id: str) -> bool:
-        guard = getattr(self, "summary_locks_guard", None)
-        if guard is None:
-            return False
+        guard = self.summary_locks_guard
         with guard:
             return (
-                run_id in getattr(self, "summary_finalizing", set())
-                or run_id in getattr(self, "summary_finalized", set())
+                run_id in self.summary_finalizing
+                or run_id in self.summary_finalized
             )
 
     def final_build_is_due(self, state: dict, run_id: str, core_result: dict) -> bool:
         """The last board has nothing left to summarize, so the run's final build is owed."""
         return (
-            getattr(self, "organization_status_v2_enabled", False)
+            self.organization_status_v2_enabled
             and not core_result.get("next_board_id")
             and state.get("state") in {"starting", "running"}
             and not self.diandian_is_halted(run_id)
@@ -4076,16 +4013,15 @@ class Bridge:
         must_restore_core = abandoned or state.get("state") == "completed"
         final_build_due = False
         core = None
-        if must_restore_core or getattr(self, "state_dir", None) is not None:
-            try:
-                result = self.read_completed_core_result(run_id)
-            except ValueError:
-                if must_restore_core:
-                    raise
-            else:
-                final_build_due = self.final_build_is_due(state, run_id, result)
-                if not final_build_due:
-                    core = self.core_result_facts(state, result)
+        try:
+            result = self.read_completed_core_result(run_id)
+        except ValueError:
+            if must_restore_core:
+                raise
+        else:
+            final_build_due = self.final_build_is_due(state, run_id, result)
+            if not final_build_due:
+                core = self.core_result_facts(state, result)
         self.report_run_event(
             "summary_plan_empty",
             run_id=run_id,
@@ -4210,15 +4146,9 @@ class Bridge:
         return open_sop_cdp_target(self.sop_port_file, initial_url)
 
     def revoke_diandian_cdp_inputs(self, run_id: str) -> None:
-        guard = getattr(self, "diandian_cdp_guard", None)
-        if guard is None:
-            guard = threading.Lock()
-            self.diandian_cdp_guard = guard
+        guard = self.diandian_cdp_guard
         with guard:
-            run_controls = getattr(self, "diandian_cdp_run_cancellations", None)
-            if run_controls is None:
-                run_controls = {}
-                self.diandian_cdp_run_cancellations = run_controls
+            run_controls = self.diandian_cdp_run_cancellations
             control = run_controls.get(run_id)
             if control is None:
                 control = (threading.Lock(), threading.Event())
@@ -4227,10 +4157,7 @@ class Bridge:
         with input_gate:
             cancelled.set()
         with guard:
-            click_states = getattr(self, "diandian_click_states", None)
-            if click_states is None:
-                click_states = {}
-                self.diandian_click_states = click_states
+            click_states = self.diandian_click_states
             for key in [key for key in click_states if key[0] == run_id]:
                 click_states.pop(key, None)
 
@@ -4239,15 +4166,9 @@ class Bridge:
         run_id: str,
         note_id: str | None = None,
     ) -> None:
-        guard = getattr(self, "diandian_cdp_guard", None)
-        if guard is None:
-            guard = threading.Lock()
-            self.diandian_cdp_guard = guard
+        guard = self.diandian_cdp_guard
         with guard:
-            click_states = getattr(self, "diandian_click_states", None)
-            if click_states is None:
-                self.diandian_click_states = {}
-                return
+            click_states = self.diandian_click_states
             for key in [
                 key
                 for key in click_states
@@ -4364,11 +4285,10 @@ class Bridge:
         if callable(cancelled) and cancelled():
             return {**base, "reason_code": "safety_stopped"}
 
-        manual_path = getattr(self, "manual_sync_path", None)
-        if isinstance(manual_path, Path) and manual_path.exists():
+        if self.manual_sync_path.exists():
             try:
                 state_path = require_plain_file(
-                    manual_path, "manual safety state"
+                    self.manual_sync_path, "manual safety state"
                 )
                 if state_path.stat().st_size > DIANDIAN_RECORD_MAX_BYTES:
                     raise ValueError("manual safety state is too large")
@@ -4390,7 +4310,7 @@ class Bridge:
 
         try:
             media_dir = require_plain_directory(
-                getattr(self, "media_dir", self.state_dir / "media"),
+                self.media_dir,
                 "fallback media directory",
             )
             media_dir_plain = True
@@ -4419,13 +4339,11 @@ class Bridge:
                 return {**base, "reason_code": "safety_stopped"}
             return outcome
 
-        video_ready = cached_video and getattr(
-            self, "video_analysis_enabled", False
-        )
+        video_ready = cached_video and self.video_analysis_enabled
         image_ready = (
             cached_image
-            and getattr(self, "image_ocr_enabled", False)
-            and isinstance(getattr(self, "image_ocr_engine", None), Path)
+            and self.image_ocr_enabled
+            and isinstance(self.image_ocr_engine, Path)
             and not path_is_reparse_point(self.image_ocr_engine)
             and self.image_ocr_engine.is_file()
         )
@@ -4446,11 +4364,11 @@ class Bridge:
 
         try:
             runner = require_plain_file(
-                getattr(self, "video_analysis_runner", None),
+                self.video_analysis_runner,
                 "fallback analysis runner",
             )
             powershell = require_plain_file(
-                getattr(self, "powershell", None),
+                self.powershell,
                 "fallback PowerShell runtime",
             )
         except (TypeError, ValueError):
@@ -4467,7 +4385,7 @@ class Bridge:
             "-MaxItems", "1", "-NoteId", note_id,
         ]
         try:
-            completed = run_bounded_subprocess(
+            completed = self.script_runner.run(
                 command,
                 input_text="",
                 cwd=self.workspace,
@@ -4575,10 +4493,7 @@ class Bridge:
         else:
             self.record_platform_stop("diandian")
         self.revoke_diandian_cdp_inputs(run_id)
-        guard = getattr(self, "summary_locks_guard", None)
-        if guard is None:
-            guard = threading.Lock()
-            self.summary_locks_guard = guard
+        guard = self.summary_locks_guard
         with self.summary_run_lock(run_id):
             with self.get_manual_sync_lock():
                 state = self.read_manual_sync()
@@ -4592,7 +4507,7 @@ class Bridge:
                 already_halted = run_id in halted_runs
                 if owns_run and already_halted:
                     with guard:
-                        getattr(self, "summary_halted", set()).add(run_id)
+                        self.summary_halted.add(run_id)
                     if effective_safety:
                         self.report_run_event(
                             "safety_halt_confirmed",
@@ -4639,10 +4554,7 @@ class Bridge:
                     remaining, "batch-aborted", "batch_aborted"
                 )
                 with guard:
-                    halted = getattr(self, "summary_halted", None)
-                    if halted is None:
-                        halted = set()
-                        self.summary_halted = halted
+                    halted = self.summary_halted
                     halted.add(run_id)
                     self.report_run_event(
                         "summary_halted",
@@ -4695,7 +4607,7 @@ class Bridge:
             self.validate_manual_board_run(run_id, board_id)
             if note_id not in self.summary_plans.get(run_id, set()):
                 raise ValueError("DianDian native click note is not pending")
-            contract = getattr(self, "diandian_browser_contract", {})
+            contract = self.diandian_browser_contract
             selectors = contract.get("selectors") if isinstance(contract, dict) else None
             expression = diandian_control_point_expression(
                 selectors,
@@ -4703,20 +4615,14 @@ class Bridge:
                 note_id,
                 worker_id,
             )
-        guard = getattr(self, "diandian_cdp_guard", None)
-        if guard is None:
-            guard = threading.Lock()
-            self.diandian_cdp_guard = guard
+        guard = self.diandian_cdp_guard
         click_key = (run_id, note_id)
         in_progress = f"{action}-in-progress"
         success_state = "shared" if action == "share" else "consumed"
         retry_state = None if action == "share" else "shared"
         claimed_state = (worker_id, in_progress)
         with guard:
-            controls = getattr(self, "diandian_cdp_run_cancellations", None)
-            if controls is None:
-                controls = {}
-                self.diandian_cdp_run_cancellations = controls
+            controls = self.diandian_cdp_run_cancellations
             control = controls.get(run_id)
             if control is None:
                 control = (threading.Lock(), threading.Event())
@@ -4724,10 +4630,7 @@ class Bridge:
             input_gate, cancelled = control
             if cancelled.is_set():
                 raise RuntimeError("run-halted")
-            click_states = getattr(self, "diandian_click_states", None)
-            if click_states is None:
-                click_states = {}
-                self.diandian_click_states = click_states
+            click_states = self.diandian_click_states
             current_state = click_states.get(click_key)
             if (action == "share" and current_state is not None) or (
                 action == "copy" and current_state != (worker_id, "shared")
@@ -4835,7 +4738,7 @@ class Bridge:
             succeeded = True
         finally:
             with guard:
-                click_states = getattr(self, "diandian_click_states", {})
+                click_states = self.diandian_click_states
                 if click_states.get(click_key) == claimed_state:
                     if succeeded:
                         click_states[click_key] = (worker_id, success_state)
@@ -4865,20 +4768,14 @@ class Bridge:
         if not title.strip() or len(title.strip()) > 200:
             raise ValueError("DianDian CDP request title is invalid")
         canonical_url = canonical_signed_note_url(signed_url, note_id)
-        if not getattr(self, "diandian_cdp_enabled", False) or not callable(
-            getattr(self, "diandian_cdp_ask", None)
+        if not self.diandian_cdp_enabled or not callable(
+            self.diandian_cdp_ask
         ):
             raise ValueError("DianDian CDP summarization is unavailable")
         key = (run_id, note_id)
-        guard = getattr(self, "diandian_cdp_guard", None)
-        if guard is None:
-            guard = threading.Lock()
-            self.diandian_cdp_guard = guard
+        guard = self.diandian_cdp_guard
         with guard:
-            completed = getattr(self, "diandian_cdp_results", None)
-            if completed is None:
-                completed = {}
-                self.diandian_cdp_results = completed
+            completed = self.diandian_cdp_results
             if key in completed:
                 return dict(completed[key])
         try:
@@ -4895,25 +4792,16 @@ class Bridge:
         with guard:
             if key in completed:
                 return dict(completed[key])
-            active = getattr(self, "diandian_cdp_active", None)
-            if active is None:
-                active = set()
-                self.diandian_cdp_active = active
+            active = self.diandian_cdp_active
             if key in active:
                 raise BridgeBusyError("DianDian CDP request is already running")
-            run_cancellations = getattr(self, "diandian_cdp_run_cancellations", None)
-            if run_cancellations is None:
-                run_cancellations = {}
-                self.diandian_cdp_run_cancellations = run_cancellations
+            run_cancellations = self.diandian_cdp_run_cancellations
             control = run_cancellations.get(run_id)
             if control is None:
                 control = (threading.Lock(), threading.Event())
                 run_cancellations[run_id] = control
             transport_input_gate, transport_cancelled = control
-            cancellations = getattr(self, "diandian_cdp_cancellations", None)
-            if cancellations is None:
-                cancellations = {}
-                self.diandian_cdp_cancellations = cancellations
+            cancellations = self.diandian_cdp_cancellations
             cancellations[key] = control
             active.add(key)
 
@@ -4950,7 +4838,7 @@ class Bridge:
                     "DianDian CDP target could not be opened"
                 ) from error
             session = target.session
-            spec = getattr(self, "diandian_cdp_spec", None)
+            spec = self.diandian_cdp_spec
             if not isinstance(spec, dict):
                 raise RuntimeError("DianDian CDP browser contract is unavailable")
             ai_url = str(spec.get("ai_chat_url", ""))
@@ -4962,7 +4850,7 @@ class Bridge:
                 raise RuntimeError("DianDian CDP browser timings are unavailable")
             single_note_wait = int(timings.get("single_note_wait", 480_000)) / 1000
             deadline = note_started + single_note_wait
-            sleep = getattr(self, "diandian_sleep", time.sleep)
+            sleep = self.diandian_sleep
             ready_state = None
             ready_tries = max(1, min(120, int(timings.get("input_wait", 30_000)) // 500))
             for attempt in range(ready_tries):
@@ -5142,9 +5030,9 @@ class Bridge:
             return dict(result)
         finally:
             with guard:
-                getattr(self, "diandian_cdp_active", set()).discard(key)
+                self.diandian_cdp_active.discard(key)
                 if cancellation_registered:
-                    getattr(self, "diandian_cdp_cancellations", {}).pop(key, None)
+                    self.diandian_cdp_cancellations.pop(key, None)
 
     def save_diandian_result(
         self,
@@ -5380,7 +5268,7 @@ class Bridge:
         run_id = str(payload.get("run_id", ""))
         board_id = str(payload.get("board_id", ""))
         if (
-            getattr(self, "processing_lock", None)
+            self.processing_lock
             and self.processing_lock.locked()
         ):
             return {**self.manual_sync_status(), "recorded": False}
@@ -5418,7 +5306,7 @@ class Bridge:
                 if safety_stopped
                 else sanitize_manual_sync_error(reported_error)
             )
-            remaining = getattr(self, "summary_plans", {}).pop(run_id, set())
+            remaining = self.summary_plans.pop(run_id, set())
             if remaining:
                 self.record_diandian_unresolved_batch(
                     remaining, "batch-aborted", "batch_aborted"
@@ -5477,7 +5365,7 @@ class Bridge:
 
     def run_media_downloader(self, urls: list[str], report: Path, safety_stop: Path) -> dict:
         try:
-            completed = run_bounded_subprocess(
+            completed = self.script_runner.run(
                 [
                     str(self.python), "-X", "utf8", str(self.media_fetcher),
                     "--signed-urls-stdin",
@@ -5570,22 +5458,20 @@ class Bridge:
 
     def userscript_content(self, all_boards: list[dict] | None = None) -> str:
         source_boards = self.all_boards if all_boards is None else all_boards
-        diandian_contract = getattr(self, "diandian_browser_contract", {"enabled": False})
+        diandian_contract = self.diandian_browser_contract
         board_map = {
             board["id"]: {"name": board["name"], "count": board["advertised_count"]}
             for board in source_boards if board["enabled"]
         }
         template = self.userscript_template.read_text(encoding="utf-8")
-        install_version = getattr(self, "userscript_install_version", "")
-        if install_version:
-            template, version_count = re.subn(
-                r"(?m)^// @version\s+[0-9]+(?:\.[0-9]+){2,}\s*$",
-                f"// @version      {install_version}",
-                template,
-                count=1,
-            )
-            if version_count != 1:
-                raise ValueError("userscript template must contain one numeric @version")
+        template, version_count = re.subn(
+            r"(?m)^// @version\s+[0-9]+(?:\.[0-9]+){2,}\s*$",
+            f"// @version      {self.userscript_install_version}",
+            template,
+            count=1,
+        )
+        if version_count != 1:
+            raise ValueError("userscript template must contain one numeric @version")
         userscript = (
             template.replace(
                 "__DIANDIAN_MATCH_LINE__",
@@ -5923,7 +5809,7 @@ class Bridge:
                     "--site-manifest-sha256", site_manifest_sha256,
                     "--config", str(self.config_path),
                 ])
-            published = run_bounded_subprocess(
+            published = self.script_runner.run(
                 command,
                 input_text="",
                 cwd=self.workspace,
@@ -6085,9 +5971,9 @@ class Bridge:
                     "version": catalog.get("version", 1),
                     "notes": scoped_notes,
                 })
-                completed = run_bounded_subprocess(
+                completed = self.script_runner.run(
                     [
-                        str(resolve_node_executable(getattr(self, "node", None))),
+                        str(resolve_node_executable(self.node)),
                         str(self.organizer),
                         "--input", "-",
                         "--catalog", str(temporary_catalog),
@@ -6160,7 +6046,7 @@ class Bridge:
         ):
             raise ValueError("curation generation is unavailable")
         command = [
-            str(resolve_node_executable(getattr(self, "node", None))),
+            str(resolve_node_executable(self.node)),
             str(self.snapshot_builder),
             "--root", str(self.workspace),
             "--kb-target", str(self.knowledge_base),
@@ -6183,12 +6069,12 @@ class Bridge:
             ])
         if self.resource_registry is not None:
             command.extend(["--resources", str(self.resource_registry)])
-        completed = run_bounded_subprocess(
+        completed = self.script_runner.run(
             command,
             input_text="",
             cwd=self.workspace,
             env=formal_node_environment(path_entries=(
-                resolve_git_executable(getattr(self, "git", None)).parent,
+                resolve_git_executable(self.git).parent,
             )),
             timeout=180,
             stdout_limit=16 * 1024,
@@ -6319,9 +6205,9 @@ class Bridge:
             "resources": resources,
             "effective_date": datetime.now(timezone.utc).date().isoformat(),
         })
-        completed = run_bounded_subprocess(
+        completed = self.script_runner.run(
             [
-                str(resolve_node_executable(getattr(self, "node", None))),
+                str(resolve_node_executable(self.node)),
                 str(self.curation_pipeline),
                 "--input", str(input_path),
                 "--output", str(output_path),
@@ -6340,7 +6226,7 @@ class Bridge:
             "started_at": started_at,
             "scanned": len(unique),
             "board_id": board_id,
-            "board_name": getattr(self, "boards", {}).get(board_id),
+            "board_name": self.boards.get(board_id),
         }
         pending_count = None
 
@@ -6411,7 +6297,7 @@ class Bridge:
                 )
                 return
 
-            fetch = run_bounded_subprocess(
+            fetch = self.script_runner.run(
                 [
                     str(self.python), "-X", "utf8", str(self.fetcher),
                     "--xhs-dir", str(self.xhs_dir), "--max-items", str(len(pending)),
@@ -6469,15 +6355,14 @@ class Bridge:
                 catalog_snapshot = self.catalog_path.read_bytes() if self.catalog_path.exists() else None
                 report_snapshot = report.read_bytes() if report.exists() else None
                 try:
-                    organized = subprocess.run(
+                    organized = self.script_runner.run(
                         organize_args,
-                        input=json.dumps({"notes": fetched_notes}, ensure_ascii=False),
-                        text=True,
-                        encoding="utf-8",
-                        capture_output=True,
+                        input_text=json.dumps({"notes": fetched_notes}, ensure_ascii=False),
                         cwd=self.workspace,
+                        env=None,
                         timeout=120,
-                        check=False,
+                        stdout_limit=64 * 1024,
+                        stderr_limit=64 * 1024,
                     )
                     if organized.returncode != 0:
                         raise RuntimeError(f"organizer failed: {sanitize_error(organized.stderr)}")

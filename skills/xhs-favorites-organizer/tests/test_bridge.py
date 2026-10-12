@@ -26,6 +26,28 @@ BRIDGE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(BRIDGE)
 
+import bridge_support
+from bridge_support import ScriptRunnerDouble, completed
+
+
+def make_bridge(root, **options):
+    """A real, fully initialised sync service in `root`, running no real helper script."""
+    return bridge_support.make_bridge(BRIDGE, root, **options)
+
+
+def started_bridge(test, **options):
+    """The same, in a fresh temporary folder that is removed when `test` ends."""
+    return bridge_support.started_bridge(test, BRIDGE, **options)
+
+
+HUGGINGFACE_PUBLISH = {"publish": {
+    "enabled": True,
+    "provider": "huggingface",
+    "repository": "https://huggingface.co/spaces/example/favsense",
+    "branch": "main",
+}}
+
+
 FETCH_PATH = Path(__file__).parents[1] / "scripts" / "fetch-xhs-details.py"
 FETCH_SPEC = importlib.util.spec_from_file_location("xhs_detail_fetcher", FETCH_PATH)
 FETCHER = importlib.util.module_from_spec(FETCH_SPEC)
@@ -262,7 +284,7 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertGreater(tuple(map(int, second.split("."))), tuple(map(int, first.split("."))))
 
     def test_userscript_render_uses_the_current_install_version(self):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge = started_bridge(self)
         bridge.all_boards = []
         bridge.port = 47631
         bridge.token = "a" * 64
@@ -311,7 +333,8 @@ class BridgeHelpersTest(unittest.TestCase):
 
     def test_manual_status_normalizes_legacy_errors_at_the_public_boundary(self):
         with tempfile.TemporaryDirectory() as directory:
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(Path(directory))
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = Path(directory) / "manual-sync.json"
 
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -333,7 +356,7 @@ class BridgeHelpersTest(unittest.TestCase):
 
     def test_manual_status_v2_exposes_orthogonal_safe_projection(self):
         with tempfile.TemporaryDirectory() as directory:
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(Path(directory))
             bridge.manual_sync_path = Path(directory) / "manual-sync.json"
             bridge.organization_status_v2_enabled = True
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -372,43 +395,6 @@ class BridgeHelpersTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "a" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.catalog_path = bridge.state_dir / "catalog.json"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.diandian_skill_path = root / "configured-diandian-skill"
-            bridge.diandian_release = {"version": "1.2.0", "cdp_transport": "scripts/cdp_transport.py"}
-            bridge.diandian_browser_contract = {"enabled": True, "cdp_enabled": True, "schema_version": 1}
-            bridge.config_path = root / "config.json"
-            bridge.profile = root / "profile.json"
-            bridge.curation = root / "curation.json"
-            bridge.resource_registry = None
-            bridge.knowledge_base = root / "knowledge-base"
-            bridge.snapshot_builder = root / "build-organization-snapshot.mjs"
-            bridge.node = BRIDGE.resolve_node_executable()
-            git_path = shutil.which("git")
-            self.assertIsNotNone(git_path)
-            bridge.git = Path(git_path)
-            bundle = bridge.state_dir / "organization-transactions" / "manual-curation-bundle.json"
-            BRIDGE.atomic_json(bridge.manual_sync_path, {
-                "batch": "manual",
-                "frozen_scope": {"note_ids": [note_id]},
-            })
-            BRIDGE.atomic_json(bridge.catalog_path, {
-                "notes": {note_id: {"description": "first"}},
-            })
-            BRIDGE.atomic_json(bridge.config_path, {"curation_quality": {}})
-            BRIDGE.atomic_json(bridge.profile, {"features": {}})
-            BRIDGE.atomic_json(bridge.curation, {})
-            BRIDGE.atomic_json(bundle, {
-                "schema_version": 1,
-                "outcome": "ready_for_safe_build",
-                "scope": {"note_ids": [note_id]},
-                "curation": {note_id: {"review_status": "pending"}},
-            })
             result = {
                 "schema_version": 1,
                 "ok": True,
@@ -417,29 +403,39 @@ class BridgeHelpersTest(unittest.TestCase):
                 "site_manifest_sha256": "c" * 64,
                 "counts": {"notes": 1, "categories": 1, "resources": 0},
             }
-            calls = []
+            runner = ScriptRunnerDouble(completed(json.dumps(result)))
+            bridge = make_bridge(root, script_runner=runner)
+            bridge.diandian_skill_path = root / "configured-diandian-skill"
+            bridge.diandian_release = {"version": "1.2.0", "cdp_transport": "scripts/cdp_transport.py"}
+            bridge.diandian_browser_contract = {"enabled": True, "cdp_enabled": True, "schema_version": 1}
+            bundle = bridge.state_dir / "organization-transactions" / "manual-curation-bundle.json"
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "manual",
+                "frozen_scope": {"note_ids": [note_id]},
+            })
+            BRIDGE.atomic_json(bridge.catalog_path, {
+                "notes": {note_id: {"description": "first"}},
+            })
+            BRIDGE.atomic_json(bundle, {
+                "schema_version": 1,
+                "outcome": "ready_for_safe_build",
+                "scope": {"note_ids": [note_id]},
+                "curation": {note_id: {"review_status": "pending"}},
+            })
 
-            def run(command, **kwargs):
-                calls.append((command, kwargs))
-                return SimpleNamespace(returncode=0, stdout=json.dumps(result), stderr="")
-
-            with (
-                mock.patch.dict(os.environ, {
-                    "NODE_OPTIONS": "--require hostile.js",
-                    "NODE_PATH": "hostile-modules",
-                    "HF_TOKEN": "secret",
-                    "PATH": "C:\\hostile-path",
-                }),
-                mock.patch.object(
-                    BRIDGE, "run_bounded_subprocess", side_effect=run
-                ) as bounded,
-            ):
+            with mock.patch.dict(os.environ, {
+                "NODE_OPTIONS": "--require hostile.js",
+                "NODE_PATH": "hostile-modules",
+                "HF_TOKEN": "secret",
+                "PATH": "C:\\hostile-path",
+            }):
                 bridge.build_organization_snapshot()
 
             def option(command, name):
                 return command[command.index(name) + 1]
 
-            command, options = calls[0]
+            (call,) = runner.calls
+            command = call.command
             self.assertEqual(option(command, "--curation-bundle"), str(bundle))
             self.assertEqual(option(command, "--diandian-report"), str(bridge.diandian_report_path))
             # The final build is the only formal build: it carries the private summaries folder and the
@@ -453,12 +449,12 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertRegex(option(command, "--effective-date"), r"^\d{4}-\d{2}-\d{2}$")
             self.assertNotIn("--input-revision-digest", command)
             self.assertTrue(Path(command[0]).is_absolute())
-            self.assertEqual(bounded.call_args.kwargs["input_text"], "")
-            self.assertIsInstance(options["env"], dict)
+            self.assertEqual(call.input_text, "")
+            self.assertIsInstance(call.env, dict)
             for hostile in ("NODE_OPTIONS", "NODE_PATH", "HF_TOKEN"):
-                self.assertNotIn(hostile, options["env"])
+                self.assertNotIn(hostile, call.env)
             self.assertEqual(
-                options["env"]["PATH"],
+                call.env["PATH"],
                 str(BRIDGE.resolve_git_executable(bridge.git).parent),
             )
 
@@ -474,17 +470,20 @@ class BridgeHelpersTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "s" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.catalog_path = bridge.state_dir / "catalog.json"
-            bridge.curation = root / "curation.json"
-            bridge.profile = root / "profile.json"
-            bridge.config_path = root / "config.json"
-            bridge.resource_registry = None
-            bridge.curation_pipeline = root / "run-curation-pipeline.mjs"
-            bridge.node = BRIDGE.resolve_node_executable()
+            result = {
+                "schema_version": 1,
+                "ok": True,
+                "outcome": "ready_for_safe_build",
+                "counts": {
+                    "accepted": 0,
+                    "unavailable": 0,
+                    "pending": 1,
+                    "rejected": 0,
+                    "resource_pending": 0,
+                },
+            }
+            runner = ScriptRunnerDouble(completed(json.dumps(result)))
+            bridge = make_bridge(root, script_runner=runner)
             bridge.saved_diandian_record = mock.Mock(return_value=None)
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -499,44 +498,20 @@ class BridgeHelpersTest(unittest.TestCase):
                     },
                 },
             })
-            BRIDGE.atomic_json(bridge.curation, {})
             BRIDGE.atomic_json(bridge.profile, {"classification": {}})
-            BRIDGE.atomic_json(bridge.config_path, {"curation_quality": {}})
-            result = {
-                "schema_version": 1,
-                "ok": True,
-                "outcome": "ready_for_safe_build",
-                "counts": {
-                    "accepted": 0,
-                    "unavailable": 0,
-                    "pending": 1,
-                    "rejected": 0,
-                    "resource_pending": 0,
-                },
-            }
 
-            with (
-                mock.patch.dict(os.environ, {
-                    "NODE_OPTIONS": "--require hostile.js",
-                    "NODE_PATH": "hostile-modules",
-                    "BRIDGE_TOKEN": "secret",
-                    "PATH": "C:\\hostile-path",
-                }),
-                mock.patch.object(
-                    BRIDGE,
-                    "run_bounded_subprocess",
-                    return_value=SimpleNamespace(
-                        returncode=0,
-                        stdout=json.dumps(result),
-                        stderr="",
-                    ),
-                ) as bounded,
-            ):
+            with mock.patch.dict(os.environ, {
+                "NODE_OPTIONS": "--require hostile.js",
+                "NODE_PATH": "hostile-modules",
+                "BRIDGE_TOKEN": "secret",
+                "PATH": "C:\\hostile-path",
+            }):
                 self.assertEqual(bridge.run_curation_pipeline(), result)
 
-            self.assertTrue(Path(bounded.call_args.args[0][0]).is_absolute())
-            self.assertEqual(bounded.call_args.kwargs["input_text"], "")
-            child_env = bounded.call_args.kwargs["env"]
+            (call,) = runner.calls
+            self.assertTrue(Path(call.command[0]).is_absolute())
+            self.assertEqual(call.input_text, "")
+            child_env = call.env
             self.assertIsInstance(child_env, dict)
             for hostile in ("NODE_OPTIONS", "NODE_PATH", "BRIDGE_TOKEN"):
                 self.assertNotIn(hostile, child_env)
@@ -558,17 +533,9 @@ class BridgeHelpersTest(unittest.TestCase):
             root = Path(directory)
             early, partial, failed, modern, image = ("e" * 24, "p" * 24, "f" * 24, "m" * 24, "i" * 24)
             unused, edited = "u" * 24, "d" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.catalog_path = bridge.state_dir / "catalog.json"
-            bridge.curation = root / "curation.json"
-            bridge.profile = root / "profile.json"
-            bridge.config_path = root / "config.json"
-            bridge.resource_registry = None
-            bridge.curation_pipeline = root / "run-curation-pipeline.mjs"
-            bridge.node = BRIDGE.resolve_node_executable()
+            ok = {"schema_version": 1, "ok": True, "outcome": "ready_for_safe_build",
+                  "counts": {"accepted": 0, "unavailable": 0, "pending": 5, "rejected": 0, "resource_pending": 0}}
+            bridge = make_bridge(root, script_runner=ScriptRunnerDouble(completed(json.dumps(ok))))
             bridge.saved_diandian_record = mock.Mock(return_value=None)
             note_ids = [early, partial, failed, modern, image, unused, edited]
             BRIDGE.atomic_json(bridge.state_dir / "curation-audit.json", {"schema_version": 2, "notes": {
@@ -582,9 +549,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 note_id: {"note_id": note_id, "description": "Safe public text", "content_sha256": "a" * 64}
                 for note_id in note_ids
             }})
-            BRIDGE.atomic_json(bridge.curation, {})
             BRIDGE.atomic_json(bridge.profile, {"classification": {}})
-            BRIDGE.atomic_json(bridge.config_path, {"curation_quality": {}})
 
             def write_artifact(note_id, filename, value):
                 target = bridge.state_dir / "video-analysis" / note_id / filename
@@ -606,13 +571,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 "provider": "human_frame_review", "tool_version": "codex-visual-review@2026-08-29",
                 "content_sha256": "a" * 64, "result_sha256": sha("画面文字"), "text": "画面文字",
             })
-            ok = {"schema_version": 1, "ok": True, "outcome": "ready_for_safe_build",
-                  "counts": {"accepted": 0, "unavailable": 0, "pending": 5, "rejected": 0, "resource_pending": 0}}
-            with mock.patch.object(
-                BRIDGE, "run_bounded_subprocess",
-                return_value=SimpleNamespace(returncode=0, stdout=json.dumps(ok), stderr=""),
-            ):
-                bridge.run_curation_pipeline()
+            bridge.run_curation_pipeline()
 
             sent = json.loads((bridge.state_dir / "organization-transactions" / "manual-curation-input.json").read_text(encoding="utf-8"))
             methods = {item["note_id"]: [m for m in item["methods"] if m["method"] != "public_text"] for item in sent["evidence"]}
@@ -644,17 +603,9 @@ class BridgeHelpersTest(unittest.TestCase):
             unused, used, no_audit, pending, legacy = ("u" * 24, "s" * 24, "n" * 24, "p" * 24, "l" * 24)
             note_ids = [unused, used, no_audit, pending, legacy]
             saved = {"provider": "xiaohongshu-diandian", "prompt_version": "v" * 64, "summary_sha256": "5" * 64}
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.catalog_path = bridge.state_dir / "catalog.json"
-            bridge.curation = root / "curation.json"
-            bridge.profile = root / "profile.json"
-            bridge.config_path = root / "config.json"
-            bridge.resource_registry = None
-            bridge.curation_pipeline = root / "run-curation-pipeline.mjs"
-            bridge.node = BRIDGE.resolve_node_executable()
+            ok = {"schema_version": 1, "ok": True, "outcome": "ready_for_safe_build",
+                  "counts": {"accepted": 0, "unavailable": 0, "pending": 5, "rejected": 0, "resource_pending": 0}}
+            bridge = make_bridge(root, script_runner=ScriptRunnerDouble(completed(json.dumps(ok))))
             bridge.saved_diandian_record = mock.Mock(return_value=saved)
             BRIDGE.atomic_json(bridge.state_dir / "curation-audit.json", {"schema_version": 2, "notes": {
                 unused: {"status": "accepted", "evidence_methods": ["description", "comments"], "evidence_dependencies": []},
@@ -668,16 +619,8 @@ class BridgeHelpersTest(unittest.TestCase):
                 note_id: {"note_id": note_id, "description": "Safe public text", "content_sha256": "a" * 64}
                 for note_id in note_ids
             }})
-            BRIDGE.atomic_json(bridge.curation, {})
             BRIDGE.atomic_json(bridge.profile, {"classification": {}})
-            BRIDGE.atomic_json(bridge.config_path, {"curation_quality": {}})
-            ok = {"schema_version": 1, "ok": True, "outcome": "ready_for_safe_build",
-                  "counts": {"accepted": 0, "unavailable": 0, "pending": 5, "rejected": 0, "resource_pending": 0}}
-            with mock.patch.object(
-                BRIDGE, "run_bounded_subprocess",
-                return_value=SimpleNamespace(returncode=0, stdout=json.dumps(ok), stderr=""),
-            ):
-                bridge.run_curation_pipeline()
+            bridge.run_curation_pipeline()
 
             sent = json.loads((bridge.state_dir / "organization-transactions" / "manual-curation-input.json").read_text(encoding="utf-8"))
             summary_methods = {
@@ -691,7 +634,8 @@ class BridgeHelpersTest(unittest.TestCase):
 
     def test_manual_failure_turns_encoded_blank_diagnostics_into_actionable_guidance(self):
         with tempfile.TemporaryDirectory() as directory:
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(Path(directory))
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = Path(directory) / "manual-sync.json"
             bridge.summary_plans = {}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -709,7 +653,8 @@ class BridgeHelpersTest(unittest.TestCase):
 
     def test_pre_core_safety_failure_keeps_its_control_reason_to_the_bridge(self):
         with tempfile.TemporaryDirectory() as directory:
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(Path(directory))
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = Path(directory) / "manual-sync.json"
             bridge.summary_plans = {}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -975,7 +920,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 }
             return {}
 
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge = started_bridge(self)
         bridge.sop_port_file = Path("dynamic-port-file")
         with mock.patch.object(
             BRIDGE, "read_sop_devtools_endpoint", return_value=endpoint
@@ -1063,10 +1008,9 @@ class BridgeHelpersTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.diandian_enabled = False
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             batch = "manual20260812010101"
@@ -1249,7 +1193,7 @@ class BridgeHelpersTest(unittest.TestCase):
                     BRIDGE.load_diandian_release(skill_path)
 
     def test_userscript_render_uses_the_external_browser_contract(self):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge = started_bridge(self)
         bridge.all_boards = []
         bridge.port = 47631
         bridge.token = "a" * 64
@@ -1464,12 +1408,11 @@ class BridgeHelpersTest(unittest.TestCase):
             root = Path(directory)
             existing_id = "a" * 24
             pending_id = "b" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.diandian_enabled = True
             bridge.diandian_cdp_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.diandian_dir.mkdir(parents=True)
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             batch = "manual20260812010101"
@@ -1508,10 +1451,9 @@ class BridgeHelpersTest(unittest.TestCase):
             root = Path(directory)
             confirmed_id = "c" * 24
             stale_page_id = "s" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             bridge.saved_diandian_record = mock.Mock(return_value=None)
@@ -1537,10 +1479,9 @@ class BridgeHelpersTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "c" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             bridge.saved_diandian_record = mock.Mock(return_value=None)
@@ -1567,11 +1508,10 @@ class BridgeHelpersTest(unittest.TestCase):
             root = Path(directory)
             missing_version_id = "v" * 24
             sensitive_id = "s" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.diandian_dir.mkdir(parents=True)
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             batch = "manual20260812010101"
@@ -1611,11 +1551,10 @@ class BridgeHelpersTest(unittest.TestCase):
             root = Path(directory)
             boolean_version_id = "b" * 24
             bom_id = "m" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.diandian_dir.mkdir(parents=True)
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -1658,10 +1597,10 @@ class BridgeHelpersTest(unittest.TestCase):
     def test_invalid_post_core_plan_stays_recoverable_until_empty_abandon(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.state_dir = root
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "出海电商"}
@@ -1723,10 +1662,10 @@ class BridgeHelpersTest(unittest.TestCase):
     def test_empty_summary_plan_restores_the_core_next_board_state(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
-            bridge.summary_plans = {}
             bridge.state_dir = root
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"board": "First", "next": "Next"}
@@ -1759,11 +1698,8 @@ class BridgeHelpersTest(unittest.TestCase):
             root = Path(directory)
             first_id = "f" * 24
             second_id = "g" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.summary_plans = {"manual_board": {first_id, second_id}}
             bridge.boards = {"board": "出海电商"}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -1825,11 +1761,8 @@ class BridgeHelpersTest(unittest.TestCase):
             root = Path(directory)
             first_id = "h" * 24
             second_id = "j" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.summary_plans = {"manual_board": {first_id, second_id}}
             bridge.boards = {"board": "出海电商"}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -1901,9 +1834,7 @@ class BridgeHelpersTest(unittest.TestCase):
             root = Path(directory)
             succeeded_id = "s" * 24
             unresolved_id = "u" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
+            bridge = make_bridge(root)
 
             bridge.record_diandian_succeeded(succeeded_id)
             bridge.record_diandian_unresolved(unresolved_id, "attachment-not-supported")
@@ -1960,15 +1891,10 @@ class BridgeHelpersTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "i" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.processing_lock = threading.Lock()
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.summary_plans = {"manual_board": {note_id}}
             bridge.boards = {"board": "出海电商"}
-            bridge.board_order = ["board"]
             configure_point_v2(bridge, root, [note_id])
             bridge.diandian_save_record = lambda destination, title, summary_text, current_id: BRIDGE.atomic_json(destination, {
                 "version": 1,
@@ -2044,19 +1970,10 @@ class BridgeHelpersTest(unittest.TestCase):
         for failure_phase in ("curation", "build", "publish"):
             with self.subTest(failure_phase=failure_phase), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
-                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-                bridge.state_dir = root / ".xhs-favorites"
-                bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-                bridge.processing_lock = threading.Lock()
-                bridge.boards = {"board": "Board"}
-                bridge.board_order = ["board"]
+                bridge = make_bridge(root)
                 bridge.organization_status_v2_enabled = True
                 bridge.summary_plans = {"manual_board": set()}
-                bridge.summary_locks = {}
-                bridge.summary_locks_guard = threading.Lock()
                 bridge.summary_finalizing = {"manual_board"}
-                bridge.summary_finalized = set()
-                bridge.summary_halted = set()
                 bridge.run_curation_pipeline = mock.Mock(return_value={
                     "counts": {"accepted": 1, "pending": 0},
                 })
@@ -2121,16 +2038,9 @@ class BridgeHelpersTest(unittest.TestCase):
             })
 
             def instance():
-                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-                bridge.state_dir = state_dir
-                bridge.manual_sync_path = manual_sync_path
-                bridge.boards = {"board": "Board"}
+                # Each call is a start of the service on the same folder, as after a restart.
+                bridge = make_bridge(root, config=HUGGINGFACE_PUBLISH)
                 bridge.summary_plans = {run_id: set()}
-                bridge.summary_locks = {}
-                bridge.summary_locks_guard = threading.Lock()
-                bridge.summary_halted = set()
-                bridge.summary_publish_claimed = set()
-                bridge.publish_config = {"repository": "synthetic"}
                 bridge.next_board_id = mock.Mock(return_value=None)
                 bridge.publish_public_site = mock.Mock(return_value={
                     "ok": True,
@@ -2179,15 +2089,8 @@ class BridgeHelpersTest(unittest.TestCase):
             )
             if linked.returncode != 0:
                 self.skipTest(f"junction unavailable: {linked.returncode}")
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = state_dir
-            bridge.manual_sync_path = state_dir / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
+            bridge = make_bridge(root)
             bridge.summary_plans = {"manual_board": set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.summary_publish_claimed = set()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
                 "state": "running",
@@ -2229,20 +2132,14 @@ import sys
 import threading
 import time
 
-module_path, state_path, ready_path, go_path, result_path, published_path = sys.argv[1:]
+module_path, tests_path, state_path, ready_path, go_path, result_path, published_path = sys.argv[1:]
+sys.path.insert(0, tests_path)
+import bridge_support
 spec = importlib.util.spec_from_file_location("bridge_race_worker", module_path)
 bridge_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bridge_module)
-bridge = bridge_module.Bridge.__new__(bridge_module.Bridge)
-bridge.state_dir = Path(state_path)
-bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-bridge.boards = {"board": "Board"}
+bridge = bridge_support.make_bridge(bridge_module, Path(state_path).parent)
 bridge.summary_plans = {"manual_board": set()}
-bridge.summary_locks = {}
-bridge.summary_locks_guard = threading.Lock()
-bridge.summary_halted = set()
-bridge.summary_publish_claimed = set()
-bridge.publish_config = {"repository": "synthetic"}
 bridge.next_board_id = lambda *_args: None
 def publish(build_version, site_manifest_sha256):
     (Path(published_path) / f"{os.getpid()}.json").write_text(
@@ -2271,6 +2168,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 """
             processes = []
             results = []
+            bridge_support.prepare_workspace(root, HUGGINGFACE_PUBLISH)
             for index in range(2):
                 ready = root / f"ready-{index}"
                 result = root / f"result-{index}.json"
@@ -2279,6 +2177,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     "-c",
                     worker,
                     str(MODULE_PATH),
+                    str(Path(__file__).parent),
                     str(state_dir),
                     str(ready),
                     str(go),
@@ -2287,12 +2186,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 ])
                 processes.append((process, ready))
                 results.append(result)
-            deadline = time.monotonic() + 10
-            while (
-                not all(ready.exists() for _, ready in processes)
-                and time.monotonic() < deadline
-            ):
-                time.sleep(0.01)
+                # Each worker finishes starting before the next begins, so the two only race on publishing.
+                deadline = time.monotonic() + 10
+                while not ready.exists() and time.monotonic() < deadline:
+                    time.sleep(0.01)
             self.assertTrue(all(ready.exists() for _, ready in processes))
             go.write_text("go", encoding="utf-8")
             try:
@@ -2316,16 +2213,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         site_manifest_sha256 = "d" * 64
 
         def instance(state_dir, result):
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = state_dir
-            bridge.manual_sync_path = state_dir / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
+            # Each call is a start of the service on the same folder, as after a restart.
+            bridge = make_bridge(state_dir.parent, config=HUGGINGFACE_PUBLISH)
             bridge.summary_plans = {"manual_board": set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.summary_publish_claimed = set()
-            bridge.publish_config = {"repository": "synthetic"}
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.publish_public_site = mock.Mock(
                 side_effect=result if isinstance(result, Exception) else None,
@@ -2453,20 +2343,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_successful_publish_remains_terminal_when_bridge_status_write_fails(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.processing_lock = threading.Lock()
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
+            bridge = make_bridge(root)
             bridge.organization_status_v2_enabled = True
             bridge.summary_plans = {"manual_board": set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
             bridge.summary_finalizing = {"manual_board"}
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
-            bridge.summary_publish_claimed = set()
             bridge.publish_config = {"repository": "synthetic"}
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 1, "pending": 0}})
@@ -2508,7 +2388,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "v" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.diandian_dir = root / "diandian-summaries"
             bridge.diandian_dir.mkdir()
             bridge.catalog_path = root / "catalog.json"
@@ -2535,7 +2415,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "c" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.summary_plans = {"manual_board": {note_id}}
@@ -2586,7 +2467,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "n" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.summary_plans = {"manual_board": {note_id}}
@@ -2616,7 +2498,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "f" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.summary_plans = {"manual_board": {note_id}}
@@ -2655,7 +2538,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "e" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.summary_plans = {"manual_board": {note_id}}
@@ -2696,11 +2579,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 first_id: "First stable DianDian summary with enough safe content.",
                 second_id: "Second stable DianDian summary with enough safe content.",
             }
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -2726,12 +2605,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             )
             configure_point_v2(bridge, root, [first_id, second_id])
             bridge.summary_plans = {run_id: {first_id, second_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             bridge.diandian_completion_state = lambda current_run, current_board: {
                 "plan_complete": not bridge.summary_plans.get(current_run),
@@ -2845,11 +2718,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "title": "Old title",
                 "summary": "Old summary remains valid after transport failure.",
             }
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -2867,12 +2737,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "timings_ms": {"response_wait": 300_000, "reply_text_stable": 2_000, "success_dwell": 1_500},
             }
             bridge.summary_plans = {run_id: {current_id, remaining_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             BRIDGE.atomic_json(bridge.diandian_dir / f"{current_id}.json", old_record)
             old_bytes = (bridge.diandian_dir / f"{current_id}.json").read_bytes()
@@ -2936,11 +2800,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             with self.subTest(reason=reason), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 note_id = "y" * 24
-                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+                bridge = make_bridge(root)
+                bridge.organization_status_v2_enabled = False
                 bridge.state_dir = root
                 bridge.manual_sync_path = root / "manual-sync.json"
                 bridge.diandian_report_path = root / "diandian-rerun-report.json"
-                bridge.boards = {"board": "Board"}
                 bridge.summary_plans = {"manual_board": {note_id}}
                 BRIDGE.atomic_json(bridge.manual_sync_path, {
                     "batch": "manual",
@@ -2978,11 +2842,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "z" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.state_dir = root
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.diandian_report_path = root / "diandian-rerun-report.json"
-            bridge.boards = {"board": "Board"}
             bridge.summary_plans = {"manual_board": {note_id}}
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -3058,11 +2922,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 board_id = "board"
                 run_id = "manual_board"
                 ai_url = "https://www.xiaohongshu.com/ai_chat"
-                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-                bridge.state_dir = root / ".xhs-favorites"
-                bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-                bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-                bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+                bridge = make_bridge(root)
+                bridge.organization_status_v2_enabled = False
                 bridge.boards = {board_id: "Board"}
                 bridge.board_order = [board_id]
                 bridge.diandian_enabled = True
@@ -3085,12 +2946,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     },
                 }
                 bridge.summary_plans = {run_id: {note_id}}
-                bridge.summary_locks = {}
-                bridge.summary_locks_guard = threading.Lock()
-                bridge.summary_halted = set()
-                bridge.diandian_cdp_active = set()
-                bridge.diandian_cdp_results = {}
-                bridge.diandian_cdp_guard = threading.Lock()
                 bridge.diandian_sleep = mock.Mock()
                 BRIDGE.atomic_json(bridge.manual_sync_path, {
                     "batch": "manual",
@@ -3188,11 +3043,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             run_id = "manual_board"
             ai_url = "https://www.xiaohongshu.com/ai_chat"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -3216,12 +3067,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             sleeps = []
             bridge.diandian_sleep = sleeps.append
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -3311,14 +3156,23 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             note_id = "r" * 24
             unrelated_id = "u" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.catalog_path = root / ".xhs-favorites" / "catalog.json"
-            bridge.organizer = (
-                Path(__file__).parents[1] / "scripts" / "organize.mjs"
-            )
-            bridge.node = BRIDGE.resolve_node_executable()
-            bridge.boards = {"board": "Board"}
+            captured = {}
+
+            def capture_runner(command, **kwargs):
+                # The real organizer runs here, through the real runner: the revision it computes is the point.
+                captured["command"] = command
+                captured["env"] = kwargs["env"]
+                captured["stdin"] = json.loads(kwargs["input_text"])
+                temporary_catalog = Path(
+                    command[command.index("--catalog") + 1]
+                )
+                captured["catalog"] = json.loads(
+                    temporary_catalog.read_text(encoding="utf-8")
+                )
+                return BRIDGE.BoundedScriptRunner().run(command, **kwargs)
+
+            runner = ScriptRunnerDouble(capture_runner)
+            bridge = make_bridge(root, script_runner=runner)
             BRIDGE.atomic_json(bridge.catalog_path, {
                 "version": 1,
                 "notes": {
@@ -3344,34 +3198,13 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             unrelated_before = json.loads(
                 bridge.catalog_path.read_text(encoding="utf-8")
             )["notes"][unrelated_id]
-            original_runner = BRIDGE.run_bounded_subprocess
-            captured = {}
 
-            def capture_runner(command, **kwargs):
-                captured["command"] = command
-                captured["env"] = kwargs["env"]
-                captured["stdin"] = json.loads(kwargs["input_text"])
-                temporary_catalog = Path(
-                    command[command.index("--catalog") + 1]
-                )
-                captured["catalog"] = json.loads(
-                    temporary_catalog.read_text(encoding="utf-8")
-                )
-                return original_runner(command, **kwargs)
-
-            with (
-                mock.patch.dict(os.environ, {
-                    "NODE_OPTIONS": "--require hostile.js",
-                    "NODE_PATH": "hostile-modules",
-                    "XSEC_TOKEN": "secret",
-                    "PATH": "C:\\hostile-path",
-                }),
-                mock.patch.object(
-                    BRIDGE,
-                    "run_bounded_subprocess",
-                    side_effect=capture_runner,
-                ),
-            ):
+            with mock.patch.dict(os.environ, {
+                "NODE_OPTIONS": "--require hostile.js",
+                "NODE_PATH": "hostile-modules",
+                "XSEC_TOKEN": "secret",
+                "PATH": "C:\\hostile-path",
+            }):
                 bridge.tag_catalog_sources("board", {note_id})
 
             note = json.loads(
@@ -3405,31 +3238,15 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "must-not-enter-formal-child", "unscanned-sentinel",
             ):
                 self.assertNotIn(sentinel, projected_bytes)
-            with mock.patch.object(BRIDGE, "run_bounded_subprocess") as bounded:
-                bridge.tag_catalog_sources("board", {note_id})
-            bounded.assert_not_called()
+            runs_so_far = len(runner.calls)
+            bridge.tag_catalog_sources("board", {note_id})
+            self.assertEqual(len(runner.calls), runs_so_far)
 
     def test_catalog_revision_backfill_failure_leaves_live_catalog_byte_identical(self):
         for outcome in ("nonzero", "invalid-hash"):
             with self.subTest(outcome=outcome), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 note_id = "t" * 24
-                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-                bridge.workspace = root
-                bridge.catalog_path = root / ".xhs-favorites" / "catalog.json"
-                bridge.organizer = Path(__file__).parents[1] / "scripts" / "organize.mjs"
-                bridge.boards = {"board": "Board"}
-                BRIDGE.atomic_json(bridge.catalog_path, {
-                    "version": 1,
-                    "notes": {
-                        note_id: {
-                            "note_id": note_id,
-                            "title": "Legacy note",
-                            "description": "Current trusted catalog content.",
-                        },
-                    },
-                })
-                before = bridge.catalog_path.read_bytes()
 
                 def run(command, **_kwargs):
                     if outcome == "nonzero":
@@ -3442,11 +3259,21 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     BRIDGE.atomic_json(temporary_catalog, value)
                     return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-                with mock.patch.object(
-                    BRIDGE, "run_bounded_subprocess", side_effect=run
-                ):
-                    with self.assertRaises(RuntimeError):
-                        bridge.tag_catalog_sources("board", {note_id})
+                bridge = make_bridge(root, script_runner=ScriptRunnerDouble(run))
+                BRIDGE.atomic_json(bridge.catalog_path, {
+                    "version": 1,
+                    "notes": {
+                        note_id: {
+                            "note_id": note_id,
+                            "title": "Legacy note",
+                            "description": "Current trusted catalog content.",
+                        },
+                    },
+                })
+                before = bridge.catalog_path.read_bytes()
+
+                with self.assertRaises(RuntimeError):
+                    bridge.tag_catalog_sources("board", {note_id})
 
                 self.assertEqual(bridge.catalog_path.read_bytes(), before)
 
@@ -3454,15 +3281,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "v" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.status_path = bridge.state_dir / "bridge-status.json"
-            bridge.catalog_path = bridge.state_dir / "catalog.json"
-            bridge.organizer = Path(__file__).parents[1] / "scripts" / "organize.mjs"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.published_since = None
+            runner = ScriptRunnerDouble(completed(returncode=1, stderr="synthetic backfill failure"))
+            bridge = make_bridge(root, script_runner=runner)
             bridge.cache_missing_media = mock.Mock()
             BRIDGE.atomic_json(bridge.catalog_path, {
                 "version": 1,
@@ -3476,25 +3296,16 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             })
             before = bridge.catalog_path.read_bytes()
 
-            with mock.patch.object(
-                BRIDGE,
-                "run_bounded_subprocess",
-                return_value=SimpleNamespace(
-                    returncode=1,
-                    stdout="",
-                    stderr="synthetic backfill failure",
-                ),
-            ) as bounded:
-                bridge.process_import(
-                    "manual_board",
-                    "board",
-                    {
-                        note_id: (
-                            "https://www.xiaohongshu.com/discovery/item/"
-                            f"{note_id}?xsec_token=transient"
-                        ),
-                    },
-                )
+            bridge.process_import(
+                "manual_board",
+                "board",
+                {
+                    note_id: (
+                        "https://www.xiaohongshu.com/discovery/item/"
+                        f"{note_id}?xsec_token=transient"
+                    ),
+                },
+            )
 
             result = json.loads(
                 (
@@ -3503,7 +3314,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             )
             self.assertEqual(result["state"], "failed")
             self.assertEqual(bridge.catalog_path.read_bytes(), before)
-            bounded.assert_called_once()
+            self.assertEqual(len(runner.calls), 1)
             bridge.cache_missing_media.assert_not_called()
 
     def test_cdp_waits_for_a_transient_card_and_retained_link_to_settle(self):
@@ -3574,12 +3385,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_delayed_summary_plan_cannot_mutate_a_replacement_batch(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.state_dir = root
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             bridge.diandian_enabled = True
             bridge.saved_diandian_record = mock.Mock(return_value=None)
             bridge.record_diandian_succeeded_batch = mock.Mock()
@@ -3687,11 +3495,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             run_id = "manual_board"
             ai_url = "https://www.xiaohongshu.com/ai_chat"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -3714,12 +3519,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -3806,11 +3605,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             run_id = "manual_board"
             ai_url = "https://www.xiaohongshu.com/ai_chat"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -3837,12 +3633,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -3965,11 +3755,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             run_id = "manual_board"
             ai_url = "https://www.xiaohongshu.com/ai_chat"
             summary = "A committed stable DianDian summary with enough safe content."
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -3996,12 +3783,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             )
             configure_point_v2(bridge, root, [note_id])
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_completion_state = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -4099,11 +3880,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             run_id = "manual_board"
             ai_url = "https://www.xiaohongshu.com/ai_chat"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -4130,12 +3908,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             bridge.diandian_save_record = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -4230,11 +4002,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             run_id = "manual_board"
             ai_url = "https://www.xiaohongshu.com/ai_chat"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.diandian_enabled = True
@@ -4261,12 +4029,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 },
             }
             bridge.summary_plans = {run_id: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
-            bridge.diandian_cdp_active = set()
-            bridge.diandian_cdp_results = {}
-            bridge.diandian_cdp_guard = threading.Lock()
             bridge.diandian_sleep = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual",
@@ -4344,17 +4106,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             old_run = f"{old_batch}_{board_id}"
             note_id = "z" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.summary_plans = {old_run: {note_id}}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
             bridge.diandian_save_record = mock.Mock()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": old_batch,
@@ -4431,17 +4186,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             batch = "manualrace"
             board_id = "board"
             run_id = f"{batch}_{board_id}"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
             bridge.summary_plans = {run_id: set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_halted = set()
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": batch,
                 "state": "running",
@@ -4497,20 +4245,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             batch = "manualpublishrace"
             board_id = "board"
             run_id = f"{batch}_{board_id}"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
-            bridge.processing_lock = threading.Lock()
             bridge.summary_plans = {run_id: set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
             bridge.summary_finalizing = {run_id}
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
             bridge.summary_finalization_threads = {}
             bridge.publish_config = {"repository": "unused", "branch": "main"}
             bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 1, "pending": 0}})
@@ -4584,16 +4323,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             batch = "manualdone"
             board_id = "board"
             run_id = f"{batch}_{board_id}"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
             bridge.boards = {board_id: "Board"}
             bridge.summary_plans = {run_id: set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_finalizing = set()
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
             BRIDGE.atomic_json(bridge.state_dir / "runs" / f"{run_id}.json", {
                 "run_id": run_id, "state": "completed",
             })
@@ -4613,16 +4345,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             batch = "manualretry"
             board_id = "board"
             run_id = f"{batch}_{board_id}"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+            bridge = make_bridge(root)
             bridge.boards = {board_id: "Board"}
             bridge.summary_plans = {run_id: set()}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_finalizing = set()
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
             BRIDGE.atomic_json(bridge.state_dir / "runs" / f"{run_id}.json", {
                 "run_id": run_id, "state": "completed",
             })
@@ -4657,11 +4382,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 board_id = "board"
                 run_id = "manual_board"
                 ai_url = "https://www.xiaohongshu.com/ai_chat"
-                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-                bridge.state_dir = root / ".xhs-favorites"
-                bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-                bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-                bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
+                bridge = make_bridge(root)
+                bridge.organization_status_v2_enabled = False
                 bridge.boards = {board_id: "Board"}
                 bridge.board_order = [board_id]
                 bridge.diandian_enabled = True
@@ -4678,12 +4400,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     "timings_ms": {"response_wait": 300_000, "reply_text_stable": 2_000, "success_dwell": 1_500},
                 }
                 bridge.summary_plans = {run_id: {note_id}}
-                bridge.summary_locks = {}
-                bridge.summary_locks_guard = threading.Lock()
-                bridge.summary_halted = set()
-                bridge.diandian_cdp_active = set()
-                bridge.diandian_cdp_results = {}
-                bridge.diandian_cdp_guard = threading.Lock()
                 bridge.diandian_sleep = mock.Mock()
                 BRIDGE.atomic_json(bridge.manual_sync_path, {
                     "batch": "manual", "state": "running", "run_board_ids": [board_id], "summary_pending": 1,
@@ -4713,7 +4429,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_diandian_result_and_skip_reject_note_id_path_traversal(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.diandian_dir = root / ".xhs-favorites" / "diandian-summaries"
             bridge.summary_plans = {"manual_board": set()}
             bridge.manual_sync_path = root / "manual-sync.json"
@@ -4748,15 +4464,13 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             first_id = "f" * 24
             second_id = "g" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.diandian_enabled = True
             bridge.diandian_dir = root / "summaries"
-            bridge.summary_plans = {}
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.state_dir = root
-            bridge.processing_lock = BRIDGE.threading.Lock()
             bridge.boards = {"board": "出海电商"}
-            bridge.board_order = ["board"]
             configure_point_v2(bridge, root, [first_id, second_id])
             batch = "manual"
             run_id = bridge.manual_run_id(batch, "board")
@@ -4846,7 +4560,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             )
             note_id = fixture["note_id"]
             board_id = fixture["board_id"]
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.catalog_path = root / "catalog.json"
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
                 note_id: {"source_board_ids": [board_id]},
@@ -4873,7 +4587,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "n" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.catalog_path = root / "catalog.json"
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
                 note_id: {"note_id": note_id, "content_sha256": "b" * 64},
@@ -5015,7 +4729,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             endpoint_access.assert_not_called()
 
     def test_diandian_cdp_target_uses_the_same_dynamic_sop_port_registry(self):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge = started_bridge(self)
         bridge.sop_port_file = Path("dynamic-cdp-port.txt")
         target = object()
         with mock.patch.object(
@@ -5089,7 +4803,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_shared_sop_page_open_rejects_non_xiaohongshu_destinations(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.sop_port_file = root / "cdp-port.txt"
             with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
                 for url in (
@@ -5104,7 +4818,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_shared_sop_page_open_fails_closed_when_the_port_registry_is_unavailable(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.sop_port_file = root / "missing-cdp-port.txt"
 
             with mock.patch.object(BRIDGE.subprocess, "Popen") as popen, self.assertRaisesRegex(
@@ -5176,16 +4890,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_manual_organization_only_opens_a_shared_sop_tab_after_explicit_trigger(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.board_order = ["first"]
             bridge.boards = {"first": "First"}
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.config_path = root / "config.json"
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
             bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
 
@@ -5212,9 +4921,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.all_boards = fixture["configured_boards"]
             bridge.boards = {
@@ -5224,15 +4932,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             }
             bridge.board_order = list(bridge.boards)
             original_board_order = list(bridge.board_order)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.config_path = root / "config.json"
             bridge.config_path.write_text(
                 json.dumps({"version": 1, "boards": bridge.all_boards}),
                 encoding="utf-8",
             )
             original_config = bridge.config_path.read_text(encoding="utf-8")
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
             bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
 
@@ -5257,9 +4961,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             note_id = "t" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
+            bridge = make_bridge(root)
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.catalog_path = root / "catalog.json"
             bridge.diandian_dir = root / "diandian-summaries"
@@ -5271,15 +4973,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             ]
             bridge.boards = {"eligible": "Eligible"}
             bridge.board_order = ["eligible"]
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.config_path = root / "config.json"
             bridge.config_path.write_text(
                 json.dumps({"version": 1, "boards": bridge.all_boards}),
                 encoding="utf-8",
             )
             original_config = bridge.config_path.read_bytes()
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
             bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
@@ -5318,19 +5016,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             board_id = "board"
             batch = "manualforce"
             run_id = f"{batch}_{board_id}"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_dir = bridge.state_dir / "diandian-summaries"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.catalog_path = bridge.state_dir / "catalog.json"
+            bridge = make_bridge(root)
             bridge.diandian_enabled = True
             bridge.diandian_cdp_enabled = True
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
-            bridge.summary_plans = {}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
             bridge.diandian_save_record = BRIDGE.load_diandian_save_record(
                 DIANDIAN_SKILL_SOURCE / "scripts" / "save_diandian_summary.py"
             )
@@ -5378,7 +5068,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "summary_plan_pending": True,
                 "board_note_ids": {board_id: [note_id, other_id]},
             })
-            bridge.summary_plans = {}
             skipped = bridge.diandian_summary_plan({
                 "run_id": batch_run_id,
                 "board_id": board_id,
@@ -5389,26 +5078,14 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_single_note_validation_rejects_ineligible_requests_before_launch(self):
         note_id = "v" * 24
 
-        def make_bridge(root: Path, *, enabled=True, note=None, saved=False):
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
-            bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.catalog_path = root / "catalog.json"
-            bridge.diandian_dir = root / "diandian-summaries"
-            bridge.diandian_enabled = enabled
-            bridge.diandian_cdp_enabled = enabled
-            bridge.all_boards = [
+        def build_service(root: Path, *, enabled=True, note=None, saved=False):
+            bridge = make_bridge(root, config={"boards": [
                 {"id": "eligible", "name": "Eligible", "enabled": True, "available": True, "advertised_count": 1},
                 {"id": "disabled", "name": "Disabled", "enabled": False, "available": True, "advertised_count": 1},
-            ]
-            bridge.boards = {"eligible": "Eligible"}
-            bridge.board_order = ["eligible"]
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.config_path = root / "config.json"
-            bridge.port = 47631
-            bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
+            ]})
+            bridge.organization_status_v2_enabled = False
+            bridge.diandian_enabled = enabled
+            bridge.diandian_cdp_enabled = enabled
             BRIDGE.atomic_json(bridge.catalog_path, {
                 "version": 1,
                 "notes": {} if note is None else {note_id: note},
@@ -5437,14 +5114,14 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         ]
         for name, enabled, note, saved, payload in cases:
             with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
-                bridge = make_bridge(Path(directory), enabled=enabled, note=note, saved=saved)
+                bridge = build_service(Path(directory), enabled=enabled, note=note, saved=saved)
                 with mock.patch.object(BRIDGE.subprocess, "Popen") as popen, self.assertRaises(ValueError):
                     bridge.trigger_manual_sync(payload)
                 popen.assert_not_called()
                 self.assertFalse(bridge.manual_sync_path.exists())
 
         with tempfile.TemporaryDirectory() as directory:
-            bridge = make_bridge(
+            bridge = build_service(
                 Path(directory),
                 note={"note_id": note_id, "source_board_ids": ["eligible"]},
             )
@@ -5458,7 +5135,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             note_id = "w" * 24
             token = "a" * 64
             batch = "manualtarget"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.port = 0
             bridge.token = token
             bridge.manual_sync_path = root / "manual-sync.json"
@@ -5512,7 +5189,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             other_id = "b" * 24
             batch = "manualtarget"
             board_id = "board"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
@@ -5557,12 +5234,12 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             other_id = "d" * 24
             batch = "manualtarget"
             board_id = "board"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.state_dir = root
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
-            bridge.summary_plans = {}
             bridge.saved_diandian_record = mock.Mock()
             bridge.record_diandian_succeeded_batch = mock.Mock()
             run_id = bridge.manual_run_id(batch, board_id)
@@ -5619,9 +5296,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
+            bridge = make_bridge(root)
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.all_boards = fixture["configured_boards"]
             bridge.boards = {
@@ -5630,9 +5305,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 if board["enabled"] and board["available"]
             }
             bridge.board_order = list(bridge.boards)
-            bridge.workspace = root
-            bridge.config_path = root / "config.json"
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
 
             with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
@@ -5751,7 +5423,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_diandian_native_click_is_plan_bound_and_dispatches_one_pointer_click(self):
         note_id = "z" * 24
         worker_id = "22222222-2222-4222-8222-222222222222"
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge = started_bridge(self)
         bridge.sop_port_file = Path("dynamic-port-file")
         bridge.summary_plans = {"manual_board": {note_id}}
         bridge.summary_run_lock = mock.Mock(return_value=BRIDGE.nullcontext())
@@ -5823,7 +5495,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         rejected_open.assert_not_called()
 
     def _native_click_bridge(self, note_id):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge = started_bridge(self)
         bridge.sop_port_file = Path("dynamic-port-file")
         bridge.summary_plans = {"manual_board": {note_id}}
         bridge.summary_run_lock = mock.Mock(return_value=BRIDGE.nullcontext())
@@ -6217,25 +5889,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            config_path = root / "config.json"
-            config_path.write_text(
-                json.dumps({"version": 1, "boards": fixture["configured_boards"]}),
-                encoding="utf-8",
-            )
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.config_path = config_path
-            bridge.catalog_path = root / "catalog.json"
-            bridge.userscript = root / "installed.user.js"
-            bridge.userscript_template = root / "template.user.js"
-            bridge.userscript_template.write_text(
-                "__PORT__ __TOKEN__ __INSTALL_CAPABILITY__ __BOARDS__",
-                encoding="utf-8",
-            )
-            bridge.port = 47631
-            bridge.token = "a" * 64
-            bridge.install_capability = "c" * 64
-            bridge.processing_lock = BRIDGE.threading.Lock()
-            bridge.manual_sync_path = root / "manual.json"
+            bridge = make_bridge(root, config={"boards": fixture["configured_boards"]})
+            bridge.organization_status_v2_enabled = False
+            config_path = bridge.config_path
             batch = "manualtarget"
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": batch,
@@ -6245,9 +5901,6 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "run_mode": fixture["expected_mode"],
                 "processed_run_ids": [],
             })
-            config = json.loads(config_path.read_text(encoding="utf-8"))
-            bridge.all_boards, bridge.boards = bridge.normalize_boards(config)
-            bridge.board_order = list(bridge.boards)
 
             active = bridge.discover_boards({"batch": batch, "boards": [
                 {"id": "boardalpha", "name": "Alpha renamed", "advertised_count": 13},
@@ -6266,11 +5919,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             self.assertFalse(enabled_by_id["boarddisabled"])
             self.assertTrue(enabled_by_id["boardnew"])
 
-            restarted = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            restarted.manual_sync_path = bridge.manual_sync_path
-            restarted.all_boards = list(bridge.all_boards)
-            restarted.boards = dict(bridge.boards)
-            restarted.board_order = list(bridge.board_order)
+            # A restart reads the settings the first run saved.
+            restarted = make_bridge(root)
+            restarted.organization_status_v2_enabled = False
             target = fixture["expected_target_scope"][0]
             context = restarted.board_context(batch, target)
             self.assertEqual(context["id"], target)
@@ -6293,37 +5944,13 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
     def test_single_note_discovery_confirms_scope_without_mutating_board_config(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            config_path = root / "config.json"
             configured_boards = [
                 {"id": "target", "name": "Configured name", "enabled": True, "available": True, "advertised_count": 1},
                 {"id": "other", "name": "Other", "enabled": True, "available": True, "advertised_count": 2},
             ]
-            config_path.write_text(
-                json.dumps({"version": 1, "boards": configured_boards}),
-                encoding="utf-8",
-            )
+            bridge = make_bridge(Path(directory), config={"boards": configured_boards})
+            config_path = bridge.config_path
             original_config = config_path.read_bytes()
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.config_path = config_path
-            bridge.catalog_path = root / "catalog.json"
-            bridge.processing_lock = threading.Lock()
-            bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.all_boards, bridge.boards = bridge.normalize_boards({
-                "version": 1,
-                "boards": configured_boards,
-            })
-            bridge.board_order = list(bridge.boards)
-            bridge.userscript = root / "installed.user.js"
-            bridge.userscript_template = root / "template.user.js"
-            bridge.userscript_template.write_text(
-                "__DIANDIAN_MATCH_LINE__ __PORT__ __TOKEN__ __INSTALL_CAPABILITY__ __BOARDS__ __DIANDIAN_CONTRACT__",
-                encoding="utf-8",
-            )
-            bridge.port = 47631
-            bridge.token = "a" * 64
-            bridge.install_capability = "b" * 64
-            bridge.diandian_browser_contract = {"enabled": False}
             batch = "manualvalidation"
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": batch,
@@ -6353,7 +5980,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_manual_organization_aggregates_board_results_without_exposing_ids(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.boards = {"first": "First", "last": "Last"}
             batch = "manual20260729010101"
@@ -6390,11 +6018,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_manual_organization_terminal_state_ignores_late_failure_and_rejects_start(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             batch = "manualterminal"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6426,12 +6052,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_active_processing_cannot_be_terminalized_by_client_failure_or_timeout(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.processing_lock = threading.Lock()
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             batch = "manualactive"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6461,11 +6084,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_manual_organization_failure_is_not_overwritten_by_late_result(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             batch = "manualterminal"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6495,11 +6115,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_manual_organization_safety_stop_is_terminal_and_keeps_partial_counts(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
             batch = "manualsafety"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6531,12 +6148,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_lost_core_response_cannot_fail_a_processed_run_waiting_for_summary_plan(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
             bridge.diandian_enabled = True
-            bridge.summary_plans = {}
             batch = "manualresponse"
             run_id = bridge.manual_run_id(batch, "board")
             BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6570,7 +6184,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_manual_organization_starting_state_expires_when_userscript_never_responds(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = root / "manual-sync.json"
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manual-stale",
@@ -6589,17 +6204,11 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_manual_organization_running_state_expires_and_can_be_restarted(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.trigger_lock = BRIDGE.threading.Lock()
-            bridge.processing_lock = BRIDGE.threading.Lock()
+            bridge = make_bridge(root)
+            bridge.organization_status_v2_enabled = False
             bridge.manual_sync_path = root / "manual-sync.json"
             bridge.board_order = ["first"]
             bridge.boards = {"first": "First"}
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.diandian_report_path = bridge.state_dir / "diandian-rerun-report.json"
-            bridge.config_path = root / "config.json"
-            bridge.port = 47631
             bridge.profile_url = "https://www.xiaohongshu.com/user/profile/testprofile?tab=fav&subTab=board"
             bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
             pending_ids = {"t" * 24, "u" * 24}
@@ -6672,33 +6281,19 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
     def test_discovery_renames_existing_boards_adds_new_boards_and_keeps_history(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            config_path = root / "config.json"
-            config_path.write_text(json.dumps({"version": 1, "boards": [
+            bridge = make_bridge(Path(directory), config={"boards": [
                 {"id": "first", "name": "Old name", "enabled": True},
                 {"id": "missing", "name": "Historical", "enabled": True},
-            ]}), encoding="utf-8")
-            catalog_path = root / "catalog.json"
+            ]})
+            bridge.organization_status_v2_enabled = False
+            config_path = bridge.config_path
+            catalog_path = bridge.catalog_path
             catalog_path.write_text(json.dumps({"version": 1, "notes": {
                 "note": {"source_board_ids": ["first"], "source_boards": ["Old name"]},
             }}), encoding="utf-8")
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.config_path = config_path
-            bridge.catalog_path = catalog_path
-            bridge.userscript = root / "installed.user.js"
-            bridge.userscript_template = root / "template.user.js"
-            bridge.userscript_template.write_text("__PORT__ __TOKEN__ __BOARDS__", encoding="utf-8")
-            bridge.port = 47631
-            bridge.token = "a" * 64
-            bridge.install_capability = "c" * 64
-            bridge.processing_lock = BRIDGE.threading.Lock()
-            bridge.manual_sync_path = root / "manual.json"
             BRIDGE.atomic_json(bridge.manual_sync_path, {
                 "batch": "manualbatch", "state": "starting", "processed_run_ids": [],
             })
-            config = json.loads(config_path.read_text(encoding="utf-8"))
-            bridge.all_boards, bridge.boards = bridge.normalize_boards(config)
-            bridge.board_order = list(bridge.boards)
 
             active = bridge.discover_boards({"batch": "manualbatch", "boards": [
                 {"id": "first", "name": "New name", "advertised_count": 12},
@@ -6729,33 +6324,15 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         ]
         for replacement in replacements:
             with self.subTest(replacement=replacement), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                config_path = root / "config.json"
-                config_path.write_text(json.dumps({"version": 1, "boards": [
+                bridge = make_bridge(Path(directory), config={"boards": [
                     {"id": "first", "name": "First", "enabled": True},
-                ]}), encoding="utf-8")
-                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-                bridge.config_path = config_path
-                bridge.catalog_path = root / "catalog.json"
-                bridge.userscript = root / "installed.user.js"
-                bridge.userscript_template = root / "template.user.js"
-                bridge.userscript_template.write_text(
-                    "__PORT__ __TOKEN__ __INSTALL_CAPABILITY__ __BOARDS__",
-                    encoding="utf-8",
-                )
-                bridge.port = 47631
-                bridge.token = "a" * 64
-                bridge.install_capability = "c" * 64
-                bridge.processing_lock = threading.Lock()
-                bridge.manual_sync_path = root / "manual.json"
+                ]})
+                bridge.organization_status_v2_enabled = False
                 BRIDGE.atomic_json(bridge.manual_sync_path, {
                     "batch": "manualbatch",
                     "state": "starting",
                     "processed_run_ids": [],
                 })
-                config = json.loads(config_path.read_text(encoding="utf-8"))
-                bridge.all_boards, bridge.boards = bridge.normalize_boards(config)
-                bridge.board_order = list(bridge.boards)
 
                 def replace_manual_state(_renamed):
                     with bridge.get_manual_sync_lock():
@@ -6803,60 +6380,43 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             self.assertEqual(queued, [unique["a" * 24]])
 
     def test_disabled_video_analysis_never_starts_media_download(self):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-        bridge.video_analysis_enabled = False
-        with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
+        with tempfile.TemporaryDirectory() as directory:
+            runner = ScriptRunnerDouble()
+            bridge = make_bridge(Path(directory), script_runner=runner)
             result = bridge.cache_missing_media({"a" * 24: "https://example.invalid"})
         self.assertEqual(result["state"], "disabled")
-        popen.assert_not_called()
+        self.assertEqual(runner.calls, [])
 
     def test_enabled_video_analysis_waits_for_bounded_platform_result(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.video_analysis_enabled = True
-            bridge.curation = root / "curation.json"
-            bridge.curation.write_text("{}", encoding="utf-8")
-            bridge.media_dir = root / "media"
-            bridge.media_dir.mkdir()
-            bridge.state_dir = root / "state"
-            bridge.state_dir.mkdir()
-            bridge.run_dir = root / "runs"
-            bridge.run_dir.mkdir()
-            bridge.python = Path("python.exe")
-            bridge.media_fetcher = Path("download-pending-media.py")
-            bridge.xhs_dir = root / "xhs"
-            bridge.workspace = root
-            completed = SimpleNamespace(
-                returncode=0,
-                stdout=json.dumps({"queued": 1, "downloaded": 1, "safety_stopped": False}),
-                stderr="",
+            downloaded = completed(json.dumps({"queued": 1, "downloaded": 1, "safety_stopped": False}))
+            runner = ScriptRunnerDouble(downloaded)
+            bridge = make_bridge(
+                root, script_runner=runner, config={"video_analysis": {"enabled": True}}
             )
-            with mock.patch.object(BRIDGE, "run_bounded_subprocess", return_value=completed) as run:
-                result = bridge.cache_missing_media({
-                    "a" * 24: "https://www.xiaohongshu.com/explore/" + "a" * 24
-                })
+            result = bridge.cache_missing_media({
+                "a" * 24: "https://www.xiaohongshu.com/explore/" + "a" * 24
+            })
             self.assertEqual(result["state"], "completed")
             self.assertEqual(result["downloaded"], 1)
-            run.assert_called_once()
-            command = run.call_args.args[0]
-            self.assertIn(str(bridge.state_dir / "platform-request.lock"), command)
+            (call,) = runner.calls
+            self.assertIn(str(bridge.state_dir / "platform-request.lock"), call.command)
             self.assertEqual(
-                run.call_args.kwargs["input_text"],
+                call.input_text,
                 "https://www.xiaohongshu.com/explore/" + "a" * 24,
             )
 
     def test_safety_stop_sentinel_prevents_future_media_workers(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.video_analysis_enabled = True
-            bridge.state_dir = root
-            (root / "media-download-safety-stop.json").write_text("{}", encoding="utf-8")
-            with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
-                result = bridge.cache_missing_media({"a" * 24: "https://example.invalid"})
+            runner = ScriptRunnerDouble()
+            bridge = make_bridge(
+                Path(directory), script_runner=runner, config={"video_analysis": {"enabled": True}}
+            )
+            (bridge.state_dir / "media-download-safety-stop.json").write_text("{}", encoding="utf-8")
+            result = bridge.cache_missing_media({"a" * 24: "https://example.invalid"})
             self.assertEqual(result["state"], "safety-stopped")
-            popen.assert_not_called()
+            self.assertEqual(runner.calls, [])
 
     def test_fetch_payload_contract_keeps_sanitized_gaps(self):
         notes, failures = BRIDGE.parse_fetch_payload(json.dumps({
@@ -6968,15 +6528,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_terminal_manual_runs_reject_late_import_before_processing(self):
         for terminal_state in ("completed", "failed", "safety-stopped"):
             with self.subTest(state=terminal_state), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-                bridge.state_dir = root / "state"
-                bridge.status_path = bridge.state_dir / "bridge-status.json"
-                bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-                bridge.processing_lock = threading.Lock()
-                bridge.boards = {"board": "Board"}
-                bridge.board_order = ["board"]
-                bridge.summary_plans = {}
+                runner = ScriptRunnerDouble()
+                bridge = make_bridge(Path(directory), script_runner=runner)
                 batch = "manualterminal"
                 run_id = bridge.manual_run_id(batch, "board")
                 BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -6988,11 +6541,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 original_state = bridge.manual_sync_path.read_bytes()
                 bridge.process_import = mock.Mock()
 
-                with (
-                    mock.patch.object(BRIDGE, "run_bounded_subprocess") as fetch,
-                    mock.patch.object(BRIDGE.subprocess, "run") as child,
-                    self.assertRaisesRegex(ValueError, "batch"),
-                ):
+                with self.assertRaisesRegex(ValueError, "batch"):
                     bridge.import_sync({
                         "run_id": run_id,
                         "board_id": "board",
@@ -7000,21 +6549,12 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     })
 
                 bridge.process_import.assert_not_called()
-                fetch.assert_not_called()
-                child.assert_not_called()
+                self.assertEqual(runner.calls, [])
                 self.assertEqual(bridge.manual_sync_path.read_bytes(), original_state)
 
     def test_import_rechecks_manual_state_after_prepare_before_processing(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.state_dir = root / "state"
-            bridge.status_path = bridge.state_dir / "bridge-status.json"
-            bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
-            bridge.processing_lock = threading.Lock()
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.summary_plans = {}
+            bridge = make_bridge(Path(directory))
             batch = "manualrace"
             run_id = bridge.manual_run_id(batch, "board")
             terminal = {
@@ -7040,16 +6580,8 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
     def test_no_pending_import_commits_source_tags_before_media_and_rolls_back_failure(self):
         for tagging_fails in (True, False):
             with self.subTest(tagging_fails=tagging_fails), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
                 note_id = "a" * 24
-                bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-                bridge.workspace = root
-                bridge.state_dir = root / ".xhs-favorites"
-                bridge.status_path = bridge.state_dir / "bridge-status.json"
-                bridge.catalog_path = root / "catalog.json"
-                bridge.boards = {"board": "Board"}
-                bridge.board_order = ["board"]
-                bridge.published_since = None
+                bridge = make_bridge(Path(directory))
                 bridge.next_board_id = mock.Mock(return_value=None)
                 bridge.publish_after_board = mock.Mock(return_value=None)
                 BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
@@ -7096,23 +6628,27 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
     def test_import_counts_only_ids_that_were_not_already_in_the_catalog(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
             old_id = "o" * 24
             new_id = "n" * 24
             failed_id = "f" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.status_path = bridge.state_dir / "bridge-status.json"
-            bridge.catalog_path = root / "catalog.json"
-            bridge.python = Path("python")
-            bridge.fetcher = Path("fetch-xhs-details.py")
-            bridge.xhs_dir = root / "xhs"
-            bridge.organizer = Path("organize-favorites.mjs")
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.published_since = None
             events = []
+            fetch_payload = json.dumps({
+                "notes": [
+                    {"note_id": old_id, "detail_fetched": True, "comment_evidence_checked": True},
+                    {"note_id": new_id, "detail_fetched": True, "comment_evidence_checked": True},
+                ],
+                "failures": [{"note_id": failed_id, "reason": "request failed"}],
+            })
+
+            def respond(command, **_options):
+                if "fetch-xhs-details.py" in " ".join(command):
+                    events.append("fetch")
+                    return completed(fetch_payload)
+                events.append("organizer")
+                return completed()
+
+            bridge = make_bridge(Path(directory), script_runner=ScriptRunnerDouble(respond))
+            bridge.organization_status_v2_enabled = False
             bridge.cache_missing_media = mock.Mock(
                 side_effect=lambda _candidates: events.append("media") or {"state": "disabled"}
             )
@@ -7122,33 +6658,12 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
                 old_id: {"note_id": old_id, "comment_evidence_checked": False},
             }})
-            fetch_payload = json.dumps({
-                "notes": [
-                    {"note_id": old_id, "detail_fetched": True, "comment_evidence_checked": True},
-                    {"note_id": new_id, "detail_fetched": True, "comment_evidence_checked": True},
-                ],
-                "failures": [{"note_id": failed_id, "reason": "request failed"}],
+
+            bridge.process_import("manual_board", "board", {
+                old_id: f"https://www.xiaohongshu.com/explore/{old_id}",
+                new_id: f"https://www.xiaohongshu.com/explore/{new_id}",
+                failed_id: f"https://www.xiaohongshu.com/explore/{failed_id}",
             })
-            completed = SimpleNamespace(returncode=0, stdout=fetch_payload, stderr="")
-            organized = SimpleNamespace(returncode=0, stdout="", stderr="")
-
-            def fetch_process(*_args, **_kwargs):
-                events.append("fetch")
-                return completed
-
-            def run_process(*_args, **_kwargs):
-                events.append("organizer")
-                return organized
-
-            with (
-                mock.patch.object(BRIDGE, "run_bounded_subprocess", side_effect=fetch_process),
-                mock.patch.object(BRIDGE.subprocess, "run", side_effect=run_process),
-            ):
-                bridge.process_import("manual_board", "board", {
-                    old_id: f"https://www.xiaohongshu.com/explore/{old_id}",
-                    new_id: f"https://www.xiaohongshu.com/explore/{new_id}",
-                    failed_id: f"https://www.xiaohongshu.com/explore/{failed_id}",
-                })
 
             result = json.loads(
                 (bridge.state_dir / "runs" / "manual_board.json").read_text(encoding="utf-8")
@@ -7164,18 +6679,23 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             root = Path(directory)
             old_id = "o" * 24
             new_id = "n" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.status_path = bridge.state_dir / "bridge-status.json"
-            bridge.catalog_path = root / "catalog.json"
-            bridge.python = Path("python")
-            bridge.fetcher = Path("fetch-xhs-details.py")
-            bridge.xhs_dir = root / "xhs"
-            bridge.organizer = Path("organize-favorites.mjs")
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.published_since = None
+            fetch_result = completed(json.dumps({
+                "notes": [{"note_id": new_id, "detail_fetched": True, "comment_evidence_checked": True}],
+                "failures": [],
+            }))
+            report = root / "xhs-favorites" / f"{BRIDGE.datetime.now().astimezone():%Y-%m-%d}.md"
+
+            def respond(command, **_options):
+                if "fetch-xhs-details.py" in " ".join(command):
+                    return fetch_result
+                BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
+                    old_id: {"note_id": old_id},
+                    new_id: {"note_id": new_id},
+                }})
+                report.write_bytes(b"partial-new-report")
+                return completed()
+
+            bridge = make_bridge(root, script_runner=ScriptRunnerDouble(respond))
             bridge.cache_missing_media = mock.Mock()
             bridge.tag_catalog_sources = mock.Mock(side_effect=RuntimeError("injected tagging failure"))
             bridge.next_board_id = mock.Mock(return_value=None)
@@ -7184,32 +6704,12 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 old_id: {"note_id": old_id, "comment_evidence_checked": True},
             }})
             original_catalog = bridge.catalog_path.read_bytes()
-            report = root / "xhs-favorites" / f"{BRIDGE.datetime.now().astimezone():%Y-%m-%d}.md"
             report.parent.mkdir(parents=True)
             report.write_bytes(b"previous-report")
-            fetch_result = SimpleNamespace(
-                returncode=0,
-                stdout=json.dumps({
-                    "notes": [{"note_id": new_id, "detail_fetched": True, "comment_evidence_checked": True}],
-                    "failures": [],
-                }),
-                stderr="",
-            )
-            def run_process(*_args, **_kwargs):
-                BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
-                    old_id: {"note_id": old_id},
-                    new_id: {"note_id": new_id},
-                }})
-                report.write_bytes(b"partial-new-report")
-                return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-            with (
-                mock.patch.object(BRIDGE, "run_bounded_subprocess", return_value=fetch_result),
-                mock.patch.object(BRIDGE.subprocess, "run", side_effect=run_process),
-            ):
-                bridge.process_import("manual_board", "board", {
-                    new_id: f"https://www.xiaohongshu.com/explore/{new_id}",
-                })
+            bridge.process_import("manual_board", "board", {
+                new_id: f"https://www.xiaohongshu.com/explore/{new_id}",
+            })
 
             result = json.loads(
                 (bridge.state_dir / "runs" / "manual_board.json").read_text(encoding="utf-8")
@@ -7221,27 +6721,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
     def test_import_safety_stop_keeps_fetched_metadata_local_and_stops_follow_up_work(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
             fetched_id = "a" * 24
             stopped_id = "b" * 24
             unrequested_id = "c" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.status_path = bridge.state_dir / "bridge-status.json"
-            bridge.catalog_path = root / "catalog.json"
-            bridge.python = Path("python")
-            bridge.fetcher = Path("fetch-xhs-details.py")
-            bridge.xhs_dir = root / "xhs"
-            bridge.organizer = Path("organize-favorites.mjs")
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.published_since = None
-            bridge.cache_missing_media = mock.Mock()
-            bridge.tag_catalog_sources = mock.Mock()
-            bridge.next_board_id = mock.Mock(return_value=None)
-            bridge.publish_after_board = mock.Mock(return_value={"status": "published"})
-            BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {}})
             fetch_payload = json.dumps({
                 "notes": [{"note_id": fetched_id, "detail_fetched": True, "comment_evidence_checked": True}],
                 "failures": [
@@ -7249,27 +6731,33 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                     {"note_id": unrequested_id, "reason": "safety stop"},
                 ],
             })
-            completed = SimpleNamespace(returncode=0, stdout=fetch_payload, stderr="")
             organizer_inputs = []
 
-            def organize_process(*_args, **kwargs):
-                payload = json.loads(kwargs["input"])
+            def respond(command, **options):
+                if "fetch-xhs-details.py" in " ".join(command):
+                    return completed(fetch_payload)
+                payload = json.loads(options["input_text"])
                 organizer_inputs.append(payload)
                 BRIDGE.atomic_json(bridge.catalog_path, {
                     "version": 1,
                     "notes": {note["note_id"]: note for note in payload["notes"]},
                 })
-                return SimpleNamespace(returncode=0, stdout="", stderr="")
+                return completed()
 
-            with (
-                mock.patch.object(BRIDGE, "run_bounded_subprocess", return_value=completed) as fetch_process,
-                mock.patch.object(BRIDGE.subprocess, "run", side_effect=organize_process),
-            ):
-                bridge.process_import("manual_board", "board", {
-                    fetched_id: f"https://www.xiaohongshu.com/explore/{fetched_id}",
-                    stopped_id: f"https://www.xiaohongshu.com/explore/{stopped_id}",
-                    unrequested_id: f"https://www.xiaohongshu.com/explore/{unrequested_id}",
-                })
+            runner = ScriptRunnerDouble(respond)
+            bridge = make_bridge(Path(directory), script_runner=runner)
+            bridge.organization_status_v2_enabled = False
+            bridge.cache_missing_media = mock.Mock()
+            bridge.tag_catalog_sources = mock.Mock()
+            bridge.next_board_id = mock.Mock(return_value=None)
+            bridge.publish_after_board = mock.Mock(return_value={"status": "published"})
+            BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {}})
+
+            bridge.process_import("manual_board", "board", {
+                fetched_id: f"https://www.xiaohongshu.com/explore/{fetched_id}",
+                stopped_id: f"https://www.xiaohongshu.com/explore/{stopped_id}",
+                unrequested_id: f"https://www.xiaohongshu.com/explore/{unrequested_id}",
+            })
 
             result = json.loads(
                 (bridge.state_dir / "runs" / "manual_board.json").read_text(encoding="utf-8")
@@ -7290,7 +6778,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             }])
             saved_catalog = json.loads(bridge.catalog_path.read_text(encoding="utf-8"))
             self.assertEqual(set(saved_catalog["notes"]), {fetched_id})
-            fetch_command = fetch_process.call_args.args[0]
+            fetch_command = runner.calls[0].command
             self.assertIn("--lock-file", fetch_command)
             self.assertIn(str(bridge.state_dir / "platform-request.lock"), fetch_command)
             self.assertIn("--safety-stop-file", fetch_command)
@@ -7303,16 +6791,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
 
     def test_existing_media_safety_stop_terminates_import_before_any_platform_work(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
             note_id = "a" * 24
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.status_path = bridge.state_dir / "bridge-status.json"
-            bridge.catalog_path = root / "catalog.json"
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.published_since = None
+            runner = ScriptRunnerDouble()
+            bridge = make_bridge(Path(directory), script_runner=runner)
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.publish_after_board = mock.Mock(return_value=None)
             bridge.cache_missing_media = mock.Mock()
@@ -7322,21 +6803,16 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 {"reason": "platform-safety-limit"},
             )
 
-            with (
-                mock.patch.object(BRIDGE, "run_bounded_subprocess") as fetch,
-                mock.patch.object(BRIDGE.subprocess, "run") as organizer,
-            ):
-                bridge.process_import("manual_board", "board", {
-                    note_id: f"https://www.xiaohongshu.com/explore/{note_id}",
-                })
+            bridge.process_import("manual_board", "board", {
+                note_id: f"https://www.xiaohongshu.com/explore/{note_id}",
+            })
 
             result = json.loads(
                 (bridge.state_dir / "runs" / "manual_board.json").read_text(encoding="utf-8")
             )
             self.assertEqual(result["state"], "safety-stopped")
             self.assertIsNone(result["next_board_id"])
-            fetch.assert_not_called()
-            organizer.assert_not_called()
+            self.assertEqual(runner.calls, [])
             bridge.cache_missing_media.assert_not_called()
             bridge.next_board_id.assert_not_called()
             bridge.publish_after_board.assert_not_called()
@@ -7361,24 +6837,15 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 "raise SystemExit(2)\n",
                 encoding="utf-8",
             )
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.workspace = root
-            bridge.state_dir = root / ".xhs-favorites"
-            bridge.status_path = bridge.state_dir / "bridge-status.json"
-            bridge.catalog_path = root / "catalog.json"
-            bridge.curation = root / "curation.json"
-            bridge.curation.write_text("{}", encoding="utf-8")
-            bridge.media_dir = bridge.state_dir / "media"
-            bridge.media_dir.mkdir(parents=True)
-            bridge.run_dir = bridge.state_dir / "runs"
-            bridge.run_dir.mkdir(parents=True)
+            # This one runs a real child process, so it gets the production runner.
+            bridge = make_bridge(
+                root, script_runner=BRIDGE.BoundedScriptRunner(),
+                config={"video_analysis": {"enabled": True}},
+            )
+            bridge.organization_status_v2_enabled = False
+            bridge.run_dir.mkdir(parents=True, exist_ok=True)
             bridge.python = Path(sys.executable)
             bridge.media_fetcher = fake_media
-            bridge.xhs_dir = root / "xhs"
-            bridge.video_analysis_enabled = True
-            bridge.boards = {"board": "Board"}
-            bridge.board_order = ["board"]
-            bridge.published_since = None
             bridge.tag_catalog_sources = mock.Mock()
             bridge.next_board_id = mock.Mock(return_value=None)
             bridge.publish_after_board = mock.Mock(return_value={"status": "published"})
@@ -7493,7 +6960,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             })
 
     def test_publish_runs_only_after_the_final_enabled_board(self):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+        bridge = started_bridge(self)
         bridge.board_order = ["first", "last"]
         bridge.publish_config = {"enabled": True}
         calls = []
@@ -7508,22 +6975,14 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             note_id = "p" * 24
             batch = "manualvalidation"
             board_id = "board"
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
+            bridge = make_bridge(root)
             bridge.state_dir = root
             bridge.catalog_path = root / "catalog.json"
             bridge.status_path = root / "bridge-status.json"
             bridge.manual_sync_path = root / "manual-sync.json"
-            bridge.processing_lock = threading.Lock()
             bridge.boards = {board_id: "Board"}
             bridge.board_order = [board_id]
-            bridge.published_since = None
             bridge.publish_config = {"enabled": True}
-            bridge.summary_plans = {}
-            bridge.summary_locks = {}
-            bridge.summary_locks_guard = threading.Lock()
-            bridge.summary_finalizing = set()
-            bridge.summary_finalized = set()
-            bridge.summary_halted = set()
             bridge.publish_public_site = mock.Mock(return_value={"ok": True, "status": "published"})
             bridge.cache_missing_media = mock.Mock(return_value={"state": "not-started"})
             bridge.tag_catalog_sources = mock.Mock()
@@ -7556,86 +7015,50 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             self.assertNotIn("local_only", public_status)
 
     def test_publish_timeout_is_reported_without_failing_local_sync(self):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-        bridge.publisher = Path("publish-huggingface.mjs")
-        bridge.workspace = Path(".").resolve()
-        bridge.publish_config = {
-            "repository": "https://huggingface.co/spaces/example/favsense",
-            "branch": "main",
-        }
-        with mock.patch.object(
-            BRIDGE,
-            "run_bounded_subprocess",
-            side_effect=BRIDGE.subprocess.TimeoutExpired(["node", "publisher"], 180),
-        ) as bounded:
+        with tempfile.TemporaryDirectory() as directory:
+            runner = ScriptRunnerDouble(BRIDGE.subprocess.TimeoutExpired(["node", "publisher"], 180))
+            bridge = make_bridge(Path(directory), script_runner=runner, config=HUGGINGFACE_PUBLISH)
             result = bridge.publish_public_site()
         self.assertFalse(result["ok"])
         self.assertEqual(result["status"], "failed")
         self.assertIn("timed out", result["error"])
-        command = bounded.call_args.args[0]
-        options = bounded.call_args.kwargs
-        self.assertEqual(command[0], "node")
-        self.assertEqual(options["timeout"], 180)
-        self.assertGreater(options["stdout_limit"], 0)
-        self.assertGreater(options["stderr_limit"], 0)
+        (call,) = runner.calls
+        self.assertEqual(call.command[0], "node")
+        self.assertEqual(call.timeout, 180)
+        self.assertGreater(call.stdout_limit, 0)
+        self.assertGreater(call.stderr_limit, 0)
 
-    def test_publish_uses_the_process_tree_bounded_runner(self):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-        bridge.publisher = Path("publish-huggingface.mjs")
-        bridge.workspace = Path(".").resolve()
-        bridge.publish_config = {
-            "repository": "https://huggingface.co/spaces/example/favsense",
-            "branch": "main",
-        }
-        completed = subprocess.CompletedProcess(
-            ["node", "publisher"],
-            0,
-            stdout=json.dumps({"ok": True, "status": "unchanged"}),
-            stderr="",
-        )
-        with mock.patch.object(
-            BRIDGE, "run_bounded_subprocess", return_value=completed
-        ) as bounded:
+    def test_publish_goes_through_the_script_runner(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = ScriptRunnerDouble(
+                completed(json.dumps({"ok": True, "status": "unchanged"}))
+            )
+            bridge = make_bridge(Path(directory), script_runner=runner, config=HUGGINGFACE_PUBLISH)
             result = bridge.publish_public_site()
 
         self.assertEqual(result["status"], "unchanged")
-        bounded.assert_called_once()
-        self.assertEqual(bounded.call_args.kwargs["input_text"], "")
-        self.assertIsNone(bounded.call_args.kwargs["env"])
+        (call,) = runner.calls
+        self.assertEqual(call.input_text, "")
+        self.assertIsNone(call.env)
 
     def test_publish_claim_uses_the_frozen_site_for_the_exact_build_version(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             build_version = "a" * 64
             site_manifest_sha256 = "b" * 64
-            bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-            bridge.publisher = Path("publish-huggingface.mjs")
-            bridge.workspace = root
-            bridge.config_path = root / "config" / "xhs-favorites.json"
-            bridge.publish_config = {
-                "repository": "https://huggingface.co/spaces/example/favsense",
-                "branch": "main",
-            }
-            completed = subprocess.CompletedProcess(
-                ["node", "publisher"],
-                0,
-                stdout=json.dumps({
-                    "ok": True,
-                    "status": "published",
-                    "build_version": build_version,
-                    "site_manifest_sha256": site_manifest_sha256,
-                }),
-                stderr="",
-            )
-            with mock.patch.object(
-                BRIDGE, "run_bounded_subprocess", return_value=completed
-            ) as bounded:
-                result = bridge.publish_public_site(build_version, site_manifest_sha256)
+            runner = ScriptRunnerDouble(completed(json.dumps({
+                "ok": True,
+                "status": "published",
+                "build_version": build_version,
+                "site_manifest_sha256": site_manifest_sha256,
+            })))
+            bridge = make_bridge(root, script_runner=runner, config=HUGGINGFACE_PUBLISH)
+            result = bridge.publish_public_site(build_version, site_manifest_sha256)
 
             self.assertEqual(result["build_version"], build_version)
-            command = bounded.call_args.args[0]
+            command = runner.calls[0].command
             frozen_site = (
-                root
+                bridge.workspace
                 / ".xhs-tools"
                 / "organization-snapshots"
                 / "publish"
