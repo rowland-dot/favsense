@@ -57,6 +57,15 @@ jobs:
       - name: Run the complete release gate
         run: npm run release:check
 
+      - name: Keep browser test traces when the release gate fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Run Windows setup safety contracts
         if: runner.os == 'Windows'
         run: npm.cmd run test:windows-contracts

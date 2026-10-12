@@ -309,6 +309,22 @@ test("ci_workflow_lets_the_lifecycle_step_read_issues", async () => {
   assert.match(step, /GITHUB_TOKEN: \$\{\{ github\.token \}\}/);
 });
 
+test("ci_workflow_keeps_the_browser_test_traces_when_the_release_gate_fails_on_either_platform", async () => {
+  // Playwright already writes traces and screenshots to test-results/ on failure; without an
+  // upload they die with the CI machine, so an intermittent browser failure leaves nothing to read.
+  const workflow = await repoText(".github/workflows/ci.yml");
+  const steps = workflow.split(/^      - name: /m).slice(1);
+  const gate = steps.findIndex((step) => step.startsWith("Run the complete release gate"));
+  const upload = steps.findIndex((step) => /uses: actions\/upload-artifact@v\d+/.test(step));
+  assert.ok(gate >= 0, "release gate step exists");
+  assert.ok(upload > gate, "an artifact upload step follows the release gate");
+  const step = steps[upload];
+  assert.match(step, /^\s+if: failure\(\)$/m, "uploads only when something failed");
+  assert.doesNotMatch(step, /runner\.os/, "uploads on both platforms");
+  assert.match(step, /^\s+path: test-results\/?$/m, "uploads the Playwright output folder");
+  assert.match(step, /^\s+name: [^\n]*\$\{\{ matrix\.os \}\}/m, "artifact names differ per platform");
+});
+
 test("pr_template_and_contributing_describe_both_lifecycle_paths", async () => {
   const template = await repoText(".github/PULL_REQUEST_TEMPLATE.md");
   assert.match(template, /ready-for-agent/);

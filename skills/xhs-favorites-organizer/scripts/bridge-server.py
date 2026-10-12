@@ -54,6 +54,10 @@ PROTOCOL_VERSION = 11
 MANUAL_START_TIMEOUT_SECONDS = 90
 MANUAL_RUN_TIMEOUT_SECONDS = 2 * 60 * 60
 MAX_BODY_BYTES = 256 * 1024
+# How long a busy publish lock (Windows sharing conflict, error 32) is waited on, for the lock itself
+# and for the path check around it.
+PUBLISH_LOCK_WAIT_SECONDS = 240
+WINDOWS_SHARING_VIOLATION = 32
 MAX_DETAIL_FETCH_BYTES = 32 * 1024 * 1024
 MAX_DETAIL_FETCH_ERROR_BYTES = 1024 * 1024
 MAX_RUN_BOARD_COUNT = 200
@@ -313,10 +317,17 @@ def atomic_json(path: Path, value: dict) -> None:
 
 
 def _plain_lock_path_identity(path: Path, *, directory: bool) -> tuple[int, int]:
-    try:
-        info = os.lstat(path)
-    except OSError as error:
-        raise ValueError("publish claim lock path is unavailable or unsafe") from error
+    deadline = time.monotonic() + PUBLISH_LOCK_WAIT_SECONDS
+    while True:
+        try:
+            info = os.lstat(path)
+            break
+        except OSError as error:
+            # Only a sharing conflict is "busy, look again"; every other failure is refused at once.
+            busy = getattr(error, "winerror", None) == WINDOWS_SHARING_VIOLATION
+            if not busy or time.monotonic() >= deadline:
+                raise ValueError("publish claim lock path is unavailable or unsafe") from error
+            time.sleep(0.01)
     if path_is_reparse_point(path):
         raise ValueError("publish claim lock path is redirected or unsafe")
     expected = stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode)
@@ -393,7 +404,7 @@ def exclusive_file_lock(path: Path, *, root: Path):
         close_handle.restype = wintypes.BOOL
         invalid_handle = wintypes.HANDLE(-1).value
         handle = invalid_handle
-        deadline = time.monotonic() + 240
+        deadline = time.monotonic() + PUBLISH_LOCK_WAIT_SECONDS
         while handle == invalid_handle:
             handle = create_file(
                 str(path),
@@ -406,7 +417,7 @@ def exclusive_file_lock(path: Path, *, root: Path):
             )
             if handle == invalid_handle:
                 error = ctypes.get_last_error()
-                if error != 32:
+                if error != WINDOWS_SHARING_VIOLATION:
                     raise OSError(error, "publish claim lock could not be acquired")
                 if time.monotonic() >= deadline:
                     raise TimeoutError("publish claim lock timed out")
@@ -6559,7 +6570,21 @@ def make_handler(bridge: Bridge):
                 return
             self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
 
+        def read_declared_body(self) -> bytes:
+            # Read the body the client announced before any reply. Windows resets a connection that is
+            # closed with request data unread, so a refusal sent first reached the client as a dropped
+            # connection instead of its 401/404. A claimed size outside 1..MAX_BODY_BYTES (or one that
+            # is not a number) reads nothing; the request-size check below refuses it as before.
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                return b""
+            if length < 1 or length > MAX_BODY_BYTES:
+                return b""
+            return self.rfile.read(length)
+
         def do_POST(self) -> None:  # noqa: N802
+            body = self.read_declared_body()
             if not self.valid_host():
                 self.send_json(HTTPStatus.NOT_FOUND, {"ok": False})
                 return
@@ -6586,7 +6611,7 @@ def make_handler(bridge: Bridge):
                 length = int(self.headers.get("Content-Length", "0"))
                 if length < 1 or length > MAX_BODY_BYTES:
                     raise ValueError("invalid request size")
-                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+                payload = json.loads(body.decode("utf-8"))
                 if not isinstance(payload, dict):
                     raise ValueError("request body must be a JSON object")
                 if self.path == "/boards":
