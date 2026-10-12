@@ -13,6 +13,13 @@ export const hex = (character) => character.repeat(64);
 export const profile = JSON.parse(await readFile(join(root, "config/domain-profiles/software.json"), "utf8"));
 export const config = { boards: [{ id: "private-board-id", name: "Synthetic", enabled: true }] };
 
+// Real DianDian replies, some of them refusals to read the note: the one table both copies of the refusal rule are held to.
+export const diandianReplyCases = JSON.parse(
+  await readFile(join(root, "skills/xhs-favorites-organizer/test-fixtures/diandian-refusal-cases.json"), "utf8")
+).cases;
+export const refusalReply = diandianReplyCases.find((entry) => entry.id === "refusal-cannot-open-link-asks-for-copy").text;
+export const normalReply = diandianReplyCases.find((entry) => entry.id === "summary-starts-with-according-to-your-note").text;
+
 // A fixed clock that is not the date the suite runs on, so a call site that forgets to pass it
 // cannot pass by accident.
 export const TODAY = "2026-10-10";
@@ -38,8 +45,7 @@ export const note = (overrides = {}) => ({
 
 // An accepted, current Skill note: reviewed entry, matching audit record, current point summary,
 // one fresh official resource. `input` is what the module takes for note "n1".
-export function acceptedSkill({ resource = skillResource() } = {}) {
-  const pointText = "Accepted point summary for the synthetic Skill.";
+export function acceptedSkill({ resource = skillResource(), pointText = "Accepted point summary for the synthetic Skill." } = {}) {
   const pointSha = sha256(pointText);
   const entry = {
     category: "Synthetic", themes: ["testing"], summary: "Accepted formal synthetic summary with enough detail for review.",

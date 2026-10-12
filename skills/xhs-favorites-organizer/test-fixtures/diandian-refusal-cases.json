@@ -1,0 +1,77 @@
+{
+  "description": "One table for every copy of the rule that recognises a DianDian reply that refused to read the note (it could not open the link and asked for the note to be sent back). The Python copy and the JavaScript copy are each tested against all of it. Every text is a real reply taken verbatim from the public web data (the deepSummary field of the notes), zero-width spaces included.",
+  "cases": [
+    {
+      "id": "refusal-cannot-open-link-asks-for-copy",
+      "text": "抱歉，我目前无法直接访问小红书链接来读取笔记内容。\n\n你可以把笔记的\u200b\u200b标题\u200b\u200b或\u200b\u200b正文内容\u200b\u200b直接复制发给我，我来帮你总结！",
+      "refused": true,
+      "why": "The most common form: an apology that it cannot open the link, then a request to copy the title or body and send it back."
+    },
+    {
+      "id": "refusal-26-chars-cut-off-after-comma",
+      "text": "抱歉，我目前无法直接访问或抓取小红书的外部链接内容，",
+      "refused": true,
+      "why": "Only 26 characters, so it is longer than the 20-character floor, and it names no copy or screenshot request. The apology plus 'cannot' in its first sentence is all that identifies it."
+    },
+    {
+      "id": "refusal-offer-only-no-apology-no-cannot",
+      "text": "如果你希望我帮你总结，可以：\n\n把笔记的\u200b\u200b截图\u200b\u200b发给我\n或者把笔记的\u200b\u200b文字内容复制粘贴\u200b\u200b给我\n\n这样我就能帮你快速提炼重点、做总结了。",
+      "refused": true,
+      "why": "No apology and no 'cannot'. It opens with an offer to summarise and asks for a screenshot or pasted text to be sent back."
+    },
+    {
+      "id": "refusal-very-sorry",
+      "text": "很抱歉，我目前无法直接访问小红书链接并获取笔记内容。\n\n如果你希望我帮你总结这篇笔记，可以尝试以下方式：\n\n\u200b\u200b复制笔记正文\u200b\u200b：把笔记的文字内容直接粘贴发给我。\n\u200b\u200b截图发送\u200b\u200b：如果笔记里有图片，可以截图发给我，我来帮你解读。\n\u200b\u200b描述核心内容\u200b\u200b：简单告诉我笔记大概讲了什么，我来帮你梳理重点。\n\n随时发给我，我马上帮你总结！",
+      "refused": true,
+      "why": "'Very sorry' opening, then the same request for a copy or screenshot."
+    },
+    {
+      "id": "refusal-temporarily-cannot",
+      "text": "抱歉，我暂时无法直接访问和读取该小红书链接的具体内容。\n\n如果你希望我帮你总结，可以尝试以下两种方式：\n\n\u200b\u200b直接复制\u200b\u200b：把这篇笔记的正文文字复制粘贴发给我。\n\u200b\u200b描述内容\u200b\u200b：简单告诉我这篇笔记主要讲了什么（比如是攻略、期待你的补充！",
+      "refused": true,
+      "why": "'Temporarily cannot' still counts as the apology plus 'cannot' form."
+    },
+    {
+      "id": "refusal-lists-several-ways-to-hand-over-the-note",
+      "text": "抱歉，我目前无法直接访问或抓取该小红书链接的具体内容，因此无法为你总结这篇笔记。\n\n如果你希望我帮你总结，可以尝试以下几种方式：\n\n\u200b\u200b复制笔记的文字内容\u200b\u200b：把笔记里的正文直接粘贴发给我。\n\u200b\u200b截图发给我\u200b\u200b：如果页面有图片，可以截图上传。\n\u200b\u200b告诉我笔记的主题\u200b\u200b：比如是美妆、旅行、美食还是其他内容，我可以先给你一些相关的通用建议或背景信息。\n\n等你补充了具体内容后，我随时可以帮你做详细的总结和分析！",
+      "refused": true,
+      "why": "An apology, then a numbered list of ways to hand the note over: copy the text, send a screenshot."
+    },
+    {
+      "id": "refusal-asks-for-title-or-gist",
+      "text": "抱歉，我目前无法直接访问或抓取小红书链接的内容。如果你能告诉我这篇笔记的\u200b\u200b标题\u200b\u200b或\u200b\u200b大致内容\u200b\u200b，或者把笔记的文字部分复制给我，我就能帮你做总结了。\n\n你也可以尝试：\n\n把笔记里的关键文字截图发给我\n告诉我笔记是关于什么主题的（比如美食、穿搭、旅行攻略等）\n\n这样我就能更好地帮你整理和总结了。",
+      "refused": true,
+      "why": "The apology plus 'cannot' in the first sentence, then several ways to hand the note over."
+    },
+    {
+      "id": "summary-starts-with-according-to-your-note",
+      "text": "根据你引用的笔记，这是一期推荐实用AI网站的短视频内容，以下是核心总结：\n\n标题\n\n\u200b\u200b这是一个让电商卖家无法拒绝的网站！\u200b\u200b\n\n核心功能\n网站收集了 \u200b\u200b1000+ Nanobanana Pro 专属提示词\u200b\u200b，涵盖女装服饰图、商品细节图等多种电商常用场景\n以\"左图右词\"的形式展示，用户选择喜欢的成品效果图后，直接复制右侧提示词即可生成同款\n使用方法\n在网站上浏览成品效果图\n选中喜欢的图片\n复制对应的提示词\n粘贴到 Nanobanana Pro 中生成同款图片\n核心优势\n\u200b\u200b无需登录\u200b\u200b：省去注册麻烦\n\u200b\u200b完全免费\u200b\u200b：对新手和电商卖家非常友好\n\u200b\u200b持续更新\u200b\u200b：提示词库还在不断扩充\n适用人群\n\n主要面向\u200b\u200b电商美工、电商卖家\u200b\u200b以及需要快速生成商品图的创作者，新手小白也能快速上手。\n\n整体来说，这是一个主打\"免费 + 便捷 + 持续更新\"的 AI 提示词库网站，降低了电商图片创作的门槛。",
+      "refused": false,
+      "why": "A normal summary opening with 'according to the note you quoted'."
+    },
+    {
+      "id": "summary-starts-with-core-summary",
+      "text": "以下是核心总结：\n\n核心亮点\n\u200b\u200b项目背景\u200b\u200b：garrytan/gbrain 在 GitHub 上线一周多就收获了 \u200b\u200b10.1k Stars\u200b\u200b，专为 OpenClaw 和 Hermes Agent 打造。\n\u200b\u200b解决痛点\u200b\u200b：Karpathy 的方案依赖纯文本目录（index.md），在 100 篇左右时表现良好，但 Garry 的私人笔记库有 \u200b\u200b18000 个页面、4300 多个人物和 700 多家公司的 2.3GB 数据\u200b\u200b，纯文本方式会撑爆大模型，而 GBrain 用 \u200b\u200bPostgres 数据库 + RAG\u200b\u200b 轻松应对。\n\u200b\u200b系统规模\u200b\u200b：包含 \u200b\u200b26 个独立 skill\u200b\u200b、Postgres/PGLite 检索层及 \u200b\u200b21 个定时任务\u200b\u200b，是一个相当厚重的复杂系统。\n四大工作流\n\u200b\u200b准备资料\u200b\u200b：支持网页链接、PDF、推文、YouTube 视频、录音文件、GitHub 仓库等多种输入源，还支持语音转文字、邮件提取、会议录音同步等。\n\u200b\u200bIngest（摄入与图谱构建）\u200b\u200b：在 Agent 对话框输入指令即可自动提取核心观点、创建关联页面。系统采用\"编译真相 + 时间轴\"的防幻觉结构，上半部分是 AI 总结，下半部分是只追加不修改的原始证据。\n\u200b\u200bQuery（查询与调用）\u200b\u200b：像平常聊天一样提问即可，系统会触发混合搜索，从成千上万条笔记中精准抽取答案，并强制优先查阅本地大脑再调用外部 API。\n\u200b\u200b定时任务（维护）\u200b\u200b：内置 cron-scheduler，每晚自动清理孤立页面、修复断链、扫描引用来源，无需手动配置。\n安装前提\n需要安装 \u200b\u200bNode.js、Git\u200b\u200b、笔记软件（如 Obsidian）和智能体（OpenClaw 或 Hermes 二选一）。\n需要准备好 \u200b\u200bAPI Key\u200b\u200b 以及\u200b\u200b海量的 Token\u200b\u200b（笔记作者强调\"海量\"）。\n对于没有技术背景的用户，可以直接把安装指令复制粘贴到 Agent 聊天窗口，约 30 分钟即可完成安装。\n一句话总结\n\nKarpathy 的 LLM Wiki 理念很优雅，但 GBrain 把它做成了能扛住万级页面规模的工程化系统，适合有技术背景、Token 充足、想打造个人 mini-AGI 的深度用户。\n\n如果你也在折腾 AI 知识库，这篇笔记提到的工作流和架构思路挺值得参考的，不过对普通用户来说门槛确实不低。",
+      "refused": false,
+      "why": "A normal summary opening with 'the core summary follows'."
+    },
+    {
+      "id": "summary-mentions-captcha-inside-zero-width-marks",
+      "text": "根据你分享的笔记，这是一篇关于开源爬虫工具 \u200b\u200bOpenClaw\u200b\u200b 的推荐视频，核心内容总结如下：\n\n核心痛点\n\n很多开发者在使用 OpenClaw 进行网页数据抓取时，经常会被\u200b\u200b验证码\u200b\u200b和\u200b\u200b登录拦截\u200b\u200b挡住，导致采集无法持续进行。\n\n核心功能\n\u200b\u200b智能绕过反机器人系统\u200b\u200b：能够自动识别并绕过网站的验证码和登录验证，实现 24 小时稳定数据采集。\n\u200b\u200b智能相似算法\u200b\u200b：即使网站页面结构发生变化，工具也能自动重新定位目标元素，不需要手动重新配置。\n\u200b\u200bMCP 模式\u200b\u200b：可以精简采集内容，大幅降低数据采集的 token 成本。\n亮点总结\n\n这个工具在 GitHub 上已经收获了约 \u200b\u200b30k star\u200b\u200b，说明在开源社区中认可度很高。整体定位是解决爬虫开发中最头疼的\"反爬拦截\"问题，让数据采集变得更省心、更稳定。\n\n如果你正在做网页数据采集相关的项目，这个工具确实值得关注一下。需要我帮你查一下它在 GitHub 上的具体使用文档或安装方式吗？",
+      "refused": false,
+      "why": "A normal summary whose body talks about captchas; the zero-width marks around bold text must not matter."
+    },
+    {
+      "id": "summary-says-copy-templates-in-body",
+      "text": "根据你引用的笔记，这是一篇关于\u200b\u200b电商 AI 生图提示词\u200b\u200b的干货分享，核心内容是 6 套可以直接复制使用的 AI 提示词模板，帮助电商设计高效出图。\n\n6 套 AI 提示词模板\n\u200b\u200b商品主图提示词\u200b\u200b：适合服饰、美妆、食品、家居小家电、数码配件等，可生成白底图或产品展示图。\n\u200b\u200b场景图提示词\u200b\u200b：适合家居、服饰、母婴、户外、美妆食品等，能把产品放进厨房、卧室、通勤包、露营桌面等场景，做成使用图或种草图。\n\u200b\u200b详情页卖点图提示词\u200b\u200b：适合小家电、数码、家居、美妆食品和工具类，一张图只讲一个卖点（如大容量、防水、易清洗），让 AI 做成局部放大效果。\n\u200b\u200b活动海报提示词\u200b\u200b：大部分电商品类都能用，可生成上新图、促销图、节日活动图。让 AI 先做画面氛围，文字区域预留出来，后期自己加活动价格和文案。\n\u200b\u200b背景替换提示词\u200b\u200b：把上一个活动的商品图替换背景，这个活动接着用，省时省力。\n\u200b\u200b局部优化提示词\u200b\u200b：适合修商品质感、光影细节、边缘和画面干净度，让图更专业。\n提示词通用结构\n\n笔记中还给出了几个提示词的通用结构，方便自己套用：\n\n\u200b\u200b卖点图\u200b\u200b：商品名称 + 商品卖点 + 使用场景 + 风格关键词 + 画面比例\n\u200b\u200b背景替换\u200b\u200b：使用场景 + 商品卖点 + 风格关键词 + 光线方向 + 画面比例\n\u200b\u200b局部优化\u200b\u200b：优化内容 + 使用场景 + 风格关键词 + 光线阴影 + 画面比例\n核心价值\n\n这 6 类提示词分开使用，出图会更稳，覆盖大部分电商品类，开箱即用，能大幅提升电商图的出图效率，省时省力。\n\n如果你需要，我可以帮你把其中某一套提示词进一步细化，或者针对你具体的商品类型定制一套专属提示词。",
+      "refused": false,
+      "why": "A normal summary that says templates can be copied. Copying is not a request to send the note back."
+    },
+    {
+      "id": "summary-says-cannot-in-body",
+      "text": "根据你引用的笔记，这是一期关于\u200b\u200b如何制作真实感拉满的赛博口播数字人\u200b\u200b的手把手教程，核心内容总结如下：\n\n素材准备\n\u200b\u200b图片素材\u200b\u200b：选择\u200b\u200b中近景正面写实人物图片\u200b\u200b，体现自然从容的状态。镜头不要太近（否则无法体现手部动作），也不要太远（否则下半身会僵硬不动，像在做工作汇报）。\n\u200b\u200b声音素材\u200b\u200b：声音对最终效果影响极大。机械的 AI 配音会让数字人\"AI 味\"很重，而\u200b\u200b真实有情感的声音\u200b\u200b会让效果自然很多。建议用自己的真实录音，或选择接近真实录音的 AI 配音，情绪越丰富效果越真实。\n生成步骤\n使用 Live AI 的\u200b\u200b智能图片 V2 模型\u200b\u200b生成图片素材，竖屏选 9:16，横屏选 16:9。\n进入 Live AI 的\u200b\u200b数字人功能入口\u200b\u200b，上传准备好的图片。\n声音方面可以选平台自带的音色，也可以上传自己录好的音频。\n在\u200b\u200b动作描述\u200b\u200b中设定人物说话时的肢体动作。如果不指定具体动作，让系统根据说话内容自动生成随机动作，反而会更自然。\n核心技巧\n图片素材构图要合理，视觉效果足够真实。\n声音必须自然、带有情感。\n动作描述不要太死板，让数字人根据内容随机做动作会更像真人。\n总结\n\n只要\u200b\u200b图片构图没问题 + 声音自然有情感 + 动作描述合理\u200b\u200b，就能轻松做出高质量的口播数字人形象。\n\n如果你也想尝试做数字人，可以先从一张好的中近景正面图片和自己的真实录音开始，效果会比纯 AI 生成的素材好很多。",
+      "refused": false,
+      "why": "A normal summary that says 'cannot' deep inside a tutorial; only an apology opening counts."
+    }
+  ]
+}
