@@ -16,10 +16,23 @@ const validDate = (value) => {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 };
 
-function canonicalVersion({ sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest, effectiveDate }) {
-  for (const value of [sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest]) if (!HASH.test(value)) throw new Error("SNAPSHOT_DIGEST_INVALID");
+// The published site's own code is part of the version (issue 43), so a front-end-only change cannot reuse
+// an already-frozen version. A build with a publish site hashes its content into a version-4 preimage; a
+// build without one keeps the version-3 preimage and therefore the version it always had.
+function canonicalVersion({ sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest, effectiveDate, publishSiteDigest }) {
+  const digests = [sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest, ...(publishSiteDigest === undefined ? [] : [publishSiteDigest])];
+  for (const value of digests) if (!HASH.test(value)) throw new Error("SNAPSHOT_DIGEST_INVALID");
   if (!validDate(effectiveDate)) throw new Error("SNAPSHOT_EFFECTIVE_DATE_INVALID");
-  const preimage = { schema_version: 3, sealed_scope_sha256: sealedScopeDigest, curation_input_sha256: curationInputDigest, public_config_sha256: configDigest, input_revision_sha256: inputRevisionDigest, effective_date: effectiveDate, builders: { public_site: 7 } };
+  const preimage = {
+    schema_version: publishSiteDigest === undefined ? 3 : 4,
+    sealed_scope_sha256: sealedScopeDigest,
+    curation_input_sha256: curationInputDigest,
+    public_config_sha256: configDigest,
+    input_revision_sha256: inputRevisionDigest,
+    ...(publishSiteDigest === undefined ? {} : { publish_site_sha256: publishSiteDigest }),
+    effective_date: effectiveDate,
+    builders: { public_site: 7 },
+  };
   return createHash("sha256").update(JSON.stringify(preimage), "utf8").digest("hex");
 }
 
@@ -124,7 +137,10 @@ export async function buildOrganizationSnapshot(options) {
     await recoverPendingSnapshotTransactions(root, storageRoot, publicParticipant);
     const prepared = typeof options.prepareSnapshot === "function" ? await options.prepareSnapshot() : {};
     const buildOptions = { ...options, ...prepared };
-    const buildVersion = canonicalVersion(buildOptions);
+    const publishSiteDigest = buildOptions.publishSite
+      ? await publishSiteContentDigest(root, buildOptions.publishSite)
+      : undefined;
+    const buildVersion = canonicalVersion({ ...buildOptions, publishSiteDigest });
     const transactionId = `snapshot-${buildVersion.slice(0, 32)}`;
     stagingRoot = join(storageRoot, `.organization-build-${transactionId}`);
     const publicStaging = join(stagingRoot, "knowledge.json");
@@ -141,6 +157,7 @@ export async function buildOrganizationSnapshot(options) {
         buildOptions.publishSite,
         publicStaging,
         buildVersion,
+        publishSiteDigest,
       );
     }
     await executeJournaledTransaction({
@@ -259,7 +276,8 @@ async function scanSiteTree(site, buildVersion, {
   captureFiles = false,
   excludedRootNames = [],
 } = {}) {
-  if (!HASH.test(buildVersion)) throw new Error("SNAPSHOT_DIGEST_INVALID");
+  // A null version scans the tree before any version exists (the version is computed from this scan).
+  if (buildVersion !== null && !HASH.test(buildVersion)) throw new Error("SNAPSHOT_DIGEST_INVALID");
   const treeRoot = resolve(site);
   const rootMetadata = await lstat(treeRoot);
   if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink()) throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
@@ -357,6 +375,23 @@ export async function siteTreeManifest(site, buildVersion) {
   return (await scanSiteTree(site, buildVersion)).manifest;
 }
 
+// Every build rewrites the live web data file (the snapshot's public target), so it cannot be part of the
+// site's identity: the version would drift with the previous build's own output.
+const SITE_DIGEST_EXCLUDED_PATHS = ["data/knowledge.json"];
+
+function siteContentDigest(entries) {
+  const kept = entries.filter((entry) => !SITE_DIGEST_EXCLUDED_PATHS.includes(entry.path));
+  return sha256(JSON.stringify({ schema_version: 1, entries: kept }));
+}
+
+async function publishSiteContentDigest(root, site) {
+  const source = resolve(site);
+  await assertPlainPath(root, source);
+  await assertPlainTree(source);
+  const { manifest } = await scanSiteTree(source, null, { excludedRootNames: [".local"] });
+  return siteContentDigest(manifest.entries);
+}
+
 function sameSiteManifest(left, right) {
   return left?.schema_version === 1
     && left?.build_version === right?.build_version
@@ -380,7 +415,7 @@ export async function readFrozenSiteManifest(site, buildVersion) {
   }
 }
 
-async function freezePublishSite(root, storageRoot, site, publicStaging, buildVersion) {
+async function freezePublishSite(root, storageRoot, site, publicStaging, buildVersion, expectedSiteDigest) {
   const source = resolve(site);
   await assertPlainPath(root, source);
   await assertPlainTree(source);
@@ -398,6 +433,8 @@ async function freezePublishSite(root, storageRoot, site, publicStaging, buildVe
       captureFiles: true,
       excludedRootNames: [".local"],
     });
+    // The version was fixed from an earlier scan; a site that changed since must not be frozen under it.
+    if (siteContentDigest(captured.manifest.entries) !== expectedSiteDigest) throw new Error("SNAPSHOT_PUBLISH_SITE_CHANGED");
     await mkdir(stagedSite);
     for (const entry of captured.manifest.entries) {
       if (entry.kind === "directory") await mkdir(join(stagedSite, ...entry.path.split("/")));

@@ -160,7 +160,7 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
 2. 在“同步设置”选择收藏夹并点击“开始整理”；
 3. FavSense 才会通过 SOP 动态 CDP 通道在现有扫描浏览器中打开业务标签，Tampermonkey 依次同步已启用的收藏夹；
 4. 本机先原子保存核心 catalog；点点、离线证据、candidate、resource 和 audit 分别到达 captured、pending 或 accepted 等真实终态；
-5. curation 质量门通过后，快照步骤构建带 `build_version` 的 `site/data/knowledge.json` staging；
+5. curation 质量门通过后，快照步骤构建带 `build_version` 的 `site/data/knowledge.json` staging；`build_version` 同时覆盖 `site/` 的网页代码（不含 `.local/` 与每次构建都会改写的 `data/knowledge.json`），所以只改前端也会得到新版本和新的冻结目录；
 6. staging 通过 schema/隐私检查后才交换 live；构建失败设置 `held_previous` 并保留同一上一版；
 7. 若本轮显式启用发布且不是 local-only，发布器把 `site/` 镜像到 Space、排除 `site/.local/`，并确保 Space 使用 `header: mini`；同一运行最多发布一次；
 8. Hugging Face 刷新公网知识库。关闭本地工作台后，回环服务随之停止。

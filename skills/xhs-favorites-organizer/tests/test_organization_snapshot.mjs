@@ -122,7 +122,9 @@ test("publish freeze failure leaves the live web data unchanged and writes nothi
   }
 });
 
-test("same build version rejects changed or tampered frozen site bytes", async () => {
+// A changed source site now gets its own version (site-code-in-build-version.test.mjs); what stays
+// rejected here is a frozen folder whose bytes no longer match its own manifest.
+test("same build version rejects tampered frozen site bytes", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const root = await mkdtemp(join(tmpdir(), "favsense-publish-manifest-"));
   const publishSite = join(root, "site");
@@ -134,11 +136,8 @@ test("same build version rejects changed or tampered frozen site bytes", async (
   const first = await buildOrganizationSnapshot(options);
   const frozenSite = join(root, ".xhs-tools", "organization-snapshots", "publish", first.build_version, "site");
 
-  await writeFile(join(publishSite, "index.html"), "site-B", "utf8");
-  await assert.rejects(buildOrganizationSnapshot(options), /SNAPSHOT_PUBLISH_MANIFEST_MISMATCH/);
   assert.equal(await readFile(join(frozenSite, "index.html"), "utf8"), "site-A");
 
-  await writeFile(join(publishSite, "index.html"), "site-A", "utf8");
   await writeFile(join(frozenSite, "index.html"), "tampered", "utf8");
   await assert.rejects(buildOrganizationSnapshot(options), /SNAPSHOT_PUBLISH_MANIFEST_MISMATCH/);
 });
