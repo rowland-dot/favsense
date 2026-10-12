@@ -1,9 +1,9 @@
 {
   "meta": {
-    "buildVersion": "fa28098c09aeb7373417ff8c4ce42af3ab5295e1d960ec8954df696231eaecfa",
+    "buildVersion": "602f9676d11bbac2692dcbcef3cdbab88c5cff476e3f9508dcfadbcd10ccdaf7",
     "title": "小红书收藏知识工作台",
     "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
-    "generatedAt": "2026-10-12T16:21:20.416Z",
+    "generatedAt": "2026-10-12T19:43:20.711Z",
     "source": "xiaohongshu",
     "sourceBoards": [
       "Skills",
@@ -36,7 +36,7 @@
     "noteCount": 377,
     "verifiedNoteCount": 348,
     "categoryCount": 16,
-    "resourceCount": 130,
+    "resourceCount": 132,
     "resourceIndexEnabled": true,
     "resourcesVerifiedAt": "2026-08-29",
     "resourceIndex": {
@@ -2112,7 +2112,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
+      "reviewedAt": "2026-10-13",
       "action": "收藏并评估xhs-visual-director-skill和claude-code-auto-video-edit等优质Skill。",
       "tools": [],
       "kind": "Note",
@@ -2145,17 +2145,17 @@
         "data-collection",
         "seo-optimization"
       ],
-      "summary": "RedBox 是基于 OpenClaw 构建的 AI 内容系统，自动抓取 YouTube 视频、AI 生成文案与 SEO 优化，形成「采集-生成-发布」一体化工作流。",
+      "summary": "RedBox（GitHub 仓库 Jamailar/RedBox）自称“小红书版 OpenClaw”的本地 AI 创作工作台：浏览器插件采集小红书笔记、YouTube 视频和网页内容进本地多空间知识库，AI 辅助仿写、生成封面与标题组，RedClaw 负责定时发布等长周期任务；需要自己配置模型的 Endpoint 和 Key。",
       "deepSummary": "根据你引用的笔记，这是一篇关于 ​​RedBox​​（一款小红书 AI 创作工具）的介绍与趋势分析，核心内容总结如下：\n\n工具定位\n\nRedBox 被定位为\"小红书版 OpenClaw\"，是一个开源的 AI 工作台，旨在把小红书从\"灵感-创作-发布\"的全链路搬到本地，用 AI 接管中间的执行工作。\n\n核心工作流（三步）\n​​采集​​：通过 Chrome 插件一键抓取小红书爆款笔记、YouTube 视频和网页内容，结构化沉淀对标账号素材。\n​​管理​​：存入本地知识库，支持多空间隔离，不同项目或赛道的素材互不干扰。\n​​创作与发布​​：AI 辅助写作、生成封面和标题组、自动生图，并支持定时发布。\n亮点功能\n​​RedClaw​​：单会话自动化功能，可跑后台定时任务和长周期任务。设定规则后，AI 能自己排期、写作、发布，创作者只需审核和调整方向。\n支持目标账号追踪和克隆、AI 转写仿写、内容打包下载等全程 AI 化操作。\n上手门槛\n\n目前工具为桌面端本地运行，需要自己配置 AI 模型的 ​​Endpoint​​ 和 ​​Key​​，对不想折腾配置的纯新手来说有一定门槛，可能需要等一个更傻瓜化的版本。\n\n趋势判断\n\n笔记最后提出了一个观察：小红书创作工具赛道正在从\"辅助\"走向\"替代\"——先替代执行，下一步替代判断。留给创作者的窗口期可能比想象中短。\n\n简单来说，RedBox 是一个功能很全的本地化 AI 自媒体创作工具，适合愿意折腾配置、想实现内容自动化生产的创作者，但对纯新手还不够友好。",
       "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "d031847dccc7e9ec51ba6e169cda6204cd8de4c0176ae07a3b28752b70968b72",
+      "curationRevision": "e8c0c2b040add1ffb2cd5882f4a3870293b59920e15859b25a2ea028b18ebb4c",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
-      "action": "参考其「采集-生成-发布」架构，评估能否用 OpenClaw 技能复现类似内容自动化流程。",
+      "reviewedAt": "2026-10-13",
+      "action": "先只用采集和本地知识库整理对标笔记；自动定时发布、目标账号克隆等功能涉及平台规则和账号风险，确认合规前不要开启。",
       "tools": [],
       "kind": "Workflow",
       "resources": [],
@@ -2187,17 +2187,17 @@
         "粉丝增长",
         "账号运营"
       ],
-      "summary": "我把1000+爆文浓缩成一套【爆文知识库】 做这套「内容创作选题册」， 是因为读了很多爆款创作的书籍都提到了一点。 爆款是重复的。 这其实是给后来的入局者们一个信心。 爆款是有规律的，它并非天才创作者的灵光乍现。 所以我集合了六大头部赛道的优质内容，并按书中以及自我实践中总结下来的经验对爆文进行拆解与总结。 拆解1篇爆文、10篇爆文、100篇爆文， 那隐藏在千变万幻的爆文中不变的骨骼框架， 必将被你窥见。至此，爆款易如反掌。",
+      "summary": "作者把六大赛道约千篇小红书爆文拆成一套订阅制“爆文知识库”：飞书多维表格记录每篇的标题、选题与文案分析、粉丝数和互动数据等 12 项信息（不含原文案和封面），另按赛道出涵盖选题、目标人群、痛点、钩子等 11 个模块的分析报告，素材每周更新、报告每月迭代。",
       "deepSummary": "根据你引用的笔记，这篇内容是在介绍一套​​「爆文知识库」​​，核心是把 1000+ 篇小红书爆文拆解浓缩成可复用的创作工具。以下是总结：\n\n核心卖点\n\n作者认为\"爆款是有规律的\"，并非天才创作者的灵光乍现。通过拆解大量爆文，能窥见隐藏在千变万化内容背后的\"骨骼框架\"，让新手也能快速掌握爆款逻辑。\n\n知识库包含什么\n​​优质内容库​​：用飞书多维表格收纳六大赛道的爆文，记录标题、文案分析、互动数据等 12 种信息（不含原文案和封面以保护版权）。每周各赛道更新 70+ 篇精选素材，以​​低粉爆款​​为主，方便新手排除粉丝量干扰、直接复刻逻辑。\n​​分析报告​​：基于拆解内容输出，涵盖选题、标题、痛点、目标人群、钩子等 11 大模块，分析每个模块的用法和写作示例，并随每月新增样本持续迭代。\n​​六大赛道覆盖​​：健身减脂、母婴育儿、#### 适用人群\n​​小红书新手博主​​：粉丝少、没流量、不会选题写文案，能靠这套库找选题、理思路。\n​​新媒体运营​​：需要快速收获大量选题、建立内容库、完成多赛道拓展任务。\n更新节奏\n​​周度​​：每周更新六大赛道优质内容，- ​​月度​​：依据样本更新各赛道专属分析报告。\n提供​​半年订阅​​（2026 年 6 月–12 月共 7 个月 28 周数据），",
       "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "5d9eac6b1fdb734bef21b0381d8e1182a33eb77c52db0d32711fe5ea9a698c53",
+      "curationRevision": "18d397c35d3e14d36497cdd52168a760342e657aedb71f91dae1fdf48ca68e50",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
-      "action": "参考账号增粉路径，制定适合自己赛道的内容发布与选题计划并持续执行。",
+      "reviewedAt": "2026-10-13",
+      "action": "先按图中健身减脂报告的痛点占比和标题公式，自己拆 10 篇本赛道低粉爆文，验证这 11 个模块是否适用后再决定是否订阅；只借鉴选题和结构，不复制他人文案。",
       "tools": [],
       "kind": "Workflow",
       "resources": [],
@@ -2225,23 +2225,23 @@
         "AI自媒体"
       ],
       "themes": [
-        "AI变现",
-        "内容创业",
-        "知识付费"
+        "Skill写法",
+        "反馈机制",
+        "知识库"
       ],
-      "summary": "根据你引用的笔记，这是一篇关于​​如何从零搭建 AI + 小红书工作流​​的干货分享，核心观点是：拉开差距的不是用了哪个 AI 工具，而是有没有把经验写成 AI 能读、能跑、能复用的工作流。 以下是核心内容总结： 核心框架：三块缺一不可 ​​知识库​​：AI 读什么、记什么。不是把文档丢进去就完事，而是要按业务线分层、带来源验证、有索引能精准调用的知识卡片。 ​​Skills​​：把判断写成 AI 能执行的动作。用 Markdown 文件写，通篇大白话，没有代码。",
+      "summary": "小红书运营者讲如何把自己的判断标准写成 AI 工作流，拆成三块：分经营中枢、共享层、业务线三层并配索引文件的知识库；一条只解决一个问题、用大白话 Markdown 写的 Skill；以及把每次出错按“错误、根因、解法、规则”四个字段写回系统的反馈机制。",
       "deepSummary": "根据你引用的笔记，这是一篇关于​​如何从零搭建 AI + 小红书工作流​​的干货分享，核心观点是：拉开差距的不是用了哪个 AI 工具，而是有没有把经验写成 AI 能读、能跑、能复用的工作流。\n\n以下是核心内容总结：\n\n核心框架：三块缺一不可\n​​知识库​​：AI 读什么、记什么。不是把文档丢进去就完事，而是要按业务线分层、带来源验证、有索引能精准调用的知识卡片。\n​​Skills​​：把判断写成 AI 能执行的动作。用 Markdown 文件写，通篇大白话，没有代码。本质是可复用的 SOP，一条 Skill 只解决一个问题。\n​​反馈机制（Learnings）​​：AI 做错了别光骂，把错误写成固定格式的规则塞回系统，下次就不会再犯。\n知识库的三层结构\n​​经营中枢（全局共用）​​：跨项目都要用的东西，如经营数据看板、年度 OKR、项目管理总表。\n​​共享层（跨业务复用）​​：不随项目变的资产，如素材库、方法论卡片、合规红线。\n​​业务线（每条业务独立）​​：按认知、资产、项目、经营四个维度拆分。\n\n另外有个细节值得学：用 AI 创建了一套索引文件，让 Agent 先读索引再精准调用，检索效率大幅提升。\n\nSkills 的正确写法\n​​一个 Skill 只解决一个问题​​：审稿、写 Brief、做提案分开写、分开调，别指望一个巨长文件干完所有事。\n​​一条成熟 Skill 必须写清楚的 10 件事​​：什么时候触发、前置资料有哪些、信息不齐时问谁、读哪些素材库、分几步执行、每一步判断什么、输出格式、禁止写什么、输出前怎么自检。\n反馈机制怎么落地\n​​根因​​：为什么当时没拦住（不是 AI 太蠢，是流程缺了什么）\n​​解法​​：这次怎么改（具体改写逻辑）\n​​规则​​：写进哪个 Skill 的哪个位置（让下次自动生效）\n\n犯一次，记一条，让 AI 越用越准。\n\n一句话总结\n\nAI 不是从工具开始接入业务，是从流程开始接入业务。你有什么经验，AI 放大什么经验；你没有标准，AI 只放大混乱。\n\n这篇笔记对做自媒体、内容运营的人挺有参考价值的，尤其是把经验系统化成 AI 能用的工作流这块，思路很清晰。",
       "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "619953297d1f6c5b129b215477cf084ea970a7d545efd1d4d99a4717457176bc",
+      "curationRevision": "888021406bd04bfcdbc375febfa6123eb8d9bef73d0c8630686580654abaa2db",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
-      "action": "评估AI+知识付费结合的适用场景与变现可行性。",
+      "reviewedAt": "2026-10-13",
+      "action": "挑一个反复出错的审稿环节，按图中列的触发条件、前置资料、执行步骤、禁写内容和输出前自检写一条只做这件事的 Skill，之后每次人工改稿按四个字段补一条规则。",
       "tools": [],
-      "kind": "Note",
+      "kind": "Workflow",
       "resources": [],
       "resourceIds": [],
       "evidence": {
@@ -2620,7 +2620,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
+      "reviewedAt": "2026-10-13",
       "action": "学习并实践该 WordPress SEO 三步工作流，运行 `openclaw skills install wp-auto-post-api` 配置自动发布技能，测试端到端内容生产流程。",
       "tools": [],
       "kind": "Workflow",
@@ -2654,15 +2654,15 @@
         "Reddit营销"
       ],
       "summary": "讲解如何通过在Reddit发布高质量内容被Perplexity等AI搜索引擎抓取引用，实现产品的GEO曝光增长。",
-      "deepSummary": "抱歉，我目前无法直接访问或抓取该小红书笔记的具体内容。\n\n如果你需要我帮你总结，可以尝试以下几种方式：\n\n​​截图或复制文字​​：把笔记里的文字内容或截图发给我，我来帮你提炼核心要点。\n​​告诉我主题​​：简单说说这篇笔记大概是讲什么的（比如美妆、旅行、美食、学习等），我可以基于你的描述给出针对性的总结建议。\n\n随时补充信息，我帮你搞定！",
-      "deepSummarySource": "xiaohongshu-diandian",
+      "deepSummary": "讲解如何通过在Reddit发布高质量内容被Perplexity等AI搜索引擎抓取引用，实现产品的GEO曝光增长。",
+      "deepSummarySource": "curation",
       "curationRevision": "afa103a2345172a0f19ce01568ad8c8ecfef13abcb657dcf3cbdc15a889c2c87",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
+      "reviewedAt": "2026-10-13",
       "action": "按教程在目标Reddit子版块发布内容，用Claude辅助撰写，再用Perplexity验证是否被AI搜索引用。",
       "tools": [],
       "kind": "Workflow",
@@ -5299,17 +5299,17 @@
         "LLM",
         "Obsidian"
       ],
-      "summary": "介绍 Karpathy 的 LLM Wiki 最新进展，以及 YC 的 Garry Tan 开发的 gbrain（10.1k Stars）和 OpenClaw、HermesAgent 等 AI Agent 技能工具，可结合 Obsidian 构建知识工作流",
+      "summary": "GBrain（garrytan/gbrain）是 Garry Tan 为 OpenClaw 和 Hermes Agent 做的智能体记忆系统，用 Postgres/PGLite 混合检索取代 Karpathy LLM Wiki 的 index.md 目录，带 26 个 Skill 和 21 个定时任务，按“准备资料、Ingest 建页并关联人物公司、Query 查询、定时维护”运行；每页分 AI 总结和只追加的证据时间轴，便于溯源。",
       "deepSummary": "以下是核心总结：\n\n核心亮点\n​​项目背景​​：garrytan/gbrain 在 GitHub 上线一周多就收获了 ​​10.1k Stars​​，专为 OpenClaw 和 Hermes Agent 打造。\n​​解决痛点​​：Karpathy 的方案依赖纯文本目录（index.md），在 100 篇左右时表现良好，但 Garry 的私人笔记库有 ​​18000 个页面、4300 多个人物和 700 多家公司的 2.3GB 数据​​，纯文本方式会撑爆大模型，而 GBrain 用 ​​Postgres 数据库 + RAG​​ 轻松应对。\n​​系统规模​​：包含 ​​26 个独立 skill​​、Postgres/PGLite 检索层及 ​​21 个定时任务​​，是一个相当厚重的复杂系统。\n四大工作流\n​​准备资料​​：支持网页链接、PDF、推文、YouTube 视频、录音文件、GitHub 仓库等多种输入源，还支持语音转文字、邮件提取、会议录音同步等。\n​​Ingest（摄入与图谱构建）​​：在 Agent 对话框输入指令即可自动提取核心观点、创建关联页面。系统采用\"编译真相 + 时间轴\"的防幻觉结构，上半部分是 AI 总结，下半部分是只追加不修改的原始证据。\n​​Query（查询与调用）​​：像平常聊天一样提问即可，系统会触发混合搜索，从成千上万条笔记中精准抽取答案，并强制优先查阅本地大脑再调用外部 API。\n​​定时任务（维护）​​：内置 cron-scheduler，每晚自动清理孤立页面、修复断链、扫描引用来源，无需手动配置。\n安装前提\n需要安装 ​​Node.js、Git​​、笔记软件（如 Obsidian）和智能体（OpenClaw 或 Hermes 二选一）。\n需要准备好 ​​API Key​​ 以及​​海量的 Token​​（笔记作者强调\"海量\"）。\n对于没有技术背景的用户，可以直接把安装指令复制粘贴到 Agent 聊天窗口，约 30 分钟即可完成安装。\n一句话总结\n\nKarpathy 的 LLM Wiki 理念很优雅，但 GBrain 把它做成了能扛住万级页面规模的工程化系统，适合有技术背景、Token 充足、想打造个人 mini-AGI 的深度用户。\n\n如果你也在折腾 AI 知识库，这篇笔记提到的工作流和架构思路挺值得参考的，不过对普通用户来说门槛确实不低。",
       "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "ee1fd95189fe01b90d76bac2aa111823b18e1a2fedc9b13ed93bc17340b2dd73",
+      "curationRevision": "8795e48021bd9f73f264c75009c89dc55fc82404c80cf1b35632b8857d7b2d3f",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
-      "action": "Star gbrain 仓库，关注 OpenClaw 与 HermesAgent，结合 Obsidian 搭建本地 Agent 技能工作流",
+      "reviewedAt": "2026-10-13",
+      "action": "先在测试库按图中流程只摄入几篇 PDF 或文章，检查生成页面的证据时间轴能否溯源；安装时 Agent 会自行拉代码并索要 API Key，批量摄入很耗 Token，确认权限和成本后再接入私人笔记。",
       "tools": [],
       "kind": "Note",
       "resources": [],
@@ -5337,20 +5337,21 @@
         "AI操作系统"
       ],
       "themes": [
-        "AI副业",
-        "创业工具"
+        "Agent记忆",
+        "OpenClaw",
+        "Skill安全"
       ],
-      "summary": "作者分享以OpenClaw为核心工具探索副业变现的思路与想法（无详细图文内容）。",
+      "summary": "作者在一台闲置旧笔记本上隔离运行 OpenClaw 数月，总结四条教训：模型质量决定上限，先用好模型跑通再降本；复杂 Skill 要人工照 SKILL.md 安装配置，ClawHub 社区 Skill 没有统一审核，装前要读源码；记忆要第一天按 SOUL.md、MEMORY.md 等分层配好；投入带教的深度决定 Agent 的表现。",
       "deepSummary": "根据你引用的笔记，作者是一位从 OpenClaw 早期（当时还叫 Clawdbot）就开始使用的用户，在一台 2018 年的旧笔记本（Linux 环境）上跑了几个月后，总结了四条核心血泪教训：\n\n教训一：模型质量是天花板，不是可选项\n\nOpenClaw 本身只是一个 AI Agent 框架，真正的\"大脑\"是它连接的大语言模型。框架再好，模型能力跟不上，一切都会打折扣。作者测试过本地小模型（如 Qwen2.5-3b），发现频繁误解意图、复杂任务容易中途放弃；换成 Kimi K2.5 和 GLM-5 后，指令遵循和工具调用稳定性才真正达标。核心建议是：​​先用好模型把工作流跑通，再考虑降本​​，顺序反了会浪费大量时间排查问题。\n\n教训二：不要幻想它能自己装好复杂的 Skill\n\nClawHub 上有上万社区 Skill，但越复杂的 Skill 越需要人工介入。比如 self-improvement 功能需要手动配置 hook 脚本并启用，Agent 没有自举能力。作者踩过的坑包括：配置错误导致 Agent 反复\"重新发明轮子\"、MCP 工具权限没有安全团队测试发现第三方 Skill 存在数据泄露风险。​​安装前务必读源码和 SKILL.md。​​\n\n教训三：记忆机制要在第一天配好，否则一切都在原地踏步\n\nOpenClaw 默认的记忆是一个不断增长的 Markdown 文件，随着体积增大检索质量会退化，压缩过程还会抹掉上下文。作者强调记忆体系有明确分层：SOUL.md（身份层）、MEMORY.md（长期记忆）、AGENTS.md（协作层）、TOOLS.md（工具层），三者协同工作。关键是在 SOUL.md 中显式写明记忆写入规则，并可以安装 Soul Memory Skill 来自动注入记忆和智能剪枝。​​不要期望它自己配好记忆机制，这是需要你主动设计的系统。​​\n\n教训四：你的投入深度，决定了它的行为质量\n\nOpenClaw 不是一个\"说一句话干一件事\"的 chatbot，而更像需要持续\"带教\"的新人。作者把它分成三个阶段：定义身份（SOUL.md）→ 在真实任务中观察行为并转化为规则 → 不断优化 Skill 配置。一个实用技巧是：用满一周后直接问它\"根据你的互动，你觉得你的 SOUL.md 有哪些地方需要改进\"，它往往能发现你没注意到的盲区。\n\n总结\n\n作者把 OpenClaw 比作\"一台需要你去理解快门、光圈、焦距的手动相机\"，而不是傻瓜相机。它代表的是 AI 从\"聊天\"迈向\"真实数字劳动\"的早期样本，但上手的门槛决定了你能用它做出什么。接下来作者会持续记录在旧笔记本上搭建个人 AI 基础设施的完整链路，从网络规划、模型选型到真实任务自动化。\n\n简单说就是：​​OpenClaw 很强大，但别指望开箱即用。模型要选好、Skill 要手动配、记忆要主动设计、投入时间带教——你越用心，它越能干。​​",
       "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "d1754bbb2f395342d9711a535daec8af69135e2635908c2a219ccad4f8ab89a6",
+      "curationRevision": "1a49af110a5cc543fd7dea8a5faf4ffa33a2164e259aa532ac8a44ccf4bf86cd",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
-      "action": "关注后续更新，参考OpenClaw在副业场景的应用思路。",
+      "reviewedAt": "2026-10-13",
+      "action": "给 OpenClaw 单独一台机器或隔离账户，装任何 ClawHub Skill 前先读它的 SKILL.md 和源码；第一天就在 SOUL.md 写明何时写入 MEMORY.md 和每日摘要，一周后对照记忆文件检查它是否记住了被纠正过的规则。",
       "tools": [],
       "kind": "Note",
       "resources": [],
@@ -7095,17 +7096,17 @@
         "GitHub Analysis",
         "MCP"
       ],
-      "summary": "GitNexus 是一个零服务器代码智能引擎，通过知识图谱追踪 GitHub 仓库中的所有关系（非仅描述），支持 Web UI 聊天、CLI 和 MCP 三种接入方式，为 Claude Code、Codex、Cursor 等 AI Agent 提供完整代码架构视图，使小模型也能获得大模型级别的代码理解能力。现有 29.5k stars、3.4k forks。",
-      "deepSummary": "GitNexus 是一个零服务器代码智能引擎，通过知识图谱追踪 GitHub 仓库中的所有关系（非仅描述），支持 Web UI 聊天、CLI 和 MCP 三种接入方式，为 Claude Code、Codex、Cursor 等 AI Agent 提供完整代码架构视图，使小模型也能获得大模型级别的代码理解能力。现有 29.5k stars、3.4k forks。",
+      "summary": "GitNexus（画面中的 GitHub 仓库 abhigyanpatwari/GitNexus）自称零服务器的代码智能引擎：为整个代码库建知识图谱，记录函数调用、导入和类继承关系，再让 Claude Code、Codex、Cursor 等编程智能体通过 MCP 直接查询，减少因不了解依赖关系而改坏代码；网页界面可直接和任意仓库对话，CLI 加 MCP 用于接入智能体。",
+      "deepSummary": "GitNexus（画面中的 GitHub 仓库 abhigyanpatwari/GitNexus）自称零服务器的代码智能引擎：为整个代码库建知识图谱，记录函数调用、导入和类继承关系，再让 Claude Code、Codex、Cursor 等编程智能体通过 MCP 直接查询，减少因不了解依赖关系而改坏代码；网页界面可直接和任意仓库对话，CLI 加 MCP 用于接入智能体。",
       "deepSummarySource": "curation",
-      "curationRevision": "f618631599157c358fa2c57dfed48e3ce45296aaebd9218fa1fcbca2c53582df",
+      "curationRevision": "e67ce2456da056b221ac96d0dabe0db5b6f7759a468f7427e385ccb5b9d10316",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "batch_aborted",
       "summaryReasonCode": "batch_aborted",
-      "reviewedAt": "2026-08-29",
-      "action": "通过 MCP 接入 GitNexus，为 Claude Code 或 Codex 提供目标仓库的知识图谱，解决 Agent 因缺少依赖关系上下文而导致的盲目编辑和调用链断裂问题；也可直接用 Web UI 快速问答任意公开仓库。",
+      "reviewedAt": "2026-10-13",
+      "action": "先用网页界面对一个自己熟悉的公开仓库提问，核对它给出的调用链是否准确；准确再通过 CLI 和 MCP 接入 Claude Code 或 Codex，改代码前让智能体先查一遍依赖关系。",
       "tools": [],
       "kind": "Tool",
       "resources": [],
@@ -7850,16 +7851,16 @@
         "Frontend",
         "UI Design"
       ],
-      "summary": "精选 Anthropic、OpenAI、Vercel 出品的 10 个前端/设计/UI Agent Skills，涵盖 landing page 生成（frontend-skill）、设计规范落地（frontend-design、web-design-guidelines）、Figma 转代码（figma-implement-design）、React/Next.js 最佳实践（react-best-practices）、UI 自动化测试（playwright、webapp-testing）、画布设计（canvas",
-      "deepSummary": "精选 Anthropic、OpenAI、Vercel 出品的 10 个前端/设计/UI Agent Skills，涵盖 landing page 生成（frontend-skill）、设计规范落地（frontend-design、web-design-guidelines）、Figma 转代码（figma-implement-design）、React/Next.js 最佳实践（react-best-practices）、UI 自动化测试（playwright、webapp-testing）、画布设计（canvas",
+      "summary": "视频推荐 10 个面向前端、产品和 UI 的 Agent Skill，标注出自 Anthropic、OpenAI、Vercel：frontend-skill 和 frontend-design 做落地页与强风格页面，figma-implement-design 把设计稿转代码，web-design-guidelines 做 UI 审查，react-best-practices 提升 React/Next.js 实现质量，playwright 和 webapp-testing 验证真实浏览器行为，canvas-design 做视觉探索，brand-guidelines 保持品牌一致，vercel-deploy-claimable 做完即部署预览。",
+      "deepSummary": "视频推荐 10 个面向前端、产品和 UI 的 Agent Skill，标注出自 Anthropic、OpenAI、Vercel：frontend-skill 和 frontend-design 做落地页与强风格页面，figma-implement-design 把设计稿转代码，web-design-guidelines 做 UI 审查，react-best-practices 提升 React/Next.js 实现质量，playwright 和 webapp-testing 验证真实浏览器行为，canvas-design 做视觉探索，brand-guidelines 保持品牌一致，vercel-deploy-claimable 做完即部署预览。",
       "deepSummarySource": "curation",
-      "curationRevision": "21eb025e6e630d3935cc4d1e53475703bf39502bb00661801473cb915bf572cd",
+      "curationRevision": "ca42154bd59fdbbd88e9ac1e992784067b2a9516b236ea26cf501afab285bae5",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "batch_aborted",
       "summaryReasonCode": "batch_aborted",
-      "reviewedAt": "2026-08-29",
+      "reviewedAt": "2026-10-13",
       "action": "按项目阶段按需安装：UI/视觉类选 frontend-skill + brand-guidelines；设计还原选 figma-implement-design + web-design-guidelines；开发质量选 react-best-practices；测试覆盖选 playwright + webapp-testing；部署选 vercel-deploy-claimable。",
       "tools": [],
       "kind": "Note",
@@ -8572,7 +8573,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-27",
+      "reviewedAt": "2026-10-13",
       "action": "先挑一个只读环节做最小流程，例如汇总公开关键词并生成待审报告；所有广告、客服和店铺写操作继续由人工确认。",
       "tools": [
         "Codex"
@@ -8666,7 +8667,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-27",
+      "reviewedAt": "2026-10-13",
       "action": "先把定位、选题和周复盘三个环节做成内部模板，用真实数据验证后再扩展；不把文中的自建名称当作可直接安装资源。",
       "tools": [],
       "kind": "Workflow",
@@ -9123,23 +9124,23 @@
         "电商运营"
       ],
       "themes": [
-        "fitness",
-        "nutrition",
-        "wellness-tools"
+        "关键词推广",
+        "淘宝运营",
+        "直通车"
       ],
-      "summary": "抱歉，我目前无法直接访问或抓取该小红书链接的具体内容。 如果你能​​复制粘贴笔记的标题和正文​​，或者​​截图发给我​​，我就能立刻帮你做详细总结！",
-      "deepSummary": "抱歉，我目前无法直接访问或抓取该小红书链接的具体内容。\n\n如果你能​​复制粘贴笔记的标题和正文​​，或者​​截图发给我​​，我就能立刻帮你做详细总结！",
-      "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "365a20ce06a01bcf199d6f657de15790a12b123b60670613a2aa9113a895a0fc",
+      "summary": "图文整理淘宝关键词推广（原直通车）的实操设置：何时适合开（产品测过、有基础销量和评价、已有搜索或老客成交），以及日限额 50 元的小预算计划、新品先用智能出价跑一周再按有转化的词建手动计划、标准计划选 5 到 10 个长尾词并按系统出价一半起步、测图测款等步骤，逐项给出出价、人群溢价、资源位和投放时段设置。",
+      "deepSummary": "图文整理淘宝关键词推广（原直通车）的实操设置：何时适合开（产品测过、有基础销量和评价、已有搜索或老客成交），以及日限额 50 元的小预算计划、新品先用智能出价跑一周再按有转化的词建手动计划、标准计划选 5 到 10 个长尾词并按系统出价一半起步、测图测款等步骤，逐项给出出价、人群溢价、资源位和投放时段设置。",
+      "deepSummarySource": "curation",
+      "curationRevision": "f6011b813f62f768b0750f61306d99948b6ab6ce07b5707e515d1ad56e9f3089",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
-      "action": "通读这 10 个工具清单，筛选出与当前健康追踪体系互补的工具，挑出最多 2 个进行为期一周的实测评估。",
+      "reviewedAt": "2026-10-13",
+      "action": "按图中新品计划先用 50 到 70 元日预算跑一周，从流量智选报告记下有转化的关键词，再建手动出价计划；每次只改出价或人群溢价中的一项并对照投产比，基础销量和评价只用合规方式积累，不刷单。",
       "tools": [],
-      "kind": "Note",
+      "kind": "Workflow",
       "resources": [],
       "resourceIds": [],
       "evidence": {
@@ -9346,7 +9347,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-27",
+      "reviewedAt": "2026-10-13",
       "action": "先把利润计算、竞品审计和周复盘做成内部模板，使用脱敏店铺数据验证；库存补货和发布动作必须保留人工确认。",
       "tools": [],
       "kind": "Workflow",
@@ -9434,7 +9435,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-27",
+      "reviewedAt": "2026-10-13",
       "action": "先用只读的公开商品搜索和评论分析验证数据来源与准确率，确认店铺授权、写操作审批和撤销机制后再连接内部账户。",
       "tools": [
         "WorkBuddy"
@@ -9509,21 +9510,21 @@
         "电商运营"
       ],
       "themes": [
-        "1对1辅导",
-        "AI教育",
-        "学习规划"
+        "小红书投放",
+        "淘宝天猫",
+        "红猫计划"
       ],
-      "summary": "根据你引用的笔记，这是一篇关于​​小红书 × 淘宝天猫「红猫计划」​​的推广介绍，核心内容是帮助淘系商家实现\"种草在小红书、成交在淘宝\"的链路打通。以下是总结： 产品是什么 ​​红猫计划​​是小红书推出的广告产品，用户在小红书看到笔记后，点击可直接跳转淘宝/天猫完成成交，小红书负责种草，淘宝负责成交，链路更短、转化更高效。",
+      "summary": "小红书营销顾问介绍“红猫计划”：淘宝、天猫商家在小红书聚光投放笔记，用户点击直接跳转淘系店铺成交。准入条件是类目在开放范围内、淘宝综合评分或天猫综合星级不低于 4.5；下单可选 CID 商家直投（在聚光下单、可累代理返点）或 UD（经阿里妈妈 UniDesk 下单），投放主体与店铺主体不一致时要备好鲜章承诺函。",
       "deepSummary": "根据你引用的笔记，这是一篇关于​​小红书 × 淘宝天猫「红猫计划」​​的推广介绍，核心内容是帮助淘系商家实现\"种草在小红书、成交在淘宝\"的链路打通。以下是总结：\n\n产品是什么\n\n​​红猫计划​​是小红书推出的广告产品，用户在小红书看到笔记后，点击可直接跳转淘宝/天猫完成成交，小红书负责种草，淘宝负责成交，链路更短、转化更高效。\n\n适合谁\n在淘宝/天猫有店铺的商家\n综合体验分 ≥ 4.5 星（淘宝综合评分或天猫综合星级二选一）\n类目在开放范围内（美妆、服饰、母婴、宠物、运动户外、家清等已基本覆盖）\n怎么开通\n确认店铺类目和评分是否达标\n在聚光后台提交店铺资质审核\n审核通过后创建广告计划\n选择\"笔记链路\"，用户点击直跳淘系店铺\n两种投放模式怎么选\n​​CID（商家直投）​​：直接在小红书聚光操作，预算给小红书，可累代理返点。适合新手或想和小红书直接合作的商家，流程更简单。\n​​UD（阿里侧下单）​​：通过阿里妈妈 Uni Desk 平台下单，预算流向为商家→阿里→小红书，不累代理返点。适合已在用阿里投流工具的商家。\n已开放类目\n\n其他类目陆续开放中。\n\n注意事项\n投放主体和店铺主体不一致的，需要提前准备​​承诺函​​（需鲜章，不接受电子章），提前备好能省时间。\n目前名额有限，有意向的商家建议尽早咨询确认资质。\n\n简单来说，如果你是在淘宝/天猫开店的商家，且评分达标，可以通过红猫计划把小红书的流量直接引到淘系店铺成交，减少跳转流失。新商家建议优先选 CID 模式，流程更简单。",
       "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "7ed297612a2885ea601b34acc7c95851634ce6c750960d67b48d2af7ab985df7",
+      "curationRevision": "2c902f4cb1247b93ed66a1f6dd1b3ecc3716ecbcf274887821a8cf355adfe579",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
-      "action": "评估课程内容与自身目标匹配度；若需系统学习 AI 工具应用，可在有效期内报名 1V1 辅导。",
+      "reviewedAt": "2026-10-13",
+      "action": "先核对自己店铺的类目和综合评分是否达标，再按是否已在用阿里投流工具在 CID 和 UD 之间选一种；这是引导私信咨询的推广帖，开通条件和名额以聚光后台审核为准。",
       "tools": [],
       "kind": "Note",
       "resources": [],
@@ -9606,7 +9607,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-27",
+      "reviewedAt": "2026-10-13",
       "action": "仅采用合规的素材、关键词和广告复盘部分；任何做单、规避搜索或操纵互动的做法一律不执行，并以淘宝当前官方规则复核。",
       "tools": [],
       "kind": "Note",
@@ -10042,7 +10043,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-27",
+      "reviewedAt": "2026-10-13",
       "action": "从一个只读的小 Agent 开始，依次补齐工具调用失败测试、状态恢复、成本记录和日志，再考虑框架或多 Agent 架构。",
       "tools": [],
       "kind": "Note",
@@ -10288,33 +10289,29 @@
       "category": "电商运营",
       "categorySource": "source_board",
       "categoryReason": "",
-      "suggestedCategory": "",
+      "suggestedCategory": "内容增长与商业",
       "sourceBoards": [
         "电商运营"
       ],
-      "themes": [
-        "供应商评估",
-        "客服外包",
-        "数据保密"
-      ],
-      "summary": "图文是“幻想客服”电商客服外包广告，主要用规模招聘、集中设备、标准流程和弹性排班解释低价，并列出按咨询量分档的报价；价格、在线时长和服务质量均为商家自述。",
-      "deepSummary": "根据你分享的这篇小红书笔记，这是一篇关于​​幻想客服​​外包平台的推广内容，主要总结为以下几点：\n\n核心主张\n\n笔记强调电商客服外包比雇佣全职客服便宜得多——全职客服在三四线城市月薪也不低于 3500 元，而幻想客服外包收费低至​​400 多元/月​​，还能提供双人值班、16 小时在线的金牌客服。\n\n为什么外包收费这么低？\n\n笔记给出了 4 个原因：\n\n​​人员成本分摊​​：外包公司服务多家电商企业，一次招聘上百人，招聘和培训的固定成本被分摊到众多项目，单个客服承载的成本大幅降低。\n​​资源整合利用​​：集中租用大场地、批量采购设备，议价能力强，资源可被不同团队共享，避免重复购置和闲置。\n​​流程标准化​​：有完善的标准化流程，借助智能系统合理分配咨询，减少重复劳动，提高效率。\n​​人力高效调配​​：专注外包业务，能精准把握电商企业的业务规律，促销期加派客服应对高峰，平时合理安排避免闲置。\n价格表参考\n\n笔记附带了客服外包价格表，按​​日咨询上限​​阶梯计费，例如：\n\n日咨询 20 上限：售前客服 450 元/月，售前 + 售后 450 元/月\n日咨询 50 上限：售前 680 元/月，售前 + 售后 800 元/月\n日咨询 100 上限：售前 1000 元/月，售前 + 售后 980 元/月\n日咨询 1000 以上：售前 9380 元/月，售前 + 售后 7080 元/月\n附加服务说明\n开票包税点，专票普票均可\n同平台缴纳打包费可总计咨询计费，店铺数量无上限\n500 咨询量以上可定制套餐和客服数量\n提供 3 年以上经验客服，制定专属 QA 话术，群内快速对接\n声明\n\n笔记开头和结尾都明确强调：​​不招聘兼职、不招聘客服​​，找工作的小伙伴勿扰。\n\n整体来看，这是一篇面向电商商家的客服外包广告，核心卖点是\"比自建客服团队便宜得多\"。如果你正在考虑是否使用客服外包服务，建议多对比几家平台的服务质量和实际口碑，不要只看价格。",
-      "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "12ab899b84cc1525b527b8c0164c45a261b74e5e2e8eb72348f4155cd5db0dc0",
-      "summaryStatus": "accepted",
-      "curationStatus": "accepted",
-      "summaryReason": "",
+      "themes": [],
+      "summary": "[红色心形R][红色心形R][红色心形R]不需要兼职，不招聘客服，找工作的小伙伴勿扰，谢谢！[抱拳R][抱拳R][抱拳R] [向右R][向右R][向右R]从事过电商行业的朋友们应该都知道，招聘一名全职客服，即使在三线城市的薪资也不会低于3500元，而且很多电商企业需要多名客服两班倒，客服的人工成本是一笔不小的支出，而且客服的专业程度直接影响着店铺的转化效率。而像幻想客服这样的客服外包平台，不仅可以提供专业优质的客服，而且收费更是低至不到4XX元/月，还是双人值班的[一R][六",
+      "deepSummary": "[红色心形R][红色心形R][红色心形R]不需要兼职，不招聘客服，找工作的小伙伴勿扰，谢谢！[抱拳R][抱拳R][抱拳R] [向右R][向右R][向右R]从事过电商行业的朋友们应该都知道，招聘一名全职客服，即使在三线城市的薪资也不会低于3500元，而且很多电商企业需要多名客服两班倒，客服的人工成本是一笔不小的支出，而且客服的专业程度直接影响着店铺的转化效率。而像幻想客服这样的客服外包平台，不仅可以提供专业优质的客服，而且收费更是低至不到4XX元/月，还是双人值班的[一R][六",
+      "deepSummarySource": "source-metadata",
+      "curationRevision": "",
+      "summaryStatus": "pending_review",
+      "curationStatus": "pending_review",
+      "summaryReason": "audit_pending",
       "summaryState": "captured",
-      "summaryReasonCode": "",
-      "reviewedAt": "2026-08-27",
-      "action": "若评估外包，至少对比三家并核对合同、响应指标、数据保密、账号权限、退款与退出交接；先用低权限短周期试运行，不只按月费选择。",
+      "summaryReasonCode": "audit_pending",
+      "reviewedAt": "",
+      "action": "",
       "tools": [],
-      "kind": "Note",
+      "kind": "Workflow",
       "resources": [],
       "resourceIds": [],
       "evidence": {
-        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
-        "locallyAvailable": true
+        "method": "目前依据原帖公开文字整理，媒体内容尚未完整解读",
+        "locallyAvailable": false
       }
     },
     {
@@ -10548,33 +10545,29 @@
       "category": "出海电商",
       "categorySource": "source_board",
       "categoryReason": "",
-      "suggestedCategory": "",
+      "suggestedCategory": "内容增长与商业",
       "sourceBoards": [
         "出海电商"
       ],
-      "themes": [
-        "亚马逊工具栈",
-        "出海电商",
-        "竞品与运营"
-      ],
-      "summary": "目录长文把 Jungle Scout、Helium 10、SellerSprite、Viral Launch 和 AMZScout 分配到选品、关键词与 Listing、经营诊断、竞品监控和机会判断等环节，并建议按阶段组合使用。已核对这些产品仍有与上述方向相关的官方能力，但目录中的细分功能没有逐项得到当前官方材料支持，而且该图文的图片正文缺失。",
-      "deepSummary": "根据你引用的笔记，这是一篇关于​​亚马逊运营数据驱动工具​​的干货分享，核心是推荐了 5 款覆盖选品、Listing 优化、广告和复盘全链路的\"智能外挂\"。\n\n5 款核心工具一览\n​​Jungle Scout​​：选品定盘星。依托海量数据库，精准分析市场容量、竞争度和利润空间，一键筛选\"高需求、低竞争\"的利基市场，用数据替代直觉选品。\n​​Helium 10​​：Listing 优化大全。功能类似\"瑞士军刀\"，Cerebro 可透视竞品核心流量词，Frankenstein 智能生成高分标题和五点描述，一站式搞定关键词挖掘和 Listing 质量评分。\n​​SellerSprite（卖家精灵）​​：广告与业务深度诊断仪。深度绑定卖家中心数据，广告模块精准定位高转化 ASIN 和浪费支出的关键词；业务报告追踪每个 ASIN 的利润和库存健康度。\n​​Viral Launch​​：竞品监控与流量引爆器。动态监控竞品关键词排名、销量波动和促销策略，内置邮件营销工具提升复购与好评率，支持一键发起站外促销冲击新品排名。\n​​AMZScout​​：市场趋势与机会发现平台。提供直观的数据看板，实时追踪热门品类和上升趋势，帮助在红海中找到蓝海缝隙市场。\n运营阶段用法总结\n​​选品期​​：深度使用 Jungle Scout 和 AMZScout 做市场调研 用 Viral Launch 冲击排名\n日常习惯建议\n\n将数据监控融入日常，保持对市场变化的敏感度，快速反应、持续领先。\n\n整体来看，这篇笔记的核心逻辑是​​告别凭感觉的\"蛮干\"模式，用数据工具让亚马逊运营更精准高效​​，适合新手避坑、老手提效。\n\n标签：#跨境电商 #选品工具 #Listing优化 #亚马逊广告 #运营技巧 #电商干货",
-      "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "89bf03346f762b9a1684861205a7cb4081e19cc4ad1e80cf1ab818805cc90eb4",
-      "summaryStatus": "accepted",
-      "curationStatus": "accepted",
-      "summaryReason": "",
+      "themes": [],
+      "summary": "告别铺货与蛮干！5个“数据驱动型”神器，从选品到爆单快人一步在亚马逊赛道实战多年，踩过坑也爆过单。最终沉淀下这套让运营动作更精准、更高效的“智能外挂”——5个针对性工具，覆盖选品、Listing、广告、复盘全链路，新手能避坑，老手可提效！ Jungle Scout | 选品定盘星，拒绝凭感觉 ⚡️海量数据库支撑，精准洞察市场容量、竞争度与利润空间。一键筛选“高需求、低竞争”利基市场，查看真实销量趋势，判断产品生命周期。告别“我觉得能卖”的直觉式选品，用数据锚定成功概率更高的起",
+      "deepSummary": "告别铺货与蛮干！5个“数据驱动型”神器，从选品到爆单快人一步在亚马逊赛道实战多年，踩过坑也爆过单。最终沉淀下这套让运营动作更精准、更高效的“智能外挂”——5个针对性工具，覆盖选品、Listing、广告、复盘全链路，新手能避坑，老手可提效！ Jungle Scout | 选品定盘星，拒绝凭感觉 ⚡️海量数据库支撑，精准洞察市场容量、竞争度与利润空间。一键筛选“高需求、低竞争”利基市场，查看真实销量趋势，判断产品生命周期。告别“我觉得能卖”的直觉式选品，用数据锚定成功概率更高的起",
+      "deepSummarySource": "source-metadata",
+      "curationRevision": "",
+      "summaryStatus": "pending_review",
+      "curationStatus": "pending_review",
+      "summaryReason": "audit_pending",
       "summaryState": "captured",
-      "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
-      "action": "选择同一关键词或商品，在五个产品中记录相同日期、市场范围、数据口径、成本和关键结果；购买或长期采用前逐项核对当前官方功能，并以业务结果比较准确性与投入产出。",
+      "summaryReasonCode": "audit_pending",
+      "reviewedAt": "",
+      "action": "",
       "tools": [],
-      "kind": "Note",
+      "kind": "Workflow",
       "resources": [],
       "resourceIds": [],
       "evidence": {
-        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
-        "locallyAvailable": true
+        "method": "目前依据原帖公开文字整理，媒体内容尚未完整解读",
+        "locallyAvailable": false
       }
     },
     {
@@ -10608,7 +10601,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
+      "reviewedAt": "2026-10-13",
       "action": "在私有环境实现输入契约，把利润计算放入确定性脚本，为每个门槛写明阈值，并用历史案例建立金标测试；缺关键数据时只列待补项。",
       "tools": [
         "Codex"
@@ -10645,16 +10638,16 @@
         "全链路 SOP",
         "出海电商"
       ],
-      "summary": "根据你引用的笔记，这是一篇关于​​跨境电商 AI 工作流​​的干货分享，作者把跨境运营拆成了 17 个 AI Skill，并串联成一套可执行的 SOP。",
+      "summary": "作者把跨境电商运营拆成 17 个 Skill 串成的 SOP：主线是市场判断、产品机会、竞品价格、1688 拿货价、平台费用、Listing、广告测试和净利润复盘八步，跑顺后再加多平台同步、供应链优化、国际物流、一件代发和持续复盘；图中把每一步对应到 Market Research Reports、Ali1688 Sourcing、Marketplace Fee Reconciliation 等具体 Skill 名称。",
       "deepSummary": "根据你引用的笔记，这是一篇关于​​跨境电商 AI 工作流​​的干货分享，作者把跨境运营拆成了 17 个 AI Skill，并串联成一套可执行的 SOP。核心内容如下：\n\n主线流程（8 步）\n\n这是跨境电商最核心的闭环链路，跑顺之后再考虑扩展：\n\n​​市场判断​​：用 AI 生成市场调研报告，判断赛道大小和趋势\n​​产品机会​​：从数据到决策，筛选有潜力的产品方向\n​​竞品价格​​：拆解竞品价格、评论、流量来源，做价格对标\n​​1688 拿货价​​：找工厂、拿货价、MOQ、认证和产地信息\n​​平台费用​​：拆平台费、仓储费、广告费，算真实净利润\n​​Listing​​：生成或诊断 Listing，优化关键词、标题、五点描述\n​​广告测试​​：管理多平台广告，覆盖 Campaign、- ​​净利润复盘​​：结合供应链和费用数据，做持续复盘\n扩展流程（5 步）\n\n主线跑通后，再往后加这些能力：\n\n​​供应链优化​​：算库存、采购成本、TCO 和供应商评分\n​​国际物流​​：HS Code、关税估算和报关文件\n​​一件代发​​：对接供应商，自动下单、同步库存\n​​持续复盘​​：用数据驱动后续决策\n核心观点\n\n作者强调：​​单个 Skill 只能解决一个点，但 17 个 Skill 串起来，才是一条完整的流水线​​。不建议新手一开始就乱装一堆工具，而是先照着这套顺序跑一遍，清楚每一步该用什么、为什么用、用完接到哪里。\n\n适合谁看\n\n这篇内容适合想做跨境电商、尤其是想用 AI 提效的新手，可以当成一个 SOP 框架慢慢对照实操。\n\n简单说就是：​​别盲目追工具，先把跨境业务的主线跑通，再用 AI Skill 去填每个环节​​。",
       "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "77e87f85c9f1a1ba5a682c209d0b2896d243d1a8cc83e09c36a3697535c50245",
+      "curationRevision": "19a5e9b60b6e5ba3f123b5ef9d2600d0511d1bda7fdc0ed157bca90c32ba7d3a",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
+      "reviewedAt": "2026-10-13",
       "action": "先把核心八步定义为带输入输出的数据契约，再按模块逐个核对来源、许可、所需数据和权限；只在单模块通过隔离测试后接入下一步，扩展链路留到核心链路能够复现利润结果之后。",
       "tools": [],
       "kind": "Workflow",
@@ -10687,16 +10680,16 @@
         "出海电商",
         "数据新鲜度"
       ],
-      "summary": "图文评测 Nexscope Amazon Skills。官方材料可确认该开源包包含 53 个兼容多种代理环境的 Amazon Skills，并明确不提供实时市场数据；图文也指出多数内容是方法与指令，只有少数目录带可执行脚本。评测重点覆盖产品、关键词、竞品、FBA 费用和 PPC 五类能力，结论是价值主要在于把已有数据和分析方法结构化，而不是自动获得搜索量、点击成本、排名、转化或实时商品数据。图中的 FBA 计算示例使用旧费率假设，不能直接用于当前决策。",
+      "summary": "图文实测 GitHub 仓库 nexscope-ai/Amazon-Skills：53 个 Amazon 运营 Skill，可装进 Codex、Claude Code、Cursor 等，但只有 5 个目录带执行脚本，其余主要是 SKILL.md 方法说明，本身不接实时搜索量、销量或 CPC。作者测了选品、关键词、竞品、FBA 费用和 PPC 五个：关键词能拓长尾词但没有搜索量，FBA 计算器用的是 2024 年费率，结论是它适合整理已有数据，替代不了数据工具。",
       "deepSummary": "根据你引用的笔记，这篇内容主要是在​​实测 GitHub 上一个叫 Amazon-Skills 的开源项目​​，作者用\"品牌出海AI课代表\"的账号发布了实测系列。以下是核心总结：\n\n项目是什么\n​​来源​​：nexscope-ai/Amazon-Skills，GitHub 开源项目，417 stars\n​​规模​​：共 53 个 AI Skills，覆盖选品、关键词、竞品分析、FBA 利润、PPC、库存、评论、合规和申诉等 Amazon 运营场景\n​​支持工具​​：可装进 Codex、Claude Code、Cursor 等，不用每次重写 Prompt\n​​本质​​：提供的是​​运营方法、分析步骤和输出结构​​，不是实时数据工具\n作者实测了哪 5 个\n​​amazon-product-research​​（选品）\n​​amazon-keyword-research​​（关键词）\n​​amazon-competitor-analysis​​（竞品分析）\n​​amazon-fba-calculator​​（FBA 利润计算）\n​​amazon-ppc-campaign​​（PPC 广告规划）\n\nmd 说明文件，告诉 AI 怎么问、怎么分析、输出什么格式\n\n​​关键词 Skill​​：能抓长尾词、暴露品牌关联词，适合拓词，但不适合单独做选品判断\n​​FBA 计算器​​：公式和逻辑可参考，但费率年份可能过期（测试用的是 2024 年费率），金额必须回 Seller Central 核验\n​​选品/竞品/PPC Skill​​：价值在于搭分析框架，缺口是仍需外部真实数据支撑\n作者给的 5 条避坑建议\n\n看到 AI Skill 先检查这 5 件事：\n\n有没有执行脚本？还是只有说明文件？\n数据从哪里来？接口、后台、第三方数据库，还是 AI 推测？\n数据是什么时候的？费率、政策是否过期？\n公式能不能复核？利润、ACoS、费用有没有计算过程？\n有没有写清限制？没有实时数据时，它会承认吗？\n最适合的使用方式\n​​没有付费卖家软件​​：用 Skill 搭框架，再手动核验关键数据\n​​有 Helium 10 或 Jungle Scout​​：把导出的真实数据交给 Skill 整理和计算\n​​有 Seller Central 数据​​：优先分析自己的搜索词、广告、利润和退货\n\n一句话总结：​​这 53 个 Skill 替代不了真实数据工具，但能帮你把已有数据变成更好的运营决策，省掉重复整理、计算和写报告的时间。​​\n\n作者后续还会公开安装过程、测试指令和完整踩坑记录，并邀请读者在评论区投票想看哪个方向的对比实测。",
       "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "cf139e82c996555566e38f27414dbd0e3e7639ef75e05cfd1082fdd1b4c922ae",
+      "curationRevision": "da8406a3bdd9989977783356cf646dd204ef01462e8377b7a548f20591a8ab53",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
+      "reviewedAt": "2026-10-13",
       "action": "先隔离测试产品、关键词、竞品、FBA 和 PPC 五项：缺数据时必须明确询问，所有结论记录来源，所有计算保留可复现公式；更新费用表后再与 Seller Central 当前结果对照，其他 Skills 通过同一门禁后再采用。",
       "tools": [],
       "kind": "Note",
@@ -10771,17 +10764,17 @@
         "出海电商",
         "市场与评论研究"
       ],
-      "summary": "抱歉，我目前无法直接访问小红书链接来获取该笔记的具体内容，因此无法为您总结。 如果您希望我帮您总结，可以尝试以下方式： ​​复制笔记正文​​：把笔记的文字内容直接粘贴发给我。 ​​截图发送​​：如果笔记中有图片或关键信息，可以截图发给我。 ​​告诉我笔记主题​​：如果您记得笔记大概讲了什么，也可以简单描述一下，我来帮您梳理要点。 另外，如果您是想了解小红书运营规则、流量算法或内容创作技巧，我也可以结合站内最新信息为您提供实用建议。 您还有其他需要总结的内容吗？",
-      "deepSummary": "抱歉，我目前无法直接访问小红书链接来获取该笔记的具体内容，因此无法为您总结。\n\n如果您希望我帮您总结，可以尝试以下方式：\n\n​​复制笔记正文​​：把笔记的文字内容直接粘贴发给我。\n​​截图发送​​：如果笔记中有图片或关键信息，可以截图发给我。\n​​告诉我笔记主题​​：如果您记得笔记大概讲了什么，也可以简单描述一下，我来帮您梳理要点。\n\n另外，如果您是想了解小红书运营规则、流量算法或内容创作技巧，我也可以结合站内最新信息为您提供实用建议。\n\n您还有其他需要总结的内容吗？",
-      "deepSummarySource": "xiaohongshu-diandian",
-      "curationRevision": "223b9c85425ea5108024b0a2bee0596cc79ce4fccb105e40d91af12251b71b15",
+      "summary": "图文列出跨境卖家在 Codex 里常装的 9 个调研类 Skill：market-research 做市场验证，amazon-product-search-api-skill 扫关键词下的竞品和价格带，amazon-product-api-skill 与 amazon-scraper 把页面数据建成竞品表，amazon-reviews-api-skill 与 reddit-insights 挖评论和讨论里的痛点，tiktok-crawling 看内容趋势，agent-browser 代为操作网页，price-tracker 监控多平台价格。帖子只给名称，没有给出仓库来源。",
+      "deepSummary": "图文列出跨境卖家在 Codex 里常装的 9 个调研类 Skill：market-research 做市场验证，amazon-product-search-api-skill 扫关键词下的竞品和价格带，amazon-product-api-skill 与 amazon-scraper 把页面数据建成竞品表，amazon-reviews-api-skill 与 reddit-insights 挖评论和讨论里的痛点，tiktok-crawling 看内容趋势，agent-browser 代为操作网页，price-tracker 监控多平台价格。帖子只给名称，没有给出仓库来源。",
+      "deepSummarySource": "curation",
+      "curationRevision": "37075d45157641b9f8ce835fdb82e5a2e0c177f7d2c048268945c086f111bddf",
       "summaryStatus": "accepted",
       "curationStatus": "accepted",
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
-      "action": "先按业务问题选择一种能力，再为候选 Skill 核对唯一官方来源、维护状态、许可、依赖和最小权限；",
+      "reviewedAt": "2026-10-13",
+      "action": "先按业务问题只选一种能力试用，为候选 Skill 找到唯一官方来源并核对维护状态、许可、依赖和所需权限；涉及爬取页面或代操作网页的 Skill，先确认平台条款再用。",
       "tools": [],
       "kind": "Note",
       "resources": [],
@@ -11080,7 +11073,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-29",
+      "reviewedAt": "2026-10-13",
       "action": "每项必须先核验唯一仓库、SKILL.md、许可证和权限，并在隔离样例上测试；未通过前不批量安装或传播下载链接。",
       "tools": [],
       "kind": "Note",
@@ -11164,7 +11157,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
+      "reviewedAt": "2026-10-13",
       "action": "选一篇已完成正文，按八类标题各生成候选并保留评分依据；去掉夸张或正文无法兑现的标题，人工改写五个入围项，再用历史账号数据或小规模发布结果复盘点击率与收藏率。",
       "tools": [],
       "kind": "Workflow",
@@ -11248,7 +11241,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
+      "reviewedAt": "2026-10-13",
       "action": "从一个重复环节开始，写清输入、输出、判断规则和人工验收点；连续处理十篇内容，记录 AI 初稿通过率、事实错误、审美返工与实际耗时，再决定是否把下一环节接入自动化。",
       "tools": [],
       "kind": "Workflow",
@@ -11290,7 +11283,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
+      "reviewedAt": "2026-10-13",
       "action": "先用一个月的历史数据复现人工复盘，把异常判断和行动建议逐条对照；对错误归因、缺失数据和不可执行建议建立驳回规则，连续三轮达到可接受准确度后再尝试行业模板与商业交付。",
       "tools": [],
       "kind": "Workflow",
@@ -11542,7 +11535,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
+      "reviewedAt": "2026-10-13",
       "action": "按当前最耗时的单一环节选一个候选做沙盒测试，不批量安装；先核验官方仓库、许可证、依赖、联网与文件权限，再用同一素材比较人工流程和自动结果，记录节省时间及新增返工。",
       "tools": [],
       "kind": "Workflow",
@@ -11584,7 +11577,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-08-26",
+      "reviewedAt": "2026-10-13",
       "action": "选一张已有参考图，分别用抽象提示词和结构化规格各生成四次；固定随机因素后比较主体、构图、留白、材质和禁用元素的一致性，发现偏差时一次只改一个字段并保存前后结果。",
       "tools": [],
       "kind": "Workflow",
@@ -12938,29 +12931,39 @@
       "category": "Skills",
       "categorySource": "source_board",
       "categoryReason": "",
-      "suggestedCategory": "本地模型与成本",
+      "suggestedCategory": "",
       "sourceBoards": [
         "Skills"
       ],
-      "themes": [],
-      "summary": "📚 你是不是也这样：技术书读得很爽，三个月后连第七章讲啥都想不起来？ 试过的三条路全是坑： ❌ 搜 PDF → 出来一堆页码，不是答案 ❌ 直接问 AI → 它没读过这本书，一本正经胡说八道 ❌ 边读边记笔记 → 写了两百行，再也没打开过 ✅ 现在有个新思路：把整本书蒸馏成一个 AI 技能 它能做什么： 🔹 框架、决策规则、反模式，一章一个文件，结构化提炼（不是流水账摘要） 🔹 问到哪章才读哪章，常驻开销只有 5K token 🔹 术语表 + 模式库 + 速查表全套配",
-      "deepSummary": "📚 你是不是也这样：技术书读得很爽，三个月后连第七章讲啥都想不起来？ 试过的三条路全是坑： ❌ 搜 PDF → 出来一堆页码，不是答案 ❌ 直接问 AI → 它没读过这本书，一本正经胡说八道 ❌ 边读边记笔记 → 写了两百行，再也没打开过 ✅ 现在有个新思路：把整本书蒸馏成一个 AI 技能 它能做什么： 🔹 框架、决策规则、反模式，一章一个文件，结构化提炼（不是流水账摘要） 🔹 问到哪章才读哪章，常驻开销只有 5K token 🔹 术语表 + 模式库 + 速查表全套配",
-      "deepSummarySource": "source-metadata",
-      "curationRevision": "",
-      "summaryStatus": "pending_review",
-      "curationStatus": "pending_review",
-      "summaryReason": "audit_pending",
+      "themes": [
+        "Skill",
+        "技术文档",
+        "知识蒸馏"
+      ],
+      "summary": "book-to-skill（官方仓库 virgiliojr94/book-to-skill）把技术书或文档文件夹蒸馏成一个 Agent Skill：主文件放核心框架和章节索引，每章一个按需加载的文件，另配术语表、模式库和速查表。原帖称常驻约 5K token、比直接塞整本书省 24 到 51 倍、转换一本约 1 美元；官方说明能在多种宿主使用，这里核验后只确认 Codex。",
+      "deepSummary": "根据你引用的笔记，这篇内容主要介绍了一个叫 ​​book-to-skill​​ 的开源项目，核心思路是\"把整本技术书变成 AI 的技能\"。以下是总结：\n\n核心痛点\n\n技术书读完三个月就忘，传统方法都有问题：\n\n​​搜 PDF​​：搜出来一堆页码，不是直接答案\n​​直接问 AI​​：AI 没读过这本书，容易一本正经胡说八道\n​​边读边记笔记​​：写了两百行，再也没打开过\n解决方案\n\nbook-to-skill 把书\"蒸馏\"成结构化的 AI 技能，三步搞定：\n\n​​指向一本书​​：支持 PDF、EPUB 或整个文件夹\n​​蒸馏成结构化技能​​：提炼框架、决策规则、反模式，一章一个文件，不是流水账摘要\n​​随时提问​​：AI 自动去读对应章节，从真实内容里给答案\n技能结构与优势\n一个主文件装核心心智模型（约 4K token），每章单独一个文件，按需加载\n配上术语表、模式库和速查表\n常驻开销只有 ​​5K token​​，非常轻量\n实测数据\n\n拿一本 12 万 token 的书实测对比：\n\n直接塞给 AI：​​119K token/轮​​\nAI 自己翻 PDF：​​12K token/轮​​\n变成技能后：​​5K token/轮​​，省 24 到 51 倍\n转换成本约 ​​1 美元/本​​，只付一次\n适用范围\n\n不止技术书，内部文档、品牌规范、论文集、RFC 标准、API 文档等反复翻的资料都能折叠成技能，新资料还能增量合并。\n\n开源信息\n\n项目完全开源（MIT 协议），GitHub 上已经 ​​30.1k stars​​，生成的技能装一份，Copilot、Claude Code、Codex、Amp 都能直接发现并使用。\n\n简单说就是：​​以后技术书不用逼自己记了，让 AI 替你把每一章都记住。​​",
+      "deepSummarySource": "xiaohongshu-diandian",
+      "curationRevision": "7a9c124fb7ab1898f85883963f21a438e9c2ce14e1783e5e909bcca6331516df",
+      "summaryStatus": "accepted",
+      "curationStatus": "accepted",
+      "summaryReason": "",
       "summaryState": "captured",
-      "summaryReasonCode": "audit_pending",
-      "reviewedAt": "",
-      "action": "",
-      "tools": [],
-      "kind": "Workflow",
-      "resources": [],
-      "resourceIds": [],
+      "summaryReasonCode": "",
+      "reviewedAt": "2026-10-13",
+      "action": "先在 Codex 里用一份没有版权顾虑的内部文档转换一次，抽查生成的章节文件是否忠于原文；受版权保护的书只给自己用，不要分享生成的技能。",
+      "tools": [
+        "book-to-skill"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "book-to-skill"
+      ],
+      "resourceIds": [
+        "github-virgiliojr94-book-to-skill"
+      ],
       "evidence": {
-        "method": "目前依据原帖公开文字整理，媒体内容尚未完整解读",
-        "locallyAvailable": false
+        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+        "locallyAvailable": true
       }
     },
     {
@@ -13888,29 +13891,39 @@
       "category": "AI视频生成",
       "categorySource": "source_board",
       "categoryReason": "",
-      "suggestedCategory": "Skills与工作流",
+      "suggestedCategory": "",
       "sourceBoards": [
         "AI视频生成"
       ],
-      "themes": [],
-      "summary": "#howto解锁创意剪辑[话题]# #AI剪辑[话题]# #codex[话题]# #AI新手村[话题]#",
-      "deepSummary": "#howto解锁创意剪辑[话题]# #AI剪辑[话题]# #codex[话题]# #AI新手村[话题]#",
-      "deepSummarySource": "source-metadata",
-      "curationRevision": "",
-      "summaryStatus": "pending_review",
-      "curationStatus": "pending_review",
-      "summaryReason": "audit_pending",
+      "themes": [
+        "AI剪辑",
+        "Skill",
+        "口播剪辑"
+      ],
+      "summary": "博主 Holland 开源的剪辑 Skill HollandCut（官方仓库 heloraai/hollandcut），可在 Codex 或 Claude Code 中使用：给 AI 原始口播素材和视频稿，它删掉重复录的废句、加字幕和图形动画，并列出需要补图的位置让你上传；官方说明依赖 FFmpeg、whisper.cpp 和 Remotion，开剪前先出提案等用户确认。",
+      "deepSummary": "根据你引用的笔记，这是一条关于​​AI 全自动剪辑​​的视频内容总结，核心信息如下：\n\n视频背景\n\n博主展示了一条​​完全由 GPT-6（Astra） 剪辑的视频​​，从粗剪、字幕到动画全程未打开 剪映。此前他每月外包剪辑花费至少 3500 元，现在用 GPT-6 替代，成本降至每月几百块。\n\n为什么开源\n\n博主年初曾尝试做 AI 剪辑创业，后来发现\"剪辑 Skill 化\"趋势明显，自己的产品甚至被自己做的 Skill 取代了。于是他把几个月积累的剪辑技巧和风格总结成 ​​HollandCut​​，并选择开源，让任何人用 Codex 或 Claude Code 都能产出类似效果。\n\n使用方法\n在 GitHub 下载 HollandCut 项目，交给 Codex 安装。\n使用时只需给 AI 两样东西：​​原始素材文件​​ + ​​视频稿​​（用于纠正字幕错字）。\nAI 会自动处理口播废片、识别需要配图或流程图的位置，并提示上传对应素材。\n功能亮点\n自动删除口播中的废片，保留最完整的一条。\n自动识别素材中需要配图、流程图的位置。\n支持自动加字幕、智能配乐。\n后续计划升级，比如增加自动从互联网收集图片素材的功能。\n消耗成本\n​​GPT Pro​​（Astra 轻度模式）：剪一个视频约消耗周用量的 5%。\n​​Claude Fable​​（20 倍额度账号）：剪一个视频消耗 5 小时额度的 3%。 博主认为消耗在可接受范围内，大部分时间花在了渲染关键帧上。\n博主观点\n\n他认为 AI 剪辑趋势已经很明显，\"单价四位数的剪辑师岗位岌岌可危\"，甚至担心到年底初级剪辑师会变成\"时代的眼泪\"。同时他也提到 GPT-6 并非完美，比如生成 3D 头像时会出现翻车搞笑的情况。\n\n如果你对这个 Skill 感兴趣，可以去 GitHub 搜索 ​​HollandCut​​ 查看项目并尝试使用。",
+      "deepSummarySource": "xiaohongshu-diandian",
+      "curationRevision": "8acadddd06a8a333e86c3cd04a0e2d0304fb3a714e46b070b8a9d09e6a7869cb",
+      "summaryStatus": "accepted",
+      "curationStatus": "accepted",
+      "summaryReason": "",
       "summaryState": "captured",
-      "summaryReasonCode": "audit_pending",
-      "reviewedAt": "",
-      "action": "",
-      "tools": [],
-      "kind": "Tool",
-      "resources": [],
-      "resourceIds": [],
+      "summaryReasonCode": "",
+      "reviewedAt": "2026-10-13",
+      "action": "先拿一段几分钟、不含隐私的口播用 lite 档试跑，核对被删的句子和字幕错字；确认本机装齐带 libx264 的 FFmpeg、whisper.cpp 模型和 Node.js，公司商用前查清 Remotion 的许可条件。",
+      "tools": [
+        "hollandcut"
+      ],
+      "kind": "Skill",
+      "resources": [
+        "hollandcut"
+      ],
+      "resourceIds": [
+        "github-heloraai-hollandcut"
+      ],
       "evidence": {
-        "method": "目前依据原帖公开文字整理，媒体内容尚未完整解读",
-        "locallyAvailable": false
+        "method": "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
+        "locallyAvailable": true
       }
     },
     {
@@ -15064,7 +15077,7 @@
       "summaryReason": "",
       "summaryState": "captured",
       "summaryReasonCode": "",
-      "reviewedAt": "2026-10-10",
+      "reviewedAt": "2026-10-13",
       "action": "检查自己的 Agent：缺关键信息时是否会追问、工具失败时是否返回结构化错误而非编造、是否设置了最大步数和低置信度提示；逐项补上后用几个刁钻的测试请求验证。",
       "tools": [],
       "kind": "Note",
@@ -19297,6 +19310,90 @@
         {
           "label": "下载 ZIP",
           "url": "https://github.com/UditAkhourii/neuroarxiv/archive/refs/heads/master.zip"
+        }
+      ]
+    },
+    {
+      "id": "github-heloraai-hollandcut",
+      "name": "hollandcut",
+      "aliases": [
+        "hollandcut",
+        "HollandCut",
+        "heloraai/hollandcut"
+      ],
+      "type": "Agent Skill",
+      "description": "MIT；依赖 FFmpeg（需带 libx264）、whisper.cpp 与约 3.1GB 的 large-v3 模型、Node.js 和 Remotion，Windows 官方注明未实测；Remotion 对超过 3 人的公司商用需另购许可。开剪前会先出提案等你确认。",
+      "metric": "",
+      "metricNumeric": 6,
+      "metricIcon": "",
+      "attributes": [
+        {
+          "label": "许可证",
+          "value": "MIT"
+        },
+        {
+          "label": "Skill manifest",
+          "value": "SKILL.md"
+        },
+        {
+          "label": "核验日期",
+          "value": "2026-10-12"
+        },
+        {
+          "label": "兼容性",
+          "value": "Claude Code,Codex"
+        }
+      ],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/heloraai/hollandcut"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/heloraai/hollandcut/archive/refs/heads/main.zip"
+        }
+      ]
+    },
+    {
+      "id": "github-virgiliojr94-book-to-skill",
+      "name": "book-to-skill",
+      "aliases": [
+        "book-to-skill",
+        "book to skill",
+        "virgiliojr94/book-to-skill"
+      ],
+      "type": "Agent Skill",
+      "description": "MIT；转换在本机运行，只处理你有权使用的书或文档，生成的技能不要再分发受版权保护的内容。项目自己写明在 Claude Code 下不会原生发现生成的技能，这里只列 Codex。",
+      "metric": "",
+      "metricNumeric": 34653,
+      "metricIcon": "",
+      "attributes": [
+        {
+          "label": "许可证",
+          "value": "MIT"
+        },
+        {
+          "label": "Skill manifest",
+          "value": "SKILL.md"
+        },
+        {
+          "label": "核验日期",
+          "value": "2026-10-12"
+        },
+        {
+          "label": "兼容性",
+          "value": "Codex"
+        }
+      ],
+      "actions": [
+        {
+          "label": "官方仓库",
+          "url": "https://github.com/virgiliojr94/book-to-skill"
+        },
+        {
+          "label": "下载 ZIP",
+          "url": "https://github.com/virgiliojr94/book-to-skill/archive/refs/heads/master.zip"
         }
       ]
     }
