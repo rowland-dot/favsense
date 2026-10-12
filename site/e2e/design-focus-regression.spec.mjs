@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { backgroundsFromElement, compositeOver, contrastRatio, parseColor, resolveBackground } from "./contrast-support.mjs";
 
 async function tabTo(page, selector) {
   for (let index = 0; index < 20; index += 1) {
@@ -9,46 +10,23 @@ async function tabTo(page, selector) {
 }
 
 async function focusRingMetrics(locator) {
-  return locator.evaluate((element) => {
-    const parseColor = (value) => {
-      const rgb = value.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+))?/);
-      if (rgb) return { channels: rgb.slice(1, 4).map(Number), alpha: Number(rgb[4] || 1) };
-      const srgb = value.match(/^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?/);
-      if (srgb) return {
-        channels: srgb.slice(1, 4).map((channel) => Number(channel) * 255),
-        alpha: Number(srgb[4] || 1),
-      };
-      throw new Error(`Unsupported computed color: ${value}`);
-    };
-    const luminance = (channels) => {
-      const [red, green, blue] = channels.map((channel) => {
-        const value = channel / 255;
-        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-      });
-      return (0.2126 * red) + (0.7152 * green) + (0.0722 * blue);
-    };
+  const sample = await locator.evaluate((element, backgroundsSource) => {
+    const backgroundsFromElement = (0, eval)(`(${backgroundsSource})`);
     const style = getComputedStyle(element);
-    let ancestor = element.parentElement;
-    let background = null;
-    while (ancestor && !background) {
-      const value = getComputedStyle(ancestor).backgroundColor;
-      if (value !== "rgba(0, 0, 0, 0)") background = value;
-      ancestor = ancestor.parentElement;
-    }
-    const backgroundChannels = parseColor(background || getComputedStyle(document.body).backgroundColor).channels;
-    const foreground = parseColor(style.outlineColor);
-    const compositedForeground = foreground.channels.map(
-      (channel, index) => (channel * foreground.alpha) + (backgroundChannels[index] * (1 - foreground.alpha))
-    );
-    const foregroundLuminance = luminance(compositedForeground);
-    const backgroundLuminance = luminance(backgroundChannels);
     return {
-      contrast: (Math.max(foregroundLuminance, backgroundLuminance) + 0.05)
-        / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05),
-      style: style.outlineStyle,
-      width: Number.parseFloat(style.outlineWidth),
+      outlineColor: style.outlineColor,
+      outlineStyle: style.outlineStyle,
+      outlineWidth: style.outlineWidth,
+      backgrounds: backgroundsFromElement(element, false),
     };
-  });
+  }, backgroundsFromElement.toString());
+  const background = resolveBackground(sample.backgrounds, [255, 255, 255]);
+  const ring = compositeOver(parseColor(sample.outlineColor), background);
+  return {
+    contrast: contrastRatio(ring, background),
+    style: sample.outlineStyle,
+    width: Number.parseFloat(sample.outlineWidth),
+  };
 }
 
 async function expectAccessibleFocusRing(locator) {
