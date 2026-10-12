@@ -640,12 +640,18 @@ function countText(value) {
   return value === null ? "未知" : String(value || 0);
 }
 
+// Is a round still running? A staged status answers by its phases; only an old single-level reply
+// (or one the page builds itself, like "starting") answers by its state word.
+function manualSyncRunning(status) {
+  return status.schema_version === 2 && status.phases
+    ? Object.values(status.phases).some((phase) => phase.status === "running")
+    : ["starting", "running"].includes(status.state);
+}
+
 function renderManualSync(status = state.manualSync) {
   state.manualSync = status;
   const v2 = status.schema_version === 2 && status.phases;
-  const active = v2
-    ? Object.values(status.phases).some((phase) => phase.status === "running")
-    : ["starting", "running"].includes(status.state);
+  const active = manualSyncRunning(status);
   const completed = v2
     ? ["organization_ready", "published"].includes(status.state)
     : status.state === "completed";
@@ -733,10 +739,7 @@ async function refreshManualSyncStatus() {
   const status = validateLocalBridgeSyncStatus(await localBridgeRequest("/sync/status"), state.statusContract);
   renderManualSync(status);
   const v2 = status.schema_version === 2 && status.phases;
-  const active = v2
-    ? Object.values(status.phases).some((phase) => phase.status === "running")
-    : ["starting", "running"].includes(status.state);
-  if (!active) {
+  if (!manualSyncRunning(status)) {
     window.clearInterval(state.manualSyncPoll);
     state.manualSyncPoll = 0;
     const corePreserved = v2
@@ -770,7 +773,7 @@ function watchManualSync() {
 }
 
 async function startManualSync() {
-  if (!state.localBridge || !sopBrowserReady() || ["starting", "running"].includes(state.manualSync.state)) return;
+  if (!state.localBridge || !sopBrowserReady() || manualSyncRunning(state.manualSync)) return;
   elements.manualSyncStart.disabled = true;
   renderManualSync({ state: "starting" });
   try {
@@ -826,7 +829,7 @@ async function startLocalRebuild() {
 }
 
 async function startSingleNoteSync(noteId) {
-  if (!state.localBridge?.diandianAvailable || !sopBrowserReady() || ["starting", "running"].includes(state.manualSync.state)) return false;
+  if (!state.localBridge?.diandianAvailable || !sopBrowserReady() || manualSyncRunning(state.manualSync)) return false;
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(String(noteId || ""))) {
     showToast("这张卡无法开始本机校验");
     return false;
@@ -867,7 +870,7 @@ async function initBoardManager() {
     if (elements.dialog.open && openNote) renderDetail(openNote);
     elements.manualSyncControl.hidden = false;
     const syncStatus = await refreshManualSyncStatus();
-    if (["starting", "running"].includes(syncStatus.state)) watchManualSync();
+    if (manualSyncRunning(syncStatus)) watchManualSync();
   } catch (error) {
     state.localBridge = null;
     elements.boardEnabledCount.textContent = "仅限本机";
@@ -1099,7 +1102,7 @@ function renderDetail(note) {
       ? '<button type="button" disabled title="请先启动 FavSense 本地服务">请先启动 FavSense 本地服务</button>'
       : `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">在小红书搜索原帖</a>`;
   const singleNoteActionHtml = state.localBridge?.diandianAvailable && sopBrowserReady() ? `
-    <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${["starting", "running"].includes(state.manualSync.state) || state.manualSync.legacy_safety_stop ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
+    <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${manualSyncRunning(state.manualSync) || state.manualSync.legacy_safety_stop ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
   ` : state.localBridge
     ? '<button type="button" disabled title="请检查点点 Skill 设置">点点总结当前不可用</button>'
     : "";
@@ -1380,7 +1383,7 @@ function bindEvents() {
     if (summarizeButton) {
       summarizeButton.disabled = true;
       await startSingleNoteSync(summarizeButton.dataset.summarizeNote);
-      summarizeButton.disabled = ["starting", "running"].includes(state.manualSync.state) || Boolean(state.manualSync.legacy_safety_stop);
+      summarizeButton.disabled = manualSyncRunning(state.manualSync) || Boolean(state.manualSync.legacy_safety_stop);
       return;
     }
     const sourceButton = event.target.closest("[data-open-source-note]");

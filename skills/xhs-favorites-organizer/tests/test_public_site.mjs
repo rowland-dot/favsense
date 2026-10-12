@@ -981,7 +981,7 @@ test("local actions stay inert until the SOP scanner browser becomes ready, then
   const app = await read("site/app.js");
   const readyStart = app.indexOf("function sopBrowserReady()");
   const readyEnd = app.indexOf("\nfunction bookmarkIcon", readyStart);
-  const renderSyncStart = app.indexOf("function renderManualSync(status = state.manualSync)");
+  const renderSyncStart = app.indexOf("function manualSyncRunning(");
   const renderSyncEnd = app.indexOf("\nasync function refreshManualSyncStatus", renderSyncStart);
   const manualStart = app.indexOf("async function startManualSync()");
   const manualEnd = app.indexOf("\nasync function startSingleNoteSync", manualStart);
@@ -1146,7 +1146,12 @@ test("mounted note detail starts one local-only DianDian validation without chan
     : "";
   assert.ok(renderSource, "the production detail renderer must be available to mount");
 
+  const runningCheckStart = app.indexOf("function manualSyncRunning(");
+  const runningCheckSource = app.slice(runningCheckStart, app.indexOf("\nfunction renderManualSync", runningCheckStart)).trim();
+  assert.ok(runningCheckStart >= 0 && runningCheckSource, "the shared running check must be part of the production app");
+
   const rendered = runInNewContext(`${readySource}
+    ${runningCheckSource}
     ${localLocationSource}
     ${renderSource}
     renderDetail(note);
@@ -1255,6 +1260,7 @@ test("mounted note detail starts one local-only DianDian validation without chan
     }
     function watchManualSync() { events.push(["watch"]); }
     function showToast(message) { events.push(["toast", message]); }
+    ${runningCheckSource}
     ${readySource}
     ${startSource}
     ${listenerSource}
@@ -2438,7 +2444,7 @@ test("manual sync renders a safety stop as an explicit terminal warning", async 
   const readyEnd = app.indexOf("\nfunction bookmarkIcon", readyStart);
   const readySource = readyStart >= 0 && readyEnd > readyStart ? app.slice(readyStart, readyEnd).trim() : "";
   assert.ok(readySource);
-  const renderStart = app.indexOf("function renderManualSync(status = state.manualSync)");
+  const renderStart = app.indexOf("function manualSyncRunning(");
   const renderEnd = app.indexOf("async function refreshManualSyncStatus", renderStart);
   const renderSource = renderStart >= 0 && renderEnd > renderStart ? app.slice(renderStart, renderEnd).trim() : "";
   assert.ok(renderSource);
@@ -2526,6 +2532,9 @@ async function runCoreCompleteRefresh(terminalStatus) {
     ? app.slice(refreshStart, refreshEnd).trim()
     : "";
   assert.ok(refreshSource, "the production sync status transition must be available");
+  const runningCheckStart = app.indexOf("function manualSyncRunning(");
+  const runningCheckSource = app.slice(runningCheckStart, app.indexOf("\nfunction renderManualSync", runningCheckStart)).trim();
+  assert.ok(runningCheckStart >= 0 && runningCheckSource, "the shared running check must be part of the production app");
 
   return JSON.parse(await runInNewContext(`
     const terminalStatus = ${JSON.stringify(terminalStatus)};
@@ -2550,6 +2559,7 @@ async function runCoreCompleteRefresh(terminalStatus) {
       events.push(["render", status.state, status.core_completed]);
     }
     function showToast(message) { events.push(["toast", message]); }
+    ${runningCheckSource}
     ${refreshSource}
     (async () => {
       const status = await refreshManualSyncStatus();

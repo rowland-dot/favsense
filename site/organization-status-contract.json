@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "overall_states": ["core_completed", "organization_partial", "organization_ready", "published", "completed_with_warnings", "failed", "safety_stopped"],
+  "overall_states": ["core_running", "core_completed", "organization_partial", "organization_ready", "published", "completed_with_warnings", "failed", "safety_stopped"],
   "phase_statuses": {
     "core": ["not_started", "not_required", "running", "completed", "failed", "safety_stopped"],
     "summary": ["not_required", "not_started", "running", "completed", "partial", "failed", "batch_aborted", "stale", "safety_stopped"],
