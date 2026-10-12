@@ -11,6 +11,7 @@ import re
 
 CONTRACT_PATH = Path(__file__).parents[3] / "site" / "organization-status-contract.json"
 HASH = re.compile(r"^[a-f0-9]{64}$")
+LEGACY_DIANDIAN_HALT_ERROR = "DianDian CDP summarization stopped; core import was preserved."
 
 
 def _contract():
@@ -100,10 +101,13 @@ def project_legacy_manual_state(value):
         run_id = "legacy-run"
     run = new_run_state(run_id)
     legacy_state = value.get("state")
+    # An earlier version recorded a stopped summary step as a failed run carrying only this text.
+    old_halt = legacy_state == "failed" and value.get("error") == LEGACY_DIANDIAN_HALT_ERROR
     core_completed = (
         value.get("core_completed") is True
         or value.get("core_imported") is True
         or legacy_state == "completed"
+        or old_halt
     )
     # A stop that hit before the core import finished belongs to the core phase; the summary was never reached.
     core_stopped = legacy_state == "safety-stopped" and not core_completed
@@ -123,9 +127,9 @@ def project_legacy_manual_state(value):
     elif failed or (
         legacy_state == "failed"
         and core_completed
-        and value.get("summary_halt_reason")
+        and (value.get("summary_halt_reason") or old_halt)
     ):
-        reason = "transport_failed" if value.get("summary_halt_reason") in {"transport-failed", "transport_failed"} else "contract_invalid"
+        reason = "transport_failed" if old_halt or value.get("summary_halt_reason") in {"transport-failed", "transport_failed"} else "contract_invalid"
         run = transition_phase(run, "summary", "failed", reason)
     elif value.get("summary_finalizing") is True or value.get("summary_plan_pending") is True or value.get("summary_pending", 0):
         run = transition_phase(run, "summary", "running")

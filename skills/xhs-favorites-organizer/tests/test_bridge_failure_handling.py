@@ -216,7 +216,6 @@ class MediaFailureTest(unittest.TestCase):
 class FailureReportRecordedFlagTest(unittest.TestCase):
     def make_bridge(self, root):
         bridge = bridge_support.make_bridge(BRIDGE, root)
-        bridge.organization_status_v2_enabled = False
         batch = "manualflag"
         run_id = bridge.manual_run_id(batch, "board")
         BRIDGE.atomic_json(bridge.manual_sync_path, {
@@ -246,7 +245,7 @@ class FailureReportRecordedFlagTest(unittest.TestCase):
             finally:
                 bridge.processing_lock.release()
         self.assertIs(status["recorded"], False)
-        self.assertEqual(status["state"], "running")
+        self.assertEqual(status["phases"]["core"]["status"], "running")
 
     def test_a_failure_report_on_an_already_finished_run_is_not_recorded(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -202,9 +202,6 @@ DIANDIAN_HALT_DIAGNOSTICS = {
         "请检查保留的失败页面后重试。"
     ),
 }
-LEGACY_DIANDIAN_HALT_ERROR = (
-    "DianDian CDP summarization stopped; core import was preserved."
-)
 EMPTY_DIAGNOSTIC_ERROR = "No diagnostic output was returned."
 MANUAL_SYNC_FALLBACK_ERROR = "请检查 SOP 扫描浏览器的登录状态后再次整理。"
 DETAIL_NOTE_FIELDS = frozenset({
@@ -2457,7 +2454,6 @@ class Bridge:
         self.skill_dir = raw_skill_dir.resolve()
         self.config_path = raw_config_path.resolve()
         ORGANIZATION_STATE._contract()
-        self.organization_status_v2_enabled = True
         config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
         self.profile_url = normalize_profile_url(config.get("profile_url"))
         self.all_boards = []
@@ -2929,44 +2925,9 @@ class Bridge:
                         value,
                         "上一次整理未正常结束，已自动解除锁定；请重新点击一键整理。",
                     )
-        allowed = {
-            "state", "started_at", "completed_at", "board_count", "processed_boards",
-            "current_board", "scanned", "new", "error", "publish_status",
-            "summarized", "summary_total", "summary_pending", "summary_failed",
-            "summary_batch_aborted",
-            "summary_plan_pending", "summary_finalizing", "summary_finalize_error",
-            "core_completed", "summary_halt_reason",
-        }
-        public = {key: value[key] for key in allowed if key in value}
-        if "error" in public:
-            public["error"] = sanitize_manual_sync_error(public["error"])
-        if (
-            public.get("state") == "failed"
-            and public.get("error") == LEGACY_DIANDIAN_HALT_ERROR
-        ):
-            public.update({
-                "core_completed": True,
-                "summary_halt_reason": "transport-failed",
-                "error": DIANDIAN_HALT_DIAGNOSTICS["transport-failed"],
-            })
-        if "summary_finalize_error" in public:
-            public["summary_finalize_error"] = sanitize_error(
-                public["summary_finalize_error"]
-            )
-        if "core_completed" in public and not isinstance(
-            public["core_completed"], bool
-        ):
-            public.pop("core_completed")
-        if "summary_halt_reason" in public:
-            try:
-                public["summary_halt_reason"] = normalize_diandian_halt_reason(
-                    public["summary_halt_reason"]
-                )
-            except ValueError:
-                public.pop("summary_halt_reason")
-        if self.organization_status_v2_enabled and value.get("state") != "idle":
-            return ORGANIZATION_STATE.public_status(value)
-        return public
+        if value.get("state") == "idle":
+            return {"state": "idle"}
+        return ORGANIZATION_STATE.public_status(value)
 
     def open_sop_browser_page(self, url: str, *, activate: bool = True) -> dict:
         destination = validate_xiaohongshu_browser_url(url)
@@ -3259,11 +3220,10 @@ class Bridge:
             resolved_plans = state.get("summary_plan_resolved_run_ids")
             if not isinstance(resolved_plans, list):
                 resolved_plans = []
-            summary_plan_pending = bool(
-                # Every v2 run waits for its plan, even with DianDian off: the plan is where the
-                # run learns it has nothing left to summarize and owes its final build.
-                (self.diandian_enabled or self.organization_status_v2_enabled)
-                and run_id not in resolved_plans
+            # Every run waits for its plan, even with DianDian off: the plan is where the run
+            # learns it has nothing left to summarize and owes its final build.
+            summary_plan_pending = (
+                run_id not in resolved_plans
                 and run_id not in self.summary_plans
             )
             outcome = result.get("state")
@@ -3990,8 +3950,7 @@ class Bridge:
     def final_build_is_due(self, state: dict, run_id: str, core_result: dict) -> bool:
         """The last board has nothing left to summarize, so the run's final build is owed."""
         return (
-            self.organization_status_v2_enabled
-            and not core_result.get("next_board_id")
+            not core_result.get("next_board_id")
             and state.get("state") in {"starting", "running"}
             and not self.diandian_is_halted(run_id)
         )

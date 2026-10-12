@@ -176,9 +176,8 @@ class EveryEndingHasTheSameFieldsTests(unittest.TestCase):
 
 
 class UnknownCountsReachTheStatusTests(unittest.TestCase):
-    def manual_bridge(self, root: Path, *, v2: bool):
+    def manual_bridge(self, root: Path):
         bridge = bridge_support.make_bridge(BRIDGE, root)
-        bridge.organization_status_v2_enabled = v2
         BRIDGE.atomic_json(bridge.manual_sync_path, {
             "batch": "manualunknown", "state": "running",
             "started_at": BRIDGE.datetime.now().astimezone().isoformat(),
@@ -188,7 +187,7 @@ class UnknownCountsReachTheStatusTests(unittest.TestCase):
 
     def test_an_unknown_new_count_stays_unknown_in_the_round_total(self):
         with tempfile.TemporaryDirectory() as directory:
-            bridge = self.manual_bridge(Path(directory), v2=False)
+            bridge = self.manual_bridge(Path(directory))
             bridge.record_manual_result(
                 bridge.manual_run_id("manualunknown", "board"), "board",
                 {"state": "safety-stopped", "scanned": 31, "new": None},
@@ -196,11 +195,10 @@ class UnknownCountsReachTheStatusTests(unittest.TestCase):
             state = bridge.read_manual_sync()
             self.assertEqual(state["scanned"], 35)
             self.assertIsNone(state["new"])
-            self.assertIsNone(bridge.manual_sync_status()["new"])
 
     def test_the_organization_status_shows_an_unknown_new_count_as_null(self):
         with tempfile.TemporaryDirectory() as directory:
-            bridge = self.manual_bridge(Path(directory), v2=True)
+            bridge = self.manual_bridge(Path(directory))
             bridge.record_manual_result(
                 bridge.manual_run_id("manualunknown", "board"), "board",
                 {"state": "safety-stopped", "scanned": 31, "new": None},
@@ -211,7 +209,7 @@ class UnknownCountsReachTheStatusTests(unittest.TestCase):
 
     def test_known_counts_still_add_up(self):
         with tempfile.TemporaryDirectory() as directory:
-            bridge = self.manual_bridge(Path(directory), v2=False)
+            bridge = self.manual_bridge(Path(directory))
             bridge.record_manual_result(
                 bridge.manual_run_id("manualunknown", "board"), "board",
                 {"state": "safety-stopped", "scanned": 3, "new": 1},

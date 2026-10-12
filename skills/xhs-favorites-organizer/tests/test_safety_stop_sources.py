@@ -43,7 +43,6 @@ def read_record(state_dir: Path) -> dict:
 
 def bridge_with_round(root: Path, **options):
     bridge = bridge_support.make_bridge(BRIDGE, root, **options)
-    bridge.organization_status_v2_enabled = False
     bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
     return bridge
 
@@ -144,7 +143,7 @@ class EveryStopLeavesARecordTests(unittest.TestCase):
             # The round that just ended in the stop shows its own wording, and the stop is already
             # the next round's leftover, so the workbench is also told how to clear it.
             status = bridge.manual_sync_status()
-            self.assertEqual(status["state"], "safety-stopped")
+            self.assertEqual(status["state"], "safety_stopped")
             self.assertEqual(status["legacy_safety_stop"]["phase"], "page")
 
     def test_a_stop_reported_by_the_diandian_step_is_recorded_as_diandian(self):
