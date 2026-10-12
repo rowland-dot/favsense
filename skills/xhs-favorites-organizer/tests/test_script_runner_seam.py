@@ -74,5 +74,38 @@ class ImportThroughTheRunnerTests(unittest.TestCase):
             self.assertEqual(result["note_ids"], sorted([KNOWN_ID, NEW_ID]))
 
 
+class AWiringMistakeIsNotHiddenTests(unittest.TestCase):
+    """The service is built whole, so a missing piece is a mistake to see, never a default to fall back on."""
+
+    def started(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        bridge = make_bridge(BRIDGE, Path(directory.name))
+        BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": "manual", "state": "running"})
+        return bridge
+
+    def test_a_piece_the_start_did_not_set_up_makes_the_public_operation_fail(self):
+        state = {"batch": "manual", "state": "running", "processed_run_ids": []}
+        operations = {
+            "board_order": lambda bridge: bridge.run_board_order("manual"),
+            "boards": lambda bridge: bridge.manual_state_owns_run(state, "manual_board", "board"),
+            "summary_plans": lambda bridge: bridge.manual_run_ids_for_state(state),
+            "processing_lock": lambda bridge: bridge.manual_sync_status(),
+            "summary_locks_guard": lambda bridge: bridge.diandian_is_halted("manual_board"),
+        }
+        for attribute, operate in operations.items():
+            with self.subTest(attribute=attribute):
+                bridge = self.started()
+                delattr(bridge, attribute)
+                with self.assertRaises(AttributeError):
+                    operate(bridge)
+
+    def test_the_local_rebuild_lock_and_thread_table_exist_from_the_start(self):
+        bridge = self.started()
+        self.assertEqual(bridge.local_rebuild_threads, {})
+        self.assertIs(bridge.get_local_rebuild_lock(), bridge.get_local_rebuild_lock())
+        self.assertTrue(hasattr(bridge, "_local_rebuild_lock"))
+
+
 if __name__ == "__main__":
     unittest.main()
