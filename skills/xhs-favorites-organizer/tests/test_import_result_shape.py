@@ -9,9 +9,11 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
-import threading
 import unittest
 from unittest import mock
+
+import bridge_support
+from bridge_support import completed
 
 
 MODULE_PATH = Path(__file__).parents[1] / "scripts" / "bridge-server.py"
@@ -36,18 +38,7 @@ def url(note_id: str) -> str:
 
 
 def make_bridge(root: Path, known=(KNOWN_ID,)):
-    bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-    bridge.workspace = root
-    bridge.state_dir = root / ".xhs-favorites"
-    bridge.status_path = bridge.state_dir / "bridge-status.json"
-    bridge.catalog_path = root / "catalog.json"
-    bridge.python = Path("python")
-    bridge.fetcher = Path("fetch-xhs-details.py")
-    bridge.xhs_dir = root / "xhs"
-    bridge.organizer = Path("organize.mjs")
-    bridge.boards = {"board": "Board"}
-    bridge.board_order = ["board"]
-    bridge.published_since = None
+    bridge = bridge_support.make_bridge(BRIDGE, root)
     bridge.cache_missing_media = mock.Mock(
         return_value={"queued": 0, "downloaded": 0, "safety_stopped": False}
     )
@@ -60,30 +51,22 @@ def make_bridge(root: Path, known=(KNOWN_ID,)):
     return bridge
 
 
-def run_import(bridge, unique, *, fetch=None, organizer_catalog=None):
+def run_import(bridge, unique, *, fetch=None):
     """Drive process_import and return the result it wrote for the run."""
-    patches = []
-    if fetch is not None:
-        completed = mock.Mock(returncode=0, stdout=json.dumps(fetch), stderr="")
-        patches.append(mock.patch.object(BRIDGE, "run_bounded_subprocess", return_value=completed))
-    else:
-        patches.append(mock.patch.object(BRIDGE, "run_bounded_subprocess"))
 
-    def organize(*_args, **kwargs):
-        payload = json.loads(kwargs["input"])
+    def respond(command, **options):
+        if fetch is not None and "fetch-xhs-details.py" in " ".join(command):
+            return completed(json.dumps(fetch))
+        if "organize.mjs" not in " ".join(command):
+            raise AssertionError(f"unexpected helper script call: {command}")
+        payload = json.loads(options["input_text"])
         existing = json.loads(bridge.catalog_path.read_text(encoding="utf-8"))
         existing["notes"].update({note["note_id"]: note for note in payload["notes"]})
         BRIDGE.atomic_json(bridge.catalog_path, existing)
-        return mock.Mock(returncode=0, stdout="", stderr="")
+        return completed()
 
-    patches.append(mock.patch.object(BRIDGE.subprocess, "run", side_effect=organize))
-    for patch in patches:
-        patch.start()
-    try:
-        bridge.process_import("manual_board", "board", unique)
-    finally:
-        for patch in reversed(patches):
-            patch.stop()
+    bridge.script_runner.respond = respond
+    bridge.process_import("manual_board", "board", unique)
     return json.loads(
         (bridge.state_dir / "runs" / "manual_board.json").read_text(encoding="utf-8")
     )
@@ -194,11 +177,7 @@ class EveryEndingHasTheSameFieldsTests(unittest.TestCase):
 
 class UnknownCountsReachTheStatusTests(unittest.TestCase):
     def manual_bridge(self, root: Path, *, v2: bool):
-        bridge = BRIDGE.Bridge.__new__(BRIDGE.Bridge)
-        bridge.manual_sync_path = root / "manual-sync.json"
-        bridge.boards = {"board": "Board"}
-        bridge.board_order = ["board"]
-        bridge.summary_plans = {}
+        bridge = bridge_support.make_bridge(BRIDGE, root)
         bridge.organization_status_v2_enabled = v2
         BRIDGE.atomic_json(bridge.manual_sync_path, {
             "batch": "manualunknown", "state": "running",

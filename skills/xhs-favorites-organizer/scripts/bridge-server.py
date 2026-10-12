@@ -2396,6 +2396,38 @@ def run_bounded_subprocess(
     )
 
 
+class BoundedScriptRunner:
+    """The production script runner: each helper script is a child process with bounded output.
+
+    The sync service runs every helper script through one runner handed to it at start. A caller
+    gives the command, the standard input, the working folder, the environment, the timeout and a
+    limit for each output pipe, and gets back what `run_bounded_subprocess` returns.
+    """
+
+    def run(
+        self,
+        command: list[str],
+        *,
+        input_text: str,
+        cwd: Path,
+        env: dict[str, str] | None,
+        timeout: float,
+        stdout_limit: int,
+        stderr_limit: int,
+        cancelled=None,
+    ) -> subprocess.CompletedProcess[str]:
+        return run_bounded_subprocess(
+            command,
+            input_text=input_text,
+            cwd=cwd,
+            env=env,
+            timeout=timeout,
+            stdout_limit=stdout_limit,
+            stderr_limit=stderr_limit,
+            cancelled=cancelled,
+        )
+
+
 class Bridge:
     def __init__(
         self,
@@ -2404,7 +2436,9 @@ class Bridge:
         config_path: Path,
         sop_runtime: Path,
         port: int,
+        script_runner=None,
     ) -> None:
+        self.script_runner = script_runner if script_runner is not None else BoundedScriptRunner()
         raw_workspace = require_plain_directory(workspace, "workspace")
         raw_skill_dir = require_plain_directory(skill_dir, "Skill directory")
         raw_config_path = require_plain_file(config_path, "configuration")
@@ -4467,7 +4501,7 @@ class Bridge:
             "-MaxItems", "1", "-NoteId", note_id,
         ]
         try:
-            completed = run_bounded_subprocess(
+            completed = self.script_runner.run(
                 command,
                 input_text="",
                 cwd=self.workspace,
@@ -5477,7 +5511,7 @@ class Bridge:
 
     def run_media_downloader(self, urls: list[str], report: Path, safety_stop: Path) -> dict:
         try:
-            completed = run_bounded_subprocess(
+            completed = self.script_runner.run(
                 [
                     str(self.python), "-X", "utf8", str(self.media_fetcher),
                     "--signed-urls-stdin",
@@ -5923,7 +5957,7 @@ class Bridge:
                     "--site-manifest-sha256", site_manifest_sha256,
                     "--config", str(self.config_path),
                 ])
-            published = run_bounded_subprocess(
+            published = self.script_runner.run(
                 command,
                 input_text="",
                 cwd=self.workspace,
@@ -6085,7 +6119,7 @@ class Bridge:
                     "version": catalog.get("version", 1),
                     "notes": scoped_notes,
                 })
-                completed = run_bounded_subprocess(
+                completed = self.script_runner.run(
                     [
                         str(resolve_node_executable(getattr(self, "node", None))),
                         str(self.organizer),
@@ -6183,7 +6217,7 @@ class Bridge:
             ])
         if self.resource_registry is not None:
             command.extend(["--resources", str(self.resource_registry)])
-        completed = run_bounded_subprocess(
+        completed = self.script_runner.run(
             command,
             input_text="",
             cwd=self.workspace,
@@ -6319,7 +6353,7 @@ class Bridge:
             "resources": resources,
             "effective_date": datetime.now(timezone.utc).date().isoformat(),
         })
-        completed = run_bounded_subprocess(
+        completed = self.script_runner.run(
             [
                 str(resolve_node_executable(getattr(self, "node", None))),
                 str(self.curation_pipeline),
@@ -6411,7 +6445,7 @@ class Bridge:
                 )
                 return
 
-            fetch = run_bounded_subprocess(
+            fetch = self.script_runner.run(
                 [
                     str(self.python), "-X", "utf8", str(self.fetcher),
                     "--xhs-dir", str(self.xhs_dir), "--max-items", str(len(pending)),
@@ -6469,15 +6503,14 @@ class Bridge:
                 catalog_snapshot = self.catalog_path.read_bytes() if self.catalog_path.exists() else None
                 report_snapshot = report.read_bytes() if report.exists() else None
                 try:
-                    organized = subprocess.run(
+                    organized = self.script_runner.run(
                         organize_args,
-                        input=json.dumps({"notes": fetched_notes}, ensure_ascii=False),
-                        text=True,
-                        encoding="utf-8",
-                        capture_output=True,
+                        input_text=json.dumps({"notes": fetched_notes}, ensure_ascii=False),
                         cwd=self.workspace,
+                        env=None,
                         timeout=120,
-                        check=False,
+                        stdout_limit=64 * 1024,
+                        stderr_limit=64 * 1024,
                     )
                     if organized.returncode != 0:
                         raise RuntimeError(f"organizer failed: {sanitize_error(organized.stderr)}")
