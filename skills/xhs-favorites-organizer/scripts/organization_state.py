@@ -129,7 +129,7 @@ def project_legacy_manual_state(value):
         run = transition_phase(run, "summary", "completed" if captured else "not_required")
     run["counts"].update({
         "scanned": max(0, int(value.get("scanned", 0) or 0)),
-        "new": max(0, int(value.get("new", 0) or 0)),
+        "new": None if value.get("new", 0) is None else max(0, int(value.get("new", 0) or 0)),
         "summary_captured": captured,
         "summary_failed": failed,
         "summary_batch_aborted": aborted,

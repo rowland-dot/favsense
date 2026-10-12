@@ -89,6 +89,44 @@ for (const [name, expected] of [
   });
 }
 
+test("a leftover safety stop is shown on load and blocks starting until the operator clears it", async ({ page }) => {
+  await scenario(page, "legacy-safety-stop");
+  const requested = [];
+  page.on("request", (request) => requested.push(`${request.method()} ${new URL(request.url()).pathname}`));
+  await page.goto("/");
+  await page.getByRole("button", { name: "同步设置" }).click();
+  const control = page.locator("#manual-sync-control");
+  await expect(control).toContainText("2026-08-29 的安全停止尚未清除");
+  await expect(control).toContainText("媒体或详情");
+  await expect(control).not.toContainText("已扫描");
+  await expect(control).not.toContainText("新增");
+  await expect(page.getByRole("button", { name: "开始整理" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "仅本地重建" })).toBeEnabled();
+  expect(requested).not.toContain("POST /sync/start");
+
+  await page.getByRole("button", { name: "已确认恢复，清除并继续" }).click();
+  await expect.poll(() => requested).toContain("POST /sync/safety-stop/clear");
+  await expect(page.getByRole("button", { name: "已确认恢复，清除并继续" })).toBeHidden();
+  await expect(control).not.toContainText("尚未清除");
+  expect(requested).not.toContain("POST /sync/start");
+});
+
+test("a start the bridge refuses because of a leftover stop shows the date instead of a generic failure", async ({ page }) => {
+  await scenario(page, "legacy-safety-stop");
+  await page.route("**/sync/status", async (route) => {
+    // The bridge learned of the leftover only after the page loaded: the first reads are clean.
+    if (route.request().method() !== "GET") return route.fallback();
+    await route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "http://127.0.0.1:8766" }, body: JSON.stringify({ ok: true, state: "idle" }) });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "同步设置" }).click();
+  await page.getByRole("button", { name: "开始整理" }).click();
+  const control = page.locator("#manual-sync-control");
+  await expect(control).toContainText("2026-08-29 的安全停止尚未清除");
+  await expect(control).not.toContainText("本次整理未完成");
+  await expect(page.getByRole("button", { name: "已确认恢复，清除并继续" })).toBeVisible();
+});
+
 test("local note detail shows captured summary as pending review without publishing it", async ({ page }) => {
   await scenario(page, "success");
   await page.goto("/");

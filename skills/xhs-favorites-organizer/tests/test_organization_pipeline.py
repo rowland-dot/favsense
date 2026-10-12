@@ -190,12 +190,20 @@ class OrganizationPipelineTests(unittest.TestCase):
             bridge.state_dir = pathlib.Path(temporary)
             bridge.manual_sync_path = bridge.state_dir / "manual-sync.json"
             bridge.manual_sync_path.write_text(
-                json.dumps({"state": "failed"}), encoding="utf-8"
+                json.dumps({"state": "failed", "started_at": "2026-10-12T09:00:00+00:00"}),
+                encoding="utf-8",
             )
 
             self.assertFalse(bridge.fallback_safety_stopped())
+            # A stop recorded after the round began cancels offline work; one left from an earlier
+            # round does not (that case is covered in test_safety_stop_offline_work.py).
             (bridge.state_dir / "media-download-safety-stop.json").write_text(
-                "{}", encoding="utf-8"
+                json.dumps({
+                    "stopped_at": "2026-10-12T09:30:00+00:00",
+                    "reason": "platform-safety-limit",
+                    "phase": "media",
+                }),
+                encoding="utf-8",
             )
             self.assertTrue(bridge.fallback_safety_stopped())
 
@@ -401,9 +409,17 @@ class OrganizationPipelineTests(unittest.TestCase):
                 persisted_safety = bridge.dispatch_evidence_fallback(
                     "a" * 24, "transport-failed"
                 )
-                bridge.manual_sync_path.unlink()
+                bridge.manual_sync_path.write_text(
+                    json.dumps({"state": "failed", "started_at": "2026-10-12T09:00:00+00:00"}),
+                    encoding="utf-8",
+                )
                 (state_dir / "media-download-safety-stop.json").write_text(
-                    "{}", encoding="utf-8"
+                    json.dumps({
+                        "stopped_at": "2026-10-12T09:30:00+00:00",
+                        "reason": "platform-safety-limit",
+                        "phase": "media",
+                    }),
+                    encoding="utf-8",
                 )
                 marker_safety = bridge.dispatch_evidence_fallback(
                     "a" * 24, "transport-failed"

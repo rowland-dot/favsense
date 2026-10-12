@@ -157,46 +157,45 @@ if ($ocrEnabled -and ($requestedNoteIds.Count -or (Test-Path -LiteralPath $manua
     } else {
         $null
     }
-    if (-not $manualState -or $manualState.state -notin @('safety-stopped', 'safety_stopped')) {
-        if (-not $python) { throw 'A local Python runtime is required for image OCR.' }
-        $python = Assert-PlainLeafPath $python 'Local Python'
-        $ocrEngine = [System.IO.Path]::GetFullPath((Join-Path $workspacePath ([string]$ocr.engine)))
-        $workspacePrefix = $workspacePath.TrimEnd(
-            [System.IO.Path]::DirectorySeparatorChar,
-            [System.IO.Path]::AltDirectorySeparatorChar
-        ) + [System.IO.Path]::DirectorySeparatorChar
-        if (-not $ocrEngine.StartsWith(
-            $workspacePrefix,
-            [System.StringComparison]::OrdinalIgnoreCase
-        )) {
-            throw 'OCR engine must stay inside the workspace.'
+    # Local OCR never touches the platform, so a safety stop recorded by the last round does not skip it.
+    if (-not $python) { throw 'A local Python runtime is required for image OCR.' }
+    $python = Assert-PlainLeafPath $python 'Local Python'
+    $ocrEngine = [System.IO.Path]::GetFullPath((Join-Path $workspacePath ([string]$ocr.engine)))
+    $workspacePrefix = $workspacePath.TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    ) + [System.IO.Path]::DirectorySeparatorChar
+    if (-not $ocrEngine.StartsWith(
+        $workspacePrefix,
+        [System.StringComparison]::OrdinalIgnoreCase
+    )) {
+        throw 'OCR engine must stay inside the workspace.'
+    }
+    if (Test-Path -LiteralPath $ocrEngine -PathType Leaf) {
+        $ocrEngine = Assert-PlainLeafPath $ocrEngine 'OCR engine'
+        $ocrRunner = Assert-PlainLeafPath (
+            Join-Path $PSScriptRoot 'extract-pending-image-text.py'
+        ) 'OCR runner'
+        $ocrArguments = @(
+            $ocrRunner,
+            '--media-dir', $mediaDirectory,
+            '--analysis-dir', $analysisDirectory,
+            '--engine', $ocrEngine,
+            '--catalog', $catalog,
+            '--report', (Join-Path $workspacePath '.xhs-favorites\image-ocr-status.json')
+        )
+        $ocrNoteIds = if ($requestedNoteIds.Count) {
+            $requestedNoteIds
+        } else {
+            @($manualState.frozen_scope.note_ids)
         }
-        if (Test-Path -LiteralPath $ocrEngine -PathType Leaf) {
-            $ocrEngine = Assert-PlainLeafPath $ocrEngine 'OCR engine'
-            $ocrRunner = Assert-PlainLeafPath (
-                Join-Path $PSScriptRoot 'extract-pending-image-text.py'
-            ) 'OCR runner'
-            $ocrArguments = @(
-                $ocrRunner,
-                '--media-dir', $mediaDirectory,
-                '--analysis-dir', $analysisDirectory,
-                '--engine', $ocrEngine,
-                '--catalog', $catalog,
-                '--report', (Join-Path $workspacePath '.xhs-favorites\image-ocr-status.json')
-            )
-            $ocrNoteIds = if ($requestedNoteIds.Count) {
-                $requestedNoteIds
-            } else {
-                @($manualState.frozen_scope.note_ids)
+        foreach ($requestedNoteId in $ocrNoteIds) {
+            if ([string]$requestedNoteId -match '^[a-f0-9]{24}$') {
+                $ocrArguments += @('--note-id', $requestedNoteId)
             }
-            foreach ($requestedNoteId in $ocrNoteIds) {
-                if ([string]$requestedNoteId -match '^[a-f0-9]{24}$') {
-                    $ocrArguments += @('--note-id', $requestedNoteId)
-                }
-            }
-            & $python @ocrArguments
-            if ($LASTEXITCODE -ne 0) { throw 'Local image OCR failed.' }
         }
+        & $python @ocrArguments
+        if ($LASTEXITCODE -ne 0) { throw 'Local image OCR failed.' }
     }
 }
 

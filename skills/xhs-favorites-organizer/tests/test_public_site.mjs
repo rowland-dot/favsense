@@ -1022,6 +1022,7 @@ test("local actions stay inert until the SOP scanner browser becomes ready, then
     const elements = {
       manualSyncControl: { classList: { toggle() {} } },
       manualSyncStart: makeTextNode(),
+      manualSyncClearStop: makeTextNode(),
       manualSyncLocalRebuild: makeTextNode(),
       manualSyncTitle: makeTextNode(),
       manualSyncDetail: makeTextNode(),
@@ -2441,6 +2442,7 @@ test("manual sync renders a safety stop as an explicit terminal warning", async 
   const elements = {
     manualSyncControl: { classList: { toggle(name, value) { classes.set(name, value); } } },
     manualSyncStart: textNode(),
+    manualSyncClearStop: textNode(),
     manualSyncLocalRebuild: textNode(),
     manualSyncTitle: textNode(),
     manualSyncDetail: textNode(),

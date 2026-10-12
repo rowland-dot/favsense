@@ -1,5 +1,6 @@
 import { resourceGroup, resourceSortsForGroup, sortResources, validateResourceIndex } from "./resource-utils.mjs";
 import {
+  validateLegacySafetyStop,
   validateLocalBridgeBoards,
   validateLocalBridgeConfig,
   validateLocalNoteOrganizationStatus,
@@ -183,6 +184,7 @@ const elements = {
   boardManagerStatus: document.querySelector("#board-manager-status"),
   manualSyncControl: document.querySelector("#manual-sync-control"),
   manualSyncStart: document.querySelector("#manual-sync-start"),
+  manualSyncClearStop: document.querySelector("#manual-sync-clear-stop"),
   manualSyncLocalRebuild: document.querySelector("#manual-sync-local-rebuild"),
   manualSyncTitle: document.querySelector("#manual-sync-title"),
   manualSyncDetail: document.querySelector("#manual-sync-detail"),
@@ -598,7 +600,9 @@ async function localBridgeRequest(path, options = {}) {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || payload.ok !== true) {
-      throw new Error(normalizeLocalBridgeDiagnostic(payload.error) || `HTTP ${response.status}`);
+      const failure = new Error(normalizeLocalBridgeDiagnostic(payload.error) || `HTTP ${response.status}`);
+      failure.payload = payload;
+      throw failure;
     }
     return payload;
   } catch (error) {
@@ -631,6 +635,11 @@ function renderBoardManager() {
   }).join("");
 }
 
+// A count the bridge could not determine arrives as null and is shown as unknown, never as zero.
+function countText(value) {
+  return value === null ? "未知" : String(value || 0);
+}
+
 function renderManualSync(status = state.manualSync) {
   state.manualSync = status;
   const v2 = status.schema_version === 2 && status.phases;
@@ -642,10 +651,13 @@ function renderManualSync(status = state.manualSync) {
     : status.state === "completed";
   const failed = status.state === "failed" && !active;
   const safetyStopped = ["safety-stopped", "safety_stopped"].includes(status.state);
+  const leftoverStop = active ? null : (status.legacy_safety_stop || null);
   elements.manualSyncControl.classList.toggle("is-running", active);
   elements.manualSyncControl.classList.toggle("is-complete", completed);
-  elements.manualSyncControl.classList.toggle("is-failed", failed || safetyStopped);
-  elements.manualSyncStart.disabled = active || !sopBrowserReady();
+  elements.manualSyncControl.classList.toggle("is-failed", failed || safetyStopped || Boolean(leftoverStop));
+  elements.manualSyncStart.disabled = active || !sopBrowserReady() || Boolean(leftoverStop);
+  elements.manualSyncClearStop.hidden = !leftoverStop;
+  elements.manualSyncClearStop.disabled = false;
   elements.manualSyncLocalRebuild.disabled = active;
   elements.manualSyncLocalRebuild.textContent = active && v2 && status.phases.core.status === "not_required" ? "重建中…" : "仅本地重建";
   elements.manualSyncStart.textContent = active
@@ -690,8 +702,8 @@ function renderManualSync(status = state.manualSync) {
       elements.manualSyncDetail.textContent = copy.local_rebuild_detail;
     } else {
       elements.manualSyncDetail.textContent = phases.core.status === "completed"
-        ? `${copy.core_completed}；已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`
-        : `已扫描 ${status.counts.scanned} 条，新增 ${status.counts.new} 条。`;
+        ? `${copy.core_completed}；已扫描 ${status.counts.scanned} 条，新增 ${countText(status.counts.new)} 条。`
+        : `已扫描 ${status.counts.scanned} 条，新增 ${countText(status.counts.new)} 条。`;
     }
   } else if (status.state === "starting") {
     elements.manualSyncTitle.textContent = "正在使用 SOP 小红书扫描浏览器";
@@ -711,7 +723,7 @@ function renderManualSync(status = state.manualSync) {
       : status.publish_status === "unchanged"
         ? "，Hugging Face 内容无变化"
         : "";
-    elements.manualSyncDetail.textContent = `共扫描 ${status.scanned || 0} 条，新增 ${status.new || 0} 条；本地知识库与网页已经更新${publishMessage}。`;
+    elements.manualSyncDetail.textContent = `共扫描 ${status.scanned || 0} 条，新增 ${countText(status.new)} 条；本地知识库与网页已经更新${publishMessage}。`;
   } else if (failed) {
     elements.manualSyncTitle.textContent = status.core_completed === true
       ? "核心整理已完成，点点增强未完成"
@@ -727,6 +739,25 @@ function renderManualSync(status = state.manualSync) {
     elements.manualSyncDetail.textContent = sopBrowserReady()
       ? "点击一次即可同步已开启的收藏夹、增量去重，并更新知识库与公开网页。"
       : "SOP 扫描浏览器未就绪。请先启动并登录该浏览器；FavSense 不会改用主浏览器或另建登录窗口。";
+  }
+  if (leftoverStop) {
+    // An earlier round's stop is still on record: say so before anything about counts, and offer the one way forward.
+    const notice = leftoverStop.date ? `${leftoverStop.date} 的安全停止尚未清除` : "有一条安全停止尚未清除";
+    if (!safetyStopped) elements.manualSyncTitle.textContent = notice;
+    elements.manualSyncDetail.textContent = `${safetyStopped ? `${notice}。` : ""}触发阶段：${leftoverStop.phase_label}。确认小红书访问已恢复后，再点“已确认恢复，清除并继续”；清除前不会访问小红书，“仅本地重建”不受影响。`;
+  }
+}
+
+function reportStartRefusal(error) {
+  // The bridge refuses a start while an earlier round's safety stop is uncleared; that is not a failed run.
+  if (!error.payload?.legacy_safety_stop) return false;
+  try {
+    const leftover = validateLegacySafetyStop(error.payload.legacy_safety_stop);
+    renderManualSync({ state: "idle", legacy_safety_stop: leftover });
+    showToast("有一条安全停止尚未清除，没有开始整理");
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -787,8 +818,29 @@ async function startManualSync() {
     watchManualSync();
     showToast("已在 SOP 扫描浏览器中开始整理收藏");
   } catch (error) {
+    if (reportStartRefusal(error)) return;
     renderManualSync({ state: "failed", error: error.message });
     showToast("没有开始整理");
+  }
+}
+
+async function clearSafetyStopAndStart() {
+  if (!state.localBridge || elements.manualSyncClearStop.hidden || elements.manualSyncClearStop.disabled) return;
+  elements.manualSyncClearStop.disabled = true;
+  try {
+    const reply = await localBridgeRequest("/sync/safety-stop/clear", { method: "POST", body: "{}" });
+    const status = validateLocalBridgeSyncStatus(reply.status, state.statusContract);
+    renderManualSync(status);
+    if (reply.cleared !== true) {
+      showToast("没有需要清除的安全停止");
+      return;
+    }
+    state.manualSyncStartedHere = true;
+    watchManualSync();
+    showToast("安全停止记录已归档保留，已开始整理");
+  } catch (error) {
+    renderManualSync({ state: "failed", error: error.message });
+    showToast("没有清除安全停止");
   }
 }
 
@@ -827,6 +879,7 @@ async function startSingleNoteSync(noteId) {
     showToast("已在 SOP 扫描浏览器中仅校验并重新总结这张卡；不会发布");
     return true;
   } catch (error) {
+    if (reportStartRefusal(error)) return false;
     renderManualSync({ state: "failed", error: error.message });
     showToast("没有开始这张卡的本机校验");
     return false;
@@ -1082,7 +1135,7 @@ function renderDetail(note) {
       ? '<button type="button" disabled title="请先启动 FavSense 本地服务">请先启动 FavSense 本地服务</button>'
       : `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">在小红书搜索原帖</a>`;
   const singleNoteActionHtml = state.localBridge?.diandianAvailable && sopBrowserReady() ? `
-    <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${["starting", "running"].includes(state.manualSync.state) ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
+    <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${["starting", "running"].includes(state.manualSync.state) || state.manualSync.legacy_safety_stop ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
   ` : state.localBridge
     ? '<button type="button" disabled title="请检查点点 Skill 设置">点点总结当前不可用</button>'
     : "";
@@ -1363,7 +1416,7 @@ function bindEvents() {
     if (summarizeButton) {
       summarizeButton.disabled = true;
       await startSingleNoteSync(summarizeButton.dataset.summarizeNote);
-      summarizeButton.disabled = ["starting", "running"].includes(state.manualSync.state);
+      summarizeButton.disabled = ["starting", "running"].includes(state.manualSync.state) || Boolean(state.manualSync.legacy_safety_stop);
       return;
     }
     const sourceButton = event.target.closest("[data-open-source-note]");
@@ -1409,6 +1462,7 @@ function bindEvents() {
   });
   elements.personalExport.addEventListener("click", exportPersonalData);
   elements.manualSyncStart.addEventListener("click", startManualSync);
+  elements.manualSyncClearStop.addEventListener("click", clearSafetyStopAndStart);
   elements.manualSyncLocalRebuild.addEventListener("click", startLocalRebuild);
   elements.personalImport.addEventListener("click", () => elements.personalImportInput.click());
   elements.personalImportInput.addEventListener("change", async () => {
