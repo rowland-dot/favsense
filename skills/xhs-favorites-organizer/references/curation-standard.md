@@ -52,6 +52,9 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 1. 标题、标签和短简介只能作为线索，不能代替图片正文。
 2. 必须完成图片文字提取或人工复核后才可标记为 `accepted`；审计方法分别写为 `image_ocr` 或 `image_review`。
 3. 图片不可用时标记为 `pending` 并说明缺少 `image-text`；不得用常识补写内容。
+4. 点点总结单独不足以接受图文笔记：质量门要求审计方法含 `image_ocr` 或 `image_review`。
+5. 本地 OCR 读取媒体缓存里该笔记的全部图片（`<笔记ID>.<扩展名>` 或一张一个文件的 `<笔记ID>_<序号>.<扩展名>`），按序号数值顺序把各页文字拼成一份 `visual-ocr.json`；某页没有文字（引擎非 0 退出且两路输出都为空）算空白页并跳过，任何一页真正出错则整篇失败。已有同正文版本、同引擎版本的工件不会重写。
+6. 私有配置 `image_ocr.output_encoding` 声明引擎输出文字的编码，缺省 `utf-8`；打包的 Windows 引擎按系统代码页输出，需写 `gbk`。解码是严格的，不认识的编码名会报错，不会回落或用替换字符补。
 
 ### 评论
 

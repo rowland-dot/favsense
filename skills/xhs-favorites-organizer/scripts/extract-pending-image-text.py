@@ -5,6 +5,7 @@
 import argparse
 import ctypes
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -20,8 +21,14 @@ from datetime import datetime, timezone
 
 NOTE_ID = re.compile(r"^[a-f0-9]{24}$")
 HASH = re.compile(r"^[a-f0-9]{64}$")
-IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_OCR_BYTES = 800_000
+
+# Which cached files are a note's images is decided in one place, shared with the sync service.
+_CACHED_IMAGES_SPEC = importlib.util.spec_from_file_location(
+    "favsense_cached_images", Path(__file__).with_name("cached_images.py")
+)
+CACHED_IMAGES = importlib.util.module_from_spec(_CACHED_IMAGES_SPEC)
+_CACHED_IMAGES_SPEC.loader.exec_module(CACHED_IMAGES)
 
 
 def _is_plain_path(path: Path, expected_mode: int) -> bool:
@@ -196,7 +203,9 @@ def _stop_process_tree(process, job):
         process.kill()
 
 
-def _run_engine(command, popen_factory=subprocess.Popen, *, timeout=60, max_bytes=MAX_OCR_BYTES):
+def _run_engine(
+    command, popen_factory=subprocess.Popen, *, timeout=60, max_bytes=MAX_OCR_BYTES, encoding="utf-8"
+):
     options = {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE}
     if os.name == "nt":
         options["creationflags"] = (
@@ -221,6 +230,7 @@ def _run_engine(command, popen_factory=subprocess.Popen, *, timeout=60, max_byte
     deadline = time.monotonic() + timeout
     output = bytearray()
     overflow = threading.Event()
+    stderr_bytes = [0]
 
     def drain(stream, capture):
         total = 0
@@ -238,6 +248,8 @@ def _run_engine(command, popen_factory=subprocess.Popen, *, timeout=60, max_byte
         except (OSError, ValueError):
             pass
         finally:
+            if capture is None:
+                stderr_bytes[0] = total
             stream.close()
 
     readers = [
@@ -274,10 +286,40 @@ def _run_engine(command, popen_factory=subprocess.Popen, *, timeout=60, max_byte
         return returncode, "", "ocr_output_too_large"
     if reason:
         return returncode, "", reason
+    # The engine exits non-zero with nothing on either stream for a picture with no text on it; a broken or
+    # missing picture leaves a stack trace on stderr. Only the first is a blank page.
+    if returncode != 0 and not output and not stderr_bytes[0]:
+        return returncode, "", "ocr_no_text"
+    # Strict on purpose: bytes that are not in the declared encoding fail the page; nothing is guessed or replaced.
     try:
-        return returncode, output.decode("utf-8"), ""
+        return returncode, output.decode(encoding), ""
     except UnicodeDecodeError:
         return returncode, "", "ocr_failed"
+
+
+def _current_extraction(path: Path, content_sha256: str, tool_version: str) -> str:
+    """The result hash of an artifact that already holds this note's text for this revision and engine, else ''."""
+    if not _is_plain_file(path):
+        return ""
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ""
+    text = value.get("text") if isinstance(value, dict) else None
+    if (
+        isinstance(value, dict)
+        and value.get("schema_version") == 1
+        and value.get("status") == "extracted"
+        and value.get("method") == "local_image_ocr"
+        and value.get("provider") == "configured-local-engine"
+        and value.get("content_sha256") == content_sha256
+        and value.get("tool_version") == tool_version
+        and isinstance(text, str)
+        and text
+        and value.get("result_sha256") == hashlib.sha256(text.encode("utf-8")).hexdigest()
+    ):
+        return value["result_sha256"]
+    return ""
 
 
 def extract_cached_images(
@@ -288,7 +330,13 @@ def extract_cached_images(
     allowed_note_ids: set[str],
     content_sha256_by_id: dict[str, str] | None = None,
     runner=subprocess.Popen,
+    engine_encoding: str = "utf-8",
+    image_note_ids: set[str] | None = None,
 ):
+    try:
+        "".encode(engine_encoding)  # rejects an unknown name and a non-text codec such as rot13
+    except LookupError as error:
+        raise ValueError(f"image_ocr.output_encoding is not a text encoding: {engine_encoding!r}") from error
     allowed = {note_id for note_id in allowed_note_ids if NOTE_ID.fullmatch(str(note_id))}
     revisions = {
         note_id: str(content_sha256).strip()
@@ -305,46 +353,67 @@ def extract_cached_images(
         raise ValueError("OCR analysis directory is unavailable or redirected")
     records = []
     failed = 0
-    candidates = sorted(
-        path for path in media_dir.iterdir()
-        if (
-            _is_plain_file(path)
-            and path.suffix.lower() in IMAGE_SUFFIXES
-            and path.stem in revisions
-        )
-    ) if _is_plain_directory(media_dir) else []
-    for image in candidates:
-        content_sha256 = revisions[image.stem]
-        note_dir = analysis_dir / image.stem
+    # A note's cached images, in page order: `<id>.jpg` is one page, `<id>_<n>.jpeg` is page n.
+    pages = {}
+    if _is_plain_directory(media_dir):
+        for path in media_dir.iterdir():
+            parsed = CACHED_IMAGES.image_page(path.name)
+            if parsed and parsed[0] in revisions and _is_plain_file(path):
+                pages.setdefault(parsed[0], []).append((parsed[1], path.name, path))
+    candidates = {
+        note_id: [path for _, _, path in sorted(pages[note_id])] for note_id in sorted(pages)
+    }
+    for note_id, images in candidates.items():
+        content_sha256 = revisions[note_id]
+        note_dir = analysis_dir / note_id
         note_dir.mkdir(parents=True, exist_ok=True)
         if not _is_plain_directory(note_dir):
             failed += 1
             records.append({
-                "note_id": image.stem,
+                "note_id": note_id,
                 "status": "failed",
                 "reason_code": "ocr_output_path_unavailable",
             })
             continue
         artifact_path = note_dir / "visual-ocr.json"
+        output_error = ""
+        page_texts = []
         try:
             tool_version = ocr_tool_version(engine)
         except (OSError, ValueError):
             tool_version = "unavailable"
-            returncode, output, output_error = 1, "", "ocr_engine_changed"
+            output_error = "ocr_engine_changed"
         else:
-            try:
-                returncode, output, output_error = _run_engine(
-                    [str(engine), str(image)], runner
-                )
-            except (OSError, subprocess.TimeoutExpired):
-                returncode, output, output_error = 1, "", "ocr_failed"
+            # Rewriting an accepted note's evidence changes its evidence version, so a current artifact is left alone.
+            current = _current_extraction(artifact_path, content_sha256, tool_version)
+            if current:
+                records.append({"note_id": note_id, "status": "extracted", "result_sha256": current})
+                continue
+            for image in images:
+                try:
+                    returncode, output, output_error = _run_engine(
+                        [str(engine), str(image)], runner, encoding=engine_encoding
+                    )
+                except (OSError, subprocess.TimeoutExpired):
+                    returncode, output, output_error = 1, "", "ocr_failed"
+                if output_error == "ocr_no_text":
+                    output_error = ""  # a picture with no text on it is a blank page, not a failure
+                    continue
+                if returncode != 0 and not output_error:
+                    output_error = "ocr_failed"
+                if output_error:
+                    break
+                page_texts.append(re.sub(r"\s+", " ", output).strip())
             try:
                 current_tool_version = ocr_tool_version(engine)
             except (OSError, ValueError):
                 current_tool_version = ""
             if current_tool_version != tool_version:
-                returncode, output, output_error = 1, "", "ocr_engine_changed"
-        if returncode != 0 or output_error:
+                output_error = "ocr_engine_changed"
+        text = " ".join(page for page in page_texts if page)
+        if not output_error and (not text or len(text) > 200_000):
+            output_error = "ocr_empty"
+        if output_error:
             failed += 1
             _atomic_json(artifact_path, {
                 "schema_version": 1,
@@ -354,27 +423,9 @@ def extract_cached_images(
                 "tool_version": tool_version,
                 "content_sha256": content_sha256,
                 "captured_at": datetime.now(timezone.utc).isoformat(),
-                "reason_code": output_error or "ocr_failed",
+                "reason_code": output_error,
             })
-            records.append({
-                "note_id": image.stem, "status": "failed",
-                "reason_code": output_error or "ocr_failed",
-            })
-            continue
-        text = re.sub(r"\s+", " ", output).strip()
-        if not text or len(text) > 200_000:
-            failed += 1
-            _atomic_json(artifact_path, {
-                "schema_version": 1,
-                "status": "failed",
-                "method": "local_image_ocr",
-                "provider": "configured-local-engine",
-                "tool_version": tool_version,
-                "content_sha256": content_sha256,
-                "captured_at": datetime.now(timezone.utc).isoformat(),
-                "reason_code": "ocr_empty",
-            })
-            records.append({"note_id": image.stem, "status": "failed", "reason_code": "ocr_empty"})
+            records.append({"note_id": note_id, "status": "failed", "reason_code": output_error})
             continue
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
         _atomic_json(artifact_path, {
@@ -388,8 +439,18 @@ def extract_cached_images(
             "captured_at": datetime.now(timezone.utc).isoformat(),
             "text": text,
         })
-        records.append({"note_id": image.stem, "status": "extracted", "result_sha256": digest})
-    return {"status": "completed" if not failed else "partial", "processed": len(candidates) - failed, "failed": failed, "records": records}
+        records.append({"note_id": note_id, "status": "extracted", "result_sha256": digest})
+    # An image note that was asked for but has no cached image was not read. Say so, so the report never
+    # reads "completed, 0 processed" for a run that read nothing.
+    missing = sorted((set(image_note_ids or ()) & set(revisions)) - set(candidates))
+    records.extend({"note_id": note_id, "status": "skipped", "reason_code": "no_cached_images"} for note_id in missing)
+    return {
+        "status": "completed" if not failed and not missing else "partial",
+        "processed": len(candidates) - failed,
+        "failed": failed,
+        "missing": len(missing),
+        "records": records,
+    }
 
 
 def main():
@@ -397,6 +458,7 @@ def main():
     parser.add_argument("--media-dir", required=True)
     parser.add_argument("--analysis-dir", required=True)
     parser.add_argument("--engine")
+    parser.add_argument("--engine-encoding", default="utf-8")
     parser.add_argument("--catalog", required=True)
     parser.add_argument("--note-id", action="append", default=[])
     parser.add_argument("--report", required=True)
@@ -410,6 +472,11 @@ def main():
         Path(options.analysis_dir),
         engine=Path(options.engine) if options.engine else None,
         allowed_note_ids=set(options.note_id),
+        engine_encoding=options.engine_encoding,
+        image_note_ids={
+            note_id for note_id, note in notes.items()
+            if isinstance(note, dict) and note.get("type") == "图文"
+        },
         content_sha256_by_id={
             note_id: note.get("content_sha256")
             for note_id, note in notes.items()
@@ -417,7 +484,10 @@ def main():
         },
     )
     _atomic_json(Path(options.report), result)
-    print(json.dumps({key: result[key] for key in ("status", "processed", "failed")}, ensure_ascii=False))
+    print(json.dumps(
+        {key: result[key] for key in ("status", "processed", "failed", "missing") if key in result},
+        ensure_ascii=False,
+    ))
 
 
 if __name__ == "__main__":

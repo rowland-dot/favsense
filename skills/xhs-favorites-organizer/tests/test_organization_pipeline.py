@@ -436,6 +436,75 @@ class OrganizationPipelineTests(unittest.TestCase):
             self.assertEqual(result["curation_status"], "pending_review")
             self.assertEqual(result["reason_code"], "ocr_unavailable")
 
+    def test_bridge_sees_a_multi_image_note_as_cached_images(self):
+        # The names come from the table the extractor is tested with (IMAGE_NAME_CASES in test_image_text_extraction.py).
+        bridge_module = load_bridge_module()
+        note_id = "a" * 24
+        for name, expected in (
+            (f"{note_id}_1.jpeg", "ocr_unavailable"),
+            (f"{note_id}_10.png", "ocr_unavailable"),
+            (f"{note_id}.jpg", "ocr_unavailable"),
+            (f"{note_id}.mp4", "transcription_unavailable"),
+            (f"{note_id}_x.jpg", "evidence_missing"),
+            (f"{'b' * 24}_1.jpeg", "evidence_missing"),
+        ):
+            with self.subTest(cached=name), tempfile.TemporaryDirectory() as temporary:
+                runner = ScriptRunnerDouble()
+                bridge = make_bridge(
+                    bridge_module, pathlib.Path(temporary), script_runner=runner,
+                    config={"image_ocr": {"enabled": True}},
+                )
+                bridge.media_dir.mkdir(parents=True, exist_ok=True)
+                (bridge.media_dir / name).write_bytes(b"cached")
+
+                result = bridge.dispatch_evidence_fallback(note_id, "transport-failed")
+
+                self.assertEqual(runner.calls, [])
+                self.assertEqual(result["reason_code"], expected)
+
+    def test_bridge_dispatches_image_text_for_a_note_cached_as_numbered_pages(self):
+        bridge_module = load_bridge_module()
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = pathlib.Path(temporary)
+            runner = ScriptRunnerDouble()
+            note_id = "a" * 24
+            (workspace / "ocr").mkdir()
+            (workspace / "ocr" / "engine.exe").write_bytes(b"engine")
+            bridge = make_bridge(
+                bridge_module, workspace, script_runner=runner,
+                config={"image_ocr": {"enabled": True, "engine": "ocr/engine.exe"}},
+            )
+            bridge.media_dir.mkdir(parents=True, exist_ok=True)
+            (bridge.media_dir / f"{note_id}_1.jpeg").write_bytes(b"cached")
+            (bridge.media_dir / f"{note_id}_2.jpeg").write_bytes(b"cached")
+            bridge.powershell = workspace / "powershell.exe"
+            bridge.powershell.write_bytes(b"tool")
+            bridge.trusted_content_sha256 = lambda candidate: "b" * 64
+            artifact = bridge.state_dir / "video-analysis" / note_id / "visual-ocr.json"
+            text = "两页图片里读到的文字"
+
+            def run_offline(command, **kwargs):
+                self.assertIn(note_id, command)
+                artifact.parent.mkdir(parents=True)
+                artifact.write_text(json.dumps({
+                    "schema_version": 1,
+                    "status": "extracted",
+                    "method": "local_image_ocr",
+                    "provider": "configured-local-engine",
+                    "tool_version": "fixture",
+                    "content_sha256": "b" * 64,
+                    "result_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                    "text": text,
+                }), encoding="utf-8")
+                return completed("{}")
+
+            runner.respond = run_offline
+            result = bridge.dispatch_evidence_fallback(note_id, "transport-failed")
+
+            self.assertEqual(len(runner.calls), 1)
+            self.assertEqual(result["evidence_status"], "ready")
+            self.assertEqual(result["methods"], ["image_ocr"])
+
     def test_revision_changes_stale_only_the_dependent_dimensions(self):
         state = load_state_module()
         body_change = state.revision_transitions(
