@@ -16,6 +16,7 @@ import {
   sealedCandidateFor,
 } from "./curation-quality.mjs";
 import { confirmedSkillResource } from "./resource-quality.mjs";
+import { worktreeBase } from "./worktree-base.mjs";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const workspace = path.resolve(path.dirname(scriptPath), "../../..");
@@ -83,9 +84,10 @@ export function requirePrivateOutput(output) {
   ], { encoding: "utf8", windowsHide: true });
   if (repository.status !== 0) throw new Error("Git privacy status could not be verified");
   const root = path.resolve(repository.stdout.trim());
-  const relative = path.relative(root, path.resolve(output));
+  const base = worktreeBase(current, root);
+  const relative = path.relative(base, path.resolve(output));
   if (!relative || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) throw new Error("Knowledge base output must stay inside the Git worktree");
-  assertPlainOutputAncestors(root, output);
+  assertPlainOutputAncestors(base, output);
   const gitPrefix = ["-c", `safe.directory=${root}`, "-C", root];
   const tracked = spawnSync("git", [...gitPrefix, "ls-files", "--error-unmatch", "--", relative], { encoding: "utf8", windowsHide: true });
   if (tracked.status === 0) throw new Error("Knowledge base output is tracked by Git; remove it from the index before rebuilding");

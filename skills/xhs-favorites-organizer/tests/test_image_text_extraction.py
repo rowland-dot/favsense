@@ -15,6 +15,27 @@ SCRIPT = Path(__file__).parents[1] / "scripts" / "extract-pending-image-text.py"
 RUNNER = Path(__file__).parents[1] / "scripts" / "run-video-analysis.ps1"
 
 
+def process_is_running(pid):
+    if os.name == "nt":
+        listing = subprocess.run(
+            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+            capture_output=True, text=True, check=False,
+        )
+        return str(pid) in listing.stdout
+    stat = Path(f"/proc/{pid}/stat")
+    if stat.parent.parent.exists():
+        try:
+            # A zombie has exited; only its parent has yet to collect it.
+            return stat.read_text(encoding="utf-8").rsplit(")", 1)[1].split()[0] != "Z"
+        except FileNotFoundError:
+            return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+
+
 def load_module():
     spec = importlib.util.spec_from_file_location("image_text", SCRIPT)
     module = importlib.util.module_from_spec(spec)
@@ -236,7 +257,7 @@ class ImageTextExtractionTests(unittest.TestCase):
             self.assertEqual(artifact["method"], "local_image_ocr")
             self.assertEqual(artifact["provider"], "configured-local-engine")
             self.assertEqual(
-                artifact["tool_version"], module.ocr_tool_version(Path(sys.executable))
+                artifact["tool_version"], module.ocr_tool_version(Path(sys.executable).resolve())
             )
             self.assertEqual(artifact["reason_code"], "ocr_output_too_large")
             self.assertNotIn("text", artifact)
@@ -258,17 +279,25 @@ class ImageTextExtractionTests(unittest.TestCase):
     def test_pipe_inheriting_descendant_cannot_hold_the_extractor_open(self):
         module = load_module()
         executable = str(Path(sys.executable).resolve())
-        child = (
-            "import subprocess,sys; "
-            "subprocess.Popen([sys.executable,'-c','import time; time.sleep(5)'],"
-            "stdout=sys.stdout,stderr=sys.stderr)"
-        )
-        started = time.monotonic()
-        _, _, reason = module._run_engine(
-            [executable, "-c", child], timeout=1, max_bytes=65536,
-        )
-        self.assertEqual(reason, "")
-        self.assertLess(time.monotonic() - started, 2)
+        with tempfile.TemporaryDirectory() as directory:
+            pid_file = Path(directory) / "descendant.pid"
+            child = (
+                "import subprocess,sys; "
+                "p=subprocess.Popen([sys.executable,'-c','import time; time.sleep(5)'],"
+                "stdout=sys.stdout,stderr=sys.stderr); "
+                f"open({str(pid_file)!r},'w').write(str(p.pid))"
+            )
+            started = time.monotonic()
+            _, _, reason = module._run_engine(
+                [executable, "-c", child], timeout=1, max_bytes=65536,
+            )
+            self.assertEqual(reason, "")
+            self.assertLess(time.monotonic() - started, 2)
+            descendant = int(pid_file.read_text(encoding="utf-8"))
+        deadline = time.monotonic() + 2
+        while process_is_running(descendant) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        self.assertFalse(process_is_running(descendant), "the descendant must not outlive the engine run")
 
     @unittest.skipUnless(os.name == "nt", "Windows suspended-launch contract")
     def test_fast_parent_cannot_outrun_windows_job_assignment(self):

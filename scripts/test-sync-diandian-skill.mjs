@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import test from "node:test";
 
 import { syncDiandianSkill } from "./sync-diandian-skill.mjs";
@@ -250,4 +250,53 @@ test("refuses to write an absolute Skill path into a tracked configuration", asy
     sync(target, { configPath: trackedConfig }),
     /tracked configuration file/,
   );
+});
+
+function shortNameOf(directory) {
+  if (process.platform !== "win32") return directory;
+  const result = spawnSync("cmd.exe", ["/d", "/c", `for %I in ("${directory}") do @echo %~sI`], {
+    encoding: "utf8",
+    windowsHide: true,
+    windowsVerbatimArguments: true,
+  });
+  return result.status === 0 && result.stdout.trim() ? result.stdout.trim() : directory;
+}
+
+async function repositoryConfigViaShortPath(target, { tracked }) {
+  const repository = join(target.root, "workspace-with-a-long-folder-name");
+  const config = join(repository, "config", "xhs-favorites.json");
+  await mkdir(dirname(config), { recursive: true });
+  await writeFile(config, `${JSON.stringify({ version: 1, diandian: { enabled: true } })}\n`, "utf8");
+  await writeFile(join(repository, ".gitignore"), "config/xhs-favorites.json\n", "utf8");
+  assert.equal(spawnSync("git", ["init", repository], { windowsHide: true }).status, 0);
+  if (tracked) {
+    assert.equal(spawnSync("git", ["-C", repository, "add", "-f", "config/xhs-favorites.json"], { windowsHide: true }).status, 0);
+  }
+  const shortRoot = shortNameOf(target.root);
+  const shortRepository = join(shortRoot, basename(shortNameOf(repository)));
+  return { config, shortConfig: join(shortRepository, "config", "xhs-favorites.json"), shortRepository };
+}
+
+test("accepts an ignored configuration reached through an 8.3 short path", async (t) => {
+  const target = await fixture();
+  const { config, shortConfig, shortRepository } = await repositoryConfigViaShortPath(target, { tracked: false });
+  if (shortRepository.toLowerCase() === dirname(dirname(config)).toLowerCase()) {
+    t.skip("this machine does not create 8.3 short names for new folders");
+    return;
+  }
+
+  await sync(target, { configPath: shortConfig });
+
+  assert.match(await readFile(config, "utf8"), /xhs-diandian-summarize-note/);
+});
+
+test("still refuses a tracked configuration reached through an 8.3 short path", async (t) => {
+  const target = await fixture();
+  const { config, shortConfig, shortRepository } = await repositoryConfigViaShortPath(target, { tracked: true });
+  if (shortRepository.toLowerCase() === dirname(dirname(config)).toLowerCase()) {
+    t.skip("this machine does not create 8.3 short names for new folders");
+    return;
+  }
+
+  await assert.rejects(sync(target, { configPath: shortConfig }), /tracked configuration file/);
 });
