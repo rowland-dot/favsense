@@ -2033,6 +2033,73 @@
         "https://github.com/UditAkhourii/neuroarxiv",
         "https://www.divergent.sh/blog/neuroarxiv-never-build-from-scratch"
       ]
+    },
+    {
+      "id": "github-heloraai-hollandcut",
+      "name": "hollandcut",
+      "aliases": [
+        "hollandcut",
+        "HollandCut",
+        "heloraai/hollandcut"
+      ],
+      "type": "Agent Skill",
+      "canonical_repo": "heloraai/hollandcut",
+      "repo": "https://github.com/heloraai/hollandcut",
+      "download": "https://github.com/heloraai/hollandcut/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "skill_manifest": "SKILL.md",
+      "verified_at": "2026-10-12",
+      "stars_numeric": 6,
+      "compatibility": [
+        "Claude Code",
+        "Codex"
+      ],
+      "compatibility_evidence": [
+        "README.md"
+      ],
+      "status": "verified",
+      "usage_note": "MIT；依赖 FFmpeg（需带 libx264）、whisper.cpp 与约 3.1GB 的 large-v3 模型、Node.js 和 Remotion，Windows 官方注明未实测；Remotion 对超过 3 人的公司商用需另购许可。开剪前会先出提案等你确认。",
+      "source_urls": [
+        "https://github.com/heloraai/hollandcut",
+        "https://github.com/heloraai/hollandcut/blob/main/README.md",
+        "https://github.com/heloraai/hollandcut/blob/main/SKILL.md",
+        "https://github.com/heloraai/hollandcut/archive/refs/heads/main.zip"
+      ],
+      "resource_identity_sha256": "3c770675904aeb4286d5cf674cba237afccf2f75ac6cca0aa7fb9edddcd27707",
+      "verification_snapshot_sha256": "fb41e9fd3c541a1cdffec99304114ebab4c0c141dc7a310ebc190bb50bc5a4dc"
+    },
+    {
+      "id": "github-virgiliojr94-book-to-skill",
+      "name": "book-to-skill",
+      "aliases": [
+        "book-to-skill",
+        "book to skill",
+        "virgiliojr94/book-to-skill"
+      ],
+      "type": "Agent Skill",
+      "canonical_repo": "virgiliojr94/book-to-skill",
+      "repo": "https://github.com/virgiliojr94/book-to-skill",
+      "download": "https://github.com/virgiliojr94/book-to-skill/archive/refs/heads/master.zip",
+      "license": "MIT",
+      "skill_manifest": "SKILL.md",
+      "verified_at": "2026-10-12",
+      "stars_numeric": 34653,
+      "compatibility": [
+        "Codex"
+      ],
+      "compatibility_evidence": [
+        "README.md"
+      ],
+      "status": "verified",
+      "usage_note": "MIT；转换在本机运行，只处理你有权使用的书或文档，生成的技能不要再分发受版权保护的内容。项目自己写明在 Claude Code 下不会原生发现生成的技能，这里只列 Codex。",
+      "source_urls": [
+        "https://github.com/virgiliojr94/book-to-skill",
+        "https://github.com/virgiliojr94/book-to-skill/blob/master/README.md",
+        "https://github.com/virgiliojr94/book-to-skill/blob/master/SKILL.md",
+        "https://github.com/virgiliojr94/book-to-skill/archive/refs/heads/master.zip"
+      ],
+      "resource_identity_sha256": "c32d695f6d43a461daae42d209833cc5094b002105bd7efc17ef95144599155f",
+      "verification_snapshot_sha256": "d094b08f16265c8178b05e3986e889bcb5ab80d1bd2da1d46d6b16ea45c0651b"
     }
   ]
 }
