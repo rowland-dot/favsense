@@ -7,11 +7,16 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import re
+import time
 
 
 CONTRACT_PATH = Path(__file__).parents[3] / "site" / "organization-status-contract.json"
 HASH = re.compile(r"^[a-f0-9]{64}$")
 LEGACY_DIANDIAN_HALT_ERROR = "DianDian CDP summarization stopped; core import was preserved."
+# How long a read waits for a file Windows refuses because it is being swapped or held. Same budget as
+# the sync service's atomic write (bridge-server.py FILE_CLASH_WAIT_SECONDS): the busiest measured
+# wait was a quarter of a second.
+FILE_CLASH_WAIT_SECONDS = 2
 
 
 def _contract():
@@ -433,17 +438,53 @@ def apply_event(record, name, data=None):
     return _build_record(handler(working, **(data or {})), previous=record)
 
 
+def read_text_waiting(path, encoding="utf-8-sig"):
+    """Read a file, waiting briefly while Windows refuses it because it is being swapped or held.
+
+    Only a `PermissionError` is waited on; a missing file and every other failure are raised at once,
+    and so is the refusal itself once the wait is over.
+    """
+    deadline = None  # the clock is only read once a read has actually been refused
+    while True:
+        try:
+            return Path(path).read_text(encoding=encoding)
+        except PermissionError:
+            now = time.monotonic()
+            deadline = now + FILE_CLASH_WAIT_SECONDS if deadline is None else deadline
+            if now >= deadline:
+                raise
+            time.sleep(0.01)
+
+
 def load_record(path):
+    """The record for a read-only look: anything that cannot be read, even after the wait, is no record."""
     try:
-        value = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+        value = json.loads(read_text_waiting(path))
     except (OSError, json.JSONDecodeError):
         return None
     return value if isinstance(value, dict) else None
 
 
+def _load_record_to_update(path):
+    """The record an event is about to be applied to. Absent is None; present but unreadable raises."""
+    try:
+        text = read_text_waiting(path)
+    except FileNotFoundError:
+        return None
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
 def report_event(path, name, data, write):
-    """Apply one event to the record at `path` and store it with `write` (the caller's atomic writer)."""
-    updated = apply_event(load_record(path), name, data)
+    """Apply one event to the record at `path` and store it with `write` (the caller's atomic writer).
+
+    A record that exists but cannot be read raises instead of being rebuilt from nothing: the write
+    would otherwise replace a whole round with the fields of this one event.
+    """
+    updated = apply_event(_load_record_to_update(path), name, data)
     write(path, updated)
     return updated
 
