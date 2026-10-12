@@ -244,7 +244,9 @@ test("accepts a documented human image review as image body evidence", () => {
 test("DianDian summary is valid body evidence for video and image without bypassing comments", () => {
   for (const type of ["视频", "图文"]) {
     const input = fixture({ type });
-    input.audit.notes[input.id].evidence_methods = ["description", "comments", "diandian_summary"];
+    // An image note also needs read image text; the summary alone no longer accepts it (image-text-evidence-required.test.mjs).
+    const imageText = type === "图文" ? ["image_ocr"] : [];
+    input.audit.notes[input.id].evidence_methods = ["description", "comments", "diandian_summary", ...imageText];
     input.audit.notes[input.id].diandian_summary_sha256 = "a".repeat(64);
     let result = auditCuration(input);
     assert.deepEqual(result.fatal, []);
@@ -331,7 +333,8 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
     assert.equal(review.items[0].diandian_summary_text.includes("EvidenceTool"), true);
     assert.equal(review.items[0].content_sha256, "a".repeat(64));
     assert.match(review.items[0].diandian_summary_sha256, /^[a-f0-9]{64}$/);
-    assert.equal(review.items[0].blockers.includes("image-text-review-required"), false);
+    // The summary is carried as evidence, but an image note still needs read image text before it can be accepted.
+    assert.equal(review.items[0].blockers.includes("image-text-review-required"), true);
     assert.deepEqual(review.items[0].evidence_methods, ["description", "comments", "diandian_summary"]);
     assert.equal(review.items[0].tool_checks[0].mentioned_in_evidence, true);
 

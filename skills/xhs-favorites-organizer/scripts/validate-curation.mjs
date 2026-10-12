@@ -133,7 +133,9 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
       if (note.type === "视频" && !methods.some((method) => ["audio_transcript", "visual_ocr", "image_ocr", "video_analysis", "diandian_summary"].includes(method))) {
         errors.push("video-body-evidence-missing");
       }
-      if (note.type === "图文" && !methods.some((method) => ["image_ocr", "image_review", "diandian_summary"].includes(method))) {
+      // curation-standard.md: an image note needs image text that was read (image_ocr) or checked by a person
+      // (image_review). The DianDian summary alone is not enough (owner ruling on issue 56, 2026-10-13).
+      if (note.type === "图文" && !methods.some((method) => ["image_ocr", "image_review"].includes(method))) {
         errors.push("image-text-evidence-missing");
       }
       if (entry) {

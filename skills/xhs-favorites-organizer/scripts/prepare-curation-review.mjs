@@ -290,7 +290,7 @@ export function prepareReview({
     if (!candidate) blockers.push("candidate-missing");
     if (note?.comment_evidence_checked !== true) blockers.push("comments-unchecked");
     if (note?.type === "视频" && !transcriptText && !visualText && !diandianSummaryText) blockers.push("video-body-evidence-missing");
-    if (note?.type === "图文" && !visualText && !diandianSummaryText && !hasImageReview) {
+    if (note?.type === "图文" && !visualText && !hasImageReview) {
       blockers.push("image-text-review-required");
     }
     if (clean(candidate?.summary).length < 32) blockers.push("summary-too-short");

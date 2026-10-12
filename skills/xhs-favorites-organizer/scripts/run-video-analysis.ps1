@@ -181,6 +181,8 @@ if ($ocrEnabled -and ($requestedNoteIds.Count -or (Test-Path -LiteralPath $manua
             '--media-dir', $mediaDirectory,
             '--analysis-dir', $analysisDirectory,
             '--engine', $ocrEngine,
+            # The engine writes its text in this encoding (a packaged Windows engine uses the system code page, not UTF-8).
+            '--engine-encoding', $(if ($ocr.output_encoding) { [string]$ocr.output_encoding } else { 'utf-8' }),
             '--catalog', $catalog,
             '--report', (Join-Path $workspacePath '.xhs-favorites\image-ocr-status.json')
         )
