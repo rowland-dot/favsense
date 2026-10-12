@@ -112,6 +112,28 @@ test("the font-size floor token and the text-colour tokens are defined", async (
 });
 
 for (const width of [390, 320]) {
+  test(`the tab bar does not cover the brand, the open-source link or the theme button at ${width}px wide`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(origins.public);
+    await expect(page.locator(".note-card").first()).toBeVisible();
+    const boxes = await page.evaluate(() => {
+      const box = (selector) => {
+        const element = document.querySelector(selector);
+        if (!element || !element.checkVisibility()) return null;
+        const { left, top, right, bottom } = element.getBoundingClientRect();
+        return { left, top, right, bottom };
+      };
+      return { nav: box(".primary-nav"), others: Object.fromEntries([".brand", "#creator-space-link", "#theme-toggle"].map((selector) => [selector, box(selector)])) };
+    });
+    expect(boxes.nav).not.toBeNull();
+    expect(boxes.others[".brand"]).not.toBeNull();
+    expect(boxes.others["#theme-toggle"]).not.toBeNull();
+    const overlaps = Object.entries(boxes.others)
+      .filter(([, other]) => other && other.left < boxes.nav.right && other.right > boxes.nav.left && other.top < boxes.nav.bottom && other.bottom > boxes.nav.top)
+      .map(([selector]) => selector);
+    expect(overlaps).toEqual([]);
+  });
+
   test(`each top navigation tab stays on one line at ${width}px wide`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto(origins.public);

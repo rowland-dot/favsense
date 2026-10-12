@@ -523,7 +523,8 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 }
 
 @media (max-width: 840px) {
-  .site-header { top: 0; min-height: 66px; padding: 10px 16px; }
+  /* backdrop-filter makes the header the containing block of the fixed tab bar, pulling it up over the brand; without it the bar sits at the bottom of the screen as intended. */
+  .site-header { top: 0; min-height: 66px; padding: 10px 16px; backdrop-filter: none; }
   .brand small { display: none; }
   .primary-nav { position: fixed; z-index: 85; right: 12px; bottom: 12px; left: 12px; justify-content: stretch; margin: 0; box-shadow: var(--shadow); }
   .nav-button { flex: 1; padding-right: 8px; padding-left: 8px; white-space: nowrap; }
