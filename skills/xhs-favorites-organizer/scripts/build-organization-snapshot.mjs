@@ -36,7 +36,21 @@ function canonicalVersion({ sealedScopeDigest, curationInputDigest, configDigest
   return createHash("sha256").update(JSON.stringify(preimage), "utf8").digest("hex");
 }
 
-async function exists(path) { try { return await lstat(path); } catch (error) { if (error.code === "ENOENT") return null; throw error; } }
+async function exists(path, options) { try { return await lstat(path, options); } catch (error) { if (error.code === "ENOENT") return null; throw error; } }
+
+// "Still the same file" is decided on exact (bigint) file info only. Ordinary Number values round the
+// 64-bit Windows file number, so two different files can read back as the same one and a swapped-in
+// file would pass. Both sides of every comparison must come from a call that passes EXACT: a Number
+// never equals a BigInt, so a mixed pair would fail every comparison.
+const EXACT = { bigint: true };
+
+function sameFileIdentity(left, right) {
+  return left.dev === right.dev
+    && left.ino === right.ino
+    && left.mode === right.mode
+    && left.size === right.size
+    && left.mtimeNs === right.mtimeNs;
+}
 
 async function validateStagedVersion(publicStaging, buildVersion) {
   const publicData = JSON.parse(await readFile(publicStaging, "utf8"));
@@ -286,15 +300,8 @@ async function scanSiteTree(site, buildVersion, {
   const entries = [];
   const files = [];
   let totalBytes = 0;
-  const sameIdentity = (left, right) => (
-    left.dev === right.dev
-    && left.ino === right.ino
-    && left.mode === right.mode
-    && left.size === right.size
-    && left.mtimeMs === right.mtimeMs
-  );
   async function visit(directory, prefix = "") {
-    const directoryBefore = await lstat(directory);
+    const directoryBefore = await lstat(directory, EXACT);
     const directoryRealBefore = await realpath(directory);
     if (
       !directoryBefore.isDirectory()
@@ -307,7 +314,7 @@ async function scanSiteTree(site, buildVersion, {
       if (!prefix && excluded.has(child.name.toLowerCase())) continue;
       const target = join(directory, child.name);
       const relativePath = prefix ? `${prefix}/${child.name}` : child.name;
-      const before = await lstat(target);
+      const before = await lstat(target, EXACT);
       if (before.isSymbolicLink()) throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
       if (before.isDirectory()) {
         entries.push({ kind: "directory", path: relativePath });
@@ -320,17 +327,17 @@ async function scanSiteTree(site, buildVersion, {
           fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW || 0),
         );
         try {
-          const opened = await handle.stat();
-          if (!opened.isFile() || !sameIdentity(before, opened)) {
+          const opened = await handle.stat(EXACT);
+          if (!opened.isFile() || !sameFileIdentity(before, opened)) {
             throw new Error("SNAPSHOT_PUBLISH_SITE_CHANGED");
           }
           const source = await handle.readFile();
-          const openedAfter = await handle.stat();
-          const after = await lstat(target);
+          const openedAfter = await handle.stat(EXACT);
+          const after = await lstat(target, EXACT);
           const resolvedAfter = await realpath(target);
           if (
-            !sameIdentity(opened, openedAfter)
-            || !sameIdentity(before, after)
+            !sameFileIdentity(opened, openedAfter)
+            || !sameFileIdentity(before, after)
             || resolvedAfter !== resolvedBefore
             || !inside(canonicalRoot, resolvedAfter)
           ) throw new Error("SNAPSHOT_PUBLISH_SITE_CHANGED");
@@ -350,10 +357,10 @@ async function scanSiteTree(site, buildVersion, {
         throw new Error("SNAPSHOT_PUBLISH_SITE_INVALID");
       }
     }
-    const directoryAfter = await lstat(directory);
+    const directoryAfter = await lstat(directory, EXACT);
     const directoryRealAfter = await realpath(directory);
     if (
-      !sameIdentity(directoryBefore, directoryAfter)
+      !sameFileIdentity(directoryBefore, directoryAfter)
       || directoryRealAfter !== directoryRealBefore
       || !inside(canonicalRoot, directoryRealAfter)
     ) throw new Error("SNAPSHOT_PUBLISH_SITE_CHANGED");
@@ -466,41 +473,34 @@ async function freezePublishSite(root, storageRoot, site, publicStaging, buildVe
 
 async function boundedFile(root, target, label, { optional = false, maxBytes = 16 * 1024 * 1024 } = {}) {
   await assertPlainPath(root, target);
-  const before = await exists(target);
+  const before = await exists(target, EXACT);
   if (!before) {
     if (optional) return { name: label, state: "missing", sha256: "" };
     throw new Error("SNAPSHOT_INPUT_UNAVAILABLE");
   }
-  if (!before.isFile() || before.isSymbolicLink() || before.size > maxBytes) throw new Error("SNAPSHOT_INPUT_INVALID");
+  if (!before.isFile() || before.isSymbolicLink() || before.size > BigInt(maxBytes)) throw new Error("SNAPSHOT_INPUT_INVALID");
   const rootMetadata = await lstat(root);
   if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink()) throw new Error("SNAPSHOT_INPUT_PATH_INVALID");
   const realRoot = await realpath(root);
   const realTarget = await realpath(target);
   if (!inside(realRoot, realTarget)) throw new Error("SNAPSHOT_INPUT_PATH_INVALID");
-  const sameIdentity = (left, right) => (
-    left.dev === right.dev
-    && left.ino === right.ino
-    && left.mode === right.mode
-    && left.size === right.size
-    && left.mtimeMs === right.mtimeMs
-  );
   const noFollow = process.platform === "win32" ? 0 : (fsConstants.O_NOFOLLOW || 0);
   const handle = await open(target, fsConstants.O_RDONLY | noFollow);
   try {
-    const opened = await handle.stat();
-    if (!opened.isFile() || !sameIdentity(before, opened) || opened.size > maxBytes) {
+    const opened = await handle.stat(EXACT);
+    if (!opened.isFile() || !sameFileIdentity(before, opened) || opened.size > BigInt(maxBytes)) {
       throw new Error("SNAPSHOT_INPUT_CHANGED");
     }
     const source = await handle.readFile();
     if (source.byteLength > maxBytes) throw new Error("SNAPSHOT_INPUT_INVALID");
-    const openedAfter = await handle.stat();
-    const after = await lstat(target);
+    const openedAfter = await handle.stat(EXACT);
+    const after = await lstat(target, EXACT);
     const realTargetAfter = await realpath(target);
     if (
       !after.isFile()
       || after.isSymbolicLink()
-      || !sameIdentity(opened, openedAfter)
-      || !sameIdentity(before, after)
+      || !sameFileIdentity(opened, openedAfter)
+      || !sameFileIdentity(before, after)
       || realTargetAfter !== realTarget
       || !inside(realRoot, realTargetAfter)
     ) throw new Error("SNAPSHOT_INPUT_CHANGED");
@@ -545,7 +545,10 @@ export async function captureBuilderInputs(options, effectiveDate) {
     ...(options.resources ? { resources: resolve(options.resources) } : {}),
   };
   for (const target of Object.values(fixed)) await assertPlainPath(root, target);
-  const core = await Promise.all([
+  // Every read is awaited to the end before a failure is reported. Promise.all would report the first
+  // failure at once and leave the other reads running with their files open, and on Windows an open
+  // file keeps its folder from being removed.
+  const settled = await Promise.allSettled([
     boundedFile(root, fixed.catalog, "catalog"),
     boundedFile(root, fixed.config, "config"),
     boundedFile(root, fixed.curation, "formal-curation"),
@@ -554,6 +557,9 @@ export async function captureBuilderInputs(options, effectiveDate) {
     ...(fixed.resources ? [boundedFile(root, fixed.resources, "resources")] : []),
     boundedFile(root, fixed.report, "diandian-report", { optional: true }),
   ]);
+  const failed = settled.find((result) => result.status === "rejected");
+  if (failed) throw failed.reason;
+  const core = settled.map((result) => result.value);
   const byName = new Map(core.map((entry) => [entry.name, entry]));
   let catalog;
   let config;

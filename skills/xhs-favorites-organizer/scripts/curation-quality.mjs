@@ -176,6 +176,11 @@ export function parseFormalPointSummaryRecord(record, noteId, expectedPromptVers
   };
 }
 
+// Exact (bigint) file info: ordinary Number values round the 64-bit Windows file number, so two
+// different files can look like the same one and a swapped-in file would pass the identity checks below.
+const EXACT = { bigint: true };
+const MAX_POINT_SUMMARY_BYTES = 512 * 1024;
+
 export function loadFormalPointSummary(directory, noteId, expectedPromptVersion) {
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(String(noteId || ""))) return null;
   if (expectedPromptVersion !== undefined && !HASH.test(expectedPromptVersion)) return null;
@@ -184,14 +189,14 @@ export function loadFormalPointSummary(directory, noteId, expectedPromptVersion)
   if (path.dirname(target) !== base) return null;
   let descriptor;
   try {
-    const baseMetadata = fs.lstatSync(base);
-    const metadata = fs.lstatSync(target);
+    const baseMetadata = fs.lstatSync(base, EXACT);
+    const metadata = fs.lstatSync(target, EXACT);
     if (
       !baseMetadata.isDirectory()
       || baseMetadata.isSymbolicLink()
       || !metadata.isFile()
       || metadata.isSymbolicLink()
-      || metadata.size > 512 * 1024
+      || metadata.size > BigInt(MAX_POINT_SUMMARY_BYTES)
     ) return null;
     const realBase = fs.realpathSync.native(base);
     const realTarget = fs.realpathSync.native(target);
@@ -203,17 +208,17 @@ export function loadFormalPointSummary(directory, noteId, expectedPromptVersion)
     ) return null;
     const noFollow = process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW || 0);
     descriptor = fs.openSync(target, fs.constants.O_RDONLY | noFollow);
-    const opened = fs.fstatSync(descriptor);
+    const opened = fs.fstatSync(descriptor, EXACT);
     if (
       !opened.isFile()
       || opened.dev !== metadata.dev
       || opened.ino !== metadata.ino
-      || opened.size > 512 * 1024
+      || opened.size > BigInt(MAX_POINT_SUMMARY_BYTES)
     ) return null;
     const source = fs.readFileSync(descriptor, "utf8");
-    if (Buffer.byteLength(source, "utf8") > 512 * 1024) return null;
-    const after = fs.lstatSync(target);
-    const openedAfter = fs.fstatSync(descriptor);
+    if (Buffer.byteLength(source, "utf8") > MAX_POINT_SUMMARY_BYTES) return null;
+    const after = fs.lstatSync(target, EXACT);
+    const openedAfter = fs.fstatSync(descriptor, EXACT);
     if (
       !after.isFile()
       || after.isSymbolicLink()
