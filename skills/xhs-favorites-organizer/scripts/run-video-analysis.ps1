@@ -187,7 +187,13 @@ if ($ocrEnabled -and ($requestedNoteIds.Count -or (Test-Path -LiteralPath $manua
         $ocrNoteIds = if ($requestedNoteIds.Count) {
             $requestedNoteIds
         } else {
-            @($manualState.frozen_scope.note_ids)
+            # A staged round record keeps its sealed notes in its bookkeeping block; an old one has them at the top.
+            $manualRound = if ($manualState -and $manualState.PSObject.Properties['bookkeeping']) {
+                $manualState.bookkeeping
+            } else {
+                $manualState
+            }
+            @($manualRound.frozen_scope.note_ids)
         }
         foreach ($requestedNoteId in $ocrNoteIds) {
             if ([string]$requestedNoteId -match '^[a-f0-9]{24}$') {

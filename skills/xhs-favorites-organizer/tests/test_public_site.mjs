@@ -2343,6 +2343,7 @@ test("local board manager accepts only protocol 11 with a redacted SOP browser s
     run_id: "fixture-run",
     state: "failed",
     build_version: "",
+    copy_key: "build_failed",
     phases: {
       core: { status: "completed", reason_code: "", updated_at: "2026-08-23T00:00:00Z" },
       summary: { status: "completed", reason_code: "", updated_at: "2026-08-23T00:00:00Z" },
@@ -2355,6 +2356,7 @@ test("local board manager accepts only protocol 11 with a redacted SOP browser s
   }, ORGANIZATION_STATUS_CONTRACT);
   assert.equal(v2.phases.build.reason_code, "build_failed");
   assert.throws(() => validateLocalBridgeSyncStatus({ ...v2, state: "completed" }, ORGANIZATION_STATUS_CONTRACT));
+  assert.throws(() => validateLocalBridgeSyncStatus({ ...v2, copy_key: "not_a_contract_sentence" }, ORGANIZATION_STATUS_CONTRACT));
   const legacy = validateLocalBridgeSyncStatus({ ok: true, state: "completed", scanned: 1 }, ORGANIZATION_STATUS_CONTRACT);
   assert.equal(legacy.state, "completed_with_warnings");
   assert.equal(legacy.reason_code, "unknown_legacy");
@@ -2510,7 +2512,8 @@ async function runCoreCompleteRefresh(terminalStatus) {
     const state = {
       manualSync: { state: "starting" },
       manualSyncStartedHere: true,
-      manualSyncPoll: 42
+      manualSyncPoll: 42,
+      statusContract: ${JSON.stringify(ORGANIZATION_STATUS_CONTRACT)}
     };
     const location = { reload() { events.push(["reload"]); } };
     const window = {
@@ -2617,23 +2620,28 @@ test("v2 terminal outcomes show truthful refresh messages", async () => {
     },
     counts: {},
   };
+  // The bubble is the contract's sentence for the key the server chose; the page does not pick it.
   for (const [patch, message] of [
     [{
       state: "failed",
+      copy_key: "build_failed",
       phases: { ...base.phases, build: phase("failed", "build_failed", "held_previous"), publish: phase("not_started") },
-    }, "核心收藏已保存；构建失败，已保留上一版"],
+    }, ORGANIZATION_STATUS_CONTRACT.copy.build_failed],
     [{
       state: "completed_with_warnings",
+      copy_key: "publish_failed",
       phases: { ...base.phases, publish: phase("failed", "publish_failed", "held_previous") },
-    }, "本地整理已保留；发布失败，远端仍为上一版"],
+    }, ORGANIZATION_STATUS_CONTRACT.copy.publish_failed],
     [{
       state: "organization_partial",
+      copy_key: "summary_failed",
       phases: { ...base.phases, summary: phase("failed", "transport_failed"), evidence: phase("missing", "evidence_missing"), curation: phase("pending_review", "audit_pending") },
-    }, "核心收藏已保存；部分整理未完成，正在刷新可用结果"],
+    }, ORGANIZATION_STATUS_CONTRACT.copy.summary_failed],
     [{
       state: "safety_stopped",
+      copy_key: "safety_stopped",
       phases: { ...base.phases, summary: phase("safety_stopped", "safety_signal"), evidence: phase("safety_stopped", "safety_signal"), build: phase("not_started"), publish: phase("not_started") },
-    }, "核心整理结果已保留；已因小红书安全限制停止，正在刷新知识库"],
+    }, ORGANIZATION_STATUS_CONTRACT.copy.safety_stopped],
   ]) {
     const result = await runCoreCompleteRefresh({ ...base, ...patch });
     assert.deepEqual(result.events, [

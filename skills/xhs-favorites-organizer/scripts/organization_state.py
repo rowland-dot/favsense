@@ -100,14 +100,25 @@ def project_legacy_manual_state(value):
         run_id = "legacy-run"
     run = new_run_state(run_id)
     legacy_state = value.get("state")
-    core_completed = value.get("core_completed") is True or legacy_state == "completed"
-    run = transition_phase(run, "core", "completed" if core_completed else ("running" if legacy_state in {"starting", "running"} else "failed"), "" if core_completed or legacy_state in {"starting", "running"} else "contract_invalid")
+    core_completed = (
+        value.get("core_completed") is True
+        or value.get("core_imported") is True
+        or legacy_state == "completed"
+    )
+    # A stop that hit before the core import finished belongs to the core phase; the summary was never reached.
+    core_stopped = legacy_state == "safety-stopped" and not core_completed
+    if core_stopped:
+        run = transition_phase(run, "core", "safety_stopped", "safety_signal")
+    else:
+        run = transition_phase(run, "core", "completed" if core_completed else ("running" if legacy_state in {"starting", "running"} else "failed"), "" if core_completed or legacy_state in {"starting", "running"} else "contract_invalid")
     captured = max(0, int(value.get("summarized", 0) or 0))
     failed = max(0, int(value.get("summary_failed", 0) or 0))
     aborted = max(0, int(value.get("summary_batch_aborted", 0) or 0))
     if not aborted and failed:
         aborted = max(0, int(value.get("summary_pending", 0) or 0))
-    if legacy_state == "safety-stopped":
+    if core_stopped:
+        pass
+    elif legacy_state == "safety-stopped":
         run = transition_phase(run, "summary", "safety_stopped", "safety_signal")
     elif failed or (
         legacy_state == "failed"
@@ -210,29 +221,45 @@ def project_local_rebuild_state(value):
     return safe_public_projection(run)
 
 
-def visible_copy(run):
-    contract = _contract()["copy"]
+def visible_copy_key(run):
+    """The one sentence the workbench shows for this run, named by its key in the status contract."""
     phases = run.get("phases", {})
-    local_rebuild = phases.get("core", {}).get("status") == "not_required"
+
+    def status(name):
+        return phases.get(name, {}).get("status")
+
+    local_rebuild = status("core") == "not_required"
     if run.get("state") == "safety_stopped":
-        return contract["safety_stopped"]
+        return "safety_stopped"
     if local_rebuild and any(phase.get("status") == "running" for phase in phases.values()):
-        return contract["local_rebuild_running"]
-    if phases.get("core", {}).get("status") == "not_started":
-        return contract["core_not_started"]
-    if phases.get("core", {}).get("status") == "running":
-        return contract["core_running"]
-    if phases.get("core", {}).get("status") == "failed":
-        return contract["core_failed"]
-    if phases.get("build", {}).get("status") == "failed":
-        return contract["build_failed"]
-    if phases.get("publish", {}).get("status") == "failed":
-        return contract["publish_failed"]
-    if phases.get("publish", {}).get("status") == "unchanged":
-        return contract["publish_unchanged"]
+        return "local_rebuild_running"
+    if status("core") == "not_started":
+        return "core_not_started"
+    if status("core") == "running":
+        return "core_running"
+    if status("core") == "failed":
+        return "core_failed"
+    if status("build") == "failed":
+        return "build_failed"
+    if status("publish") == "failed":
+        return "publish_failed"
+    if status("publish") == "unchanged":
+        return "publish_unchanged"
+    if status("summary") == "failed":
+        return "summary_failed"
+    if status("summary") == "batch_aborted":
+        return "summary_batch_aborted"
+    if status("evidence") in {"missing", "partial", "blocked"}:
+        return "evidence_missing"
+    if status("summary") == "not_started":
+        return "summary_not_started"
     if local_rebuild:
-        return contract["local_rebuild_ready"]
-    return contract["core_completed"]
+        return "local_rebuild_ready"
+    return "core_completed"
+
+
+def visible_copy(run):
+    return _contract()["copy"][visible_copy_key(run)]
 
 
 def new_note_state(note_id, content_sha256):
@@ -308,4 +335,548 @@ def safe_public_projection(run):
     allowed = {"schema_version", "run_id", "state", "build_version", "phases", "counts"}
     projection = {key: copy.deepcopy(value) for key, value in run.items() if key in allowed}
     projection["state"] = derive_overall_state(projection)
+    projection["copy_key"] = visible_copy_key(projection)
     return projection
+
+
+# --- The run record: the one writer -----------------------------------------------------------
+#
+# The stored run record is the staged state (phases, counts, the selected sentence) plus a private
+# `bookkeeping` block holding the working fields the sync service reads to decide whether a call
+# belongs to the current round. The service reports what happened as an event; this module applies
+# it, advances the phases, and is the only code that writes the file. An old single-level record is
+# converted when it is read and rewritten in the staged form only by the next event.
+
+NOTE_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+BOOKKEEPING = "bookkeeping"
+_EVENTS = {}
+
+
+def _event(name):
+    def register(handler):
+        _EVENTS[name] = handler
+        return handler
+    return register
+
+
+def _local_now():
+    return datetime.now().astimezone().isoformat()
+
+
+def add_known_count(total, addition):
+    """Add two counts; once either is unknown (null) the total stays unknown."""
+    if total is None or addition is None:
+        return None
+    return int(total or 0) + int(addition or 0)
+
+
+def _live(working):
+    return {"state": "idle"} if working is None else working
+
+
+def _append_unique(working, key, value):
+    values = working.get(key)
+    if not isinstance(values, list):
+        values = []
+    if value in values:
+        working[key] = values
+        return False
+    values.append(value)
+    working[key] = values
+    return True
+
+
+def is_run_record(value):
+    return isinstance(value, dict) and value.get("schema_version") == 2 and isinstance(value.get(BOOKKEEPING), dict)
+
+
+def working_view(record):
+    """The service's working fields as a private copy; an old single-level record is its own view."""
+    if is_run_record(record):
+        return copy.deepcopy(record[BOOKKEEPING])
+    return copy.deepcopy(record) if isinstance(record, dict) else {"state": "idle"}
+
+
+def _derive(working, local_rebuild=False):
+    if local_rebuild or working.get("run_mode") == "local_rebuild":
+        return project_local_rebuild_state(working)
+    return project_legacy_manual_state(working)
+
+
+def _build_record(working, previous=None):
+    public = _derive(working)
+    earlier = previous.get("phases") if is_run_record(previous) else None
+    if isinstance(earlier, dict):
+        for name, phase in public["phases"].items():
+            old = earlier.get(name)
+            if isinstance(old, dict) and all(old.get(key) == phase.get(key) for key in ("status", "reason_code", "artifact_status")):
+                phase["updated_at"] = old.get("updated_at", phase["updated_at"])
+    return {**public, BOOKKEEPING: copy.deepcopy(working)}
+
+
+def public_status(record, local_rebuild=False):
+    """What the status route may show: the staged state and the sentence key, never the bookkeeping."""
+    if is_run_record(record):
+        return safe_public_projection(record)
+    return _derive(working_view(record), local_rebuild)
+
+
+def apply_event(record, name, data=None):
+    handler = _EVENTS.get(name)
+    if handler is None:
+        raise ValueError("unknown organization run event")
+    working = None if record is None else working_view(record)
+    return _build_record(handler(working, **(data or {})), previous=record)
+
+
+def load_record(path):
+    try:
+        value = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def report_event(path, name, data, write):
+    """Apply one event to the record at `path` and store it with `write` (the caller's atomic writer)."""
+    updated = apply_event(load_record(path), name, data)
+    write(path, updated)
+    return updated
+
+
+def snapshot_record(path):
+    path = Path(path)
+    return path.read_bytes() if path.exists() else None
+
+
+def restore_record(path, snapshot, restore):
+    """Put the record back exactly as `snapshot_record` saw it, using the caller's restoring writer."""
+    restore(path, snapshot)
+
+
+def discard_record(path):
+    Path(path).unlink(missing_ok=True)
+
+
+def _apply_core_result(working, core):
+    core = core or {"next_board_id": None}
+    working["summary_plan_pending"] = False
+    if core.get("publish_status") is not None:
+        working["publish_status"] = core["publish_status"]
+    if core.get("next_board_id") is None:
+        working.update({
+            "state": "completed",
+            "completed_at": core.get("completed_at") or _local_now(),
+            "current_board": "",
+        })
+        return
+    processed = working.get("processed_run_ids")
+    if not isinstance(processed, list) or core.get("next_run_id") not in processed:
+        working.update({"state": "running", "current_board": core.get("next_board_name", "")})
+        working.pop("completed_at", None)
+
+
+@_event("round_started")
+def _round_started(_working, *, batch, started_at, run_board_ids, mode, requested_board_ids=None, target_note_id=None):
+    working = {
+        "batch": batch,
+        "state": "starting",
+        "started_at": started_at,
+        "board_count": len(run_board_ids),
+        "processed_boards": 0,
+        "current_board": "正在刷新收藏夹",
+        "scanned": 0,
+        "new": 0,
+        "summarized": 0,
+        "summary_total": 0,
+        "summary_pending": 0,
+        "summary_failed": 0,
+        "summary_batch_aborted": 0,
+        "summary_plan_pending": False,
+        "summary_finalizing": False,
+        "processed_run_ids": [],
+        "run_board_ids": list(run_board_ids),
+        "run_mode": mode,
+    }
+    if requested_board_ids is not None:
+        working["requested_board_ids"] = list(requested_board_ids)
+    if target_note_id is not None:
+        working["target_note_id"] = target_note_id
+        working["local_only"] = True
+    return working
+
+
+@_event("start_failed")
+def _start_failed(working, *, error, completed_at=None):
+    working = _live(working)
+    working.update({"state": "failed", "completed_at": completed_at or _local_now(), "error": error})
+    return working
+
+
+@_event("run_expired")
+def _run_expired(working, *, error, halted_run_ids, pending=0, completed_at=None):
+    working = _live(working)
+    working.update({
+        "state": "failed",
+        "completed_at": completed_at or _local_now(),
+        "error": error,
+        "summary_pending": 0,
+        "summary_plan_pending": False,
+        "summary_finalizing": False,
+        "summary_halted_run_ids": list(halted_run_ids),
+    })
+    if pending:
+        working["summary_batch_aborted"] = int(working.get("summary_batch_aborted", 0) or 0) + pending
+    return working
+
+
+@_event("boards_discovered")
+def _boards_discovered(working, *, run_board_ids, board_name):
+    working = _live(working)
+    working.update({
+        "state": "running",
+        "board_count": len(run_board_ids),
+        "current_board": board_name,
+        "run_board_ids": list(run_board_ids),
+    })
+    return working
+
+
+@_event("single_note_scope_confirmed")
+def _single_note_scope_confirmed(working, *, board_name):
+    working = _live(working)
+    working.update({"state": "running", "board_count": 1, "current_board": board_name})
+    return working
+
+
+@_event("board_started")
+def _board_started(working, *, board_name):
+    working = _live(working)
+    working.update({"state": "running", "current_board": board_name, "summary_plan_pending": False})
+    return working
+
+
+@_event("board_imported")
+def _board_imported(
+    working, *, run_id, board_id, board_name, outcome, scanned=0, new=0, note_ids=None,
+    completed_at=None, error="", summary_pending=False, summary_plan_pending=False,
+    diandian_enabled=False, config_sha256="", core=None,
+):
+    """One board's core import finished with `outcome` ("completed", "failed" or "safety-stopped")."""
+    working = _live(working)
+    processed = working.get("processed_run_ids")
+    if not isinstance(processed, list):
+        processed = []
+    processed.append(run_id)
+    working["scanned"] = int(working.get("scanned", 0) or 0) + int(scanned or 0)
+    working["new"] = add_known_count(working.get("new", 0), new)
+    working["processed_run_ids"] = processed
+    working["processed_boards"] = len(processed)
+    all_processed = len(processed) == len(working.get("run_board_ids", []))
+    if isinstance(note_ids, list) and all(isinstance(note_id, str) and NOTE_ID.fullmatch(note_id) for note_id in note_ids):
+        board_note_ids = working.get("board_note_ids") if isinstance(working.get("board_note_ids"), dict) else {}
+        board_note_ids[board_id] = sorted(set(note_ids))
+        working["board_note_ids"] = board_note_ids
+        if all_processed:
+            sealed = sorted({note_id for values in board_note_ids.values() for note_id in values})
+            working["frozen_scope"] = {
+                "note_ids": sealed,
+                "mode": working.get("run_mode", "incremental"),
+                "local_only": working.get("local_only") is True,
+                "config_sha256": config_sha256() if callable(config_sha256) else config_sha256,
+            }
+    working["summary_plan_pending"] = bool(summary_plan_pending)
+    if outcome == "failed":
+        working.update({
+            "state": "failed",
+            "completed_at": completed_at or _local_now(),
+            "error": error,
+            "summary_plan_pending": False,
+        })
+    elif outcome == "safety-stopped":
+        working.update({
+            "state": "safety-stopped",
+            "completed_at": completed_at or _local_now(),
+            "error": error,
+            "current_board": "",
+            "summary_plan_pending": False,
+        })
+    elif outcome == "completed":
+        # The last board's import is the end of the core phase, whatever follows it.
+        if all_processed:
+            working["core_imported"] = True
+        if summary_pending or summary_plan_pending:
+            if summary_plan_pending and diandian_enabled:
+                step = "等待点点 AI 计划"
+            elif summary_plan_pending:
+                step = "正在完成本轮整理"
+            else:
+                step = "点点 AI 深度整理"
+            working.update({"state": "running", "current_board": f"{board_name}：{step}"})
+        else:
+            _apply_core_result(working, core)
+    return working
+
+
+@_event("summary_planned")
+def _summary_planned(working, *, run_id, board_name, planned):
+    working = _live(working)
+    working["summary_total"] = int(working.get("summary_total", 0) or 0) + planned
+    working["summary_pending"] = planned
+    working["summary_plan_pending"] = False
+    working["summary_finalizing"] = False
+    working.pop("summary_finalize_error", None)
+    _append_unique(working, "summary_plan_resolved_run_ids", run_id)
+    if planned:
+        working.update({"state": "running", "current_board": f"{board_name}：点点 AI 深度整理"})
+        working.pop("completed_at", None)
+    return working
+
+
+@_event("summary_plan_empty")
+def _summary_plan_empty(working, *, run_id, abandoned, already_abandoned, pending_count, core=None):
+    """The run's summary plan holds nothing (more) to do; `core` is set when the core result is applied here."""
+    working = _live(working)
+    if abandoned:
+        _append_unique(working, "summary_plan_abandoned_run_ids", run_id)
+    if abandoned and pending_count and not already_abandoned:
+        working["summary_batch_aborted"] = int(working.get("summary_batch_aborted", 0) or 0) + pending_count
+    _append_unique(working, "summary_plan_resolved_run_ids", run_id)
+    working.update({"summary_plan_pending": False, "summary_pending": 0, "summary_finalizing": False})
+    if core is not None:
+        _apply_core_result(working, core)
+    return working
+
+
+@_event("summary_progress")
+def _summary_progress(working, *, summarized_delta=0, failed_delta=0, pending=0):
+    working = _live(working)
+    working["summarized"] = int(working.get("summarized", 0) or 0) + summarized_delta
+    working["summary_failed"] = int(working.get("summary_failed", 0) or 0) + failed_delta
+    working["summary_pending"] = pending
+    return working
+
+
+@_event("summary_halted")
+def _summary_halted(working, *, run_id, safety, reason, attempted, remaining, error, completed_at=None):
+    working = _live(working)
+    halted = working.get("summary_halted_run_ids")
+    halted = list(halted) if isinstance(halted, list) else []
+    if run_id not in halted:
+        halted.append(run_id)
+        working["summary_failed"] = int(working.get("summary_failed", 0) or 0) + attempted
+        working["summary_batch_aborted"] = int(working.get("summary_batch_aborted", 0) or 0) + remaining
+    working.update({
+        "state": "safety-stopped" if safety else "failed",
+        "completed_at": completed_at or _local_now(),
+        "current_board": "",
+        "summary_pending": 0,
+        "summary_plan_pending": False,
+        "summary_finalizing": False,
+        "summary_halted_run_ids": halted,
+        "core_completed": True,
+        "error": error,
+    })
+    if not safety:
+        working["summary_halt_reason"] = reason
+    return working
+
+
+@_event("safety_halt_confirmed")
+def _safety_halt_confirmed(working, *, error):
+    working = _live(working)
+    working.update({"state": "safety-stopped", "core_completed": True, "error": error})
+    working.pop("summary_halt_reason", None)
+    return working
+
+
+@_event("round_failed")
+def _round_failed(working, *, safety, error, remaining=0, completed_at=None):
+    working = _live(working)
+    working.update({
+        "state": "safety-stopped" if safety else "failed",
+        "completed_at": completed_at or _local_now(),
+        "error": error,
+        "summary_plan_pending": False,
+    })
+    if remaining:
+        working["summary_batch_aborted"] = int(working.get("summary_batch_aborted", 0) or 0) + remaining
+        working["summary_pending"] = 0
+    return working
+
+
+@_event("finalization_started")
+def _finalization_started(working, *, board_name):
+    working = _live(working)
+    working.update({
+        "state": "running",
+        "current_board": f"{board_name}：正在更新点点 AI 结果",
+        "summary_plan_pending": False,
+        "summary_finalizing": True,
+    })
+    working.pop("summary_finalize_error", None)
+    return working
+
+
+@_event("finalization_finished")
+def _finalization_finished(
+    working, *, error="", failed_phase="build", build_version=None, site_manifest_sha256=None,
+    curation_counts=None, completed=False, completed_at=None, board_name="", next_board_id="",
+    next_run_id="", next_board_name="下一个收藏夹", publish_status=None, publish_warning=None,
+):
+    working = _live(working)
+    working["summary_finalizing"] = False
+    working["summary_plan_pending"] = False
+    if error:
+        working["summary_finalize_error"] = error
+        working["finalize_failed_phase"] = failed_phase or "build"
+        working.update({"state": "failed", "completed_at": _local_now(), "current_board": ""})
+    else:
+        working.pop("summary_finalize_error", None)
+        working.pop("finalize_failed_phase", None)
+    if isinstance(build_version, str) and HASH.fullmatch(build_version):
+        working["build_version"] = build_version
+    if isinstance(site_manifest_sha256, str) and HASH.fullmatch(site_manifest_sha256):
+        working["site_manifest_sha256"] = site_manifest_sha256
+    if isinstance(curation_counts, dict):
+        working["curation_accepted"] = max(0, int(curation_counts.get("accepted", 0) or 0))
+        working["curation_pending"] = max(0, int(curation_counts.get("pending", 0) or 0))
+    if not error and completed:
+        if not next_board_id:
+            working.update({
+                "state": "completed",
+                "completed_at": completed_at or _local_now(),
+                "current_board": "",
+            })
+        else:
+            processed = working.get("processed_run_ids")
+            if (
+                (not isinstance(processed, list) or next_run_id not in processed)
+                and working.get("state") != "completed"
+                and str(working.get("current_board", "")).startswith(board_name)
+            ):
+                working.update({"state": "running", "current_board": next_board_name})
+    if publish_status is not None:
+        working["publish_status"] = publish_status
+        if publish_warning == "bridge_status_write_failed":
+            working["publish_status_warning"] = publish_warning
+    return working
+
+
+@_event("publish_claimed")
+def _publish_claimed(working, *, build_version, site_manifest_sha256):
+    working = _live(working)
+    working.update({
+        "build_version": build_version,
+        "site_manifest_sha256": site_manifest_sha256,
+        "publish_claimed_build_version": build_version,
+        "publish_claimed_site_manifest_sha256": site_manifest_sha256,
+        "publish_status": "running",
+    })
+    working.pop("publish_error", None)
+    return working
+
+
+@_event("publish_outcome_unknown")
+def _publish_outcome_unknown(working):
+    working = _live(working)
+    working["publish_status"] = "failed"
+    working["publish_error"] = "previous publish outcome is unknown; automatic retry withheld"
+    return working
+
+
+@_event("publish_recorded")
+def _publish_recorded(working, *, status, build_version, site_manifest_sha256, error=""):
+    working = _live(working)
+    working["publish_status"] = status
+    if status in {"published", "unchanged"}:
+        working["published_build_version"] = build_version
+        working["published_site_manifest_sha256"] = site_manifest_sha256
+        working.pop("publish_error", None)
+    else:
+        working["publish_error"] = error
+    return working
+
+
+def _owned_rebuild(working, batch):
+    if working is None or working.get("batch") != batch:
+        raise ValueError("local rebuild no longer owns this record")
+    working.setdefault("run_mode", "local_rebuild")
+    return working
+
+
+@_event("rebuild_started")
+def _rebuild_started(_working, *, batch, started_at, note_ids):
+    return {
+        "batch": batch,
+        "state": "running",
+        "run_mode": "local_rebuild",
+        "started_at": started_at,
+        "phase": "curation",
+        "note_ids": list(note_ids),
+    }
+
+
+@_event("rebuild_claimed")
+def _rebuild_claimed(working, *, batch):
+    working = _owned_rebuild(working, batch)
+    working["work_claimed"] = True
+    return working
+
+
+@_event("rebuild_phase")
+def _rebuild_phase(working, *, batch, phase, curation_accepted=None, curation_pending=None):
+    working = _owned_rebuild(working, batch)
+    working["phase"] = phase
+    if curation_accepted is not None:
+        working["curation_accepted"] = curation_accepted
+    if curation_pending is not None:
+        working["curation_pending"] = curation_pending
+    return working
+
+
+@_event("rebuild_publish_claimed")
+def _rebuild_publish_claimed(working, *, batch, build_version):
+    working = _owned_rebuild(working, batch)
+    working.update({"publish_claimed_build_version": build_version, "publish_status": "running"})
+    return working
+
+
+@_event("rebuild_publish_finished")
+def _rebuild_publish_finished(working, *, batch, status, error=""):
+    working = _owned_rebuild(working, batch)
+    working["publish_status"] = status
+    if status == "failed":
+        working["publish_error"] = error
+    return working
+
+
+@_event("rebuild_completed")
+def _rebuild_completed(
+    working, *, batch, build_version, site_manifest_sha256, completed_at=None,
+    curation_accepted=None, curation_pending=None,
+):
+    working = _owned_rebuild(working, batch)
+    working.update({
+        "state": "completed",
+        "completed_at": completed_at or _local_now(),
+        "build_version": build_version,
+        "site_manifest_sha256": site_manifest_sha256,
+    })
+    if curation_accepted is not None:
+        working["curation_accepted"] = curation_accepted
+    if curation_pending is not None:
+        working["curation_pending"] = curation_pending
+    return working
+
+
+@_event("rebuild_failed")
+def _rebuild_failed(working, *, batch, failed_phase, error, completed_at=None):
+    working = _owned_rebuild(working, batch)
+    working.update({
+        "state": "failed",
+        "completed_at": completed_at or _local_now(),
+        "failed_phase": failed_phase,
+        "error": error,
+    })
+    return working

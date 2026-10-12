@@ -22,6 +22,7 @@ const v2Status = (extra = {}) => ({
   run_id: "fixture-run",
   state: "published",
   build_version: "",
+  copy_key: "publish_unchanged",
   phases: {
     core: phase("completed"), summary: phase("completed"), evidence: phase("ready"),
     curation: phase("validated"), build: phase("succeeded"), publish: phase("unchanged")

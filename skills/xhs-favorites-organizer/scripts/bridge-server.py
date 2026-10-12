@@ -248,13 +248,6 @@ def import_result(base: dict, state: str, **fields) -> dict:
     }
 
 
-def add_known_count(total: object, addition: object) -> int | None:
-    """Add two counts; once either is unknown (null) the total stays unknown."""
-    if total is None or addition is None:
-        return None
-    return int(total or 0) + int(addition or 0)
-
-
 class BridgeBusyError(RuntimeError):
     pass
 
@@ -2711,13 +2704,19 @@ class Bridge:
         return list(scoped)
 
     def read_manual_sync(self) -> dict:
+        """The round's working fields. They are read-only here: changes are reported as events."""
         if not self.manual_sync_path.exists():
             return {"state": "idle"}
-        try:
-            value = json.loads(self.manual_sync_path.read_text(encoding="utf-8-sig"))
-        except (OSError, json.JSONDecodeError):
+        record = ORGANIZATION_STATE.load_record(self.manual_sync_path)
+        if record is None:
             return {"state": "idle"}
-        return value if isinstance(value, dict) else {"state": "idle"}
+        return ORGANIZATION_STATE.working_view(record)
+
+    def report_run_event(self, name: str, **data) -> dict:
+        """Tell the run state module what happened to the sync round; it alone writes the record."""
+        return ORGANIZATION_STATE.working_view(
+            ORGANIZATION_STATE.report_event(self.manual_sync_path, name, data, atomic_json)
+        )
 
     def get_manual_sync_lock(self) -> threading.RLock:
         lock = getattr(self, "_manual_sync_lock", None)
@@ -2801,19 +2800,6 @@ class Bridge:
                 note_ids, "batch-aborted", "batch_aborted"
             )
         pending = sum(len(note_ids) for note_ids in pending_by_run.values())
-        state.update({
-            "state": "failed",
-            "completed_at": datetime.now().astimezone().isoformat(),
-            "error": error,
-            "summary_pending": 0,
-            "summary_plan_pending": False,
-            "summary_finalizing": False,
-            "summary_halted_run_ids": halted_runs,
-        })
-        if pending:
-            state["summary_batch_aborted"] = (
-                int(state.get("summary_batch_aborted", 0) or 0) + pending
-            )
         guard = getattr(self, "summary_locks_guard", None)
         if guard is None:
             guard = threading.Lock()
@@ -2826,20 +2812,21 @@ class Bridge:
             halted.update(run_ids)
         for run_id in run_ids:
             getattr(self, "summary_plans", {}).pop(run_id, None)
-        return state
+        return self.report_run_event(
+            "run_expired", error=error, halted_run_ids=halted_runs, pending=pending,
+        )
 
     def local_rebuild_status(self, local: dict) -> dict:
         if local.get("state") == "running" and not self.local_rebuild_is_running(local) and not (
             getattr(self, "processing_lock", None) and self.processing_lock.locked()
         ):
-            local = self.update_local_rebuild(
-                local["batch"],
-                state="failed",
-                completed_at=datetime.now().astimezone().isoformat(),
+            local = self.report_rebuild_event(
+                "rebuild_failed",
+                batch=local["batch"],
                 failed_phase=str(local.get("phase") or "build"),
                 error="上一次本地重建未正常结束；请重新点击“仅本地重建”。",
             )
-        return ORGANIZATION_STATE.project_local_rebuild_state(local)
+        return ORGANIZATION_STATE.public_status(local, local_rebuild=True)
 
     def active_round_started_at(self) -> str | None:
         """When the organization round now running began, or None when no round is running."""
@@ -2906,7 +2893,6 @@ class Bridge:
                         value,
                         "Chrome 已打开，但未检测到 Tampermonkey 响应；请确认脚本已启用后重试。",
                     )
-                    atomic_json(self.manual_sync_path, value)
             elif value.get("state") == "running":
                 try:
                     started = datetime.fromisoformat(str(value.get("started_at", "")))
@@ -2922,7 +2908,6 @@ class Bridge:
                         value,
                         "上一次整理未正常结束，已自动解除锁定；请重新点击一键整理。",
                     )
-                    atomic_json(self.manual_sync_path, value)
         allowed = {
             "state", "started_at", "completed_at", "board_count", "processed_boards",
             "current_board", "scanned", "new", "error", "publish_status",
@@ -2959,7 +2944,7 @@ class Bridge:
             except ValueError:
                 public.pop("summary_halt_reason")
         if getattr(self, "organization_status_v2_enabled", False) and value.get("state") != "idle":
-            return ORGANIZATION_STATE.project_legacy_manual_state(value)
+            return ORGANIZATION_STATE.public_status(value)
         return public
 
     def open_sop_browser_page(self, url: str, *, activate: bool = True) -> dict:
@@ -3018,33 +3003,16 @@ class Bridge:
 
             batch = f"manual{datetime.now().astimezone():%Y%m%d%H%M%S%f}"
             run_board_ids = requested_board_ids or list(self.board_order)
-            state = {
-                "batch": batch,
-                "state": "starting",
-                "started_at": datetime.now().astimezone().isoformat(),
-                "board_count": len(run_board_ids),
-                "processed_boards": 0,
-                "current_board": "正在刷新收藏夹",
-                "scanned": 0,
-                "new": 0,
-                "summarized": 0,
-                "summary_total": 0,
-                "summary_pending": 0,
-                "summary_failed": 0,
-                "summary_batch_aborted": 0,
-                "summary_plan_pending": False,
-                "summary_finalizing": False,
-                "processed_run_ids": [],
-                "run_board_ids": run_board_ids,
-                "run_mode": mode,
-            }
-            if requested_board_ids is not None:
-                state["requested_board_ids"] = requested_board_ids
-            if target_note_id is not None:
-                state["target_note_id"] = target_note_id
-                state["local_only"] = True
             with self.get_manual_sync_lock():
-                atomic_json(self.manual_sync_path, state)
+                self.report_run_event(
+                    "round_started",
+                    batch=batch,
+                    started_at=datetime.now().astimezone().isoformat(),
+                    run_board_ids=run_board_ids,
+                    mode=mode,
+                    requested_board_ids=requested_board_ids,
+                    target_note_id=target_note_id,
+                )
             parsed_profile = urlparse(self.profile_url)
             query = parse_qs(parsed_profile.query)
             query.update({
@@ -3056,16 +3024,12 @@ class Bridge:
             try:
                 self.open_sop_browser_page(url)
             except (RuntimeError, ValueError) as error:
-                state.update({
-                    "state": "failed",
-                    "completed_at": datetime.now().astimezone().isoformat(),
-                    "error": sanitize_error(str(error)),
-                })
+                message = sanitize_error(str(error))
                 with self.get_manual_sync_lock():
                     current = self.read_manual_sync()
                     if current.get("batch") == batch:
-                        atomic_json(self.manual_sync_path, state)
-                raise RuntimeError(state["error"]) from error
+                        self.report_run_event("start_failed", error=message)
+                raise RuntimeError(message) from error
             return self.manual_sync_status()
         finally:
             self.trigger_lock.release()
@@ -3090,11 +3054,8 @@ class Bridge:
     def read_local_rebuild(self) -> dict | None:
         if not isinstance(getattr(self, "state_dir", None), Path):
             return None
-        try:
-            value = json.loads(self.local_rebuild_path().read_text(encoding="utf-8-sig"))
-        except (OSError, json.JSONDecodeError):
-            return None
-        return value if isinstance(value, dict) else None
+        record = ORGANIZATION_STATE.load_record(self.local_rebuild_path())
+        return None if record is None else ORGANIZATION_STATE.working_view(record)
 
     @staticmethod
     def run_age_seconds(state: dict, *, unreadable: float) -> float:
@@ -3125,14 +3086,12 @@ class Bridge:
         except (TypeError, ValueError):
             return False
 
-    def update_local_rebuild(self, batch: str, **fields) -> dict:
+    def report_rebuild_event(self, name: str, **data) -> dict:
+        """Tell the run state module what happened to the local rebuild; it alone writes the record."""
         with self.get_local_rebuild_lock():
-            state = self.read_local_rebuild()
-            if state is None or state.get("batch") != batch:
-                raise ValueError("local rebuild no longer owns this record")
-            state.update(fields)
-            atomic_json(self.local_rebuild_path(), state)
-            return state
+            return ORGANIZATION_STATE.working_view(
+                ORGANIZATION_STATE.report_event(self.local_rebuild_path(), name, data, atomic_json)
+            )
 
     def local_rebuild_scope(self) -> list[str]:
         if not self.catalog_path.is_file():
@@ -3164,15 +3123,12 @@ class Bridge:
                 raise BridgeBusyError("organization is already processing a collection")
             note_ids = self.local_rebuild_scope()
             batch = f"localrebuild{datetime.now().astimezone():%Y%m%d%H%M%S%f}"
-            with self.get_local_rebuild_lock():
-                atomic_json(self.local_rebuild_path(), {
-                    "batch": batch,
-                    "state": "running",
-                    "run_mode": "local_rebuild",
-                    "started_at": datetime.now().astimezone().isoformat(),
-                    "phase": "curation",
-                    "note_ids": note_ids,
-                })
+            self.report_rebuild_event(
+                "rebuild_started",
+                batch=batch,
+                started_at=datetime.now().astimezone().isoformat(),
+                note_ids=note_ids,
+            )
             threads = getattr(self, "local_rebuild_threads", None)
             if threads is None:
                 threads = {}
@@ -3188,7 +3144,7 @@ class Bridge:
                 thread.start()
             except Exception:
                 threads.pop(batch, None)
-                self.local_rebuild_path().unlink(missing_ok=True)
+                ORGANIZATION_STATE.discard_record(self.local_rebuild_path())
                 raise
             return self.manual_sync_status()
         finally:
@@ -3205,10 +3161,8 @@ class Bridge:
                 state = self.read_local_rebuild()
                 if state is None or state.get("batch") != batch or state.get("publish_claimed_build_version"):
                     return None
-                self.update_local_rebuild(
-                    batch,
-                    publish_claimed_build_version=build_version,
-                    publish_status="running",
+                self.report_rebuild_event(
+                    "rebuild_publish_claimed", batch=batch, build_version=build_version,
                 )
             try:
                 published = self.publish_public_site(build_version, site_manifest_sha256)
@@ -3217,10 +3171,15 @@ class Bridge:
             status = str(published.get("status") or "")
             if status not in {"published", "unchanged"}:
                 status = "failed"
-            outcome = {"publish_status": status}
-            if status == "failed":
-                outcome["publish_error"] = sanitize_error(str(published.get("error") or "publish failed"))
-            self.update_local_rebuild(batch, **outcome)
+            self.report_rebuild_event(
+                "rebuild_publish_finished",
+                batch=batch,
+                status=status,
+                error=(
+                    sanitize_error(str(published.get("error") or "publish failed"))
+                    if status == "failed" else ""
+                ),
+            )
             return published
 
     def run_local_rebuild(self, batch: str) -> None:
@@ -3233,7 +3192,7 @@ class Bridge:
                 or state.get("work_claimed")
             ):
                 return
-            self.update_local_rebuild(batch, work_claimed=True)
+            self.report_rebuild_event("rebuild_claimed", batch=batch)
         result: dict = {}
 
         def curation_counts() -> dict:
@@ -3254,23 +3213,21 @@ class Bridge:
                         batch, build_version, site_manifest_sha256
                     ),
                     scope={"batch": batch, "note_ids": state["note_ids"]},
-                    on_phase=lambda phase: self.update_local_rebuild(
-                        batch, phase=phase, **curation_counts()
+                    on_phase=lambda phase: self.report_rebuild_event(
+                        "rebuild_phase", batch=batch, phase=phase, **curation_counts()
                     ),
                 )
-            self.update_local_rebuild(
-                batch,
-                state="completed",
-                completed_at=datetime.now().astimezone().isoformat(),
+            self.report_rebuild_event(
+                "rebuild_completed",
+                batch=batch,
                 build_version=result["build_version"],
                 site_manifest_sha256=result["site_manifest_sha256"],
                 **curation_counts(),
             )
         except Exception as error:  # noqa: BLE001
-            self.update_local_rebuild(
-                batch,
-                state="failed",
-                completed_at=datetime.now().astimezone().isoformat(),
+            self.report_rebuild_event(
+                "rebuild_failed",
+                batch=batch,
                 failed_phase=str(result.get("_finalize_failed_phase") or "build"),
                 error=sanitize_error(str(error)),
             )
@@ -3287,24 +3244,6 @@ class Bridge:
                 processed = []
             if run_id in processed:
                 return
-            processed.append(run_id)
-            state["scanned"] = int(state.get("scanned", 0) or 0) + int(result.get("scanned", 0) or 0)
-            state["new"] = add_known_count(state.get("new", 0), result.get("new", 0))
-            state["processed_run_ids"] = processed
-            state["processed_boards"] = len(processed)
-            result_note_ids = result.get("note_ids")
-            if isinstance(result_note_ids, list) and all(isinstance(note_id, str) and NOTE_ID.fullmatch(note_id) for note_id in result_note_ids):
-                board_note_ids = state.get("board_note_ids") if isinstance(state.get("board_note_ids"), dict) else {}
-                board_note_ids[board_id] = sorted(set(result_note_ids))
-                state["board_note_ids"] = board_note_ids
-                if len(processed) == len(state.get("run_board_ids", [])):
-                    sealed = sorted({note_id for values in board_note_ids.values() for note_id in values})
-                    state["frozen_scope"] = {
-                        "note_ids": sealed,
-                        "mode": state.get("run_mode", "incremental"),
-                        "local_only": state.get("local_only") is True,
-                        "config_sha256": hashlib.sha256(self.config_path.read_bytes()).hexdigest(),
-                    }
             summary_pending = bool(getattr(self, "summary_plans", {}).get(run_id))
             resolved_plans = state.get("summary_plan_resolved_run_ids")
             if not isinstance(resolved_plans, list):
@@ -3316,70 +3255,54 @@ class Bridge:
                 and run_id not in resolved_plans
                 and run_id not in getattr(self, "summary_plans", {})
             )
-            state["summary_plan_pending"] = summary_plan_pending
-            if result.get("state") == "failed":
-                state.update({
-                    "state": "failed",
-                    "completed_at": result.get("completed_at") or datetime.now().astimezone().isoformat(),
-                    "error": sanitize_error(str(result.get("error") or "organization failed")),
-                    "summary_plan_pending": False,
-                })
-            elif result.get("state") == "safety-stopped":
-                state.update({
-                    "state": "safety-stopped",
-                    "completed_at": result.get("completed_at") or datetime.now().astimezone().isoformat(),
-                    "error": sanitize_error(str(
-                        result.get("error") or "小红书触发安全限制，已停止本轮且不会继续重试"
-                    )),
-                    "current_board": "",
-                    "summary_plan_pending": False,
-                })
-            elif result.get("state") == "completed" and (summary_pending or summary_plan_pending):
-                state.update({
-                    "state": "running",
-                    "current_board": (
-                        f"{self.boards[board_id]}：等待点点 AI 计划"
-                        if summary_plan_pending and getattr(self, "diandian_enabled", False)
-                        else f"{self.boards[board_id]}：正在完成本轮整理"
-                        if summary_plan_pending
-                        else f"{self.boards[board_id]}：点点 AI 深度整理"
-                    ),
-                })
-            elif result.get("state") == "completed":
-                self.apply_core_result_to_manual_state(state, run_id, board_id, result)
-            atomic_json(self.manual_sync_path, state)
+            outcome = result.get("state")
+            error = ""
+            if outcome == "failed":
+                error = sanitize_error(str(result.get("error") or "organization failed"))
+            elif outcome == "safety-stopped":
+                error = sanitize_error(str(
+                    result.get("error") or "小红书触发安全限制，已停止本轮且不会继续重试"
+                ))
+            core = (
+                self.core_result_facts(state, result)
+                if outcome == "completed" and not (summary_pending or summary_plan_pending)
+                else None
+            )
+            self.report_run_event(
+                "board_imported",
+                run_id=run_id,
+                board_id=board_id,
+                board_name=self.boards[board_id],
+                outcome=outcome,
+                scanned=int(result.get("scanned", 0) or 0),
+                new=result.get("new", 0),
+                note_ids=result.get("note_ids"),
+                completed_at=result.get("completed_at"),
+                error=error,
+                summary_pending=summary_pending,
+                summary_plan_pending=summary_plan_pending,
+                diandian_enabled=getattr(self, "diandian_enabled", False),
+                config_sha256=lambda: hashlib.sha256(self.config_path.read_bytes()).hexdigest(),
+                core=core,
+            )
 
-    def apply_core_result_to_manual_state(
-        self,
-        state: dict,
-        run_id: str,
-        board_id: str,
-        result: dict,
-    ) -> None:
+    def core_result_facts(self, state: dict, result: dict) -> dict:
+        """What a completed core result tells the run: its publish outcome and which board is next."""
         if result.get("state") != "completed":
             raise ValueError("core organization result is not completed")
-        state["summary_plan_pending"] = False
         publish = result.get("publish") if isinstance(result.get("publish"), dict) else None
-        if publish:
-            state["publish_status"] = str(publish.get("status") or "")
-        next_board_id = result.get("next_board_id")
-        if next_board_id is None:
-            state.update({
-                "state": "completed",
-                "completed_at": result.get("completed_at") or datetime.now().astimezone().isoformat(),
-                "current_board": "",
-            })
-            return
-        if not isinstance(next_board_id, str) or next_board_id not in self.boards:
-            raise ValueError("core organization result has an invalid next board")
-        processed = state.get("processed_run_ids")
-        next_run_id = self.manual_run_id(str(state.get("batch", "")), next_board_id)
-        if not isinstance(processed, list) or next_run_id not in processed:
-            state.update({
-                "state": "running",
-                "current_board": self.boards[next_board_id],
-            })
-            state.pop("completed_at", None)
+        facts = {
+            "publish_status": str(publish.get("status") or "") if publish else None,
+            "next_board_id": result.get("next_board_id"),
+            "completed_at": result.get("completed_at"),
+        }
+        next_board_id = facts["next_board_id"]
+        if next_board_id is not None:
+            if not isinstance(next_board_id, str) or next_board_id not in self.boards:
+                raise ValueError("core organization result has an invalid next board")
+            facts["next_run_id"] = self.manual_run_id(str(state.get("batch", "")), next_board_id)
+            facts["next_board_name"] = self.boards[next_board_id]
+        return facts
 
     def read_completed_core_result(self, run_id: str) -> dict:
         status_path = self.state_dir / "runs" / f"{run_id}.json"
@@ -3405,12 +3328,7 @@ class Bridge:
             processed = state.get("processed_run_ids")
             if isinstance(processed, list) and run_id in processed:
                 return
-            state.update({
-                "state": "running",
-                "current_board": self.boards[board_id],
-                "summary_plan_pending": False,
-            })
-            atomic_json(self.manual_sync_path, state)
+            self.report_run_event("board_started", board_name=self.boards[board_id])
 
     def validate_manual_board_run(self, run_id: str, board_id: str) -> None:
         with self.get_manual_sync_lock():
@@ -3743,10 +3661,12 @@ class Bridge:
         with self.get_manual_sync_lock():
             state = self.read_manual_sync()
             self.require_active_manual_run_state(state, run_id, board_id)
-            state["summarized"] = int(state.get("summarized", 0) or 0) + summarized_delta
-            state["summary_failed"] = int(state.get("summary_failed", 0) or 0) + failed_delta
-            state["summary_pending"] = len(self.summary_plans.get(run_id, set()))
-            atomic_json(self.manual_sync_path, state)
+            self.report_run_event(
+                "summary_progress",
+                summarized_delta=summarized_delta,
+                failed_delta=failed_delta,
+                pending=len(self.summary_plans.get(run_id, set())),
+            )
 
     def finalization_is_active(self, run_id: str) -> bool:
         guard = getattr(self, "summary_locks_guard", None)
@@ -3816,9 +3736,7 @@ class Bridge:
                             return False
                         if claimed == expected:
                             if state.get("publish_status") == "running":
-                                state["publish_status"] = "failed"
-                                state["publish_error"] = "previous publish outcome is unknown; automatic retry withheld"
-                                atomic_json(self.manual_sync_path, state)
+                                self.report_run_event("publish_outcome_unknown")
                             return False
                     guard = getattr(self, "summary_locks_guard", None)
                     if guard is None:
@@ -3834,13 +3752,11 @@ class Bridge:
                         if run_id in memory_claims:
                             return False
                         if build_version is not None:
-                            state["build_version"] = build_version
-                            state["site_manifest_sha256"] = site_manifest_sha256
-                            state["publish_claimed_build_version"] = build_version
-                            state["publish_claimed_site_manifest_sha256"] = site_manifest_sha256
-                            state["publish_status"] = "running"
-                            state.pop("publish_error", None)
-                            atomic_json(self.manual_sync_path, state)
+                            self.report_run_event(
+                                "publish_claimed",
+                                build_version=build_version,
+                                site_manifest_sha256=site_manifest_sha256,
+                            )
                         memory_claims.add(run_id)
                         return True
 
@@ -3884,14 +3800,17 @@ class Bridge:
                         or state.get("publish_claimed_site_manifest_sha256") != site_manifest_sha256
                     ):
                         raise ValueError("publish claim no longer owns this run")
-                    state["publish_status"] = status
-                    if status in {"published", "unchanged"}:
-                        state["published_build_version"] = build_version
-                        state["published_site_manifest_sha256"] = site_manifest_sha256
-                        state.pop("publish_error", None)
-                    else:
-                        state["publish_error"] = sanitize_error(str(publish.get("error") or "publish failed"))
-                    atomic_json(self.manual_sync_path, state)
+                    self.report_run_event(
+                        "publish_recorded",
+                        status=status,
+                        build_version=build_version,
+                        site_manifest_sha256=site_manifest_sha256,
+                        error=(
+                            ""
+                            if status in {"published", "unchanged"}
+                            else sanitize_error(str(publish.get("error") or "publish failed"))
+                        ),
+                    )
 
     def start_diandian_finalization(self, run_id: str, board_id: str) -> bool:
         with self.summary_run_lock(run_id):
@@ -3941,15 +3860,8 @@ class Bridge:
                 with guard:
                     finalizing.discard(run_id)
                 return False
-            state_snapshot = self.manual_sync_path.read_bytes() if self.manual_sync_path.exists() else None
-            state.update({
-                "state": "running",
-                "current_board": f"{self.boards[board_id]}：正在更新点点 AI 结果",
-                "summary_plan_pending": False,
-                "summary_finalizing": True,
-            })
-            state.pop("summary_finalize_error", None)
-            atomic_json(self.manual_sync_path, state)
+            state_snapshot = ORGANIZATION_STATE.snapshot_record(self.manual_sync_path)
+            self.report_run_event("finalization_started", board_name=self.boards[board_id])
         threads = getattr(self, "summary_finalization_threads", None)
         if threads is None:
             threads = {}
@@ -3974,7 +3886,9 @@ class Bridge:
                     and current.get("state") == "running"
                     and current.get("summary_finalizing") is True
                 ):
-                    restore_file_snapshot(self.manual_sync_path, state_snapshot)
+                    ORGANIZATION_STATE.restore_record(
+                        self.manual_sync_path, state_snapshot, restore_file_snapshot,
+                    )
             raise
         return True
 
@@ -3996,58 +3910,8 @@ class Bridge:
                 ):
                     return
                 batch = str(state.get("batch", ""))
-                state["summary_finalizing"] = False
-                state["summary_plan_pending"] = False
-                if error:
-                    state["summary_finalize_error"] = error
-                    state["finalize_failed_phase"] = str(
-                        result.get("_finalize_failed_phase") or "build"
-                    )
-                    state.update({
-                        "state": "failed",
-                        "completed_at": datetime.now().astimezone().isoformat(),
-                        "current_board": "",
-                    })
-                else:
-                    state.pop("summary_finalize_error", None)
-                    state.pop("finalize_failed_phase", None)
-                build_version = result.get("build_version")
-                if isinstance(build_version, str) and re.fullmatch(r"[a-f0-9]{64}", build_version):
-                    state["build_version"] = build_version
-                site_manifest_sha256 = result.get("site_manifest_sha256")
-                if isinstance(site_manifest_sha256, str) and re.fullmatch(r"[a-f0-9]{64}", site_manifest_sha256):
-                    state["site_manifest_sha256"] = site_manifest_sha256
+                next_board_id = str(result.get("next_board_id") or "")
                 curation_counts = result.get("curation", {}).get("counts")
-                if isinstance(curation_counts, dict):
-                    state["curation_accepted"] = max(0, int(curation_counts.get("accepted", 0) or 0))
-                    state["curation_pending"] = max(0, int(curation_counts.get("pending", 0) or 0))
-                if not error and result.get("state") == "completed":
-                    next_board_id = str(result.get("next_board_id") or "")
-                    if not next_board_id:
-                        state.update({
-                            "state": "completed",
-                            "completed_at": result.get("completed_at") or datetime.now().astimezone().isoformat(),
-                            "current_board": "",
-                        })
-                    else:
-                        processed = state.get("processed_run_ids")
-                        next_run_id = self.manual_run_id(batch, next_board_id)
-                        old_board = self.boards[board_id]
-                        if (
-                            (not isinstance(processed, list) or next_run_id not in processed)
-                            and state.get("state") != "completed"
-                            and str(state.get("current_board", "")).startswith(old_board)
-                        ):
-                            state.update({
-                                "state": "running",
-                                "current_board": self.boards.get(next_board_id, "下一个收藏夹"),
-                            })
-                if publish:
-                    state["publish_status"] = str(publish.get("status") or "")
-                    if publish.get("status_write_warning") == "bridge_status_write_failed":
-                        state["publish_status_warning"] = "bridge_status_write_failed"
-                if not self.manual_state_owns_run(state, run_id, board_id):
-                    return
                 guard = getattr(self, "summary_locks_guard", None)
                 if guard is None:
                     guard = threading.Lock()
@@ -4059,7 +3923,24 @@ class Bridge:
                         or isinstance(halted_runs, list) and run_id in halted_runs
                     ):
                         return
-                    atomic_json(self.manual_sync_path, state)
+                    self.report_run_event(
+                        "finalization_finished",
+                        error=error,
+                        failed_phase=str(result.get("_finalize_failed_phase") or "build"),
+                        build_version=result.get("build_version"),
+                        site_manifest_sha256=result.get("site_manifest_sha256"),
+                        curation_counts=curation_counts if isinstance(curation_counts, dict) else None,
+                        completed=result.get("state") == "completed",
+                        completed_at=result.get("completed_at"),
+                        board_name=self.boards[board_id],
+                        next_board_id=next_board_id,
+                        next_run_id=self.manual_run_id(batch, next_board_id) if next_board_id else "",
+                        next_board_name=self.boards.get(next_board_id, "下一个收藏夹"),
+                        publish_status=str(publish.get("status") or "") if publish else None,
+                        publish_warning=(
+                            publish.get("status_write_warning") if publish else None
+                        ),
+                    )
 
     def run_final_build(
         self,
@@ -4181,18 +4062,6 @@ class Bridge:
             and not self.diandian_is_halted(run_id)
         )
 
-    @staticmethod
-    def append_unique_state_value(state: dict, key: str, value: str) -> bool:
-        values = state.get(key)
-        if not isinstance(values, list):
-            values = []
-        if value in values:
-            state[key] = values
-            return False
-        values.append(value)
-        state[key] = values
-        return True
-
     def complete_empty_diandian_plan(
         self,
         run_id: str,
@@ -4210,24 +4079,17 @@ class Bridge:
             return response
         state = self.read_manual_sync()
         pending = set(self.summary_plans.get(run_id, set())) if abandoned else set()
-        already_abandoned = not self.append_unique_state_value(
-            state, "summary_plan_abandoned_run_ids", run_id
-        ) if abandoned else False
+        abandoned_runs = state.get("summary_plan_abandoned_run_ids")
+        already_abandoned = bool(
+            abandoned and isinstance(abandoned_runs, list) and run_id in abandoned_runs
+        )
         if abandoned and pending and not already_abandoned:
             self.record_diandian_unresolved_batch(
                 pending, "summary-plan-abandoned", "batch_aborted"
             )
-            state["summary_batch_aborted"] = (
-                int(state.get("summary_batch_aborted", 0) or 0) + len(pending)
-            )
-        self.append_unique_state_value(state, "summary_plan_resolved_run_ids", run_id)
-        state.update({
-            "summary_plan_pending": False,
-            "summary_pending": 0,
-            "summary_finalizing": False,
-        })
         must_restore_core = abandoned or state.get("state") == "completed"
         final_build_due = False
+        core = None
         if must_restore_core or getattr(self, "state_dir", None) is not None:
             try:
                 result = self.read_completed_core_result(run_id)
@@ -4237,8 +4099,15 @@ class Bridge:
             else:
                 final_build_due = self.final_build_is_due(state, run_id, result)
                 if not final_build_due:
-                    self.apply_core_result_to_manual_state(state, run_id, board_id, result)
-        atomic_json(self.manual_sync_path, state)
+                    core = self.core_result_facts(state, result)
+        self.report_run_event(
+            "summary_plan_empty",
+            run_id=run_id,
+            abandoned=abandoned,
+            already_abandoned=already_abandoned,
+            pending_count=len(pending),
+            core=core,
+        )
         self.summary_plans.pop(run_id, None)
         if final_build_due:
             self._start_diandian_finalization(run_id, board_id)
@@ -4338,25 +4207,16 @@ class Bridge:
                 state = self.read_manual_sync()
                 if not self.manual_state_owns_run(state, run_id, board_id):
                     raise ValueError("manual organization batch does not match")
-                state["summary_total"] = int(state.get("summary_total", 0) or 0) + len(planned)
-                state["summary_pending"] = len(planned)
-                state["summary_plan_pending"] = False
-                state["summary_finalizing"] = False
-                state.pop("summary_finalize_error", None)
-                self.append_unique_state_value(
-                    state, "summary_plan_resolved_run_ids", run_id
-                )
-                if planned:
-                    state.update({
-                        "state": "running",
-                        "current_board": f"{self.boards[board_id]}：点点 AI 深度整理",
-                    })
-                    state.pop("completed_at", None)
-                else:
+                if not planned:
                     return self.complete_empty_diandian_plan(
                         run_id, board_id, abandoned=False, enabled=True
                     )
-                atomic_json(self.manual_sync_path, state)
+                self.report_run_event(
+                    "summary_planned",
+                    run_id=run_id,
+                    board_name=self.boards[board_id],
+                    planned=len(planned),
+                )
                 self.summary_plans[run_id] = set(planned)
                 return {"enabled": True, "note_ids": planned}
 
@@ -4748,16 +4608,13 @@ class Bridge:
                     with guard:
                         getattr(self, "summary_halted", set()).add(run_id)
                     if effective_safety:
-                        state.update({
-                            "state": "safety-stopped",
-                            "core_completed": True,
-                            "error": (
+                        self.report_run_event(
+                            "safety_halt_confirmed",
+                            error=(
                                 "Xiaohongshu safety stop detected; "
                                 "core import was preserved."
                             ),
-                        })
-                        state.pop("summary_halt_reason", None)
-                        atomic_json(self.manual_sync_path, state)
+                        )
                     self.summary_plans.pop(run_id, None)
                     return {
                         "saved": False,
@@ -4795,39 +4652,25 @@ class Bridge:
                 self.record_diandian_unresolved_batch(
                     remaining, "batch-aborted", "batch_aborted"
                 )
-                if run_id not in halted_runs:
-                    halted_runs.append(run_id)
-                    state["summary_failed"] = (
-                        int(state.get("summary_failed", 0) or 0) + len(attempted)
-                    )
-                    state["summary_batch_aborted"] = (
-                        int(state.get("summary_batch_aborted", 0) or 0)
-                        + len(remaining)
-                    )
-                state.update({
-                    "state": "safety-stopped" if effective_safety else "failed",
-                    "completed_at": datetime.now().astimezone().isoformat(),
-                    "current_board": "",
-                    "summary_pending": 0,
-                    "summary_plan_pending": False,
-                    "summary_finalizing": False,
-                    "summary_halted_run_ids": halted_runs,
-                    "core_completed": True,
-                    "error": (
-                        "Xiaohongshu safety stop detected; core import was preserved."
-                        if effective_safety
-                        else DIANDIAN_HALT_DIAGNOSTICS[reason]
-                    ),
-                })
-                if not effective_safety:
-                    state["summary_halt_reason"] = reason
                 with guard:
                     halted = getattr(self, "summary_halted", None)
                     if halted is None:
                         halted = set()
                         self.summary_halted = halted
                     halted.add(run_id)
-                    atomic_json(self.manual_sync_path, state)
+                    self.report_run_event(
+                        "summary_halted",
+                        run_id=run_id,
+                        safety=effective_safety,
+                        reason=reason,
+                        attempted=len(attempted),
+                        remaining=len(remaining),
+                        error=(
+                            "Xiaohongshu safety stop detected; core import was preserved."
+                            if effective_safety
+                            else DIANDIAN_HALT_DIAGNOSTICS[reason]
+                        ),
+                    )
                 self.summary_plans.pop(run_id, None)
                 return {
                     "saved": False,
@@ -5584,27 +5427,19 @@ class Bridge:
             safety_stopped = reported_error == DIANDIAN_SAFETY_STOP_REASON
             if safety_stopped:
                 self.record_platform_stop("page")
-            state.update({
-                "state": "safety-stopped" if safety_stopped else "failed",
-                "completed_at": datetime.now().astimezone().isoformat(),
-                "error": (
-                    "小红书页面触发安全限制；本轮已停止且不会继续重试。"
-                    if safety_stopped
-                    else sanitize_manual_sync_error(reported_error)
-                ),
-                "summary_plan_pending": False,
-            })
+            message = (
+                "小红书页面触发安全限制；本轮已停止且不会继续重试。"
+                if safety_stopped
+                else sanitize_manual_sync_error(reported_error)
+            )
             remaining = getattr(self, "summary_plans", {}).pop(run_id, set())
             if remaining:
                 self.record_diandian_unresolved_batch(
                     remaining, "batch-aborted", "batch_aborted"
                 )
-                state["summary_batch_aborted"] = (
-                    int(state.get("summary_batch_aborted", 0) or 0)
-                    + len(remaining)
-                )
-                state["summary_pending"] = 0
-            atomic_json(self.manual_sync_path, state)
+            self.report_run_event(
+                "round_failed", safety=safety_stopped, error=message, remaining=len(remaining),
+            )
         return {**self.manual_sync_status(), "recorded": True}
 
     def cache_missing_media(self, unique: dict[str, str]) -> dict:
@@ -5893,12 +5728,9 @@ class Bridge:
                     ):
                         raise ValueError("single-note validation scope is unavailable after discovery")
                     board_id = run_board_ids[0]
-                    state.update({
-                        "state": "running",
-                        "board_count": 1,
-                        "current_board": self.boards[board_id],
-                    })
-                    atomic_json(self.manual_sync_path, state)
+                    self.report_run_event(
+                        "single_note_scope_confirmed", board_name=self.boards[board_id],
+                    )
                     return [{"id": board_id, "name": self.boards[board_id]}]
 
             config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
@@ -5967,13 +5799,11 @@ class Bridge:
                     raise ValueError("requested board is not available after discovery")
                 else:
                     run_board_ids = list(requested_board_ids)
-                state.update({
-                    "state": "running",
-                    "board_count": len(run_board_ids),
-                    "current_board": self.boards[run_board_ids[0]],
-                    "run_board_ids": run_board_ids,
-                })
-                atomic_json(self.manual_sync_path, state)
+                self.report_run_event(
+                    "boards_discovered",
+                    run_board_ids=run_board_ids,
+                    board_name=self.boards[run_board_ids[0]],
+                )
             return [
                 {"id": board_id, "name": self.boards[board_id]}
                 for board_id in run_board_ids

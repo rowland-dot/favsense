@@ -110,6 +110,8 @@ node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs" `
 
 本地“同步设置”页的“仅本地重建”（桥接 `POST /sync/local-rebuild`，需要本机凭据与工作台 Origin）复用同一条最终构建与发布链路，但不接触小红书：不打开扫描浏览器、不抓详情、不下载媒体、不调用点点。它冻结当前完整 catalog，使用自己的运行标识（`localrebuild…`）和独立记录 `.xhs-favorites/local-rebuild.json`，不改写上一轮同步的 manual-sync 记录与 curation input / bundle；同步运行中拒绝，遗留安全停止不阻止它；状态里扫描与总结阶段显示“不需要”。
 
+整理运行记录（`.xhs-favorites/manual-sync.json`）与本地重建记录（`local-rebuild.json`）只由运行状态 module（`scripts/organization_state.py`）写入：Bridge 只向它报告发生了什么，由它推进分阶段状态与计数，并选定工作台显示的那句话（状态接口的 `copy_key`，文字只在 `site/organization-status-contract.json` 里有一份）。运行簿记字段（批次号、收藏夹清单、冻结范围等）随记录保存在 `bookkeeping` 块里，不进入状态接口。磁盘上旧的单层记录只在读取时转换，下一次写入才改为分阶段格式。事件序列与期望状态的共用用例表是 `site/organization-status-cases.json`，Python 与网页测试都遍历它。
+
 本地预览：
 
 ```powershell
