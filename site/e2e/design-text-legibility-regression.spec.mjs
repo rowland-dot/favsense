@@ -8,7 +8,6 @@ import { backgroundsFromElement, compositeOver, contrastRatio, parseColor, resol
 const MIN_FONT_PX = 11;
 const AA_NORMAL = 4.5;
 const AA_LARGE = 3;
-const THEME_STORAGE_KEY = "xhs-kb-theme-xhs";
 const origins = { manager: "http://127.0.0.1:8766", public: "http://127.0.0.1:8767" };
 const canvas = { light: [255, 255, 255], dark: [18, 18, 18] };
 const noteIds = ["note-accepted", "note-pending", "note-diandian", "note-evidence"];
@@ -67,8 +66,9 @@ async function resetFixture(page) {
 
 async function textProbesForEveryView(page, kind, theme) {
   await resetFixture(page);
-  await page.addInitScript(([key, value]) => localStorage.setItem(key, value), [THEME_STORAGE_KEY, theme]);
   await page.goto(origins[kind]);
+  // Switch the way a visitor does: with the site's own theme button, which sets data-theme on <html>.
+  if (theme === "dark") await page.locator("#theme-toggle").click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
   await expect(page.locator(".note-card")).toHaveCount(noteIds.length);
   const probes = [...await scan(page, "知识卡", "body")];
@@ -110,6 +110,24 @@ test("the font-size floor token and the text-colour tokens are defined", async (
   expect(Number.parseFloat(tokens["--text-xs"])).toBeGreaterThanOrEqual(MIN_FONT_PX);
   for (const name of ["--text-red", "--text-blue", "--fill-blue"]) expect(tokens[name], name).not.toBe("");
 });
+
+for (const width of [390, 320]) {
+  test(`each top navigation tab stays on one line at ${width}px wide`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(origins.public);
+    await expect(page.locator(".note-card").first()).toBeVisible();
+    const lines = await page.locator(".primary-nav .nav-button").evaluateAll((buttons) => buttons.map((button) => {
+      const range = document.createRange();
+      range.selectNodeContents(button);
+      return { label: button.textContent.trim(), lines: new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size };
+    }));
+    expect(lines).toEqual([
+      { label: "知识卡", lines: 1 },
+      { label: "资源索引", lines: 1 },
+      { label: "同步设置", lines: 1 },
+    ]);
+  });
+}
 
 for (const kind of Object.keys(origins)) {
   for (const theme of ["light", "dark"]) {

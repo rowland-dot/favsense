@@ -526,7 +526,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
   .site-header { top: 0; min-height: 66px; padding: 10px 16px; }
   .brand small { display: none; }
   .primary-nav { position: fixed; z-index: 85; right: 12px; bottom: 12px; left: 12px; justify-content: stretch; margin: 0; box-shadow: var(--shadow); }
-  .nav-button { flex: 1; }
+  .nav-button { flex: 1; padding-right: 8px; padding-left: 8px; white-space: nowrap; }
   .hero { grid-template-columns: 1fr; padding-top: 62px; }
   .hero-reel { max-width: 540px; }
   .workspace { display: block; }
