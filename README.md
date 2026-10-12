@@ -11,7 +11,7 @@ hf_oauth: true
 hf_oauth_scopes:
   - contribute-repos
 license: mit
-short_description: 主动整理小红书收藏，通过视频分析、资源索引与 Obsidian 输出生成可搜索、可追溯、可行动的知识库
+short_description: 主动整理小红书收藏，通过视频分析与资源索引生成可搜索、可追溯、可行动的知识库
 tags:
   - knowledge-base
   - xiaohongshu
@@ -22,7 +22,6 @@ tags:
   - local-first
   - static-site
   - agent-skill
-  - obsidian
   - tampermonkey
   - video-analysis
   - automation
@@ -32,9 +31,9 @@ tags:
 
 > Make sense of what you save.
 
-FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整理引擎：由用户主动同步收藏，通过视频画面分析识别短暂出现的信息，再生成可搜索、可追溯、可行动的知识库、资源索引与 Obsidian 笔记。
+FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整理引擎：由用户主动同步收藏，通过视频画面分析识别短暂出现的信息，再生成可搜索、可追溯、可行动的知识库网页与资源索引。
 
-**Automated Xiaohongshu / RedNote favorites organizer with video analysis, a domain-aware resource index, Obsidian output, and a deployable static knowledge-base UI.**
+**Automated Xiaohongshu / RedNote favorites organizer with video analysis, a domain-aware resource index, and a deployable static knowledge-base UI.**
 
 ![FavSense 拾光台知识卡与收藏分析界面](docs/assets/favsense-overview.png)
 
@@ -60,9 +59,9 @@ FavSense 是一套本地优先、可独立运行的小红书 / RedNote 收藏整
 
 ## 整理结果怎样变成可信知识
 
-每次点击“开始整理”只启动一次本地运行。核心目录保存完成时先显示“核心收藏已保存”；点点回复原子保存后是 `captured`，缺证据、资源或语义审核时保持 `pending`，只有当前 revision 与质量门全部匹配时才是 `accepted`。本机详情可以通过鉴权的“待审核证据” overlay 查看清理后的 captured 内容，公开页面和正式知识库不会直接采用 raw 点点回复。
+每次点击“开始整理”只启动一次本地运行。核心目录保存完成时先显示“核心收藏已保存”；点点回复原子保存后是 `captured`，缺证据、资源或语义审核时保持 `pending`，只有当前 revision 与质量门全部匹配时才是 `accepted`。本机详情可以通过鉴权的“待审核证据” overlay 查看清理后的 captured 内容，公开页面不会直接采用 raw 点点回复。
 
-关键词只会产生 `candidateKind="Skill"`。公开 `confirmed Skill` 必须是 accepted，并恰好关联一个完整、当前、已核验的官方资源；详情同时显示官方仓库、下载 ZIP 和其他安全动作。最后一个收藏夹完成只建立核心 checkpoint；curation 完成后才构建一个共享版本的知识库与网页快照，验证成功后按配置最多发布一次。构建或发布失败会保留上一可用版本并显示真实阶段状态。
+关键词只会产生 `candidateKind="Skill"`。公开 `confirmed Skill` 必须是 accepted，并恰好关联一个完整、当前、已核验的官方资源；详情同时显示官方仓库、下载 ZIP 和其他安全动作。最后一个收藏夹完成只建立核心 checkpoint；curation 完成后才构建一个带版本号的网页数据快照，验证成功后按配置最多发布一次。构建或发布失败会保留上一可用版本并显示真实阶段状态。
 
 ## 推荐：让 Agent 直接安装
 
@@ -76,10 +75,10 @@ skills/xhs-favorites-organizer/SKILL.md，遵守隐私与只读边界；检查 W
 Node.js、Git、uv、Google Chrome 和 Tampermonkey 依赖；根据示例创建我的私有配置，
 引导我只填写无法自动发现的主页与收藏夹信息；运行 favsense.ps1 setup，
 完成测试并启动本地预览。不要读取、输出或提交 Cookie、Token、收藏夹 ID、
-原始视频、抽帧或 knowledge-base。遇到验证码、300031 或访问频繁立即停止。
+原始视频或抽帧。遇到验证码、300031 或访问频繁立即停止。
 ```
 
-Agent 能完成本机环境检查和配置；出于浏览器安全边界，首次扫码登录、Tampermonkey 的最终安装确认和“开始整理”按钮仍由用户在 SOP 扫描浏览器或本地工作台中操作。安装后的同步、去重、知识库构建和网页生成均独立运行，不依赖 Codex、Claude 或任何模型服务，也不会创建每日或开机整理任务。
+Agent 能完成本机环境检查和配置；出于浏览器安全边界，首次扫码登录、Tampermonkey 的最终安装确认和“开始整理”按钮仍由用户在 SOP 扫描浏览器或本地工作台中操作。安装后的同步、去重和网页生成均独立运行，不依赖 Codex、Claude 或任何模型服务，也不会创建每日或开机整理任务。
 
 ## 快速预览
 
@@ -111,7 +110,7 @@ Copy-Item ".\config\xhs-favorites.example.json" ".\config\xhs-favorites.json"
 
 编辑私有配置中的个人主页并提供至少一个初始收藏夹。首次及以后每轮整理都会从个人收藏页自动补齐新增收藏夹并同步名称变更。
 
-`published_since` 控制深度处理的内容发布日期下限，格式为 `YYYY-MM-DD`。媒体下载、音频转写和按需视觉分析使用这一范围；它不会从知识库或网页中隐藏 catalog 已保存的历史收藏。示例默认从 `2026-01-01` 开始。
+`published_since` 控制深度处理的内容发布日期下限，格式为 `YYYY-MM-DD`。媒体下载、音频转写和按需视觉分析使用这一范围；它不会从网页中隐藏 catalog 已保存的历史收藏。示例默认从 `2026-01-01` 开始。
 
 先完成下面的同步 setup；它会准备离线转写所依赖的固定版本 Python 运行时。
 
@@ -146,7 +145,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
 
 工作任务默认先离线转写音频，不自动批量抽帧。长视频按可续跑时间窗处理：只要语音已经说出 Skill、仓库或所缺事实，就立刻停止剩余音频并进入官方核验；仍有缺口才继续下一段。只有语音没有给出明确名称、音频过少或讲解明确要求查看屏幕时，才在复核转写后追加 `-PrepareVisualEvidence`。该开关每次只处理一个条目的一个 30 秒低密度画面窗口，并受总帧数、磁盘字节和执行时间三重预算约束；找到目标后不再检查余下画面，未找到才从记录的下一个时间点继续。每 0.5 秒抽帧只用于仍未解决的局部时间段。临时 WAV 默认在转写后删除，原视频、转写和帧始终保留在 Git 忽略的私有目录中。
 
-私有配置显式开启 `diandian.enabled` 并加载 v1.2 CDP transport 后，仍然只需这一个按钮：系统先完成确定性的同步、去重和核心 checkpoint，再由 Tampermonkey 为每篇笔记分享并复制一次临时签名链接；本机 Bridge 只在内存中核对该链接，随后通过 SOP 动态 CDP 通道在同一个扫描浏览器中新建空白目标页。外部 Skill 的 `ask(session, plain_note_url, spec=...)` 负责真实鼠标聚焦和原生输入，Bridge 负责导航、登录/验证码/`300031`/频率限制检查、严格的新回复与稳定性证明、私有保存确认以及成功后的关页。任一步失败都会保留诊断页并停止当前及剩余批次，不重试轰炸，也不伪造总结。点点回复经过逐篇质量门、评论检查、资源核验和内容哈希绑定后才可能进入正式输出；最终双输出快照只构建一次。
+私有配置显式开启 `diandian.enabled` 并加载 v1.2 CDP transport 后，仍然只需这一个按钮：系统先完成确定性的同步、去重和核心 checkpoint，再由 Tampermonkey 为每篇笔记分享并复制一次临时签名链接；本机 Bridge 只在内存中核对该链接，随后通过 SOP 动态 CDP 通道在同一个扫描浏览器中新建空白目标页。外部 Skill 的 `ask(session, plain_note_url, spec=...)` 负责真实鼠标聚焦和原生输入，Bridge 负责导航、登录/验证码/`300031`/频率限制检查、严格的新回复与稳定性证明、私有保存确认以及成功后的关页。任一步失败都会保留诊断页并停止当前及剩余批次，不重试轰炸，也不伪造总结。点点回复经过逐篇质量门、评论检查、资源核验和内容哈希绑定后才可能进入正式输出；最终网页数据快照只构建一次。
 
 `diandian.skill_path` 指定点点单篇总结 Skill 的安装目录，开启点点时必须显式填写。公开配置模板指向仓库随附的 `skills/xhs-diandian-summarize-note`；也可以在 Git 忽略的私有配置中填写一个版本化的本机绝对路径，把 Skill 作为独立知识资产管理。桥接会核对 `SKILL.md`、`release.json`、`runtime/browser-contract.json`、API 1 保存器，以及 v1.2 精确声明的 `scripts/cdp_transport.py` 和 `ask` 签名。v1.1 可被旧链路兼容加载，但不会暴露本机 CDP“重新总结”能力；路径、版本、transport 或契约错误时会 fail closed，不会从网页内容动态加载可执行路径。
 
@@ -161,7 +160,7 @@ Windows 用户也可以使用统一入口：
 .\favsense.ps1 verify
 ```
 
-“开始整理”会自动生成 Obsidian 知识库和公开网页数据。命令行备用入口为：
+“开始整理”会自动生成公开网页数据。命令行备用入口为：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
@@ -182,7 +181,7 @@ node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs"
 
 ## 小红书来源与领域配置
 
-当前采集适配器只连接小红书：SOP 扫描浏览器中的 FavSense 用户脚本读取你有权访问的收藏面板，本地桥接服务增量去重并重建知识库。采集层不包含软件、GitHub 或健身规则。
+当前采集适配器只连接小红书：SOP 扫描浏览器中的 FavSense 用户脚本读取你有权访问的收藏面板，本地桥接服务增量去重并重建网页数据。采集层不包含软件、GitHub 或健身规则。
 
 `config/xhs-favorites.json` 通过两个路径决定整理方式：
 
@@ -218,11 +217,11 @@ git push -u origin main
 
 同一配置中的 `creatorGitHubUrl` 和 `creatorName` 控制右上角作者空间入口；开源使用者替换这两个字段即可指向自己的 GitHub。没有配置有效 GitHub 地址时，入口自动隐藏，不会产生失效链接。
 
-提交前务必检查 staged diff；不要使用 `git add -f` 强行加入 `.xhs-favorites/`、`knowledge-base/` 或私有配置。
+提交前务必检查 staged diff；不要使用 `git add -f` 强行加入 `.xhs-favorites/` 或私有配置。
 
 ## 发布到 Hugging Face Spaces
 
-Hugging Face 不是只有项目介绍页：FavSense 会把 `site/` 作为完整、可交互的公网知识库发布。小红书登录、采集、视频证据和 Obsidian 完整库留在本机；用户主动整理的最终 curation 与双输出快照验证成功后，才可把新的脱敏网页数据同步到 Space，同一运行最多一次。
+Hugging Face 不是只有项目介绍页：FavSense 会把 `site/` 作为完整、可交互的公网知识库发布。小红书登录、采集和视频证据留在本机；用户主动整理的最终 curation 与网页数据快照验证成功后，才可把新的脱敏网页数据同步到 Space，同一运行最多一次。
 
 ```json
 {
@@ -258,7 +257,7 @@ skills/xhs-favorites-organizer/       跨 Agent、可独立运行的同步 Skill
 config/xhs-favorites.example.json     可公开的配置模板
 config/xhs-favorites.json             本机私有配置（Git 忽略）
 .xhs-favorites/                       私有 catalog、原始视频和分析画面（Git 忽略）
-knowledge-base/                       本机 Obsidian 输出（Git 忽略）
+knowledge-base/                       旧版本地输出（已停止生成，Git 忽略，可手动删除）
 scripts/                              零依赖预览与发布检查
 .github/                              CI、Issue、PR 与 Pages 模板
 AGENTS.md / CLAUDE.md                 跨 Agent 的安全协作规则

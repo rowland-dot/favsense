@@ -52,7 +52,7 @@ jobs:
           node --check scripts/verify-release.mjs
           node --check scripts/run-python-tests.mjs
           node --check skills/xhs-favorites-organizer/scripts/build-public-site.mjs
-          node --check skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs
+          node --check skills/xhs-favorites-organizer/scripts/build-organization-snapshot.mjs
 
       - name: Run the complete release gate
         run: npm run release:check

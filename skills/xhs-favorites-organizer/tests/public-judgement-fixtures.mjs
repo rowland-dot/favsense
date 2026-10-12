@@ -1,5 +1,5 @@
-// Inputs shared by the public judgement tests: the module's own tests and the tests that run both
-// formal builders on the same notes.
+// Inputs shared by the public judgement tests: the module's own tests and the tests that run the
+// web builder on the same notes.
 
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";

@@ -70,8 +70,8 @@ test("Node 20 entry points do not rely on import.meta.dirname", async () => {
   for (const relative of [
     "scripts/verify-release.mjs",
     "scripts/serve-site.mjs",
-    "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs",
-    "skills/xhs-favorites-organizer/tests/test_knowledge_base.mjs",
+    "skills/xhs-favorites-organizer/scripts/build-organization-snapshot.mjs",
+    "skills/xhs-favorites-organizer/tests/web-only-snapshot.test.mjs",
   ]) {
     const source = await readFile(resolve(root, relative), "utf8");
     assert.doesNotMatch(source, /import\.meta\.dirname/, relative);

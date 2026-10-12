@@ -34,7 +34,7 @@
     "build_failed": "构建失败，已保留上一版",
     "publish_failed": "发布失败，远端仍为上一版；本地结果已保留",
     "publish_unchanged": "内容无变化，无需发布",
-    "local_rebuild_running": "正在本地重建知识库与网页，不访问小红书",
+    "local_rebuild_running": "正在本地重建网页数据，不访问小红书",
     "local_rebuild_ready": "本地重建完成，未访问小红书",
     "local_rebuild_detail": "仅本地重建：没有扫描收藏，也没有重新总结。",
     "safety_stopped": "安全限制已触发，本轮已停止；请在 SOP 扫描浏览器完成验证后重新开始"

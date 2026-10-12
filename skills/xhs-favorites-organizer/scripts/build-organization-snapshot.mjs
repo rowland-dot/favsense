@@ -19,16 +19,15 @@ const validDate = (value) => {
 function canonicalVersion({ sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest, effectiveDate }) {
   for (const value of [sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest]) if (!HASH.test(value)) throw new Error("SNAPSHOT_DIGEST_INVALID");
   if (!validDate(effectiveDate)) throw new Error("SNAPSHOT_EFFECTIVE_DATE_INVALID");
-  const preimage = { schema_version: 2, sealed_scope_sha256: sealedScopeDigest, curation_input_sha256: curationInputDigest, public_config_sha256: configDigest, input_revision_sha256: inputRevisionDigest, effective_date: effectiveDate, builders: { knowledge_base: 3, public_site: 7 } };
+  const preimage = { schema_version: 3, sealed_scope_sha256: sealedScopeDigest, curation_input_sha256: curationInputDigest, public_config_sha256: configDigest, input_revision_sha256: inputRevisionDigest, effective_date: effectiveDate, builders: { public_site: 7 } };
   return createHash("sha256").update(JSON.stringify(preimage), "utf8").digest("hex");
 }
 
 async function exists(path) { try { return await lstat(path); } catch (error) { if (error.code === "ENOENT") return null; throw error; } }
 
-async function validateStagedVersions(kbStaging, publicStaging, buildVersion) {
-  const kb = JSON.parse(await readFile(join(kbStaging, "build.json"), "utf8"));
+async function validateStagedVersion(publicStaging, buildVersion) {
   const publicData = JSON.parse(await readFile(publicStaging, "utf8"));
-  if (kb.build_version !== buildVersion || publicData?.meta?.buildVersion !== buildVersion) throw new Error("SNAPSHOT_BUILD_VERSION_MISMATCH");
+  if (publicData?.meta?.buildVersion !== buildVersion) throw new Error("SNAPSHOT_BUILD_VERSION_MISMATCH");
 }
 
 async function acquireSnapshotLock(storageRoot) {
@@ -63,13 +62,29 @@ async function acquireSnapshotLock(storageRoot) {
   };
 }
 
-async function recoverPendingSnapshotTransactions(root, storageRoot, participants) {
+// Before issue 39 a snapshot swapped two outputs, so a crash of that version leaves a journal naming both.
+// That journal is finished the way it was written: the knowledge-base target comes from the journal's own
+// record (it must still sit inside the workspace and not be a link), the web data target from this build.
+// Any other journal shape is held to the participants of this build alone.
+function participantsForJournal(root, publicParticipant, record) {
+  const entries = Array.isArray(record.participants) ? record.participants : [];
+  const knowledgeBase = entries.find((entry) => entry?.name === "knowledge-base");
+  if (entries.length !== 2 || !knowledgeBase || typeof knowledgeBase.target !== "string") return [publicParticipant];
+  return [{ name: "knowledge-base", target: resolve(root, knowledgeBase.target) }, publicParticipant];
+}
+
+async function recoverPendingSnapshotTransactions(root, storageRoot, publicParticipant) {
   const rootNames = await readdir(storageRoot);
   const names = rootNames.filter((name) => name.startsWith(".organization-tx-snapshot-")).sort();
   for (const name of names) {
     const id = name.slice(".organization-tx-".length);
     if (!/^snapshot-[a-f0-9]{32}$/.test(id)) throw new Error("SNAPSHOT_RECOVERY_ID_INVALID");
-    await recoverJournaledTransaction({ root, transactionRoot: storageRoot, id, participants });
+    await recoverJournaledTransaction({
+      root,
+      transactionRoot: storageRoot,
+      id,
+      participants: (record) => participantsForJournal(root, publicParticipant, record),
+    });
   }
   for (const name of rootNames.filter((entry) => entry.startsWith(".organization-build-snapshot-")).sort()) {
     if (!/^\.organization-build-snapshot-[a-f0-9]{32}$/.test(name)) throw new Error("SNAPSHOT_STAGING_ID_INVALID");
@@ -89,18 +104,14 @@ async function assertNoPendingMigrationTransaction(root) {
 export async function buildOrganizationSnapshot(options) {
   const root = resolve(options.root);
   const storageRoot = join(root, ".xhs-tools", "organization-snapshots");
-  const kbTarget = resolve(options.kbTarget);
   const publicTarget = resolve(options.publicTarget);
-  if (!inside(root, kbTarget) || !inside(root, publicTarget)) throw new Error("SNAPSHOT_TARGET_INVALID");
+  if (!inside(root, publicTarget)) throw new Error("SNAPSHOT_TARGET_INVALID");
   const releaseMutationLock = await acquireOrganizationMutationLock(root, {
     busyError: () => new Error("SNAPSHOT_ALREADY_RUNNING"),
     invalidError: () => new Error("SNAPSHOT_LOCK_INVALID"),
   });
   let releaseLock = null;
-  const participants = [
-    { name: "knowledge-base", target: kbTarget },
-    { name: "public", target: publicTarget },
-  ];
+  const publicParticipant = { name: "public", target: publicTarget };
   let stagingRoot = null;
   try {
     await assertPlainPath(root, storageRoot);
@@ -110,20 +121,18 @@ export async function buildOrganizationSnapshot(options) {
     if (!storageMetadata.isDirectory() || storageMetadata.isSymbolicLink()) throw new Error("SNAPSHOT_STORAGE_INVALID");
     releaseLock = await acquireSnapshotLock(storageRoot);
     await assertNoPendingMigrationTransaction(root);
-    await recoverPendingSnapshotTransactions(root, storageRoot, participants);
+    await recoverPendingSnapshotTransactions(root, storageRoot, publicParticipant);
     const prepared = typeof options.prepareSnapshot === "function" ? await options.prepareSnapshot() : {};
     const buildOptions = { ...options, ...prepared };
     const buildVersion = canonicalVersion(buildOptions);
     const transactionId = `snapshot-${buildVersion.slice(0, 32)}`;
     stagingRoot = join(storageRoot, `.organization-build-${transactionId}`);
-    const kbStaging = join(stagingRoot, "knowledge-base");
     const publicStaging = join(stagingRoot, "knowledge.json");
     await rm(stagingRoot, { recursive: true, force: true });
     await mkdir(stagingRoot);
-    await buildOptions.buildKnowledgeBase({ target: kbStaging, buildVersion });
     await buildOptions.buildPublicSite({ target: publicStaging, buildVersion });
     await buildOptions.verifyInputs?.();
-    await validateStagedVersions(kbStaging, publicStaging, buildVersion);
+    await validateStagedVersion(publicStaging, buildVersion);
     let publishManifest = null;
     if (buildOptions.publishSite) {
       publishManifest = await freezePublishSite(
@@ -139,10 +148,7 @@ export async function buildOrganizationSnapshot(options) {
       transactionRoot: storageRoot,
       id: transactionId,
       failAt: buildOptions.failAt,
-      participants: participants.map((participant) => ({
-        ...participant,
-        staging: participant.name === "knowledge-base" ? kbStaging : publicStaging,
-      })),
+      participants: [{ ...publicParticipant, staging: publicStaging }],
     });
     await rm(stagingRoot, { recursive: true, force: true });
     return {
@@ -673,7 +679,7 @@ function cliArgs(argv) {
     if (!key?.startsWith("--") || !value) throw new Error("SNAPSHOT_ARGUMENT_INVALID");
     result[key.slice(2)] = value;
   }
-  const required = ["root", "kb-target", "public-target", "catalog", "config", "curation", "curation-bundle", "profile", "sealed-scope-digest", "diandian-dir", "diandian-report", "video-analysis", "effective-date"];
+  const required = ["root", "public-target", "catalog", "config", "curation", "curation-bundle", "profile", "sealed-scope-digest", "diandian-dir", "diandian-report", "video-analysis", "effective-date"];
   const optional = ["resources", "diandian-prompt-version"];
   if (
     Object.keys(result).some((key) => ![...required, ...optional].includes(key))
@@ -709,7 +715,7 @@ async function runCli() {
   let frozen = null;
   try {
     const result = await buildOrganizationSnapshot({
-      root, kbTarget: resolve(options["kb-target"]), publicTarget: resolve(options["public-target"]),
+      root, publicTarget: resolve(options["public-target"]),
       publishSite: join(root, "site"),
       effectiveDate,
       prepareSnapshot: async () => {
@@ -726,11 +732,6 @@ async function runCli() {
           configDigest: captured.configDigest,
           inputRevisionDigest: captured.inputRevisionDigest,
         };
-      },
-      buildKnowledgeBase: async ({ target, buildVersion }) => {
-        const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate, ...(frozen.promptVersion ? ["--diandian-prompt-version", frozen.promptVersion] : [])];
-        runBuilder(join(scriptDir, "build-knowledge-base.mjs"), ["--candidates", frozen.candidates, ...shared, "--output", target, "--diandian-dir", frozen.diandian, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
-        await writeFile(join(target, "build.json"), `${JSON.stringify({ schema_version: 1, build_version: buildVersion })}\n`, "utf8");
       },
       buildPublicSite: async ({ target, buildVersion }) => {
         const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate, ...(frozen.promptVersion ? ["--diandian-prompt-version", frozen.promptVersion] : [])];

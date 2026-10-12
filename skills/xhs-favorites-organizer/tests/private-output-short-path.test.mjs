@@ -5,7 +5,6 @@ import path from "node:path";
 import test from "node:test";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { requirePrivateOutput } from "../scripts/build-knowledge-base.mjs";
 
 // The CI Windows runner reaches its temp folder through an 8.3 short name
 // (RUNNER~1). These tests address a temp repository through such a name and
@@ -30,7 +29,7 @@ function repositoryWithShortName(t) {
   t.after(() => fs.rmSync(parent, { recursive: true, force: true }));
   const long = path.join(parent, "private-repository-with-a-long-name");
   fs.mkdirSync(long);
-  fs.writeFileSync(path.join(long, ".gitignore"), "knowledge-base/\n.private/\n.xhs-favorites/\nreports/\n", "utf8");
+  fs.writeFileSync(path.join(long, ".gitignore"), ".private/\n.xhs-favorites/\nreports/\n", "utf8");
   assert.equal(spawnSync("git", ["init", "--quiet"], { cwd: long }).status, 0);
   const short = path.join(shortNameOf(parent), shortNameOf(long).split(path.sep).pop());
   return { parent, long, short };
@@ -44,51 +43,6 @@ function skipUnlessShortNamesExist(t, repository) {
   }
   return false;
 }
-
-function samePlace(left, right) {
-  return fs.realpathSync.native(left).toLowerCase() === fs.realpathSync.native(right).toLowerCase();
-}
-
-test("knowledge base: an ignored output reached through a short path is accepted", (t) => {
-  const repository = repositoryWithShortName(t);
-  if (skipUnlessShortNamesExist(t, repository)) return;
-  fs.mkdirSync(path.join(repository.long, "knowledge-base"));
-  const root = requirePrivateOutput(path.join(repository.short, "knowledge-base"));
-  assert.ok(root, "a repository root is returned");
-  assert.ok(samePlace(root, repository.long));
-});
-
-test("knowledge base: a junction-redirected output reached through a short path is still refused", (t) => {
-  const repository = repositoryWithShortName(t);
-  if (skipUnlessShortNamesExist(t, repository)) return;
-  const target = path.join(repository.long, "public-target");
-  fs.mkdirSync(target);
-  fs.symlinkSync(target, path.join(repository.long, ".private"), process.platform === "win32" ? "junction" : "dir");
-  assert.throws(
-    () => requirePrivateOutput(path.join(repository.short, ".private", "leak")),
-    /redirected|invalid ancestor/i,
-  );
-  assert.equal(fs.existsSync(path.join(target, "leak")), false);
-});
-
-test("knowledge base: an output reached through a link to the repository is refused", (t) => {
-  const repository = repositoryWithShortName(t);
-  const alias = path.join(repository.parent, "alias-to-repository");
-  fs.symlinkSync(repository.long, alias, process.platform === "win32" ? "junction" : "dir");
-  assert.throws(
-    () => requirePrivateOutput(path.join(alias, "knowledge-base")),
-    /redirected|invalid ancestor|must stay inside/i,
-  );
-});
-
-test("knowledge base: an un-ignored output reached through a short path is refused", (t) => {
-  const repository = repositoryWithShortName(t);
-  if (skipUnlessShortNamesExist(t, repository)) return;
-  assert.throws(
-    () => requirePrivateOutput(path.join(repository.short, "docs-output")),
-    /not ignored/i,
-  );
-});
 
 function runOrganizer(workspace, outputPath) {
   const input = path.join(workspace, "favorites.json");

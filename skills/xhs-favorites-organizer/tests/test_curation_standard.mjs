@@ -42,21 +42,19 @@ test("public Skill rebuild examples preserve the Bridge-frozen DianDian prompt c
     path.join(repositoryRoot, "skills/xhs-favorites-organizer/SKILL.md"),
     "utf8"
   );
-  assert.match(skill, /正式知识库只由快照步骤写入/);
+  assert.match(skill, /正式网页数据只由快照步骤写入/);
   assert.match(skill, /“仅本地重建”/);
   assert.match(skill, /不要直接运行缺少该值的底层 builder/);
   assert.doesNotMatch(skill, /rebuild_knowledge_base/);
   assert.doesNotMatch(skill, /统一编排/);
   assert.doesNotMatch(skill, /完成 catalog 与 Obsidian 重建后，同时运行/);
+  // The knowledge base builder is gone: the skill document no longer teaches running it, or any Obsidian output.
+  assert.doesNotMatch(skill, /build-knowledge-base|--kb-target|Obsidian/);
   const examples = skill.match(/```powershell[\s\S]*?```/g) || [];
-  const knowledge = examples.find((example) => example.includes("build-knowledge-base.mjs")) || "";
+  assert.equal(examples.some((example) => example.includes("build-knowledge-base.mjs")), false);
   const publicSite = examples.find((example) => example.includes("build-public-site.mjs")) || "";
-  for (const example of [knowledge, publicSite]) {
-    assert.match(example, /--diandian-prompt-version \$promptVersion/);
-  }
-  // A direct run of the knowledge base builder writes to a new temporary directory, never the live folder.
-  assert.match(knowledge, /--output \$newDirectory/);
-  assert.doesNotMatch(knowledge, /--output "\.\\knowledge-base"/);
+  assert.match(publicSite, /--diandian-prompt-version \$promptVersion/);
+  assert.match(publicSite, /\$promptVersion = "</);
 });
 
 test("curation merge documentation requires the prepared evidence packet", () => {

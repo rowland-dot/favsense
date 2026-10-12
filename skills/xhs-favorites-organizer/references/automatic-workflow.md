@@ -16,8 +16,8 @@
   -> 无法附着且未触发安全限制：只使用已有缓存进入音频/OCR/评论证据回退，不伪造成功
   -> 确定性编排 candidate -> evidence -> resource -> audit；缺证据保持 pending，只有完整当前记录进入 accepted
   -> 关键词候选只输出 candidateKind；confirmed Skill 必须恰好关联一个 verified resource
-  -> build-organization-snapshot.mjs 生成同一 build_version 的正式知识库与脱敏网页快照
-  -> 两份 staging 全部验证并交换成功后，按配置最多发布一次到 Hugging Face Static Space
+  -> build-organization-snapshot.mjs 生成带 build_version 的脱敏网页数据快照
+  -> 网页数据 staging 验证并交换成功后，按配置最多发布一次到 Hugging Face Static Space
   -> 本地设置页显示真实阶段结果；captured/pending 证据只在鉴权待审核 overlay 显示
 ```
 
@@ -32,7 +32,7 @@
   -> 名称缺失或指向屏幕：每 5 秒一帧 + 转场帧
   -> 缺失事实补齐：立即停止视频检查，转官方来源核验
   -> 仍未确认：只对可疑时间段每 0.5 秒抽帧
-  -> 写入策展 JSON 后重建知识库与网页
+  -> 写入策展 JSON 后重建网页数据
 ```
 
 首次启用离线转写时运行 `scripts/setup-transcription.ps1`；模型下载完成后，日常处理不依赖云端模型 API。`scripts/run-video-analysis.ps1` 默认按文件体积从小到大处理并逐条输出进度。默认只转写；确认缺失事实后才使用 `-PrepareVisualEvidence`，每次仅生成一个条目的一个短窗口。找到技能名、仓库或缺失事实后立即结束该条，不再读取后续音频或画面；没有找到才从记录的下一时间点继续。若内容声称来自 GitHub、开源项目或代码仓库，产品名与仓库身份必须分开核验：只有获得可唯一定位的 `owner/repo` 才能停止仓库视觉检查，之后仍需从官方仓库独立检查源码、许可证和项目类型。
@@ -52,7 +52,7 @@
 
 ## 安全停止
 
-“现在可以接触平台吗”只由平台接触许可（`scripts/platform_access.py`）回答。**平台接触**指任何会向小红书发出请求的动作：扫描收藏夹页面、抓取笔记详情、下载媒体、点点总结。安全停止只阻止平台接触；已缓存媒体的本地转写与图片 OCR、证据补全、知识库与网页重建、“仅本地重建”照常进行。“打开原帖”是用户自己在扫描浏览器里的浏览，不受阻止。
+“现在可以接触平台吗”只由平台接触许可（`scripts/platform_access.py`）回答。**平台接触**指任何会向小红书发出请求的动作：扫描收藏夹页面、抓取笔记详情、下载媒体、点点总结。安全停止只阻止平台接触；已缓存媒体的本地转写与图片 OCR、证据补全、网页数据重建、“仅本地重建”照常进行。“打开原帖”是用户自己在扫描浏览器里的浏览，不受阻止。
 
 - **记录**：每一种安全停止——详情抓取、媒体下载、页面上报、点点总结——都会在私有的 `.xhs-favorites/media-download-safety-stop.json` 记录发生时间与触发阶段，因此都会成为下一轮的遗留安全停止。同一条记录只写第一次。旧格式记录只有时间，读作阶段“媒体或详情”；无法读取（损坏或不是普通文件）的记录读作“未知”，仍按存在停止处理。
 - **本轮触发的停止**：整轮停止，不做最终构建，不发布；提示“小红书触发安全限制，已停止本轮且不会继续重试”。本轮开始之后由任何进程写下的记录都按本轮触发处理，并取消本轮随后的证据补全。
@@ -88,9 +88,9 @@
 - `.xhs-favorites/organization-state/`：正交 run/note 状态和恢复依据；状态使用 `captured`、`failed`、`batch_aborted`、`pending_review`、`accepted` 等封闭枚举。
 - `.xhs-favorites/resource-assessments.json`：候选、歧义、缺失或过期资源的私有评估；只有完整 verified 快照进入正式资源注册表。
 - `xhs-favorites/YYYY-MM-DD.md`：同步日报。
-- `knowledge-base/`：Obsidian 可直接打开的知识体系。
+- 旧版本地 `knowledge-base/` 目录（若仍在磁盘上）不再更新，可手动删除；正式输出只有 `site/data/knowledge.json`。
 
-`captured` 只表示点点回复已按当前正文版本安全保存；`pending` 表示还缺审核、证据或资源；`accepted` 才能进入正式知识库和公开页面。`candidateKind="Skill"` 是候选提示，不是 `confirmed Skill`。本地待审核 overlay 只经鉴权 loopback 返回清理后的摘要、证据方法和 blocker；公共 Origin 不请求也不渲染该区域。
+`captured` 只表示点点回复已按当前正文版本安全保存；`pending` 表示还缺审核、证据或资源；`accepted` 才能进入公开页面。`candidateKind="Skill"` 是候选提示，不是 `confirmed Skill`。本地待审核 overlay 只经鉴权 loopback 返回清理后的摘要、证据方法和 blocker；公共 Origin 不请求也不渲染该区域。
 
 ## 可移植性
 

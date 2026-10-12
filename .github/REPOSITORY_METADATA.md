@@ -3,7 +3,7 @@
 ## About description
 
 ```text
-把小红书 / RedNote 收藏自动整理成可搜索、可追溯、可行动的知识库｜Automated sync, video analysis, resource index, Obsidian output & static web UI.
+把小红书 / RedNote 收藏自动整理成可搜索、可追溯、可行动的知识库｜Automated sync, video analysis, resource index & static web UI.
 ```
 
 ## Topics
@@ -18,7 +18,6 @@ knowledge-base
 knowledge-management
 personal-knowledge-management
 digital-garden
-obsidian
 local-first
 tampermonkey
 video-analysis

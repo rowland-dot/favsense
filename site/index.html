@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="FavSense 按需整理小红书 / RedNote 收藏，通过视频分析、资源索引与 Obsidian 输出，生成可搜索、可追溯、可行动的知识库。" />
-    <meta name="keywords" content="FavSense, 拾光台, 小红书收藏整理, Xiaohongshu, RedNote, favorites organizer, bookmark organizer, knowledge base, Obsidian, Tampermonkey, video analysis, resource index, local-first" />
+    <meta name="description" content="FavSense 按需整理小红书 / RedNote 收藏，通过视频分析与资源索引，生成可搜索、可追溯、可行动的知识库。" />
+    <meta name="keywords" content="FavSense, 拾光台, 小红书收藏整理, Xiaohongshu, RedNote, favorites organizer, bookmark organizer, knowledge base, Tampermonkey, video analysis, resource index, local-first" />
     <meta property="og:title" content="FavSense · 拾光台" />
     <meta property="og:description" content="Make sense of what you save. Turn Xiaohongshu / RedNote favorites into a searchable, traceable and actionable knowledge base." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="FavSense · 拾光台" />
-    <meta name="twitter:description" content="Automated favorites sync, video analysis, resource index, Obsidian output and a static knowledge-base UI." />
+    <meta name="twitter:description" content="Automated favorites sync, video analysis, resource index and a static knowledge-base UI." />
     <meta name="theme-color" content="#ffffff" />
     <title>FavSense · 拾光台 · 小红书收藏知识工作台</title>
     <link rel="stylesheet" href="./styles.css" />
@@ -167,12 +167,12 @@
               <div class="manual-sync-copy">
                 <span class="manual-sync-label"><i aria-hidden="true"></i> 一键整理</span>
                 <strong id="manual-sync-title">准备好后再开始</strong>
-                <small id="manual-sync-detail">点击一次即可刷新收藏夹、同步正文与可用评论线索、增量去重，并更新知识库与公开网页。</small>
+                <small id="manual-sync-detail">点击一次即可刷新收藏夹、同步正文与可用评论线索、增量去重，并更新公开网页。</small>
               </div>
               <div class="manual-sync-actions">
                 <button class="manual-sync-button" id="manual-sync-start" type="button">开始整理</button>
                 <button class="manual-sync-button" id="manual-sync-clear-stop" type="button" hidden title="只有在 SOP 扫描浏览器里确认小红书访问已恢复后才点：旧的安全停止记录会被归档保留，然后立即开始一轮整理">已确认恢复，清除并继续</button>
-                <button class="manual-sync-button is-secondary" id="manual-sync-local-rebuild" type="button" title="只用本机已有的收藏重新生成知识库与网页，不访问小红书">仅本地重建</button>
+                <button class="manual-sync-button is-secondary" id="manual-sync-local-rebuild" type="button" title="只用本机已有的收藏重新生成网页数据，不访问小红书">仅本地重建</button>
               </div>
             </div>
             <div class="board-manager-head">

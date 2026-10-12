@@ -427,7 +427,7 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertEqual(option(command, "--curation-bundle"), str(bundle))
             self.assertEqual(option(command, "--diandian-report"), str(bridge.diandian_report_path))
             # The final build is the only formal build: it carries the private summaries folder and the
-            # frozen prompt version, and the snapshot step hands the same pair to both builders.
+            # frozen prompt version, and the snapshot step hands them to the web builder.
             self.assertEqual(option(command, "--diandian-dir"), str(bridge.diandian_dir))
             self.assertEqual(
                 option(command, "--diandian-prompt-version"),
@@ -698,11 +698,6 @@ class BridgeHelpersTest(unittest.TestCase):
         organizer = FETCH_PATH.with_name("organize.mjs").read_text(encoding="utf-8")
         self.assertIn('`safe.directory=${markerRoot}`', organizer)
         self.assertIn('`safe.directory=${repositoryRoot}`', organizer)
-
-    def test_knowledge_builder_git_privacy_check_handles_runtime_identity(self):
-        builder = FETCH_PATH.with_name("build-knowledge-base.mjs").read_text(encoding="utf-8")
-        self.assertIn('`safe.directory=${current}`', builder)
-        self.assertIn('`safe.directory=${root}`', builder)
 
     def test_protocol_version_is_pinned(self):
         self.assertEqual(BRIDGE.PROTOCOL_VERSION, 11)

@@ -1,6 +1,6 @@
-"""The sync service builds the formal knowledge base and web data only in the final snapshot build.
+"""The sync service builds the formal web data only in the final snapshot build.
 
-The older path rebuilt both outputs straight into the live folders after every board, and published
+The older path rebuilt the outputs straight into the live folders after every board, and published
 board by board. It was reachable only while a switch that is always on in production was off.
 """
 

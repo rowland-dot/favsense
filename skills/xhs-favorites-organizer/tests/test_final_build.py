@@ -261,6 +261,74 @@ class RunAlwaysEndsWithOneFinalBuildTest(unittest.TestCase):
             self.assertEqual(run.bridge.read_manual_sync()["state"], "safety-stopped")
 
 
+class SnapshotCommandTest(unittest.TestCase):
+    """The web data is the only formal output: the snapshot step is never told about a knowledge base."""
+
+    RESULT = {
+        "schema_version": 1, "ok": True, "outcome": "built",
+        "build_version": BUILD_VERSION, "site_manifest_sha256": MANIFEST,
+        "counts": {"notes": 1, "categories": 1, "resources": 0},
+    }
+
+    def final_build(self, root: Path, scope: dict | None) -> list[str]:
+        """Run the one final build with the real snapshot step; return the command it was given."""
+        runner = bridge_support.ScriptRunnerDouble(bridge_support.completed(json.dumps(self.RESULT)))
+        bridge = bridge_support.make_bridge(BRIDGE, root, script_runner=runner)
+        note = note_id("a")
+        batch = "manual20261011000000" if scope is None else scope["batch"]
+        BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {note: {"note_id": note}}})
+        BRIDGE.atomic_json(bridge.manual_sync_path, {
+            "batch": "manual20261011000000", "state": "running",
+            "frozen_scope": {"note_ids": [note]},
+        })
+        BRIDGE.atomic_json(
+            bridge.state_dir / "organization-transactions" / f"{batch}-curation-bundle.json",
+            {"schema_version": 1, "outcome": "ready_for_safe_build",
+             "scope": {"note_ids": [note]}, "curation": {note: {"review_status": "pending"}}},
+        )
+        bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 0, "pending": 1}})
+        published = []
+        bridge.run_final_build(
+            {}, lambda version, manifest: published.append((version, manifest)),
+            scope=None if scope is None else {"batch": batch, "note_ids": [note]},
+        )
+        self.assertEqual(published, [(BUILD_VERSION, MANIFEST)])
+        (call,) = runner.calls
+        return call.command
+
+    def test_a_finished_sync_and_a_local_rebuild_both_build_the_web_data_alone(self):
+        for label, scope in (("sync", None), ("rebuild", {"batch": "localrebuild20261011"})):
+            with self.subTest(label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                command = self.final_build(root, scope)
+                self.assertNotIn("--kb-target", command)
+                self.assertFalse([part for part in command if "knowledge-base" in part], command)
+                # The bridge works on the resolved workspace path; the temp folder may be spelled with
+                # an 8.3 short name (RUNNER~1), so compare both sides resolved, not as written.
+                self.assertEqual(
+                    Path(command[command.index("--public-target") + 1]).resolve(),
+                    (root / "site" / "data" / "knowledge.json").resolve(),
+                )
+
+    def test_a_private_config_that_still_names_a_knowledge_base_folder_does_not_stop_the_bridge_starting(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            required = []
+            real = BRIDGE.require_plain_file
+
+            def record(path, *args, **kwargs):
+                required.append(Path(path))
+                return real(path, *args, **kwargs)
+
+            with mock.patch.object(BRIDGE, "require_plain_file", side_effect=record):
+                bridge = bridge_support.make_bridge(BRIDGE, root, config={"knowledge_base": "knowledge-base"})
+
+            self.assertTrue(required, "startup checked no required file")
+            self.assertEqual([path.name for path in required if "knowledge" in path.name], [])
+            self.assertFalse(hasattr(bridge, "knowledge_base"))
+            self.assertFalse((root / "knowledge-base").exists())
+
+
 class LocalRebuildTest(unittest.TestCase):
     PRIOR_BATCH = "manual20261010000000"
 
@@ -406,16 +474,13 @@ class LocalRebuildTest(unittest.TestCase):
             # The real snapshot builder runs: this rebuild's curation bundle was never produced.
             bridge.build_organization_snapshot = BRIDGE.Bridge.build_organization_snapshot.__get__(bridge)
             public_data = Path(directory) / "site" / "data" / "knowledge.json"
-            card = Path(directory) / "knowledge-base" / "02-知识卡片" / "one.md"
-            for path, content in ((public_data, b'{"previous": true}'), (card, b"previous card")):
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(content)
+            public_data.parent.mkdir(parents=True, exist_ok=True)
+            public_data.write_bytes(b'{"previous": true}')
 
             self.rebuild(run)
             status = bridge.manual_sync_status()
 
             self.assertEqual(public_data.read_bytes(), b'{"previous": true}')
-            self.assertEqual(card.read_bytes(), b"previous card")
             bridge.publish_public_site.assert_not_called()
             self.assertEqual(status["phases"]["build"]["status"], "failed")
             self.assertEqual(status["phases"]["build"]["artifact_status"], "held_previous")

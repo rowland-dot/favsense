@@ -679,7 +679,7 @@ function renderManualSync(status = state.manualSync) {
   } else if (status.state === "running") {
     if (status.summary_plan_pending) {
       elements.manualSyncTitle.textContent = "核心入库完成，正在确认深度整理";
-      elements.manualSyncDetail.textContent = "本地知识库已保留；正在确认本轮点点 AI 计划，请保持 SOP 扫描浏览器开启。";
+      elements.manualSyncDetail.textContent = "本地整理结果已保留；正在确认本轮点点 AI 计划，请保持 SOP 扫描浏览器开启。";
     } else {
       elements.manualSyncTitle.textContent = status.current_board ? `正在整理「${status.current_board}」` : "正在整理收藏";
       elements.manualSyncDetail.textContent = `已完成 ${status.processed_boards || 0} / ${status.board_count || state.boards.length} 个收藏夹，请保持 SOP 扫描浏览器开启。`;
@@ -691,7 +691,7 @@ function renderManualSync(status = state.manualSync) {
       : status.publish_status === "unchanged"
         ? "，Hugging Face 内容无变化"
         : "";
-    elements.manualSyncDetail.textContent = `共扫描 ${status.scanned || 0} 条，新增 ${countText(status.new)} 条；本地知识库与网页已经更新${publishMessage}。`;
+    elements.manualSyncDetail.textContent = `共扫描 ${status.scanned || 0} 条，新增 ${countText(status.new)} 条；本地网页数据已经更新${publishMessage}。`;
   } else if (failed) {
     elements.manualSyncTitle.textContent = status.core_completed === true
       ? "核心整理已完成，点点增强未完成"
@@ -705,7 +705,7 @@ function renderManualSync(status = state.manualSync) {
   } else {
     elements.manualSyncTitle.textContent = "准备好后再开始";
     elements.manualSyncDetail.textContent = sopBrowserReady()
-      ? "点击一次即可同步已开启的收藏夹、增量去重，并更新知识库与公开网页。"
+      ? "点击一次即可同步已开启的收藏夹、增量去重，并更新公开网页。"
       : "SOP 扫描浏览器未就绪。请先启动并登录该浏览器；FavSense 不会改用主浏览器或另建登录窗口。";
   }
   if (leftoverStop) {
@@ -747,10 +747,10 @@ async function refreshManualSyncStatus() {
       const refreshMessage = v2
         ? state.statusContract?.copy?.[status.copy_key] || ""
         : ["safety-stopped", "safety_stopped"].includes(status.state)
-          ? "核心整理结果已保留；已因小红书安全限制停止，正在刷新知识库"
+          ? "核心整理结果已保留；已因小红书安全限制停止，正在刷新网页"
           : status.core_completed === true && status.state !== "completed"
-            ? "核心整理完成，点点增强未完成；正在刷新知识库"
-            : "整理完成，正在刷新知识库";
+            ? "核心整理完成，点点增强未完成；正在刷新网页"
+            : "整理完成，正在刷新网页";
       showToast(refreshMessage);
       window.setTimeout(() => location.reload(), 900);
     }
