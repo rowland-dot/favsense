@@ -149,6 +149,8 @@ node ".\skills\xhs-favorites-organizer\scripts\merge-curation-results.mjs" `
 
 `prompt_version` 必须由已验证的 Bridge/整理编排器提供；这些 Node CLI 不读取外部 Skill release 或 browser contract，也不接受人工推导的替代值。缺少或不匹配该冻结值时，点点正文及依赖它的正式 curation 一律降级，不得发布。
 
+合并器从 `--config` 指向的收藏配置里的 `domain_profile` 找到领域配置（缺省 `config/domain-profiles/software.json`，相对运行目录），并按其中 `resource_index.verification_max_age_days` 判断 Skill 资源是否过期；键不存在时按 30 天，键存在但不是非负整数时直接报错并指出该配置文件和键。构建器、策展流水线、公开判定和迁移都用同一个数字。
+
 ## 7. 旧组织状态迁移
 
 - 迁移默认 dry-run，只生成不含笔记 ID、标题或绝对路径的计数报告；报告 15 分钟后失效。
@@ -156,6 +158,7 @@ node ".\skills\xhs-favorites-organizer\scripts\merge-curation-results.mjs" `
 - dry-run 报告、备份和回滚 manifest 都是私有迁移制品，不得进入公开站点或知识库。
 - 本流水线只允许 synthetic fixture、dry-run 与故障注入；不得对真实收藏数据执行 `--apply`。
 - 迁移不访问平台或 GitHub，不把未核验 Skill 或猜测的下载链接写入正式输出。
+- 迁移从 `--root` 下的 `config/xhs-favorites.json` 找领域配置并读取资源核验有效期；这个数字属于 dry-run 确认的内容，dry-run 之后改动有效期，apply 会因报告失效而拒绝，需重新 dry-run。
 
 ## 8. 运行质量门
 

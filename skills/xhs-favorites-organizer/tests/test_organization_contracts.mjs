@@ -13,6 +13,18 @@ const testRoot = dirname(fileURLToPath(import.meta.url));
 const migrationFixturePath = resolve(testRoot, "../test-fixtures/organization-migration-v1.json");
 const loadMigrationFixture = async () => JSON.parse(await readFile(migrationFixturePath, "utf8"));
 const execFileAsync = promisify(execFile);
+// The migration takes the domain profile as an explicit input; these tests use the shipped software
+// profile. What the profile's limit does is tested in verification-max-age-migration.test.mjs.
+const softwareProfilePath = resolve(testRoot, "../../../config/domain-profiles/software.json");
+const importMigration = async () => {
+  const migration = await import("../scripts/migrate-organization-state.mjs");
+  const profile = JSON.parse(await readFile(softwareProfilePath, "utf8"));
+  return {
+    ...migration,
+    planMigration: (input, options) => migration.planMigration(input, { profile, ...options }),
+    applyMigration: (input, options) => migration.applyMigration(input, { profile, ...options }),
+  };
+};
 const migrationOldBytes = (key, marker) => JSON.stringify({
   organization_state: { schema_version: 2, notes: { old: { marker } } },
   curation_audit: { schema_version: 2, notes: { old: { marker } } },
@@ -728,7 +740,7 @@ test("durable journal recovery survives an abrupt child exit at a phase boundary
 });
 
 test("migration dry-run is deterministic, count-only, conservative, and writes no live files", async () => {
-  const { planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   const root = await mkdtemp(join(tmpdir(), "favsense-migration-dry-run-"));
   try {
@@ -777,7 +789,7 @@ test("migration dry-run is deterministic, count-only, conservative, and writes n
 });
 
 test("migration rejects Windows-alias and DOS-device IDs before dry-run or apply mutation", async () => {
-  const { applyMigration, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   const root = await mkdtemp(join(tmpdir(), "favsense-migration-id-alias-"));
   const base = fixture.records[0];
@@ -815,7 +827,7 @@ test("migration rejects Windows-alias and DOS-device IDs before dry-run or apply
 });
 
 test("migration apply requires the matching unexpired dry-run confirmation", async () => {
-  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationTargetPaths, planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   for (const [confirmation, now, code] of [
     ["mismatch", "2026-08-23T00:01:00.000Z", "MIGRATION_CONFIRMATION_MISMATCH"],
@@ -882,7 +894,7 @@ test("migration apply requires the matching unexpired dry-run confirmation", asy
 });
 
 test("migration apply rejects a concurrent distinct plan before touching shared targets", async () => {
-  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationTargetPaths, planMigration } = await importMigration();
   const firstInput = await loadMigrationFixture();
   const secondInput = structuredClone(firstInput);
   secondInput.records[0].note.title = "Distinct synthetic migration plan";
@@ -919,7 +931,7 @@ test("migration apply rejects a concurrent distinct plan before touching shared 
 });
 
 test("migration mutation lock rejects a junction root without writing through it", async (context) => {
-  const { applyMigration, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, planMigration } = await importMigration();
   const input = await loadMigrationFixture();
   const parent = await mkdtemp(join(tmpdir(), "favsense-migration-junction-"));
   const target = join(parent, "target");
@@ -952,7 +964,7 @@ test("migration mutation lock rejects a junction root without writing through it
 });
 
 test("migration apply maps legacy uncertainty honestly and keeps unverified Skill private", async () => {
-  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationTargetPaths, planMigration } = await importMigration();
   const { expectedResourceRevisions } = await import("../scripts/resource-quality.mjs");
   const fixture = await loadMigrationFixture();
   const root = await mkdtemp(join(tmpdir(), "favsense-migration-apply-"));
@@ -1030,7 +1042,7 @@ test("migration apply maps legacy uncertainty honestly and keeps unverified Skil
 });
 
 test("migration preserves independently current curation when the same note has a legacy point", async () => {
-  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationTargetPaths, planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   const combined = structuredClone(fixture);
   for (const record of combined.records.filter((item) => item.id === "note-current")) {
@@ -1062,7 +1074,7 @@ test("migration preserves independently current curation when the same note has 
 });
 
 test("migration keeps invalid v2 point contracts pending and undiscoverable", async () => {
-  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationTargetPaths, planMigration } = await importMigration();
   const { loadFormalPointSummary } = await import("../scripts/curation-quality.mjs");
   const fixture = await loadMigrationFixture();
   for (const invalid of ["empty-title", "oversize-summary"]) {
@@ -1090,7 +1102,7 @@ test("migration keeps invalid v2 point contracts pending and undiscoverable", as
 });
 
 test("migration journal faults restore every live participant and keep a safe private manifest", async () => {
-  const { applyMigration, migrationPrivatePaths, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationPrivatePaths, migrationTargetPaths, planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   for (const participant of ["organization-state", "point-records", "curation-audit", "resource-assessments", "formal-curation", "formal-resources"]) {
     const root = await mkdtemp(join(tmpdir(), "favsense-migration-fault-"));
@@ -1131,7 +1143,7 @@ test("migration journal faults restore every live participant and keep a safe pr
 });
 
 test("migration restart recovery rolls back crashes at every durable participant boundary", async () => {
-  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationTargetPaths, planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   const liveParticipants = [
     "organization-state", "point-records", "curation-audit",
@@ -1183,7 +1195,7 @@ test("migration restart recovery rolls back crashes at every durable participant
 });
 
 test("snapshot capture fails closed while a crashed migration journal requires recovery", async () => {
-  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationTargetPaths, planMigration } = await importMigration();
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const fixture = await loadMigrationFixture();
   const root = await mkdtemp(join(tmpdir(), "favsense-migration-snapshot-block-"));
@@ -1258,7 +1270,7 @@ test("migration reports and backups are rejected from the public tree and docume
 });
 
 test("migration rejects credential-shaped legacy material before planning", async () => {
-  const { planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   const root = await mkdtemp(join(tmpdir(), "favsense-migration-private-"));
   try {
@@ -1275,7 +1287,7 @@ test("migration rejects credential-shaped legacy material before planning", asyn
 });
 
 test("migration rejects record ids that can mutate ordinary object prototypes", async () => {
-  const { planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   const root = await mkdtemp(join(tmpdir(), "favsense-migration-prototype-"));
   try {
@@ -1295,7 +1307,7 @@ test("migration rejects record ids that can mutate ordinary object prototypes", 
 });
 
 test("migration rejects malformed live participant JSON without replacing it", async () => {
-  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationTargetPaths, planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   const root = await mkdtemp(join(tmpdir(), "favsense-migration-invalid-live-"));
   try {
@@ -1316,7 +1328,7 @@ test("migration rejects malformed live participant JSON without replacing it", a
 });
 
 test("migration rejects credential-shaped retained formal curation without replacing it", async () => {
-  const { applyMigration, migrationTargetPaths, planMigration } = await import("../scripts/migrate-organization-state.mjs");
+  const { applyMigration, migrationTargetPaths, planMigration } = await importMigration();
   const fixture = await loadMigrationFixture();
   const root = await mkdtemp(join(tmpdir(), "favsense-migration-invalid-retained-"));
   try {
@@ -1342,6 +1354,10 @@ test("migration CLI confirmation failure returns a closed rerun instruction", as
   const script = resolve(testRoot, "../scripts/migrate-organization-state.mjs");
   const report = ".xhs-favorites/migration-reports/synthetic.json";
   try {
+    // The command reads the workspace's collection config and the domain profile it points at.
+    await mkdir(join(root, "config", "domain-profiles"), { recursive: true });
+    await writeFile(join(root, "config", "xhs-favorites.json"), "{}");
+    await writeFile(join(root, "config", "domain-profiles", "software.json"), await readFile(softwareProfilePath));
     await execFileAsync(process.execPath, [
       script, "--input", migrationFixturePath, "--root", root, "--report", report,
     ]);

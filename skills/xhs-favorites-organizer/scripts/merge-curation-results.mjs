@@ -13,7 +13,7 @@ import {
   normalizeEvidencePacket,
   sealCandidateRevision
 } from "./normalize-evidence.mjs";
-import { confirmedSkillResource, nonSkillResourceAssessment } from "./resource-quality.mjs";
+import { confirmedSkillResource, nonSkillResourceAssessment, readDomainProfile, verificationMaxAgeDays } from "./resource-quality.mjs";
 import { executeJournaledTransaction, recoverJournaledTransaction } from "./journaled-transaction.mjs";
 import { acquireOrganizationMutationLock } from "./organization-mutation-lock.mjs";
 
@@ -29,6 +29,8 @@ const SAFE_CLI_ERRORS = new Set([
   "CURATION_MERGE_TRANSACTION_FAILED",
   "CURATION_MERGE_CLEANUP_FAILED"
 ]);
+
+const PROFILE_ERRORS = new Set(["RESOURCE_MAX_AGE_INVALID", "RESOURCE_PROFILE_REQUIRED", "DOMAIN_PROFILE_UNREADABLE"]);
 
 function clean(value) { return String(value ?? "").replace(/\s+/g, " ").trim(); }
 function sha256(value) { return createHash("sha256").update(value, "utf8").digest("hex"); }
@@ -142,16 +144,13 @@ function validateAudit(value) {
   return result;
 }
 
-function resourceAssessment(candidate, auditEntry, resources, today) {
+function resourceAssessment(candidate, auditEntry, resources, today, maxAgeDays) {
   const collection = Array.isArray(resources) ? resources : resources?.resources || [];
   if (candidate.kind !== "Skill") return nonSkillResourceAssessment(auditEntry.resource_status);
   const names = new Set(candidate.tools.map((tool) => clean(tool).toLocaleLowerCase("zh-CN")));
   const matches = collection.filter((resource) => [resource?.name, ...(resource?.aliases || [])]
     .some((alias) => names.has(clean(alias).toLocaleLowerCase("zh-CN"))));
-  const verified = confirmedSkillResource(matches, {
-    today,
-    maxAgeDays: 30
-  });
+  const verified = confirmedSkillResource(matches, { today, maxAgeDays });
   return verified ? {
     status: "verified",
     resource_id: verified.id,
@@ -169,7 +168,7 @@ function resourceAssessment(candidate, auditEntry, resources, today) {
   };
 }
 
-function formalCandidate(noteId, note, candidate, auditEntry, resources, evidenceItem, point, today) {
+function formalCandidate(noteId, note, candidate, auditEntry, resources, evidenceItem, point, today, maxAgeDays) {
   const methods = [{
     method: "public_text",
     provider: "favsense",
@@ -251,7 +250,7 @@ function formalCandidate(noteId, note, candidate, auditEntry, resources, evidenc
     profile: { classification: { default: candidate.kind } },
     priorCandidates: [{ id: noteId, ...candidate }]
   })[0];
-  const assessment = resourceAssessment(candidate, auditEntry, resources, today);
+  const assessment = resourceAssessment(candidate, auditEntry, resources, today, maxAgeDays);
   if (candidate.kind === "Skill" && assessment.status !== "verified") {
     throw new Error("accepted Skill resource is unavailable or stale");
   }
@@ -267,12 +266,14 @@ function formalCandidate(noteId, note, candidate, auditEntry, resources, evidenc
 }
 
 export function mergeResults({
-  catalog, config, scope, review, candidates, resources, audit, curation,
+  catalog, config, profile, scope, review, candidates, resources, audit, curation,
   evidenceReview = null, pointSummaries = null, expectedCount = null,
   expectedPromptVersion = "",
   requirePacketBinding = false,
   today = new Date().toISOString().slice(0, 10)
 }) {
+  // The domain profile is a required input: how fresh a Skill resource must be is decided by it alone.
+  const maxAgeDays = verificationMaxAgeDays(profile);
   if (expectedPromptVersion && !/^[a-f0-9]{64}$/.test(expectedPromptVersion)) {
     throw new Error("DianDian prompt version is invalid");
   }
@@ -353,7 +354,7 @@ export function mergeResults({
     if (auditEntry.status === "accepted") {
       const point = pointSummaries?.[noteId] || null;
       const formal = formalCandidate(
-        noteId, note, candidate, auditEntry, resources, evidenceItem, point, today
+        noteId, note, candidate, auditEntry, resources, evidenceItem, point, today, maxAgeDays
       );
       const formalEntry = formal.entry;
       const current = currentFormalRevisions(
@@ -501,9 +502,11 @@ async function main() {
       if (expectedPromptVersion && !/^[a-f0-9]{64}$/.test(expectedPromptVersion)) {
         throw new Error("DianDian prompt version is invalid");
       }
+      const config = readJson(options.config, "config");
       merged = mergeResults({
         catalog: readJson(options.catalog, "catalog"),
-        config: readJson(options.config, "config"),
+        config,
+        profile: readDomainProfile(root, config),
         scope,
         review: readJson(options.review, "review"),
         candidates: readJson(options.candidates, "candidates"),
@@ -558,7 +561,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       const code = SAFE_CLI_ERRORS.has(error?.message)
         ? error.message
         : "CURATION_MERGE_FAILED";
-      process.stderr.write(`curation-merge: ${code}\n`);
+      // A profile problem carries only the profile's workspace-relative path and the key to fix, so it
+      // is the one input error whose detail is safe to print.
+      const detail = PROFILE_ERRORS.has(error?.cause?.code) ? `: ${error.cause.message}` : "";
+      process.stderr.write(`curation-merge: ${code}${detail}\n`);
       process.exitCode = 1;
     });
 }

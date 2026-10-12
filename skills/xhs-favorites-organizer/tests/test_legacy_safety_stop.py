@@ -35,9 +35,8 @@ COUNT_FIELDS = {
 }
 
 
-def make_bridge(root: Path, *, v2: bool = False):
+def make_bridge(root: Path):
     bridge = bridge_support.make_bridge(BRIDGE, root)
-    bridge.organization_status_v2_enabled = v2
     bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
     return bridge
 
@@ -117,7 +116,7 @@ class StartIsRefusedTests(unittest.TestCase):
             )
             with mock.patch.object(BRIDGE.subprocess, "Popen"):
                 result = bridge.trigger_manual_sync()
-            self.assertEqual(result["state"], "starting")
+            self.assertEqual(result["phases"]["core"]["status"], "running")
             self.assertNotIn("refused", result)
             bridge.open_sop_browser_page.assert_called_once()
 
@@ -147,18 +146,16 @@ class StatusReplyTests(unittest.TestCase):
 
     def test_the_status_reply_carries_it_next_to_the_last_finished_round(self):
         with tempfile.TemporaryDirectory() as directory:
-            for v2 in (False, True):
-                with self.subTest(v2=v2):
-                    bridge = make_bridge(Path(directory), v2=v2)
-                    write_stop(bridge)
-                    BRIDGE.atomic_json(bridge.manual_sync_path, {
-                        "batch": "manualdone", "state": "completed", "scanned": 5, "new": 2,
-                        "started_at": "2026-10-10T08:00:00+00:00",
-                        "processed_run_ids": [], "run_board_ids": ["first"],
-                    })
-                    status = bridge.manual_sync_status()
-                    self.assertEqual(status["legacy_safety_stop"]["date"], "2026-08-29")
-                    self.assertNotEqual(status.get("state"), "safety-stopped")
+            bridge = make_bridge(Path(directory))
+            write_stop(bridge)
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": "manualdone", "state": "completed", "scanned": 5, "new": 2,
+                "started_at": "2026-10-10T08:00:00+00:00",
+                "processed_run_ids": [], "run_board_ids": ["first"],
+            })
+            status = bridge.manual_sync_status()
+            self.assertEqual(status["legacy_safety_stop"]["date"], "2026-08-29")
+            self.assertNotEqual(status.get("state"), "safety_stopped")
 
     def test_no_leftover_means_no_field(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -204,7 +201,7 @@ class ClearTests(unittest.TestCase):
 
             self.assertIs(reply["cleared"], True)
             self.assertIs(reply["started"], True)
-            self.assertEqual(reply["status"]["state"], "starting")
+            self.assertEqual(reply["status"]["phases"]["core"]["status"], "running")
             self.assertNotIn("legacy_safety_stop", reply["status"])
             bridge.open_sop_browser_page.assert_called_once()
             self.assertFalse((bridge.state_dir / STOP_NAME).exists())
@@ -245,7 +242,7 @@ class ClearTests(unittest.TestCase):
             BRIDGE.atomic_json(bridge.manual_sync_path, {"batch": "done", "state": "completed"})
             with mock.patch.object(BRIDGE.subprocess, "Popen"):
                 result = bridge.trigger_manual_sync()
-            self.assertEqual(result["state"], "starting")
+            self.assertEqual(result["phases"]["core"]["status"], "running")
             self.assertEqual(bridge.open_sop_browser_page.call_count, 2)
 
 

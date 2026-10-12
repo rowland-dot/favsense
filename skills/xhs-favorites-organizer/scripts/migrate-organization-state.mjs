@@ -15,7 +15,7 @@ import { executeJournaledTransaction, recoverJournaledTransaction } from "./jour
 import { sealCandidateRevision } from "./normalize-evidence.mjs";
 import { acquireOrganizationMutationLock } from "./organization-mutation-lock.mjs";
 import { atomicWriteTextFile } from "./public-tree-policy.mjs";
-import { confirmedSkillResource, validateVerifiedResource } from "./resource-quality.mjs";
+import { confirmedSkillResource, readDomainProfile, validateVerifiedResource, verificationMaxAgeDays } from "./resource-quality.mjs";
 import { containsCredentialShape } from "./sensitive-data.mjs";
 
 const HASH = /^[a-f0-9]{64}$/;
@@ -34,6 +34,9 @@ const PARTICIPANTS = [
 const FORMAL_CURATION_KEYS = new Set([
   "action", "candidate_revision", "category", "category_override", "category_reason",
   "evidence_dependencies", "evidence_sha256", "kind", "summary", "themes", "title", "tools",
+]);
+const PROFILE_ERRORS = new Set([
+  "RESOURCE_MAX_AGE_INVALID", "RESOURCE_PROFILE_REQUIRED", "DOMAIN_PROFILE_UNREADABLE", "MIGRATION_CONFIG_UNREADABLE",
 ]);
 const clean = (value) => String(value ?? "").normalize("NFC").replace(/\s+/gu, " ").trim();
 const shaText = (value) => createHash("sha256").update(String(value), "utf8").digest("hex");
@@ -157,7 +160,7 @@ function currentCandidate(id, record, contentSha256, evidenceSha256, dependencie
 function phase(status, reasonCode, updatedAt) {
   return { status, reason_code: reasonCode, updated_at: updatedAt };
 }
-function migrateRecord(id, record, conflicting, today, updatedAt) {
+function migrateRecord(id, record, conflicting, today, updatedAt, maxAgeDays) {
   const contentSha256 = contentRevision(record.note);
   const base = {
     schema_version: 2,
@@ -198,7 +201,7 @@ function migrateRecord(id, record, conflicting, today, updatedAt) {
       contentSha256, comments: [], commentsChecked: false, methods: [dependency],
     });
     const independentCuration = record.audit?.status === "accepted"
-      ? migrateRecord(id, { ...record, point: undefined, legacy_prompt_version: undefined }, false, today, updatedAt)
+      ? migrateRecord(id, { ...record, point: undefined, legacy_prompt_version: undefined }, false, today, updatedAt, maxAgeDays)
       : null;
     if (independentCuration?.classification === "unchanged") {
       return {
@@ -233,7 +236,7 @@ function migrateRecord(id, record, conflicting, today, updatedAt) {
       const resourceInputs = Array.isArray(record.resources)
         ? record.resources
         : (record.resource ? [record.resource] : []);
-      const resource = skillCandidate ? confirmedSkillResource(resourceInputs, { today, maxAgeDays: 30 }) : null;
+      const resource = skillCandidate ? confirmedSkillResource(resourceInputs, { today, maxAgeDays }) : null;
       const dependencies = Array.isArray(record.evidence.methods) ? record.evidence.methods : [];
       const evidenceSha256 = evidenceRevision({
         contentSha256, comments: record.evidence.comments || [],
@@ -308,7 +311,7 @@ function migrateRecord(id, record, conflicting, today, updatedAt) {
   if (base.candidate_kind === "Skill") base.dimensions.resource = phase("candidate", "resource_stale", updatedAt);
   return { classification: "pending", state: base };
 }
-function prepareMigration(input, { today = "", updatedAt = "" } = {}) {
+function prepareMigration(input, { today = "", updatedAt = "", maxAgeDays } = {}) {
   const { records, conflicts, duplicates } = uniqueRecords(input);
   const output = {
     state: { schema_version: 2, notes: {} }, points: {}, audit: { schema_version: 2, notes: {} },
@@ -320,7 +323,7 @@ function prepareMigration(input, { today = "", updatedAt = "" } = {}) {
     unchanged: 0, migrated: 0, pending: 0, rejected: 0,
   };
   for (const [id, record] of records) {
-    const result = migrateRecord(id, record, conflicts.has(id), today, updatedAt);
+    const result = migrateRecord(id, record, conflicts.has(id), today, updatedAt, maxAgeDays);
     counts[result.classification] += 1;
     output.state.notes[id] = result.state;
     if (result.point) output.points[id] = result.point;
@@ -340,16 +343,19 @@ function prepareMigration(input, { today = "", updatedAt = "" } = {}) {
   return { counts, output };
 }
 
-export function planMigration(input, { now = new Date().toISOString(), root: rootValue } = {}) {
+export function planMigration(input, { now = new Date().toISOString(), root: rootValue, profile } = {}) {
+  // The domain profile decides how fresh a Skill resource must be, and the dry run confirms that number.
+  const maxAgeDays = verificationMaxAgeDays(profile);
   if (!rootValue) throw new Error("MIGRATION_ROOT_REQUIRED");
   const rootIdentity = shaText(resolve(rootValue).normalize("NFC").toLowerCase());
   const created = parseInstant(now, "MIGRATION_TIME_INVALID");
   const createdAt = created.toISOString();
-  const { counts } = prepareMigration(input, { today: createdAt.slice(0, 10), updatedAt: createdAt });
+  const { counts } = prepareMigration(input, { today: createdAt.slice(0, 10), updatedAt: createdAt, maxAgeDays });
   const normalized = uniqueRecords(input);
   const expiresAt = new Date(created.getTime() + 15 * 60 * 1000).toISOString();
   const dryRunId = shaJson({
     schema_version: 1, created_at: createdAt, expires_at: expiresAt, counts,
+    verification_max_age_days: maxAgeDays,
     root_identity_sha256: rootIdentity,
     live_target_revisions: liveTargetRevisions(rootValue),
     records: normalized.records.map(([, record]) => canonical(record)),
@@ -434,7 +440,8 @@ async function readSafeJsonFile(path) {
     throw new Error("MIGRATION_TARGET_SCHEMA_INVALID");
   }
 }
-export async function applyMigration(input, { root: rootValue, report, confirm, now = new Date().toISOString(), failAt = "" } = {}) {
+export async function applyMigration(input, { root: rootValue, report, confirm, now = new Date().toISOString(), failAt = "", profile } = {}) {
+  const maxAgeDays = verificationMaxAgeDays(profile);
   const root = resolve(rootValue);
   if (!report || !HASH.test(String(report.dry_run_id || ""))) throw migrationError("MIGRATION_REPORT_STALE");
   if (confirm !== report.dry_run_id) throw migrationError("MIGRATION_CONFIRMATION_MISMATCH");
@@ -447,7 +454,7 @@ export async function applyMigration(input, { root: rootValue, report, confirm, 
   }
   const transactionId = `migration-${report.dry_run_id.slice(0, 16)}`;
   if (!await pathMetadata(join(root, `.organization-tx-${transactionId}`))) {
-    validateReport(report, planMigration(input, { now: report.created_at, root }));
+    validateReport(report, planMigration(input, { now: report.created_at, root, profile }));
   }
   const targets = migrationTargetPaths(root);
   const privatePaths = migrationPrivatePaths(root, report.dry_run_id);
@@ -492,10 +499,10 @@ export async function applyMigration(input, { root: rootValue, report, confirm, 
     );
     throw migrationError("MIGRATION_RECOVERED_RERUN_DRY_RUN");
   }
-  const expected = planMigration(input, { now: report.created_at, root });
+  const expected = planMigration(input, { now: report.created_at, root, profile });
   validateReport(report, expected);
   const confirmedLiveRevisions = liveTargetRevisions(root);
-  const { output } = prepareMigration(input, { today: report.created_at.slice(0, 10), updatedAt: report.created_at });
+  const { output } = prepareMigration(input, { today: report.created_at.slice(0, 10), updatedAt: report.created_at, maxAgeDays });
   const priorState = await readSafeJsonFile(targets.organization_state);
   const priorAudit = await readSafeJsonFile(targets.curation_audit);
   const priorAssessments = await readSafeJsonFile(targets.resource_assessments);
@@ -531,7 +538,7 @@ export async function applyMigration(input, { root: rootValue, report, confirm, 
   const validFormalResource = (resource) => {
     if (!resource || typeof resource !== "object" || Array.isArray(resource) || containsCredentialShape(resource)) return false;
     if (resource.type === "Agent Skill") {
-      return validateVerifiedResource(resource, { today: resourceToday, maxAgeDays: 30 }).length === 0;
+      return validateVerifiedResource(resource, { today: resourceToday, maxAgeDays }).length === 0;
     }
     return Boolean(clean(resource.name) && clean(resource.type));
   };
@@ -550,7 +557,7 @@ export async function applyMigration(input, { root: rootValue, report, confirm, 
     clean(left.id || left.name).localeCompare(clean(right.id || right.name))
   ));
   if (priorFormalResources) output.formalResources.verified_at = priorFormalResources.verified_at;
-  validateReport(report, planMigration(input, { now: report.created_at, root }));
+  validateReport(report, planMigration(input, { now: report.created_at, root, profile }));
   const values = {
     organization_state: output.state, point_records: output.points, curation_audit: output.audit,
     resource_assessments: output.resources, formal_curation: output.formalCuration, formal_resources: output.formalResources,
@@ -634,6 +641,19 @@ function privateReportPath(rootValue, reportValue) {
   }
   return report;
 }
+// The domain profile the workspace's collection config points at (the same one the builders read).
+// Read again by the apply run, so a limit edited after the dry run changes the plan it must match.
+function readWorkspaceProfile(rootValue) {
+  const root = resolve(rootValue);
+  let config;
+  try { config = JSON.parse(readFileSync(join(root, "config", "xhs-favorites.json"), "utf8")); }
+  catch {
+    const error = new Error("MIGRATION_CONFIG_UNREADABLE: config/xhs-favorites.json");
+    error.code = "MIGRATION_CONFIG_UNREADABLE";
+    throw error;
+  }
+  return readDomainProfile(root, config);
+}
 async function main() {
   const args = parseArguments(process.argv.slice(2));
   if (!args.input || !args.root) throw new Error("MIGRATION_ARGUMENT_INVALID");
@@ -645,8 +665,9 @@ async function main() {
   } catch {
     throw new Error("MIGRATION_INPUT_INVALID");
   }
+  const profile = readWorkspaceProfile(args.root);
   if (!args.apply) {
-    const report = planMigration(input, { root: args.root });
+    const report = planMigration(input, { root: args.root, profile });
     if (args.report) {
       const reportPath = privateReportPath(args.root, args.report);
       await assertSafePath(resolve(args.root), reportPath);
@@ -665,7 +686,7 @@ async function main() {
     throw new Error("MIGRATION_REPORT_INVALID");
   }
   const result = await applyMigration(input, {
-    root: args.root, report, confirm: args.confirm, failAt: args.fault_at,
+    root: args.root, report, confirm: args.confirm, failAt: args.fault_at, profile,
   });
   process.stdout.write(`${JSON.stringify(result)}\n`);
 }
@@ -675,7 +696,10 @@ if (isMain) {
     const rawCode = clean(error?.code || error?.message || "");
     const code = /^[A-Z][A-Z0-9_:-]{2,120}$/.test(rawCode) ? rawCode : "MIGRATION_FAILED";
     const next = error?.next_action === "rerun_dry_run" ? "; next: rerun dry-run" : "";
-    process.stderr.write(`${code} phase: migration${next}\n`);
+    // A profile problem is described by the profile's workspace-relative path and the key to fix, which
+    // is safe to print and is the whole point of the message.
+    const shown = PROFILE_ERRORS.has(rawCode) ? clean(error.message) : code;
+    process.stderr.write(`${shown} phase: migration${next}\n`);
     process.exitCode = 1;
   });
 }

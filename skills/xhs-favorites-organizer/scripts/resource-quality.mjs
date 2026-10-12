@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { relative, resolve, sep } from "node:path";
 
 const HASH = /^[a-f0-9]{64}$/;
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -31,9 +33,58 @@ export function nonSkillResourceAssessment(auditResourceStatus) {
   };
 }
 
-export function resourceFreshness(resource, { today, maxAgeDays = 30 } = {}) {
+const MAX_AGE_KEY = "resource_index.verification_max_age_days";
+const DEFAULT_MAX_AGE_DAYS = 30;
+const DEFAULT_PROFILE_PATH = "config/domain-profiles/software.json";
+
+function configError(code, message) {
+  const error = new Error(`${code}: ${message}`);
+  error.code = code;
+  return error;
+}
+
+// The one place that turns a domain profile into "how many days a resource check stays fresh".
+// An absent key means the default; a present key that is not a non-negative whole number is a
+// configuration mistake and is reported, never read as "everything is stale". `source` names the
+// profile file in the message when the caller knows it.
+export function verificationMaxAgeDays(profile, source = "domain profile") {
+  if (!profile || typeof profile !== "object" || Array.isArray(profile)) {
+    throw configError("RESOURCE_PROFILE_REQUIRED", "a domain profile is required to decide how fresh a resource check must be");
+  }
+  const value = profile.resource_index?.verification_max_age_days;
+  if (value === undefined) return DEFAULT_MAX_AGE_DAYS;
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw configError("RESOURCE_MAX_AGE_INVALID", `${source}: ${MAX_AGE_KEY} must be a non-negative whole number`);
+  }
+  return value;
+}
+
+// The domain profile a collection config points at, read the way the builders read it: the path is
+// relative to the workspace root and defaults to the software profile. A profile that cannot be read,
+// or whose limit is broken, is reported here by its workspace-relative path, so the message names the
+// file to fix without revealing where the workspace lives on this machine.
+export function readDomainProfile(root, config) {
+  const file = resolve(root, String(config?.domain_profile || DEFAULT_PROFILE_PATH));
+  const name = relative(resolve(root), file).split(sep).join("/");
+  let profile;
+  try {
+    const text = readFileSync(file, "utf8");
+    profile = JSON.parse(text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text);
+  }
+  catch { throw configError("DOMAIN_PROFILE_UNREADABLE", name); }
+  verificationMaxAgeDays(profile, name);
+  return profile;
+}
+
+// The limit is always resolved by the caller (see verificationMaxAgeDays); this function has no
+// default of its own, so a call site that forgot to pass it fails loudly instead of judging stale.
+export function resourceFreshness(resource, options) {
+  const { today, maxAgeDays } = options ?? {};
+  if (!Number.isSafeInteger(maxAgeDays) || maxAgeDays < 0) {
+    throw configError("RESOURCE_MAX_AGE_INVALID", `${MAX_AGE_KEY} was not resolved before the freshness check`);
+  }
   const current = utcDay(today); const verified = utcDay(resource?.verified_at);
-  if (current === null || verified === null || verified > current || !Number.isSafeInteger(maxAgeDays) || maxAgeDays < 0) return "stale";
+  if (current === null || verified === null || verified > current) return "stale";
   return current - verified <= maxAgeDays ? "fresh" : "stale";
 }
 

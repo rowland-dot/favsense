@@ -18,12 +18,16 @@ import {
 } from "../scripts/curation-quality.mjs";
 import { prepareScope } from "../scripts/prepare-curation-scope.mjs";
 import { initializeAudit } from "../scripts/initialize-curation-audit.mjs";
-import { mergeResults } from "../scripts/merge-curation-results.mjs";
+import { mergeResults as mergeResultsWithProfile } from "../scripts/merge-curation-results.mjs";
 import { curationRevision, reviewPacketRevision } from "../scripts/curation-revision.mjs";
 import { executeJournaledTransaction } from "../scripts/journaled-transaction.mjs";
 import { expectedResourceRevisions } from "../scripts/resource-quality.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+// The merge takes the domain profile as an explicit input; these tests use the shipped software profile.
+// The tests of what the profile's limit does live in verification-max-age.test.mjs.
+const softwareProfile = JSON.parse(fs.readFileSync(path.join(repositoryRoot, "config/domain-profiles/software.json"), "utf8"));
+const mergeResults = (input) => mergeResultsWithProfile({ profile: softwareProfile, ...input });
 const mergeCli = path.join(
   repositoryRoot,
   "skills/xhs-favorites-organizer/scripts/merge-curation-results.mjs"
@@ -117,6 +121,8 @@ function mergeCliFixture(workspace) {
     }
   } });
   writeJson(paths.config, { boards: [{ name: "主题甲", category: "主题甲" }] });
+  // The command finds the profile through --config, defaulting to the software profile in the workspace.
+  writeJson(path.join(workspace, "config/domain-profiles/software.json"), softwareProfile);
   writeJson(paths.scope, { note_ids: ["current"] });
   const evidencePacket = {
     note_id: "current",
