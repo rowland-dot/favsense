@@ -5,19 +5,13 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizeSensitiveText } from "./sensitive-data.mjs";
 import { collectVideoEvidenceStats } from "./evidence-stats.mjs";
-import { resolveCategoryPolicy } from "./category-policy.mjs";
 import { curationRevision } from "./curation-revision.mjs";
 import {
-  currentFormalRevisions,
-  formalCurationDecision,
-  formalContentKind,
-  isPublishableCuration,
   loadFormalPointSummary,
   loadCurationAudit,
-  publicEvidenceStatus,
-  sealedCandidateFor
+  publicEvidenceStatus
 } from "./curation-quality.mjs";
-import { confirmedSkillResource } from "./resource-quality.mjs";
+import { judgePublicNote, validateContentKindProfile } from "./public-judgement.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
 import { atomicWriteTextFile } from "./public-tree-policy.mjs";
 
@@ -35,29 +29,6 @@ const config = await parseJson(configPath);
 const configuredPath = (value, fallback) => resolve(workspace, value || fallback);
 const profilePath = arg("profile", configuredPath(config.domain_profile, "config/domain-profiles/software.json"));
 const profile = await parseJson(profilePath);
-function validateContentKindProfile(value) {
-  const allowedKinds = new Set(Object.keys(value.content_kinds || {}));
-  if (!allowedKinds.size) throw new Error("domain_profile.content_kinds must not be empty");
-  if (!value.classification || !String(value.classification.default || "").trim()) {
-    throw new Error("domain_profile.classification.default is required");
-  }
-  const groups = [
-    ["classification", value.classification?.default, value.classification?.rules || []],
-    ["fallback", value.fallback?.default_kind, value.fallback?.kind_rules || []]
-  ];
-  for (const [label, defaultKind, rules] of groups) {
-    if (defaultKind && !allowedKinds.has(defaultKind)) {
-      throw new Error(`${label} default kind is not declared in content_kinds: ${defaultKind}`);
-    }
-    for (const rule of rules) {
-      if (!allowedKinds.has(rule.kind)) {
-        throw new Error(`${label} rule kind is not declared in content_kinds: ${rule.kind}`);
-      }
-      if (!rule.pattern) throw new Error(`${label} kind rule is missing a pattern`);
-      new RegExp(rule.pattern, "i");
-    }
-  }
-}
 validateContentKindProfile(profile);
 const resourceIndex = profile.resource_index || {};
 if (profile.features?.resource_index) validateResourceIndex(resourceIndex);
@@ -173,75 +144,6 @@ const resources = rawResources.map((raw, index) => {
     actions
   };
 });
-const resourceByAlias = new Map();
-const rawResourceByAlias = new Map();
-for (const [index, resource] of resources.entries()) {
-  const raw = rawResources[index];
-  for (const alias of [resource.name, ...(resource.aliases || [])]) {
-    resourceByAlias.set(String(alias).toLocaleLowerCase("zh-CN"), resource);
-    rawResourceByAlias.set(String(alias).toLocaleLowerCase("zh-CN"), raw);
-  }
-}
-
-function resourceForTool(tool) {
-  return resourceByAlias.get(String(tool).toLocaleLowerCase("zh-CN")) || null;
-}
-
-function classify(entry, matchedResources) {
-  const allowedKinds = new Set(Object.keys(profile.content_kinds || {}));
-  if (entry.kind !== undefined) {
-    if (!allowedKinds.has(entry.kind)) {
-      throw new Error(`Invalid content kind: ${entry.kind}. Expected one of: ${[...allowedKinds].join(", ")}.`);
-    }
-    return entry.kind;
-  }
-  const text = `${entry.summary} ${entry.action} ${entry.themes.join(" ")}`;
-  const resourceTypes = matchedResources.map((resource) => resource.type).join(" ");
-  for (const rule of profile.classification?.rules || []) {
-    const source = ["resource_type", "project_type"].includes(rule.source) ? resourceTypes : text;
-    if (new RegExp(rule.pattern, "i").test(source)) return rule.kind;
-  }
-  return profile.classification.default;
-}
-
-function fallbackEntry(raw) {
-  const text = [raw.title, raw.description, raw.tags].filter(Boolean).join(" ");
-  let category = profile.fallback?.default_category || "未分类";
-  let kind = profile.fallback?.default_kind
-    || profile.classification.default;
-  for (const rule of profile.fallback?.rules || []) {
-    if (new RegExp(rule.pattern, "i").test(text)) {
-      category = rule.category;
-      break;
-    }
-  }
-  const fallbackKindRules = profile.fallback?.kind_rules?.length
-    ? profile.fallback.kind_rules
-    : (profile.classification?.rules || []).filter((rule) => !["resource_type", "project_type"].includes(rule.source));
-  for (const rule of fallbackKindRules) {
-    if (new RegExp(rule.pattern, "i").test(text)) {
-      kind = rule.kind;
-      break;
-    }
-  }
-  if (!Object.hasOwn(profile.content_kinds || {}, kind)) {
-    throw new Error(`Invalid fallback content kind: ${kind}`);
-  }
-  const excerpt = String(raw.description || raw.title || "")
-    .replace(/\s+/g, " ")
-    .trim();
-  return {
-    category,
-    themes: [],
-    summary: excerpt
-      ? excerpt.slice(0, 240)
-      : "这条收藏已收录，完整内容尚未解读。",
-    action: "",
-    tools: [],
-    kind
-  };
-}
-
 const rawNotes = Object.fromEntries(
   Object.entries(catalog.notes || {})
 );
@@ -304,55 +206,29 @@ const diandianById = new Map(Object.keys(rawNotes)
 const evidenceStats = await collectVideoEvidenceStats(paths.videoAnalysis, config.public_stats, Object.keys(rawNotes));
 const frameVerifiedNoteIds = new Set(evidenceStats.verifiedNoteIds);
 const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
-  const hasCuration = Object.hasOwn(curation, noteId);
-  const candidateEntry = hasCuration
-    ? curation[noteId]
-    : (sealedCandidateFor(sealedCandidates, noteId) ?? fallbackEntry(raw));
-  const candidateResources = [...new Map((candidateEntry.tools || [])
-    .map(resourceForTool).filter(Boolean).map((resource) => [resource.id, resource])).values()];
-  const candidateKind = classify(candidateEntry, candidateResources);
-  const rawCandidateResources = (candidateEntry.tools || [])
-    .map((tool) => rawResourceByAlias.get(String(tool).toLocaleLowerCase("zh-CN"))).filter(Boolean);
-  const confirmedResource = candidateKind === "Skill"
-    ? confirmedSkillResource(rawCandidateResources, { today: effectiveDate, maxAgeDays: 30 })
-    : null;
-  const currentRevisions = currentFormalRevisions(raw, candidateEntry, confirmedResource, expectedPromptVersion);
-  const isCurated = hasCuration
-    && isPublishableCuration(
-      noteId,
-      raw,
-      curation,
-      curationQuality,
-      curationAudit,
-      curationBaselineIds,
-      curationBaselineRevisions,
-      { config, resources: resourceRegistry, ...(currentRevisions ? { currentRevisions } : {}) }
-    );
-  const isFrameVerified = frameVerifiedNoteIds.has(noteId);
-  const entry = isCurated ? curation[noteId] : fallbackEntry(raw);
-  const categoryPolicy = resolveCategoryPolicy({
-    entry,
+  const diandian = diandianById.get(noteId);
+  const verdict = judgePublicNote({
+    noteId,
     note: raw,
+    curation,
+    sealedCandidates,
+    quality: {
+      policy: curationQuality,
+      audit: curationAudit,
+      baselineIds: curationBaselineIds,
+      baselineRevisions: curationBaselineRevisions
+    },
+    point: diandian,
+    resourceRegistry,
     config,
     profile,
-    entryOrigin: isCurated ? "curation" : "content_rule"
+    effectiveDate,
+    promptVersion: expectedPromptVersion
   });
-  const matchedResources = [...new Map(
-    (entry.tools || []).map(resourceForTool).filter(Boolean).map((resource) => [resource.name, resource])
-  ).values()];
-  const title = displayTitle(raw, entry, noteId);
-  const diandian = diandianById.get(noteId);
+  const isFrameVerified = frameVerifiedNoteIds.has(noteId);
+  const title = displayTitle(raw, verdict.entry, noteId);
   const auditEntry = curationAudit?.notes?.[noteId];
-  const formalDecision = formalCurationDecision({
-    publishable: isCurated,
-    auditEntry,
-    currentRevisions,
-    point: diandian,
-    kind: candidateKind,
-    resource: confirmedResource,
-  });
-  const publicDiandian = formalDecision.summary_source === "point" ? diandian : null;
-  const formalSummaryReasonCode = String(formalDecision.reason_code || "");
+  const formalSummaryReasonCode = String(verdict.reasonCode || "");
   const runState = diandianRunStateById.get(noteId);
   const summaryState = runState?.summaryState || (diandian
     ? (["content_changed", "provider_changed", "prompt_changed", "summary_changed"].includes(formalSummaryReasonCode)
@@ -360,24 +236,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
         : "captured")
     : "not_started");
   const summaryReasonCode = runState?.summaryReasonCode || formalSummaryReasonCode;
-  const curationStatus = formalDecision.accepted
-    ? "accepted"
-    : (auditEntry?.status === "rejected"
-        ? "rejected"
-        : (auditEntry?.status === "unavailable" ? "unavailable" : "pending_review"));
-  const projectedKind = formalContentKind(
-    profile,
-    candidateKind === "Skill" ? candidateKind : classify(entry, matchedResources),
-    formalDecision.accepted && Boolean(confirmedResource)
-  );
-  const projectedResources = candidateKind === "Skill"
-    ? matchedResources.filter((resource) => formalDecision.resource_ids.includes(resource.id))
-    : matchedResources;
-  const projectedTools = candidateKind === "Skill"
-    ? projectedResources.map((resource) => resource.name)
-    : entry.tools || [];
-  const publicSummary = String(entry.summary || "");
-  const publicDeepSummary = publicDiandian?.summary || publicSummary;
+  const deepSummarySources = { point: "xiaohongshu-diandian", curation: "curation", metadata: "source-metadata" };
 
   return {
     id: noteId,
@@ -389,31 +248,31 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     likes: raw.liked_count || "",
     collections: raw.collected_count || "",
     mediaType: raw.type || "视频",
-    category: categoryPolicy.category,
-    categorySource: categoryPolicy.categorySource,
-    categoryReason: categoryPolicy.categoryReason,
-    suggestedCategory: categoryPolicy.suggestedCategory,
-    sourceBoards: categoryPolicy.sourceBoards,
-    themes: categoryPolicy.themes,
-    summary: publicSummary,
-    deepSummary: publicDeepSummary,
-    deepSummarySource: publicDiandian ? "xiaohongshu-diandian" : (isCurated ? "curation" : "source-metadata"),
-    curationRevision: isCurated ? curationRevision(entry) : "",
-    summaryStatus: curationStatus,
-    curationStatus,
-    summaryReason: formalDecision.reason_code,
+    category: verdict.category,
+    categorySource: verdict.categorySource,
+    categoryReason: verdict.categoryReason,
+    suggestedCategory: verdict.suggestedCategory,
+    sourceBoards: verdict.sourceBoards,
+    themes: verdict.themes,
+    summary: verdict.summary,
+    deepSummary: verdict.deepSummary,
+    deepSummarySource: deepSummarySources[verdict.summarySource],
+    curationRevision: verdict.curated ? curationRevision(verdict.entry) : "",
+    summaryStatus: verdict.curationStatus,
+    curationStatus: verdict.curationStatus,
+    summaryReason: verdict.reasonCode,
     summaryState,
     summaryReasonCode,
-    ...(candidateKind === "Skill" && projectedKind !== "Skill" ? { candidateKind } : {}),
-    reviewedAt: formalDecision.accepted || auditEntry?.status === "unavailable"
+    ...(verdict.candidateKind ? { candidateKind: verdict.candidateKind } : {}),
+    reviewedAt: verdict.accepted || auditEntry?.status === "unavailable"
       ? String(auditEntry?.reviewed_at || "")
       : "",
-    action: String(entry.action || "").trim(),
-    tools: projectedTools,
-    kind: projectedKind,
-    resources: projectedResources.map((resource) => resource.name),
-    resourceIds: formalDecision.resource_ids,
-    evidence: publicEvidenceStatus(noteId, curationAudit, isFrameVerified, formalDecision.accepted)
+    action: verdict.action,
+    tools: verdict.tools,
+    kind: verdict.kind,
+    resources: verdict.resourceNames,
+    resourceIds: verdict.resourceIds,
+    evidence: publicEvidenceStatus(noteId, curationAudit, isFrameVerified, verdict.accepted)
   };
 });
 
