@@ -2686,7 +2686,7 @@ test("v2 terminal outcomes show truthful refresh messages", async () => {
   }
 });
 
-test("one-click workflow imports first and stops the DianDian batch after one browser-contract failure", async () => {
+test("one-click workflow imports first, hands the plan to the sync service and opens nothing", async () => {
   const [template, app] = await Promise.all([
     read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template"),
     read("site/app.js")
@@ -2695,13 +2695,12 @@ test("one-click workflow imports first and stops the DianDian batch after one br
   assert.match(template, /__DIANDIAN_MATCH_LINE__/);
   assert.ok(template.includes(exportMarker));
   const userscript = renderUserscriptTemplate(template)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { runBoard, signedMessage };\n${exportMarker}`);
+    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { runBoard };\n${exportMarker}`);
 
   const requests = [];
   const events = [];
   const openedTabs = [];
   const assigned = [];
-  const summarizeMessages = [];
   let hooks;
   let statusBox = null;
   let timerId = 0;
@@ -2710,35 +2709,6 @@ test("one-click workflow imports first and stops the DianDian batch after one br
     if (delay < 5000) queueMicrotask(callback);
     return id;
   };
-
-  class FakeBroadcastChannel {
-    constructor() { this.listeners = new Set(); }
-    addEventListener(type, listener) { if (type === "message") this.listeners.add(listener); }
-    removeEventListener(type, listener) { if (type === "message") this.listeners.delete(listener); }
-    close() { this.listeners.clear(); }
-    postMessage(message) {
-      events.push(message.type);
-      const { signature: _signature, ...unsigned } = message;
-      const respond = (patch) => hooks.signedMessage({ ...unsigned, ...patch }).then((signed) => {
-        queueMicrotask(() => {
-          for (const listener of [...this.listeners]) listener({ data: signed });
-        });
-      });
-      if (message.type === "probe") respond({ type: "ready" });
-      if (message.type === "share-probe") respond({ type: "share-ready" });
-      if (message.type === "copy-link") {
-        respond({
-          type: "share-link",
-          url: `https://www.xiaohongshu.com/discovery/item/${message.note_id}?xsec_token=copied-${message.note_id}&xsec_source=pc_share`
-        });
-      }
-      if (message.type === "summarize") {
-        summarizeMessages.push(message);
-        if (message.note_id === "note-a") respond({ type: "failed", error: "ai-response-timeout" });
-        else respond({ type: "saved", error: "" });
-      }
-    }
-  }
 
   const anchors = ["note-a", "note-b"].map((noteId) => {
     const container = { textContent: `Title ${noteId}`, querySelector: () => null };
@@ -2778,9 +2748,8 @@ test("one-click workflow imports first and stops the DianDian batch after one br
   };
   const responses = {
     "/sync/board-context": { ok: true, board: { id: "board1", name: "Board One", advertised_count: 2 } },
-    "/sync/summary-plan": { ok: true, enabled: true, note_ids: ["note-a", "note-b"] },
-    "/import-sync": { ok: true, scanned: 2, new: 2, next_board_id: "board2" },
-    "/sync/diandian-skip": { ok: true, skipped: true, plan_complete: false, finalization_started: false }
+    "/sync/summary-plan": { ok: true, enabled: true, note_ids: ["note-a", "note-b"], driven: true },
+    "/import-sync": { ok: true, scanned: 2, new: 2, next_board_id: "board2" }
   };
   const GM_xmlhttpRequest = (options) => {
     const pathname = new URL(options.url).pathname;
@@ -2804,7 +2773,6 @@ test("one-click workflow imports first and stops the DianDian batch after one br
     URLSearchParams,
     TextEncoder,
     crypto: webcrypto,
-    BroadcastChannel: FakeBroadcastChannel,
     setTimeout: schedule,
     clearTimeout() {},
     queueMicrotask,
@@ -2825,22 +2793,9 @@ test("one-click workflow imports first and stops the DianDian batch after one br
   const planIndex = requests.findIndex((item) => item.pathname === "/sync/summary-plan");
   const importIndex = requests.findIndex((item) => item.pathname === "/import-sync");
   assert.ok(importIndex >= 0 && planIndex > importIndex);
-  assert.ok(events.indexOf("/import-sync") < events.indexOf("share-probe"));
-  assert.ok(events.indexOf("/import-sync") < events.indexOf("summarize"));
   assert.equal(requests.some((item) => item.pathname === "/sync/failure"), false);
-  const skip = requests.find((item) => item.pathname === "/sync/diandian-skip");
-  assert.deepEqual(skip?.body, {
-    run_id: "batch1_board1",
-    board_id: "board1",
-    note_id: "note-a",
-    reason: "ai-response-timeout"
-  });
-  assert.deepEqual(summarizeMessages.map((message) => message.note_id), ["note-a"]);
-  assert.match(summarizeMessages[0].url, /xsec_token=copied-note-a/);
-  assert.equal(openedTabs.filter((url) => /\/ai_chat/.test(url)).length, 1, "a failed note must not open the next AI tab");
-  assert.equal(openedTabs.filter((url) => /\/discovery\/item\//.test(url)).length, 1);
-  assert.ok(openedTabs.filter((url) => /\/discovery\/item\//.test(url)).every((url) => /xhs_kb_share_worker=/.test(url)));
-  assert.deepEqual(assigned, [], "a failed DianDian transaction must remain on the current board");
+  assert.deepEqual(openedTabs, [], "the board page never opens a tab; the sync service moves the one page");
+  assert.deepEqual(assigned, [], "the sync service, not the board page, takes the page to the next step");
   assert.doesNotMatch(template, /GM_setValue|localStorage|sessionStorage/);
   assert.match(app, /\/notes\/open/);
   assert.match(app, /已在 SOP 扫描浏览器中定位原帖/);
@@ -2853,15 +2808,13 @@ test("target-note mode imports, plans, and summarizes exactly the requested visi
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
   const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
   const userscript = renderUserscriptTemplate(template)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { runBoard, signedMessage };\n${exportMarker}`);
+    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { runBoard };\n${exportMarker}`);
   let hooks;
   let targetNoteId = "note-target";
   let invalidPlan = false;
-  let failureCode = "";
   let statusBox = null;
   let timerId = 0;
   const requests = [];
-  const summarized = [];
   const openedTabs = [];
   const assigned = [];
   const schedule = (callback, delay = 0) => {
@@ -2869,33 +2822,6 @@ test("target-note mode imports, plans, and summarizes exactly the requested visi
     if (delay < 5000) queueMicrotask(callback);
     return id;
   };
-
-  class FakeBroadcastChannel {
-    constructor() { this.listeners = new Set(); }
-    addEventListener(type, listener) { if (type === "message") this.listeners.add(listener); }
-    removeEventListener(type, listener) { if (type === "message") this.listeners.delete(listener); }
-    close() { this.listeners.clear(); }
-    postMessage(message) {
-      const { signature: _signature, ...unsigned } = message;
-      const respond = (patch) => hooks.signedMessage({ ...unsigned, ...patch }).then((signed) => {
-        queueMicrotask(() => {
-          for (const listener of [...this.listeners]) listener({ data: signed });
-        });
-      });
-      if (message.type === "share-probe") respond({ type: "share-ready" });
-      if (message.type === "copy-link") respond({
-        type: "share-link",
-        url: `https://www.xiaohongshu.com/discovery/item/${message.note_id}?xsec_token=fixture&xsec_source=pc_share`
-      });
-      if (message.type === "probe") respond({ type: "ready" });
-      if (message.type === "summarize") {
-        summarized.push(message.note_id);
-        respond(failureCode
-          ? { type: "failed", error: failureCode }
-          : { type: "saved", error: "" });
-      }
-    }
-  }
 
   const anchors = ["note-a", "note-target", "note-c"].map((noteId) => {
     const container = { textContent: `Title ${noteId}`, querySelector: () => null };
@@ -2947,10 +2873,8 @@ test("target-note mode imports, plans, and summarizes exactly the requested visi
     else if (pathname === "/sync/summary-plan") payload = {
       ok: true,
       enabled: true,
+      driven: true,
       note_ids: invalidPlan ? [targetNoteId, "note-a"] : [targetNoteId]
-    };
-    else if (pathname === "/sync/diandian-skip") payload = {
-      ok: true, saved: false, skipped: true, plan_complete: false, finalization_started: false
     };
     else payload = { ok: true };
     queueMicrotask(() => options.onload({ status: 200, responseText: JSON.stringify(payload) }));
@@ -2973,60 +2897,40 @@ test("target-note mode imports, plans, and summarizes exactly the requested visi
     URLSearchParams,
     TextEncoder,
     crypto: webcrypto,
-    BroadcastChannel: FakeBroadcastChannel,
     setTimeout: schedule,
     clearTimeout() {},
     queueMicrotask,
     GM_xmlhttpRequest,
     GM_registerMenuCommand() {},
     GM_openInTab(url) {
-      const tab = {
-        url: String(url),
-        closed: false,
-        close() { this.closed = true; }
-      };
-      openedTabs.push(tab);
-      return tab;
+      openedTabs.push(String(url));
+      return { close() {} };
     }
   };
   context.globalThis = context;
   runInNewContext(userscript, context);
   hooks = context.__FAVSENSE_TEST_HOOKS__;
 
-  const offsets = () => ({ requests: requests.length, summarized: summarized.length, tabs: openedTabs.length, assigned: assigned.length });
+  const offsets = () => ({ requests: requests.length, tabs: openedTabs.length, assigned: assigned.length });
   let start = offsets();
   await hooks.runBoard("history", "target-success");
   let runRequests = requests.slice(start.requests);
-  let runTabs = openedTabs.slice(start.tabs);
   const imported = runRequests.find((request) => request.pathname === "/import-sync");
   const planned = runRequests.find((request) => request.pathname === "/sync/summary-plan" && request.body.note_ids.length);
   assert.equal(imported.body.urls.length, 1);
   assert.match(imported.body.urls[0], /\/note-target\?/);
   assert.deepEqual(planned.body.note_ids, ["note-target"]);
-  assert.deepEqual(summarized.slice(start.summarized), ["note-target"]);
-  assert.equal(runTabs.filter((tab) => /\/discovery\/item\//.test(tab.url)).length, 1);
-  assert.equal(runTabs.filter((tab) => /\/ai_chat/.test(tab.url)).length, 1);
-  assert.equal(runTabs.some((tab) => /note-a|note-c/.test(tab.url)), false);
+  assert.deepEqual(Object.keys(planned.body.titles), ["note-target"]);
+  assert.equal(openedTabs.slice(start.tabs).length, 0, "the target run opens no tab; the sync service moves the one page");
   assert.deepEqual(assigned.slice(start.assigned), [], "a target run must never continue to another board");
 
-  failureCode = "ai-response-timeout";
-  start = offsets();
-  await hooks.runBoard("history", "target-failure");
-  runTabs = openedTabs.slice(start.tabs);
-  assert.deepEqual(summarized.slice(start.summarized), ["note-target"]);
-  assert.equal(runTabs.filter((tab) => /\/ai_chat/.test(tab.url)).length, 1);
-  assert.equal(runTabs.find((tab) => /\/ai_chat/.test(tab.url))?.closed, false, "the failed DianDian tab must remain open");
-  assert.equal(runTabs.some((tab) => /note-a|note-c/.test(tab.url)), false);
-  assert.deepEqual(assigned.slice(start.assigned), []);
-
-  failureCode = "";
   invalidPlan = true;
   start = offsets();
   await hooks.runBoard("history", "target-invalid-plan");
   runRequests = requests.slice(start.requests);
   assert.equal(openedTabs.slice(start.tabs).length, 0, "an invalid multi-note plan must not open any note or AI tab");
   assert.equal(runRequests.some((request) => request.pathname === "/sync/summary-plan" && request.body.note_ids.length === 0), true);
-  assert.deepEqual(summarized.slice(start.summarized), []);
+  assert.deepEqual(assigned.slice(start.assigned), []);
 
   invalidPlan = false;
   targetNoteId = "missing-note";
@@ -3036,7 +2940,6 @@ test("target-note mode imports, plans, and summarizes exactly the requested visi
   assert.equal(runRequests.some((request) => request.pathname === "/import-sync"), false);
   assert.equal(runRequests.some((request) => request.pathname === "/sync/summary-plan"), false);
   assert.equal(openedTabs.slice(start.tabs).length, 0);
-  assert.deepEqual(summarized.slice(start.summarized), []);
   assert.deepEqual(assigned.slice(start.assigned), []);
 });
 
@@ -3183,7 +3086,7 @@ test("a DianDian plan failure cannot roll back or block the completed core impor
   const planCalls = requests.filter((request) => request.pathname === "/sync/summary-plan");
   assert.ok(importIndex >= 0 && requests.indexOf(planCalls[0]) > importIndex);
   assert.deepEqual(planCalls.map((request) => request.body), [
-    { run_id: "batch1_board1", board_id: "board1", note_ids: ["note-a"] },
+    { run_id: "batch1_board1", board_id: "board1", note_ids: ["note-a"], titles: { "note-a": "Title note-a" } },
     { run_id: "batch1_board1", board_id: "board1", note_ids: [] },
     { run_id: "batch1_board1", board_id: "board1", note_ids: [] }
   ]);
@@ -3192,11 +3095,11 @@ test("a DianDian plan failure cannot roll back or block the completed core impor
   assert.match(assigned.at(-1), /^https:\/\/www\.xiaohongshu\.com\/board\/board2\?/);
 });
 
-async function runBoardAckFailureScenario(kind) {
+async function runBoardAckFailureScenario() {
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
   const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
   const userscript = renderUserscriptTemplate(template)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { runBoard, signedMessage };\n${exportMarker}`);
+    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { runBoard };\n${exportMarker}`);
   const requests = [];
   const assigned = [];
   let statusBox = null;
@@ -3205,28 +3108,6 @@ async function runBoardAckFailureScenario(kind) {
     if (delay < 5000) queueMicrotask(callback);
     return 1;
   };
-
-  class FakeBroadcastChannel {
-    constructor() { this.listeners = new Set(); }
-    addEventListener(type, listener) { if (type === "message") this.listeners.add(listener); }
-    removeEventListener(type, listener) { if (type === "message") this.listeners.delete(listener); }
-    close() { this.listeners.clear(); }
-    postMessage(message) {
-      const { signature: _signature, ...unsigned } = message;
-      const respond = (patch) => hooks.signedMessage({ ...unsigned, ...patch }).then((signed) => {
-        queueMicrotask(() => {
-          for (const listener of [...this.listeners]) listener({ data: signed });
-        });
-      });
-      if (message.type === "share-probe") respond({ type: "share-ready" });
-      if (message.type === "copy-link") respond({
-        type: "share-link",
-        url: `https://www.xiaohongshu.com/discovery/item/${message.note_id}?xsec_token=copied&xsec_source=pc_share`
-      });
-      if (message.type === "probe") respond({ type: "ready" });
-      if (message.type === "summarize") respond({ type: "failed", error: "link-not-recognized" });
-    }
-  }
 
   const anchor = {
     href: "https://www.xiaohongshu.com/board/board1/note-a?xsec_token=board-token&xsec_source=pc_share",
@@ -3265,12 +3146,10 @@ async function runBoardAckFailureScenario(kind) {
     URLSearchParams,
     TextEncoder,
     crypto: webcrypto,
-    BroadcastChannel: FakeBroadcastChannel,
     setTimeout: schedule,
     clearTimeout() {},
     queueMicrotask,
     GM_registerMenuCommand() {},
-    GM_openInTab() { return { close() {} }; },
     GM_xmlhttpRequest(options) {
       const pathname = new URL(options.url).pathname;
       const body = options.data ? JSON.parse(options.data) : null;
@@ -3281,11 +3160,7 @@ async function runBoardAckFailureScenario(kind) {
       } else if (pathname === "/import-sync") {
         response = { status: 200, body: { ok: true, scanned: 1, new: 1, next_board_id: "board2" } };
       } else if (pathname === "/sync/summary-plan") {
-        response = kind === "plan" || body.note_ids.length === 0
-          ? { status: 503, body: { ok: false, error: "plan acknowledgement unavailable" } }
-          : { status: 200, body: { ok: true, enabled: true, note_ids: ["note-a"] } };
-      } else if (pathname === "/sync/diandian-skip") {
-        response = { status: 503, body: { ok: false, error: "skip acknowledgement unavailable" } };
+        response = { status: 503, body: { ok: false, error: "plan acknowledgement unavailable" } };
       } else {
         response = { status: 500, body: { ok: false, error: `unexpected ${pathname}` } };
       }
@@ -3300,7 +3175,7 @@ async function runBoardAckFailureScenario(kind) {
 }
 
 test("runBoard stays on the current board when both plan-abandon acknowledgements fail", async () => {
-  const result = await runBoardAckFailureScenario("plan");
+  const result = await runBoardAckFailureScenario();
   const abandonCalls = result.requests.filter((request) => (
     request.pathname === "/sync/summary-plan" && request.body.note_ids.length === 0
   ));
@@ -3308,332 +3183,6 @@ test("runBoard stays on the current board when both plan-abandon acknowledgement
   assert.deepEqual(result.assigned, []);
   assert.equal(result.requests.some((request) => request.pathname === "/sync/failure"), false);
   assert.doesNotMatch(result.status, /完成/);
-});
-
-test("runBoard stays on the current board when both skip acknowledgements fail", async () => {
-  const result = await runBoardAckFailureScenario("skip");
-  assert.equal(result.requests.filter((request) => request.pathname === "/sync/diandian-skip").length, 2);
-  assert.deepEqual(result.assigned, []);
-  assert.equal(result.requests.some((request) => request.pathname === "/sync/failure"), false);
-  assert.doesNotMatch(result.status, /完成/);
-});
-
-test("CDP note-page share worker delegates exactly one native 分享 and 复制链接 click", async () => {
-  const contract = JSON.parse(await read(
-    "skills/xhs-favorites-organizer/test-fixtures/diandian-single-note-state-arc.json"
-  ));
-  const browserContract = structuredClone(TEST_DIANDIAN_CONTRACT);
-  browserContract.cdp_enabled = true;
-  const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  const runAt = template.match(/^\/\/ @run-at\s+(\S+)$/m)?.[1];
-  const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
-  const userscript = renderUserscriptTemplate(template, browserContract)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { signedMessage, validMessage };\n${exportMarker}`);
-  class SharedChannel {
-    static instances = new Set();
-    constructor() {
-      this.listeners = new Set();
-      SharedChannel.instances.add(this);
-    }
-    addEventListener(type, listener) { if (type === "message") this.listeners.add(listener); }
-    removeEventListener(type, listener) { if (type === "message") this.listeners.delete(listener); }
-    postMessage(data) {
-      for (const channel of SharedChannel.instances) {
-        if (channel === this) continue;
-        queueMicrotask(() => {
-          for (const listener of [...channel.listeners]) listener({ data });
-        });
-      }
-    }
-    close() {
-      this.listeners.clear();
-      SharedChannel.instances.delete(this);
-    }
-  }
-  let shareClicks = 0;
-  let copyClicks = 0;
-  let shareContainerClicks = 0;
-  let copyContainerClicks = 0;
-  const nativeClickRequests = [];
-  let cleanedLocation = "";
-  const visibleElement = (text, click) => ({
-    textContent: text,
-    className: "",
-    click,
-    getClientRects: () => [{}],
-    getBoundingClientRect: () => ({ left: 10, top: 20, width: 24, height: 24 })
-  });
-  const shareHit = { click() { shareClicks += 1; } };
-  const copyHit = { click() { copyClicks += 1; } };
-  const share = visibleElement("分享", () => { shareContainerClicks += 1; });
-  share.className = "share-icon-container";
-  share.contains = (element) => element === shareHit;
-  const copy = visibleElement("复制链接", () => { copyContainerClicks += 1; });
-  copy.contains = (element) => element === copyHit;
-  let domReady;
-  const documentAttributes = new Map();
-  const document = {
-    readyState: "loading",
-    body: { innerText: "" },
-    documentElement: {
-      appendChild() {},
-      setAttribute(name, value) { documentAttributes.set(name, value); },
-      getAttribute(name) { return documentAttributes.get(name) ?? null; },
-      removeAttribute(name) { documentAttributes.delete(name); }
-    },
-    addEventListener(type, listener) { if (type === "DOMContentLoaded") domReady = listener; },
-    getElementById: () => null,
-    createElement: () => ({ style: {}, textContent: "" }),
-    querySelectorAll(selector) {
-      if (selector.includes(".share-icon-container")) return [share];
-      if (shareClicks && selector.includes('[role="menuitem"]')) return [copy];
-      return [];
-    },
-    elementFromPoint: () => shareClicks ? copyHit : shareHit
-  };
-  const workerId = "22222222-2222-4222-8222-222222222222";
-  const location = {
-    origin: "https://www.xiaohongshu.com",
-    pathname: "/discovery/item/note-a",
-    search: `?xsec_token=current-token&xhs_kb_share_worker=${workerId}`,
-    hash: "",
-    href: `https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=current-token&xhs_kb_share_worker=${workerId}`
-  };
-  const context = {
-    globalThis: null,
-    location,
-    history: { state: null, replaceState(_state, _title, url) {
-      cleanedLocation = url;
-      location.search = "";
-      location.href = `${location.origin}${url}`;
-    } },
-    document,
-    window: { setTimeout, clearTimeout },
-    navigator: { clipboard: { readText: () => new Promise(() => {}) } },
-    getComputedStyle: () => ({ display: "block", visibility: "visible", opacity: "1" }),
-    URL,
-    URLSearchParams,
-    TextEncoder,
-    crypto: webcrypto,
-    BroadcastChannel: SharedChannel,
-    setTimeout: (callback) => { queueMicrotask(callback); return 1; },
-    clearTimeout() {},
-    queueMicrotask,
-    GM_registerMenuCommand() {},
-    GM_xmlhttpRequest(options) {
-      const pathname = new URL(options.url).pathname;
-      const body = options.data ? JSON.parse(options.data) : null;
-      if (pathname === "/sync/diandian-click") {
-        nativeClickRequests.push(body);
-        if (body.action === "share") shareClicks += 1;
-        if (body.action === "copy") copyClicks += 1;
-      }
-      queueMicrotask(() => options.onload({ status: 200, responseText: '{"ok":true,"clicked":true}' }));
-    }
-  };
-  context.globalThis = context;
-  runInNewContext(userscript, context);
-  assert.equal(runAt, "document-start");
-  assert.equal(cleanedLocation, "");
-  for (let attempt = 0; attempt < 50 && ![...SharedChannel.instances].some((channel) => channel.listeners.size); attempt += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 1));
-  }
-  assert.ok(
-    [...SharedChannel.instances].some((channel) => channel.listeners.size),
-    "the transient worker must listen before DOMContentLoaded"
-  );
-  location.search = "";
-  location.href = `${location.origin}${location.pathname}`;
-  document.readyState = "complete";
-  domReady();
-  const hooks = context.__FAVSENSE_TEST_HOOKS__;
-  assert.ok(hooks);
-  for (let attempt = 0; attempt < 50 && ![...SharedChannel.instances].some((channel) => channel.listeners.size); attempt += 1) {
-    await new Promise((resolveWait) => setTimeout(resolveWait, 0));
-  }
-  const controller = new SharedChannel();
-  const nextMessage = (expectedType) => new Promise((resolveMessage, rejectMessage) => {
-    const timeout = setTimeout(() => rejectMessage(new Error(`missing ${expectedType} response`)), 2000);
-    const listener = async (event) => {
-      if (!await hooks.validMessage(event.data) || event.data.type !== expectedType) return;
-      clearTimeout(timeout);
-      controller.removeEventListener("message", listener);
-      resolveMessage(event.data);
-    };
-    controller.addEventListener("message", listener);
-  });
-  const base = {
-    job_id: "batch1_board1-note-a",
-    worker_id: workerId,
-    batch: "batch1",
-    run_id: "batch1_board1",
-    board_id: "board1",
-    note_id: "note-a",
-    title: "Title note-a"
-  };
-  const unexpectedResponses = [];
-  controller.addEventListener("message", (event) => {
-    if (["share-ready", "share-link", "share-failed"].includes(event.data?.type)) {
-      unexpectedResponses.push(event.data.type);
-    }
-  });
-  controller.postMessage({ type: "share-probe", ...base });
-  controller.postMessage(await hooks.signedMessage({
-    type: "share-probe",
-    ...base,
-    worker_id: "33333333-3333-4333-8333-333333333333"
-  }));
-  controller.postMessage(await hooks.signedMessage({
-    type: "share-probe",
-    ...base,
-    note_id: "note-b"
-  }));
-  await new Promise((resolve) => setTimeout(resolve, 10));
-  assert.deepEqual(unexpectedResponses, []);
-  assert.equal(shareClicks, 0);
-  assert.equal(copyClicks, 0);
-
-  const ready = nextMessage("share-ready");
-  controller.postMessage(await hooks.signedMessage({ type: "share-probe", ...base }));
-  await ready;
-  assert.equal(documentAttributes.get("data-xhs-kb-share-worker"), workerId);
-  const copied = nextMessage("share-link");
-  controller.postMessage(await hooks.signedMessage({ type: "copy-link", ...base }));
-  const result = await copied;
-  controller.close();
-
-  assert.equal(shareClicks, contract.expected_share_clicks);
-  assert.equal(copyClicks, contract.expected_copy_clicks);
-  assert.equal(shareContainerClicks, 0);
-  assert.equal(copyContainerClicks, 0);
-  assert.deepEqual(nativeClickRequests, [
-    {
-      run_id: "batch1_board1",
-      board_id: "board1",
-      note_id: "note-a",
-      worker_id: workerId,
-      action: "share"
-    },
-    {
-      run_id: "batch1_board1",
-      board_id: "board1",
-      note_id: "note-a",
-      worker_id: workerId,
-      action: "copy"
-    }
-  ]);
-  assert.equal(result.url, "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=current-token");
-  assert.equal(cleanedLocation, "/discovery/item/note-a");
-  assert.equal(documentAttributes.has("data-xhs-kb-share-worker"), false);
-});
-
-test("CDP note-page share worker propagates native safety stop without requesting copy", async () => {
-  const browserContract = structuredClone(TEST_DIANDIAN_CONTRACT);
-  browserContract.cdp_enabled = true;
-  const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
-  const userscript = renderUserscriptTemplate(template, browserContract)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { signedMessage, validMessage };\n${exportMarker}`);
-  class SharedChannel {
-    static instances = new Set();
-    constructor() { this.listeners = new Set(); SharedChannel.instances.add(this); }
-    addEventListener(type, listener) { if (type === "message") this.listeners.add(listener); }
-    removeEventListener(type, listener) { if (type === "message") this.listeners.delete(listener); }
-    postMessage(data) {
-      for (const channel of SharedChannel.instances) if (channel !== this) queueMicrotask(() => {
-        for (const listener of [...channel.listeners]) listener({ data });
-      });
-    }
-    close() { this.listeners.clear(); SharedChannel.instances.delete(this); }
-  }
-  let shareClicks = 0;
-  let cleanedLocation = "";
-  const nativeClickRequests = [];
-  const document = {
-    body: { innerText: "" },
-    documentElement: { appendChild() {} },
-    getElementById: () => null,
-    createElement: () => ({ style: {}, textContent: "" }),
-    querySelectorAll(selector) {
-      if (selector.includes(".share-icon-container")) return [{
-        textContent: "分享", className: "share-icon-container", classList: { contains: () => true },
-        click() { shareClicks += 1; }, getClientRects: () => [{}], getAttribute: () => ""
-      }];
-      if (shareClicks && selector.includes('[role="menuitem"]')) return [{
-        textContent: "复制链接", dataset: { clipboardText: "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=current-token" },
-        click() { document.body.innerText = "验证码"; }, getClientRects: () => [{}], getAttribute: () => ""
-      }];
-      return [];
-    }
-  };
-  const stableShare = {
-    textContent: "分享", className: "share-icon-container", classList: { contains: () => true },
-    click() { shareClicks += 1; }, getClientRects: () => [{}], getAttribute: () => ""
-  };
-  const stableCopy = {
-    textContent: "复制链接", dataset: { clipboardText: "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=current-token" },
-    click() { document.body.innerText = "验证码"; }, getClientRects: () => [{}], getAttribute: () => ""
-  };
-  document.querySelectorAll = (selector) => {
-    if (document.body.innerText && String(selector).includes('[role="alert"]')) return [{
-      innerText: document.body.innerText,
-      hidden: false,
-      getAttribute: () => null,
-      getClientRects: () => [{}]
-    }];
-    if (selector.includes(".share-icon-container")) return [stableShare];
-    if (shareClicks && /menuitem|popover|share/.test(selector)) return [stableCopy];
-    return [];
-  };
-  const workerId = "33333333-3333-4333-8333-333333333333";
-  const context = {
-    globalThis: null,
-    location: { origin: "https://www.xiaohongshu.com", pathname: "/discovery/item/note-a", search: `?xhs_kb_share_worker=${workerId}`, href: "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=current-token" },
-    history: { state: null, replaceState(_state, _title, url) { cleanedLocation = url; } }, document,
-    window: { setTimeout: (callback) => { queueMicrotask(callback); return 1; }, clearTimeout() {} },
-    navigator: { clipboard: { readText: async () => "" } },
-    getComputedStyle: () => ({ display: "block", visibility: "visible", opacity: "1" }),
-    URL, URLSearchParams, TextEncoder, crypto: webcrypto, BroadcastChannel: SharedChannel,
-    setTimeout, clearTimeout, queueMicrotask,
-    GM_registerMenuCommand() {},
-    GM_xmlhttpRequest(options) {
-      const pathname = new URL(options.url).pathname;
-      const body = options.data ? JSON.parse(options.data) : null;
-      if (pathname === "/sync/diandian-click") {
-        nativeClickRequests.push(body);
-        queueMicrotask(() => options.onload({
-          status: 500,
-          responseText: '{"ok":false,"error":"xhs-safety-stop"}'
-        }));
-        return;
-      }
-      queueMicrotask(() => options.onload({ status: 200, responseText: '{"ok":true}' }));
-    }
-  };
-  context.globalThis = context;
-  runInNewContext(userscript, context);
-  const hooks = context.__FAVSENSE_TEST_HOOKS__;
-  for (let attempt = 0; attempt < 50 && ![...SharedChannel.instances].some((channel) => channel.listeners.size); attempt += 1) await new Promise((resolveWait) => setTimeout(resolveWait, 0));
-  const controller = new SharedChannel();
-  const next = (types) => new Promise((resolveMessage) => {
-    const listener = async (event) => {
-      if (!await hooks.validMessage(event.data) || !types.includes(event.data.type)) return;
-      controller.removeEventListener("message", listener); resolveMessage(event.data);
-    };
-    controller.addEventListener("message", listener);
-  });
-  const base = { job_id: "job", worker_id: workerId, batch: "batch", run_id: "run", board_id: "board", note_id: "note-a", title: "Title" };
-  const ready = next(["share-ready", "share-failed"]);
-  controller.postMessage(await hooks.signedMessage({ type: "share-probe", ...base }));
-  assert.equal((await ready).type, "share-ready");
-  const failed = next(["share-link", "share-failed"]);
-  controller.postMessage(await hooks.signedMessage({ type: "copy-link", ...base }));
-  const result = await failed;
-  assert.equal(result.type, "share-failed");
-  assert.equal(result.error, "xhs-safety-stop");
-  assert.deepEqual(nativeClickRequests.map((request) => request.action), ["share"]);
-  assert.equal(cleanedLocation, "/discovery/item/note-a");
-  controller.close();
 });
 
 test("profile and board workflows preserve a pre-core safety stop in the bridge protocol", async () => {
@@ -3824,31 +3373,11 @@ async function runMountedAiWorker({
     read("skills/xhs-favorites-organizer/test-fixtures/diandian-inline-link-prompt.json").then(JSON.parse),
     read("skills/xhs-favorites-organizer/test-fixtures/diandian-hybrid-context.json").then(JSON.parse)
   ]);
-  const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
-  const userscript = renderUserscriptTemplate(template)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { signedMessage, validMessage };\n${exportMarker}`);
-
-  class SharedChannel {
-    static instances = new Set();
-    constructor() {
-      this.listeners = new Set();
-      SharedChannel.instances.add(this);
-    }
-    addEventListener(type, listener) { if (type === "message") this.listeners.add(listener); }
-    removeEventListener(type, listener) { if (type === "message") this.listeners.delete(listener); }
-    postMessage(data) {
-      for (const channel of SharedChannel.instances) {
-        if (channel === this) continue;
-        queueMicrotask(() => {
-          for (const listener of [...channel.listeners]) listener({ data });
-        });
-      }
-    }
-    close() {
-      this.listeners.clear();
-      SharedChannel.instances.delete(this);
-    }
-  }
+  // The page gets its job from the sync service by the worker id in its address, runs it by itself and
+  // reports the result; the reported result is mapped to the saved/failed shape these tests read.
+  const userscript = renderUserscriptTemplate(template);
+  let reportOutcome;
+  const reported = new Promise((resolveReport) => { reportOutcome = resolveReport; });
 
   class BrowserEvent {
     constructor(type, init = {}) {
@@ -4027,9 +3556,27 @@ async function runMountedAiWorker({
     const body = options.data ? JSON.parse(options.data) : null;
     requests.push({ pathname, body });
     if (pathname === "/sync/diandian-result") saveSawFinishedReply = newMessageFinished;
+    if (pathname === "/sync/page-result") {
+      reportOutcome(body.ok ? { type: "saved", error: "" } : { type: "failed", error: body.error });
+    }
     const response = pathname === "/sync/board-context"
       ? { ok: true, board: { id: "board1", name: "Board One" } }
-      : { ok: true, saved: true, plan_complete: true, finalization_started: true };
+      : pathname === "/sync/page-task"
+        ? {
+            ok: true,
+            task: {
+              stage: "ai",
+              run_id: "batch1_board1",
+              board_id: "board1",
+              note_id: "note-a",
+              title: "Mounted AI worker note",
+              batch: "batch1",
+              url: sourceUrl || (inputMode === "inline-link"
+                ? inlineFixture.canonical_share_url
+                : "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=copied-token&xsec_source=pc_share")
+            }
+          }
+        : { ok: true, saved: true, plan_complete: true, finalization_started: true };
     queueMicrotask(() => {
       options.onload({ status: 200, responseText: JSON.stringify(response) });
       if (pathname === "/sync/diandian-result" && safetyAfterSave) document.body.innerText = "验证码";
@@ -4064,7 +3611,6 @@ async function runMountedAiWorker({
     URLSearchParams,
     TextEncoder,
     crypto: webcrypto,
-    BroadcastChannel: SharedChannel,
     HTMLTextAreaElement: FakeTextarea,
     InputEvent: BrowserEvent,
     Event: BrowserEvent,
@@ -4080,51 +3626,12 @@ async function runMountedAiWorker({
     GM_openInTab() { throw new Error("AI worker must not open another tab"); }
   };
   context.globalThis = context;
+  // The worker starts by itself when the page loads and reports when it is done.
   runInNewContext(userscript, context);
-  const hooks = context.__FAVSENSE_TEST_HOOKS__;
-  assert.ok(hooks);
-
-  for (let attempt = 0; attempt < 50 && ![...SharedChannel.instances].some((channel) => channel.listeners.size); attempt += 1) {
-    await new Promise((resolveWait) => setTimeout(resolveWait, 0));
-  }
-  const controller = new SharedChannel();
-  const nextMessage = (expectedType) => new Promise((resolveMessage, rejectMessage) => {
-    const expectedTypes = Array.isArray(expectedType) ? expectedType : [expectedType];
-    const timeout = setTimeout(() => rejectMessage(new Error(`missing ${expectedTypes.join("/")} response`)), 2000);
-    const listener = async (event) => {
-      if (!await hooks.validMessage(event.data) || !expectedTypes.includes(event.data.type)) return;
-      clearTimeout(timeout);
-      controller.removeEventListener("message", listener);
-      resolveMessage(event.data);
-    };
-    controller.addEventListener("message", listener);
-  });
-  const base = {
-    job_id: "batch1_board1-note-a",
-    worker_id: workerId,
-    batch: "batch1",
-    run_id: "batch1_board1",
-    board_id: "board1",
-    note_id: "note-a",
-    title: "Mounted AI worker note"
-  };
-  const ready = nextMessage("ready");
-  controller.postMessage(await hooks.signedMessage({ type: "probe", ...base }));
-  await ready;
-  const outcome = nextMessage(
-    safetyText || safetyAfterEnter || safetyAfterPrompt
-      ? "failed"
-      : inputMode === "attachment" ? "saved" : ["saved", "failed"]
-  );
-  controller.postMessage(await hooks.signedMessage({
-    type: "summarize",
-    ...base,
-    url: sourceUrl || (inputMode === "inline-link"
-      ? inlineFixture.canonical_share_url
-      : "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=copied-token&xsec_source=pc_share")
-  }));
-  const message = await outcome;
-  controller.close();
+  const message = await Promise.race([
+    reported,
+    new Promise((_resolve, rejectTimeout) => setTimeout(() => rejectTimeout(new Error("the AI page never reported")), 3000))
+  ]);
   return {
     message,
     requests,
@@ -4281,298 +3788,12 @@ test("mounted AI worker waits for a transient card-and-link state to settle", as
   assert.equal(result.requests.filter((request) => request.pathname === "/sync/diandian-result").length, 1);
 });
 
-async function runMountedCdpController({
-  endpointResponse,
-  endpointStatus = 200,
-  channelUnavailable = false,
-  shareFailure = false,
-  shareFailureCode = "share-link-unavailable"
-} = {}) {
-  const contract = structuredClone(TEST_DIANDIAN_CONTRACT);
-  contract.cdp_enabled = true;
-  const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
-  const userscript = renderUserscriptTemplate(template, contract)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { summarizePlannedNotes, signedMessage };\n${exportMarker}`);
-  const requests = [];
-  const channelMessages = [];
-  const openedTabs = [];
-  const statusMessages = [];
-  let statusBox = null;
-  let hooks;
-  let timerId = 0;
-
-  class FakeBroadcastChannel {
-    constructor() {
-      if (channelUnavailable) throw new Error("BroadcastChannel unavailable");
-      this.listeners = new Set();
-    }
-    addEventListener(type, listener) { if (type === "message") this.listeners.add(listener); }
-    removeEventListener(type, listener) { if (type === "message") this.listeners.delete(listener); }
-    close() { this.listeners.clear(); }
-    postMessage(message) {
-      channelMessages.push(message.type);
-      const { signature: _signature, ...unsigned } = message;
-      const respond = (patch) => hooks.signedMessage({ ...unsigned, ...patch }).then((signed) => {
-        queueMicrotask(() => {
-          for (const listener of [...this.listeners]) listener({ data: signed });
-        });
-      });
-      if (message.type === "share-probe") respond({ type: "share-ready" });
-      if (message.type === "copy-link") respond(shareFailure
-        ? { type: "share-failed", error: shareFailureCode }
-        : {
-            type: "share-link",
-            url: `https://www.xiaohongshu.com/discovery/item/${message.note_id}?xsec_token=private-${message.note_id}&xsec_source=pc_share`
-          });
-      // These legacy responses keep the RED test finite before the CDP branch exists.
-      if (message.type === "probe") respond({ type: "ready" });
-      if (message.type === "summarize") respond({ type: "saved", error: "" });
-    }
-  }
-
-  const schedule = (callback, delay = 0) => {
-    const id = ++timerId;
-    if (delay < 5000) queueMicrotask(callback);
-    return id;
-  };
-  const GM_xmlhttpRequest = (options) => {
-    const pathname = new URL(options.url).pathname;
-    const body = options.data ? JSON.parse(options.data) : null;
-    requests.push({ pathname, body });
-    const isCdp = pathname === "/sync/diandian-cdp";
-    const payload = isCdp
-      ? endpointResponse || { ok: true, saved: true, halted: false }
-      : { ok: true };
-    const status = isCdp ? endpointStatus : 200;
-    queueMicrotask(() => options.onload({ status, responseText: JSON.stringify(payload) }));
-  };
-  const context = {
-    globalThis: null,
-    location: {
-      origin: "https://www.xiaohongshu.com",
-      pathname: "/board/board1",
-      search: "",
-      href: "https://www.xiaohongshu.com/board/board1"
-    },
-    history: { state: null, replaceState() {} },
-    document: {
-      body: { innerText: "" },
-      documentElement: {
-        appendChild(element) {
-          statusBox = element;
-          const descriptor = Object.getOwnPropertyDescriptor(element, "textContent");
-          if (!descriptor?.set) {
-            let value = element.textContent || "";
-            Object.defineProperty(element, "textContent", {
-              get: () => value,
-              set: (next) => { value = String(next); statusMessages.push(value); },
-              configurable: true
-            });
-          }
-        }
-      },
-      getElementById(id) { return statusBox?.id === id ? statusBox : null; },
-      createElement() { return { id: "", style: {}, textContent: "" }; },
-      querySelectorAll() { return []; }
-    },
-    window: {
-      setTimeout: schedule,
-      clearTimeout() {},
-      setInterval() { return ++timerId; },
-      clearInterval() {}
-    },
-    URL,
-    URLSearchParams,
-    TextEncoder,
-    crypto: webcrypto,
-    BroadcastChannel: FakeBroadcastChannel,
-    setTimeout: schedule,
-    clearTimeout() {},
-    queueMicrotask,
-    GM_xmlhttpRequest,
-    GM_registerMenuCommand() {},
-    GM_openInTab(url) {
-      const tab = {
-        url: String(url),
-        closed: false,
-        close() { this.closed = true; }
-      };
-      openedTabs.push(tab);
-      return tab;
-    }
-  };
-  context.globalThis = context;
-  runInNewContext(userscript, context);
-  hooks = context.__FAVSENSE_TEST_HOOKS__;
-  const notes = ["note-a", "note-b"].map((id) => ({
-    id,
-    title: `Title ${id}`,
-    source_url: `https://www.xiaohongshu.com/discovery/item/${id}?xsec_token=board-${id}&xsec_source=pc_share`
-  }));
-  const result = await hooks.summarizePlannedNotes(
-    notes,
-    { id: "board1", name: "Board One" },
-    "batch1",
-    "batch1_board1",
-    { enabled: true, note_ids: ["note-a", "note-b"] }
-  );
-  return { template, userscript, requests, channelMessages, openedTabs, statusMessages, result };
-}
-
-test("runBoard labels only an explicit safety reason as a Xiaohongshu safety stop", async () => {
-  const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  const runBoardStart = template.indexOf("  async function runBoard(mode, batch)");
-  const runBoardEnd = template.indexOf("\n  function startUserscript", runBoardStart);
-  const runBoardSource = template.slice(runBoardStart, runBoardEnd).trim();
-  assert.ok(runBoardSource);
-
-  const messagesFor = async (reason) => JSON.parse(await runInNewContext(`
-    const messages = [];
-    const boardId = "board1";
-    async function get() { return { board: { id: "board1", name: "Board One" } }; }
-    async function manualRunId() { return "batch_board1"; }
-    async function scan() { return [{ id: "note-a", source_url: "#" }]; }
-    async function post(path) {
-      if (path === "/import-sync") return { scanned: 1, new: 1, next_board_id: null };
-      return { ok: true };
-    }
-    async function postImport(runId, payload) { return post("/import-sync", payload); }
-    async function createSummaryPlan() { return { enabled: true, note_ids: ["note-a"] }; }
-    async function summarizePlannedNotes() {
-      return { saved: 0, skipped: 0, halted: true, reason: ${JSON.stringify(reason)} };
-    }
-    function show(message, error = false) { messages.push([message, error]); }
-    async function abandonSummaryPlan() {}
-    async function sleep() {}
-    function goToBoard() { throw new Error("a halted run must not navigate"); }
-    function workflowError(code, message) { return Object.assign(new Error(message), { code }); }
-    function isSafetyFailure() { return false; }
-    async function reportDiandianHalt() {}
-    ${runBoardSource}
-    (async () => {
-      await runBoard("incremental", "batch");
-      return JSON.stringify(messages);
-    })();
-  `));
-
-  const transport = await messagesFor("transport-failed");
-  assert.match(transport.at(-1)[0], /点点页面流程未完整完成/);
-  assert.doesNotMatch(transport.at(-1)[0], /小红书触发安全限制/);
-
-  const safety = await messagesFor("xhs-safety-stop");
-  assert.match(safety.at(-1)[0], /小红书触发安全限制/);
-});
-
-test("CDP mode copies one transient link and sends one exact bridge request without opening an AI tab", async () => {
-  const result = await runMountedCdpController({
-    endpointResponse: { ok: true, saved: true, halted: false }
-  });
-  const cdpRequests = result.requests.filter((request) => request.pathname === "/sync/diandian-cdp");
-
-  assert.deepEqual({ ...result.result }, { saved: 2, skipped: 0, halted: false });
-  assert.equal(result.channelMessages.filter((type) => type === "copy-link").length, 2);
-  assert.equal(cdpRequests.length, 2);
-  assert.deepEqual(cdpRequests.map((request) => request.body), [
-    {
-      run_id: "batch1_board1",
-      board_id: "board1",
-      note_id: "note-a",
-      title: "Title note-a",
-      url: "https://www.xiaohongshu.com/discovery/item/note-a?xsec_token=private-note-a&xsec_source=pc_share"
-    },
-    {
-      run_id: "batch1_board1",
-      board_id: "board1",
-      note_id: "note-b",
-      title: "Title note-b",
-      url: "https://www.xiaohongshu.com/discovery/item/note-b?xsec_token=private-note-b&xsec_source=pc_share"
-    }
-  ]);
-  assert.equal(result.openedTabs.length, 2, "only the two source-note tabs may open");
-  assert.ok(result.openedTabs.every((tab) => /\/discovery\/item\//.test(tab.url)));
-  assert.ok(result.openedTabs.every((tab) => tab.closed), "a copied source-note tab may close after returning its link");
-  assert.equal(result.channelMessages.some((type) => ["probe", "summarize", "finish", "cancel"].includes(type)), false);
-  assert.equal(result.requests.some((request) => ["/sync/diandian-skip", "/sync/diandian-halt"].includes(request.pathname)), false);
-  assert.ok(result.statusMessages.every((message) => !/xsec_token|private-note/.test(message)));
-});
-
-test("CDP mode stops the current and remaining batch after a halt, safety stop, or HTTP failure without retrying", async () => {
-  for (const failure of [
-    { endpointResponse: { ok: true, saved: false, halted: true, reason: "transport-failed" }, expectedReason: "transport-failed" },
-    { endpointResponse: { ok: true, saved: false, halted: true, reason: "xhs-safety-stop" }, expectedReason: "xhs-safety-stop" },
-    { endpointResponse: { ok: false, error: "bridge unavailable" }, endpointStatus: 503, expectedReason: "transport-failed" }
-  ]) {
-    const result = await runMountedCdpController(failure);
-    const cdpRequests = result.requests.filter((request) => request.pathname === "/sync/diandian-cdp");
-    assert.deepEqual({ ...result.result }, {
-      saved: 0, skipped: 0, halted: true, reason: failure.expectedReason
-    });
-    assert.equal(cdpRequests.length, 1, "the bridge transaction must never retry");
-    assert.equal(cdpRequests[0].body.note_id, "note-a", "the next note must not start");
-    assert.equal(result.channelMessages.filter((type) => type === "copy-link").length, 1);
-    assert.equal(result.openedTabs.length, 1, "failure must not open an AI tab or the next source-note tab");
-    const halts = result.requests.filter((request) => request.pathname === "/sync/diandian-halt");
-    const endpointAcknowledged = failure.endpointResponse?.halted === true;
-    assert.equal(halts.length, endpointAcknowledged ? 0 : 1);
-    if (!endpointAcknowledged) assert.equal(halts[0].body.reason, "transport-failed");
-    assert.equal(result.requests.some((request) => ["/sync/diandian-skip", "/sync/summary-plan"].includes(request.pathname)), false);
-    assert.equal(result.openedTabs[0].closed, false, "a failed source-note tab must remain open");
-    if (failure.expectedReason !== "xhs-safety-stop") {
-      assert.ok(result.statusMessages.every((message) => !message.includes("小红书触发安全限制")));
-    }
-  }
-});
-
-test("CDP mode stops without legacy skip retries when its share channel is unavailable", async () => {
-  const result = await runMountedCdpController({ channelUnavailable: true });
-  assert.deepEqual({ ...result.result }, {
-    saved: 0, skipped: 0, halted: true, reason: "diandian-channel-unavailable"
-  });
-  assert.equal(result.openedTabs.length, 0);
-  assert.deepEqual(
-    result.requests.filter((request) => request.pathname.startsWith("/sync/diandian-")).map((request) => request.pathname),
-    ["/sync/diandian-halt"]
-  );
-});
-
-test("CDP mode keeps a failed source tab open and durably halts before posting a copied URL", async () => {
-  const result = await runMountedCdpController({ shareFailure: true });
-  assert.deepEqual({ ...result.result }, {
-    saved: 0, skipped: 0, halted: true, reason: "share-link-unavailable"
-  });
-  assert.equal(result.channelMessages.filter((type) => type === "copy-link").length, 1);
-  assert.equal(result.requests.some((request) => request.pathname === "/sync/diandian-cdp"), false);
-  assert.deepEqual(
-    result.requests.filter((request) => request.pathname === "/sync/diandian-halt").map((request) => request.body),
-    [{ run_id: "batch1_board1", board_id: "board1", reason: "share-link-unavailable", note_id: "note-a" }]
-  );
-  assert.equal(result.openedTabs.length, 1, "the next source note must not open");
-  assert.equal(result.openedTabs[0].closed, false, "the failed source tab must remain for diagnosis");
-});
-
-test("CDP mode reports the specific share step that failed instead of a generic transport failure", async () => {
-  for (const code of ["share-control-timeout", "share-menu-timeout", "share-service-request-failed"]) {
-    const result = await runMountedCdpController({ shareFailure: true, shareFailureCode: code });
-    assert.deepEqual({ ...result.result }, { saved: 0, skipped: 0, halted: true, reason: code });
-    assert.deepEqual(
-      result.requests.filter((request) => request.pathname === "/sync/diandian-halt").map((request) => request.body.reason),
-      [code]
-    );
-  }
-});
-
 test("CDP mode omits the AI match and cannot start the page worker defensively", async () => {
   const contract = structuredClone(TEST_DIANDIAN_CONTRACT);
   contract.cdp_enabled = true;
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
   const userscript = renderUserscriptTemplate(template, contract);
   let workerStarts = 0;
-  class TrapBroadcastChannel {
-    constructor() { workerStarts += 1; }
-    addEventListener() {}
-    close() {}
-  }
   const schedule = (callback) => { queueMicrotask(callback); return 1; };
   runInNewContext(userscript, {
     location: {
@@ -4593,222 +3814,20 @@ test("CDP mode omits the AI match and cannot start the page worker defensively",
     URLSearchParams,
     TextEncoder,
     crypto: webcrypto,
-    BroadcastChannel: TrapBroadcastChannel,
     setTimeout: schedule,
     clearTimeout() {},
     queueMicrotask,
     GM_xmlhttpRequest(options) {
+      // A page worker would start by asking the sync service for its job.
+      if (new URL(options.url).pathname === "/sync/page-task") workerStarts += 1;
       queueMicrotask(() => options.onload({ status: 200, responseText: JSON.stringify({ ok: true }) }));
     },
-    GM_registerMenuCommand() {},
-    GM_openInTab() { throw new Error("CDP mode must not open an AI tab"); }
+    GM_registerMenuCommand() {}
   });
   await new Promise((resolve) => setTimeout(resolve, 0));
 
   assert.doesNotMatch(userscript, /^\/\/ @match\s+https:\/\/www\.xiaohongshu\.com\/ai_chat/m);
   assert.equal(workerStarts, 0);
-});
-
-test("controller durably stops before the next note on safety or link-recognition failure", async () => {
-  const contract = JSON.parse(await read(
-    "skills/xhs-favorites-organizer/test-fixtures/diandian-single-note-state-arc.json"
-  ));
-  const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
-  const userscript = renderUserscriptTemplate(template)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { summarizePlannedNotes, signedMessage };\n${exportMarker}`);
-  let hooks;
-  const requests = [];
-  const summarized = [];
-  const openedTabs = [];
-  let virtualElapsed = 0;
-  let failureCode = "xhs-safety-stop";
-  class FakeBroadcastChannel {
-    constructor() { this.listeners = new Set(); }
-    addEventListener(type, listener) { if (type === "message") this.listeners.add(listener); }
-    removeEventListener(type, listener) { if (type === "message") this.listeners.delete(listener); }
-    close() { this.listeners.clear(); }
-    postMessage(message) {
-      const { signature: _signature, ...unsigned } = message;
-      const respond = (patch) => hooks.signedMessage({ ...unsigned, ...patch }).then((signed) => {
-        queueMicrotask(() => {
-          for (const listener of [...this.listeners]) listener({ data: signed });
-        });
-      });
-      if (message.type === "share-probe") respond({ type: "share-ready" });
-      if (message.type === "copy-link") respond({
-        type: "share-link",
-        url: `https://www.xiaohongshu.com/discovery/item/${message.note_id}?xsec_token=copied&xsec_source=pc_share`
-      });
-      if (message.type === "probe") respond({ type: "ready" });
-      if (message.type === "summarize") {
-        summarized.push(message.note_id);
-        respond({ type: "failed", error: failureCode });
-      }
-    }
-  }
-  const schedule = (callback, delay = 0) => {
-    if (delay < 5000) {
-      virtualElapsed += delay;
-      queueMicrotask(callback);
-    }
-    return 1;
-  };
-  const GM_xmlhttpRequest = (options) => {
-    const pathname = new URL(options.url).pathname;
-    requests.push({ pathname, body: options.data ? JSON.parse(options.data) : null });
-    const payload = pathname === "/sync/diandian-skip"
-      ? failureCode === "link-not-recognized"
-        ? { ok: true, saved: false, skipped: true, plan_complete: false, finalization_started: false }
-        : { ok: true, saved: true, skipped: false, plan_complete: true, finalization_started: true }
-      : pathname === "/sync/summary-plan"
-        ? { ok: true, enabled: false, abandoned: true, note_ids: [] }
-        : { ok: true, halted: true, plan_complete: true, finalization_started: false };
-    queueMicrotask(() => options.onload({
-      status: 200,
-      responseText: JSON.stringify(payload)
-    }));
-  };
-  const context = {
-    globalThis: null,
-    location: { origin: "https://www.xiaohongshu.com", pathname: "/board/board1", search: "", href: "https://www.xiaohongshu.com/board/board1" },
-    history: { state: null, replaceState() {} },
-    document: {
-      body: { innerText: "" },
-      documentElement: { appendChild() {} },
-      getElementById: () => null,
-      createElement: () => ({ style: {}, textContent: "" }),
-      querySelectorAll: () => []
-    },
-    window: { setTimeout: schedule, clearTimeout() {}, setInterval: () => 1, clearInterval() {} },
-    URL,
-    URLSearchParams,
-    TextEncoder,
-    crypto: webcrypto,
-    BroadcastChannel: FakeBroadcastChannel,
-    setTimeout: schedule,
-    clearTimeout() {},
-    queueMicrotask,
-    GM_xmlhttpRequest,
-    GM_registerMenuCommand() {},
-    GM_openInTab(url) {
-      const tab = {
-        kind: String(url).includes("/ai_chat") ? "ai" : "note",
-        openedAt: virtualElapsed,
-        closedAt: null,
-        close() { this.closedAt = virtualElapsed; }
-      };
-      openedTabs.push(tab);
-      return tab;
-    }
-  };
-  context.globalThis = context;
-  runInNewContext(userscript, context);
-  hooks = context.__FAVSENSE_TEST_HOOKS__;
-  const notes = ["note-a", "note-b"].map((id) => ({
-    id,
-    title: `Title ${id}`,
-    source_url: `https://www.xiaohongshu.com/discovery/item/${id}?xsec_token=board&xsec_source=pc_share`
-  }));
-
-  const result = await hooks.summarizePlannedNotes(
-    notes,
-    { id: "board1", name: "Board One" },
-    "batch1",
-    "batch1_board1",
-    { enabled: true, note_ids: ["note-a", "note-b"] }
-  );
-
-  assert.deepEqual({ ...result }, {
-    saved: 0, skipped: 0, halted: true, reason: "xhs-safety-stop"
-  });
-  assert.deepEqual(summarized, ["note-a"]);
-  assert.equal(requests.some((request) => request.pathname === "/sync/diandian-skip"), false);
-  assert.deepEqual(requests.find((request) => request.pathname === "/sync/diandian-halt")?.body, {
-    run_id: "batch1_board1",
-    board_id: "board1",
-    reason: "xhs-safety-stop",
-    note_id: "note-a"
-  });
-
-  failureCode = "diandian-ai-failed";
-  const reconciled = await hooks.summarizePlannedNotes(
-    notes.slice(0, 1),
-    { id: "board1", name: "Board One" },
-    "batch2",
-    "batch2_board1",
-    { enabled: true, note_ids: ["note-a"] }
-  );
-  assert.deepEqual({ ...reconciled }, {
-    saved: 1, skipped: 0, halted: true, reason: "diandian-ai-failed"
-  });
-
-  const requestStart = requests.length;
-  const summaryStart = summarized.length;
-  const tabStart = openedTabs.length;
-  failureCode = "link-not-recognized";
-  const linkFailure = await hooks.summarizePlannedNotes(
-    notes,
-    { id: "board1", name: "Board One" },
-    "batch3",
-    "batch3_board1",
-    { enabled: true, note_ids: ["note-a", "note-b"] }
-  );
-  const linkFailureRequests = requests.slice(requestStart);
-  const linkFailureTabs = openedTabs.slice(tabStart);
-
-  assert.deepEqual({ ...linkFailure }, {
-    saved: 0, skipped: 1, halted: true, reason: "link-not-recognized"
-  });
-  assert.deepEqual(summarized.slice(summaryStart), ["note-a"], "a failed note must not trigger the next note");
-  assert.deepEqual(
-    linkFailureRequests.find((request) => request.pathname === "/sync/diandian-skip")?.body,
-    { run_id: "batch3_board1", board_id: "board1", note_id: "note-a", reason: "link-not-recognized" }
-  );
-  assert.deepEqual(
-    linkFailureRequests.find((request) => request.pathname === "/sync/summary-plan")?.body,
-    { run_id: "batch3_board1", board_id: "board1", note_ids: [] },
-    "the unresolved remainder must be durably abandoned before the controller returns"
-  );
-  assert.equal(linkFailureTabs.length, 2);
-  const [noteTab, aiTab] = linkFailureTabs;
-  assert.equal(noteTab.kind, "note");
-  assert.notEqual(noteTab.closedAt, null, "the successfully copied source note may close before the AI transaction begins");
-  assert.equal(aiTab.kind, "ai");
-  assert.equal(aiTab.closedAt, null, "the failed DianDian page must remain open for diagnosis");
-});
-
-test("an unacknowledged skip stops instead of pretending the plan advanced", async () => {
-  const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
-  const userscript = renderUserscriptTemplate(template)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { reportDiandianSkip };\n${exportMarker}`);
-  const attemptedPaths = [];
-  const schedule = (callback) => { queueMicrotask(callback); return 1; };
-  const context = {
-    globalThis: null,
-    location: { origin: "https://www.xiaohongshu.com", pathname: "/board/board1", search: "", href: "https://www.xiaohongshu.com/board/board1" },
-    history: { state: null, replaceState() {} },
-    document: { body: { innerText: "" }, documentElement: { appendChild() {} }, getElementById: () => null, createElement: () => ({ style: {} }) },
-    window: { setTimeout: schedule, clearTimeout() {} },
-    URL,
-    URLSearchParams,
-    setTimeout: schedule,
-    queueMicrotask,
-    GM_xmlhttpRequest(options) {
-      attemptedPaths.push(new URL(options.url).pathname);
-      queueMicrotask(() => options.onload({ status: 503, responseText: JSON.stringify({ ok: false, error: "bridge unavailable" }) }));
-    },
-    GM_registerMenuCommand() {}
-  };
-  context.globalThis = context;
-  runInNewContext(userscript, context);
-
-  await assert.rejects(
-    () => context.__FAVSENSE_TEST_HOOKS__.reportDiandianSkip("batch1_board1", "board1", "note-a", "link-not-recognized"),
-    (error) => error.code === "diandian-skip-unconfirmed"
-  );
-  assert.equal(attemptedPaths.filter((path) => path === "/sync/diandian-skip").length, 2);
 });
 
 test("generated userscript exits before touching secrets or privileged APIs on a non-Xiaohongshu origin", async () => {
@@ -4833,7 +3852,7 @@ test("generated userscript exits before touching secrets or privileged APIs on a
 
 test("long board IDs derive collision-resistant run IDs consistently", async () => {
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  const helpers = sourceSlice(template, "  function hex(bytes)", "\n  async function signedMessage");
+  const helpers = sourceSlice(template, "  function hex(bytes)", "\n  async function waitUntil");
   const batch = "manual20260822010101000000";
   const firstBoard = `${"a".repeat(79)}b`;
   const secondBoard = `${"a".repeat(79)}c`;
@@ -4856,9 +3875,13 @@ test("long board IDs derive collision-resistant run IDs consistently", async () 
   assert.equal(result.short, "shortbatch_board");
 });
 
-test("userscript metadata identifies the exact-note workflow release", async () => {
+test("userscript metadata identifies the one-page workflow release and asks for no tab-opening grant", async () => {
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  assert.equal(template.match(/^\/\/ @version\s+(\S+)$/m)?.[1], "3.0.3");
+  assert.equal(template.match(/^\/\/ @version\s+(\S+)$/m)?.[1], "3.1.0");
+  assert.deepEqual(
+    [...template.matchAll(/^\/\/ @grant\s+(\S+)$/gm)].map((match) => match[1]),
+    ["GM_xmlhttpRequest", "GM_registerMenuCommand"]
+  );
 });
 
 test("userscript metadata covers the exact Xiaohongshu page opened by setup", async () => {

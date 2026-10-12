@@ -510,6 +510,22 @@ def _round_started(_working, *, batch, started_at, run_board_ids, mode, requeste
     return working
 
 
+@_event("run_page_opened")
+def _run_page_opened(working, *, page_id):
+    """The one browser page the round works in. Bookkeeping only: it never reaches the status."""
+    working = _live(working)
+    working["run_page_id"] = page_id
+    return working
+
+
+@_event("run_page_closed")
+def _run_page_closed(working, *, page_id):
+    working = _live(working)
+    if working.get("run_page_id") == page_id:
+        working.pop("run_page_id")
+    return working
+
+
 @_event("start_failed")
 def _start_failed(working, *, error, completed_at=None):
     working = _live(working)

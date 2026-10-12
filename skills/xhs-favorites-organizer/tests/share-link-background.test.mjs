@@ -8,6 +8,8 @@ import { runInNewContext } from "node:vm";
 
 // Covers fetching a note's share link while the scan browser sits behind other windows.
 // The page then counts as hidden, so the browser delays its timers far past their due time.
+// The note page gets its job from the local sync service by the worker id in its address, does it
+// on its own, and reports the result back.
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const read = (path) => readFile(resolve(root, path), "utf8");
@@ -28,7 +30,7 @@ function renderUserscript(template) {
     .replaceAll("__DIANDIAN_CONTRACT__", JSON.stringify(BROWSER_CONTRACT));
 }
 
-// Drives the real note-page share worker through its signed channel on a fake clock.
+// Drives the real note-page share worker against a fake sync service on a fake clock.
 // timerCost maps a requested timer delay to how far the clock really moves; a hidden page
 // is modelled by a cost far above the delay.
 async function runShareWorker({
@@ -41,7 +43,7 @@ async function runShareWorker({
   const exportMarker = '  GM_registerMenuCommand("打开拾光台后开始整理"';
   assert.ok(template.includes(exportMarker));
   const userscript = renderUserscript(template)
-    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { signedMessage, validMessage, waitUntil };\n${exportMarker}`);
+    .replace(exportMarker, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { waitUntil };\n${exportMarker}`);
   let clock = 1_800_000_000_000;
   let currentTimerCost = timerCost;
   class FakeDate extends Date { static now() { return clock; } }
@@ -50,18 +52,8 @@ async function runShareWorker({
     queueMicrotask(callback);
     return 1;
   };
-  class SharedChannel {
-    static instances = new Set();
-    constructor() { this.listeners = new Set(); SharedChannel.instances.add(this); }
-    addEventListener(type, listener) { if (type === "message") this.listeners.add(listener); }
-    removeEventListener(type, listener) { if (type === "message") this.listeners.delete(listener); }
-    postMessage(data) {
-      for (const channel of SharedChannel.instances) if (channel !== this) queueMicrotask(() => {
-        for (const listener of [...channel.listeners]) listener({ data });
-      });
-    }
-    close() { this.listeners.clear(); SharedChannel.instances.delete(this); }
-  }
+  let reportResult;
+  const reported = new Promise((resolveReport) => { reportResult = resolveReport; });
   let shareClickedAt = null;
   const clickActions = [];
   const shareControl = {
@@ -100,12 +92,21 @@ async function runShareWorker({
     window: { setTimeout: schedule, clearTimeout() {} },
     navigator: { clipboard: { readText: async () => "" } },
     getComputedStyle: () => ({ display: "block", visibility: "visible", opacity: "1" }),
-    URL, URLSearchParams, TextEncoder, crypto: webcrypto, BroadcastChannel: SharedChannel,
+    URL, URLSearchParams, TextEncoder, crypto: webcrypto,
     setTimeout: schedule, clearTimeout() {}, queueMicrotask,
     GM_registerMenuCommand() {},
     GM_xmlhttpRequest(options) {
       const pathname = new URL(options.url).pathname;
       const body = options.data ? JSON.parse(options.data) : null;
+      if (pathname === "/sync/page-task") {
+        const task = { stage: "share", run_id: "run", board_id: "board", note_id: "note-a", title: "Title", batch: "batch" };
+        queueMicrotask(() => options.onload({ status: 200, responseText: JSON.stringify({ ok: true, task }) }));
+        return;
+      }
+      if (pathname === "/sync/page-result") {
+        // Report in the shape these tests have always read: the link, or the reason it failed.
+        reportResult(body.ok ? { type: "share-link", url: body.url } : { type: "share-failed", error: body.error });
+      }
       if (pathname === "/sync/diandian-click") {
         clickActions.push(body.action);
         if (body.action === "share") shareClickedAt = clock;
@@ -120,30 +121,14 @@ async function runShareWorker({
   context.globalThis = context;
   runInNewContext(userscript, context);
   const hooks = context.__FAVSENSE_TEST_HOOKS__;
-  for (let attempt = 0; attempt < 50 && ![...SharedChannel.instances].some((channel) => channel.listeners.size); attempt += 1) {
-    await new Promise((resolveWait) => setTimeout(resolveWait, 0));
-  }
-  const controller = new SharedChannel();
-  const reply = new Promise((resolveMessage) => {
-    controller.addEventListener("message", async (event) => {
-      if (await hooks.validMessage(event.data) && ["share-link", "share-failed"].includes(event.data.type)) {
-        resolveMessage(event.data);
-      }
-    });
-  });
   return {
     clickActions,
     hooks,
     now: () => clock,
     setTimerCost(next) { currentTimerCost = next; },
+    // The worker starts by itself when the page loads; this waits for what it reports.
     async requestCopy() {
-      controller.postMessage(await hooks.signedMessage({
-        type: "copy-link", job_id: "job", worker_id: workerId, batch: "batch", run_id: "run",
-        board_id: "board", note_id: "note-a", title: "Title"
-      }));
-      const result = await reply;
-      controller.close();
-      return result;
+      return reported;
     }
   };
 }

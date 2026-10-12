@@ -426,11 +426,12 @@ class LocalRebuildTest(unittest.TestCase):
     def forbid_platform_contact(self, bridge) -> mock.Mock:
         contact = mock.Mock(side_effect=AssertionError("local rebuild touched the platform"))
         for name in (
-            "open_cdp_target", "open_sop_browser_page", "cache_missing_media", "process_import",
-            "import_sync", "save_diandian_result", "run_diandian_cdp", "click_diandian_control",
+            "attach_run_page", "open_sop_browser_page", "list_sop_browser_pages", "close_sop_browser_page",
+            "cache_missing_media", "process_import", "import_sync", "save_diandian_result",
+            "run_diandian_cdp", "click_diandian_control",
         ):
             setattr(bridge, name, contact)
-        for name in ("open_sop_cdp_target", "loopback_devtools_json", "loopback_devtools_action"):
+        for name in ("open_sop_note_session", "loopback_devtools_json", "loopback_devtools_action"):
             patcher = mock.patch.object(BRIDGE, name, contact)
             patcher.start()
             self.addCleanup(patcher.stop)
