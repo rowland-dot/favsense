@@ -4,7 +4,7 @@
 
 ## 开始之前
 
-本项目统一要求 Node.js 20 与 Python 3.12。行为修改必须从 APPROVED Spec 和 canonical Plan 开始；真实平台、凭据和真实迁移 apply 不属于自动测试范围。
+本项目统一要求 Node.js 20 与 Python 3.12。行为修改有两条起点：已 triage 为 `ready-for-agent` 的 issue（其 agent brief 就是规格与计划），或 APPROVED Spec 加 canonical Plan；真实平台、凭据和真实迁移 apply 不属于自动测试范围。
 
 1. Fork 仓库并从 `main` 创建分支。
 2. 不要提交真实 Cookie、Token、个人主页、收藏夹 ID、下载视频或抽帧图片。
@@ -39,4 +39,9 @@ npm run release:check
 
 ## Pull Request
 
-PR 描述必须链接 APPROVED Spec、canonical Plan、RED/GREEN、Review、QA、Audit、Review brief 与回滚说明。行为修改严格遵守 Spec → Plan → TDD → Review → QA → Audit → Brief → 用户批准 → PR；避免在同一个 PR 中混合无关重构。
+PR 描述分两条路径，生命周期检查（`scripts/verify-development-lifecycle.mjs`）按正文自动选择：
+
+- **关闭 `ready-for-agent` issue 的 PR**：正文用 `Fixes #N` 引用该 issue（已关闭的 issue 也算），写 `## Test plan`（至少一个已勾选的 `- [x]` 测试项）、`Rollback:` 行和已勾选的 `- [x] Rollback reviewed`。不要求仓库内的 spec、plan、review、QA、audit、brief 文件。
+- **其他触及受治理路径的 PR**：必须链接 APPROVED Spec、canonical Plan、RED/GREEN、Review、QA、Audit、Review brief 与回滚说明。
+
+无论哪条路径，行为修改都严格遵守 Spec → Plan → TDD → Review → QA → Audit → Brief → 用户批准 → PR；避免在同一个 PR 中混合无关重构。

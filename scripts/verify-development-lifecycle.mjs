@@ -61,7 +61,47 @@ async function validateEvidencePath(workspace, value) {
   try { return (await stat(target)).isFile(); } catch { return false; }
 }
 
-export async function verifyDevelopmentLifecycle({ root: workspace, event, diffFiles }) {
+const closingKeyword = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)/gi;
+
+function closedIssueNumbers(body) {
+  return [...new Set([...String(body || "").matchAll(closingKeyword)].map((match) => Number(match[1])))];
+}
+
+// Test evidence = a level-2 "Test plan" heading with at least one ticked box before the next heading.
+function hasTestEvidence(body) {
+  let inSection = false;
+  for (const line of String(body || "").split(/\r?\n/)) {
+    if (/^#{1,6}\s/.test(line)) inSection = /^##\s+test plan\s*$/i.test(line);
+    else if (inSection && /^\s*[-*]\s*\[x\]/i.test(line)) return true;
+  }
+  return false;
+}
+
+function rollbackFailures(body) {
+  if (!/^\s*Rollback\s*:\s*\S+/im.test(body)) return [{ id: "LIFECYCLE_ROLLBACK_MISSING" }];
+  if (!/-\s*\[x\]\s*Rollback reviewed/i.test(body)) return [{ id: "LIFECYCLE_ROLLBACK_UNCHECKED" }];
+  return [];
+}
+
+// Reads one issue's labels from GitHub. Closed issues count: issue-pipeline closes the issue before the PR opens.
+// The issues endpoint also answers for PR numbers, so a `pull_request` field marks those.
+export async function readGitHubIssue({ number, repository, token, fetchImpl = fetch }) {
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repository || "")) throw new Error("LIFECYCLE_ISSUE_UNAVAILABLE: event has no repository");
+  const response = await fetchImpl(`https://api.github.com/repos/${repository}/issues/${number}`, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!response.ok) throw new Error(`LIFECYCLE_ISSUE_UNAVAILABLE: GitHub answered ${response.status} for issue ${number}`);
+  const issue = await response.json();
+  return { labels: (issue.labels || []).map((label) => label.name), isPullRequest: Boolean(issue.pull_request) };
+}
+
+export async function verifyDevelopmentLifecycle({
+  root: workspace, event, diffFiles,
+  readIssue = (args) => readGitHubIssue({ ...args, token: process.env.GITHUB_TOKEN }),
+}) {
   const changedResult = await normalizeChanged(event, workspace, diffFiles);
   if (!changedResult.available) {
     return { ok: false, governed: true, failures: [{ id: "LIFECYCLE_CHANGED_FILES_UNAVAILABLE" }] };
@@ -70,6 +110,20 @@ export async function verifyDevelopmentLifecycle({ root: workspace, event, diffF
   const governed = changed.some((file) => governedPrefixes.some((prefix) => file.startsWith(prefix)));
   if (!governed) return { ok: true, governed: false, failures: [] };
   const body = String(event?.pull_request?.body || "");
+  let closesReadyIssue = false;
+  try {
+    for (const number of closedIssueNumbers(body)) {
+      const issue = await readIssue({ number, repository: event?.repository?.full_name });
+      if (!issue.isPullRequest && issue.labels.includes("ready-for-agent")) { closesReadyIssue = true; break; }
+    }
+  } catch {
+    // Fail closed: an unreadable issue must never fall back to a pass.
+    return { ok: false, governed: true, failures: [{ id: "LIFECYCLE_ISSUE_UNAVAILABLE" }] };
+  }
+  if (closesReadyIssue) {
+    const failures = [...(hasTestEvidence(body) ? [] : [{ id: "LIFECYCLE_TEST_PLAN_MISSING" }]), ...rollbackFailures(body)];
+    return { ok: failures.length === 0, governed: true, failures };
+  }
   const values = Object.fromEntries(Object.entries(labels).map(([key, names]) => [key, extract(body, names)]));
   const failures = [];
   if (!values.spec || !(await validateEvidencePath(workspace, values.spec))) {
@@ -90,8 +144,7 @@ export async function verifyDevelopmentLifecycle({ root: workspace, event, diffF
     const brief = await readFile(resolve(workspace, values.brief), "utf8");
     if (!/RED\/GREEN evidence\s*:\s*\S+/i.test(brief)) failures.push({ id: "LIFECYCLE_BRIEF_TDD_MISSING" });
   }
-  if (!/^\s*Rollback\s*:\s*\S+/im.test(body)) failures.push({ id: "LIFECYCLE_ROLLBACK_MISSING" });
-  else if (!/-\s*\[x\]\s*Rollback reviewed/i.test(body)) failures.push({ id: "LIFECYCLE_ROLLBACK_UNCHECKED" });
+  failures.push(...rollbackFailures(body));
   return { ok: failures.length === 0, governed: true, failures };
 }
 
