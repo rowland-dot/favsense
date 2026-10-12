@@ -54,6 +54,13 @@ if CACHED_IMAGES_SPEC is None or CACHED_IMAGES_SPEC.loader is None:
 CACHED_IMAGES = importlib.util.module_from_spec(CACHED_IMAGES_SPEC)
 CACHED_IMAGES_SPEC.loader.exec_module(CACHED_IMAGES)
 
+DIANDIAN_REFUSAL_PATH = Path(__file__).with_name("diandian_refusal.py")
+DIANDIAN_REFUSAL_SPEC = importlib.util.spec_from_file_location("favsense_diandian_refusal", DIANDIAN_REFUSAL_PATH)
+if DIANDIAN_REFUSAL_SPEC is None or DIANDIAN_REFUSAL_SPEC.loader is None:
+    raise RuntimeError("DianDian refusal rule is unavailable")
+DIANDIAN_REFUSAL = importlib.util.module_from_spec(DIANDIAN_REFUSAL_SPEC)
+DIANDIAN_REFUSAL_SPEC.loader.exec_module(DIANDIAN_REFUSAL)
+
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 47631
@@ -124,6 +131,10 @@ DIANDIAN_HALT_DIAGNOSTICS = {
     "diandian-channel-unavailable": (
         "浏览器无法建立点点 AI 整理通道；核心整理结果已保留。"
         "请确认浏览器允许当前页面通信后重试。"
+    ),
+    "diandian-refused": (
+        "点点 AI 没有读取这篇笔记，只回复了无法访问；核心整理结果已保留。"
+        "这篇没有保存总结，下一轮整理会重试，失败页面已保留。"
     ),
     "duplicate-submit": (
         "点点 AI 检测到重复提交风险；核心整理结果已保留。"
@@ -725,6 +736,7 @@ def valid_diandian_record(value: object, note_id: str) -> bool:
             and isinstance(value.get("summary"), str)
             and value["summary"].strip()
             and len(value["summary"]) <= 200_000
+            and not DIANDIAN_REFUSAL.is_refusal(value["summary"])
             and isinstance(value.get("prompt_version"), str)
             and re.fullmatch(r"[a-f0-9]{64}", value["prompt_version"])
             and all(
@@ -752,6 +764,7 @@ def valid_diandian_record(value: object, note_id: str) -> bool:
         and isinstance(value.get("summary"), str)
         and value["summary"].strip()
         and len(value["summary"]) <= 200_000
+        and not DIANDIAN_REFUSAL.is_refusal(value["summary"])
         and not contains_diandian_credential_shape(value)
     )
 
@@ -5427,6 +5440,10 @@ class Bridge:
             minimum = int(spec.get("minimum_summary_chars", 20))
             if not minimum <= len(summary) <= 100_000:
                 raise DiandianPageStop("invalid-summary")
+            # DianDian sometimes answers that it cannot open the link instead of reading the note. That is a
+            # failure of this note, not a summary: stop the batch and write nothing.
+            if DIANDIAN_REFUSAL.is_refusal(summary):
+                raise DiandianPageStop("diandian-refused")
             before_save = read_ai_page_state(session, state_expression)
             if self.diandian_is_halted(run_id):
                 raise DiandianPageStop("run-halted")

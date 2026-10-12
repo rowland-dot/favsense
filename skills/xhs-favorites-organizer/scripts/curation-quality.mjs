@@ -3,6 +3,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { curationRevision } from "./curation-revision.mjs";
 import { containsCredentialShape } from "./sensitive-data.mjs";
+import { isDiandianRefusal } from "./diandian-refusal.mjs";
 import { auditCuration } from "./validate-curation.mjs";
 
 function clean(value) {
@@ -164,6 +165,8 @@ export function parseFormalPointSummaryRecord(record, noteId, expectedPromptVers
   ) return null;
   const summary = record.summary.replace(/\r\n?/g, "\n").trim();
   if (!summary || summary.length > 200_000) return null;
+  // A reply that says DianDian could not read the note is not a summary of it.
+  if (isDiandianRefusal(summary)) return null;
   const summarySha256 = createHash("sha256").update(summary, "utf8").digest("hex");
   if (record.summary_sha256 !== summarySha256) return null;
   return {

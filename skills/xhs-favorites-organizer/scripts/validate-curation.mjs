@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { curationRevision } from "./curation-revision.mjs";
+import { isDiandianRefusal } from "./diandian-refusal.mjs";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const GENERIC_TEXT = [
@@ -141,8 +142,8 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
       if (entry) {
         const title = clean(entry.title || note.title);
         if (!title || /未命名收藏/.test(title)) errors.push("title-invalid");
-        if (clean(entry.summary).length < 32 || GENERIC_TEXT.some((pattern) => pattern.test(clean(entry.summary)))) errors.push("summary-not-specific");
-        if (clean(entry.action).length < 16 || GENERIC_TEXT.some((pattern) => pattern.test(clean(entry.action)))) errors.push("action-not-specific");
+        if (clean(entry.summary).length < 32 || GENERIC_TEXT.some((pattern) => pattern.test(clean(entry.summary))) || isDiandianRefusal(entry.summary)) errors.push("summary-not-specific");
+        if (clean(entry.action).length < 16 || GENERIC_TEXT.some((pattern) => pattern.test(clean(entry.action))) || isDiandianRefusal(entry.action)) errors.push("action-not-specific");
         if (!Array.isArray(entry.themes) || entry.themes.length < 1) errors.push("themes-missing");
         if (!Array.isArray(entry.tools)) errors.push("tools-invalid");
         if (entry.category_override === true && (!clean(entry.category) || !clean(entry.category_reason))) {

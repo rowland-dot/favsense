@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { curationRevision } from "../scripts/curation-revision.mjs";
-import { PROMPT, TODAY, acceptedSkill, note, pointFile, profile, root, skillResource } from "./public-judgement-fixtures.mjs";
+import { PROMPT, TODAY, acceptedSkill, normalReply, note, pointFile, profile, refusalReply, root, skillResource } from "./public-judgement-fixtures.mjs";
 
 // Issue 6 made one public judgement module decide each note for the formal output; issue 39 left the web
 // data as that output. Run the web builder on a set of notes and check what the verdict decides.
@@ -108,6 +108,28 @@ test("an accepted Skill is shown with its point summary and resource, and with t
   assert.equal(without[id].kind, "Skill");
   assert.equal(without[id].deepSummarySource, "curation");
   assert.deepEqual(without[id].resourceIds, [accepted.resource.id]);
+});
+
+test("a point summary that is a refusal to read the note is never shown, and the note keeps its reviewed summary", async () => {
+  const id = "n1";
+  const scenario = (pointText) => {
+    const accepted = acceptedSkill({ pointText });
+    return {
+      accepted,
+      common: { notes: { [id]: note() }, curation: { [id]: accepted.entry }, audit: { [id]: accepted.audit },
+        resources: [accepted.resource], points: { [id]: pointFile(id, accepted) } },
+    };
+  };
+  // The same note with a real point summary shows it, so the refusal is what changes the answer.
+  const real = scenario(normalReply);
+  const shown = await buildWeb(real.common);
+  assert.equal(shown[id].deepSummarySource, "xiaohongshu-diandian");
+  assert.equal(shown[id].deepSummary, normalReply);
+  const refused = scenario(refusalReply);
+  const web = await buildWeb(refused.common);
+  assert.notEqual(web[id].deepSummary, refusalReply);
+  assert.equal(web[id].deepSummary, refused.accepted.entry.summary);
+  assert.notEqual(web[id].deepSummarySource, "xiaohongshu-diandian");
 });
 
 test("the web builder reads the resource freshness limit from the profile, and keeps 30 days when it is absent", async () => {
