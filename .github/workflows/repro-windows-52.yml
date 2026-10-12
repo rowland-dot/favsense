@@ -1,7 +1,8 @@
 name: Repro ERR_NO_BUFFER_SPACE (temporary, issue 52)
 
 # Temporary: runs the Windows release gate many times at once so at least one failure lands in a run that
-# has a connection log. Removed before the branch is merged.
+# has a connection log. "plain" replicas run the gate exactly as CI did before the logger existed, to show
+# whether the logger itself changes the outcome. Removed before the branch is merged.
 
 on:
   push:
@@ -15,7 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        replica: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+        mode: [logged, plain]
+        replica: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
@@ -41,10 +43,15 @@ jobs:
         run: npx.cmd playwright install chromium
 
       - name: Run the complete release gate with the connection log
+        if: matrix.mode == 'logged'
         run: node scripts/connection-log.mjs --out ci-diagnostics -- npm run release:check
 
+      - name: Run the complete release gate without the connection log
+        if: matrix.mode == 'plain'
+        run: npm run release:check
+
       - name: Keep the connection log
-        if: always()
+        if: always() && matrix.mode == 'logged'
         uses: actions/upload-artifact@v4
         with:
           name: connection-log-${{ matrix.replica }}-${{ github.run_attempt }}
@@ -56,7 +63,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.replica }}-${{ github.run_attempt }}
+          name: test-results-${{ matrix.mode }}-${{ matrix.replica }}-${{ github.run_attempt }}
           path: test-results/
           if-no-files-found: ignore
           retention-days: 14
