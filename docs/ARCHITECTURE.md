@@ -12,9 +12,8 @@ flowchart LR
   CATALOG --> SUMMARY["captured summary / cached evidence"]
   SUMMARY --> CANDIDATE["candidate + resource assessment"]
   CANDIDATE --> AUDIT["audit：pending / accepted"]
-  AUDIT --> BUILD["双输出 snapshot coordinator"]
-  BUILD -->|"同一 build_version"| KB["正式 Obsidian 知识库"]
-  BUILD -->|"同一 build_version"| SITE["纯静态 FavSense · 拾光台网页"]
+  AUDIT --> BUILD["snapshot 步骤"]
+  BUILD -->|"带 build_version"| SITE["纯静态 FavSense · 拾光台网页"]
   SITE --> GH["GitHub Pages"]
   SITE --> HF["Hugging Face Static Space"]
 ```
@@ -38,8 +37,8 @@ flowchart LR
 3. Bridge 校验 Host、token、面板 ID、请求大小和小红书 URL。
 4. 新笔记按 ID 增量去重；失败条目单独记录，不循环重试。
 5. 点点或离线证据先形成 candidate；资源评估与 audit 明确产生 pending/rejected/accepted，不配置 Agent 时也能确定性完成到诚实状态。
-6. 两个正式构建器共用同一 acceptance decision，在 staging 中生成相同 `build_version` 的 Markdown 与脱敏 `site/data/knowledge.json`。
-7. 双输出 journal 只在两份 staging 全部验证后交换 live；失败恢复为同一上一版。
+6. 网页构建器按公开判定 module 给出的唯一 acceptance decision，在 staging 中生成带 `build_version` 的脱敏 `site/data/knowledge.json`。
+7. journal 只在网页数据 staging 验证后交换 live；失败恢复为同一上一版。
 8. 发布只在最终快照成功后按配置执行，单个 run 最多一次；`publish_failed` 保留本地新快照与远端上一版。
 9. 网页在浏览器中完成搜索、筛选、排序和详情展示。
 
@@ -53,5 +52,5 @@ flowchart LR
 - 确定性构建器：相同输入产生相同结构，不把每日运行绑定到某个模型供应商。
 - 原始证据留在本机：公开知识可以分享，账号登录态和版权材料不随之发布。
 - 候选不冒充结论：`candidateKind=Skill` 只有在 accepted 且恰好一个 fresh verified resource 时才提升为 confirmed Skill。
-- 同代正式输出：知识库与网页通过 journal、恢复和共享 build version 获得一致性，不声称跨目录原子 rename。
+- 单一正式输出：网页数据通过 journal 与恢复保证交换要么完整、要么回到上一版，并带有 build version。旧版本地 `knowledge-base/` 目录已停止生成，可手动删除。
 - 收藏夹优先建立主分类：默认直接反映用户自己的收藏体系；内容识别负责主题关联和纠偏建议，只有带依据的显式覆盖才跨收藏夹归档。

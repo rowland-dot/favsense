@@ -1,98 +1,70 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
 import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), "favsense-snapshot-"));
-  const kbTarget = join(root, "knowledge-base");
-  const publicTarget = join(root, "knowledge.json");
-  await mkdir(kbTarget);
-  await writeFile(join(kbTarget, "build.json"), JSON.stringify({ build_version: "old" }));
-  await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" } }));
-  return { root, kbTarget, publicTarget };
-}
+// The web data is the only formal output (issue 39), so a snapshot has exactly one participant.
 
-const builder = (kind, calls, fail = false) => async ({ target, buildVersion }) => {
-  calls.push(kind);
-  if (fail) throw new Error(`${kind}_failed`);
-  if (kind === "kb") {
-    await mkdir(target, { recursive: true });
-    await writeFile(join(target, "build.json"), JSON.stringify({ build_version: buildVersion }));
-  } else {
-    await writeFile(target, JSON.stringify({ meta: { buildVersion } }));
-  }
+const COMMON = {
+  sealedScopeDigest: "a".repeat(64),
+  curationInputDigest: "b".repeat(64),
+  configDigest: "c".repeat(64),
+  inputRevisionDigest: "d".repeat(64),
+  effectiveDate: "2026-08-25",
 };
 
-test("second builder failure preserves both previous live outputs", async () => {
+async function fixture() {
+  const root = await mkdtemp(join(tmpdir(), "favsense-snapshot-"));
+  const publicTarget = join(root, "knowledge.json");
+  await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" } }));
+  return { root, publicTarget };
+}
+
+const builder = (calls, fail = false) => async ({ target, buildVersion }) => {
+  calls.push("public");
+  if (fail) throw new Error("public_failed");
+  await writeFile(target, JSON.stringify({ meta: { buildVersion } }));
+};
+
+const liveVersion = async (path) => JSON.parse(await readFile(path, "utf8")).meta.buildVersion;
+
+test("a web builder failure preserves the previous live web data", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const paths = await fixture(); const calls = [];
-  await assert.rejects(buildOrganizationSnapshot({ ...paths, sealedScopeDigest: "a".repeat(64), curationInputDigest: "b".repeat(64), configDigest: "c".repeat(64), inputRevisionDigest: "d".repeat(64), effectiveDate: "2026-08-25", buildKnowledgeBase: builder("kb", calls), buildPublicSite: builder("public", calls, true) }), /public_failed/);
-  assert.deepEqual(calls, ["kb", "public"]);
-  assert.equal(JSON.parse(await readFile(join(paths.kbTarget, "build.json"), "utf8")).build_version, "old");
-  assert.equal(JSON.parse(await readFile(paths.publicTarget, "utf8")).meta.buildVersion, "old");
+  await assert.rejects(buildOrganizationSnapshot({ ...paths, ...COMMON, buildPublicSite: builder(calls, true) }), /public_failed/);
+  assert.deepEqual(calls, ["public"]);
+  assert.equal(await liveVersion(paths.publicTarget), "old");
 });
 
-test("the knowledge base builder is handed a staging path that does not exist yet", async () => {
-  // The builder only writes to a new directory, so the snapshot step must never create the target first.
-  const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
-  const paths = await fixture();
-  const seen = [];
-  const kb = async (options) => {
-    seen.push(existsSync(options.target));
-    await builder("kb", [])(options);
-  };
-  await buildOrganizationSnapshot({ ...paths, sealedScopeDigest: "a".repeat(64), curationInputDigest: "b".repeat(64), configDigest: "c".repeat(64), inputRevisionDigest: "d".repeat(64), effectiveDate: "2026-08-25", buildKnowledgeBase: kb, buildPublicSite: builder("public", []) });
-  assert.deepEqual(seen, [false]);
-});
-
-test("failure after the first swap rolls both participants back", async () => {
+test("failure at the web data swap restores the previous web data", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const paths = await fixture(); const calls = [];
-  await assert.rejects(buildOrganizationSnapshot({ ...paths, sealedScopeDigest: "a".repeat(64), curationInputDigest: "b".repeat(64), configDigest: "c".repeat(64), inputRevisionDigest: "d".repeat(64), effectiveDate: "2026-08-25", buildKnowledgeBase: builder("kb", calls), buildPublicSite: builder("public", calls), failAt: "swap:public" }), /FAULT_INJECTION/);
-  assert.equal(JSON.parse(await readFile(join(paths.kbTarget, "build.json"), "utf8")).build_version, "old");
-  assert.equal(JSON.parse(await readFile(paths.publicTarget, "utf8")).meta.buildVersion, "old");
+  await assert.rejects(buildOrganizationSnapshot({ ...paths, ...COMMON, buildPublicSite: builder(calls), failAt: "swap:public" }), /FAULT_INJECTION/);
+  assert.equal(await liveVersion(paths.publicTarget), "old");
 });
 
-test("one canonical version is embedded in both outputs", async () => {
+test("one canonical version is embedded in the web data and leftover input folders are removed", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const paths = await fixture(); const calls = [];
   const staleInput = join(paths.root, ".xhs-tools", "organization-snapshots", "snapshot-input-stale");
   await mkdir(staleInput, { recursive: true });
   await writeFile(join(staleInput, "private.json"), "{}");
-  const result = await buildOrganizationSnapshot({ ...paths, sealedScopeDigest: "a".repeat(64), curationInputDigest: "b".repeat(64), configDigest: "c".repeat(64), inputRevisionDigest: "d".repeat(64), effectiveDate: "2026-08-25", buildKnowledgeBase: builder("kb", calls), buildPublicSite: builder("public", calls) });
+  const result = await buildOrganizationSnapshot({ ...paths, ...COMMON, buildPublicSite: builder(calls) });
   assert.match(result.build_version, /^[a-f0-9]{64}$/);
-  assert.equal(JSON.parse(await readFile(join(paths.kbTarget, "build.json"), "utf8")).build_version, result.build_version);
-  assert.equal(JSON.parse(await readFile(paths.publicTarget, "utf8")).meta.buildVersion, result.build_version);
+  assert.equal(await liveVersion(paths.publicTarget), result.build_version);
   assert.equal((await readdir(join(paths.root, ".xhs-tools", "organization-snapshots"))).includes("snapshot-input-stale"), false);
 });
 
 test("successful build freezes a publish site under its canonical version", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const root = await mkdtemp(join(tmpdir(), "favsense-publish-snapshot-"));
-  const kbTarget = join(root, "knowledge-base");
   const publishSite = join(root, "site");
   const publicTarget = join(publishSite, "data", "knowledge.json");
-  await mkdir(kbTarget);
   await mkdir(join(publishSite, "data"), { recursive: true });
-  await writeFile(join(kbTarget, "build.json"), JSON.stringify({ build_version: "old" }));
   await writeFile(join(publishSite, "index.html"), "site-A", "utf8");
   await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" } }));
-  const result = await buildOrganizationSnapshot({
-    root,
-    kbTarget,
-    publicTarget,
-    publishSite,
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    inputRevisionDigest: "d".repeat(64),
-    effectiveDate: "2026-08-25",
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
-  });
+  const result = await buildOrganizationSnapshot({ root, publicTarget, publishSite, ...COMMON, buildPublicSite: builder([]) });
   const frozenSite = join(
     root,
     ".xhs-tools",
@@ -119,16 +91,13 @@ test("successful build freezes a publish site under its canonical version", asyn
   );
 });
 
-test("publish freeze failure leaves both live outputs unchanged and writes nothing outside", async (context) => {
+test("publish freeze failure leaves the live web data unchanged and writes nothing outside", async (context) => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const root = await mkdtemp(join(tmpdir(), "favsense-publish-freeze-failure-"));
   const outside = await mkdtemp(join(tmpdir(), "favsense-publish-freeze-outside-"));
-  const kbTarget = join(root, "knowledge-base");
   const publishSite = join(root, "site");
   const publicTarget = join(publishSite, "data", "knowledge.json");
-  await mkdir(kbTarget);
   await mkdir(join(publishSite, "data"), { recursive: true });
-  await writeFile(join(kbTarget, "build.json"), JSON.stringify({ build_version: "old" }));
   await writeFile(join(publishSite, "index.html"), "old-site", "utf8");
   await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" }, marker: "old" }));
   try {
@@ -141,20 +110,7 @@ test("publish freeze failure leaves both live outputs unchanged and writes nothi
       }
       throw error;
     }
-    await assert.rejects(buildOrganizationSnapshot({
-      root,
-      kbTarget,
-      publicTarget,
-      publishSite,
-      sealedScopeDigest: "a".repeat(64),
-      curationInputDigest: "b".repeat(64),
-      configDigest: "c".repeat(64),
-      inputRevisionDigest: "d".repeat(64),
-      effectiveDate: "2026-08-25",
-      buildKnowledgeBase: builder("kb", []),
-      buildPublicSite: builder("public", []),
-    }), /SNAPSHOT_PUBLISH_SITE_INVALID/);
-    assert.equal(JSON.parse(await readFile(join(kbTarget, "build.json"), "utf8")).build_version, "old");
+    await assert.rejects(buildOrganizationSnapshot({ root, publicTarget, publishSite, ...COMMON, buildPublicSite: builder([]) }), /SNAPSHOT_PUBLISH_SITE_INVALID/);
     assert.deepEqual(JSON.parse(await readFile(publicTarget, "utf8")), {
       meta: { buildVersion: "old" },
       marker: "old",
@@ -169,27 +125,12 @@ test("publish freeze failure leaves both live outputs unchanged and writes nothi
 test("same build version rejects changed or tampered frozen site bytes", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const root = await mkdtemp(join(tmpdir(), "favsense-publish-manifest-"));
-  const kbTarget = join(root, "knowledge-base");
   const publishSite = join(root, "site");
   const publicTarget = join(publishSite, "data", "knowledge.json");
-  await mkdir(kbTarget);
   await mkdir(join(publishSite, "data"), { recursive: true });
-  await writeFile(join(kbTarget, "build.json"), JSON.stringify({ build_version: "old" }));
   await writeFile(join(publishSite, "index.html"), "site-A", "utf8");
   await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" } }));
-  const options = {
-    root,
-    kbTarget,
-    publicTarget,
-    publishSite,
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    inputRevisionDigest: "d".repeat(64),
-    effectiveDate: "2026-08-25",
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
-  };
+  const options = { root, publicTarget, publishSite, ...COMMON, buildPublicSite: builder([]) };
   const first = await buildOrganizationSnapshot(options);
   const frozenSite = join(root, ".xhs-tools", "organization-snapshots", "publish", first.build_version, "site");
 
@@ -205,90 +146,52 @@ test("same build version rejects changed or tampered frozen site bytes", async (
 test("same build version recovers an interrupted deterministic transaction before rebuilding", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const paths = await fixture();
-  const options = {
-    ...paths,
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    inputRevisionDigest: "d".repeat(64),
-    effectiveDate: "2026-08-25",
-  };
+  const options = { ...paths, ...COMMON };
   await assert.rejects(
-    buildOrganizationSnapshot({
-      ...options,
-      buildKnowledgeBase: builder("kb", []),
-      buildPublicSite: builder("public", []),
-      failAt: "crash-after-swap:knowledge-base",
-    }),
+    buildOrganizationSnapshot({ ...options, buildPublicSite: builder([]), failAt: "crash-after-swap:public" }),
     /SIMULATED_CRASH/,
   );
-  const recovered = await buildOrganizationSnapshot({
-    ...options,
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
-  });
-  assert.equal(JSON.parse(await readFile(join(paths.kbTarget, "build.json"), "utf8")).build_version, recovered.build_version);
-  assert.equal(JSON.parse(await readFile(paths.publicTarget, "utf8")).meta.buildVersion, recovered.build_version);
-  assert.equal((await readdir(paths.root)).some((name) => name.startsWith(".organization-tx-snapshot-")), false);
+  const recovered = await buildOrganizationSnapshot({ ...options, buildPublicSite: builder([]) });
+  assert.equal(await liveVersion(paths.publicTarget), recovered.build_version);
+  assert.equal((await readdir(join(paths.root, ".xhs-tools", "organization-snapshots"))).some((name) => name.startsWith(".organization-tx-snapshot-")), false);
 });
 
 test("a changed build version recovers the previous interrupted target transaction first", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const paths = await fixture();
-  const common = {
-    ...paths,
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    effectiveDate: "2026-08-25",
-  };
+  const common = { ...paths, ...COMMON };
   await assert.rejects(buildOrganizationSnapshot({
     ...common,
     inputRevisionDigest: "d".repeat(64),
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
-    failAt: "crash-after-swap:knowledge-base",
+    buildPublicSite: builder([]),
+    failAt: "crash-after-swap:public",
   }), /SIMULATED_CRASH/);
   const recovered = await buildOrganizationSnapshot({
     ...common,
     inputRevisionDigest: "e".repeat(64),
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
+    buildPublicSite: builder([]),
   });
-  assert.equal(JSON.parse(await readFile(join(paths.kbTarget, "build.json"), "utf8")).build_version, recovered.build_version);
-  assert.equal(JSON.parse(await readFile(paths.publicTarget, "utf8")).meta.buildVersion, recovered.build_version);
+  assert.equal(await liveVersion(paths.publicTarget), recovered.build_version);
 });
 
-test("pending recovery rejects a different target pair instead of moving old backups", async () => {
+test("pending recovery rejects a different target instead of moving old backups", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const root = await mkdtemp(join(tmpdir(), "favsense-target-identity-"));
-  async function targets(prefix) {
-    const kbTarget = join(root, `${prefix}-knowledge-base`);
+  async function target(prefix) {
     const publicTarget = join(root, `${prefix}-knowledge.json`);
-    await mkdir(kbTarget);
-    await writeFile(join(kbTarget, "build.json"), JSON.stringify({ build_version: "old" }));
     await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" } }));
-    return { root, kbTarget, publicTarget };
+    return { root, publicTarget };
   }
-  const first = await targets("first");
-  const second = await targets("second");
-  const options = {
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    inputRevisionDigest: "d".repeat(64),
-    effectiveDate: "2026-08-25",
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
-  };
+  const first = await target("first");
+  const second = await target("second");
+  const options = { ...COMMON, buildPublicSite: builder([]) };
   await assert.rejects(buildOrganizationSnapshot({
     ...first,
     ...options,
-    failAt: "crash-after-swap:knowledge-base",
+    failAt: "crash-after-swap:public",
   }), /SIMULATED_CRASH/);
   await assert.rejects(buildOrganizationSnapshot({ ...second, ...options }), /TRANSACTION_RECOVERY_PARTICIPANTS_INVALID/);
-  assert.equal(JSON.parse(await readFile(join(second.kbTarget, "build.json"), "utf8")).build_version, "old");
-  assert.equal(JSON.parse(await readFile(second.publicTarget, "utf8")).meta.buildVersion, "old");
+  assert.equal(await liveVersion(second.publicTarget), "old");
   await buildOrganizationSnapshot({ ...first, ...options });
 });
 
@@ -301,18 +204,13 @@ test("target-global lock rejects a concurrent snapshot before either transaction
   const blocked = new Promise((resolveBlocked) => { allowFirst = resolveBlocked; });
   const options = {
     ...paths,
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    inputRevisionDigest: "d".repeat(64),
-    effectiveDate: "2026-08-25",
+    ...COMMON,
     prepareSnapshot: async () => {
       markStarted();
       await blocked;
       return {};
     },
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
+    buildPublicSite: builder([]),
   };
   const first = buildOrganizationSnapshot(options);
   await started;
@@ -340,14 +238,9 @@ test("snapshot capture rejects an active migration mutation lock before reading 
   const calls = [];
   await assert.rejects(buildOrganizationSnapshot({
     ...paths,
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    inputRevisionDigest: "d".repeat(64),
-    effectiveDate: "2026-08-25",
+    ...COMMON,
     prepareSnapshot: async () => { calls.push("capture"); return {}; },
-    buildKnowledgeBase: builder("kb", calls),
-    buildPublicSite: builder("public", calls),
+    buildPublicSite: builder(calls),
   }), /SNAPSHOT_ALREADY_RUNNING/);
   assert.deepEqual(calls, []);
 });
@@ -356,25 +249,17 @@ test("complete input revision changes the canonical build version", async () => 
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const firstPaths = await fixture();
   const secondPaths = await fixture();
-  const common = {
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    effectiveDate: "2026-08-25",
-  };
   const first = await buildOrganizationSnapshot({
     ...firstPaths,
-    ...common,
+    ...COMMON,
     inputRevisionDigest: "d".repeat(64),
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
+    buildPublicSite: builder([]),
   });
   const second = await buildOrganizationSnapshot({
     ...secondPaths,
-    ...common,
+    ...COMMON,
     inputRevisionDigest: "e".repeat(64),
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
+    buildPublicSite: builder([]),
   });
   assert.notEqual(first.build_version, second.build_version);
 });
@@ -455,28 +340,22 @@ test("coordinator captures and freezes every builder input with the exact bundle
   assert.notEqual(emptyVideoRoot.inputRevisionDigest, missingVideoRoot.inputRevisionDigest);
 });
 
-test("input mutation between builders aborts before either live output swaps", async () => {
+test("input mutation after the web build aborts before the live web data swaps", async () => {
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const paths = await fixture();
   let revision = "old";
   await assert.rejects(buildOrganizationSnapshot({
     ...paths,
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    inputRevisionDigest: "d".repeat(64),
-    effectiveDate: "2026-08-25",
-    buildKnowledgeBase: builder("kb", []),
+    ...COMMON,
     buildPublicSite: async (options) => {
-      await builder("public", [])(options);
+      await builder([])(options);
       revision = "changed";
     },
     verifyInputs: async () => {
       if (revision !== "old") throw new Error("SNAPSHOT_INPUT_CHANGED");
     },
   }), /SNAPSHOT_INPUT_CHANGED/);
-  assert.equal(JSON.parse(await readFile(join(paths.kbTarget, "build.json"), "utf8")).build_version, "old");
-  assert.equal(JSON.parse(await readFile(paths.publicTarget, "utf8")).meta.buildVersion, "old");
+  assert.equal(await liveVersion(paths.publicTarget), "old");
 });
 
 test("snapshot rejects impossible effective dates", async () => {
@@ -484,13 +363,9 @@ test("snapshot rejects impossible effective dates", async () => {
   const paths = await fixture();
   await assert.rejects(buildOrganizationSnapshot({
     ...paths,
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    inputRevisionDigest: "d".repeat(64),
+    ...COMMON,
     effectiveDate: "2026-99-99",
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
+    buildPublicSite: builder([]),
   }));
 });
 
@@ -498,24 +373,10 @@ test("unsafe private-root links are rejected before any outside directory is cre
   const { buildOrganizationSnapshot } = await import("../scripts/build-organization-snapshot.mjs");
   const root = await mkdtemp(join(tmpdir(), "favsense-storage-link-"));
   const outside = await mkdtemp(join(tmpdir(), "favsense-storage-outside-"));
-  const kbTarget = join(root, "knowledge-base");
   const publicTarget = join(root, "knowledge.json");
-  await mkdir(kbTarget);
-  await writeFile(join(kbTarget, "build.json"), JSON.stringify({ build_version: "old" }));
   await writeFile(publicTarget, JSON.stringify({ meta: { buildVersion: "old" } }));
   await symlink(outside, join(root, ".xhs-tools"), process.platform === "win32" ? "junction" : "dir");
-  await assert.rejects(buildOrganizationSnapshot({
-    root,
-    kbTarget,
-    publicTarget,
-    sealedScopeDigest: "a".repeat(64),
-    curationInputDigest: "b".repeat(64),
-    configDigest: "c".repeat(64),
-    inputRevisionDigest: "d".repeat(64),
-    effectiveDate: "2026-08-25",
-    buildKnowledgeBase: builder("kb", []),
-    buildPublicSite: builder("public", []),
-  }), /SNAPSHOT_INPUT_PATH_INVALID/);
+  await assert.rejects(buildOrganizationSnapshot({ root, publicTarget, ...COMMON, buildPublicSite: builder([]) }), /SNAPSHOT_INPUT_PATH_INVALID/);
   assert.deepEqual(await readdir(outside), []);
 });
 
@@ -537,15 +398,9 @@ test("snapshot rejects a junction root before creating private storage outside i
     }
     await assert.rejects(buildOrganizationSnapshot({
       root: linkedRoot,
-      kbTarget: join(linkedRoot, "knowledge-base"),
       publicTarget: join(linkedRoot, "knowledge.json"),
-      sealedScopeDigest: "a".repeat(64),
-      curationInputDigest: "b".repeat(64),
-      configDigest: "c".repeat(64),
-      inputRevisionDigest: "d".repeat(64),
-      effectiveDate: "2026-08-25",
-      buildKnowledgeBase: builder("kb", []),
-      buildPublicSite: builder("public", []),
+      ...COMMON,
+      buildPublicSite: builder([]),
     }), /SNAPSHOT_LOCK_INVALID/);
     assert.deepEqual(await readdir(outside), []);
   } finally {

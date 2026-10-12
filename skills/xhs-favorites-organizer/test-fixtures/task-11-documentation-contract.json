@@ -6,14 +6,17 @@
         "真正尝试失败的当前笔记写 `failed`，尚未尝试的剩余笔记写 `batch_aborted`；二者不得共用失败语义。",
         "关键词只能产生 `candidateKind=\"Skill\"`；公开 `confirmed Skill` 必须是 accepted，并且恰好关联一个当前、完整、已核验的官方资源",
         "最后一个收藏夹完成只形成核心 checkpoint；Bridge 必须等待冻结范围内的总结、证据、候选、资源与 curation 状态确定",
-        "两个 staging 输出全部验证并原子交换成功后，才允许调用 `publish-huggingface.mjs`，同一运行最多发布一次。",
+        "网页数据 staging 验证并原子交换成功后，才允许调用 `publish-huggingface.mjs`，同一运行最多发布一次。",
         "Spec → Plan → TDD → Review → QA → Audit → Brief → 用户批准 → PR"
       ],
       "forbidden_phrases": [
         "每个面板最多发布一次",
         "最后一个收藏夹完成后立即发布",
         "`captured` 等于 `accepted`",
-        "`failed` 与 `batch_aborted` 含义相同"
+        "`failed` 与 `batch_aborted` 含义相同",
+        "两个 staging 输出",
+        "build-knowledge-base",
+        "--kb-target"
       ]
     },
     "skills/xhs-favorites-organizer/references/automatic-workflow.md": {
@@ -21,13 +24,14 @@
         "每篇成功原子保存为 captured；真实失败为 failed，未尝试剩余项为 batch_aborted",
         "缺证据保持 pending，只有完整当前记录进入 accepted",
         "关键词候选只输出 candidateKind；confirmed Skill 必须恰好关联一个 verified resource",
-        "两份 staging 全部验证并交换成功后，按配置最多发布一次到 Hugging Face Static Space",
-        "`captured` 只表示点点回复已按当前正文版本安全保存；`pending` 表示还缺审核、证据或资源；`accepted` 才能进入正式知识库和公开页面。"
+        "网页数据 staging 验证并交换成功后，按配置最多发布一次到 Hugging Face Static Space",
+        "`captured` 只表示点点回复已按当前正文版本安全保存；`pending` 表示还缺审核、证据或资源；`accepted` 才能进入公开页面。"
       ],
       "forbidden_phrases": [
         "每个面板最多发布一次",
         "最后一个收藏夹完成后立即发布",
-        "failed 和 batch_aborted 是同一状态"
+        "failed 和 batch_aborted 是同一状态",
+        "两份 staging"
       ]
     },
     "skills/xhs-favorites-organizer/references/curation-standard.md": {
@@ -56,30 +60,32 @@
     "README.md": {
       "required_phrases": [
         "核心目录保存完成时先显示“核心收藏已保存”；点点回复原子保存后是 `captured`，缺证据、资源或语义审核时保持 `pending`，只有当前 revision 与质量门全部匹配时才是 `accepted`。",
-        "本机详情可以通过鉴权的“待审核证据” overlay 查看清理后的 captured 内容，公开页面和正式知识库不会直接采用 raw 点点回复。",
+        "本机详情可以通过鉴权的“待审核证据” overlay 查看清理后的 captured 内容，公开页面不会直接采用 raw 点点回复。",
         "关键词只会产生 `candidateKind=\"Skill\"`。公开 `confirmed Skill` 必须是 accepted，并恰好关联一个完整、当前、已核验的官方资源",
-        "最后一个收藏夹完成只建立核心 checkpoint；curation 完成后才构建一个共享版本的知识库与网页快照，验证成功后按配置最多发布一次。"
+        "最后一个收藏夹完成只建立核心 checkpoint；curation 完成后才构建一个带版本号的网页数据快照，验证成功后按配置最多发布一次。"
       ],
       "forbidden_phrases": [
         "最后一个收藏夹完成后立即发布",
-        "公开页面直接采用 raw 点点回复"
+        "公开页面直接采用 raw 点点回复",
+        "知识库与网页快照"
       ]
     },
     "docs/ARCHITECTURE.md": {
       "required_phrases": [
         "点点或离线证据先形成 candidate；资源评估与 audit 明确产生 pending/rejected/accepted",
-        "两个正式构建器共用同一 acceptance decision，在 staging 中生成相同 `build_version`",
+        "网页构建器按公开判定 module 给出的唯一 acceptance decision，在 staging 中生成带 `build_version`",
         "发布只在最终快照成功后按配置执行，单个 run 最多一次",
         "`candidateKind=Skill` 只有在 accepted 且恰好一个 fresh verified resource 时才提升为 confirmed Skill。"
       ],
       "forbidden_phrases": [
-        "每个面板最多发布一次"
+        "每个面板最多发布一次",
+        "两个正式构建器"
       ]
     },
     "docs/PUBLISHING.md": {
       "required_phrases": [
         "只有通过 current curation 与 accepted audit 的正式摘要可以进入；captured/pending 证据只留在本机 overlay。",
-        "curation 质量门通过后，双输出协调器构建共享 `build_version`",
+        "curation 质量门通过后，快照步骤构建带 `build_version`",
         "同一运行最多发布一次；",
         "构建失败设置 `held_previous` 并保留同一上一版；",
         "没有内容变化时，发布器返回 `unchanged`，不会产生空提交。",
@@ -87,7 +93,8 @@
       ],
       "forbidden_phrases": [
         "每个面板最多发布一次",
-        "captured/pending 证据可以公开"
+        "captured/pending 证据可以公开",
+        "双输出协调器"
       ]
     }
   },

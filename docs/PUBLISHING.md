@@ -1,6 +1,6 @@
 # 发布与公网知识库指南
 
-FavSense 把采集和展示分成两层：本机负责登录小红书、下载、分析和保存完整知识库；公网只托管系统生成的脱敏网页。这样既能在任何设备上使用知识库，又不会把 Cookie、原始视频或私人配置上传到公共仓库。
+FavSense 把采集和展示分成两层：本机负责登录小红书、下载、分析并保存完整的私有数据；公网只托管系统生成的脱敏网页。这样既能在任何设备上使用知识库网页，又不会把 Cookie、原始视频或私人配置上传到公共仓库。
 
 ## 1. 发布前检查
 
@@ -13,7 +13,7 @@ git status --short --ignored
 
 - `.xhs-favorites/`：私有 catalog、运行记录、视频与证据画面；
 - `.xhs-tools/`：本机下载器和运行环境；
-- `knowledge-base/`：可在 Obsidian 打开的完整本地知识库；
+- `knowledge-base/`：旧版本地输出，已停止生成；若仍在磁盘上请保持 ignored，可手动删除；
 - `config/xhs-favorites.json`：包含个人主页、收藏夹和发布目标的私有配置；
 - `site/.local/`：本机回环服务地址。
 
@@ -160,8 +160,8 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
 2. 在“同步设置”选择收藏夹并点击“开始整理”；
 3. FavSense 才会通过 SOP 动态 CDP 通道在现有扫描浏览器中打开业务标签，Tampermonkey 依次同步已启用的收藏夹；
 4. 本机先原子保存核心 catalog；点点、离线证据、candidate、resource 和 audit 分别到达 captured、pending 或 accepted 等真实终态；
-5. curation 质量门通过后，双输出协调器构建共享 `build_version` 的 `knowledge-base/` 与 `site/data/knowledge.json` staging；
-6. 两份 staging 全部通过 schema/隐私检查后才交换 live；构建失败设置 `held_previous` 并保留同一上一版；
+5. curation 质量门通过后，快照步骤构建带 `build_version` 的 `site/data/knowledge.json` staging；
+6. staging 通过 schema/隐私检查后才交换 live；构建失败设置 `held_previous` 并保留同一上一版；
 7. 若本轮显式启用发布且不是 local-only，发布器把 `site/` 镜像到 Space、排除 `site/.local/`，并确保 Space 使用 `header: mini`；同一运行最多发布一次；
 8. Hugging Face 刷新公网知识库。关闭本地工作台后，回环服务随之停止。
 
@@ -173,12 +173,11 @@ node .\skills\xhs-favorites-organizer\scripts\publish-huggingface.mjs `
 |---|---:|---:|---:|
 | 私有 catalog、运行记录 | 是 | 否 | 否 |
 | 原始视频、抽帧和核验证据 | 是 | 否 | 否 |
-| Obsidian Markdown 知识库 | 是 | 否 | 否 |
 | 脱敏网页与 `knowledge.json` | 是 | 是 | 可选的公开演示 |
 | 书签与个人描述修订 | 浏览器副本 | 用户私有 Dataset | 否 |
 | Cookie、Token、个人配置 | 是 | 否 | 否 |
 
-因此，“两边都有”指的是：完整数据和 Obsidian 知识库在本机；脱敏网页知识库发布到 Space；书签与个人描述修订在浏览器保留副本，并在用户登录后同步到私有 HF Dataset。Hugging Face 仍然不是原始视频或账号数据的备份位置。
+因此，“两边都有”指的是：完整数据在本机；脱敏网页知识库发布到 Space；书签与个人描述修订在浏览器保留副本，并在用户登录后同步到私有 HF Dataset。Hugging Face 仍然不是原始视频或账号数据的备份位置。
 
 ## 6. 为什么默认不使用 Docker
 

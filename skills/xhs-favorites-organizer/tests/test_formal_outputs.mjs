@@ -13,12 +13,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const hex = (character) => character.repeat(64);
 const sealResource = (resource) => Object.assign(resource, expectedResourceRevisions(resource));
 
-test("accepted confirmed Skill produces the same safe formal outcome in KB and public JSON", async () => {
+test("accepted confirmed Skill produces the safe formal outcome in the public JSON", async () => {
   const work = await mkdtemp(join(tmpdir(), "favsense-formal-output-"));
-  const output = join(work, "knowledge-base");
-  // The builder only writes to a directory that does not exist yet, so each rebuild gets its own.
-  const staleOutput = join(work, "knowledge-base-stale");
-  const baselineOutput = join(work, "knowledge-base-baseline");
   const noteId = "synthetic-skill";
   const pointSummary = "Current accepted point summary for the synthetic confirmed Skill.";
   const pointSummarySha256 = createHash("sha256").update(pointSummary, "utf8").digest("hex");
@@ -93,23 +89,10 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
       "--profile", paths.profile, "--resources", paths.resources, "--build-version", hex("d"),
       "--diandian-prompt-version", promptVersion
     ];
-    const kb = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"), ...common, "--diandian-dir", join(work, "point"), "--output", output], { cwd: root, encoding: "utf8" });
-    assert.equal(kb.status, 0, kb.stderr || kb.stdout);
     const site = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
     assert.equal(site.status, 0, site.stderr || site.stdout);
 
-    const checklist = await readFile(join(output, "05-Skills成果", "GitHub-Skills核验清单.md"), "utf8");
-    const card = await readFile(join(output, "02-知识卡片", `${noteId}.md`), "utf8");
     const publicData = JSON.parse(await readFile(paths.public, "utf8"));
-    for (const expected of [resource.name, resource.type, resource.repo, resource.download, "MIT", "SKILL.md", "Codex", "verified", verifiedAt, "4"]) {
-      assert.match(checklist, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    }
-    assert.match(card, /Skill 核验/);
-    for (const expected of [resource.id, resource.name, resource.type, resource.repo, resource.download, "MIT", "SKILL.md", "Codex", "verified", verifiedAt, "4"]) {
-      assert.match(card, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    }
-    assert.match(card, new RegExp(pointSummary));
-    assert.doesNotMatch(card, /Stale synthetic Skill|old\/repo/);
     assert.equal(publicData.meta.buildVersion, hex("d"));
     assert.equal(publicData.notes[0].summaryStatus, "accepted");
     assert.equal(publicData.notes[0].summaryReason, "");
@@ -118,7 +101,8 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
     assert.deepEqual(publicData.notes[0].tools, [resource.name]);
     assert.deepEqual(publicData.notes[0].resources, [resource.name]);
     assert.deepEqual(publicData.notes[0].resourceIds, ["github-owner-repo"]);
-    assert.doesNotMatch(checklist, /old\/repo|Stale synthetic Skill/);
+    assert.equal(publicData.notes[0].deepSummary, pointSummary);
+    assert.doesNotMatch(JSON.stringify(publicData.notes[0]), /Stale synthetic Skill|old\/repo/);
 
     const staleEntry = structuredClone(curationEntry);
     staleEntry.evidence_dependencies[0].version = stalePromptVersion;
@@ -138,15 +122,11 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
       prompt_version: stalePromptVersion, request_sha256: hex("8"), summary_sha256: pointSummarySha256,
       captured_at: "2026-08-23T00:00:00.000Z"
     }));
-    const staleKb = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"), ...common, "--diandian-dir", join(work, "point"), "--output", staleOutput], { cwd: root, encoding: "utf8" });
-    assert.equal(staleKb.status, 0, staleKb.stderr || staleKb.stdout);
     const staleSite = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
     assert.equal(staleSite.status, 0, staleSite.stderr || staleSite.stdout);
-    const staleCard = await readFile(join(staleOutput, "02-知识卡片", `${noteId}.md`), "utf8");
     const stalePublic = JSON.parse(await readFile(paths.public, "utf8")).notes[0];
-    assert.doesNotMatch(staleCard, new RegExp(pointSummary));
-    assert.doesNotMatch(staleCard, new RegExp(curationEntry.summary));
-    assert.match(staleCard, /Synthetic safe body/);
+    assert.doesNotMatch(JSON.stringify(stalePublic), new RegExp(pointSummary));
+    assert.doesNotMatch(JSON.stringify(stalePublic), new RegExp(curationEntry.summary));
     assert.notEqual(stalePublic.summaryStatus, "accepted");
     assert.equal(stalePublic.summary, "Synthetic safe body");
 
@@ -156,14 +136,10 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
       note_ids: [noteId],
       curation_hashes: { [noteId]: staleRevision }
     }));
-    const baselineKb = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"), ...common, "--diandian-dir", join(work, "point"), "--output", baselineOutput], { cwd: root, encoding: "utf8" });
-    assert.equal(baselineKb.status, 0, baselineKb.stderr || baselineKb.stdout);
     const baselineSite = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
     assert.equal(baselineSite.status, 0, baselineSite.stderr || baselineSite.stdout);
-    const baselineCard = await readFile(join(baselineOutput, "02-知识卡片", `${noteId}.md`), "utf8");
     const baselinePublic = JSON.parse(await readFile(paths.public, "utf8")).notes[0];
-    assert.doesNotMatch(baselineCard, new RegExp(curationEntry.summary));
-    assert.match(baselineCard, /Synthetic safe body/);
+    assert.doesNotMatch(JSON.stringify(baselinePublic), new RegExp(curationEntry.summary));
     assert.notEqual(baselinePublic.summaryStatus, "accepted");
     assert.equal(baselinePublic.summary, "Synthetic safe body");
 
@@ -174,9 +150,8 @@ test("accepted confirmed Skill produces the same safe formal outcome in KB and p
   }
 });
 
-test("explicit rejected audit overrides a matching baseline in both formal builders", async () => {
+test("explicit rejected audit overrides a matching baseline in the web builder", async () => {
   const work = await mkdtemp(join(tmpdir(), "favsense-baseline-override-"));
-  const output = join(work, "knowledge-base");
   const noteId = "synthetic-baseline-rejected";
   const metadataText = "Public catalog metadata remains the only allowed fallback.";
   const privateFormalSummary = "Rejected formal curation summary must not be projected.";
@@ -243,13 +218,6 @@ test("explicit rejected audit overrides a matching baseline in both formal build
       "--resources", paths.resources,
       "--build-version", hex("8")
     ];
-    const kb = spawnSync(process.execPath, [
-      join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"),
-      ...common,
-      "--diandian-dir", join(work, "point"),
-      "--output", output
-    ], { cwd: root, encoding: "utf8" });
-    assert.equal(kb.status, 0, kb.stderr || kb.stdout);
     const site = spawnSync(process.execPath, [
       join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"),
       ...common,
@@ -259,10 +227,7 @@ test("explicit rejected audit overrides a matching baseline in both formal build
     ], { cwd: root, encoding: "utf8" });
     assert.equal(site.status, 0, site.stderr || site.stdout);
 
-    const card = await readFile(join(output, "02-知识卡片", `${noteId}.md`), "utf8");
     const publicData = JSON.parse(await readFile(paths.public, "utf8"));
-    assert.match(card, new RegExp(metadataText));
-    assert.doesNotMatch(card, new RegExp(privateFormalSummary));
     assert.equal(publicData.notes[0].summary, metadataText);
     assert.equal(publicData.notes[0].deepSummary, metadataText);
     assert.equal(publicData.notes[0].deepSummarySource, "source-metadata");
@@ -275,7 +240,6 @@ test("explicit rejected audit overrides a matching baseline in both formal build
 
 test("unverified Skill stays a pending candidate without a guessed resource or legacy point", async () => {
   const work = await mkdtemp(join(tmpdir(), "favsense-formal-candidate-"));
-  const output = join(work, "knowledge-base");
   const noteId = "synthetic-skill-candidate";
   const legacySummary = "Private legacy candidate summary must never reach formal output.";
   const profile = JSON.parse(await readFile(join(root, "config/domain-profiles/software.json"), "utf8"));
@@ -320,21 +284,11 @@ test("unverified Skill stays a pending candidate without a guessed resource or l
       summary_sha256: createHash("sha256").update(legacySummary, "utf8").digest("hex")
     }));
     const common = ["--catalog", paths.catalog, "--config", paths.config, "--curation", paths.curation, "--profile", paths.profile, "--resources", paths.resources, "--build-version", hex("5")];
-    const kb = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-knowledge-base.mjs"), ...common, "--diandian-dir", join(work, "point"), "--output", output], { cwd: root, encoding: "utf8" });
-    assert.equal(kb.status, 0, kb.stderr || kb.stdout);
     const site = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
     assert.equal(site.status, 0, site.stderr || site.stdout);
 
-    const card = await readFile(join(output, "02-知识卡片", `${noteId}.md`), "utf8");
-    const checklist = await readFile(join(output, "05-Skills成果", "GitHub-Skills核验清单.md"), "utf8");
-    const toolIndex = await readFile(join(output, "03-工具雷达", "工具索引.md"), "utf8");
     const publicData = JSON.parse(await readFile(paths.public, "utf8"));
-    assert.match(card, /Skill candidate/);
-    assert.doesNotMatch(card, new RegExp(legacySummary));
-    assert.doesNotMatch(card, /github\.com|ZIP/);
-    assert.doesNotMatch(card, /content_kind: "Skill"|内容形态：Skill|Stale candidate Skill/);
-    assert.doesNotMatch(toolIndex, /Stale candidate Skill|stale\/repo/);
-    assert.doesNotMatch(checklist, /synthetic-skill-candidate|github\.com\/synthetic/i);
+    assert.doesNotMatch(JSON.stringify(publicData.notes[0]), /github\.com|stale\/repo|Stale candidate Skill/);
     assert.equal(publicData.notes[0].kind, "Note");
     assert.equal(publicData.notes[0].candidateKind, "Skill");
     assert.equal(publicData.notes[0].summaryStatus, "pending_review");

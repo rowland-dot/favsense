@@ -54,9 +54,9 @@ import { expectedResourceRevisions } from "../scripts/resource-quality.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const builder = (name) => join(root, "skills/xhs-favorites-organizer/scripts", name);
 
-// Builds both outputs from a catalog, a curation file that holds no entry for the note (it is not
+// Builds the web data from a catalog, a curation file that holds no entry for the note (it is not
 // accepted), and the sealed candidates the curation step produced for it.
-async function buildBoth({ notes, candidates, audit, resources }) {
+async function buildWeb({ notes, candidates, audit, resources }) {
   const work = await mkdtemp(join(tmpdir(), "favsense-reviewed-evidence-"));
   const paths = Object.fromEntries(["catalog", "config", "curation", "audit", "baseline", "profile", "resources", "candidates", "public"].map((name) => [name, join(work, `${name}.json`)]));
   const profile = JSON.parse(await readFile(join(root, "config/domain-profiles/software.json"), "utf8"));
@@ -81,14 +81,10 @@ async function buildBoth({ notes, candidates, audit, resources }) {
       "--profile", paths.profile, "--resources", paths.resources, "--candidates", paths.candidates,
       "--effective-date", "2026-10-10", "--diandian-dir", join(work, "point"),
     ];
-    const kb = spawnSync(process.execPath, [builder("build-knowledge-base.mjs"), ...common, "--output", join(work, "knowledge-base")], { cwd: root, encoding: "utf8" });
-    assert.equal(kb.status, 0, kb.stderr || kb.stdout);
     const site = spawnSync(process.execPath, [builder("build-public-site.mjs"), ...common, "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
     assert.equal(site.status, 0, site.stderr || site.stdout);
     const publicData = JSON.parse(await readFile(paths.public, "utf8"));
-    const cards = {};
-    for (const id of Object.keys(notes)) cards[id] = await readFile(join(work, "knowledge-base", "02-知识卡片", `${id}.md`), "utf8");
-    return { site: Object.fromEntries(publicData.notes.map((note) => [note.id, note])), cards };
+    return Object.fromEntries(publicData.notes.map((note) => [note.id, note]));
   } finally {
     await rm(work, { recursive: true, force: true });
   }
@@ -130,7 +126,7 @@ test("a not-accepted note shows the sealed candidate's reason, not the builder's
   const noteCandidate = sealedCandidate({ kind: "Note", text: "note" });
   const skillCandidate = sealedCandidate({ kind: "Skill", tools: [expiredSkill.name], text: "skill" });
   const plainSkillCandidate = sealedCandidate({ kind: "Skill", tools: [expiredSkill.name], text: "plain skill" });
-  const { site: built, cards } = await buildBoth({
+  const built = await buildWeb({
     notes: {
       [noteId]: { note_id: noteId, title: "Claude skill walkthrough", description: "A Claude skill walkthrough", published_at: "2026-08-23", source_boards: ["Synthetic"], content_sha256: hex("c") },
       [skillId]: { note_id: skillId, title: "Weekly routine", description: "A weekly routine for the team", published_at: "2026-08-23", source_boards: ["Synthetic"], content_sha256: hex("c") },
@@ -151,7 +147,7 @@ test("a not-accepted note shows the sealed candidate's reason, not the builder's
   // Neither unaccepted note is presented as a confirmed Skill.
   for (const id of [noteId, skillId, plainSkillId]) {
     assert.notEqual(built[id].kind, "Skill", id);
-    assert.doesNotMatch(cards[id], /Skill 核验/, id);
+    assert.deepEqual(built[id].resourceIds, [], id);
   }
 });
 

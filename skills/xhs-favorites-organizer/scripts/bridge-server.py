@@ -2484,7 +2484,6 @@ class Bridge:
                 self.image_ocr_engine = None
         self.diandian_config = normalize_diandian_config(config)
         self.diandian_enabled = self.diandian_config["enabled"]
-        self.knowledge_base = resolve_workspace_path(self.workspace, str(config.get("knowledge_base", "knowledge-base")), "knowledge_base")
         self.port = port
         self.state_dir = self.workspace / ".xhs-favorites"
         self.sop_browser = resolve_sop_browser_contract(sop_runtime)
@@ -2515,7 +2514,6 @@ class Bridge:
         self.media_dir = self.state_dir / "media"
         self.run_dir = self.state_dir / "runs"
         self.organizer = self.skill_dir / "scripts" / "organize.mjs"
-        self.builder = self.skill_dir / "scripts" / "build-knowledge-base.mjs"
         self.public_builder = self.skill_dir / "scripts" / "build-public-site.mjs"
         self.snapshot_builder = self.skill_dir / "scripts" / "build-organization-snapshot.mjs"
         self.curation_pipeline = self.skill_dir / "scripts" / "run-curation-pipeline.mjs"
@@ -2592,7 +2590,6 @@ class Bridge:
             self.fetcher,
             self.media_fetcher,
             self.organizer,
-            self.builder,
             self.public_builder,
             self.snapshot_builder,
             self.curation_pipeline,
@@ -3861,7 +3858,7 @@ class Bridge:
         should_stop=lambda: False,
         on_phase=lambda phase: None,
     ) -> dict | None:
-        """The one final build: curation, then the paired snapshot, then at most one publish.
+        """The one final build: curation, then the web data snapshot, then at most one publish.
 
         Both a finished sync run and a local-only rebuild end here. `scope` carries the
         rebuild's own batch and notes; a sync run leaves it empty and is read from its
@@ -5991,7 +5988,7 @@ class Bridge:
     def build_organization_snapshot(
         self, *, batch: str | None = None, note_ids: list[str] | None = None
     ) -> dict:
-        """Build the paired local snapshot for a run's sealed scope.
+        """Build the local web data snapshot for a run's sealed scope.
 
         A sync run reads its batch and scope from the manual-sync record; a local rebuild
         passes its own, so it never has to touch that record.
@@ -6019,7 +6016,6 @@ class Bridge:
             str(resolve_node_executable(self.node)),
             str(self.snapshot_builder),
             "--root", str(self.workspace),
-            "--kb-target", str(self.knowledge_base),
             "--public-target", str(self.workspace / "site" / "data" / "knowledge.json"),
             "--catalog", str(self.catalog_path),
             "--config", str(self.config_path),

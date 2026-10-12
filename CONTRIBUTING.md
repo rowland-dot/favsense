@@ -22,7 +22,7 @@ Windows PowerShell 使用 `npm.cmd`，POSIX/Ubuntu CI 使用 `npm`。按改动�
 |---|---|---|
 | 收藏整理状态、候选、迁移 | `npm.cmd run test:organization` | `npm.cmd run release:check` |
 | 浏览器脚本 | `npm.cmd run check:syntax`、`npm.cmd run lint:a11y`、`npm.cmd run test:site` | `npm.cmd run test:e2e`、`npm.cmd run release:check` |
-| 知识库/公开输出 | `npm.cmd run test:knowledge`、`npm.cmd run test:site` | `npm.cmd run release:check` |
+| 公开输出（网页数据） | `npm.cmd run test:knowledge`、`npm.cmd run test:site` | `npm.cmd run release:check` |
 | Windows 安装安全 | `npm.cmd run test:windows-contracts` | Windows CI 的同名入口 |
 
 合成 QA 服务的场景和 UX/VC 映射可由 `npm.cmd run preview:qa-fixture -- --help` 查看；Playwright 自己管理该服务，并覆盖 desktop/mobile 的 success、partial、build-failed、publish-failed、safety-stopped。测试只写合成的 `test-results/`、`playwright-report/` 与 canonical `docs/reports/`，不得收集任何私有目录。

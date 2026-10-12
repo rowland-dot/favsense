@@ -110,7 +110,7 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 - `accepted`：证据与资源核验均满足本标准，可以发布；
 - `unavailable`：原帖已无法访问，保留此前记录并结束补证；这是已完成但不可发布的终态，必须记录 `source_unavailable` 方法和具体原因；
 - `pending`：缺少正文、实体、仓库或其他关键证据；收藏仍以原始公开摘要留在本地界面，但不得使用候选深度总结或未经核验的资源结论；
-- `rejected`：不在范围、重复、用户排除或不应进入知识库。
+- `rejected`：不在范围、重复、用户排除或不应出现在网页中。
 
 候选摘要不能直接视为完成。先生成私有复核队列，逐篇阅读 `public_text`、`transcript_text` 或图文证据，并清除所有 blocker 后才能写 `accepted`：
 
@@ -155,7 +155,7 @@ node ".\skills\xhs-favorites-organizer\scripts\merge-curation-results.mjs" `
 
 - 迁移默认 dry-run，只生成不含笔记 ID、标题或绝对路径的计数报告；报告 15 分钟后失效。
 - apply 必须同时提供与最新 dry-run 完全匹配的确认 ID。确认不匹配或过期时，必须重新运行 dry-run，且不得写入正式状态。
-- dry-run 报告、备份和回滚 manifest 都是私有迁移制品，不得进入公开站点或知识库。
+- dry-run 报告、备份和回滚 manifest 都是私有迁移制品，不得进入公开站点。
 - 本流水线只允许 synthetic fixture、dry-run 与故障注入；不得对真实收藏数据执行 `--apply`。
 - 迁移不访问平台或 GitHub，不把未核验 Skill 或猜测的下载链接写入正式输出。
 - 迁移从 `--root` 下的 `config/xhs-favorites.json` 找领域配置并读取资源核验有效期；这个数字属于 dry-run 确认的内容，dry-run 之后改动有效期，apply 会因报告失效而拒绝，需重新 dry-run。
@@ -179,7 +179,7 @@ node ".\skills\xhs-favorites-organizer\scripts\validate-curation.mjs" `
 
 1. 先运行质量门并阅读报告。
 2. 只把 `accepted` 条目写入正式 curation；`pending` 只留在私有审计。所有已同步收藏仍以安全 fallback 显示，质量门只控制深度策展字段，不删除收藏。
-3. 使用双输出协调器构建同一 `build_version` 的 Obsidian 与网页 staging；检查正式摘要都来自 accepted/current curation，Skill 卡片都满足 confirmed Skill 资源门。
+3. 使用快照步骤构建带 `build_version` 的网页数据 staging；检查正式摘要都来自 accepted/current curation，Skill 卡片都满足 confirmed Skill 资源门。
 4. 检查公开 JSON 不含原始评论、Cookie、Token、个人主页、收藏夹 ID、视频或帧路径。
-5. 两份输出全部验证后才交换 live；失败时恢复同一上一版，不发布半成品。
+5. 网页数据验证后才交换 live；失败时恢复同一上一版，不发布半成品。
 6. 运行项目测试与发布检查；只有最终快照成功后才允许最多发布一次。发布失败保留本地新快照和远端上一版。

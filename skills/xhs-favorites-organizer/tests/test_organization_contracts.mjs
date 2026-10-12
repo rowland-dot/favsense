@@ -1218,16 +1218,12 @@ test("snapshot capture fails closed while a crashed migration journal requires r
       now: "2026-08-23T00:01:00.000Z",
       failAt: "crash-after-swap:organization-state",
     }), /SIMULATED_CRASH/);
-    const kbTarget = join(root, "published-kb");
     const publicTarget = join(root, "published.json");
-    await mkdir(kbTarget);
-    await writeFile(join(kbTarget, "build.json"), '{"build_version":"old"}');
     await writeFile(publicTarget, '{"meta":{"buildVersion":"old"}}');
     const beforeState = await readFile(targets.organization_state, "utf8");
     const calls = [];
     await assert.rejects(buildOrganizationSnapshot({
       root,
-      kbTarget,
       publicTarget,
       sealedScopeDigest: "a".repeat(64),
       curationInputDigest: "b".repeat(64),
@@ -1235,12 +1231,10 @@ test("snapshot capture fails closed while a crashed migration journal requires r
       inputRevisionDigest: "d".repeat(64),
       effectiveDate: "2026-08-25",
       prepareSnapshot: async () => { calls.push("capture"); return {}; },
-      buildKnowledgeBase: async () => { calls.push("kb"); },
       buildPublicSite: async () => { calls.push("public"); },
     }), /SNAPSHOT_MIGRATION_RECOVERY_REQUIRED/);
     assert.deepEqual(calls, []);
     assert.equal(await readFile(targets.organization_state, "utf8"), beforeState);
-    assert.equal(await readFile(join(kbTarget, "build.json"), "utf8"), '{"build_version":"old"}');
     assert.equal(await readFile(publicTarget, "utf8"), '{"meta":{"buildVersion":"old"}}');
   } finally {
     await rm(root, { recursive: true, force: true });

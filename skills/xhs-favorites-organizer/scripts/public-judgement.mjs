@@ -1,6 +1,5 @@
-// The one place that decides what is public about a note. Both formal builders (the Obsidian
-// knowledge base and the web knowledge.json) hand a note's inputs to judgePublicNote and only
-// lay the verdict out; neither judges on its own.
+// The one place that decides what is public about a note. The web builder (knowledge.json) hands a
+// note's inputs to judgePublicNote and only lays the verdict out; it does not judge on its own.
 
 import { resolveCategoryPolicy } from "./category-policy.mjs";
 import {

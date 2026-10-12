@@ -2040,7 +2040,9 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /id="manual-sync-control"[^>]*hidden/);
   assert.match(html, /id="manual-sync-start"[^>]*>开始整理</);
   assert.match(html, />\s*一键整理</);
-  assert.match(html, /刷新收藏夹、同步正文与可用评论线索、增量去重，并更新知识库与公开网页/);
+  assert.match(html, /刷新收藏夹、同步正文与可用评论线索、增量去重，并更新公开网页/);
+  // The web data is the only formal output: no sentence may speak of a second, knowledge base output.
+  assert.doesNotMatch(html, /知识库与(?:公开)?网页|网页与知识库|Obsidian/);
   assert.doesNotMatch(html, /选择每天整理|自动进入每日同步/);
   assert.match(html, /id="creator-space-link"/);
   assert.doesNotMatch(html, /id="hero-dismiss"|id="hero-restore"/);
@@ -2060,7 +2062,8 @@ test("static app has the required deployment assets", async () => {
   assert.match(windowsEntrypointText, /Local\\FavSensePreview/);
   assert.match(windowsEntrypointText, /System\.Diagnostics\.ProcessStartInfo/);
   assert.doesNotMatch(windowsEntrypointText, /Start-Process -FilePath 'node\.exe'/);
-  assert.match(html, /name="keywords"[^>]*Xiaohongshu[^>]*RedNote[^>]*Obsidian/);
+  assert.match(html, /name="keywords"[^>]*Xiaohongshu[^>]*RedNote/);
+  assert.doesNotMatch(html, /name="keywords"[^>]*Obsidian/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /\.filter-sidebar \{[^}]*position:\s*static[^}]*height:\s*auto[^}]*overflow-y:\s*visible/);
   assert.doesNotMatch(css, /\.filter-sidebar \{[^}]*overflow-y:\s*auto/);
@@ -2473,7 +2476,7 @@ test("manual sync renders a safety stop as an explicit terminal warning", async 
 
   runInNewContext(`${readySource}\n${renderSource}\nrenderManualSync({ state: "running", summary_plan_pending: true });`, { state, elements, normalizeLocalBridgeDiagnostic });
   assert.equal(elements.manualSyncTitle.textContent, "核心入库完成，正在确认深度整理");
-  assert.match(elements.manualSyncDetail.textContent, /本地知识库已保留/);
+  assert.match(elements.manualSyncDetail.textContent, /本地整理结果已保留/);
   assert.equal(singleNoteButton.disabled, true);
 
   runInNewContext(`${readySource}\n${renderSource}\nrenderManualSync({ state: "failed", error: "fixture failure" });`, { state, elements, normalizeLocalBridgeDiagnostic });
@@ -2496,6 +2499,23 @@ test("manual sync renders a safety stop as an explicit terminal warning", async 
     "请检查 SOP 扫描浏览器的登录状态后再次整理。",
     "an HTML whitespace entity must not replace the actionable failure explanation",
   );
+
+  // The web data is the only formal output, so no sentence reports a second one.
+  runInNewContext(`${readySource}\n${renderSource}\nrenderManualSync({ state: "idle" });`, { state, elements, normalizeLocalBridgeDiagnostic });
+  assert.equal(elements.manualSyncDetail.textContent, "点击一次即可同步已开启的收藏夹、增量去重，并更新公开网页。");
+  runInNewContext(
+    `${readySource}\n${renderSource}\nrenderManualSync({ state: "completed", scanned: 3, new: 1, publish_status: "published" });`,
+    { state, elements, normalizeLocalBridgeDiagnostic, countText: String },
+  );
+  assert.equal(elements.manualSyncTitle.textContent, "本次整理完成");
+  assert.equal(elements.manualSyncDetail.textContent, "共扫描 3 条，新增 1 条；本地网页数据已经更新，Hugging Face 已更新。");
+});
+
+test("the status contract's local rebuild sentence names the web data alone", async () => {
+  assert.equal(ORGANIZATION_STATUS_CONTRACT.copy.local_rebuild_running, "正在本地重建网页数据，不访问小红书");
+  for (const [key, sentence] of Object.entries(ORGANIZATION_STATUS_CONTRACT.copy)) {
+    assert.doesNotMatch(sentence, /知识库与网页|网页与知识库|Obsidian/, key);
+  }
 });
 
 async function runCoreCompleteRefresh(terminalStatus) {
@@ -2551,7 +2571,7 @@ test("a core-complete point-enhancement failure refreshes the preserved local re
   assert.deepEqual(result.events, [
     ["render", "failed", true],
     ["clear", 42],
-    ["toast", "核心整理完成，点点增强未完成；正在刷新知识库"],
+    ["toast", "核心整理完成，点点增强未完成；正在刷新网页"],
     ["timeout", 900],
     ["reload"],
   ]);
@@ -2571,7 +2591,7 @@ test("a post-core safety stop refreshes preserved results without masking the sa
   assert.deepEqual(result.events, [
     ["render", "safety-stopped", true],
     ["clear", 42],
-    ["toast", "核心整理结果已保留；已因小红书安全限制停止，正在刷新知识库"],
+    ["toast", "核心整理结果已保留；已因小红书安全限制停止，正在刷新网页"],
     ["timeout", 900],
     ["reload"],
   ]);

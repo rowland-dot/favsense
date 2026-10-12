@@ -20,7 +20,6 @@
     "enabled": false,
     "skill_path": "skills/xhs-diandian-summarize-note"
   },
-  "knowledge_base": "knowledge-base",
   "domain_profile": "config/domain-profiles/software.json",
   "curation_file": "skills/xhs-favorites-organizer/references/skills-board-curation.json",
   "curation_quality": {

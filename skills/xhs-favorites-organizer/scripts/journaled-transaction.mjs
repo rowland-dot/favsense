@@ -377,7 +377,12 @@ export async function recoverJournaledTransaction({ root: rootValue, transaction
     || !Array.isArray(record.participants)
     || !/^[a-f0-9]{64}$/.test(record.immutable_state_sha256 || "")
   ) throw new Error("TRANSACTION_JOURNAL_INVALID");
-  const participants = validateParticipants(root, rawParticipants);
+  // A caller that may find a journal written under an older participant set passes a function that picks
+  // the participants once it has seen the journal's own record of them.
+  const participants = validateParticipants(
+    root,
+    typeof rawParticipants === "function" ? rawParticipants(record) : rawParticipants,
+  );
   const participantBindings = new Map();
   for (const participant of participants) {
     await assertContainedPlainPath(root, participant.target);
