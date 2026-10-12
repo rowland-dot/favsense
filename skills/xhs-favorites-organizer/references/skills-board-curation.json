@@ -18248,5 +18248,296 @@
     "candidate_revision": "b8154eb80b5501bece83651ebe4fca7ff29b78f11cedebde96352b46e274a97a",
     "review_status": "accepted",
     "review_reason_code": ""
+  },
+  "6ac34fd40000000018005b2a": {
+    "id": "6ac34fd40000000018005b2a",
+    "content_sha256": "ca963fa54d452b5b8d2febf0b4aee4898e015b568d695f496f576cb1115c294e",
+    "title": "Anthropic 官方 Skill 编写最佳实践要点",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频拆解 Anthropic 官方文档《Skill authoring best practices》中的几条写法（帖子称“新规、旧认知已过时”，实为官方最佳实践指南）：超过 100 行的参考文件在顶部加目录，因为 Claude 预览文件时可能只读一部分；所有参考文件直接从 SKILL.md 链接、只保持一层，避免嵌套引用被 head -100 式预览截断；按任务的脆弱程度选择高、中、低三档自由度，越容易出错、越要求一致的步骤越应写成固定脚本；在计划使用的 Haiku、Sonnet、Opus 上分别测试；顺序重要的复杂流程配可逐项勾选的检查清单，质量关键任务加“检查、修复、再检查”的反馈循环；不假设依赖已安装，写明安装命令。视频里“重要规则在第 100 行之后就等于不存在”是作者的夸张说法，官方只说预览时可能读不全。",
+    "action": "挑一个自己最常用的 Skill 对照官方清单逐项检查：SKILL.md 是否少于 500 行、参考文件是否都从 SKILL.md 一层直达、超过 100 行的参考文件是否有目录、依赖与安装命令是否写明、关键步骤是否有可重跑的检查；再用同一组三个真实任务分别在 Haiku 和 Opus 上各跑一次，记下哪一步需要补充说明、哪一步说明过多。",
+    "themes": [
+      "Agent Skills",
+      "Claude",
+      "Skill编写"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "8f4e3ddb8fbaefab3c2f5976fe2ae0b111a5b7bd6398bbfeb9d4918c86cdc1ad",
+    "evidence_sha256": "e7ce75b31ace00c1556ae9a35ae3e2fbec8e4db18091d571b16d3b933b1a6a9d",
+    "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "0868b77dad99deb4665ba7e2d787ae262da3c3536176edd32c6eeb8a7e4e4765"
+      },
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "861b10e0ac105437c481ef89a15db2863b3486449f1ceaf16e6391b9ee955381"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "92dc84710bcd94e15fc487a55883c1887454e3c9a32dd744c9c887ed3a8ff39b"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "3e5a5931e99854097db6ae5e0c9adfd4629b2b1ecf310effe275f38e16a6466f",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac85743000000001402cc7a": {
+    "id": "6ac85743000000001402cc7a",
+    "content_sha256": "1e1a0c20c631cb905b34de9c5f805d410fd6ef417705bc35157ba2a97b0d87e8",
+    "title": "Compositor 中文版：开源 Mac 修图软件的社区汉化",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "作者把 Robbie Tilton 开发的免费开源 Mac 修图软件 Compositor（原帖称其为前 Apple 设计师）做成非官方社区中文版并开源（Wawajiao-Wwj/Compositor-Chinese，MIT）：基于原版 1.4.7 和社区已有的中文本地化方案，简体与繁体各 1,160 条翻译，菜单、图层、蒙版、滤镜等界面汉化，⌘F 可用中文搜索命令，以独立应用安装、可与英文原版并存并保留 .comp 工程格式。官方仓库确认只支持 Apple 芯片 Mac、macOS 26 及以上；发布包为本地签名、未经 Apple 公证，也不随原版自动更新。帖中的界面图是示意图，不是实际编辑截图。",
+    "action": "Apple 芯片且 macOS 26 以上的 Mac 用户，从官方仓库 Release 下载 v1.4.7-zh.1 压缩包，先用同一页的 SHA256SUMS.txt 核对文件，再与原版并存安装；首次打开按系统提示确认开发者来源，用一张常修的图试图层、蒙版和 ⌘F 中文命令搜索，漏译到仓库 Issues 反馈。Intel Mac 或更低系统版本不适用。",
+    "themes": [
+      "Mac工具",
+      "图像编辑",
+      "软件汉化"
+    ],
+    "tools": [
+      "Compositor 中文版"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "dd4930d861c18459913752a2bd2f4222547d1ffadef6bb437f0ee963a7ffd3ff",
+    "evidence_sha256": "8be4c4c9b8c2019f4a6aa712fbf801793ff4e6a01006c77d04b9927ef7b663b0",
+    "evidence_dependencies": [
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "2f99163f4a2f8f3c684f44629864b38a9c92879e4ea57435a78c53789d6c1352"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "db9b9d0d8ecea22c63efaa80824d663a494a495f39582b363ef5f36be17f8955"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "b302371c3bb9cd87d73f46dd12d75ec2b6625fa4b1fa3b1ce7dba96ec1e7b32f",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6ac90e9a000000001501686d": {
+    "id": "6ac90e9a000000001501686d",
+    "content_sha256": "a3a86935afa647115e54e52462868cba9439ac3ccd25592823f2f5264f07f79e",
+    "title": "VoxCPM：面壁智能开源的多语言语音生成模型",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频推荐开源语音生成项目 VoxCPM（OpenBMB/VoxCPM，Apache-2.0，代码与权重公开、可商用），由面壁智能（ModelBest）与清华相关团队发布：当前版本 VoxCPM2 为 2B 参数、用超过 200 万小时语音训练，可只用文字描述生成新音色（性别、年龄、语气、语速等），也能用一段参考音频克隆音色，支持 30 种语言和四川话、粤语、东北话、河南话、天津话等 9 种中文方言，输出 48kHz 音频。帖中“一秒声音不到三分之一秒生成”和“8G 显存就够”对应官方 RTX 4090 上实时率约 0.3、显存约 8GB；帖称 M 系列 Mac 也跑得动，官方只说明 Apple 芯片可用 MPS 运行，并给出 M4 Pro 上 llama.cpp 版实时率约 1.76，即慢于实时。官方明令禁止用于冒充他人、诈骗或虚假信息。",
+    "action": "有约 8GB 显存的 NVIDIA 显卡时，按官方说明安装后先跑通“声音设计”示例，用同一段配音文案比较三到四种音色描述的效果，每种多生成两三次（官方提示结果会有波动）；需要克隆时只用本人或已获书面授权的声音，成品标注为 AI 合成。Mac 用户先实测一段文案的生成耗时，再决定是否用于批量配音。",
+    "themes": [
+      "声音设计",
+      "开源模型",
+      "语音合成"
+    ],
+    "tools": [
+      "VoxCPM"
+    ],
+    "kind": "Tool",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "e6392a58f1f00bf60f3ec3b80d79073b7fe23a9b80ab8ad001557bffe771ba03",
+    "evidence_sha256": "225713843713e9c992178e304444cb0f9f1eaf02f547002da85a25291bb0472f",
+    "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "531fb6cb2a22ad52ef690b2d0920f33ca6a0b9f58a9bd6221990f5fa40675b4d"
+      },
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "63df6a3d9ad69fc77109a9c2a5eaf7be00d528444cdd16d6d6c5c3296a259c7b"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "60a7f698ea8cdd9aebfc6c0e98515bd240118b90510601e58bbb61694ed9c2be"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "ee5c653869b4e2b4f7c0e710538b68e7a22767ab3792a48258060691d25a202c",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6a7fc34900000000350152d8": {
+    "id": "6a7fc34900000000350152d8",
+    "content_sha256": "3bdef652ad5d8dbf511964066be4e797a84554349260a2f2426817e345738ece",
+    "title": "先查现成方案再写代码的两个 Skill：advise-project-approach 与 NeuroArxiv",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频介绍两个让编码 Agent 动手前先找现成解法的 Skill。advise-project-approach（AaravKashyap12/advise-project-approach）先判断是全新项目还是给现有产品加功能，需求不清时追问给谁用、要完成什么和预算，未回答的部分写成假设，再检索付费产品与开源项目；它不只按 GitHub Star 排名，而是区分候选方案里哪些能力适合你、哪些设计只服务于对方的规模，并按开发期、首批用户和增长期分阶段估算成本。网上没有成熟方案时接第二个 Skill：音频里读作“Neuroarchive”，对应官方项目 NeuroArxiv（UditAkhourii/neuroarxiv，MIT），它检索 arXiv 论文，每篇论文用独立上下文单独阅读，再汇总成一个带出处的方案；两个仓库都声明支持 Claude Code 与 Codex。视频里的 Sendbird、Stream 价格和给 Skills 做自动更新的案例是作者举例，未单独核实。",
+    "action": "下一个要加的功能，先在 Claude Code 或 Codex 里用 advise-project-approach 跑一遍，检查它列出的现成方案和分阶段成本是否站得住，再决定自研范围；只有确实找不到现成实现、需要做算法或架构选择时再调用 NeuroArxiv，并逐条核对它引用论文的局限。两者都从官方仓库安装，NeuroArxiv 会为每篇论文单独调用一次模型，先用小问题试一次看用量。",
+    "themes": [
+      "Agent Skills",
+      "先例检索",
+      "方案调研"
+    ],
+    "tools": [
+      "Neuroarchive",
+      "advise-project-approach"
+    ],
+    "kind": "Workflow",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "2a53db90d209ebf8a209d1ed9d2fa9ab5002b100a2235beeffd9d420c53664d2",
+    "evidence_sha256": "d6da314ab3cf6bd122a83801f6600a89fe79e6aeb289e90af87a3d7a8a6bdddf",
+    "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "4548453f813db689fb79b0f8602386b6d8da89b194ef3eaaf1f3065306494542"
+      },
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "679d180369638051e446db65d9482593cb880d0d96299aab9855e5c14db2d5bc"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "0ae9be9f3b25e238fe5af3e032be3c105101f239f6b40aa3b951bd7a646296e3"
+      }
+    ],
+    "resource": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "verified",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "e1f427bfa8e3c9f9ab9187040995734cfebb25ff2e05fd5f7f5e57f4b47c083f",
+    "review_status": "accepted",
+    "review_reason_code": ""
+  },
+  "6aa253310000000011037d08": {
+    "id": "6aa253310000000011037d08",
+    "content_sha256": "f918fbb72418a14dfa70194a6fb0297c9b4010dec7a4d992d487b3c544ba947a",
+    "title": "去掉 Suno AI 音乐“塑料味”的三个方法",
+    "category": "",
+    "category_override": false,
+    "category_reason": "",
+    "summary": "视频讲用 Suno 写歌时减少“AI 塑料味”的三个做法（作者经验，未经官方核实）：一是在歌词前加结构标签，如 [Verse]、[Chorus]、[Guitar Solo]，用标签而不是在提示词里写长句来控制段落，避免主歌就飙高音、副歌乱飘；二是在风格提示里加 raw acoustic、live performance 这类词，压住默认偏重的混响与电音，人声吞字时再加 clear vocals；三是某一段跑调或乱唱时不整首重做，而是把时间轴拖到出问题前一秒，用 Extend 从那里续写，只改一小段、少花积分。“50 积分出神曲、5000 积分全是塑料味”是作者的夸张对比，结尾的“爆款音乐人词典”是引流资料。",
+    "action": "下次用 Suno 写歌，先给同一段歌词加 [Verse]、[Chorus] 结构标签生成一版，再在风格提示里加 raw acoustic、live performance 和 clear vocals 生成第二版，对比副歌位置和吐字清晰度；遇到局部跑调时用 Extend 从出问题前一秒续写，记下每种做法花掉的积分，只保留确实有效的标签组合。",
+    "themes": [
+      "AI音乐",
+      "Suno",
+      "提示词"
+    ],
+    "tools": [],
+    "kind": "Note",
+    "status": "pending_review",
+    "blockers": [],
+    "candidate_seed_revision": "ba5e9fbe678aa9bd9f5cb65f47eb2bbeb480ccbf889352e17ee5e3ee11312074",
+    "evidence_sha256": "619f37582ccc994f0f4f9ff80fffa768ff4ba02cd3f5dc4ea8961901961acdd2",
+    "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "b4ad39d4702e1f048986fd2e89758a2cb6312ae1e51b14055b06d5c76f797ed9"
+      },
+      {
+        "method": "diandian_summary",
+        "provider": "xiaohongshu-diandian",
+        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
+        "result_sha256": "1619efa0ac899aa21c2f97939be02466a18f06f27cc09461abe0947ea582aba0"
+      },
+      {
+        "method": "public_text",
+        "provider": "favsense",
+        "version": "1",
+        "result_sha256": "677a33a53e1489376ace6a9a57c00cfcb46ca699887aaac349d4711fdf2c8736"
+      }
+    ],
+    "resource": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "resource_assessment": {
+      "status": "missing",
+      "resource_id": "",
+      "reason_code": "resource_not_applicable",
+      "resource_identity_sha256": "",
+      "verification_snapshot_sha256": ""
+    },
+    "candidate_revision": "75ebbd2547f9ddc37bc4b86f085ccab5367849bc7ec8095a6d43e2bb4ec4cd90",
+    "review_status": "accepted",
+    "review_reason_code": ""
   }
 }

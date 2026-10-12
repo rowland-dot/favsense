@@ -1964,6 +1964,75 @@
         "https://github.com/xjli360/sealeap-amazon-skills",
         "https://sealeap.cn/"
       ]
+    },
+    {
+      "name": "VoxCPM",
+      "aliases": [
+        "VoxCPM2",
+        "Vox CPM",
+        "OpenBMB/VoxCPM"
+      ],
+      "type": "开源 TTS 与声音设计模型",
+      "canonical_repo": "OpenBMB/VoxCPM",
+      "default_branch": "main",
+      "repo": "https://github.com/OpenBMB/VoxCPM",
+      "download": "https://github.com/OpenBMB/VoxCPM/archive/refs/heads/main.zip",
+      "license": "Apache-2.0",
+      "stars": "39.1k",
+      "stars_numeric": 39141,
+      "verified_at": "2026-10-12",
+      "status": "verified",
+      "usage_note": "Apache-2.0，代码与权重公开、可商用；VoxCPM2 为 2B 参数、30 种语言加 9 种中文方言、48kHz 输出，官方标注约 8GB 显存、RTX 4090 上 RTF 约 0.3。官方明令禁止用于冒充、诈骗或虚假信息，只克隆本人或已授权的声音并标注为合成语音。",
+      "source_urls": [
+        "https://github.com/OpenBMB/VoxCPM",
+        "https://voxcpm.com"
+      ]
+    },
+    {
+      "name": "Compositor 中文版",
+      "aliases": [
+        "Compositor-Chinese",
+        "Wawajiao-Wwj/Compositor-Chinese",
+        "Compositor Chinese"
+      ],
+      "type": "开源 Mac 图像编辑器（非官方社区中文构建）",
+      "canonical_repo": "Wawajiao-Wwj/Compositor-Chinese",
+      "default_branch": "main",
+      "repo": "https://github.com/Wawajiao-Wwj/Compositor-Chinese",
+      "download": "https://github.com/Wawajiao-Wwj/Compositor-Chinese/archive/refs/heads/main.zip",
+      "license": "MIT",
+      "stars": "16",
+      "stars_numeric": 16,
+      "verified_at": "2026-10-12",
+      "status": "verified",
+      "usage_note": "MIT；基于 Compositor 1.4.7 的非官方社区中文构建，仅支持 Apple 芯片与 macOS 26 及以上；发布包本地签名、未经 Apple 公证，不随原版自动更新，安装前核对 Release 中的 SHA256SUMS。",
+      "source_urls": [
+        "https://github.com/Wawajiao-Wwj/Compositor-Chinese",
+        "https://wawajiao-wwj.github.io/Compositor-Chinese/"
+      ]
+    },
+    {
+      "name": "NeuroArxiv",
+      "aliases": [
+        "neuroarxiv",
+        "UditAkhourii/neuroarxiv",
+        "Neuroarchive"
+      ],
+      "type": "arXiv 先例检索 Agent Skill / CLI",
+      "canonical_repo": "UditAkhourii/neuroarxiv",
+      "default_branch": "master",
+      "repo": "https://github.com/UditAkhourii/neuroarxiv",
+      "download": "https://github.com/UditAkhourii/neuroarxiv/archive/refs/heads/master.zip",
+      "license": "MIT",
+      "stars": "435",
+      "stars_numeric": 435,
+      "verified_at": "2026-10-12",
+      "status": "verified",
+      "usage_note": "MIT；官方说明支持 Claude Code 与 Codex CLI，会联网读取 arXiv 论文并为每篇论文单独调用一次模型，消耗随论文数增加；把它的结论当作带出处的建议，落地前自己核对被引论文的限制。",
+      "source_urls": [
+        "https://github.com/UditAkhourii/neuroarxiv",
+        "https://www.divergent.sh/blog/neuroarxiv-never-build-from-scratch"
+      ]
     }
   ]
 }
