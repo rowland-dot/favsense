@@ -17,6 +17,7 @@ node_modules/
 dist/
 .coverage/
 .test-tmp/
+ci-diagnostics/
 
 # Python caches
 __pycache__/
