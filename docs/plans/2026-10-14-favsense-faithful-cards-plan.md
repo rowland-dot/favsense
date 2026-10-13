@@ -615,7 +615,7 @@ git commit -m "feat: add the deterministic card rules (title, main text, reply s
 - Create: `skills/xhs-favorites-organizer/tests/damaged-replies.test.mjs`
 - Modify: `package.json` (`test:knowledge`)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test** (f5b1abd)
 
 ```js
 import test from "node:test";
@@ -710,12 +710,12 @@ test("a missing list means nothing is damaged; a malformed one is an error, not 
 
 (`public-judgement-fixtures.mjs` still exports `diandianReplyCases` after its Task 6 rewrite; keep that export.)
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail** (f5b1abd)
 
 Run: `node --test skills/xhs-favorites-organizer/tests/damaged-replies.test.mjs`
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Implementation**
+- [x] **Step 3: Implementation** (f5b1abd)
 
 In `site/diandian-text.mjs` rename `function isBare(line)` to `export function isBareLine(line)` and update every internal use (the three calls inside `headingText`, lines 57–59); no alias is kept.
 
@@ -797,12 +797,12 @@ function main() {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass** (f5b1abd)
 
 Run: `node --test skills/xhs-favorites-organizer/tests/damaged-replies.test.mjs skills/xhs-favorites-organizer/tests/diandian-summary-display.test.mjs`
 Expected: PASS (the second file proves the renamed export did not break the formatting module).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit** (f5b1abd)
 
 ```bash
 git add site/diandian-text.mjs skills/xhs-favorites-organizer/scripts/damaged-replies.mjs skills/xhs-favorites-organizer/tests/damaged-replies.test.mjs package.json
