@@ -14,8 +14,10 @@
     "agents/openai.yaml",
     "scripts/save_diandian_batch.py",
     "scripts/save_diandian_summary.py",
+    "test-fixtures/lock_stress_worker.py",
     "test-fixtures/reject-signed-source.txt",
     "tests/test_batch.py",
+    "tests/test_lock_handoff.py",
     "tests/test_save_summary.py",
     "tests/fixtures/diandian-with-footer.txt"
   ]
