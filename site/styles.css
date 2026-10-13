@@ -266,6 +266,9 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .card-summary-source--metadata { color: var(--ink-soft); }
 .card-summary { display: -webkit-box; margin: 13px 0 16px; overflow: hidden; color: var(--ink-soft); font-size: 12px; line-height: 1.75; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 .tools-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto; }
+.hero-counts { margin: 12px 0 0; color: var(--ink-soft); font-size: 14px; font-weight: 700; }
+.extracted-text p { margin: 0 0 8px; color: var(--ink); font-size: 13px; line-height: 1.75; }
+.tool-unverified { margin-left: 4px; padding: 1px 5px; border-radius: 5px; background: color-mix(in srgb, var(--sun), var(--surface) 70%); color: var(--ink); font-size: var(--text-xs); font-weight: 700; }
 .tool-chip { max-width: 100%; padding: 5px 8px; overflow: hidden; border-radius: 7px; background: var(--surface-soft); color: var(--ink); font-size: var(--text-xs); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .card-footer { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-top: 1px solid var(--line); }
 .card-metrics { display: flex; gap: 10px; color: var(--ink-soft); font-family: var(--mono); font-size: var(--text-xs); }
@@ -336,7 +339,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .process-track li:nth-child(4) .process-number { background: var(--lavender); }
 .process-track strong { display: block; margin-top: 2px; font-family: var(--display); font-size: 23px; }
 .process-track p { margin: 7px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.7; }
-.method-proof { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr) 2fr; margin-top: 10px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; }
+.method-proof { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr) 2fr; margin-top: 10px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; }
 .method-proof > div, .method-proof > p { margin: 0; padding: 27px; border-right: 1px solid var(--line); }
 .method-proof > div strong, .method-proof > div span { display: block; }
 .method-proof > div strong { font-family: var(--display); font-size: 40px; }
@@ -503,10 +506,6 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .detail-resource-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .detail-resource a { padding: 6px 9px; border-radius: 7px; background: var(--ink); color: var(--surface); text-decoration: none; font-size: var(--text-xs); }
 .detail-resource-attributes { grid-column: 1 / -1; margin-top: 0; }
-.pending-evidence-overlay { border: 1px solid color-mix(in srgb, var(--cobalt), var(--line) 50%); background: color-mix(in srgb, var(--cobalt), var(--surface) 96%); }
-.pending-evidence-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.pending-evidence-heading span { padding: 4px 8px; border-radius: 999px; background: var(--fill-blue); color: white; font: var(--text-xs) var(--mono); }
-.pending-evidence-overlay > p { color: var(--ink-soft); font-size: var(--text-xs); line-height: 1.65; }
 .detail-footer { display: flex; flex-wrap: wrap; gap: 9px; padding-top: 24px; border-top: 1px solid var(--line); }
 .detail-footer a, .detail-footer button { padding: 11px 15px; border: 1px solid var(--ink); border-radius: 999px; background: var(--surface); color: var(--ink); cursor: pointer; text-decoration: none; font-size: 11px; font-weight: 700; }
 .detail-footer a:first-child { background: var(--ink); color: var(--surface); }
@@ -554,7 +553,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
   .section-intro { grid-template-columns: 1fr; }
   .section-intro > p:last-child { margin-top: 25px; }
   .method-panel { grid-template-columns: 1fr; }
-  .method-proof { grid-column: 1; grid-template-columns: repeat(3, 1fr); }
+  .method-proof { grid-column: 1; grid-template-columns: repeat(2, 1fr); }
   .method-proof > p { grid-column: 1 / -1; border-top: 1px solid var(--line); }
   .board-manager { grid-template-columns: 1fr; gap: 30px; }
   .personal-data-panel { grid-template-columns: 1fr; gap: 30px; }

@@ -5,14 +5,14 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { diandianBlocks, stripDiandianOpener } from "../../../site/diandian-text.mjs";
 
-// Issue #99: how a saved DianDian reply is shown. The browser tests (site/e2e/card-summary-sources.spec.mjs)
+// Issue #99: how a saved DianDian reply is shown. The browser tests (site/e2e/faithful-cards.spec.mjs)
 // check what the page looks like; these check the reply handling against every real published reply.
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const readJson = async (path) => JSON.parse(await readFile(resolve(root, path), "utf8"));
 const published = (await readJson("site/data/knowledge.json")).notes
   .filter((note) => note.deepSummarySource === "xiaohongshu-diandian");
-const frozen = (await readJson("scripts/fixtures/card-summary-sources.json")).notes;
+const frozen = (await readJson("scripts/fixtures/faithful-cards.json")).notes;
 const letters = (text) => [...text.matchAll(/\p{L}/gu)].map((match) => match[0]).join("");
 
 test("the published set holds the DianDian replies this sweep is meant to cover", () => {
@@ -74,7 +74,7 @@ test("every real reply formats into well-formed blocks", () => {
 
 test("the approved example reply comes out with the headings and lists of the approved design", () => {
   const example = frozen.find((note) => note.id === "6a7dc92600000000250090ff");
-  const blocks = diandianBlocks(stripDiandianOpener(example.deepSummary).text);
+  const blocks = diandianBlocks(stripDiandianOpener(example.mainText).text);
   const outline = blocks.map((block) => block.type === "list"
     ? `${block.ordered ? "ol" : "ul"}:${block.items.length}`
     : `${block.type === "heading" ? "h" : "p"}:${block.text.replace(/[​-‍﻿]/g, "").slice(0, 12)}`);

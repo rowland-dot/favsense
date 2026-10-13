@@ -13,7 +13,7 @@ const testHeader = "favsense-synthetic-v1";
 const scenarios = new Set([
   "success", "running-success", "partial", "summary-failed", "batch-aborted", "stale",
   "build-failed", "publish-failed", "safety-stopped", "local-rebuild", "legacy-safety-stop",
-  "resume-core-running", "resume-summary-running", "card-sources",
+  "resume-core-running", "resume-summary-running", "faithful-cards",
 ]);
 // A round already under way when the page opens: the first reads show it running, then it ends.
 const resuming = () => scenario === "resume-core-running" || scenario === "resume-summary-running";
@@ -25,14 +25,14 @@ const leftoverStop = { date: "2026-08-29", phase: "media_or_detail", phase_label
 const leftoverActive = () => scenario === "legacy-safety-stop" && !stopCleared;
 
 const knowledge = {
-  meta: { noteCount: 4, frameEvidenceCount: 0, verifiedNoteCount: 1, resourceCount: 1, resourceIndexEnabled: true, kindLabels: { Other: "其他", Skill: "Skill" }, resourceIndex: { groups: [{ label: "Skills", pattern: "Agent Skill" }], default_group: "其他", sorts: [{ id: "name-asc", label: "按名称", field: "name", type: "text", direction: "asc" }] } },
+  meta: { noteCount: 4, frameEvidenceCount: 0, replyCount: 1, transcriptCount: 1, resourceCount: 1, resourceIndexEnabled: true, kindLabels: { Other: "其他", Skill: "Skill" }, resourceIndex: { groups: [{ label: "Skills", pattern: "Agent Skill" }], default_group: "其他", sorts: [{ id: "name-asc", label: "按名称", field: "name", type: "text", direction: "asc" }] } },
   categories: [{ name: "Synthetic", count: 4 }],
   notes: [
-    { id: "note-accepted", title: "Verified synthetic Skill", category: "Synthetic", kind: "Skill", publishedAt: "2026-08-23", summary: "Accepted synthetic summary.", summaryStatus: "accepted", summaryReason: "", themes: ["testing"], tools: ["Official synthetic Skill"], resources: ["Official synthetic Skill"], evidence: { method: "curation", label: "已审核" }, reviewedAt: "2026-08-23" },
-    { id: "note-pending", title: "Pending synthetic note", category: "Synthetic", kind: "Other", candidateKind: "Skill", publishedAt: "2026-08-23", summary: "Safe metadata fallback.", summaryStatus: "pending_review", summaryReason: "audit_pending", summaryState: "captured", summaryReasonCode: "", themes: [], tools: [], resources: [], evidence: { method: "source-metadata", label: "待审核" } },
-    // Older than the two notes above so the existing first/second card assumptions hold; they put the 点点 and other-evidence source labels on screen.
-    { id: "note-diandian", title: "Diandian synthetic note", category: "Synthetic", kind: "Other", publishedAt: "2026-08-20", summary: "Diandian synthetic summary.", summaryStatus: "accepted", summaryReason: "", deepSummarySource: "xiaohongshu-diandian", themes: [], tools: [], resources: [], evidence: { method: "point", label: "已审核" }, reviewedAt: "2026-08-20" },
-    { id: "note-evidence", title: "Evidence synthetic note", category: "Synthetic", kind: "Other", publishedAt: "2026-08-19", summary: "Other-evidence synthetic summary.", summaryStatus: "accepted", summaryReason: "", deepSummarySource: "curation", themes: [], tools: [], resources: [], evidence: { method: "curation", label: "已审核" }, reviewedAt: "2026-08-19" },
+    { id: "note-accepted", title: "Verified synthetic Skill", category: "Synthetic", kind: "Skill", publishedAt: "2026-08-23", mainText: "Accepted synthetic summary.", mainSource: "post-text", replyDamaged: false, postUnreachable: false, extracted: null, themes: ["testing"], tools: ["Official synthetic Skill"], unverifiedTools: [], resources: ["Official synthetic Skill"] },
+    { id: "note-pending", title: "Pending synthetic note", category: "Synthetic", kind: "Other", publishedAt: "2026-08-23", mainText: "Safe metadata fallback.", mainSource: "post-text", replyDamaged: false, postUnreachable: false, extracted: null, themes: [], tools: [], unverifiedTools: [], resources: [] },
+    // Older than the two notes above so the existing first/second card assumptions hold; they put the 点点 and transcript source labels on screen.
+    { id: "note-diandian", title: "Diandian synthetic note", category: "Synthetic", kind: "Other", publishedAt: "2026-08-20", mainText: "Diandian synthetic summary.", mainSource: "diandian", replyDamaged: false, postUnreachable: false, extracted: null, themes: [], tools: [], unverifiedTools: [], resources: [] },
+    { id: "note-evidence", title: "Evidence synthetic note", category: "Synthetic", kind: "Other", publishedAt: "2026-08-19", mainText: "Other-evidence synthetic summary.", mainSource: "video-transcript", replyDamaged: false, postUnreachable: false, extracted: null, themes: [], tools: [], unverifiedTools: [], resources: [] },
   ],
   resources: [{
     id: "github-owner-repo",
@@ -56,20 +56,13 @@ const knowledge = {
   }],
 };
 
-// Real published cards frozen for the summary-source cases (one or more per case), so display tests use real data.
-const cardSources = JSON.parse(readFileSync(resolve(root, "scripts", "fixtures", "card-summary-sources.json"), "utf8"));
+// The cards of the faithful-cards cases: four from the owner-approved mockups, the rest synthetic (one per card state).
+const faithfulCards = JSON.parse(readFileSync(resolve(root, "scripts", "fixtures", "faithful-cards.json"), "utf8"));
 
+// The run-state scenarios drive the run panel only; a card looks the same whatever state the last run ended in.
 function scenarioKnowledge() {
-  if (scenario === "card-sources") return structuredClone(cardSources);
-  const value = structuredClone(knowledge);
-  const note = value.notes[1];
-  if (scenario === "summary-failed") note.summaryState = "failed";
-  if (scenario === "batch-aborted") note.summaryState = "batch_aborted";
-  if (scenario === "stale") {
-    note.summaryState = "stale";
-    note.summaryReasonCode = "content_changed";
-  }
-  return value;
+  if (scenario === "faithful-cards") return structuredClone(faithfulCards);
+  return structuredClone(knowledge);
 }
 
 function syncStatus() {

@@ -1,0 +1,570 @@
+{
+  "meta": {
+    "buildVersion": "b5cf28831d5ed2ddaa9bc2a15b5142d40d13c943ea6746cbad922264b6654e79",
+    "title": "小红书收藏知识工作台",
+    "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
+    "generatedAt": "2026-10-13T08:02:22.422Z",
+    "source": "xiaohongshu",
+    "sourceBoards": [
+      "Skills",
+      "AI电商",
+      "AI自媒体",
+      "SEO",
+      "AI设计",
+      "AI视频生成",
+      "AI基础知识",
+      "Vibe Coding",
+      "小红书内容运营",
+      "AI操作系统",
+      "电商运营",
+      "出海电商",
+      "AI数字人",
+      "理财",
+      "修图",
+      "AI音乐"
+    ],
+    "sourceBoard": "Skills、AI电商、AI自媒体、SEO、AI设计、AI视频生成、AI基础知识、Vibe Coding、小红书内容运营、AI操作系统、电商运营、出海电商、AI数字人、理财、修图、AI音乐",
+    "profileId": "software",
+    "profileLabel": "软件与 AI 工具",
+    "categoryStrategy": "source-board-first",
+    "hero": {
+      "eyebrow": "本期片场 · 软件与 AI 收藏",
+      "from": "收藏过",
+      "to": "判断过",
+      "intro": "收藏会先自动收录；完成解读的内容会整理成可搜索的总结、相关资源和具体用法。你只管收藏，拾光台负责把零散内容逐步变成有用的知识。"
+    },
+    "noteCount": 12,
+    "categoryCount": 3,
+    "resourceCount": 132,
+    "resourceIndexEnabled": true,
+    "resourcesVerifiedAt": "2026-08-29",
+    "resourceIndex": {
+      "label": "资源索引",
+      "entity_label": "资源",
+      "eyebrow": "项目、网站、文档与教程",
+      "title": "从收藏里的线索，<br />直达可靠资源。",
+      "description": "把开源项目、官方网站、文档、教程和参考资料集中归类。需要时直接打开，不必再回到帖子里重新寻找。",
+      "search_placeholder": "搜索项目、网站、文档或教程…",
+      "filter_label": "资源类型",
+      "verified_label": "链接核对日期",
+      "detail_label": "相关资源",
+      "registry_file": "skills/xhs-favorites-organizer/references/software-resources.json",
+      "collection": "resources",
+      "verification_max_age_days": 30,
+      "mapping": {
+        "name": "name",
+        "aliases": "aliases",
+        "type": "type",
+        "description": "usage_note",
+        "metric": "stars",
+        "metric_numeric": "stars_numeric",
+        "metric_icon": "metric_icon"
+      },
+      "metric": {
+        "label": "Star",
+        "icon": "★",
+        "missing": "暂无数据"
+      },
+      "fields": [],
+      "fields_by_type": {
+        "Agent Skill": [
+          {
+            "field": "license",
+            "label": "许可证"
+          },
+          {
+            "field": "skill_manifest",
+            "label": "Skill manifest"
+          },
+          {
+            "field": "verified_at",
+            "label": "核验日期"
+          },
+          {
+            "field": "compatibility",
+            "label": "兼容性"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "field": "repo",
+          "label": "官方仓库"
+        },
+        {
+          "field": "download",
+          "label": "下载 ZIP"
+        },
+        {
+          "field": "website",
+          "label": "打开官网"
+        },
+        {
+          "field": "documentation",
+          "label": "打开文档"
+        },
+        {
+          "field": "tutorial",
+          "label": "查看教程"
+        },
+        {
+          "field": "faq",
+          "label": "查看 FAQ"
+        },
+        {
+          "field": "limitations",
+          "label": "平台限制"
+        },
+        {
+          "field": "trust",
+          "label": "安全与信任"
+        }
+      ],
+      "groups": [
+        {
+          "label": "GitHub 项目",
+          "pattern": "GitHub 项目|GitHub 产品项目"
+        },
+        {
+          "label": "官方网站",
+          "pattern": "官方网站|产品官网|提示词与案例网站"
+        },
+        {
+          "label": "官方文档",
+          "pattern": "官方文档"
+        },
+        {
+          "label": "教程",
+          "pattern": "教程|快速入门"
+        },
+        {
+          "label": "参考资料",
+          "pattern": "参考资料|指南|目录"
+        }
+      ],
+      "default_group": "开源项目",
+      "sorts": [
+        {
+          "id": "name-asc",
+          "label": "名称 A–Z",
+          "field": "name",
+          "type": "text",
+          "direction": "asc"
+        },
+        {
+          "id": "name-desc",
+          "label": "名称 Z–A",
+          "field": "name",
+          "type": "text",
+          "direction": "desc"
+        },
+        {
+          "id": "metric-desc",
+          "label": "Star 从高到低",
+          "field": "metricNumeric",
+          "type": "number",
+          "direction": "desc",
+          "applies_to": [
+            "开源项目",
+            "GitHub 项目"
+          ]
+        },
+        {
+          "id": "metric-asc",
+          "label": "Star 从低到高",
+          "field": "metricNumeric",
+          "type": "number",
+          "direction": "asc",
+          "applies_to": [
+            "开源项目",
+            "GitHub 项目"
+          ]
+        }
+      ]
+    },
+    "frameEvidenceCount": 9630,
+    "evidenceStatsAutoUpdated": true,
+    "kindLabels": {
+      "Note": "观点、资讯与知识说明",
+      "Tool": "可直接使用的工具",
+      "Skill": "可安装的 Agent 能力包",
+      "Workflow": "可复用的方法与流程",
+      "Product": "托管或商业产品"
+    },
+    "replyCount": 4,
+    "transcriptCount": 3
+  },
+  "categories": [
+    {
+      "name": "AI自媒体",
+      "count": 2
+    },
+    {
+      "name": "AI视频生成",
+      "count": 1
+    },
+    {
+      "name": "Skills",
+      "count": 9
+    }
+  ],
+  "notes": [
+    {
+      "number": 1,
+      "author": "陈祝器",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%B8%80%E4%B8%AA%E4%BA%BA%EF%BC%8C3%E5%A4%A9%EF%BC%8CCodex%EF%BC%8C10W%20%E9%99%88%E7%A5%9D%E5%99%A8&source=web_search_result_notes",
+      "publishedAt": "2026-08-13_23:39:50",
+      "likes": "310",
+      "collections": "413",
+      "mediaType": "图文",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "内容增长与商业",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
+      "themes": [
+        "商业验证",
+        "复盘智能体",
+        "经验产品化"
+      ],
+      "kind": "Workflow",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": false,
+      "id": "6a7dc92600000000250090ff",
+      "title": "一个人，3天，Codex，10W",
+      "mainText": "根据你引用的笔记，这是一篇关于​​用 AI 打造复盘智能体并实现商业化​​的实战分享。以下是核心内容总结：\n\n核心故事\n\n作者原本每月做小红书账号复盘要花一下午拉数据、看指标、写总结，觉得重复又烦。于是用 ​​Codex​​ 花了 3 天搭了一个\"复盘智能体\"，把数据丢进去就能自动分析。结果发群里炫耀时，被做护肤号的朋友问能不能按他们的品类定制，顺势接了 3 个定制客户（美妆、职场、本地生活），累计收入 ​​10W​​。\n\n搭建过程拆解\n​​第 1 天​​：没急着写代码，先把自己脑子里的复盘逻辑一条条拆出来——看哪些指标、怎么判断爆款、什么情况追投、什么换选题。这些\"脑子里的经验\"才是智能体值钱的地方。\n​​第 2 天​​：第一版出来了，但 AI 味太重，总结一堆却不敢下判断。于是推翻重来，加了 ​​4 个核心问题​​逼它从\"总结型\"变成\"判断型\"。\n让 AI 敢下判断的 4 个问题\n哪条数据异常了？\n为什么会异常？\n对账号影响有多大？\n下周具体发什么、怎么改？\n\n就这 4 个问题，让 AI 从\"写年终表彰稿\"变成了\"敢找问题、给原因、出方案\"的运营搭子。\n\n商业化逻辑\n\n客户买的不是 Codex，也不是提示词，而是​​\"我不用自己看表，也知道下个月该发什么\"​​这个结果。作者总结选项目只看 3 个问题：\n\n解决谁的问题？（越具体越好）\n这个问题值多少钱？（客户愿意付费才说明真痛）\n能不能标准化交付？（能复制才叫生意）\n核心观点\n\nAI 最大的机会不一定在 AI 行业里，电商、小红书、私域、外贸、招聘、教育……每个\"每个月都要复盘\"的岗位，都值得有一个智能体。真正有优势的，不是最会写提示词的人，而是​​既懂自己行业、又愿意把 AI 用起来的人​​。\n\n互动引导\n\n作者预告下一篇会拆解这个 10W 智能体具体怎么搭，并邀请读者在评论区扣\"复盘\"领取一份\"智能体 4 问框架\"提示词模板。",
+      "mainSource": "diandian"
+    },
+    {
+      "number": 2,
+      "author": "金黄说AI",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%B0%8F%E7%BA%A2%E4%B9%A6%E7%88%86%E6%AC%BE%E9%AB%98%E8%B5%9ESkill%E6%B1%87%E6%80%BB%20%E9%87%91%E9%BB%84%E8%AF%B4AI&source=web_search_result_notes",
+      "publishedAt": "2026-07-01_14:11:56",
+      "likes": "1787",
+      "collections": "2779",
+      "mediaType": "图文",
+      "category": "AI自媒体",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "AI内容",
+      "sourceBoards": [
+        "AI自媒体"
+      ],
+      "themes": [
+        "Agent Skill",
+        "Skill仓库",
+        "内容创作"
+      ],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": true,
+      "id": "6a44938c0000000006021e9e",
+      "title": "小红书爆款高赞Skill汇总‼️",
+      "mainText": "最近的小红书越来越像一个Skill Hub了，越来越多的创作者都在分享各种Skill，再加上官方现在还趁热打铁发布了Red Skill这个新功能，允许创作者直接在笔记里分享自己的完整的Skill直接让观众下载，这一步真的很超前。最近沉迷于在小红书上收集整理各种Skill，在这里归纳总结了我找到的所有小红书分享的高赞Skill 📚图文制作类 1️⃣jimeng-infographic-skill - @陈困困 分享的即梦信息图生成 Skill，把信息图制作流程封装进 Agent / Jimeng 工作流，减少复杂提示词，适合知识卡、信息图和教程型图文 2️⃣guizang-social-card-skill - @歸藏 老师有名的社交媒体配图Skill，适合做图文封面，长文配图（本帖的封面就是这个Skill做的） 3️⃣humanizer-zh - 还是@歸藏 老师的中文版写作Skill，一键去除AI味 4️⃣baoyu-skills - 宝玉老师的配图Skill，内置多种风格，字体氛围等 5️⃣zarazhangrui/frontend-slides - @张咋啦 老师的PPT Skill，已经在小红书上广为流传 6️⃣ziguishian/xhs-visual-director-skill - @子圭时安 老师的小红书视觉设计Skill 7️⃣panggungunvibe/atutun-xhs-cover - @阿囤囤 老师的爆款小红书封面设计Skill 🎥视频制作类 1️⃣Hyperframes - HeyGen出品的用HTML制作视频的Skill，个人感觉完爆之前Remotion 2️⃣DayadaUP/claude-code-auto-video-edit - @大牙大 老师的口播A-roll剪辑Skill 👨‍💻面试准备 1️⃣lan1177/interview-prep - @长尾敲字员 的面试准备Skill，帮你快速生成一份针对具体岗位 + 具体公司的面试准备文档 最后还是想说，RedSkill是一个划时代的功能。因为在未来用户的Agent的能力或许和本人的能力一样重要，而新时代的创作者经济一定是从分发内容快进到分发能力。RedSkill让我们看到了未来社交媒体新意义的雏形，大家赶快都来试试吧！",
+      "mainSource": "post-text"
+    },
+    {
+      "number": 3,
+      "author": "Kiwi的AI实验室🥝",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Seedance%E8%80%81%E5%BA%9F%E7%89%87%20Kiwi%E7%9A%84AI%E5%AE%9E%E9%AA%8C%E5%AE%A4&source=web_search_result_notes",
+      "publishedAt": "2026-09-24_00:19:08",
+      "likes": "53",
+      "collections": "119",
+      "mediaType": "视频",
+      "category": "AI视频生成",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "Skills与工作流",
+      "sourceBoards": [
+        "AI视频生成"
+      ],
+      "themes": [
+        "AI视频",
+        "提示词模板"
+      ],
+      "kind": "Tool",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [
+        "Seedance 导演 Skill"
+      ],
+      "unverifiedTools": [
+        "Seedance 导演 Skill"
+      ],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": false,
+      "id": "6ab3dfdc00000000140023f9",
+      "title": "Seedance老废片？花2W得出的提示词模板分享",
+      "mainText": "项目背景\n\n有人花费超过 2 万元，拆解了 ​​463 条 AI 视频​​案例，提炼出 25 个提示词模板、60 个导演 Skill，并公开了 264 次跨模型复测结果，目的是帮用户减少 AI 视频试错成本、告别废片。\n\n核心内容\n\n- ​​提示词模板​​：涵盖 UGC、商业广告、叙事、动画、动作等类型。每条提示词都经过真实模型复现验证，不靠成片反推，确保画面稳定和动作完整。\n- ​​导演 Skill​​：相当于\"一行命令\"，可以安装在 Codex 或 Claude Code 中。直接输入\"帮我做一条 15 秒洗发水 UGC\"，AI 会自动选择模板、补时间轴、镜头动作、人物锁和产品锁。\n- ​​灵感库​​：在线更新，包含更新排行榜，用户可以直接参考使用。\n\n使用方法\n\n- ​​新手​​：直接使用提示词模板，挑中想要的效果后，替换人物、产品和场景即可生成自己的 Prompt。\n- ​​进阶用户​​：安装导演 Skill，用自然语言指令让 AI 自动完成模板选择和细节填充。\n\n核心价值\n\n这个项目最有价值的地方不在于让你收藏多少提示词模板，而是​​把 AI 视频创作从\"碰运气抽卡\"变成了一套可以复现、可信的方法论​​。",
+      "mainSource": "diandian"
+    },
+    {
+      "number": 4,
+      "author": "AI小蔡狗",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=AI%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E9%A1%B9%E7%9B%AE%20GitHub%20TrendIing%E6%A6%9C%E7%AC%AC%E4%B8%80%20AI%E5%B0%8F%E8%94%A1%E7%8B%97&source=web_search_result_notes",
+      "publishedAt": "2026-06-12_10:38:01",
+      "likes": "535",
+      "collections": "1437",
+      "mediaType": "视频",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [
+        "Skills"
+      ],
+      "themes": [
+        "last30days",
+        "社媒研究",
+        "趋势"
+      ],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": false,
+      "id": "6a2a81d1000000001702d3de",
+      "title": "AI搜索引擎项目，GitHub TrendIing榜第一",
+      "mainText": "记住这个地表超强AI搜索引擎项目 它在GitHub拿下了38.2K的Star 并且登上了GitHub Trendy音榜第一 项目的核心功能是 早瞄近30天天多个平台的热点讨论 生成数据驱动的选题检报 并且是按真实互动数据加权 而非编辑筛选 在搜索前先理解话题和你的意图 解析实体 人民 公司 占有名词 再决定去哪搜 避免再错的地方找答案 如果是同一个故事 在Reddit X YouTube三個平台都出現時 它會自動聚合成一條 而不是給你三份榮譽的簡報 生成的簡報是HTML文件 可以直接丟進Slack Notion或者郵件 不需要額外的渲染依賴 非常適合研究者做話題研究 進品追蹤 以及內容創作者和產品經理 就非常不錯",
+      "mainSource": "video-transcript"
+    },
+    {
+      "number": 5,
+      "author": "合成作者",
+      "sourceUrl": "",
+      "publishedAt": "2026-08-02",
+      "likes": "10",
+      "collections": "20",
+      "mediaType": "视频",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [],
+      "themes": [],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": {
+        "kind": "video-transcript",
+        "text": "这是视频里说的话，原样保留。"
+      },
+      "postUnreachable": false,
+      "replyDamaged": false,
+      "id": "fixture-post-and-transcript",
+      "title": "合成：有帖文也有转写",
+      "mainText": "第一段帖子文字。\n\n第二段帖子文字。",
+      "mainSource": "post-text"
+    },
+    {
+      "number": 6,
+      "author": "合成作者",
+      "sourceUrl": "",
+      "publishedAt": "2026-08-03",
+      "likes": "10",
+      "collections": "20",
+      "mediaType": "图文",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [],
+      "themes": [],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": false,
+      "id": "fixture-paragraphs",
+      "title": "合成：两个段落",
+      "mainText": "第一段。\n\n第二段。",
+      "mainSource": "post-text"
+    },
+    {
+      "number": 7,
+      "author": "合成作者",
+      "sourceUrl": "",
+      "publishedAt": "2026-08-04",
+      "likes": "10",
+      "collections": "20",
+      "mediaType": "视频",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [],
+      "themes": [],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": true,
+      "replyDamaged": false,
+      "id": "fixture-unreachable",
+      "title": "合成：原帖不可访问",
+      "mainText": "这是一条保存下来的点点回复。\n\n它有两个段落。",
+      "mainSource": "diandian"
+    },
+    {
+      "number": 8,
+      "author": "合成作者",
+      "sourceUrl": "",
+      "publishedAt": "2026-08-05",
+      "likes": "10",
+      "collections": "20",
+      "mediaType": "图文",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [],
+      "themes": [],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": false,
+      "id": "fixture-image-text",
+      "title": "合成：图片文字",
+      "mainText": "图片里的文字，原样保留。",
+      "mainSource": "image-text"
+    },
+    {
+      "number": 9,
+      "author": "合成作者",
+      "sourceUrl": "",
+      "publishedAt": "2026-08-06",
+      "likes": "10",
+      "collections": "20",
+      "mediaType": "视频",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [],
+      "themes": [],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": false,
+      "id": "fixture-short-reply",
+      "title": "合成：短回复不折叠",
+      "mainText": "项目简介\n\n这是一条很短的点点回复，不需要折叠。",
+      "mainSource": "diandian"
+    },
+    {
+      "number": 10,
+      "author": "合成作者",
+      "sourceUrl": "",
+      "publishedAt": "2026-08-07",
+      "likes": "10",
+      "collections": "20",
+      "mediaType": "视频",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [],
+      "themes": [
+        "占位主题"
+      ],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": false,
+      "id": "fixture-no-text",
+      "title": "合成：没有任何文字",
+      "mainText": "",
+      "mainSource": "post-text"
+    },
+    {
+      "number": 11,
+      "author": "合成作者",
+      "sourceUrl": "",
+      "publishedAt": "2026-08-08",
+      "likes": "10",
+      "collections": "20",
+      "mediaType": "视频",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [],
+      "themes": [],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": true,
+      "id": "fixture-damaged-transcript",
+      "title": "合成：回复残缺，用转写",
+      "mainText": "一段很短的视频转写。",
+      "mainSource": "video-transcript"
+    },
+    {
+      "number": 12,
+      "author": "合成作者",
+      "sourceUrl": "",
+      "publishedAt": "2026-08-09",
+      "likes": "10",
+      "collections": "20",
+      "mediaType": "视频",
+      "category": "Skills",
+      "categorySource": "source_board",
+      "categoryReason": "",
+      "suggestedCategory": "",
+      "sourceBoards": [],
+      "themes": [],
+      "kind": "Note",
+      "resources": [],
+      "resourceIds": [],
+      "tools": [],
+      "unverifiedTools": [],
+      "extracted": null,
+      "postUnreachable": false,
+      "replyDamaged": true,
+      "id": "fixture-damaged-only-reply",
+      "title": "合成：只剩残缺回复",
+      "mainText": "这篇讲了两件事，第一件，",
+      "mainSource": "diandian"
+    }
+  ],
+  "resources": []
+}

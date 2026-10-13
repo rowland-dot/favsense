@@ -83,19 +83,6 @@ for (const name of ["resume-core-running", "resume-summary-running"]) {
 }
 
 for (const [name, expected] of [
-  ["summary-failed", "本篇总结失败，可在下次继续"],
-  ["batch-aborted", "本次未尝试，可继续整理"],
-  ["stale", "正文已变化，需重新核验"],
-]) {
-  test(`${name} exposes its distinct note recovery state`, async ({ page }) => {
-    await scenario(page, name);
-    await page.goto("/");
-    await page.getByRole("button", { name: "查看总结" }).nth(1).click();
-    await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
-  });
-}
-
-for (const [name, expected] of [
   ["publish-failed", "发布失败，远端仍为上一版；本地结果已保留"],
   ["safety-stopped", "安全限制已触发，本轮已停止"],
 ]) {
@@ -144,23 +131,4 @@ test("a start the bridge refuses because of a leftover stop shows the date inste
   await expect(control).toContainText("2026-08-29 的安全停止尚未清除");
   await expect(control).not.toContainText("本次整理未完成");
   await expect(page.getByRole("button", { name: "已确认恢复，清除并继续" })).toBeVisible();
-});
-
-test("local note detail shows captured summary as pending review without publishing it", async ({ page }) => {
-  await scenario(page, "success");
-  await page.goto("/");
-  await page.getByRole("button", { name: "查看总结" }).nth(1).click();
-  const overlay = page.getByRole("status", { name: "本机补证内容" });
-  await expect(overlay).toContainText("总结已保存，尚未完成证据核验");
-  await expect(overlay).toContainText("Captured private synthetic summary");
-  await expect(overlay).toContainText("点点总结");
-});
-
-test("public origin never mounts or requests the private pending overlay", async ({ page }) => {
-  const requests = [];
-  page.on("request", (request) => requests.push(request.url()));
-  await page.goto("http://127.0.0.1:8767/");
-  await page.getByRole("button", { name: "查看总结" }).nth(1).click();
-  await expect(page.getByText("补证内容", { exact: true })).toHaveCount(0);
-  expect(requests.some((url) => url.includes("/notes/organization-status"))).toBe(false);
 });

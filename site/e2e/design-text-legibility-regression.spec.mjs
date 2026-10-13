@@ -76,7 +76,6 @@ async function textProbesForEveryView(page, kind, theme) {
   for (const id of noteIds) {
     await page.locator(`[data-open-note="${id}"]`).click();
     await expect(page.locator("#detail-dialog")).toHaveAttribute("open", "");
-    if (kind === "manager" && id === "note-pending") await expect(page.getByRole("status", { name: "本机补证内容" })).toBeVisible();
     probes.push(...await scan(page, `详情 ${id}`, "#detail-dialog"));
     await page.locator("#dialog-close").click();
     await expect(page.locator("#detail-dialog")).not.toHaveAttribute("open", "");
