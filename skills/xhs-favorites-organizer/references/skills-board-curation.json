@@ -52,59 +52,6 @@
     "review_status": "accepted",
     "review_reason_code": ""
   },
-  "693657fc000000001e038601": {
-    "id": "693657fc000000001e038601",
-    "content_sha256": "66c92928d2b6ad91d99baf9e9775ddf73e9f9f700d45eb30b31900954cb17823",
-    "title": "选品训练法：刷手机、感受、记录",
-    "category": "",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "​​动作​​：打开手机刷某宝，旁边放个小本子记录 ​​三个关键点记录​​： ​​为什么会停下来看​​——第一眼在看什么 案例拆解 ​​眉笔案例​​：发现第一眼被\"主图效果图是否自然\"吸引，第二眼看外观，点击是因为\"买一送一\"的卖点。- ​​厨房置物架案例​​：发现买家会看置物架上的瓶瓶罐罐是否和自己家一样，于是把罐子换成本地家庭常用的外形，引发共鸣，做成爆款。 方法价值 把消费者无意识的视觉感知变成显性经验后，卖家就能一眼看出别人图的优劣，选品时避开很多坑，提升爆款成功率。",
-    "action": "选择一个熟悉品类，按第一眼、第二眼、点击理由三栏记录一周样本；把高频线索转成主图或卖点假设，并通过固定受众的小范围测试验证。面对不熟悉的品类，先补充真实使用场景和当地消费者资料。",
-    "themes": [
-      "产品卖点",
-      "出海电商",
-      "消费者视角",
-      "选品训练"
-    ],
-    "tools": [],
-    "kind": "Workflow",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "c26c023d0edad198663c4960c2f696fd297ac823b4f0befaacf1d37e698f277e",
-    "evidence_sha256": "8ba0d82a8357220c427a357eb0ba9e20dfdea567d22afa6ef45c554de8fba336",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "58e5720bbd67b465787456c1bcf60862509797fef775102e03905f09c7dd95ed"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "14670d859b36b7915a15b3dc5ea2d301a583bfec3106bd50e2c5b51e9f20ed1b"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "ac0f0365ec2f1c5e13c7949ca7f175efb3e9b78e9d0607f223d3926f2c4b30bc",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
   "69d50977000000002301f67a": {
     "id": "69d50977000000002301f67a",
     "content_sha256": "e3a2783b71c4f77b58a5e9d972c64a1cb6757187d1d7b2a01fa86b6c9db0c52d",
@@ -1146,35 +1093,29 @@
   "6a368882000000001700bf8c": {
     "id": "6a368882000000001700bf8c",
     "content_sha256": "1af0b08133ed243b77040e06b51b50544fe7622484ee5329b16545680e1f205f",
-    "title": "两个好用的提示词，让AI输出质量翻倍",
+    "title": "两个提示词：先澄清需求，再让五个顾问辩论",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "抱歉，我目前无法直接访问小红书链接来读取笔记内容。 你可以把笔记的​​标题​​或​​正文内容​​直接复制发给我，我来帮你总结！",
-    "action": "Save — structured framework for monetising AI skills across multiple income channels with concrete method breakdown",
+    "summary": "视频给出两条可直接复用的提示词。第一条要求 AI 在执行任务前先识别所有模糊和缺失的需求点，逐条列出问题向用户确认，全部明确后再输出，用来减少来回修改。第二条针对 AI 顺着用户说话的倾向，让它扮演五个互不通气的独立顾问并用固定句式发言：反驳者引用失败案例和数据挑漏洞，本质追问者重新定义问题，扩张者提出 A、B 之外的选项，代价权衡者分析机会成本和隐形成本，执行者只问下周一早上具体做什么。视频里修改次数减少和转化率提高的说法只是作者个人经验。",
+    "action": "挑一个需求模糊的写作或方案任务，先只加第一条提示词，记下 AI 提了哪些确认问题、最后改了几轮；遇到决策类问题再用五顾问提示词，检查它是否给出了你没想到的反对意见和可执行的第一步。",
     "themes": [
-      "AI赚钱",
-      "副业收入",
-      "技能矩阵"
+      "多角色辩论",
+      "提示词工程",
+      "需求澄清"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "84066d91dbb2d3f1595bd9f6d1b595ac7238e955264a55afedbd22d361890103",
-    "evidence_sha256": "f3678e347c0d5192ecff57a208f455171b2035f623ea00feb1539f0036414c06",
+    "evidence_sha256": "7a2614a4866c300d38f1924ea34f895c936b7c075e5bb02ad03ba040acf0921d",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "d3c28f1f28baf3308301d3c6bff9883f5a67a434b822ff2cd9e9259ca679631a"
-      },
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "8d850f230874ecaf557475890d160f0d6f73e58c63126cbd44749d473305305f"
       },
       {
         "method": "public_text",
@@ -1197,7 +1138,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "7676c64669e6caaa70fbc1ecc5f9a8dd66b6ac579b2a2de19a748ab380816614",
+    "candidate_revision": "117e5ab5368541468fe570e55b7bc30890f39c926720fe2c9485fa8deb632283",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -1841,35 +1782,29 @@
   "6a4bd81c000000002100bb24": {
     "id": "6a4bd81c000000002100bb24",
     "content_sha256": "7cd058e67b63a58bef8e67bb405160d0bf3d8f9600a5664ba5b85aeffca053a1",
-    "title": "全网最适合小白的WorkBuddy入门指南！",
+    "title": "WorkBuddy 入门：三种模式、技能与专家团、连接器和项目空间",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "今天这期视频是连奶奶都能听懂的 Walker Body的新手小白指南 好 按照惯例 我们先解释一下Walker Body是什么东西 Walker Body就是囤迅推出的一个 面向办公场景的agent软件 agent软件是什么呢 也许你现在已经使用过像豆包 Deep Stick这种AI的应用 但它们是聊天型的软件 它只能在你的网页上去给你做问答 就像是AI时代的百度或谷歌 但是agent软件它是跑在你本地电脑的 可以去操作你电脑的文件 为你生成或者读取文件 甚至现在还可以去帮你",
-    "action": "评估WorkBuddy平台作为Agent+Skill工作流管理工具的适用性。",
+    "summary": "视频面向新手讲解腾讯的办公 Agent 软件 WorkBuddy：它运行在本地电脑上，可以读写和生成文件。三种模式是 Ask（只聊天）、Plan（先追问需求并给出计划，确认后执行）和 Craft（直接操作电脑，可开完全访问权限，风险更高）。模型可选自动路由，按积分倍数计费，看不到实际 Token 消耗。特色功能有技能（含技能市场和生活类 Skill，演示了查询并下单口红）、专家与专家团（多个 Agent 分工、互相审阅、并行执行）、连接器（打通 QQ 邮箱、腾讯会议、飞书、钉钉等，演示读取会议转写生成纪要）。项目空间支持多人协同、任务看板和把任务派给 Agent。作者指出的不足：专家团只能加入预置专家，项目空间不能读取或操作本地文件，只能手动上传。",
+    "action": "先用一个不含敏感资料的文件夹作为工作空间，在 Ask 或 Plan 模式下试一个小任务并记录积分消耗；不要默认开启完全访问权限，涉及支付的 Skill 和每个连接器的授权范围逐一确认；团队使用前先测试项目空间的文件上传与成员权限。",
     "themes": [
-      "AI Agent",
-      "Skill管理",
-      "工作流"
+      "Agent团队",
+      "WorkBuddy",
+      "办公Agent"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "40a6f4b504a19f7a9a9cc83be5d6b7c9c6debb9d27cd2cee3db93457ab7b22dc",
-    "evidence_sha256": "cfa46df6a16ba6df1bac9be7f2da9f06debeaf6442274bdadaac034a6eed6148",
+    "evidence_sha256": "94fbf387bc6217d49b0cba258b76de96417a62f1571b80f79d92b8406a42ff64",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
-        "result_sha256": "313f8ac751fbde2eb5cb5c0a5d0faddc4e070483e446e595b11fd97d45a7fe61"
-      },
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "14c9aa14e648672fc9754b8398b45e7f58973ac31b664164ad8a0a1fc6ef4083"
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "3cdd6679b6add7e1bfa7bc11c5f7eab367ed040dc1e62df28cce5e1cb24a9124"
       },
       {
         "method": "public_text",
@@ -1892,7 +1827,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "0eba4e3556cf28e45047a0676fc6110c3fe60fdeed34a2fc0a54f123c6eae32e",
+    "candidate_revision": "c029092c1564d85c89ac26de422a981882edc6b41e02ba553b00ebc6d8c30ba9",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -5857,15 +5792,15 @@
   "6a3a04110000000021021a89": {
     "id": "6a3a04110000000021021a89",
     "content_sha256": "cec488f8128561af49e8da4fb4d406e96f0f4ff2c5f2a0722d5cda7b12655e5d",
-    "title": "用 Codex 分析买家评论辅助选品",
+    "title": "用 Codex 和 LinkFox 的 Amazon Reviews Skill 挖掘买家评论",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频演示用 Amazon Review Skill 抓取近期低星评论，按时间整理投诉点，再对竞品差评和自家好评做聚类，用于产品问题定位、差异化选品和 Listing 表达优化。",
-    "action": "先限定站点、ASIN、星级、时间窗和最大评论数，保存去标识化 CSV；每个痛点结论回链原始评论，并把利润、合规和供应链判断放入独立复核。",
+    "summary": "LinkFox 账号发布的演示：在 LinkFox Skills 网站搜索 Amazon Reviews Skill（画面显示 v1.0.2，说明支持 15 个站点按星级筛选评论）并装进 Codex，然后分三种用法。一是抓自家产品最近 30 条 1 到 2 星评论按时间排序，定位投诉集中在哪个环节，演示结果整理成 CSV，问题集中在手柄、漏水、凹痕和保冷；二是抓竞品 1 到 3 星评论，归纳买家最集中的三类投诉，作为新品差异化切入点；三是抓自家 4 到 5 星评论，提炼买家高频夸赞的词和场景，写进 Listing 标题和五点描述。",
+    "action": "先在 LinkFox 确认该 Skill 的提供方、调用费用和评论数据来源，再用一个自家 ASIN 跑一次 1 到 2 星评论抓取，人工抽查 CSV 中的评论原文是否支持归纳出的结论；差异化方向和 Listing 用词只当假设，结合退货原因与客服记录再验证。",
     "themes": [
+      "Listing优化",
       "亚马逊选品",
-      "正文待补",
       "评论分析"
     ],
     "tools": [
@@ -5875,7 +5810,7 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "fdd7c1edd5645c4b3d639d091de215f52b1ec0a740c59876d99dd0ecf899ba4b",
-    "evidence_sha256": "df5926def957acf364a110ab9a11620d7eb1876e50e01e28093b568945d3bf1b",
+    "evidence_sha256": "995b988438653303225c9290bd6179294b5ce29a01b4a414578662be1b4b3827",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
@@ -5884,10 +5819,10 @@
         "result_sha256": "3b7b56c9c4e25ff18c74ce97a3ee435dba579d9e99d1cbd894877b2d3f3174dc"
       },
       {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "3b46f7d084cea39d2b36f1d3c1b051ff4c51f9670231bbbf8f7f23b8c1eda3cf"
+        "method": "image_ocr",
+        "provider": "human_frame_review",
+        "version": "claude-visual-review@2026-10-13",
+        "result_sha256": "bcef5b26461dfe187a29b3b058b4e5e2e87b0f788b2aeec8db9f2ee565cf2cba"
       },
       {
         "method": "public_text",
@@ -5910,7 +5845,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "014b3152ab271004a8c1c3aaa4b988347103e13b8d30d7240a5a37a533612686",
+    "candidate_revision": "dbc704ddbd8aad54b6483b77ecf49fa8ae190779084fe88f00895af018f05d1d",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -6043,16 +5978,16 @@
   "6a795b5a0000000022015f1b": {
     "id": "6a795b5a0000000022015f1b",
     "content_sha256": "2ccd2419bafb75387c6f4f067e211b698aea843a9a327ad2afb4cf81d8970b9a",
-    "title": "做自媒体，先核验这款热点汇总 Skill",
+    "title": "TrendRadar：多平台热点聚合与推送",
     "category": "",
     "category_override": false,
     "category_reason": "",
     "summary": "视频介绍 TrendRadar：聚合多平台热榜与 RSS，按关键词筛选并生成 AI 分析简报，再推送到常用消息渠道；画面中的星数只代表拍摄时快照。",
     "action": "先在本地用少量公开来源试运行，限制模型和推送渠道的凭据范围，检查误报、重复新闻和版权，再决定是否长期部署。",
     "themes": [
-      "Skill候选",
-      "正文待补",
-      "热点汇总"
+      "开源工具",
+      "热点汇总",
+      "自媒体运营"
     ],
     "tools": [
       "TrendRadar"
@@ -6061,19 +5996,13 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "15234ceead6950e90cdd4509b66f275e388d22e4e767fbb691cd80ca3e91735c",
-    "evidence_sha256": "1fcc33dc7dea7b5c55a35798233b87805249311f7fbaa44295ee59c94fb68391",
+    "evidence_sha256": "8c0b61b7f3fc6ffffd2392c158d88a106b6df0a4bc3b12d285bf15d2dec46073",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
         "provider": "faster-whisper",
         "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "8f79a8a140361d71184b582ffca61643239f7bc21d476b5c35f2dc747e919e60"
-      },
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "3af441ae21ecce336d6d28cd0fd2b502936f96cd56a44bed000a9e338fd648fe"
       },
       {
         "method": "image_ocr",
@@ -6102,7 +6031,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "06aa1b39f7a11c563478a04556f9a7aa1721397d34ad8a1e55d671dd5f6b0e9e",
+    "candidate_revision": "9e562bf89b816d9224ce8adda9ce5340eb2d6ee6bb7b9c30b407f24b2ab00ec6",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -6113,31 +6042,25 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频演示在 ChatGPT 中连接 Canva，并调用 Magic Layer 把生成图转成可继续调整文字和版式的 Canva 设计；实际可编辑程度取决于识别结果和账户功能。",
+    "summary": "视频演示在 ChatGPT 里搜索并安装 Canva 插件、连接自己的 Canva 账号，然后在对话框输入 Add Canva 并选择 Magic Layer，等待处理后得到一个 Canva 链接，打开后生成图里的文字和排版都能继续修改，不用为了改字重新生成整张图。视频没有说明需要哪种 Canva 账户，也没有展示复杂图片的分层效果。",
     "action": "用无敏感素材测试文字、分层和版式保真，检查 Canva 连接权限与素材授权；导出前逐项核对字体、图片和品牌资产。",
     "themes": [
       "AI生图",
-      "图片编辑",
-      "正文待补"
+      "ChatGPT应用",
+      "图片编辑"
     ],
     "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "8f2ac70d8785dcd73627fcf3fa2275685b2280fc26080209e05e47576972be13",
-    "evidence_sha256": "e53769c921896c9d3369c93c2c10cdf077841c562859795436e8fb4636b683f7",
+    "evidence_sha256": "8415ec0070bcf9b5e996f72b804876bfa20196de0fd90bf1daddeddd365ee44d",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
         "provider": "faster-whisper",
         "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "0912f60dfaa1a300762a30caaad6c393a63ad43f148267197e81518e4b805033"
-      },
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "f938244443c591338d9ed3323cb909a5846acce72842dbff8071b2264014eb1c"
       },
       {
         "method": "public_text",
@@ -6160,7 +6083,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "e47b2a33650d9f39a0badf466946bf57125c41767a272f20319cc8342eb7b387",
+    "candidate_revision": "3232ca42fb5ad32a6fc7c2c0af1eb037e13833d1ead6003dea1b3c976f907168",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -7318,58 +7241,6 @@
     "review_status": "accepted",
     "review_reason_code": ""
   },
-  "6a5b1bee000000000f007345": {
-    "id": "6a5b1bee000000000f007345",
-    "content_sha256": "65d12fc45944a55f2b0ec5f9b0c4199457670569f08f30ab510d0a228edb572e",
-    "title": "本地部署AI绘画软件！",
-    "category": "AI工具",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "演示用Stable Diffusion进行AI图生图的完整工作流，包含批处理快捷键和Modus工具操作步骤。",
-    "action": "参照视频步骤搭建本地Stable Diffusion图生图工作流。",
-    "themes": [
-      "AI工作流",
-      "AI绘图",
-      "图生图"
-    ],
-    "tools": [],
-    "kind": "Workflow",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "e8ac8bcc4c32c9b9a10d31c49c9ebdddc96ec0361d75fcd5a896baa13b2479e2",
-    "evidence_sha256": "be060df585fcd1e3f5ec562e860cf9fa0d61fc533ae73917fb1aea6f330f5e8f",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "e8360874f066c2228ba1707012feb3c634761e86a64a0ae7a27b44dcd0cabef3"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "bf72f106aa5597fe2be8eb12febdf187be2491960541be9e73b827113cb58e80"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "37b8649f86266c82a69d8fbf971aadd457103e13257532668823ea0681ff7124",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
   "6a462248000000001102cab2": {
     "id": "6a462248000000001102cab2",
     "content_sha256": "bca8dbfe387b8d2d26fc6e91be0b5d039823842b8918c3c41d0e0213e8f02619",
@@ -7471,58 +7342,6 @@
       "verification_snapshot_sha256": ""
     },
     "candidate_revision": "7d259ebab1af66cfb30c4da3af11ba44219411d61677a972a40417d973bc1340",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "6a26863e000000000803c827": {
-    "id": "6a26863e000000000803c827",
-    "content_sha256": "0b03914a370bb9083c9e5ba9059a70a4235d2a2f47a759038d7e43a187f8d510",
-    "title": "一键翻配视频玩转海外流量",
-    "category": "AI工具",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "GitHub开源工具Voice-Pro支持100+语言，提供声音克隆、语音翻译、视频配音等完整音视频AI处理能力，可本地部署。",
-    "action": "Save — Voice-Pro open-source tool for voice cloning, translation, and dubbing across 100+ languages; locally deployable",
-    "themes": [
-      "多语言",
-      "语音处理",
-      "音视频制作"
-    ],
-    "tools": [],
-    "kind": "Tool",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "2402fc64f7424fa0dc27b1b77f1dd613c434bebde5610b92700879b14d9a26da",
-    "evidence_sha256": "6d17e9ea103e8914956b6431a39a1156d0dcd03ffedaff72e98c5adf1e10b443",
-    "evidence_dependencies": [
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "a6bfc8d8a1d54778ec52494607377d3b7ec3ce9112915a3726aa47d004b8131a"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "67e70445b4a508e8b94d416ed3d5b51609517b9264e6fda06f3b938b1af57879"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "5599e849b1153cf6aa48378c26b5c294e8e0bacbf703264e94c5c035c2e3c029",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -8373,29 +8192,35 @@
   "69c7ac430000000022027cb0": {
     "id": "69c7ac430000000022027cb0",
     "content_sha256": "43c2a1b5b4bd5632c153ffc45e97978109d938e81ab28e795815e2c7bbabfed2",
-    "title": "别再说不会用！OpenClaw一键管理神器来了！",
+    "title": "ClawPanel：OpenClaw 可视化管理面板",
     "category": "AI工具",
     "category_override": false,
     "category_reason": "",
-    "summary": "介绍OpenClaw平台架构：通过Gateway与ClawHub管理Skill，支持多渠道Agent一键部署。",
-    "action": "登录OpenClaw平台体验ClawHub技能市场，评估是否适合接入自有业务场景。",
+    "summary": "视频介绍 ClawPanel，一个管理 OpenClaw（俗称“小龙虾”）的可视化后台：仪表盘实时显示 Gateway 等运行状态，出错时可点一下自动诊断修复；集中管理多个模型并快速切换；可以直接查看和修改对话记忆文件；另有消息渠道、Agent、定时任务和安全设置页。Skills 页可以通过“SkillHub（国内加速）”搜索社区 Skill 一键安装，视频称借此绕开官方源的频率限制。画面显示版本 v0.10.0 和网址 claw.qt.cool，没有给出开源仓库或许可证。",
+    "action": "先在测试用的 OpenClaw 实例上试 ClawPanel，确认它会读写哪些配置和记忆文件、需要什么权限；通过国内镜像安装 Skill 前逐个查看 Skill 的来源和代码，不在装有密钥的主环境里直接一键安装。",
     "themes": [
-      "AI平台",
-      "Agent部署",
-      "技能市场"
+      "OpenClaw",
+      "Skill安装",
+      "可视化管理"
     ],
     "tools": [],
-    "kind": "Note",
+    "kind": "Tool",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "367d63f3894eae7343fca588b03812ef0d4d8beb32169e5310937ff8dc2f2aee",
-    "evidence_sha256": "38715af09607939f345b66f560c430aeee10751415db580a8406ea27ae00e8fe",
+    "candidate_seed_revision": "ab6dad3e898b131bed455d8aed7168c7822bc204cac5aae6eb58a902a73e3c26",
+    "evidence_sha256": "ca4dd38253725f8db7efc8647ccea4881a66368b0a4557bae74d99483e868f49",
     "evidence_dependencies": [
       {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "9c3fad9637e90ac605d0596272141bb11b471500df2255ca576015cd63d6d58d"
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "90c8b56b5083a8b16410caf96df934504bbf687254a1b9d1c18d2269bc59f7c5"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "human_frame_review",
+        "version": "claude-visual-review@2026-10-13",
+        "result_sha256": "66937f09abb7f0532e9bb73fc86d8dc24eff659db2342878892139e53b13772d"
       },
       {
         "method": "public_text",
@@ -8418,7 +8243,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "a1ac17cf64ccb39523cb8684ea4e9d2f4d7a8cc57d2844477ee147d42d33bb1a",
+    "candidate_revision": "d36cd3cf391bc3f09329dc736d405ad5ba4d509a5b6fa33baacaaf832f904055",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -8796,29 +8621,29 @@
   "6a4afd18000000001101092b": {
     "id": "6a4afd18000000001101092b",
     "content_sha256": "0721aca05feacf3e4b967013a06cd43c83b66ff5ae5b579ef16d67b138ae5aa1",
-    "title": "手把手教你免费部署自己人生第一个AI Agent",
+    "title": "EdgeOne Makers：免费托管和部署 AI Agent",
     "category": "开发部署与Vibe Coding",
     "category_override": false,
     "category_reason": "",
-    "summary": "长视频从本地代码演示 EdgeOne Pages：导入项目后自动构建与部署，配置域名、环境变量、数据处理、定时任务、DDoS 防护、全球节点和身份认证。",
-    "action": "用无敏感数据 Demo 验证构建日志、环境变量、域名、回滚和费用边界。",
+    "summary": "视频介绍腾讯云新推出的 EdgeOne Makers 边缘 Web 与 Agent 托管平台，演示从模板部署一个“AI 趋势定时摘要助手”：工作台有 6 类场景、19 个预设模板，也可以用命令行、Git 和 CI/CD 把本地写好的 Agent 接进来；点“部署”、选环境和环境变量即可上线，平台自动配置 SSL 并分配免费域名，依托腾讯云全球边缘节点，自带 DDoS 和 WAF 防护；浏览器、代码执行等动作在独立沙箱里运行，控制台能看到每一步调用的模型、Token 用量和耗时；不绑定专属 SDK，常见 Python、JS 框架和模型都能用。视频称注册用户每月有免费额度，属于上线活动宣传。",
+    "action": "用一个不含敏感数据的模板 Agent 完整走一遍部署，核对构建日志、环境变量、沙箱隔离和回滚方式；在官方计费页确认免费额度、超额费用和数据存放地域后，再决定是否迁移正式项目。",
     "themes": [
       "Agent部署",
-      "EdgeOne Pages",
-      "定时任务"
+      "EdgeOne Makers",
+      "边缘托管"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "cafedf87ef86b04ec451784410a663386433eb48c027a9f370b2f0a46ac79502",
-    "evidence_sha256": "cea90d6bb272338a96bd6cfb95613689984d33051e364874b71ceca9a19d54df",
+    "evidence_sha256": "ef153642624efffb54065ac111b021ce7a77dc44a28f270d4cb06448157a32ee",
     "evidence_dependencies": [
       {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "844c51e771127da738797b43eb34f218c2949509198c1cf85285aad7b3ffd02d"
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "2da3b80934312f78d765ba9dbc38ba773c40ffdfd8265585e367c85297949d42"
       },
       {
         "method": "public_text",
@@ -8841,36 +8666,44 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "97328af27f26f7e31d214f658374253228b4aa96cd5e47ec76b8cb0494806745",
+    "candidate_revision": "323ba69235ec30af3b8c8a78643c4ecad0896222b45a480b034db7aaaa6898ec",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a53c47800000000150268e6": {
     "id": "6a53c47800000000150268e6",
     "content_sha256": "8b35407eb67bf224fefcbe76f9076551c51cc71ce8ef5acdd98a67f63b4243ee",
-    "title": "Claude Code 代币使用量减少最多 92%",
+    "title": "Headroom：在模型读取前压缩日志和文件以节省 Token",
     "category": "本地模型与成本",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频介绍 Headroom：在工具输出、日志、文件、数据库转储与 RAG 片段进入模型前做压缩；示例把约 17,765 token 降到 1,408，并提供库、代理与 MCP 接入。",
-    "action": "用固定代码排错任务实测 token、答案正确率、延迟和遗漏；不能直接采用视频宣称的 92% 作为结论。",
+    "summary": "视频介绍开源工具 Headroom（画面给出 github.com/headroomlabs-ai/headroom）：它放在你和 Claude 之间充当过滤器，在日志、文件、数据库转储等内容进入上下文前压掉模型用不到的噪音。画面里的真实代码搜索示例把单次运行从 17,765 个 Token 降到 1,408 个，视频据此称便宜 92%；安装用 pip 或 npm 的 headroom-ai，可以包裹 claude 命令运行、开本地代理，或在代码里调用压缩函数，另有 MCP 扩展。星数和 92% 都是视频里的说法。",
+    "action": "用一个固定的代码排错任务分别直接运行和经 Headroom 运行，比较 Token、答案正确率、延迟和被压掉的信息；先在不含密钥的仓库里试本地代理模式，确认日志内容不会被发到别处。",
     "themes": [
       "Claude Code",
-      "Headroom",
-      "Token压缩"
+      "Token压缩",
+      "上下文管理"
     ],
-    "tools": [],
-    "kind": "Note",
+    "tools": [
+      "Headroom"
+    ],
+    "kind": "Tool",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "e36342a9087062452b047aba56bcc304084c37b206b5ef9b80acf53ea96a872d",
-    "evidence_sha256": "85d0079eac33fc0505b8a6e6a7e6b229f45dc0ea2893fc31a60d7b41ae0594e0",
+    "candidate_seed_revision": "7988f4345479e3608f32b6da237ce64edbb938faeffb54fd370f138e9ae3dda8",
+    "evidence_sha256": "d59cf681e069e7d3922da6620910115ecfd1f227bba181bece8c70fd9ea1f957",
     "evidence_dependencies": [
       {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "804a68d5418c72cc0591f368b5161af3fbde89d97c1ed43f71c7de53e563d016"
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "5437e25419ea88c26f14ae4e7fe7010fac27c6d06939e6d70dbec1f7e6a39875"
+      },
+      {
+        "method": "image_ocr",
+        "provider": "human_frame_review",
+        "version": "claude-visual-review@2026-10-13",
+        "result_sha256": "eecf94cfaa59c6e7b02caa3634d0f66b79d1479f3111673308d302e3f4c1e7fe"
       },
       {
         "method": "public_text",
@@ -8880,20 +8713,20 @@
       }
     ],
     "resource": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
     "resource_assessment": {
-      "status": "missing",
+      "status": "verified",
       "resource_id": "",
       "reason_code": "resource_not_applicable",
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "3ab629bb51c25bce9e999214bca88acbab4e1a677f5bfd7833e74eac67458163",
+    "candidate_revision": "6d1a88dd602912e31bf4d6ae9ab26a5746490438de009bb40904fab2684ce0fb",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -9268,7 +9101,7 @@
     "category": "Skills与工作流",
     "category_override": false,
     "category_reason": "",
-    "summary": "逐帧确认视频列出的七项：Agent-Reach、OpenCLI、PleasePrompto/notebooklm-skill、ListenHub Skills、google-labs-code/stitch-skills 中的 Remotion Skill、Humanizer-zh 和 baoyu-skills。它们分别解决跨平台取材、网页命令化、资料问答、播客/音视频生成、产品演示视频、中文改写和图文内容生产；并非都适合整包安装。",
+    "summary": "视频按内容生产链路推荐七个 Skill：Agent Reach 用一句话从 YouTube、小红书、Twitter、公众号等平台找素材、取字幕，不花 API 费用；OpenCLI 替你操作浏览器，登录平台、截图、填表、抓数据；一个在 Claude Code 里操作 NotebookLM 的 Skill，把采集到的文章、PDF、视频批量导入做分析；ListenHub 是七个 Skill 的合集，给一个主题或链接就能生成公众号长文、小红书图文卡片和口播稿，口播稿还能转成播客；Remotion 用代码生成动效视频；Humanizer-zh 用于去掉中文文本的 AI 味；宝玉（baoyu）的 Skill 合集有二十多个，能给文章配图，并通过真实浏览器发布到推特、公众号和微博。视频没有给出各项目的仓库地址。",
     "action": "按内容链路分批试用：先只读取材与资料问答，再测试草稿与视频生成；涉及浏览器登录、Google 会话、ListenHub API、外部素材和自动发布时必须单独授权，默认保留人工审核。",
     "themes": [
       "Agent Skills",
@@ -9280,13 +9113,13 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "dc273c80830e1dad40bc3e4b1030a91d093e1ceb1e915bae9e93f0648ee73706",
-    "evidence_sha256": "93c96826310102711013f85bc34a125b18454ec177cb2a712a63676d4faa4f3a",
+    "evidence_sha256": "c1f1e5692a50992cd421dd8efb99513d8939fbe5b6cf417c7c77970987225151",
     "evidence_dependencies": [
       {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "af1dd80d219876885649453ac57da13d43400d5ff868adf7cbf7938d4a19ef5a"
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "6cd1c00d17abf8e818def34869221e2dc64610c4b6e4af0bc9815bc1d4375a66"
       },
       {
         "method": "public_text",
@@ -9309,7 +9142,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "82ea2c921e9aebafc15b675a514fc08373d12afe833c41a1632a35adac5d361c",
+    "candidate_revision": "b68bbc91d4fd41216e654a80a59696146395913a0061a5f67d1a201115c35f1d",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -9372,7 +9205,7 @@
     "category": "AI设计与多媒体",
     "category_override": false,
     "category_reason": "",
-    "summary": "视频演示用一张角色图片、9:16 比例、15 秒时长和包含角色、动作、表情、台词的结构化提示词生成数字人口播；台词过长时拆成多段。它能降低拍摄与初剪成本，但人物授权、AI 标识、连续性和语音真实性仍需人工负责。",
+    "summary": "视频演示在 AI 视频工具的视频模式里选择 Seedance 2.0 全能参考，比例 9:16、时长 15 秒，上传一张自己的 AI 形象照，再按固定格式填写角色形象、动作表情和台词的提示词，一键生成数字人口播；15 秒说不完的台词分几段生成。视频提醒发布时要标注 AI 生成；肖像授权、多段之间的人物一致性和口型仍需自己检查。",
     "action": "只使用本人或已授权形象做 15 秒测试，固定角色设定并比较三次生成的一致性；发布前标注 AI 生成并检查口型、台词、肖像与声音授权。",
     "themes": [
       "Seedance 2.0",
@@ -9384,13 +9217,13 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "29d75177ff88269504745d0b0b891100edefa801635f653ef3fb3851f5042a17",
-    "evidence_sha256": "7c94e1580f954522e791a0aceaad82fea399b75092e6badfa315e57cf1654945",
+    "evidence_sha256": "481b8609fdbeeab3dc620ba60900f49c5b05f2600bf9530d7493d59aa85aa12d",
     "evidence_dependencies": [
       {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "888e3f867f8b4307d0ef0319e13009bbdbdbf1a096ac47e3fc91f3a98b44cabd"
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "44125847009565005874bf7735bb5949f96f60009b168c813b7ab3461914b7a6"
       },
       {
         "method": "public_text",
@@ -9413,7 +9246,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "6f86306e148cbed19330dc28733cb4f8461877a10fc05cf84d3d53cf143332db",
+    "candidate_revision": "554148ce26fe829913317bc2e666f5a91cd0cc9026fd9920606a91dda2d923b9",
     "review_status": "accepted",
     "review_reason_code": ""
   },
