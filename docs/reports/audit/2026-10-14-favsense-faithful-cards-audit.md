@@ -154,3 +154,24 @@ Precheck: spec-testability-precheck ok
   Completeness: 9/10  Confidence: 8/10
 
 Final verdict: AUDIT-INCOMPLETE — Step 2 — HOW (plan audit), 3-pass cap exhausted
+
+---
+
+## Step 3 — PLAN (spec coverage pre-flight)
+
+Spec: docs/specs/2026-10-14-favsense-faithful-cards-spec.md · Plan: docs/plans/2026-10-14-favsense-faithful-cards-plan.md
+
+- §3 / CARD-01..09 → Tasks 3, 5, 6 (plan coverage table). §5.2 → Task 6. §6.3 → Tasks 3, 5, 6. §7 card path → Tasks 5, 6; curation layer → Tasks 7, 8, 10 Step 7; archiving → Task 10 Steps 3–4; documents → Task 9. Frozen damaged list → Tasks 4, 6, 10. AC-CARD/NOGATE/ADDON/PARA → Tasks 5, 6, 10, 1.
+- Slice B by spec §9 and the plan's "Not in this plan — Slice B": §4 CAP-01..05 (CAP-06 offline half in Task 1, D12), §5.1, §6.1 LINK-01..03 (and the conditional "搜索原帖文字" removal in §7), §6.2 COMP-01, AC-CAP, AC-LINK, §10 live checks.
+- §7 curated-skip rule removal → Slice B by plan decision D13 (owner rulings §2, §5.1).
+- §0–§2, §8, §11: principle, derivation, rulings, boundaries, approval — no behaviour to assign.
+
+UNASSIGNED: 0. Nothing auto-deferred; TODOS.md and the spec unchanged.
+
+---
+
+## Step 3 — PLAN (reviewed plan audit)
+
+Artifact: docs/plans/2026-10-14-favsense-faithful-cards-plan.md
+Skill: /autoplan (audit mode)
+Machine checks: PASS (Test Plan Artifact, NOT-in-scope, manual-only tags)

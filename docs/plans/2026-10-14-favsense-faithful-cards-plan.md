@@ -1,3 +1,5 @@
+<!-- /autoplan restore point: "C:\\Users\\rowla\\.gstack\\projects\\rowland-dot-favsense\\feat-faithful-cards-autoplan-restore-20261014-075143.md" -->
+## Implementation plan
 # FavSense Faithful Cards — Slice A Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -43,7 +45,7 @@
 | D11 | Two data commits | Task 6 commits a rebuilt `site/data/knowledge.json` (direct builder run, offline) so tests that read the committed file stay green; Task 10 rebuilds it again through the production snapshot path. | Keeps every commit green. |
 | D13 | Spec §7 lists "the rule that media download and transcription skip curated notes, and the switch that undoes it" as removed in Slice A | **Not done in this plan.** The rule (`transcribe-pending-videos.py`, `extract-pending-frames.py`, `run-video-analysis.ps1 -IncludeCurated`, `media_urls_to_cache` in `bridge-server.py`) and the tests and documents that describe it stay exactly as they are; the removal moves to the Slice B list, tied to §5.1's trigger (reader engine runs only for notes recorded "点点未取得"). | Owner ruling in spec §2 (video and image evidence: "Only when needed") and §5.1: with the rule gone and the trigger not yet built, the next owner-started sync would queue downloads for every previously curated note. The orchestrator ruled on this at plan audit (pass 1); spec §7's line is therefore deferred, not dropped. |
 
-**Risks to put in the brief:** (1) The rule that media download and transcription skip curated notes is **kept unchanged** in this plan (D13): removing it would make the owner's next sync queue downloads for every previously curated note, against his ruling "Only when needed" (spec §2) and §5.1. Its removal is Slice B, tied to §5.1's trigger. (2) The full post text and the extracted transcripts become public in `knowledge.json` (before: a 240-character excerpt). Spec §3.1 requires it; the safety scan in the builder still refuses tokens and private identifiers. (3) With the "saved after review" exception removed, the next real review run may send some accepted notes back to review; cards are unaffected (AC-NOGATE).
+**Risks to put in the brief:** (1) The rule that media download and transcription skip curated notes is **kept unchanged** in this plan (D13): removing it would make the owner's next sync queue downloads for every previously curated note, against his ruling "Only when needed" (spec §2) and §5.1. Its removal is Slice B, tied to §5.1's trigger. (2) The full post text and the extracted transcripts become public in `knowledge.json` (before: a 240-character excerpt). Spec §3.1 requires it; the safety scan in the builder still refuses tokens and private identifiers. (3) With the "saved after review" exception removed, the next real review run may send some accepted notes back to review; cards are unaffected (AC-NOGATE). (4) Paragraph breaks (CARD-08) appear on existing cards only after their details are fetched again, which is Slice B; after this run the 377 live cards still show their text as one block, and the brief says so. (5) The 79 damaged cards say the reply will be fetched again "下一轮" (owner-approved CARD-04 wording); the re-fetch is CAP-05 in Slice B, recorded in `TODOS.md` by Task 10 Step 1 with its start condition. (6) Transcripts and picture text are read through the evidence reader, which flattens whitespace (`clean`), so they show as one block of text; this is today's behaviour and the brief says so.
 
 ---
 
@@ -394,6 +396,8 @@ test("without a title the first line of the post text is the title, cut at 52 ch
   const first = "行".repeat(60);
   assert.equal(cardTitle({ title: "", body: `${first}\n第二行`, author: "甲", noteId: "n" }), `${"行".repeat(51)}…`);
   assert.equal(cardTitle({ title: undefined, body: "\n短标题\n后面", author: "", noteId: "n" }), "短标题");
+  const emojiAtCut = `${"行".repeat(50)}🥝🥝🥝`;
+  assert.equal(cardTitle({ title: "", body: emojiAtCut, author: "", noteId: "n" }), `${"行".repeat(50)}🥝…`, "an emoji at the limit is kept whole");
 });
 
 test("without a title or text the title is the author's collection, then the note id tail", () => {
@@ -471,7 +475,7 @@ Expected: FAIL — module not found.
 // the text taken out of the post's media, and (elsewhere) the optional add-on. It reads no review state
 // and no run record, so no agent session can decide whether a card shows in full.
 
-const TITLE_LIMIT = 52;
+export const TITLE_LIMIT = 52;
 const tidy = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
 
 // The post's own words with its topic tags taken out. Line breaks are kept and nothing is cut.
@@ -490,7 +494,9 @@ export function cardTitle({ title, body, author, noteId }) {
   const own = tidy(title);
   if (own) return own;
   const first = tidy(String(body ?? "").split("\n").find((line) => line.trim()) ?? "");
-  if (first) return first.length > TITLE_LIMIT ? `${first.slice(0, TITLE_LIMIT - 1)}…` : first;
+  // Count and cut by characters (code points), so an emoji at the limit is never split in half.
+  const chars = Array.from(first);
+  if (first) return chars.length > TITLE_LIMIT ? `${chars.slice(0, TITLE_LIMIT - 1).join("")}…` : first;
   const who = tidy(author);
   return who ? `${who}的收藏` : `收藏条目 · ${String(noteId).slice(-6)}`;
 }
@@ -699,7 +705,7 @@ export function loadDamagedReplies(path) {
   }
   const list = JSON.parse(source.replace(/^\ufeff/, ""));
   if (!Array.isArray(list?.entries) || list.entries.some((entry) => !NOTE_ID.test(entry?.note_id) || !HASH.test(entry?.summary_sha256))) {
-    throw new Error("damaged reply list is malformed");
+    throw new Error(`damaged reply list is malformed: ${path}`);
   }
   return new Map(list.entries.map((entry) => [entry.note_id, entry.summary_sha256]));
 }
@@ -793,7 +799,7 @@ async function openCard(page, id) {
 Tests (each runs on the desktop and phone projects automatically):
 1. **CARD-01** — open the grid; for every card in the fixture, `.card-summary-source` contains none of `BANNERS`; no element anywhere contains `证据未补齐，暂不发布`.
 2. **CARD-02** — `REPLY` detail title equals the fixture title; `fixture-post-and-transcript` etc. likewise.
-3. **CARD-03** [mockup § ①] — source `strong` is `点点 AI 深度总结`; provenance contains `点点 AI 的完整回复，原文未改动，共 ${card(REPLY).mainText.trim().length} 字` (the source box counts the trimmed reply, the fold button below counts the whole `mainText.length`, exactly as the live code does today); the opening sentence `根据你引用的笔记` is absent; `.summary-fold-toggle` text is `展开全文 · ${length} 字`, `aria-expanded` goes `false` → `true` on click, collapsed body height ≤ 421, expanded height greater; tool/theme chips `商业验证` present.
+3. **CARD-03** [mockup § ①] — source `strong` is `点点 AI 深度总结`; provenance contains `点点 AI 的完整回复，原文未改动，共 ${card(REPLY).mainText.trim().length} 字` (the source box and the fold button below both count the trimmed reply, so the two numbers are equal); the opening sentence `根据你引用的笔记` is absent; `.summary-fold-toggle` text is `展开全文 · ${length} 字`, `aria-expanded` goes `false` → `true` on click, collapsed body height ≤ 421, expanded height greater; tool/theme chips `商业验证` present.
 4. **CARD-04** [mockup § ②] — source `strong` is `原帖公开文字`; provenance contains exactly `保存的点点回复缺了内容（是我们采集出错），下一轮重新获取；在那之前先显示原帖自己的文字。`; `.structured-summary` text equals the fixture `mainText`; no `.summary-fold-toggle`; chips `Agent Skill`, `Skill仓库`, `内容创作` present.
 5. **CARD-05** [mockup § ③] — source `点点 AI 深度总结`; the chip `Seedance 导演 Skill` contains the badge `未核实`; no banner.
 6. **CARD-06** [mockup § ④] — source `视频转写与画面文字`; provenance contains `原帖只有话题标签、没有正文`; main text starts `记住这个地表超强AI搜索引擎项目`; and for `fixture-damaged-transcript` (`replyDamaged: true`, `mainSource: "video-transcript"`) the explanation starts `保存的点点回复缺了内容（是我们采集出错），下一轮重新获取；原帖只有话题标签`.
@@ -803,10 +809,10 @@ Tests (each runs on the desktop and phone projects automatically):
 10. **Image text** — `fixture-image-text`: source `图片文字`.
 11. **CARD-09** — home page: `#hero-counts` has text `${fixture.meta.noteCount} 条收藏 · ${fixture.meta.replyCount} 条有完整点点总结 · ${fixture.meta.transcriptCount} 条有视频转写`; the page text contains neither `条完成深度解读` nor `已完成视频内容核验`; `#proof-replies` and `#proof-transcripts` show the same two numbers; the four `.method-proof > div` cells sit on one row at desktop width (equal top offset, the note below or beside them but never between), and at both widths the document has no sideways scroll (`scrollWidth - clientWidth <= 0`).
 12. **Footer and source box** [mockup (summary-sources) § ①] — the QA server has two origins sharing the scenario: `http://127.0.0.1:8766` is the local workbench (the footer's first control is `打开原帖` or a disabled `请先启动 FavSense 本地服务`, never a link) and `http://127.0.0.1:8767` is the public site. On **8767** (`page.goto("http://127.0.0.1:8767/#note=<REPLY>")`, after the scenario is set through 8766) the footer holds, in this order, the link `在小红书搜索原帖` (its `href` starts `https://www.xiaohongshu.com/search_result?` and no link anywhere on the page contains `/explore/`), `复制卡片链接` and the bookmark button; on 8766 the first control is that local button and the other two follow it. The `编辑描述` button sits inside the source box (inside its bounding box, right of the label), and opens the editor with the text on screen; with clipboard permission granted to the page (`context.grantPermissions(["clipboard-read", "clipboard-write"])`), clicking `复制卡片链接` shows the toast `卡片链接已复制` and the clipboard text ends with `#note=<id>`.
-13. **Grid parity** — the grid preview shows the same source label and the same first text as the detail view for `REPLY` and `DAMAGED`.
+13. **Grid parity** — the grid preview shows the same source label and the same first text as the detail view for every fixture card whose `mainText` is not empty; the grid card of `fixture-no-text` shows its title and chips and no source line.
 14. **No sideways scroll** — dialog `scrollWidth - clientWidth <= 0` for `REPLY` and for the longest transcript card, at both widths.
 15. **Personal revision** — ported from the old spec: revision wins over the reply, restoring brings the reply back, fold state survives a re-draw and resets after closing. New assertions: after saving a revision the browser's local storage holds it, and the JSON served at `/data/knowledge.json` is byte-identical to what was served before the save.
-16. **No text** — `fixture-no-text` (`mainText: ""`, no extracted text): the detail view has its title and chips but no source box and no text section, and no new wording appears (decision D10).
+16. **No text** — `fixture-no-text` (`mainText: ""`, no extracted text): the detail view has its title and chips but no source box and no text section, its grid card has no source line, and no new wording appears (decision D10).
 17. **Search** — typing a phrase that occurs only in the `DAMAGED` post text lists that card; typing a phrase that occurs only in the `VIDEO_ONLY_TAGS` transcript lists that card.
 18. **Cut reply is the only text (D10)** — `fixture-damaged-only-reply`: source `strong` is `点点 AI 深度总结`; provenance starts `保存的点点回复缺了内容（是我们采集出错），下一轮重新获取；` and ends `先显示已保存的那部分点点回复。`; it does not contain `点点 AI 的完整回复`; `.structured-summary` text equals the fixture `mainText`; no banner. The home counts (test 11) do not include this card in `replyCount`.
 
@@ -824,7 +830,7 @@ In `scripts/serve-qa-fixture.mjs`: add `"faithful-cards"` to `scenarios` in plac
 - [ ] **Step 5: `app.js`**
 
 Make these changes (each is a deletion or a replacement of the named function):
-- `validateKnowledgeData`: require `typeof note.mainText === "string"`, `["diandian","post-text","video-transcript","image-text"].includes(note.mainSource)`, `[themes, tools, unverifiedTools, resources].every(isStringArray)`; delete the `evidence` check; `emptyKnowledgeData().meta` gets `replyCount: 0, transcriptCount: 0` and loses `verifiedNoteCount`.
+- `validateKnowledgeData`: require `typeof note.mainText === "string"`, `["diandian","post-text","video-transcript","image-text"].includes(note.mainSource)`, `[themes, tools, unverifiedTools, resources].every(isStringArray)`, `typeof note.replyDamaged === "boolean"`, `typeof note.postUnreachable === "boolean"`, and `note.extracted === null || (["video-transcript","image-text"].includes(note.extracted.kind) && typeof note.extracted.text === "string")`; delete the `evidence` check; the data fetch becomes `fetch(DATA_URL, { cache: "no-cache" })` so a page never pairs new code with a stale cached data file; `emptyKnowledgeData().meta` gets `replyCount: 0, transcriptCount: 0` and loses `verifiedNoteCount`.
 - Delete `localEvidenceDescription`, `loadLocalNoteOrganizationStatus`, `localOrganizationHtml`, `state.noteOrganizationStatus`, `state.noteOrganizationPending`, the `validateLocalNoteOrganizationStatus` import, and the call in `openNote`.
 - `showsDianDianReply(note)` → `note.mainSource === "diandian" && Boolean(note.mainText.trim())`.
 - `noteDescription(note)`: personal revision first; then `showsDianDianReply` → `stripDiandianOpener(note.mainText).text`; else `note.mainText`.
@@ -872,7 +878,8 @@ function summarySourcePresentation(note) {
 ```
 
 (The sentence with `共 N 字` keeps the live behaviour that adds the opener clause only when an opener was removed; the mockup's ① shows the sentence without it because that reply has no opener.)
-- `descriptionSection`: if `note.mainText` is empty and there is no personal revision, return `""` (no provenance box, no wording; decision D10). Fold body uses `note.mainText.length` in place of `note.deepSummary.length`.
+- `descriptionSection`: if `note.mainText` is empty and there is no personal revision, return `""` (no provenance box, no wording; decision D10). The fold label uses `note.mainText.trim().length` in place of `note.deepSummary.length`, the same number the source box shows.
+- `noteCard`: when `note.mainText` is empty and there is no personal revision, leave out the `.card-summary-source` line and the summary block, so the grid card matches the detail view (decision D10).
 - New section after the main text in `renderDetail`, plus tool chips with the badge:
 
 ```js
@@ -898,13 +905,13 @@ function toolChip(note, name) {
 
 ```css
 .hero-counts { margin: 12px 0 0; color: var(--ink-soft); font-size: 14px; font-weight: 700; }
-.extracted-text p { margin: 0 0 8px; color: var(--ink); font-size: 13px; line-height: 1.75; white-space: pre-wrap; }
+.extracted-text p { margin: 0 0 8px; color: var(--ink); font-size: 13px; line-height: 1.75; }
 .tool-unverified { margin-left: 4px; padding: 1px 5px; border-radius: 5px; background: color-mix(in srgb, var(--gold, #b58b00), var(--surface) 80%); color: var(--ink); font-size: 10.5px; font-weight: 700; }
 ```
 
 (Use the real token names found in `styles.css`; the `.tool-unverified` text is the signal, colour is only reinforcement.)
 
-- [ ] **Step 7: Rewrite the tests Task 5 owns** (see the disposition table): the `app.js` and validator cases in `test_public_site.mjs`, the banner and overlay cases in `organization-recovery.spec.mjs`, and the overlay line in `design-text-legibility-regression.spec.mjs`. The static-app asset test must also expect `hero-counts`, `proof-replies`, `proof-transcripts`. Do **not** touch the cases that read `site/data/knowledge.json` or run the builder: the committed data is still the old shape until Task 6, and those cases still describe it truthfully.
+- [ ] **Step 7: Rewrite the tests Task 5 owns** (see the disposition table): the `app.js` and validator cases in `test_public_site.mjs`, the banner and overlay cases in `organization-recovery.spec.mjs`, and the overlay line in `design-text-legibility-regression.spec.mjs`. The static-app asset test must also expect `hero-counts`, `proof-replies`, `proof-transcripts`. The malformed-document cases gain three payloads the validator refuses: a note with `extracted: { kind: "x", text: "a" }`, one with `replyDamaged: "no"`, and one with `postUnreachable` missing. Do **not** touch the cases that read `site/data/knowledge.json` or run the builder: the committed data is still the old shape until Task 6, and those cases still describe it truthfully.
 
 - [ ] **Step 8: Run**
 
@@ -914,7 +921,7 @@ Expected: PASS everywhere. Other e2e specs (`organization-recovery`, `design-*`,
 - [ ] **Step 9: Commit**
 
 ```bash
-git add site/app.js site/index.html site/styles.css scripts/serve-qa-fixture.mjs scripts/fixtures/faithful-cards.json site/e2e/faithful-cards.spec.mjs skills/xhs-favorites-organizer/tests/test_public_site.mjs
+git add site/app.js site/index.html site/styles.css scripts/serve-qa-fixture.mjs scripts/fixtures/faithful-cards.json site/e2e/faithful-cards.spec.mjs site/e2e/organization-recovery.spec.mjs site/e2e/design-text-legibility-regression.spec.mjs skills/xhs-favorites-organizer/tests/test_public_site.mjs
 git rm site/e2e/card-summary-sources.spec.mjs scripts/fixtures/card-summary-sources.json
 git commit -m "feat: draw every card from its own text, with one honest source line and real counts"
 ```
@@ -981,8 +988,11 @@ async function run({ notes, curation = {}, candidates = {}, replies = {}, transc
     await writeFile(at("config.json"), JSON.stringify({
       version: 1, domain_profile: at("profile.json"), curation_file: at("curation.json"),
       boards: [{ id: "private-board-id", name: "Synthetic", enabled: true }], public_stats: {},
-      ...(audit ? { curation_quality: { audit_file: at("audit.json") } } : {}),
       ...extraConfig,
+      // The audit path survives extra quality settings, so a test can combine a real audit with publish_only_accepted.
+      ...(audit || extraConfig.curation_quality
+        ? { curation_quality: { ...(audit ? { audit_file: at("audit.json") } : {}), ...(extraConfig.curation_quality || {}) } }
+        : {}),
     }));
     const result = spawnSync(process.execPath, [
       builder, "--catalog", at("catalog.json"), "--config", at("config.json"), "--curation", at("curation.json"),
@@ -1019,9 +1029,9 @@ The tests:
 10. **CARD-08** — description `"第一段\n\n第二段 #x[话题]#"` → `mainText "第一段\n\n第二段"`.
 11. **CARD-09** — meta `replyCount`/`transcriptCount` equal the counts from the cards in tests 2–10, with `n-reply-and-transcript` counted in `replyCount` and **not** in `transcriptCount`; `meta` has no `verifiedNoteCount` or `videoMethod`.
 12. **Unreachable (D3)** — three builds of one note: (a) `audit: { [id]: { status: "unavailable" } }` (the helper points `config.curation_quality.audit_file` at it), (b) a sealed candidate carrying `review_status: "unavailable"`, (c) neither. (a) and (b) give `postUnreachable true`, (c) gives `false`; in all three `title`, `mainText` and `mainSource` are identical. A fourth build with an `audit` that marks the note `rejected` or `pending` also gives `postUnreachable false` (only `unavailable` is read), and one whose `audit_file` points at a path that does not exist builds without error.
-13. **AC-NOGATE** — build the notes of tests 2–10 twice: once with `curation`, `candidates`, an `audit` of `rejected`/`pending` states and `extraConfig.curation_quality = { publish_only_accepted: true, audit_file: <missing> }`; once with all of those removed. For every card `title`, `mainText` and `mainSource` are identical.
+13. **AC-NOGATE** — build the notes of tests 2–10 twice: once with `curation`, `candidates`, an `audit` of `rejected`/`pending` states and `extraConfig.curation_quality = { publish_only_accepted: true, baseline_file: <a path that does not exist> }` (the helper keeps the audit path, so the rejected/pending audit is really read); once with all of those removed. For every card `title`, `mainText` and `mainSource` are identical.
 14. **AC-ADDON** — build with and without the add-on: only `themes tools unverifiedTools category categorySource categoryReason suggestedCategory kind resources resourceIds` may differ; `title`, `mainText`, `mainSource`, `extracted`, `replyDamaged` do not.
-15. **Public safety** — with `buildResult`, a description containing `xsec_token=abc` makes the builder exit non-zero with `Public data safety check failed` in `stderr`, and `written` is `false`.
+15. **Public safety** — with `buildResult`, a description containing `xsec_token=abc` makes the builder exit non-zero with `Public data safety check failed` in `stderr`, `stderr` names that note's id and the field (`mainText`), `stderr` does not contain `abc`, and `written` is `false`.
 16. **No fields left behind** — a card has none of `summary deepSummary deepSummarySource curationRevision summaryStatus curationStatus summaryReason summaryState summaryReasonCode candidateKind reviewedAt action evidence`.
 17. **Search link unchanged** — `sourceUrl` still starts `https://www.xiaohongshu.com/search_result?` and carries no `/explore/` (LINK-02 is not planned).
 18. **Cut reply is the only text (D10)** — a note whose saved reply is on the damaged list, whose description is `#趋势[话题]#` and which has no transcript file: `mainSource "diandian"`, `replyDamaged true`, `mainText` equal to the saved reply, `extracted null`. It is not counted in `meta.replyCount` (test 11 adds this note to its set and expects the same `replyCount` as before). A note with the same description, no reply and no transcript still gets `mainText ""` (the only empty card left).
@@ -1110,7 +1120,7 @@ Keep `sealedCandidateFor`, `acceptedRevisionsCurrent`, `currentFormalRevisions` 
 
 - [ ] **Step 5: Rewrite the per-note block of `build-public-site.mjs`**
 
-Arguments: add `damaged: arg("damaged-replies", resolve(workspace, ".xhs-favorites/damaged-diandian-replies.json"))`; delete `--diandian-prompt-version`, `--diandian-report`, `loadDiandianRunStates` and everything that read them, `loadCurationAudit`, `curationQuality`/`curationAudit`/baseline destructuring (replace them with the single line `const unreachableIds = loadUnreachableNoteIds(workspace, config);`, importing it from `./curation-quality.mjs`), the now-unused `tidySpaces`, `displayTitle`, `titleFromText`, `cleanedPostText`'s title use (keep `TITLE_LIMIT`, `cleanedPostText` and `searchTextOf` for the unchanged search link, which still cuts at that limit), `deepSummarySources`, `publicEvidenceStatus`. Then:
+Arguments: add `damaged: arg("damaged-replies", "")` with no default path, so a test or a direct run that names no list never reads the private folder (production always passes the frozen copy, Task 7); delete `--diandian-prompt-version`, `--diandian-report`, `loadDiandianRunStates` and everything that read them, `loadCurationAudit`, `curationQuality`/`curationAudit`/baseline destructuring (replace them with the single line `const unreachableIds = loadUnreachableNoteIds(workspace, config);`, importing it from `./curation-quality.mjs`), the now-unused `tidySpaces`, `displayTitle`, `titleFromText`, `cleanedPostText`'s title use (keep `cleanedPostText` and `searchTextOf` for the unchanged search link, and replace the builder's own `const TITLE_LIMIT = 52` with `TITLE_LIMIT` imported from `./card-content.mjs`, so the title cut and the search-text cut share one number), `deepSummarySources`, `publicEvidenceStatus`. Then:
 
 ```js
 import { cardCounts, cardText, cardTitle, postBody, replyState } from "./card-content.mjs";
@@ -1118,7 +1128,7 @@ import { loadExtractedText } from "./extracted-text.mjs";
 import { loadDamagedReplies } from "./damaged-replies.mjs";
 import { loadFormalPointSummary, sealedCandidateFor } from "./curation-quality.mjs";
 
-const damagedReplies = loadDamagedReplies(paths.damaged);
+const damagedReplies = paths.damaged ? loadDamagedReplies(paths.damaged) : new Map();
 const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const addOn = Object.hasOwn(curation, noteId) ? curation[noteId] : sealedCandidateFor(sealedCandidates, noteId);
   const verdict = judgePublicNote({ noteId, note: raw, addOn, unreachableIds, resourceRegistry, config, profile, effectiveDate });
@@ -1144,7 +1154,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
 });
 ```
 
-`meta`: add `...cardCounts(notes)`; delete `verifiedNoteCount`, `videoMethod`. Keep the `forbidden` patterns and private-identifier checks exactly as they are (they now also scan the post text and transcripts). Remove the now-unused `verifiedNoteCount` constant, `frameVerifiedNoteIds`, the `open` import from `node:fs/promises` (only `loadDiandianRunStates` used it) and the `curationRevision` import. Keep `collectVideoEvidenceStats`, `frameEvidenceCount` and `evidenceStatsAutoUpdated`: they feed the unchanged "张可复核画面" counter (`#proof-frames`).
+`meta`: add `...cardCounts(notes)`; delete `verifiedNoteCount`, `videoMethod`. Keep the `forbidden` patterns and private-identifier checks exactly as they are (they now also scan the post text and transcripts). When one of them matches, find the first card and field that contains the match (scan each card's string fields with the same normalisation) and put that note id and field name in the error after `Public data safety check failed`; never put the matched text in the message. Remove the now-unused `verifiedNoteCount` constant, `frameVerifiedNoteIds`, the `open` import from `node:fs/promises` (only `loadDiandianRunStates` used it) and the `curationRevision` import. Keep `collectVideoEvidenceStats`, `frameEvidenceCount` and `evidenceStatsAutoUpdated`: they feed the unchanged "张可复核画面" counter (`#proof-frames`).
 
 - [ ] **Step 6: Rewrite the old judgement tests and fixtures** (disposition table). `public-judgement-fixtures.mjs` keeps `root hex profile config diandianReplyCases refusalReply normalReply TODAY skillResource note`; delete `PROMPT`, `acceptedSkill`, `pointFile`. Then clear the other users of the deleted functions and fixtures named in the disposition table (`test_curation_standard.mjs`, `stable-curation-rebuild.test.mjs`, `test_organization_contracts.mjs`, `test_formal_outputs.mjs`, `reviewed-evidence-only-rebuild.test.mjs`, `verification-max-age.test.mjs`) and the `test_public_site.mjs` cases Task 6 owns. Before Step 7, `grep -rln "acceptedSkill\|pointFile\|PROMPT" skills/xhs-favorites-organizer/tests` must list no file that still imports them from `public-judgement-fixtures.mjs`.
 
@@ -1162,10 +1172,10 @@ node skills/xhs-favorites-organizer/scripts/damaged-replies.mjs --catalog .xhs-f
 It prints `{count, ids}`. Record the count and the IDs in the commit body of Task 10 and in the review brief; **do not adjust the signs to change the count** (D1). Expected on today's data: 79 (D1's entry-by-entry reading). If the printed count or IDs differ from D1 (a reply was saved since), do not stop: read the last two lines of each ID that D1 did not cover, state in the brief which look cut, and list the two doubtful IDs from D1 (`…01e252`, `…03930b`) for the owner. Then rebuild the committed data directly (offline, no publish):
 
 ```bash
-node skills/xhs-favorites-organizer/scripts/build-public-site.mjs --candidates <sealed-candidates.json> --effective-date <today> --output site/data/knowledge.json
+node skills/xhs-favorites-organizer/scripts/build-public-site.mjs --candidates <sealed-candidates.json> --effective-date <today as YYYY-MM-DD> --damaged-replies .xhs-favorites/damaged-diandian-replies.json --output site/data/knowledge.json
 ```
 
-where `<sealed-candidates.json>` is made by the scratch snippet `Object.fromEntries(Object.entries(bundle.curation).filter(([, entry]) => entry.review_status !== "accepted"))` over the newest `.xhs-favorites/organization-transactions/*-curation-bundle.json`, and the other arguments take the builder defaults (catalog, curation, profile, resources, replies, video analysis, damaged list). Then update `tests/diandian-summary-display.test.mjs` and the `site/data/knowledge.json` readers in `test_public_site.mjs` (lines near 506, 1948, 1975, 2003) to the new fields. Then run `npm.cmd run test:site`. Expected: PASS (no case may be skipped).
+where `<sealed-candidates.json>` is made by the scratch snippet `Object.fromEntries(Object.entries(bundle.curation).filter(([, entry]) => entry.review_status !== "accepted"))` over the most recently modified `.xhs-favorites/organization-transactions/*-curation-bundle.json` (print its file name, the number of sealed candidates written, and how many of the 31 formerly held notes they cover), and the other arguments take the builder defaults (catalog, curation, profile, resources, replies, video analysis, damaged list). Then update `tests/diandian-summary-display.test.mjs` and the `site/data/knowledge.json` readers in `test_public_site.mjs` (lines near 506, 1948, 1975, 2003) to the new fields. Then run `npm.cmd run test:site`. Expected: PASS (no case may be skipped).
 
 - [ ] **Step 9: Commit**
 
@@ -1191,7 +1201,7 @@ The commit body carries the damaged-reply count and ID list from Step 8.
 In `test_organization_snapshot.mjs` add (reading the file's existing helpers first, then using them):
 1. a build whose frozen input folder receives `damaged-replies.json` when the private file exists, and receives `video-analysis/<id>/transcription.json` and `visual-ocr.json` byte for byte;
 2. two builds that differ only in the damaged list get different build versions, and two that differ only in one frozen `transcription.json` do too (both are build inputs);
-3. a build with no damaged list file succeeds (the file is optional);
+3. a build with no damaged list file succeeds when the frozen DianDian folder holds no reply file, and its builder still receives `--damaged-replies` pointing at a frozen empty list (`{"schema_version":1,"entries":[]}`); a build with no damaged list file while the DianDian folder holds at least one reply file stops with `DAMAGED_REPLY_LIST_MISSING` and writes nothing (a missing list would otherwise publish every cut reply as complete);
 4. the CLI refuses `--diandian-report` and `--diandian-prompt-version` as unknown arguments;
 5. `canonicalVersion` (export it from the module) equals the SHA-256 of the exact JSON preimage built in the test with `builders: { public_site: 8 }`, so a silent revert to 7 fails.
 6. the audit file named by `config.curation_quality.audit_file` is frozen byte for byte (a note it marks `unavailable` comes out `postUnreachable` in the built data), is optional (a build with the key absent, or the file missing, succeeds), and a build whose only change is that file's content gets a different build version; a `baseline_file` key is ignored and never captured.
@@ -1207,10 +1217,10 @@ Expected: FAIL on the new assertions only.
 
 `build-organization-snapshot.mjs`:
 - `canonicalVersion` (line 22, currently not exported): change it to `export function canonicalVersion(...)` so the new test can import it, and set `builders: { public_site: 8 }`.
-- `captureBuilderInputs`: remove `report` from `fixed` and from the `Promise.allSettled` list; remove `promptVersion` handling and the `diandian-prompt-version` input; in the `quality.publish_only_accepted` block, drop the baseline capture and the condition, and keep the audit as an optional input read only for the unreachable label (D3): `if (typeof quality.audit_file === "string" && quality.audit_file) inputs.push(await boundedFile(root, resolve(root, quality.audit_file), "audit_file", { optional: true }));`; add `boundedFile(root, damagedPath, "damaged-replies", { optional: true, maxBytes: 1024 * 1024 })` where `damagedPath` is `options.damagedReplies ? resolve(options.damagedReplies) : null` (skip when null); inside the per-note loop add, for 24-hex ids, `boundedFile(root, join(noteDirectory, "transcription.json"), `transcript:${noteId}`, { optional: true, maxBytes: 4 * 1024 * 1024 })` and the same for `visual-ocr.json` as `picture-text:${noteId}`.
-- `materializeCapturedInputs`: write `damaged-replies` to `paths.damaged = join(inputRoot, "damaged-replies.json")` when present; write `transcript:` and `picture-text:` entries into `video/<id>/transcription.json` and `visual-ocr.json`; delete the `report` and `baseline` paths and the `publish_only_accepted` condition, and replace that branch with: when `config.curation_quality?.audit_file` is a string, point it at `paths.audit` and write the frozen `audit_file` entry there (if the file was missing the entry is not written and the loader treats the missing path as "none"); drop `baseline_file` from the frozen config; return `damaged` (empty string when absent) and drop `promptVersion`.
+- `captureBuilderInputs`: remove `report` from `fixed` and from the `Promise.allSettled` list; remove `promptVersion` handling and the `diandian-prompt-version` input; in the `quality.publish_only_accepted` block, drop the baseline capture and the condition, and keep the audit as an optional input read only for the unreachable label (D3): `if (typeof quality.audit_file === "string" && quality.audit_file) inputs.push(await boundedFile(root, resolve(root, quality.audit_file), "audit_file", { optional: true }));`; add `boundedFile(root, damagedPath, "damaged-replies", { optional: true, maxBytes: 1024 * 1024 })` where `damagedPath` is `options.damagedReplies ? resolve(options.damagedReplies) : null` (skip when null); after capture, if no `damaged-replies` entry was captured and the captured DianDian replies include at least one file, throw `DAMAGED_REPLY_LIST_MISSING`; inside the per-note loop add, for 24-hex ids, `boundedFile(root, join(noteDirectory, "transcription.json"), `transcript:${noteId}`, { optional: true, maxBytes: 4 * 1024 * 1024 })` and the same for `visual-ocr.json` as `picture-text:${noteId}`.
+- `materializeCapturedInputs`: write `damaged-replies` to `paths.damaged = join(inputRoot, "damaged-replies.json")` when present, and write `{"schema_version":1,"entries":[]}` there when it is absent, so the build never falls back to a live file; write `transcript:` and `picture-text:` entries into `video/<id>/transcription.json` and `visual-ocr.json`; delete the `report` and `baseline` paths and the `publish_only_accepted` condition, and replace that branch with: when `config.curation_quality?.audit_file` is a string, point it at `paths.audit` and write the frozen `audit_file` entry there (if the file was missing the entry is not written and the loader treats the missing path as "none"); drop `baseline_file` from the frozen config; return `damaged` (empty string when absent) and drop `promptVersion`.
 - `cliArgs`: `required` loses `diandian-report`; `optional` becomes `["resources", "damaged-replies"]`.
-- `runCli`: pass `damagedReplies` into `captureOptions`; `buildPublicSite` passes `["--damaged-replies", frozen.damaged]` when set and no longer passes `--diandian-report` or `--diandian-prompt-version`.
+- `runCli`: pass `damagedReplies` into `captureOptions`; `buildPublicSite` always passes `["--damaged-replies", frozen.damaged]` and no longer passes `--diandian-report` or `--diandian-prompt-version`.
 
 `bridge-server.py` `build_organization_snapshot`: delete the `--diandian-report` pair and the `if self.diandian_skill_path is not None:` block that adds the prompt version; add
 
@@ -1281,7 +1291,7 @@ Retired (must not appear): in `SKILL.md` — the sentence at line 158 `只有 \`
 
 Replacements to write (assert each is present): `SKILL.md` line 14 — `公开 confirmed Skill 恰好关联一个当前、完整、已核验的官方资源` (the Skill marker rule of spec §5.2, without "accepted"); line 158 — `审核通过（accepted）的条目写入正式 curation，作为卡片的可选附加信息；卡片本身不受审核状态控制`. Also in line 158 retire `本机可通过鉴权的待审核 overlay 查看清理后的 captured 证据` (the card overlay is gone, decision D9) and `公开站不得直接消费 raw 点点记录`; replace the latter with `公开卡片展示点点回复原文（只去掉开头的对话语句），不展示其记录里的其他字段`. Do the same for any README sentence that describes the pending-review overlay (`grep -n "overlay\|待审核" README.md`).
 
-New (must appear): `SKILL.md` — a paragraph stating that every card is built by the deterministic card step, that the curation file/sealed candidate is an optional add-on that adds topics, tools, category suggestion and content kind but never title or main text, and that the DianDian rule "任一失败都必须放弃当前及剩余点点计划并停止" is **unchanged until Slice B**; `CONTEXT.md` — **公开判定** redefined as "category, kind, resources and tools for a card; it does not decide whether the card is shown in full", **卡片标题** as "the post's own title, else the first line of the post text, else the author's collection (no reviewed title)", **搜索原帖文字** unchanged; `automatic-workflow.md` and `organization-schema.md` — the new public card fields from Task 5.
+New (must appear): `SKILL.md` — a paragraph stating that every card is built by the deterministic card step, that the curation file/sealed candidate is an optional add-on that adds topics, tools, category suggestion and content kind but never title or main text, and that the DianDian rule "任一失败都必须放弃当前及剩余点点计划并停止" is **unchanged until Slice B**, and a paragraph on the damaged-reply list: the command `node skills/xhs-favorites-organizer/scripts/damaged-replies.mjs --catalog … --diandian-dir … --output …`, that its output `.xhs-favorites/damaged-diandian-replies.json` is private, that the snapshot freezes it and a card reads it, and that it is regenerated after the Slice B re-fetch (the docs test asserts the script name and the output path appear); `CONTEXT.md` — **公开判定** redefined as "category, kind, resources and tools for a card; it does not decide whether the card is shown in full", **卡片标题** as "the post's own title, else the first line of the post text, else the author's collection (no reviewed title)", **搜索原帖文字** unchanged; `automatic-workflow.md` and `organization-schema.md` — the new public card fields from Task 5.
 
 **Documentation contract fixture (`test-fixtures/task-11-documentation-contract.json`, read by `tests/test_curation_standard.mjs` lines ~181–200).** It pins exact sentences as `required_phrases`, and several of them are the statements this task retires. Replace each in the same edit as its document, with the new sentence written in Step 3 (same file, same key), never by deleting the key: `SKILL.md` phrase 3 (`公开 \`confirmed Skill\` 必须是 accepted，并且恰好关联…`); `README.md` phrases 2 and 3 (the pending-review overlay sentence and the `confirmed Skill` sentence); `curation-standard.md` phrase 2 (`…还必须通过 accepted/current/resource 门`); `organization-schema.md` phrase 1 (`…未满足 accepted/current/resource 门…只有 accepted 且恰好关联一个 fresh verified resource 时才是 confirmed Skill`); `automatic-workflow.md` phrase 5 (`\`accepted\` 才能进入公开页面`); `docs/ARCHITECTURE.md` phrases 2 and 4 (`…唯一 acceptance decision…`, `…只有在 accepted 且恰好一个 fresh verified resource 时才提升为 confirmed Skill`); `docs/PUBLISHING.md` phrase 1 (`只有通过 current curation 与 accepted audit 的正式摘要可以进入；captured/pending 证据只留在本机 overlay。`). The new wording for the Skill marker is the one in the SKILL.md replacement above (恰好关联一个当前、完整、已核验的官方资源, no "accepted"). Public cards no longer carry `candidateKind` (Task 5 field list), so wherever a replaced sentence says the builder "outputs" or "额外输出" `candidateKind`, reword it as: a keyword match only makes a Skill candidate in the curation layer, and the card's kind is `Skill` only with exactly one verified resource. The `captured / pending / accepted / failed / batch_aborted` status definitions (SKILL.md phrases 1–2, `automatic-workflow.md` phrases 1–2, `curation-standard.md` phrase 1) describe the curation layer and the run, which remain, so they stay.
 
@@ -1317,18 +1327,20 @@ All steps run against the real workspace by the run itself (no browser, no Xiaoh
 
 - [ ] **Step 1: Write the follow-ups into `TODOS.md`**, one line each in the project's entry shape:
   - `- [ ] Delete the bridge endpoint /notes/organization-status and validateLocalNoteOrganizationStatus in site/local-bridge-utils.mjs (the card overlay that used them is gone) — closes when no code or test references either — written by the faithful-cards run, 2026-10-14`
+  - `- [ ] Let the owner mark a flagged DianDian reply as complete so regenerating the damaged list keeps it off (today a hand edit of .xhs-favorites/damaged-diandian-replies.json is undone by the next regeneration) — closes when the owner rules on either doubtful entry (…01e252, …03930b) — written by the faithful-cards run, 2026-10-14`
+  - `- [ ] Give site/app.js and site/styles.css a version marker in site/index.html (the build version) so a browser holding the old page code never pairs it with a new data shape; this run only makes the data fetch revalidate — closes when the published page's script and stylesheet addresses carry the build version — written by the faithful-cards run, 2026-10-14`
   - one line per Slice B item named at the end of this plan, each with its closing condition ("closes when the captcha hold clears and the owner agrees a time for the watched run").
 
 - [ ] **Step 2: Regenerate the damaged list** (idempotent; same command as Task 6 Step 8). Compare the printed IDs with the Task 6 commit body: identical unless a reply was saved in between. Report the count; do not tune.
 
-- [ ] **Step 3: Archive the agent-written card texts first** (copy, not move): write `.xhs-favorites/archive-2026-10-14/agent-written-card-texts.json` holding `{id, title, summary, action}` of every curation-file entry whose note has **no** complete reply (`loadFormalPointSummary` returns null, or the reply is on the damaged list). The expected count is about 105 (spec §7); print it.
+- [ ] **Step 3: Archive the agent-written card texts first** (copy, not move). **Order:** Steps 3 and 4 run after Steps 5, 5a, 6 and 7 have passed and before Step 8, so a rebuild or real-data check failure can never be confused with the file moves: write `.xhs-favorites/archive-2026-10-14/agent-written-card-texts.json` holding `{id, title, summary, action}` of every curation-file entry whose note has **no** complete reply (`loadFormalPointSummary` returns null, or the reply is on the damaged list). The expected count is about 105 (spec §7); print it.
 
 - [ ] **Step 4: Move the hand-made batch files and private scripts** into `.xhs-favorites/archive-2026-10-14/` (a `git`-ignored folder; moves only, nothing deleted). First print the dry-run list and save it; then move exactly these top-level files: `agent-batch-*`, `pending-*`, `rejected-*`, `new-notes-*`, `rereview-*`, `refusal-rereview-*`, `issue79-*`, `issue86-*`, `issue87-*`, `latest-note-*`, `unavailable-final-review.json`, `final-*`, `curation-agent-*`, `diandian-fallback-review.json`, `remaining-evidence-plan.json`, `all-notes-scope.json`, and the five scripts `build-agent-batch.mjs`, `bridge-prompt-version.py`, `issue86-local-rebuild.py`, `rebind-agent-review.mjs`, `registry-add.mjs`. **Keep in place:** `catalog.json`, `curation-audit.json`, `curation-baseline.json`, `curation-candidates.json`, `curation-quality-report.json`, `curation-request.json`, `curation-review.json`, `curation-scope.json`, `published-baseline.json`, `diandian-rerun-report.json`, `manual-sync.json`, `local-rebuild.json`, `bridge-status.json`, `bridge-token` (not `bridge-*`: `bridge-prompt-version.py` is one of the five scripts that move), `media-download-safety-stop*.json`, `software-resources.before-*`, every directory, and `damaged-diandian-replies.json`. The expected move count is about 209 (the planner counted 204 data files and 5 scripts on 2026-10-14, 89 of them `agent-batch-*`); any other top-level file (status files, lock files, logs, images, `xhs-favorites.user.js`, `live-diandian-reply.txt`) matches none of these names and stays. Nothing in the repository reads any moved name (searched 2026-10-14); `curation-standard.md` shows `diandian-fallback-review.json` only as an example output path. Step 5 spells out its own driver, so moving `issue86-local-rebuild.py` first is safe.
 
-- [ ] **Step 5: Production-path rebuild without publishing.** Call the bridge's own method from a scratch driver in the session scratchpad. Load `skills/xhs-favorites-organizer/scripts/bridge-server.py` with `importlib.util.spec_from_file_location`, construct `module.Bridge(workspace, workspace / "skills" / "xhs-favorites-organizer", workspace / "config" / "xhs-favorites.json", workspace.parent / "SOP - 小红书", 47631)` (the same arguments the private `issue86-local-rebuild.py` uses; no browser is opened and no request leaves the machine), then make a batch id of its own (`batch = "faithfulcards" + <YYYYMMDDHHMMSS>`, which fits the 80-character run-id pattern) and the full scope, and call the two steps the bridge's own `run_final_build` runs before it publishes: `note_ids = bridge.local_rebuild_scope()`, then `bridge.run_curation_pipeline(batch=batch, note_ids=note_ids)`, then `bridge.build_organization_snapshot(batch=batch, note_ids=note_ids)`. Do **not** call `trigger_local_rebuild()`, which would also publish, and do **not** pass the newest batch in `manual-sync.json` (`manual20261013025553339527`) to `build_organization_snapshot`: that round's sealed scope is 207 notes, the snapshot compares it with the 377 in the catalog and stops with `SNAPSHOT_SCOPE_DIGEST_MISMATCH` (checked 2026-10-14: the newest curation bundle's `scope.note_ids` has 207 entries). The curation step writes `<batch>-curation-input.json` and `<batch>-curation-bundle.json` under `.xhs-favorites/organization-transactions/` (private, ignored by git, no platform contact), exactly as a local rebuild does. The snapshot then runs `build-organization-snapshot.mjs` and swaps `site/data/knowledge.json` atomically with a real `buildVersion`. Every later re-run (Step 7) uses a new batch id. Then `git diff --stat site/data/knowledge.json`.
+- [ ] **Step 5: Production-path rebuild without publishing.** First check that the running FavSense service is not mid-run: nothing answers on `127.0.0.1:47631`, or, if it does, the run-status files it writes (`.xhs-favorites/manual-sync.json`, `.xhs-favorites/local-rebuild.json`) show no run in progress; otherwise stop and report, because the driver below builds its own copy of the service and does not see the running copy's busy flags. Call the bridge's own method from a scratch driver in the session scratchpad. Load `skills/xhs-favorites-organizer/scripts/bridge-server.py` with `importlib.util.spec_from_file_location`, construct `module.Bridge(workspace, workspace / "skills" / "xhs-favorites-organizer", workspace / "config" / "xhs-favorites.json", workspace.parent / "SOP - 小红书", 47631)` (the same arguments the private `issue86-local-rebuild.py` uses; no browser is opened and no request leaves the machine), then make a batch id of its own (`batch = "faithfulcards" + <YYYYMMDDHHMMSS>`, which fits the 80-character run-id pattern) and the full scope, and call the two steps the bridge's own `run_final_build` runs before it publishes: `note_ids = bridge.local_rebuild_scope()`, then `bridge.run_curation_pipeline(batch=batch, note_ids=note_ids)`, then `bridge.build_organization_snapshot(batch=batch, note_ids=note_ids)`. Do **not** call `trigger_local_rebuild()`, which would also publish, and do **not** pass the newest batch in `manual-sync.json` (`manual20261013025553339527`) to `build_organization_snapshot`: that round's sealed scope is 207 notes, the snapshot compares it with the 377 in the catalog and stops with `SNAPSHOT_SCOPE_DIGEST_MISMATCH` (checked 2026-10-14: the newest curation bundle's `scope.note_ids` has 207 entries). The curation step writes `<batch>-curation-input.json` and `<batch>-curation-bundle.json` under `.xhs-favorites/organization-transactions/` (private, ignored by git, no platform contact), exactly as a local rebuild does. The snapshot then runs `build-organization-snapshot.mjs` and swaps `site/data/knowledge.json` atomically with a real `buildVersion`. Every later re-run (Step 7) uses a new batch id. Then `git diff --stat site/data/knowledge.json`.
 
-- [ ] **Step 5a: Real-data check of the four mockup cards and the counts** (a scratch script reading the rebuilt `site/data/knowledge.json`; prints values only, never private text). Expected, from the spec and the mockup: note `6a7dc92600000000250090ff` has `mainSource "diandian"` and title `一个人，3天，Codex，10W`; `6a44938c0000000006021e9e` has `mainSource "post-text"` and `replyDamaged true`; `6ab3dfdc00000000140023f9` has `mainSource "diandian"`, `replyDamaged false` and `kind` `Tool` (not `Skill`; its sealed candidate says `Skill` but names no verified resource) — its `tools` list is expected to be **empty**, because the real sealed candidate and the curation bundle entry for this note both have `tools: []`, so the mockup's `Seedance 导演 Skill · 未核实` chip is an illustration of the badge (proved by the fixture card, builder test 5 and Playwright test 5), not a value the real data produces; `6a2a81d1000000001702d3de` has `mainSource "video-transcript"`. Also print: the number of cards (expected 377), the number with `postUnreachable true` (expected 3, spec §3.1: the three ids the audit file marks `unavailable`, via D3; the run must have `config.curation_quality.audit_file` still set, so Step 7 keeps that key), counts by `mainSource`, `meta.replyCount` and `meta.transcriptCount`, the number of cards with an empty `mainText` (expected **0**), and the number of cards with `mainSource "diandian"` and `replyDamaged true` (a read-only simulation at audit pass 3 gave 13, all with a tags-only post and no usable transcript; printed, not asserted). The same simulation gave about 196 complete replies and 103 video transcripts shown; those two are printed for the brief, not asserted. A transcript is shown only when its text matches its own hash after whitespace is flattened (D4), so if the fourth card is not a `video-transcript`, or the unreachable count is not 3, or any card has an empty `mainText`, **stop and report it with the printed numbers; do not change the card rules to make the numbers match**.
-- [ ] **Step 6: AC-NOGATE on real data, on copies.** Copy `catalog.json`, `diandian-summaries/`, `video-analysis/` transcript files, the damaged list, the curation file and the sealed candidates into a scratch folder. Build twice with `build-public-site.mjs`: once with the curation file and candidates, once with both replaced by `{}` and no audit or report (pass `--config` a scratch copy of `config/xhs-favorites.json` in both builds, and delete its `curation_quality` block for the second one; the builder's default config would otherwise still point at the real audit file). Compare every card's `title`, `mainText`, `mainSource`. Expected: 377 cards, zero differences. Save the one-line result for the brief.
+- [ ] **Step 5a: Real-data check of the four mockup cards and the counts** (a scratch script reading the rebuilt `site/data/knowledge.json`; prints values only, never private text). Expected, from the spec and the mockup: note `6a7dc92600000000250090ff` has `mainSource "diandian"` and title `一个人，3天，Codex，10W`; `6a44938c0000000006021e9e` has `mainSource "post-text"` and `replyDamaged true`; `6ab3dfdc00000000140023f9` has `mainSource "diandian"`, `replyDamaged false` and `kind` `Tool` (not `Skill`; its sealed candidate says `Skill` but names no verified resource) — its `tools` list is expected to be **empty**, because the real sealed candidate and the curation bundle entry for this note both have `tools: []`, so the mockup's `Seedance 导演 Skill · 未核实` chip is an illustration of the badge (proved by the fixture card, builder test 5 and Playwright test 5), not a value the real data produces; `6a2a81d1000000001702d3de` has `mainSource "video-transcript"`. Also print: the number of cards (expected 377), the number with `postUnreachable true` (expected 3, spec §3.1: the three ids the audit file marks `unavailable`, via D3; the run must have `config.curation_quality.audit_file` still set, so Step 7 keeps that key), counts by `mainSource`, `meta.replyCount` and `meta.transcriptCount`, the number of cards with an empty `mainText` (expected **0**), and the number of cards with `mainSource "diandian"` and `replyDamaged true` (a read-only simulation at audit pass 3 gave 13, all with a tags-only post and no usable transcript; printed, not asserted). The same simulation gave about 196 complete replies and 103 video transcripts shown; those two are printed for the brief, not asserted. A transcript is shown only when its text matches its own hash after whitespace is flattened (D4), so if the fourth card is not a `video-transcript`, or the unreachable count is not 3, or any card has an empty `mainText`, **stop and report it with the printed numbers; do not change the card rules to make the numbers match**. Also print the number of entries in `.xhs-favorites/damaged-diandian-replies.json` and the number of cards with `replyDamaged true`; stop and report the same way if the list file is missing or the two numbers differ (a missing list would otherwise show every cut reply as complete). When this step stops, the rebuilt `site/data/knowledge.json` stays uncommitted and nothing is published.
+- [ ] **Step 6: AC-NOGATE on real data, on copies.** Copy `catalog.json`, `diandian-summaries/`, `video-analysis/` transcript files, the damaged list, the curation file and the sealed candidates into a scratch folder. Build twice with `build-public-site.mjs`: once with the curation file and candidates, once with both replaced by `{}` and no audit or report (pass `--config` a scratch copy of `config/xhs-favorites.json` in both builds, and delete its `curation_quality` block for the second one; the builder's default config would otherwise still point at the real audit file). Compare every card's `title`, `mainText`, `mainSource`. Expected: 377 cards, zero differences. Save the one-line result for the brief. From the same two builds also print, for the brief and never asserted, how many cards differ in any of `themes`, `tools`, `category`, `suggestedCategory` or `kind` (the add-on's measurable effect on the cards), and, from the first build, how many cards' `mainText` or `extracted.text` contain an 11-digit run starting with `1` or `微信`/`vx`/`VX` followed by a letter-or-digit token (third-party contact details that the full text now makes public; a count only, no text printed, nothing blocked).
 
 - [ ] **Step 7: Private config cleanup.** In `config/xhs-favorites.json` remove the unread `curation_agent` block and the `curation_quality.publish_only_accepted` and `baseline_file` keys (keep `audit_file` and `scope_file`: the audit file is what marks the 3 unreachable posts, D3) (the private config is git-ignored; back it up to `.xhs-favorites/archive-2026-10-14/xhs-favorites.config.before.json` first). Then re-run Step 5 and confirm it still builds and that every card's `title`, `mainText` and `mainSource` equals the Step 5 result; commit the data from this last run.
 
@@ -1386,3 +1398,751 @@ After merge the run does what the pipeline's later steps own: local rebuild and 
 | §7 archiving | 10 | Steps 3–4 (counts printed, moves not deletes) |
 | §7 documents | 9 | `faithful-cards-docs.test.mjs` |
 | Frozen damaged list | 4, 6, 10 | `damaged-replies.test.mjs`; printed count and IDs |
+
+<!-- autoplan-accepted:ceo -->
+- Task 10 Step 6 prints, never asserts, the number of cards whose `themes`, `tools`, `category`, `suggestedCategory` or `kind` differ between the build with the add-on and the build without it.
+- Task 10 Step 6 prints, never asserts and never blocks, the number of cards whose `mainText` or `extracted.text` contains an 11-digit run starting with `1` or `微信`/`vx`/`VX` followed by a letter-or-digit token; no matched text is printed.
+- Task 10 Steps 3 and 4 (archive copy and file moves) run after Steps 5, 5a, 6 and 7 have passed and before Step 8.
+- `card-content.mjs` exports `TITLE_LIMIT`; `build-public-site.mjs` imports it instead of declaring its own 52, and the search-link cut keeps using it.
+- The risks list carries (4) existing cards regain paragraphs only after a Slice B re-fetch and (5) the "下一轮" wording depends on CAP-05 in Slice B, tracked in `TODOS.md` by Task 10 Step 1.
+- Premise P2 (full third-party text on the public site) is presented at the final gate as a premise item; the owner's ruling stands unless he changes it.
+<!-- /autoplan-accepted:ceo -->
+
+<!-- autoplan-accepted:design -->
+- Task 5: the fold label uses `note.mainText.trim().length`, the same number as the source box; Playwright test 3 expects the two numbers to be equal.
+- Task 5: `noteCard` leaves out the `.card-summary-source` line and the summary block when `note.mainText` is empty and there is no personal revision; Playwright test 16 asserts the grid card of `fixture-no-text` has no source line.
+- Task 5: Playwright test 13 compares the grid card's source label and first text with the detail view for every fixture card whose `mainText` is not empty.
+- Task 5: `.extracted-text p` has no `white-space: pre-wrap`.
+- Taste decisions T-D1 to T-D5 keep the plan as written and are listed at the final gate.
+<!-- /autoplan-accepted:design -->
+
+<!-- autoplan-accepted:dx -->
+- Task 5 Step 9 commit adds `site/e2e/organization-recovery.spec.mjs` and `site/e2e/design-text-legibility-regression.spec.mjs`.
+- `loadDamagedReplies` throws `damaged reply list is malformed: <path>` for a malformed list.
+- The builder's public safety failure names the first note id and field containing the match and never includes the matched text; builder test 15 asserts the note id and `mainText` appear in `stderr` and `abc` does not.
+- Task 6 Step 8 passes `--effective-date` as today's `YYYY-MM-DD`, builds sealed candidates from the most recently modified `*-curation-bundle.json`, and prints that file name, the number of sealed candidates, and how many of the 31 formerly held notes they cover.
+- Task 10 Step 5a prints the damaged-list entry count and the count of cards with `replyDamaged true`, and stops and reports if the list file is missing or the two differ; when Step 5a stops, the rebuilt `site/data/knowledge.json` stays uncommitted and nothing is published.
+- Task 9 adds a `SKILL.md` paragraph naming `damaged-replies.mjs`, its private output `.xhs-favorites/damaged-diandian-replies.json`, that the snapshot freezes it and a card reads it, and that it is regenerated after the Slice B re-fetch; `faithful-cards-docs.test.mjs` asserts the script name and output path appear.
+- Task 10 Step 1 adds the `TODOS.md` line for an owner override of a flagged reply, closing when he rules on either doubtful entry.
+<!-- /autoplan-accepted:dx -->
+
+<!-- autoplan-accepted:eng -->
+- `build-public-site.mjs` takes `--damaged-replies` with no default path; when absent, no reply is treated as damaged; `paths.damaged ? loadDamagedReplies(paths.damaged) : new Map()`.
+- Task 6 Step 8's direct builder run passes `--damaged-replies .xhs-favorites/damaged-diandian-replies.json`.
+- `build-organization-snapshot.mjs` throws `DAMAGED_REPLY_LIST_MISSING` when no damaged list was captured and the captured DianDian replies include at least one file; when there is no list and no reply, it writes `{"schema_version":1,"entries":[]}` as the frozen list; `buildPublicSite` always passes `--damaged-replies` with the frozen path; snapshot test 3 covers both cases.
+- `validateKnowledgeData` requires boolean `replyDamaged` and `postUnreachable`, and `extracted` either `null` or `{kind: "video-transcript"|"image-text", text: string}`; three malformed payloads are refused in `test_public_site.mjs`.
+- `app.js` fetches the data file with `{ cache: "no-cache" }`.
+- Task 10 Step 5 checks that nothing answers on `127.0.0.1:47631`, or that `manual-sync.json` and `local-rebuild.json` show no run in progress, before building its own service copy; otherwise it stops and reports.
+- `cardTitle` counts and cuts the first line by code points; the title test asserts `${"行".repeat(50)}🥝…` for `${"行".repeat(50)}🥝🥝🥝`.
+- The builder test helper merges `curation_quality` so `audit_file` survives `extraConfig`; test 13 uses `{ publish_only_accepted: true, baseline_file: <missing path> }`.
+- Task 10 Step 1 writes the `TODOS.md` line for a script and stylesheet version marker, closing when the published page's script and stylesheet addresses carry the build version.
+- The risks list carries (6): transcripts and picture text show as one block because the evidence reader flattens whitespace.
+- The Test Plan Artifact and the behaviour-to-layer table in this record are the test inputs for Step 4.
+<!-- /autoplan-accepted:eng -->
+## Review record
+
+### Phase 1 — CEO review (autoplan, SELECTIVE EXPANSION, 2026-10-14)
+
+Inputs read: the spec (whole), this plan (whole), `CLAUDE.md`, `TODOS.md`, the Step 2 audit log, `build-public-site.mjs`, `public-judgement.mjs`, `curation-quality.mjs` (all whole), `git log -30`, `git diff main --stat`. No design doc in `~/.gstack/projects/rowland-dot-favsense/` (office-hours offer auto-skipped: the approved spec is the design doc). Web landscape search skipped: Aside is a macOS app and this is Windows; the question is a private tool's internal rewrite, not a market choice.
+
+Outside voice: Codex `model_unusable` (the probe's `gpt-6-astra` call failed; `~/.codex/config.toml` names the same model). Native Claude CEO subagent completed (7 findings). Tag: `[subagent-only]`.
+
+#### 0A Premise challenge
+
+| # | Premise | Verdict | Evidence |
+|---|---|---|---|
+| P1 | A card must come from a deterministic step that needs no model; review only adds tags | Valid | `CLAUDE.md` principle quoted in spec §0; `public-judgement.mjs:142-153` shows the gate (`isPublishableCuration`) choosing between the reviewed entry and a 240-char fallback, which is the R1 defect |
+| P2 | The full post text, full DianDian reply and full transcript belong on the public site | Owner ruling, challenged by one voice | Spec §2 rulings and §3.1 ("never cut"); the live builder already publishes `deepSummary` in full for accepted notes (`build-public-site.mjs:276`). The subagent flags creator copyright, platform terms and third-party contact details. Single-model, so not a User Challenge; queued to the gate as a premise item |
+| P3 | The two damage signs, untuned, decide the frozen list | Valid | D1 entry-by-entry read: 77 of 79 plainly cut, 2 doubtful and named |
+| P4 | The token-free post link is untested, so the search link stays | Valid | Spec §6.1, §10 item 1 |
+| P5 | The curated-skip rule must stay until the reader-engine trigger exists | Valid | D13, spec §2 "Only when needed", §5.1 |
+
+#### 0B Existing code leverage
+
+| Sub-problem | Existing code | Plan reuses? |
+|---|---|---|
+| Read a saved DianDian reply safely | `loadFormalPointSummary` (`curation-quality.mjs:187`) | Yes, unchanged signature (third argument optional) |
+| Read transcript / picture text safely | `readEvidence`, `currentEvidence` in `prepare-curation-review.mjs` | Yes, moved to `evidence-files.mjs` (Task 2), split into `evidenceText` |
+| Reply formatting, opener removal | `site/diandian-text.mjs` | Yes; `isBare` exported as `isBareLine` for the damage rule |
+| Category and kind | `resolveCategoryPolicy`, `classify`, `formalContentKind`, `confirmedSkillResource` | Yes, kept |
+| Public safety scan | `forbidden` list and private-identifier check (`build-public-site.mjs:340-364`) | Yes, kept; now also scans post text and transcripts |
+| Search link | `publicSourceUrl`, `searchTextOf` | Yes, unchanged |
+| Snapshot, atomic publish | `build-organization-snapshot.mjs`, `atomicWriteTextFile` | Yes, inputs changed only |
+
+Nothing is rebuilt that exists; the one new module (`card-content.mjs`) replaces logic that was spread across `displayTitle`, `fallbackEntry` and `formalCurationDecision`.
+
+#### 0C Dream state
+
+```
+CURRENT                         THIS PLAN                          12-MONTH IDEAL
+31 cards held behind a banner;  every card from its own post,      cards complete and faithful (CAP fixes the
+titles rewritten by agents;     reply or transcript; review adds   capture, re-fetch heals the 79), each card
+240-char excerpts; 377 search   tags only; honest counts; 79 cut   opens its post directly (LINK-02), and the
+links; counts say "343 深度解读" replies fall back and say why     cross-post layer (verified tools, topics,
+                                                                   search) is where review effort goes
+```
+
+#### 0C-bis Implementation alternatives
+
+```
+APPROACH A: Pure card module + builder rewrite (the plan)
+  Effort M · Risk Med · Reuses loaders, formatter, category policy, snapshot
+  Pros: one deterministic place for card rules; gate removed at its root; testable without the private folder
+  Cons: wide test churn (about 20 test files); two data commits
+APPROACH B: Minimal — switch publish_only_accepted off and drop the banners
+  Effort S · Risk High · Reuses everything
+  Pros: tiny diff
+  Cons: titles stay agent-written, 240-char cut stays, damaged replies show as complete, gate code stays to drift back
+APPROACH C: Separate card service outside the curation pipeline
+  Effort L · Risk Med
+  Pros: review code could later be retired without touching cards
+  Cons: a second build path beside the snapshot; parallel machinery the solution-shape rule rejects
+RECOMMENDATION: A — it fixes the defect where it lives and keeps one build path (completeness, explicit over clever).
+```
+
+Auto-decided: A (P1, P5). Not a taste decision: B fails CARD-02, CARD-04 and §7; C duplicates the snapshot path.
+
+#### 0F Mode: SELECTIVE EXPANSION (autoplan override; feature iteration on an existing system).
+
+#### 0D Selective expansion
+
+Complexity check: about 25 production and test files, 4 new modules. Over the 8-file smell line, but most of it is deletion of the gate across its callers and tests; the four new modules each have one job (title/text rules, damage list, extracted text, evidence reading). Minimum set that meets the spec: Tasks 1–10 as written; nothing deferrable without failing an acceptance row.
+
+Expansion candidates (each decided; additions limited to checks and reporting, because new behaviour or wording needs the owner per the grounding rule):
+
+| # | Candidate | Effort | Decision | Why |
+|---|---|---|---|---|
+| E1 | Print how many cards the add-on actually changes (tags, category, kind) | S | Accepted (Task 10 Step 6) | Measures whether the review pipeline still earns its upkeep; print only |
+| E2 | Count third-party contact details now public | S | Accepted (Task 10 Step 6) | Gives the owner evidence on premise P2; count only, nothing blocked |
+| E3 | Block publishing when contact details are found | S | Taste, not added | Would stop the build on owner-approved content; the count (E2) lets the owner decide |
+| E4 | Archive moves after the rebuild checks | S | Accepted (Task 10 Step 3 order note) | A rebuild failure stays attributable |
+| E5 | Brief states that paragraphs return only after re-fetch, and that "下一轮" depends on Slice B | S | Accepted (risks 4 and 5) | Honest expectations; no wording change |
+| E6 | Re-seal the 41 early-format transcripts | M | Skipped | Writing a hash onto text never checked against its source invents provenance |
+| E7 | Public excerpt, full text only on the local workbench | M | Not added; premise item P2 at the gate | Contradicts the owner's ruling |
+
+#### 0E Temporal interrogation
+
+- Hour 1: the implementer needs the new card fields (Task 5 contract) before touching `app.js`; the plan gives them.
+- Hours 2–3: `classify` reads `entry.themes.join` when an add-on has no `kind`; sealed candidates carry `kind` (D2), so the path is not hit. Left to Eng to verify.
+- Hours 4–5: real-data counts (79, 13, 3) may move if a reply was saved since; Task 6 Step 8 says what to do.
+- Hour 6+: test churn across about 20 files; the disposition table owns each.
+
+#### Sections 1–11
+
+1. **Architecture.** Dependency graph after the change:
+```
+catalog.json ─┐
+replies/*.json ─┤→ loadFormalPointSummary ─┐
+damaged list ───┤→ loadDamagedReplies ─────┤→ replyState ─┐
+video-analysis ─┤→ loadExtractedText ──────┼──────────────┤→ cardText ─┐
+                │                          │  postBody ───┘            │
+curation/candidates → judgePublicNote (kind, tags, tools, unreachable) ┤→ card → safety scan → knowledge.json
+audit file ──→ loadUnreachableNoteIds ─────┘                           │
+                                                   cardTitle ──────────┘
+```
+New coupling: the builder now reads `video-analysis` (it already read it for frame counts). Rollback: revert the data commit and republish the previous snapshot. One finding: the title limit 52 existed twice (card module and builder); auto-decided to share one export (P4, mechanical, applied).
+2. **Error and rescue.** See the registry below. Every new failure is loud (throws, build stops, nothing published) or a defined fallback (missing file means "none"). No swallowed errors added.
+3. **Security.** The safety scan still refuses tokens, profile paths, author ids, cookies and private board ids, and now runs over far more text. New exposure is third-party text (P2, E2). No new endpoint; one is retired (D9 keeps the bridge endpoint until a tracked follow-up).
+4. **Data flow edge cases.** Nil reply → absent; empty post → extracted or saved reply or empty card (D10); refusal → absent; malformed damaged list → build stops; missing list → none damaged; unsafe evidence path → build stops; missing audit file → no unreachable labels. All tested in the plan.
+5. **Code quality.** Fits existing patterns; one DRY finding fixed (title limit). `cardText` has five branches, under the limit.
+6. **Tests.** Every CARD and AC row maps to a unit, builder and browser test (coverage table). Owned in detail by the Eng phase.
+7. **Performance.** 377 notes, a few small file reads each; snapshot freezes up to 252 transcript files of at most 4 MB each. No issue.
+8. **Observability.** The run prints the damaged list, the four mockup cards, counts by source, empty count, cut-reply count, add-on effect and contact-shape count. Enough to reconstruct a bad publish.
+9. **Deployment.** Publish happens once after merge from a frozen snapshot; rollback is a revert plus republish. Old and new site code never run together (static site, atomic data swap).
+10. **Trajectory.** Reversibility 4/5. Debt: the review pipeline now produces only tags (E1 measures it); the bridge endpoint follow-up is tracked.
+11. **Design.** UI scope present; handed to the Design phase.
+
+#### Error and rescue registry
+
+| Codepath | Failure | Handling | User sees |
+|---|---|---|---|
+| `loadDamagedReplies` | file missing | empty set | cards from their text |
+| `loadDamagedReplies` | malformed | throws "damaged reply list is malformed" | build stops; last published site stays |
+| `loadExtractedText` / `readEvidence` | symlink or escaping path | throws "Curation evidence path is unsafe" | build stops |
+| `evidenceText` | hash mismatch, wrong status or method | null | card uses post text or reply |
+| `loadUnreachableNoteIds` | file missing / unset | empty set | no unreachable label |
+| `loadUnreachableNoteIds` | unreadable JSON | throws | build stops |
+| `loadFormalPointSummary` | bad record, refusal, credential shape | null | reply absent, post text shown |
+| builder safety scan | token or private id in text | throws, nothing written | last published site stays |
+
+#### Failure modes registry
+
+| Codepath | Failure mode | Rescued | Test | User sees | Logged |
+|---|---|---|---|---|---|
+| card text | all three sources empty | Yes (empty text section, D10) | builder 18, Playwright 16 | title and chips only | Step 5a count |
+| damaged reply | doubtful entry flagged | Yes (fallback text) | D1 read | wrong blame line on 2 cards | brief names both |
+| transcript | early format rejected | Yes (fallback) | extracted-text tests | post text or cut reply | D4 counts |
+| publish | third-party contact details | No block (owner ruling) | — | the text as posted | E2 count |
+
+No row is unrescued, untested and silent: 0 critical gaps.
+
+#### NOT in scope
+
+- Slice B (CAP-01..05, LINK-01..03, COMP-01, §5.1, CAP-06's platform half): needs Xiaohongshu contact.
+- Curated-skip removal (D13): tied to §5.1.
+- Blocking on third-party contact details (E3): owner decides from the E2 count.
+- Re-sealing early transcripts (E6): would invent provenance.
+- Public-excerpt mode (E7): contradicts the owner's ruling.
+
+#### What already exists
+
+See 0B. The plan reuses every loader, the formatter, the category policy, the safety scan and the snapshot; it only deletes the gate and adds one card module.
+
+#### Dream state delta
+
+After this plan the cards are faithful and ungated; still missing for the 12-month state: capture fixes and the re-fetch of 79 replies (Slice B), the direct post link (LINK-02), and investment in the cross-post layer instead of capture fidelity.
+
+#### CEO dual voices
+
+Codex: unavailable (`model_unusable`). Claude subagent: completed, 7 findings.
+
+```
+CEO DUAL VOICES — CONSENSUS TABLE:
+  Dimension                            Claude   Codex  Consensus
+  1. Premises valid?                   mostly   —      N/A
+  2. Right problem to solve?           yes      —      N/A
+  3. Scope calibration correct?        yes      —      N/A
+  4. Alternatives sufficiently explored? yes    —      N/A
+  5. Competitive/market risks covered? partly   —      N/A
+  6. 6-month trajectory sound?         mostly   —      N/A
+```
+
+Subagent findings and their disposition: 1 (full text public) → premise P2 queued to the gate, E2 count added; 2 (review pipeline value) → E1; 3 (re-fetch promise) → risk 5, `TODOS.md` line already in Task 10 Step 1, wording kept (owner-approved); 4 (two doubtful replies) → already in D1 and the brief, owner edits the list if he clears one; 5 (archive order) → E4; 6 (Xiaohongshu as competitor) → dream-state delta, no change; 7 (early transcripts, paragraphs) → E6 skipped, risk 4.
+
+#### Completion summary
+
+```
+  | Mode selected        | SELECTIVE EXPANSION                                   |
+  | System Audit         | gate lives in public-judgement.mjs:142-153            |
+  | Step 0               | approach A; 7 candidates: 4 accepted, 1 taste, 2 not  |
+  | Section 1  (Arch)    | 1 issue (title limit duplicated) — fixed              |
+  | Section 2  (Errors)  | 8 paths mapped, 0 GAPS                                |
+  | Section 3  (Security)| 1 issue (third-party text public), owner ruling       |
+  | Section 4  (Data/UX) | 8 edge cases mapped, 0 unhandled                      |
+  | Section 5  (Quality) | 1 issue (same as Section 1)                           |
+  | Section 6  (Tests)   | coverage table complete; detail in Eng                |
+  | Section 7  (Perf)    | 0 issues                                              |
+  | Section 8  (Observ)  | 2 prints added (E1, E2)                               |
+  | Section 9  (Deploy)  | 0 risks beyond rollback by revert                     |
+  | Section 10 (Future)  | Reversibility 4/5, debt items 2                       |
+  | Section 11 (Design)  | handed to Design phase                                |
+  | NOT in scope         | written (5 items)                                     |
+  | Error/rescue registry| 8 paths, 0 CRITICAL GAPS                              |
+  | Failure modes        | 4 total, 0 CRITICAL GAPS                              |
+  | Outside voice        | codex unavailable (model_unusable)                    |
+  | Lake Score           | 1/1 chose the complete option (A over B)              |
+  | Unresolved decisions | 0 mid-run; premise P2 at the gate                     |
+```
+
+<!-- autoplan-accepted:ceo -->
+- Task 10 Step 6 prints, never asserts, the number of cards whose `themes`, `tools`, `category`, `suggestedCategory` or `kind` differ between the build with the add-on and the build without it.
+- Task 10 Step 6 prints, never asserts and never blocks, the number of cards whose `mainText` or `extracted.text` contains an 11-digit run starting with `1` or `微信`/`vx`/`VX` followed by a letter-or-digit token; no matched text is printed.
+- Task 10 Steps 3 and 4 (archive copy and file moves) run after Steps 5, 5a, 6 and 7 have passed and before Step 8.
+- `card-content.mjs` exports `TITLE_LIMIT`; `build-public-site.mjs` imports it instead of declaring its own 52, and the search-link cut keeps using it.
+- The risks list carries (4) existing cards regain paragraphs only after a Slice B re-fetch and (5) the "下一轮" wording depends on CAP-05 in Slice B, tracked in `TODOS.md` by Task 10 Step 1.
+- Premise P2 (full third-party text on the public site) is presented at the final gate as a premise item; the owner's ruling stands unless he changes it.
+<!-- /autoplan-accepted:ceo -->
+
+<!-- autoplan-baseline-edits:ceo {"sourceSha256":"935d3e65cf9016a528edff85c303dd2c661e7c68afd990b85222bd829c84f355","replacements":[{"oldText":"Compare every card's `title`, `mainText`, `mainSource`. Expected: 377 cards, zero differences. Save the one-line result for the brief.","newText":"Compare every card's `title`, `mainText`, `mainSource`. Expected: 377 cards, zero differences. Save the one-line result for the brief. From the same two builds also print, for the brief and never asserted, how many cards differ in any of `themes`, `tools`, `category`, `suggestedCategory` or `kind` (the add-on's measurable effect on the cards), and, from the first build, how many cards' `mainText` or `extracted.text` contain an 11-digit run starting with `1` or `微信`/`vx`/`VX` followed by a letter-or-digit token (third-party contact details that the full text now makes public; a count only, no text printed, nothing blocked)."},{"oldText":"- [ ] **Step 3: Archive the agent-written card texts first** (copy, not move):","newText":"- [ ] **Step 3: Archive the agent-written card texts first** (copy, not move). **Order:** Steps 3 and 4 run after Steps 5, 5a, 6 and 7 have passed and before Step 8, so a rebuild or real-data check failure can never be confused with the file moves:"},{"oldText":"const TITLE_LIMIT = 52;\nconst tidy = (value) => String(value ?? \"\").replace(/\\s+/g, \" \").trim();","newText":"export const TITLE_LIMIT = 52;\nconst tidy = (value) => String(value ?? \"\").replace(/\\s+/g, \" \").trim();"},{"oldText":"(keep `TITLE_LIMIT`, `cleanedPostText` and `searchTextOf` for the unchanged search link, which still cuts at that limit)","newText":"(keep `cleanedPostText` and `searchTextOf` for the unchanged search link, and replace the builder's own `const TITLE_LIMIT = 52` with `TITLE_LIMIT` imported from `./card-content.mjs`, so the title cut and the search-text cut share one number)"},{"oldText":"(3) With the \"saved after review\" exception removed, the next real review run may send some accepted notes back to review; cards are unaffected (AC-NOGATE).","newText":"(3) With the \"saved after review\" exception removed, the next real review run may send some accepted notes back to review; cards are unaffected (AC-NOGATE). (4) Paragraph breaks (CARD-08) appear on existing cards only after their details are fetched again, which is Slice B; after this run the 377 live cards still show their text as one block, and the brief says so. (5) The 79 damaged cards say the reply will be fetched again \"下一轮\" (owner-approved CARD-04 wording); the re-fetch is CAP-05 in Slice B, recorded in `TODOS.md` by Task 10 Step 1 with its start condition."}]} -->
+
+
+### Phase 2 — Design review (autoplan, 2026-10-14)
+
+Inputs read: this plan, the spec, `site/app.js` (source presentation 494–540, `noteCard` 974–997, `descriptionSection` and fold 1068–1121), `site/styles.css` (card clamp 267, 471–487), both mockups (`docs/designs/2026-10-14-card-design-rewrite.html` cases ①–④, `docs/designs/2026-10-14-card-summary-sources.html` unreachable case lines 261–284). No `DESIGN.md` in the repository; the site's own stylesheet tokens and the two owner-approved mockups are the design source of truth (spec §3.2 last line, plan Task 5). No new mockups generated: the owner already approved these two, and new variants would compete with an approved design.
+
+Outside voice: Codex unavailable (`model_unusable`, same probe as Phase 1). Native Claude design subagent completed: 1 critical, 4 high, 8 medium, 2 low. Tag `[subagent-only]`.
+
+#### Step 0
+
+Initial design completeness: 7/10. Structure, placement and wording come from approved mockups and are specific; gaps were the grid card for an empty card, two counts for one reply, and paragraph styling of the extra section. A 10 here means every card state renders the same way in grid and detail, with one number per fact.
+
+#### Litmus scorecard (APP UI / READ hybrid: a card reader)
+
+```
+  Check                                    Claude  Codex  Consensus
+  1. Brand unmistakable in first screen?   n/a     —      N/A (unchanged home page)
+  2. One strong visual anchor?             yes     —      N/A
+  3. Scannable by headlines only?          yes     —      N/A
+  4. Each section has one job?             mostly  —      N/A
+  5. Cards actually necessary?             yes     —      N/A (the card is the object)
+  6. Motion improves hierarchy?            n/a     —      N/A (no motion added)
+  7. Premium without decorative shadows?   n/a     —      N/A (no new chrome)
+  Hard rejections triggered:               0       —      N/A
+```
+
+#### Card state table (precedence is the order of `summarySourcePresentation` in Task 5)
+
+```
+  STATE                                   | SOURCE LABEL          | EXPLANATION                     | TEXT SHOWN            | FOLD
+  ----------------------------------------|-----------------------|---------------------------------|-----------------------|-----
+  post unreachable (any text source)      | 已完成（原帖不可访问） | approved #99 sentence           | per text rules        | reply only
+  cut reply is the only text (D10)        | 点点 AI 深度总结       | damaged opening + new clause    | saved cut reply       | yes
+  complete reply                          | 点点 AI 深度总结       | 完整回复…共 N 字                 | reply                 | yes
+  transcript as main text                 | 视频转写与画面文字     | opening + videoOnlyRest         | transcript            | no
+  picture text as main text               | 图片文字              | opening + imageOnlyRest         | picture text          | no
+  post text, reply damaged                | 原帖公开文字           | CARD-04 sentence                | post text             | no
+  post text, no reply                     | 原帖公开文字           | noReply sentence                | post text + section   | no
+  nothing at all                          | (none)                | (none)                          | (none)                | no
+  personal revision on any of the above   | same label            | "正文已使用你的个人修订。原系统内容：" + same | revision | no
+```
+
+#### Passes
+
+1. **Information architecture — 8/10 → 8/10.** Title, source box, text, extra section, chips, footer: the order of mockup ①. No change.
+2. **Interaction states — 6/10 → 8/10.** Gap: the grid card of an empty card still drew a source label while the detail view drew none. Auto-fixed (structural): `noteCard` leaves the line out, tests 13 and 16 cover it. Remaining: long post text and transcripts do not fold (taste T-D1).
+3. **Journey — 8/10.** Browse grid → open card → read source line → read text → open post search. The source line answers "can I trust this text" before the text; unchanged.
+4. **AI slop — 9/10.** No new chrome; one new badge and one new section, both utility language.
+5. **Design system — 7/10 → 8/10.** No `DESIGN.md`. New CSS uses the stylesheet's tokens. Auto-fixed: the extra section's paragraphs dropped `white-space: pre-wrap`, which the main text does not use, so both areas space paragraphs the same way.
+6. **Responsive and accessibility — 7/10 → 8/10.** Both widths tested; no sideways scroll asserted; badge text is the signal, colour only reinforcement. One fix: one character count per reply (the source box and the fold button now show the same number).
+7. **Unresolved design decisions** — none blocking; the taste decisions below go to the gate.
+
+#### Subagent findings and disposition
+
+| Finding | Disposition | Why |
+|---|---|---|
+| C1 unreachable card loses its text-source label; its sentence says "不作为正式核验结果发布" | Kept as planned; taste T-D2 | Spec §3.1 keeps that label and sentence for the 3 cards, and the approved mockup (`card-summary-sources.html:261-262`) draws it; changing wording needs the owner |
+| H1 cut reply looks like a complete one; "展开全文" on a cut reply | Kept; taste T-D3 | New wording; joins the D6 `[needs user-approved copy]` item |
+| H2 long post text and transcripts never fold | Kept; taste T-D1 | The approved mockup shows post text (case ②) and transcript (case ④) without a fold button |
+| H3 two counts for one reply | Fixed | Fold label now uses the trimmed length the source box uses; the saved reply is already trimmed by `parseFormalPointSummaryRecord`, so the numbers were equal in data, and now the code says so |
+| H4 extra section has no source line | Kept; taste T-D4 | Spec §3.1 defines the section as a heading plus the text; a new line under it is unapproved UI |
+| M1 combinations not listed | Fixed in this record | State table above |
+| M2 grid parity only for two cards | Fixed | Test 13 covers every fixture card |
+| M3 empty card gives no reason | Kept | D10 chose no new wording; real data expects 0 such cards (Task 10 Step 5a) |
+| M4 counts shown twice; loading and failure states | Kept; taste T-D5 | Spec CARD-09 requires the sentence; the proof strip already existed and its third cell had to be replaced |
+| M5 badge meaning and contrast | Kept | Contrast follows the site's tokens; a tooltip would be new wording |
+| M6 refetch promise and two doubtful replies | Already covered | CEO risk 5, D1 |
+| M7 "已完成" reads as run status | Kept; part of T-D2 | Approved wording |
+| M8 paragraph spacing differs | Fixed | `pre-wrap` removed |
+| L1 emoji counted as two | Kept | Live behaviour approved in #99 |
+| L2 fixture Seedance tool is illustrative | Already covered | Task 5 Step 1 item 3 says so |
+
+#### Taste decisions for the gate
+
+- T-D1: Long post text and transcripts show unfolded (as the mockup draws them). Alternative: fold every main text taller than 420px with the same button.
+- T-D2: The 3 unreachable cards keep "已完成（原帖不可访问）" and its sentence ending "不作为正式核验结果发布". Alternative: label by text source and add the unreachable fact as a sentence, with new wording.
+- T-D3: A cut reply that is the only text keeps the label "点点 AI 深度总结" and the fold text "展开全文". Alternative: a distinct label such as "点点 AI 深度总结（不完整）".
+- T-D4: The extra transcript or picture-text section has a heading only. Alternative: one line under it saying the text is not rewritten by AI.
+- T-D5: The two counts appear in the hero sentence and in the proof strip. Alternative: one place only.
+
+#### NOT in scope (design)
+
+New mockup variants (owner-approved mockups exist); a `DESIGN.md` (no design-system work in this spec); tooltips and any wording not already approved.
+
+#### What already exists (design)
+
+Source box with edit button (#99), reply fold (`FOLDED_SUMMARY_HEIGHT = 420`, `settleSummaryFolds`), grid clamp (`.card-summary` 4 lines), tool chips, footer controls, proof strip.
+
+#### Completion summary
+
+```
+  | System Audit         | no DESIGN.md; two approved mockups are the source  |
+  | Step 0               | 7/10                                               |
+  | Pass 1  (Info Arch)  | 8/10 → 8/10                                        |
+  | Pass 2  (States)     | 6/10 → 8/10                                        |
+  | Pass 3  (Journey)    | 8/10 → 8/10                                        |
+  | Pass 4  (AI Slop)    | 9/10 → 9/10                                        |
+  | Pass 5  (Design Sys) | 7/10 → 8/10                                        |
+  | Pass 6  (Responsive) | 7/10 → 8/10                                        |
+  | Pass 7  (Decisions)  | 4 fixed, 5 taste to the gate                       |
+  | Approved Mockups     | 0 generated (2 owner-approved exist)               |
+  | Overall design score | 6/10 → 8/10                                        |
+```
+
+<!-- autoplan-accepted:design -->
+- Task 5: the fold label uses `note.mainText.trim().length`, the same number as the source box; Playwright test 3 expects the two numbers to be equal.
+- Task 5: `noteCard` leaves out the `.card-summary-source` line and the summary block when `note.mainText` is empty and there is no personal revision; Playwright test 16 asserts the grid card of `fixture-no-text` has no source line.
+- Task 5: Playwright test 13 compares the grid card's source label and first text with the detail view for every fixture card whose `mainText` is not empty.
+- Task 5: `.extracted-text p` has no `white-space: pre-wrap`.
+- Taste decisions T-D1 to T-D5 keep the plan as written and are listed at the final gate.
+<!-- /autoplan-accepted:design -->
+
+<!-- autoplan-baseline-edits:design {"sourceSha256":"295ea6c994fa989233cfe2c180880fbd802c9636f6d603116ab8475412fbcccf","replacements":[{"oldText":"return `\"\"` (no provenance box, no wording; decision D10). Fold body uses `note.mainText.length` in place of `note.deepSummary.length`.","newText":"return `\"\"` (no provenance box, no wording; decision D10). The fold label uses `note.mainText.trim().length` in place of `note.deepSummary.length`, the same number the source box shows.\n- `noteCard`: when `note.mainText` is empty and there is no personal revision, leave out the `.card-summary-source` line and the summary block, so the grid card matches the detail view (decision D10)."},{"oldText":"the same first text as the detail view for `REPLY` and `DAMAGED`.","newText":"the same first text as the detail view for every fixture card whose `mainText` is not empty; the grid card of `fixture-no-text` shows its title and chips and no source line."},{"oldText":".extracted-text p { margin: 0 0 8px; color: var(--ink); font-size: 13px; line-height: 1.75; white-space: pre-wrap; }","newText":".extracted-text p { margin: 0 0 8px; color: var(--ink); font-size: 13px; line-height: 1.75; }"},{"oldText":"(the source box counts the trimmed reply, the fold button below counts the whole `mainText.length`, exactly as the live code does today)","newText":"(the source box and the fold button below both count the trimmed reply, so the two numbers are equal)"},{"oldText":"the detail view has its title and chips but no source box and no text section, and no new wording appears (decision D10).","newText":"the detail view has its title and chips but no source box and no text section, its grid card has no source line, and no new wording appears (decision D10)."}]} -->
+
+
+### Phase 2.5 — DX review (autoplan, DX POLISH, 2026-10-14)
+
+Scope trigger: the snapshot tool's term count (141 matches: import, npm, package, agent, SKILL.md). Product type: a Claude Code skill plus a local CLI pipeline (`skills/xhs-favorites-organizer/scripts/*`, `npm.cmd run …`), used by one owner and by the agents that run this pipeline. Mode: DX POLISH (enhancement to an existing tool). Competitive benchmark skipped: a private single-owner tool has no competitors to time against; reference tier "Competitive" is used for the operator path. Outside voice: Codex unavailable (`model_unusable`). Native Claude DX subagent completed: 2 critical, 4 high, 9 medium.
+
+#### Persona
+
+```
+TARGET DEVELOPER PERSONA
+Who:       the agent (or the owner) executing this plan and later re-running the card build
+Context:   overnight pipeline run; later, a rebuild after Slice B re-fetches replies
+Tolerance: zero ambiguity in a RUN STEP; any unfilled placeholder stops an unattended run
+Expects:   exact commands, a stop-and-report rule at every real-data step, errors that name the file and note
+```
+
+#### Empathy narrative
+
+I open the plan and read the eight governing documents it names. Task 1 is three commands and a commit; I get a green test in about fifteen minutes. Tasks 2 to 4 are the same shape. In Task 5 I rewrite two older browser tests as the disposition table tells me, then run the commit command, which does not add them: the commit fails its own tests. In Task 6 Step 8 I have to build the sealed-candidates file from "the newest bundle" and pass `--effective-date <today>`, and I am not told what "newest" means or what format the date takes. In Task 10 the rebuild finishes, my check prints 79 damaged cards, and I have nothing to compare it with; if the list file had been missing, every cut reply would have been called complete and I would not know.
+
+#### Developer journey
+
+```
+STAGE        | DEVELOPER DOES                         | FRICTION                                   | STATUS
+1. Discover  | reads plan + 8 governing documents     | long, but each is named                    | ok
+2. Install   | none (repo already set up)             | none                                       | ok
+3. First run | Task 1: test, implement, commit        | none                                       | ok
+4. Real use  | Tasks 5–9 commits                      | Task 5 commit missed two test files        | fixed
+5. Real data | Task 6 Step 8, Task 10 Steps 5–7       | vague bundle choice and date; silent list  | fixed
+6. Debug     | builder safety failure, list malformed | messages named no note, field or file      | fixed
+7. Upgrade   | regenerate damaged list after Slice B  | no document named the command              | fixed
+8. Override  | owner clears a doubtful reply          | hand edit undone by regeneration           | deferred (TODOS line)
+9. Repeat    | rerun Task 10 on a new day             | new batch id each run (already stated)     | ok
+```
+
+#### First-time operator confusion log
+
+```
+T+0:00  Reads plan header and governing sources list.
+T+0:15  Task 1 green and committed.
+T+1:30  Task 5 commit: two rewritten browser tests left out; suite red.   → fixed
+T+2:30  Task 6 Step 8: "newest bundle"? "<today>"?                       → fixed (mtime, YYYY-MM-DD, printed counts)
+T+3:30  Task 10 Step 5a prints 79 damaged and moves on; no cross-check.  → fixed (list count = damaged cards, else stop)
+```
+
+TTHW (operator, first green commit): about 15 minutes now; target unchanged. The time is dominated by reading governing documents, which is deliberate.
+
+#### Passes
+
+1. **Getting started — 7/10 → 8/10.** Task 1 is copy-paste complete. The Task 5 commit gap is fixed.
+2. **API/CLI design — 6/10 → 7/10.** `damaged-replies.mjs` takes `--catalog`, `--diandian-dir`, `--output`; the builder takes `--damaged-replies` with a default. Taste T-X1: the generator's `--output` has no default (plan keeps it explicit). One file, three internal names (private file, frozen input, snapshot key): left, each name is local to its layer.
+3. **Error messages — 4/10 → 7/10.** Fixed: the malformed-list error names the path; the public safety failure names the note and field and never the matched text (builder test 15). Kept: "Curation evidence path is unsafe" from the moved reader (it is the existing message, and the case is a planted symlink in the private folder).
+4. **Documentation — 6/10 → 8/10.** Fixed: Task 9 adds a SKILL.md paragraph on the damaged-list command, its private output, the snapshot freezing it, and regeneration after the re-fetch.
+5. **Upgrade path — 7/10.** Builder version 7 → 8 in the snapshot; old data shape replaced in one commit with its tests. Rollback is a revert.
+6. **Dev environment — 7/10.** Windows commands use `npm.cmd`/`npx.cmd`; the shared `site/` import from a skill script already has precedent (`build-public-site.mjs` imports `../../../site/resource-utils.mjs`).
+7. **Community — n/a (private single-owner tool).** Examined: no external audience; nothing to add.
+8. **Measurement — 6/10 → 8/10.** Fixed: Step 5a cross-checks the damaged list against the cards; Task 6 Step 8 prints the bundle used and the candidates it covers.
+
+#### Subagent findings and disposition
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | Task 5 commit misses two browser-test files | Fixed |
+| 2 | Missing damaged list publishes cut replies as complete | Fixed (Step 5a stop) |
+| 3 | Task 6 Step 8 snippet vague | Fixed (mtime, date format, printed counts) |
+| 4 | Owner's ruling on a doubtful reply lost on regeneration | Deferred: `TODOS.md` line in Task 10 Step 1, closes when he rules |
+| 5 | Safety failure gives no note or field | Fixed (builder test 15) |
+| 6 | No document for the damaged-list command | Fixed (Task 9) |
+| 7 | Option defaults and names | Taste T-X1; names left |
+| 8 | Errors without file or note | Fixed for the list; evidence-path message kept |
+| 9 | Rejected transcripts dropped with no count | Kept: D4 already measured 41; Step 5a prints the empty-card count that would reveal harm |
+| 10 | Stop leaves rebuilt data in place | Fixed (stays uncommitted, nothing published) |
+| 11 | Rebuild driver described, not written | Kept: Step 5 names every call and argument; Eng phase checks it |
+| 12 | Fixture generator not committed | Kept: the fixture is committed and its counts come from `cardCounts` in the Playwright test's own expectations |
+| 13 | Skill script imports from `site/` | No issue (precedent above) |
+| 14 | Unreachable sentence uses old wording | Same as design T-D2 |
+| 15 | "point" vs "reply" names | Kept (code-internal) |
+
+#### DX scorecard
+
+```
+| Getting Started   | 8/10 | Error Messages | 7/10 | Documentation | 8/10 |
+| API/CLI           | 7/10 | Upgrade Path   | 7/10 | Dev Env       | 7/10 |
+| Community         | n/a  | Measurement    | 8/10 |
+| TTHW (operator)   | ~15 min to first green commit                         |
+| Mode              | POLISH        | Product type | Claude Code skill + CLI |
+| Overall DX        | 6/10 → 7/10                                            |
+```
+
+#### DX implementation checklist
+
+```
+[x] Every RUN STEP command has no unfilled placeholder except the ones it defines
+[x] Every real-data step has a stop-and-report condition
+[x] Damaged-list absence or mismatch stops the run
+[x] Safety failure names note and field, never the text
+[x] Damaged-list command documented in SKILL.md
+[ ] Owner override for a flagged reply (TODOS)
+```
+
+<!-- autoplan-accepted:dx -->
+- Task 5 Step 9 commit adds `site/e2e/organization-recovery.spec.mjs` and `site/e2e/design-text-legibility-regression.spec.mjs`.
+- `loadDamagedReplies` throws `damaged reply list is malformed: <path>` for a malformed list.
+- The builder's public safety failure names the first note id and field containing the match and never includes the matched text; builder test 15 asserts the note id and `mainText` appear in `stderr` and `abc` does not.
+- Task 6 Step 8 passes `--effective-date` as today's `YYYY-MM-DD`, builds sealed candidates from the most recently modified `*-curation-bundle.json`, and prints that file name, the number of sealed candidates, and how many of the 31 formerly held notes they cover.
+- Task 10 Step 5a prints the damaged-list entry count and the count of cards with `replyDamaged true`, and stops and reports if the list file is missing or the two differ; when Step 5a stops, the rebuilt `site/data/knowledge.json` stays uncommitted and nothing is published.
+- Task 9 adds a `SKILL.md` paragraph naming `damaged-replies.mjs`, its private output `.xhs-favorites/damaged-diandian-replies.json`, that the snapshot freezes it and a card reads it, and that it is regenerated after the Slice B re-fetch; `faithful-cards-docs.test.mjs` asserts the script name and output path appear.
+- Task 10 Step 1 adds the `TODOS.md` line for an owner override of a flagged reply, closing when he rules on either doubtful entry.
+<!-- /autoplan-accepted:dx -->
+
+<!-- autoplan-baseline-edits:dx {"sourceSha256":"bdf93cd11015a64699f3cc169f21b8f05cdf9192158ecff637b9fb4fc06ede03","replacements":[{"oldText":"git add site/app.js site/index.html site/styles.css scripts/serve-qa-fixture.mjs scripts/fixtures/faithful-cards.json site/e2e/faithful-cards.spec.mjs skills/xhs-favorites-organizer/tests/test_public_site.mjs","newText":"git add site/app.js site/index.html site/styles.css scripts/serve-qa-fixture.mjs scripts/fixtures/faithful-cards.json site/e2e/faithful-cards.spec.mjs site/e2e/organization-recovery.spec.mjs site/e2e/design-text-legibility-regression.spec.mjs skills/xhs-favorites-organizer/tests/test_public_site.mjs"},{"oldText":"    throw new Error(\"damaged reply list is malformed\");","newText":"    throw new Error(`damaged reply list is malformed: ${path}`);"},{"oldText":"15. **Public safety** — with `buildResult`, a description containing `xsec_token=abc` makes the builder exit non-zero with `Public data safety check failed` in `stderr`, and `written` is `false`.","newText":"15. **Public safety** — with `buildResult`, a description containing `xsec_token=abc` makes the builder exit non-zero with `Public data safety check failed` in `stderr`, `stderr` names that note's id and the field (`mainText`), `stderr` does not contain `abc`, and `written` is `false`."},{"oldText":"--effective-date <today> --output site/data/knowledge.json","newText":"--effective-date <today as YYYY-MM-DD> --output site/data/knowledge.json"},{"oldText":"  - `- [ ] Delete the bridge endpoint /notes/organization-status and validateLocalNoteOrganizationStatus in site/local-bridge-utils.mjs (the card overlay that used them is gone) — closes when no code or test references either — written by the faithful-cards run, 2026-10-14`","newText":"  - `- [ ] Delete the bridge endpoint /notes/organization-status and validateLocalNoteOrganizationStatus in site/local-bridge-utils.mjs (the card overlay that used them is gone) — closes when no code or test references either — written by the faithful-cards run, 2026-10-14`\n  - `- [ ] Let the owner mark a flagged DianDian reply as complete so regenerating the damaged list keeps it off (today a hand edit of .xhs-favorites/damaged-diandian-replies.json is undone by the next regeneration) — closes when the owner rules on either doubtful entry (…01e252, …03930b) — written by the faithful-cards run, 2026-10-14`"},{"oldText":"Keep the `forbidden` patterns and private-identifier checks exactly as they are (they now also scan the post text and transcripts).","newText":"Keep the `forbidden` patterns and private-identifier checks exactly as they are (they now also scan the post text and transcripts). When one of them matches, find the first card and field that contains the match (scan each card's string fields with the same normalisation) and put that note id and field name in the error after `Public data safety check failed`; never put the matched text in the message."},{"oldText":"over the newest `.xhs-favorites/organization-transactions/*-curation-bundle.json`, and the other arguments","newText":"over the most recently modified `.xhs-favorites/organization-transactions/*-curation-bundle.json` (print its file name, the number of sealed candidates written, and how many of the 31 formerly held notes they cover), and the other arguments"},{"oldText":"so if the fourth card is not a `video-transcript`, or the unreachable count is not 3, or any card has an empty `mainText`, **stop and report it with the printed numbers; do not change the card rules to make the numbers match**.","newText":"so if the fourth card is not a `video-transcript`, or the unreachable count is not 3, or any card has an empty `mainText`, **stop and report it with the printed numbers; do not change the card rules to make the numbers match**. Also print the number of entries in `.xhs-favorites/damaged-diandian-replies.json` and the number of cards with `replyDamaged true`; stop and report the same way if the list file is missing or the two numbers differ (a missing list would otherwise show every cut reply as complete). When this step stops, the rebuilt `site/data/knowledge.json` stays uncommitted and nothing is published."},{"oldText":"is **unchanged until Slice B**; `CONTEXT.md`","newText":"is **unchanged until Slice B**, and a paragraph on the damaged-reply list: the command `node skills/xhs-favorites-organizer/scripts/damaged-replies.mjs --catalog … --diandian-dir … --output …`, that its output `.xhs-favorites/damaged-diandian-replies.json` is private, that the snapshot freezes it and a card reads it, and that it is regenerated after the Slice B re-fetch (the docs test asserts the script name and the output path appear); `CONTEXT.md`"}]} -->
+
+
+### Phase 3 — Eng review (autoplan, FULL_REVIEW, 2026-10-14)
+
+Inputs read this phase: `build-public-site.mjs`, `public-judgement.mjs`, `curation-quality.mjs` (whole); `site/app.js` lines 24, 284–303, 494–540, 974–997, 1068–1121, 1575; `site/index.html` lines 16, 244; `site/styles.css` 267, 471–487; `package.json` scripts. Outside voice: Codex unavailable (`model_unusable`). Native Claude eng subagent completed: 1 high, 3 medium, 9 lower; it ran two read-only scans of the real notes (no safety-pattern hits in 377 posts and their extracted text; largest transcript 170 KB).
+
+#### Step 0 — scope challenge
+
+- Existing code reused: see CEO 0B; nothing rebuilt in parallel.
+- Minimum change: Tasks 1–10; each removes a piece of the gate or adds a spec row. No deferrable task found.
+- Complexity check triggers (about 30 files, 4 new modules). Autoplan override "never reduce": proceeding as written. The file count is mostly the gate's callers and their tests; the four modules each hold one rule set.
+- Search check: no new framework pattern; plain Node modules and `node:test`. Skipped external search.
+- TODOS cross-reference: the one open line (browser-test login probe) is unrelated; three new lines are written by Task 10 Step 1.
+- Distribution: no new artifact; the site publishes through the existing snapshot path.
+
+#### Section 1 — Architecture
+
+```
+                 ┌──────────────── build-organization-snapshot.mjs (freezes inputs, version 8) ───────────────┐
+ .xhs-favorites/ │  catalog ─┐  replies/ ─┐  damaged list (required when replies exist) ─┐  video-analysis/ ─┐ │
+                 │           ▼            ▼                                              ▼                   ▼ │
+                 │                 build-public-site.mjs  (one card per note)                                  │
+                 │   loadFormalPointSummary ─► replyState ◄─ loadDamagedReplies                                │
+                 │   postBody / cardTitle ───────────────► cardText ◄─ loadExtractedText ◄─ evidence-files.mjs │
+                 │   judgePublicNote(add-on, unreachable) ─► kind · tags · tools · unverified · postUnreachable│
+                 │                       └──────────────► card ─► safety scan (names note+field) ─► knowledge.json
+                 └──────────────────────────────────────────────────────────────────────────────────────────────┘
+ site/app.js: validate (new fields) ─► noteCard / descriptionSection / extractedSectionHtml ─► counts from meta
+```
+
+Coupling added: the builder reads `video-analysis` evidence through the module the review already uses (shared, not copied). Findings decided this phase:
+- E-1 (high, 8/10) missing damaged list publishes cut replies as complete (`damaged-replies.mjs` loader returns an empty map on ENOENT). Fixed: snapshot stops with `DAMAGED_REPLY_LIST_MISSING` when replies exist and no list was captured; the frozen build always gets a list file (empty when there are no replies); Task 10 Step 5a cross-check from DX stays.
+- E-2 (medium, 7/10) the frozen build could fall back to the live private list. Fixed with E-1: builder has no default path; snapshot always passes the frozen copy.
+- E-3 (medium, 8/10) cached old page code with new data: `site/index.html:244` loads `./app.js` without a version and `app.js:1575` fetches data plainly. Partly fixed: data fetch uses `cache: "no-cache"`; the script/stylesheet version marker is a `TODOS.md` line (Task 10 Step 1).
+- E-4 (medium, 8/10) the rebuild driver builds its own service copy and misses the running service's busy flags. Fixed: Task 10 Step 5 checks port 47631 and the run-status files first.
+
+#### Section 2 — Code quality
+
+- E-5 (low, 9/10) title cut could split an emoji (`first.slice(0, TITLE_LIMIT - 1)`). Fixed: cut by code points; one assertion added to the existing title test.
+- E-6 (low, 8/10) builder test 13 overwrote the audit path with `extraConfig`, so the rejected/pending audit was never read. Fixed: helper merges `curation_quality`; test 13 uses a missing `baseline_file` instead.
+- E-7 (low, 7/10) the front-end validator did not check `extracted`, `replyDamaged`, `postUnreachable`. Fixed, with three refused payloads.
+- Kept: two topic-tag strippers (`postBody` for card text, `cleanedPostText` for the unchanged search link); their outputs differ on purpose (the search text is the words before the first tag). Taste T-E4.
+- Kept: `point` and `reply` naming inside code.
+
+#### Section 3 — Tests
+
+Framework: Node `node:test` (`npm test` lists), Python `unittest discover`, Playwright (desktop and phone projects, `scripts/serve-qa-fixture.mjs`).
+
+```
+CODE PATHS                                                   USER FLOWS
+[+] fetch-xhs-details.py clean_paragraphs                    [+] Browse grid
+  ├── [★★★] breaks kept, CRLF/CR, 3+ newlines, trim, empty,     ├── [★★★] no banners anywhere — e2e 1
+  │         20k cap, single-line fields — test_post_text_…    ├── [★★★] grid = detail for every card — e2e 13
+[+] evidence-files.mjs / extracted-text.mjs                     └── [★★ ] no-text card grid line — e2e 16
+  ├── [★★★] video, video+ocr, image, stray transcript —      [+] Open card detail
+  │         extracted-text.test 1–3                            ├── [★★★] reply fold, counts equal — e2e 3
+  ├── [★★★] hash mismatch, wrong status, no files — 5–7        ├── [★★★] damaged → post text — e2e 4
+  └── [★★ ] review path unchanged — test_curation_standard     ├── [★★★] former held + 未核实 — e2e 5
+[+] card-content.mjs                                           ├── [★★★] transcript main / section — e2e 6, 7
+  ├── postBody [★★★] tags, breaks, no cut                      ├── [★★ ] paragraphs — e2e 8
+  ├── cardTitle [★★★] own, first line 52+emoji, author, id     ├── [★★ ] unreachable, image text — e2e 9, 10
+  ├── replyState [★★★] absent/damaged/re-fetched/complete      ├── [★★★] cut reply only (D10) — e2e 18
+  ├── cardText [★★★] 6 branches incl. D10, empty               └── [★★★] edit/restore, data unchanged — e2e 15
+  └── cardCounts [★★★] cut reply and hidden transcript         [+] Home
+[+] damaged-replies.mjs                                          ├── [★★★] counts text + proof cells row — e2e 11
+  ├── damageSigns [★★★] both signs, same-line rule, ZW chars   └── [★★ ] footer/source box both origins — e2e 12
+  ├── command [★★★] refusal skipped, hash, list file          [+] Search
+  └── loader [★★★] missing → empty, malformed → error+path      └── [★★★] post-only and transcript-only phrase — e2e 17
+[+] public-judgement.mjs judgePublicNote                      [+] Load failure
+  ├── [★★★] Skill confirmed / unconfirmed, 未核实 — builder 5,6  └── [★★ ] malformed payloads refused — test_public_site
+  ├── [★★★] unreachable via audit / add-on / neither — 12
+  └── [★★ ] max-age limits — verification-max-age.test
+[+] build-public-site.mjs per-note block
+  ├── [★★★] CARD-02..09 — builder 1–11, 18
+  ├── [★★★] AC-NOGATE, AC-ADDON — 13, 14 (+ Task 10 Step 6 real data)
+  ├── [★★★] safety stop names note+field, no text — 15
+  └── [★★ ] no old fields, search link unchanged — 16, 17
+[+] build-organization-snapshot.mjs
+  ├── [★★★] freezes list/transcripts/audit, version moves — snapshot 1, 2, 6
+  ├── [★★★] list missing with replies → DAMAGED_REPLY_LIST_MISSING — snapshot 3
+  └── [★★ ] old args refused, builder version 8 — 4, 5
+[+] bridge-server.py snapshot command / curation trims
+  └── [★★ ] args present/absent, exceptions removed — test_final_build, test_bridge
+[+] documents
+  └── [★★ ] retired/new statements, list command paragraph — faithful-cards-docs.test
+
+COVERAGE: every CARD, AC and decision row has at least one test; regressions: none found that lack a test
+(the removed gate's callers are rewritten in the same commits, Task 5/6/7/8 disposition table).
+GAPS: 0 blocking. E2E-worthy flows are already Playwright tests. No LLM or prompt change: no eval suite.
+```
+
+#### Test Plan Artifact (behaviour → test layer, for Step 4)
+
+Written to `~/.gstack/projects/rowland-dot-favsense/rowla-feat-faithful-cards-eng-review-test-plan-20261014-082126.md` (pages, interactions, edge cases, critical paths). Layer map:
+
+| Behaviour | Unit (`node:test`/`unittest`) | Builder (spawned build on temp data) | Snapshot | Browser (Playwright, desktop + phone) | Real data (Task 10, print/stop) |
+|---|---|---|---|---|---|
+| CARD-01 all cards, no banners | — | 16 | — | 1, 13 | 377 cards, 0 empty |
+| CARD-02 title | card-content title tests (incl. emoji) | 1 | — | 2 | mockup card ① title |
+| CARD-03 complete reply, fold | card-content cardText | 2 | — | 3 | card ① `diandian` |
+| CARD-04 damaged reply | replyState, cardText | 3, 18 | 3 (list required) | 4, 18 | card ② damaged; list count = damaged cards |
+| CARD-05 formerly held | — | 5 | — | 5 | card ③ `Tool`, not damaged |
+| CARD-06 transcript main | cardText; extracted-text | 7 | 1, 2 | 6 | card ④ `video-transcript` |
+| CARD-07 post + section | cardText | 8 | — | 7 | — |
+| CARD-08 paragraphs | test_post_text_paragraphs; postBody | 10 | — | 8 | (after Slice B re-fetch) |
+| CARD-09 counts | cardCounts | 11 | — | 11 | counts printed |
+| Unreachable label | — | 12 | 6 | 9 | 3 cards |
+| AC-NOGATE | — | 13 | — | — | Step 6 zero differences |
+| AC-ADDON | — | 14 | — | — | Step 6 add-on effect printed |
+| AC-PARA | test_post_text_paragraphs | — | — | — | — |
+| Public safety | — | 15 | — | — | stop and report |
+| Data validator | test_public_site malformed cases | — | — | load-failure screen | — |
+| Personal revision | — | — | — | 15 | — |
+| Search | — | — | — | 17 | — |
+
+#### Section 4 — Performance
+
+Builder: about 1,100 small file reads for 377 notes; no network. Snapshot: freezes up to 252 evidence files (largest 170 KB, limit 4 MB each). `knowledge.json` grows from about 1.3 MB to about 2.3 MB (subagent measurement); the publish check's 16 MB limit leaves headroom for several times today's notes. Browser: post text and transcripts render unfolded (taste T-D1); the grid clamps to 4 lines. No issue requiring change.
+
+#### Failure modes registry
+
+| Codepath | Failure | Test | Handling | User sees | Critical? |
+|---|---|---|---|---|---|
+| snapshot | damaged list missing with replies | snapshot 3 | stops `DAMAGED_REPLY_LIST_MISSING` | last published site | no |
+| builder | token or private id in full text | builder 15 | stops, names note+field | last published site | no |
+| builder | unsafe evidence path | — (planted symlink) | stops "Curation evidence path is unsafe" | last published site | no |
+| builder | malformed damaged list | damaged-replies test | stops, names path | last published site | no |
+| page | cached old code + new data | — | data revalidates; code marker in TODOS | load-failure screen until reload | no (visible) |
+| rebuild driver | service mid-run | — (run step) | checks port and status files, stops | nothing published | no |
+| card | doubtful entry flagged | D1 reading | fallback text | wrong blame line on up to 2 cards | no |
+
+0 critical gaps (every row is either tested, handled loudly, or visible).
+
+#### Worktree parallelization
+
+Tasks 1–4 touch separate modules (fetcher, evidence reader, card rules, damage list) and could run as parallel lanes; Tasks 5–10 depend on them and on each other's data shape. Recommendation: sequential on the existing branch. Opening worktrees needs the owner's approval under his rules, and the four early tasks are each minutes long.
+
+#### NOT in scope (eng)
+
+- Script and stylesheet version marker (TODOS line).
+- Owner override for a flagged reply (TODOS line).
+- Per-note safety exclusion instead of stopping the build (taste T-E1).
+- Fixing sign 2 for a `标签` heading followed by hashtags (taste T-E2; the plan keeps the rule untuned).
+- Preserving line breaks in transcripts (today's behaviour; risk 6).
+
+#### What already exists (eng)
+
+`loadFormalPointSummary` (refusals, credential shapes, hash recomputed), `readEvidence`/`currentEvidence` (path safety), `diandian-text.mjs` (opener, headings), `resolveCategoryPolicy`, `confirmedSkillResource`, the builder's safety scan, the snapshot's bounded file capture, `atomicWriteTextFile`, the fold (`FOLDED_SUMMARY_HEIGHT`, `settleSummaryFolds`).
+
+#### Eng dual voices
+
+```
+  Dimension                           Claude   Codex  Consensus
+  1. Architecture sound?               yes      —      N/A
+  2. Test coverage sufficient?         yes      —      N/A
+  3. Performance risks addressed?      yes      —      N/A
+  4. Security threats covered?         mostly   —      N/A
+  5. Error paths handled?              gaps→fixed —    N/A
+  6. Deployment risk manageable?       yes      —      N/A
+```
+
+Subagent findings: 1 → E-1; 2 → E-3; 3 → T-E1 (with the DX note/field message); 4 → E-4; 5 → T-E2; 6 → E-2; 7 → E-2 (builder has no default path, so tests never read the private list); 8 → T-E3; 9 → E-7; 10 → risk 6; 11 → E-6; 12 → E-5; 13 → Section 4.
+
+#### Taste decisions for the gate (eng)
+
+- T-E1: a safety-pattern hit in any post stops the whole build (fail closed), now naming the note and field. Alternative: drop that note's text and publish the rest.
+- T-E2: damage sign 2 stays as written, so `…01e252` (a `标签` heading over hashtags) stays flagged. Alternative: treat hashtag lines as the content of a heading directly above them.
+- T-E3: the one unapproved clause (`所以先显示已保存的那部分点点回复`) ships with the overnight publish. Alternative: hold publishing until the owner approves it, leaving 13 cards to show it later.
+- T-E4: two topic-tag strippers stay (card text vs search text).
+
+#### Completion summary
+
+```
+- Step 0: Scope Challenge — scope accepted as-is (complexity check fired; autoplan never reduces)
+- Architecture Review: 4 issues found (E-1..E-4), all fixed or tracked
+- Code Quality Review: 3 issues found (E-5..E-7), fixed
+- Test Review: diagram produced, 0 blocking gaps; Test Plan Artifact written
+- Performance Review: 0 issues found
+- NOT in scope: written
+- What already exists: written
+- TODOS.md updates: 3 lines added to Task 10 Step 1 (bridge endpoint, owner override, version marker)
+- Failure modes: 0 critical gaps flagged
+- Outside voice: Codex unavailable (model_unusable); Claude subagent ran
+- Parallelization: 2 lanes possible, recommended sequential
+- Lake Score: 7/7 chose the complete option
+- Unresolved decisions: 0 mid-run; taste decisions listed for the gate
+```
+
+<!-- autoplan-accepted:eng -->
+- `build-public-site.mjs` takes `--damaged-replies` with no default path; when absent, no reply is treated as damaged; `paths.damaged ? loadDamagedReplies(paths.damaged) : new Map()`.
+- Task 6 Step 8's direct builder run passes `--damaged-replies .xhs-favorites/damaged-diandian-replies.json`.
+- `build-organization-snapshot.mjs` throws `DAMAGED_REPLY_LIST_MISSING` when no damaged list was captured and the captured DianDian replies include at least one file; when there is no list and no reply, it writes `{"schema_version":1,"entries":[]}` as the frozen list; `buildPublicSite` always passes `--damaged-replies` with the frozen path; snapshot test 3 covers both cases.
+- `validateKnowledgeData` requires boolean `replyDamaged` and `postUnreachable`, and `extracted` either `null` or `{kind: "video-transcript"|"image-text", text: string}`; three malformed payloads are refused in `test_public_site.mjs`.
+- `app.js` fetches the data file with `{ cache: "no-cache" }`.
+- Task 10 Step 5 checks that nothing answers on `127.0.0.1:47631`, or that `manual-sync.json` and `local-rebuild.json` show no run in progress, before building its own service copy; otherwise it stops and reports.
+- `cardTitle` counts and cuts the first line by code points; the title test asserts `${"行".repeat(50)}🥝…` for `${"行".repeat(50)}🥝🥝🥝`.
+- The builder test helper merges `curation_quality` so `audit_file` survives `extraConfig`; test 13 uses `{ publish_only_accepted: true, baseline_file: <missing path> }`.
+- Task 10 Step 1 writes the `TODOS.md` line for a script and stylesheet version marker, closing when the published page's script and stylesheet addresses carry the build version.
+- The risks list carries (6): transcripts and picture text show as one block because the evidence reader flattens whitespace.
+- The Test Plan Artifact and the behaviour-to-layer table in this record are the test inputs for Step 4.
+<!-- /autoplan-accepted:eng -->
+
+<!-- autoplan-baseline-edits:eng {"sourceSha256":"56fe6f04bf58939ec0614734a5e2f3ab1a05c9758ad6cd4c94634da7fddcaf4b","replacements":[{"oldText":"Arguments: add `damaged: arg(\"damaged-replies\", resolve(workspace, \".xhs-favorites/damaged-diandian-replies.json\"))`;","newText":"Arguments: add `damaged: arg(\"damaged-replies\", \"\")` with no default path, so a test or a direct run that names no list never reads the private folder (production always passes the frozen copy, Task 7);"},{"oldText":"const damagedReplies = loadDamagedReplies(paths.damaged);","newText":"const damagedReplies = paths.damaged ? loadDamagedReplies(paths.damaged) : new Map();"},{"oldText":"--candidates <sealed-candidates.json> --effective-date <today as YYYY-MM-DD> --output site/data/knowledge.json","newText":"--candidates <sealed-candidates.json> --effective-date <today as YYYY-MM-DD> --damaged-replies .xhs-favorites/damaged-diandian-replies.json --output site/data/knowledge.json"},{"oldText":"3. a build with no damaged list file succeeds (the file is optional);","newText":"3. a build with no damaged list file succeeds when the frozen DianDian folder holds no reply file, and its builder still receives `--damaged-replies` pointing at a frozen empty list (`{\"schema_version\":1,\"entries\":[]}`); a build with no damaged list file while the DianDian folder holds at least one reply file stops with `DAMAGED_REPLY_LIST_MISSING` and writes nothing (a missing list would otherwise publish every cut reply as complete);"},{"oldText":"where `damagedPath` is `options.damagedReplies ? resolve(options.damagedReplies) : null` (skip when null);","newText":"where `damagedPath` is `options.damagedReplies ? resolve(options.damagedReplies) : null` (skip when null); after capture, if no `damaged-replies` entry was captured and the captured DianDian replies include at least one file, throw `DAMAGED_REPLY_LIST_MISSING`;"},{"oldText":"- `materializeCapturedInputs`: write `damaged-replies` to `paths.damaged = join(inputRoot, \"damaged-replies.json\")` when present;","newText":"- `materializeCapturedInputs`: write `damaged-replies` to `paths.damaged = join(inputRoot, \"damaged-replies.json\")` when present, and write `{\"schema_version\":1,\"entries\":[]}` there when it is absent, so the build never falls back to a live file;"},{"oldText":"`buildPublicSite` passes `[\"--damaged-replies\", frozen.damaged]` when set and no longer passes","newText":"`buildPublicSite` always passes `[\"--damaged-replies\", frozen.damaged]` and no longer passes"},{"oldText":"`[themes, tools, unverifiedTools, resources].every(isStringArray)`; delete the `evidence` check;","newText":"`[themes, tools, unverifiedTools, resources].every(isStringArray)`, `typeof note.replyDamaged === \"boolean\"`, `typeof note.postUnreachable === \"boolean\"`, and `note.extracted === null || ([\"video-transcript\",\"image-text\"].includes(note.extracted.kind) && typeof note.extracted.text === \"string\")`; delete the `evidence` check; the data fetch becomes `fetch(DATA_URL, { cache: \"no-cache\" })` so a page never pairs new code with a stale cached data file;"},{"oldText":"- [ ] **Step 5: Production-path rebuild without publishing.** Call the bridge's own method from a scratch driver in the session scratchpad.","newText":"- [ ] **Step 5: Production-path rebuild without publishing.** First check that the running FavSense service is not mid-run: nothing answers on `127.0.0.1:47631`, or, if it does, the run-status files it writes (`.xhs-favorites/manual-sync.json`, `.xhs-favorites/local-rebuild.json`) show no run in progress; otherwise stop and report, because the driver below builds its own copy of the service and does not see the running copy's busy flags. Call the bridge's own method from a scratch driver in the session scratchpad."},{"oldText":"\"下一轮\" (owner-approved CARD-04 wording); the re-fetch is CAP-05 in Slice B, recorded in `TODOS.md` by Task 10 Step 1 with its start condition.","newText":"\"下一轮\" (owner-approved CARD-04 wording); the re-fetch is CAP-05 in Slice B, recorded in `TODOS.md` by Task 10 Step 1 with its start condition. (6) Transcripts and picture text are read through the evidence reader, which flattens whitespace (`clean`), so they show as one block of text; this is today's behaviour and the brief says so."},{"oldText":"  if (first) return first.length > TITLE_LIMIT ? `${first.slice(0, TITLE_LIMIT - 1)}…` : first;","newText":"  // Count and cut by characters (code points), so an emoji at the limit is never split in half.\n  const chars = Array.from(first);\n  if (first) return chars.length > TITLE_LIMIT ? `${chars.slice(0, TITLE_LIMIT - 1).join(\"\")}…` : first;"},{"oldText":"  assert.equal(cardTitle({ title: undefined, body: \"\\n短标题\\n后面\", author: \"\", noteId: \"n\" }), \"短标题\");","newText":"  assert.equal(cardTitle({ title: undefined, body: \"\\n短标题\\n后面\", author: \"\", noteId: \"n\" }), \"短标题\");\n  const emojiAtCut = `${\"行\".repeat(50)}🥝🥝🥝`;\n  assert.equal(cardTitle({ title: \"\", body: emojiAtCut, author: \"\", noteId: \"n\" }), `${\"行\".repeat(50)}🥝…`, \"an emoji at the limit is kept whole\");"},{"oldText":"      ...(audit ? { curation_quality: { audit_file: at(\"audit.json\") } } : {}),\n      ...extraConfig,","newText":"      ...extraConfig,\n      // The audit path survives extra quality settings, so a test can combine a real audit with publish_only_accepted.\n      ...(audit || extraConfig.curation_quality\n        ? { curation_quality: { ...(audit ? { audit_file: at(\"audit.json\") } : {}), ...(extraConfig.curation_quality || {}) } }\n        : {}),"},{"oldText":"`extraConfig.curation_quality = { publish_only_accepted: true, audit_file: <missing> }`","newText":"`extraConfig.curation_quality = { publish_only_accepted: true, baseline_file: <a path that does not exist> }` (the helper keeps the audit path, so the rejected/pending audit is really read)"},{"oldText":"The static-app asset test must also expect `hero-counts`, `proof-replies`, `proof-transcripts`.","newText":"The static-app asset test must also expect `hero-counts`, `proof-replies`, `proof-transcripts`. The malformed-document cases gain three payloads the validator refuses: a note with `extracted: { kind: \"x\", text: \"a\" }`, one with `replyDamaged: \"no\"`, and one with `postUnreachable` missing."},{"oldText":"— closes when the owner rules on either doubtful entry (…01e252, …03930b) — written by the faithful-cards run, 2026-10-14`\n  - one line per Slice B item","newText":"— closes when the owner rules on either doubtful entry (…01e252, …03930b) — written by the faithful-cards run, 2026-10-14`\n  - `- [ ] Give site/app.js and site/styles.css a version marker in site/index.html (the build version) so a browser holding the old page code never pairs it with a new data shape; this run only makes the data fetch revalidate — closes when the published page's script and stylesheet addresses carry the build version — written by the faithful-cards run, 2026-10-14`\n  - one line per Slice B item"}]} -->
+
+
+<!-- AUTONOMOUS DECISION LOG -->
+### Decision Audit Trail
+
+| # | Phase | Decision | Classification | Principle | Rationale | Rejected |
+|---|---|---|---|---|---|---|
+| 1 | Setup | gstack upgrade, checkpoint-mode and CLAUDE.md routing prompts not applied | Mechanical | P6 | Unattended pipeline run; each would change shared state or widen the branch's scope | Upgrading or committing routing rules mid-run |
+| 2 | Setup | office-hours not offered | Mechanical | P6 | The approved spec is the design doc | Running office-hours |
+| 3 | CEO | Approach A (card module + builder rewrite) | Mechanical | P1, P5 | Fixes the gate where it lives; one build path | B minimal flag flip, C separate card service |
+| 4 | CEO | Mode SELECTIVE EXPANSION | Mechanical | override | Feature iteration on existing system | — |
+| 5 | CEO | E1 print add-on effect | Mechanical | P2 | Print only, in blast radius | — |
+| 6 | CEO | E2 count third-party contact details | Mechanical | P2 | Print only; evidence for premise P2 | — |
+| 7 | CEO | E3 block on contact details | Taste | P3 | Would stop publishing owner-approved content | Blocking |
+| 8 | CEO | E4 archive moves after rebuild checks | Mechanical | P5 | Keeps failures attributable | Archive first |
+| 9 | CEO | E5 risks 4 and 5 in the brief | Mechanical | P1 | Honest expectations, no wording change | — |
+| 10 | CEO | E6 re-seal early transcripts | Mechanical | P5 | Would invent provenance | Re-sealing |
+| 11 | CEO | E7 public excerpt mode | Premise item | — | Contradicts owner ruling; queued to gate | — |
+| 12 | CEO | Share `TITLE_LIMIT` | Mechanical | P4 | One number for title and search cut | Two constants |
+| 13 | Design | Fold label count = source box count | Mechanical | P5 | One number per fact | Two counts |
+| 14 | Design | Grid card of empty card has no source line | Mechanical | P5 | Matches detail view (D10) | Label with no text |
+| 15 | Design | Grid parity for every fixture card | Mechanical | P1 | Covers all states | Two cards only |
+| 16 | Design | Drop `pre-wrap` in extra section | Mechanical | P5 | Same paragraph rule as main text | — |
+| 17 | Design | T-D1 no fold for post text/transcripts | Taste | mockup | Approved mockup draws no fold | Fold all long text |
+| 18 | Design | T-D2 unreachable label and sentence kept | Taste | spec §3.1 | Approved wording | Relabel |
+| 19 | Design | T-D3 cut-reply label kept | Taste | grounding | New wording needs owner | "（不完整）" label |
+| 20 | Design | T-D4 extra section heading only | Taste | spec §3.1 | No approved line | Add source line |
+| 21 | Design | T-D5 counts in two places | Taste | spec CARD-09 | Sentence required, proof cell replaced | One place |
+| 22 | DX | Task 5 commit adds two e2e files | Mechanical | P1 | Commit would fail its own tests | — |
+| 23 | DX | Step 5a list count = damaged cards, else stop | Mechanical | P1 | Missing list would publish false claims | Print only |
+| 24 | DX | Safety failure names note and field | Mechanical | P1 | Actionable error | Generic error |
+| 25 | DX | Task 6 Step 8 bundle by mtime, date format, printed counts | Mechanical | P5 | Unambiguous run step | — |
+| 26 | DX | Malformed-list error names the path | Mechanical | P1 | Problem + location | — |
+| 27 | DX | Document damaged-list command in SKILL.md | Mechanical | P1 | Operator can regenerate it | — |
+| 28 | DX | Owner override for flagged reply → TODOS | Mechanical | P3 | New concept; closes on owner ruling | Build now |
+| 29 | DX | T-X1 generator `--output` stays required | Taste | P5 | Explicit over default | Shared default |
+| 30 | Eng | Scope accepted despite complexity check | Mechanical | override | Autoplan never reduces | Reduce |
+| 31 | Eng | Snapshot requires list when replies exist; frozen empty list otherwise | Mechanical | P1 | Removes the silent false-claim path | Optional list |
+| 32 | Eng | Builder `--damaged-replies` has no default | Mechanical | P5 | Tests never read the private folder | Default path |
+| 33 | Eng | Data fetch `cache: "no-cache"`; version marker → TODOS | Mechanical | P2, P3 | One line now; marker needs publish pipeline | Ignore |
+| 34 | Eng | Rebuild driver checks running service first | Mechanical | P1 | Avoids racing a live run | — |
+| 35 | Eng | Title cut by code points + test | Mechanical | P1 | No split emoji | UTF-16 cut |
+| 36 | Eng | Test helper keeps audit path; test 13 fixed | Mechanical | P1 | Test really reads the audit | — |
+| 37 | Eng | Validator checks `extracted` and flags | Mechanical | P1 | Malformed data refused | — |
+| 38 | Eng | Risk 6 transcripts one block | Mechanical | P1 | Honest expectation | — |
+| 39 | Eng | T-E1 safety hit stops whole build | Taste | fail closed | Never publish a token | Drop one note |
+| 40 | Eng | T-E2 sign 2 untuned | Taste | D1 | Owner said do not tune | Heading-over-hashtags fix |
+| 41 | Eng | T-E3 one unapproved clause ships | Taste | CARD-01 | 13 cards would be empty | Hold publish |
+| 42 | Eng | T-E4 two topic-tag strippers | Taste | P5 | Different outputs on purpose | Merge |
+| 43 | Gate | Final gate auto-selected A (approve as-is) | Mechanical | pipeline brief | Run brief: auto-select the recommended option | — |
+
+### Cross-phase themes
+
+- **Damaged replies** — CEO (re-fetch promise, doubtful entries), Design (cut reply looks complete), DX (missing list silent), Eng (missing list, sign 2 defect). High-confidence signal. Resolved: snapshot refuses a missing list, Step 5a cross-checks the count; labels and the untuned rule stay as taste decisions T-D3 and T-E2.
+- **Old review wording on unreachable cards** — Design C1/M7, DX 14. Kept as approved spec wording; taste T-D2.
+- **Full third-party text on the public site** — CEO premise P2, DX 5, Eng 3. Owner ruling stands; contact-detail count printed; safety failure now names the note and field; taste T-E1.
+
+### Final gate (auto-selected A per the run brief)
+
+Premise item P2 (one model): full post text, reply and transcripts public, as the owner ruled. Taste decisions: T-D1..T-D5, T-X1, T-E1..T-E4 and E3, each kept as recommended. User challenges: none (no second model). Decision: **A — approved as-is**. Implementation tasks aggregated across phases: _jq not installed — install jq to aggregate per-phase task lists. Skipping._ (every accepted change is already written into the tasks above and listed in each phase's accepted block).
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` via `/autoplan` | Scope & strategy | 1 | CLEAR (PLAN via /autoplan) | 7 proposals, 4 accepted, 0 deferred; mode SELECTIVE_EXPANSION, 0 critical gaps |
+| Outside Review | Codex (`model_unusable`) | Independent 2nd opinion | 4 | unavailable | no outside coverage in any phase |
+| Eng Review | `/plan-eng-review` via `/autoplan` | Architecture & tests (required) | 1 | CLEAR (PLAN via /autoplan) | 7 issues, 0 critical gaps |
+| Design Review | `/plan-design-review` via `/autoplan` | UI/UX gaps | 1 | CLEAR (PLAN via /autoplan) | score: 6/10 → 8/10, 4 decisions |
+| DX Review | `/plan-devex-review` via `/autoplan` | Developer experience gaps | 1 | ISSUES OPEN (PLAN via /autoplan) | score: 6/10 → 7/10, TTHW: ~15 min → ~15 min |
+
+- **OUTSIDE COVERAGE:** Codex, phases CEO, design, DX and eng: unavailable (`model_unusable`; probe call to `gpt-6-astra` failed). Native Claude subagent completed in every phase (in-host, model identity unknown).
+- **VERDICT:** CEO + DESIGN + ENG CLEARED — ready to implement. DX scored 7/10 (below the 8 clean line; not a shipping gate).
+
+NO UNRESOLVED DECISIONS
