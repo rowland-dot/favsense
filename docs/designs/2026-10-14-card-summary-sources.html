@@ -12,7 +12,8 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 .t-meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:0 0 8px;color:var(--ink-soft);font-size:12px}
 .t-cat{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono)}.t-cat i{width:22px;height:3px;background:var(--accent)}
 .t-sugg b{margin-right:6px;padding:2px 6px;border-radius:5px;background:color-mix(in srgb,var(--accent),var(--surface) 84%);color:var(--ink);font-size:11px}.t-sugg small{color:var(--ink-soft)}
-.t-title{margin-bottom:14px;max-width:none;font-size:clamp(24px,2.6vw,34px);text-wrap:pretty}.t-title::after{margin-top:10px;height:5px;width:56px}
+.t-title{max-width:none;font-size:clamp(26px,2.5vw,33px);text-wrap:pretty}.t-title::after{margin-top:12px}
+.t-kicker{margin:0 0 12px}.t-dmeta{margin:14px 0 18px}.t-sugg{margin:-6px 0 18px}
 .t-sec{padding:14px 0;border-top:1px solid var(--line)}
 .t-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .t-head h3{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--ink-soft)}
@@ -79,8 +80,10 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
     </footer>
   </div></div></div>
 <div><span class="tag next">建议</span><p class="why">只显示点点原文：默认折叠露出开头，点“展开全文”看完整内容；按点点的小标题与列表排版，去掉“根据你引用的笔记”开头。</p><div class="detail-dialog mock-dialog" style="--accent:#6f3cc3"><div class="dialog-shell t-shell">
-<p class="t-meta"><span class="t-cat"><i></i>AI自媒体 · Workflow</span><span>陈祝器 · 2026年8月13日</span><span class="t-sugg"><b>建议分类</b>内容增长与商业<small>（仍按“AI自媒体”归档）</small></span></p>
+<p class="detail-kicker t-kicker"><i></i> AI自媒体 · Workflow</p>
 <h2 class="detail-title t-title">把账号复盘经验产品化为 Codex 智能体</h2>
+<div class="detail-meta t-dmeta"><span>陈祝器</span><span>2026年8月13日</span></div>
+<p class="category-suggestion t-sugg"><span>内容建议分类</span>内容增长与商业<small>当前仍按收藏夹“AI自媒体”归档</small></p>
 <section class="t-sec">
   <div class="summary-provenance summary-provenance--diandian t-prov"><strong>点点 AI 深度总结</strong><span>点点 AI 的完整回复，原文未改动，共 805 字；只去掉开头的对话语句，按小标题与列表排版。</span><button type="button" class="t-edit" aria-label="编辑描述" title="编辑描述"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>编辑</button></div>
   <div class="dd-fold" data-expanded="false"><div class="structured-summary dd-body">
@@ -133,8 +136,10 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
     </footer>
   </div></div></div>
 <div><span class="tag next">建议</span><p class="why">标签直接说明证据来源；说明压成一行小字。</p><div class="detail-dialog mock-dialog" style="--accent:#6f3cc3"><div class="dialog-shell t-shell">
-<p class="t-meta"><span class="t-cat"><i></i>Skills · Note</span><span>李叔聊AI · 2026年7月6日</span><span class="t-sugg"><b>建议分类</b>开发部署与Vibe Coding<small>（仍按“Skills”归档）</small></span></p>
+<p class="detail-kicker t-kicker"><i></i> Skills · Note</p>
 <h2 class="detail-title t-title">EdgeOne Makers：免费托管和部署 AI Agent</h2>
+<div class="detail-meta t-dmeta"><span>李叔聊AI</span><span>2026年7月6日</span></div>
+<p class="category-suggestion t-sugg"><span>内容建议分类</span>开发部署与Vibe Coding<small>当前仍按收藏夹“Skills”归档</small></p>
 <section class="t-sec">
   <div class="summary-provenance summary-provenance--evidence t-prov"><strong>本机视频证据整理</strong><span>点点没能读取这篇笔记；内容根据本机保存的视频转写等证据整理（按这张卡实际用到的证据列出）。</span><button type="button" class="t-edit" aria-label="编辑描述" title="编辑描述"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>编辑</button></div>
   <div class="structured-summary"><p>视频介绍腾讯云新推出的 EdgeOne Makers 边缘 Web 与 Agent 托管平台，演示从模板部署一个“AI 趋势定时摘要助手”：工作台有 6 类场景、19 个预设模板，也可以用命令行、Git 和 CI/CD 把本地写好的 Agent 接进来；</p><p>点“部署”、选环境和环境变量即可上线，平台自动配置 SSL 并分配免费域名，依托腾讯云全球边缘节点，自带 DDoS 和 WAF 防护；浏览器、代码执行等动作在独立沙箱里运行，控制台能看到每一步调用的模型、Token 用量和耗时；不绑定专属 SDK，常见 Python、JS 框架和模型都能用。视频称注册用户每月有免费额度，属于上线活动宣传。</p></div>
@@ -179,8 +184,10 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
     </footer>
   </div></div></div>
 <div><span class="tag next">建议</span><p class="why">不再显示“失败”；图文笔记写“本机图片文字整理”。</p><div class="detail-dialog mock-dialog" style="--accent:#6f3cc3"><div class="dialog-shell t-shell">
-<p class="t-meta"><span class="t-cat"><i></i>Skills · Note</span><span>AI小蔡狗 · 2026年6月12日</span></p>
+<p class="detail-kicker t-kicker"><i></i> Skills · Note</p>
 <h2 class="detail-title t-title">AI搜索引擎项目，GitHub TrendIing榜第一</h2>
+<div class="detail-meta t-dmeta"><span>AI小蔡狗</span><span>2026年6月12日</span></div>
+
 <section class="t-sec">
   <div class="summary-provenance summary-provenance--evidence t-prov"><strong>本机视频证据整理</strong><span>这篇没有点点总结；内容根据本机保存的视频转写等证据整理（按这张卡实际用到的证据列出）。</span><button type="button" class="t-edit" aria-label="编辑描述" title="编辑描述"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>编辑</button></div>
   <div class="structured-summary"><p>视频中的 GitHub 热门项目是 last30days Skill：聚合最近 30 天 Reddit、X、TikTok、Instagram、YouTube 等讨论，输出近期共识、争议、来源和研究简报。</p></div>
@@ -225,8 +232,10 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
     </footer>
   </div></div></div>
 <div><span class="tag next">建议</span><p class="why">说明已复核、具体缺什么。</p><div class="detail-dialog mock-dialog" style="--accent:#6f3cc3"><div class="dialog-shell t-shell">
-<p class="t-meta"><span class="t-cat"><i></i>AI视频生成 · Workflow</span><span>有点坏有点可爱 · 2026年7月18日</span><span class="t-sugg"><b>建议分类</b>AI设计与多媒体<small>（仍按“AI视频生成”归档）</small></span></p>
+<p class="detail-kicker t-kicker"><i></i> AI视频生成 · Workflow</p>
 <h2 class="detail-title t-title">本地部署AI绘画软件！</h2>
+<div class="detail-meta t-dmeta"><span>有点坏有点可爱</span><span>2026年7月18日</span></div>
+<p class="category-suggestion t-sugg"><span>内容建议分类</span>AI设计与多媒体<small>当前仍按收藏夹“AI视频生成”归档</small></p>
 <section class="t-sec">
   <div class="summary-provenance summary-provenance--warning t-prov"><strong>证据未补齐，暂不发布</strong><span>已复核：视频和画面里找不到软件名称和下载来源，只显示原帖公开文字；补齐证据后会重新审核。</span><button type="button" class="t-edit" aria-label="编辑描述" title="编辑描述"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>编辑</button></div>
   <div class="structured-summary"><p>最强AI已无需确认！！#AI工具[话题]# #ai漫剧[话题]# #AIgc[话题]# #AI视频[话题]# #ai视频制作[话题]# #ai教程分享[话题]# #ai动态漫[话题]# #ai漫剧制作[话题]#</p></div>
@@ -271,8 +280,10 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
     </footer>
   </div></div></div>
 <div><span class="tag next">建议</span><p class="why">文字不变，只是排版更紧凑。</p><div class="detail-dialog mock-dialog" style="--accent:#6f3cc3"><div class="dialog-shell t-shell">
-<p class="t-meta"><span class="t-cat"><i></i>AI视频生成 · Workflow</span><span>Mx-Shell · 2026年6月3日</span><span class="t-sugg"><b>建议分类</b>AI设计与多媒体<small>（仍按“AI视频生成”归档）</small></span></p>
+<p class="detail-kicker t-kicker"><i></i> AI视频生成 · Workflow</p>
 <h2 class="detail-title t-title">国产“爱死机”《丧尸清道夫》创作思路分享</h2>
+<div class="detail-meta t-dmeta"><span>Mx-Shell</span><span>2026年6月3日</span></div>
+<p class="category-suggestion t-sugg"><span>内容建议分类</span>AI设计与多媒体<small>当前仍按收藏夹“AI视频生成”归档</small></p>
 <section class="t-sec">
   <div class="summary-provenance summary-provenance--metadata t-prov"><strong>已完成（原帖不可访问）</strong><span>原帖可能已被作者隐藏或删除；已保留现有记录并结束补证，不作为正式核验结果发布。</span><button type="button" class="t-edit" aria-label="编辑描述" title="编辑描述"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>编辑</button></div>
   <div class="structured-summary"><p>国产“爱死机”《丧尸清道夫》创作思路分享</p></div>
