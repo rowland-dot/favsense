@@ -6638,15 +6638,14 @@ class Bridge:
             "--profile", str(self.profile),
             "--sealed-scope-digest", sealed_scope_digest,
             "--diandian-dir", str(self.diandian_dir),
-            "--diandian-report", str(self.diandian_report_path),
             "--video-analysis", str(self.state_dir / "video-analysis"),
             "--effective-date", datetime.now(timezone.utc).date().isoformat(),
         ]
-        if self.diandian_skill_path is not None:
-            command.extend([
-                "--diandian-prompt-version",
-                diandian_prompt_version(self.diandian_release, self.diandian_browser_contract),
-            ])
+        # The frozen list of saved replies that lost text (damaged-replies.mjs writes it). The snapshot
+        # stops if there are saved replies and no list, so a cut reply is never published as complete.
+        damaged_replies = self.state_dir / "damaged-diandian-replies.json"
+        if damaged_replies.is_file() and not path_is_reparse_point(damaged_replies):
+            command.extend(["--damaged-replies", str(damaged_replies)])
         if self.resource_registry is not None:
             command.extend(["--resources", str(self.resource_registry)])
         completed = self.script_runner.run(

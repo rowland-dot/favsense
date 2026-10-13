@@ -2,7 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 // The web data is the only formal output (issue 39), so a snapshot has exactly one participant.
 
@@ -263,8 +266,8 @@ test("complete input revision changes the canonical build version", async () => 
   assert.notEqual(first.build_version, second.build_version);
 });
 
-test("coordinator captures and freezes every builder input with the exact bundle scope", async () => {
-  const { captureBuilderInputs, materializeCapturedInputs } = await import("../scripts/build-organization-snapshot.mjs");
+// A small private workspace with every input a snapshot reads, for the capture tests below.
+async function captureWorkspace({ withDamagedList = true, configuration } = {}) {
   const root = await mkdtemp(join(tmpdir(), "favsense-inputs-"));
   const noteId = "a".repeat(24);
   const state = join(root, ".xhs-favorites");
@@ -280,35 +283,45 @@ test("coordinator captures and freezes every builder input with the exact bundle
     bundle: join(state, "bundle.json"),
     profile: join(root, "profile.json"),
     resources: join(root, "resources.json"),
-    report: join(state, "diandian-rerun-report.json"),
+    damaged: join(state, "damaged-diandian-replies.json"),
     audit: join(state, "curation-audit.json"),
-    baseline: join(state, "baseline.json"),
     point: join(points, `${noteId}.json`),
     analysis: join(noteVideo, "analysis.json"),
+    transcript: join(noteVideo, "transcription.json"),
+    pictureText: join(noteVideo, "visual-ocr.json"),
     image: join(noteVideo, "frame.png"),
   };
   const original = {
     catalog: JSON.stringify({ notes: { [noteId]: {} } }),
-    config: JSON.stringify({ curation_quality: { publish_only_accepted: true, audit_file: ".xhs-favorites/curation-audit.json", baseline_file: ".xhs-favorites/baseline.json" } }),
+    config: configuration ?? JSON.stringify({ curation_quality: { audit_file: ".xhs-favorites/curation-audit.json" } }),
     curation: "{}",
     bundle: JSON.stringify({ schema_version: 1, outcome: "ready_for_safe_build", scope: { note_ids: [noteId] }, curation: { [noteId]: { review_status: "pending" } } }),
-    profile: "{}", resources: "{}", report: "{}", audit: "{}", baseline: "{}", point: "{}", analysis: "{}", image: "{}",
+    profile: "{}", resources: "{}", damaged: JSON.stringify({ schema_version: 1, entries: [] }),
+    audit: "{}", point: "{}", analysis: "{}", transcript: "{\"text\":\"spoken\"}", pictureText: "{\"text\":\"on screen\"}", image: "{}",
   };
-  for (const [label, path] of Object.entries(files)) await writeFile(path, original[label]);
+  for (const [label, path] of Object.entries(files)) {
+    if (label === "damaged" && !withDamagedList) continue;
+    await writeFile(path, original[label]);
+  }
   const options = {
     root, catalog: files.catalog, config: files.config, curation: files.curation,
     curationBundle: files.bundle, profile: files.profile, resources: files.resources,
-    diandianDir: points, diandianReport: files.report, videoAnalysis: video,
-    diandianPromptVersion: "9".repeat(64),
+    diandianDir: points, videoAnalysis: video, damagedReplies: files.damaged,
   };
+  return { root, noteId, state, video, noteVideo, points, files, original, options };
+}
+
+test("coordinator captures and freezes every builder input with the exact bundle scope", async () => {
+  const { captureBuilderInputs, materializeCapturedInputs } = await import("../scripts/build-organization-snapshot.mjs");
+  const { root, noteId, video, noteVideo, files, original, options } = await captureWorkspace();
   const baseline = await captureBuilderInputs(options, "2026-08-25");
   assert.equal(baseline.sealedScopeDigest, (await import("node:crypto")).createHash("sha256").update(JSON.stringify([noteId])).digest("hex"));
   const frozen = await materializeCapturedInputs(root, baseline, {});
-  assert.equal(frozen.promptVersion, "9".repeat(64));
   await writeFile(files.catalog, JSON.stringify({ changed: "after-capture" }));
   assert.equal(await readFile(frozen.catalog, "utf8"), original.catalog);
   await writeFile(files.catalog, original.catalog);
   await rm(frozen.root, { recursive: true, force: true });
+  // Every input that reaches the build changes the version when it changes (the bundle is checked by its own digest).
   for (const [label, path] of Object.entries(files).filter(([label]) => !["bundle"].includes(label))) {
     const mutatedPath = label === "image" ? join(noteVideo, "second-frame.webp") : path;
     await writeFile(mutatedPath, JSON.stringify({ changed: label }));
@@ -319,17 +332,12 @@ test("coordinator captures and freezes every builder input with the exact bundle
   }
   const nextDay = await captureBuilderInputs(options, "2026-08-26");
   assert.notEqual(nextDay.inputRevisionDigest, baseline.inputRevisionDigest);
-  const changedPrompt = await captureBuilderInputs({
-    ...options,
-    diandianPromptVersion: "8".repeat(64),
-  }, "2026-08-25");
-  assert.notEqual(changedPrompt.inputRevisionDigest, baseline.inputRevisionDigest);
 
+  // A config that names no audit file reads none: the file may change without moving the version.
   await writeFile(files.config, JSON.stringify({ curation_quality: { publish_only_accepted: true } }));
-  const defaultAudit = await captureBuilderInputs(options, "2026-08-25");
-  await writeFile(files.audit, JSON.stringify({ changed: "default-audit" }));
-  const changedDefaultAudit = await captureBuilderInputs(options, "2026-08-25");
-  assert.notEqual(changedDefaultAudit.inputRevisionDigest, defaultAudit.inputRevisionDigest);
+  const noAudit = await captureBuilderInputs(options, "2026-08-25");
+  await writeFile(files.audit, JSON.stringify({ changed: "unread-audit" }));
+  assert.equal((await captureBuilderInputs(options, "2026-08-25")).inputRevisionDigest, noAudit.inputRevisionDigest);
   await writeFile(files.audit, original.audit);
 
   await rm(video, { recursive: true, force: true });
@@ -337,6 +345,127 @@ test("coordinator captures and freezes every builder input with the exact bundle
   await mkdir(video);
   const emptyVideoRoot = await captureBuilderInputs(options, "2026-08-25");
   assert.notEqual(emptyVideoRoot.inputRevisionDigest, missingVideoRoot.inputRevisionDigest);
+});
+
+test("the damaged-reply list and each note's extracted text are frozen byte for byte", async () => {
+  const { captureBuilderInputs, materializeCapturedInputs } = await import("../scripts/build-organization-snapshot.mjs");
+  const { root, noteId, files, original, options } = await captureWorkspace();
+  const damagedList = JSON.stringify({ schema_version: 1, entries: [{ note_id: noteId, summary_sha256: "e".repeat(64), signs: ["ends-on-comma-or-colon"] }] });
+  await writeFile(files.damaged, damagedList);
+  const frozen = await materializeCapturedInputs(root, await captureBuilderInputs(options, "2026-08-25"), {});
+  try {
+    assert.equal(await readFile(frozen.damaged, "utf8"), damagedList);
+    assert.equal(await readFile(join(frozen.video, noteId, "transcription.json"), "utf8"), original.transcript);
+    assert.equal(await readFile(join(frozen.video, noteId, "visual-ocr.json"), "utf8"), original.pictureText);
+  } finally {
+    await rm(frozen.root, { recursive: true, force: true });
+  }
+});
+
+test("a different damaged list, or a different transcript, is a different build version", async () => {
+  const { captureBuilderInputs } = await import("../scripts/build-organization-snapshot.mjs");
+  const { files, original, options } = await captureWorkspace();
+  const before = await captureBuilderInputs(options, "2026-08-25");
+  await writeFile(files.damaged, JSON.stringify({ schema_version: 1, entries: [{ note_id: "a".repeat(24), summary_sha256: "e".repeat(64), signs: [] }] }));
+  const withList = await captureBuilderInputs(options, "2026-08-25");
+  assert.notEqual(withList.inputRevisionDigest, before.inputRevisionDigest);
+  await writeFile(files.damaged, original.damaged);
+  await writeFile(files.transcript, JSON.stringify({ text: "a different transcript" }));
+  assert.notEqual((await captureBuilderInputs(options, "2026-08-25")).inputRevisionDigest, before.inputRevisionDigest);
+});
+
+test("a missing damaged list is an empty one only when there is no saved reply to mislabel", async () => {
+  const { captureBuilderInputs, materializeCapturedInputs } = await import("../scripts/build-organization-snapshot.mjs");
+  const noReplies = await captureWorkspace({ withDamagedList: false });
+  await rm(noReplies.files.point);
+  const captured = await captureBuilderInputs(noReplies.options, "2026-08-25");
+  const frozen = await materializeCapturedInputs(noReplies.root, captured, {});
+  try {
+    assert.deepEqual(JSON.parse(await readFile(frozen.damaged, "utf8")), { schema_version: 1, entries: [] });
+  } finally {
+    await rm(frozen.root, { recursive: true, force: true });
+  }
+
+  // A saved reply and no list: every cut reply would be published as complete, so the build stops.
+  const withReply = await captureWorkspace({ withDamagedList: false });
+  await assert.rejects(captureBuilderInputs(withReply.options, "2026-08-25"), /DAMAGED_REPLY_LIST_MISSING/);
+  await assert.rejects(captureBuilderInputs({ ...withReply.options, damagedReplies: undefined }, "2026-08-25"), /DAMAGED_REPLY_LIST_MISSING/);
+});
+
+test("the command line no longer takes the run report or the prompt version", async () => {
+  const script = fileURLToPath(new URL("../scripts/build-organization-snapshot.mjs", import.meta.url));
+  const required = {
+    "--root": tmpdir(), "--public-target": join(tmpdir(), "knowledge.json"), "--catalog": "c", "--config": "c", "--curation": "c",
+    "--curation-bundle": "c", "--profile": "c", "--sealed-scope-digest": "a".repeat(64), "--diandian-dir": "c",
+    "--video-analysis": "c", "--effective-date": "2026-08-25",
+  };
+  const run = (extra) => spawnSync(process.execPath, [script, ...Object.entries({ ...required, ...extra }).flat()], { encoding: "utf8" });
+  for (const flag of ["--diandian-report", "--diandian-prompt-version"]) {
+    const refused = run({ [flag]: "x" });
+    assert.notEqual(refused.status, 0, flag);
+    assert.match(refused.stderr, /SNAPSHOT_ARGUMENT_INVALID/, flag);
+  }
+  // Without the removed flags the arguments are accepted (the run then fails later on the files it cannot find).
+  assert.doesNotMatch(run({}).stderr, /SNAPSHOT_ARGUMENT_INVALID/);
+});
+
+test("the builder version is 8, so a silent revert changes the version", async () => {
+  const { canonicalVersion } = await import("../scripts/build-organization-snapshot.mjs");
+  const sha = (value) => createHash("sha256").update(value, "utf8").digest("hex");
+  const without = canonicalVersion({ ...COMMON });
+  assert.equal(without, sha(JSON.stringify({
+    schema_version: 3, sealed_scope_sha256: COMMON.sealedScopeDigest, curation_input_sha256: COMMON.curationInputDigest,
+    public_config_sha256: COMMON.configDigest, input_revision_sha256: COMMON.inputRevisionDigest,
+    effective_date: COMMON.effectiveDate, builders: { public_site: 8 },
+  })));
+  const withSite = canonicalVersion({ ...COMMON, publishSiteDigest: "f".repeat(64) });
+  assert.equal(withSite, sha(JSON.stringify({
+    schema_version: 4, sealed_scope_sha256: COMMON.sealedScopeDigest, curation_input_sha256: COMMON.curationInputDigest,
+    public_config_sha256: COMMON.configDigest, input_revision_sha256: COMMON.inputRevisionDigest,
+    publish_site_sha256: "f".repeat(64), effective_date: COMMON.effectiveDate, builders: { public_site: 8 },
+  })));
+});
+
+test("the audit file named in the config is frozen for the unreachable label, is optional, and a baseline file is ignored", async () => {
+  const { captureBuilderInputs, materializeCapturedInputs } = await import("../scripts/build-organization-snapshot.mjs");
+  const profile = await readFile(join(dirname(fileURLToPath(import.meta.url)), "../../../config/domain-profiles/software.json"), "utf8");
+  const workspace = await captureWorkspace({
+    configuration: JSON.stringify({ boards: [{ id: "private-board-id", name: "Synthetic", enabled: true }], public_stats: {}, curation_quality: { audit_file: ".xhs-favorites/curation-audit.json", baseline_file: ".xhs-favorites/baseline.json" } }),
+  });
+  const { root, noteId, files, options } = workspace;
+  await writeFile(files.profile, profile);
+  await writeFile(files.resources, JSON.stringify({ verified_at: "2026-08-25", resources: [] }));
+  await writeFile(files.catalog, JSON.stringify({ notes: { [noteId]: { title: "不可访问的帖子", description: "文字", source_boards: ["Synthetic"] } } }));
+  await writeFile(files.audit, JSON.stringify({ version: 2, notes: { [noteId]: { status: "unavailable" } } }));
+  // A baseline file that does not exist is not an input at all.
+  const first = await captureBuilderInputs(options, "2026-08-25");
+  assert.equal(first.inputs.some((entry) => entry.name === "baseline_file"), false);
+  const frozen = await materializeCapturedInputs(root, first, {});
+  try {
+    const frozenConfig = JSON.parse(await readFile(frozen.config, "utf8"));
+    assert.equal(frozenConfig.curation_quality.audit_file, frozen.audit);
+    assert.equal(Object.hasOwn(frozenConfig.curation_quality, "baseline_file"), false);
+    assert.equal(JSON.parse(await readFile(frozen.audit, "utf8")).notes[noteId].status, "unavailable");
+    const built = join(frozen.root, "knowledge.json");
+    const run = spawnSync(process.execPath, [
+      fileURLToPath(new URL("../scripts/build-public-site.mjs", import.meta.url)),
+      "--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile,
+      "--resources", frozen.resources, "--candidates", frozen.candidates, "--diandian-dir", frozen.diandian,
+      "--video-analysis", frozen.video, "--damaged-replies", frozen.damaged, "--effective-date", "2026-08-25", "--output", built,
+    ], { encoding: "utf8" });
+    assert.equal(run.status, 0, run.stderr);
+    assert.equal(JSON.parse(await readFile(built, "utf8")).notes[0].postUnreachable, true);
+  } finally {
+    await rm(frozen.root, { recursive: true, force: true });
+  }
+
+  // Changing the audit changes the version; a missing audit file is allowed.
+  await writeFile(files.audit, JSON.stringify({ version: 2, notes: {} }));
+  assert.notEqual((await captureBuilderInputs(options, "2026-08-25")).inputRevisionDigest, first.inputRevisionDigest);
+  await rm(files.audit);
+  const missing = await captureBuilderInputs(options, "2026-08-25");
+  const frozenMissing = await materializeCapturedInputs(root, missing, {});
+  await rm(frozenMissing.root, { recursive: true, force: true });
 });
 
 test("input mutation after the web build aborts before the live web data swaps", async () => {

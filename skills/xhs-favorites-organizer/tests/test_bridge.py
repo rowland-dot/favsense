@@ -425,14 +425,12 @@ class BridgeHelpersTest(unittest.TestCase):
             (call,) = runner.calls
             command = call.command
             self.assertEqual(option(command, "--curation-bundle"), str(bundle))
-            self.assertEqual(option(command, "--diandian-report"), str(bridge.diandian_report_path))
             # The final build is the only formal build: it carries the private summaries folder and the
-            # frozen prompt version, and the snapshot step hands them to the web builder.
+            # snapshot step hands it to the web builder. A card no longer depends on the run report or on
+            # the prompt version a reply was saved under, so neither is passed.
+            self.assertNotIn("--diandian-report", command)
+            self.assertNotIn("--diandian-prompt-version", command)
             self.assertEqual(option(command, "--diandian-dir"), str(bridge.diandian_dir))
-            self.assertEqual(
-                option(command, "--diandian-prompt-version"),
-                BRIDGE.diandian_prompt_version(bridge.diandian_release, bridge.diandian_browser_contract),
-            )
             self.assertEqual(option(command, "--video-analysis"), str(bridge.state_dir / "video-analysis"))
             self.assertRegex(option(command, "--effective-date"), r"^\d{4}-\d{2}-\d{2}$")
             self.assertNotIn("--input-revision-digest", command)

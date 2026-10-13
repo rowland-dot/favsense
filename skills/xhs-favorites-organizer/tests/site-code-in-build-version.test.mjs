@@ -99,6 +99,7 @@ test("a build with no publish site keeps its version", async () => {
     return { root: dir, publicTarget: target };
   })();
   const result = await build({ root, publicTarget, ...COMMON, buildPublicSite: builder() });
-  // Literal captured by running this exact case against the code before issue 43; a site-less build must not change.
-  assert.equal(result.build_version, "bfd4f8e664ecea2eef3029ba76d363e05c3e2fd915479584e2744116ccbab353");
+  // Literal for this exact case under builder version 8 (faithful cards). It moves only when the builder version
+  // or the shape of the version preimage moves, so a site-less build never changes by accident.
+  assert.equal(result.build_version, "a42d5a8d5bd959bb9eb1ec3022cf251ec1cbdc189c26151f37e39a13fe4f0c0b");
 });
