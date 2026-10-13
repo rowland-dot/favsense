@@ -6,6 +6,11 @@ import { test, expect } from "@playwright/test";
 const headers = { "X-FavSense-Test": "favsense-synthetic-v1" };
 const DIANDIAN_CARD = "6a7dc92600000000250090ff";
 
+// The test server is shared by every spec: put it back on its default data so later specs never see these cards.
+test.afterEach(async ({ page }) => {
+  await page.request.post("http://127.0.0.1:8766/__test/reset", { headers });
+});
+
 async function openCard(page, noteId) {
   await page.request.post("http://127.0.0.1:8766/__test/reset", { headers });
   await page.request.post("http://127.0.0.1:8766/__test/scenario", { headers, data: { scenario: "card-sources" } });
