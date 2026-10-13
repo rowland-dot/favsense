@@ -1075,8 +1075,8 @@ test("production review merge requires a current packet and candidate identity b
     id: noteId,
     content_sha256: contentSha256,
     title: "Bound candidate",
-    summary: "This review candidate is explicitly bound to the current note and evidence packet revision.",
-    action: "Verify the bounded evidence before publishing this synthetic candidate.",
+    summary: "这条复核候选明确绑定到当前笔记与证据包的版本，用来验证合并时的身份校验。",
+    action: "发布这条合成候选之前，先核对它所绑定的证据。",
     themes: ["binding"],
     tools: [],
     kind: "Note"

@@ -156,8 +156,8 @@ const postDescription = "用Codex封装亚马逊选品Skill后…#codex[话题]#
 // One reviewed, publishable note ("n1") whose reviewed entry names a tool and carries a reviewed title.
 function reviewedNote({ entry: entryOverrides = {}, note: noteOverrides = {}, published = true } = {}) {
   const entry = {
-    category: "Synthetic", themes: ["testing"], summary: "Reviewed summary with enough detail to be published.",
-    action: "Try the workflow on one product before relying on it.", tools: ["Codex"], kind: "Note",
+    category: "Synthetic", themes: ["testing"], summary: "已审核的摘要，写清了对象与做法，细节足够用于公开发布。",
+    action: "先在一个产品上试跑这个工作流，确认可靠后再依赖它。", tools: ["Codex"], kind: "Note",
     title: reviewedTitle, ...entryOverrides,
   };
   return {

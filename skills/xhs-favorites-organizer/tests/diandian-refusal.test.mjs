@@ -132,6 +132,7 @@ test("the quality gate refuses a reviewed summary or action that is a refusal", 
   assert.deepEqual(auditCuration(acceptedNote({})).fatal, []);
   assert.match(auditCuration(acceptedNote({ summary: refusalReply })).fatal.join("\n"), /summary-not-specific/);
   assert.match(auditCuration(acceptedNote({ action: refusalReply })).fatal.join("\n"), /action-not-specific/);
-  // A real DianDian summary is long and specific, so it passes the same check.
-  assert.deepEqual(auditCuration(acceptedNote({ summary: normalReply })).fatal, []);
+  // A real DianDian summary is long and specific, so the refusal rule leaves it alone. (Pasting a reply
+  // into a reviewed summary is refused by a different rule, for its opening: accepted-text-quality.test.mjs.)
+  assert.doesNotMatch(auditCuration(acceptedNote({ summary: normalReply })).fatal.join("\n"), /summary-not-specific/);
 });

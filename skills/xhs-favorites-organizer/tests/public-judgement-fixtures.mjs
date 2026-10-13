@@ -48,8 +48,8 @@ export const note = (overrides = {}) => ({
 export function acceptedSkill({ resource = skillResource(), pointText = "Accepted point summary for the synthetic Skill." } = {}) {
   const pointSha = sha256(pointText);
   const entry = {
-    category: "Synthetic", themes: ["testing"], summary: "Accepted formal synthetic summary with enough detail for review.",
-    action: "Inspect the verified synthetic Skill before installing it in a controlled workspace.",
+    category: "Synthetic", themes: ["testing"], summary: "已审核的合成 Skill 总结，写清了对象、工作方式与限制，细节足够用于评审。",
+    action: "先在受控的工作区里检查这个已核验的合成 Skill，再决定是否安装。",
     tools: [resource.name], kind: "Skill", evidence_sha256: hex("e"), candidate_revision: hex("f"),
     evidence_dependencies: [{ method: "diandian_summary", provider: "xiaohongshu-diandian", version: PROMPT, result_sha256: pointSha }],
   };
