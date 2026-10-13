@@ -1005,7 +1005,7 @@ git commit -m "feat: draw every card from its own text, with one honest source l
 - Rewrite: `tests/public-judgement.test.mjs`, `tests/public-judgement-builders.test.mjs`, `tests/public-judgement-fixtures.mjs`; update `tests/diandian-summary-display.test.mjs` and the other files in the disposition table
 - Modify: `package.json` (`test:knowledge`)
 
-- [ ] **Step 1: Write the failing builder test** (`faithful-cards-builder.test.mjs`)
+- [x] **Step 1: Write the failing builder test** (dcb9245) (`faithful-cards-builder.test.mjs`)
 
 Helper (fresh objects every call, no shared defaults):
 
@@ -1103,12 +1103,12 @@ The tests:
 17. **Search link unchanged** — `sourceUrl` still starts `https://www.xiaohongshu.com/search_result?` and carries no `/explore/` (LINK-02 is not planned).
 18. **Cut reply is the only text (D10)** — a note whose saved reply is on the damaged list, whose description is `#趋势[话题]#` and which has no transcript file: `mainSource "diandian"`, `replyDamaged true`, `mainText` equal to the saved reply, `extracted null`. It is not counted in `meta.replyCount` (test 11 adds this note to its set and expects the same `replyCount` as before). A note with the same description, no reply and no transcript still gets `mainText ""` (the only empty card left).
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail** (dcb9245)
 
 Run: `node --test skills/xhs-favorites-organizer/tests/faithful-cards-builder.test.mjs`
 Expected: FAIL — `--damaged-replies` unknown or old fields present.
 
-- [ ] **Step 3: Rewrite `public-judgement.mjs`** (keep `validateContentKindProfile`, `resourceLookup`, `classify`; replace `fallbackEntry` and `judgePublicNote`)
+- [x] **Step 3: Rewrite `public-judgement.mjs`** (dcb9245) (keep `validateContentKindProfile`, `resourceLookup`, `classify`; replace `fallbackEntry` and `judgePublicNote`)
 
 `fallbackEntry` keeps the category and kind rules but no longer builds a 240-character summary or the "尚未解读" placeholder:
 
@@ -1162,7 +1162,7 @@ export function judgePublicNote({ noteId, note, addOn = null, unreachableIds = n
 
 Remove the imports of `currentFormalRevisions`, `formalCurationDecision`, `isPublishableCuration`, `sealedCandidateFor`. (`entryOrigin: addOn ? "curation" : "content_rule"` is deliberate: an add-on's `category` becomes the category suggestion, and a note with no add-on keeps the content-rule category it has today.)
 
-- [ ] **Step 4: Trim `curation-quality.mjs`**
+- [x] **Step 4: Trim `curation-quality.mjs`** (dcb9245)
 
 First prove nothing else uses them: `grep -rn "isPublishableCuration\|hasCompleteAcceptedAudit\|formalCurationDecision\|publicEvidenceStatus\|loadCurationAudit" skills scripts site` must list only the builder, the judgement module and tests. Then delete those five exports and `revisionReason` and the `auditCuration` import, and add the one narrow reader that replaces `loadCurationAudit` (D3; `fs` and `path` are already imported in this file):
 
@@ -1185,7 +1185,7 @@ export function loadUnreachableNoteIds(workspace, config) {
 
 Keep `sealedCandidateFor`, `acceptedRevisionsCurrent`, `currentFormalRevisions` (until Task 8), `formalContentKind`, `parseFormalPointSummaryRecord`, `loadFormalPointSummary`. (Reading the audit only when `audit_file` is configured keeps tests off the private folder: a config without it never touches `.xhs-favorites/`.)
 
-- [ ] **Step 5: Rewrite the per-note block of `build-public-site.mjs`**
+- [x] **Step 5: Rewrite the per-note block of `build-public-site.mjs`** (dcb9245)
 
 Arguments: add `damaged: arg("damaged-replies", "")` with no default path, so a test or a direct run that names no list never reads the private folder (production always passes the frozen copy, Task 7); delete `--diandian-prompt-version`, `--diandian-report`, `loadDiandianRunStates` and everything that read them, `loadCurationAudit`, `curationQuality`/`curationAudit`/baseline destructuring (replace them with the single line `const unreachableIds = loadUnreachableNoteIds(workspace, config);`, importing it from `./curation-quality.mjs`), the now-unused `tidySpaces`, `displayTitle`, `titleFromText`, `cleanedPostText`'s title use (keep `cleanedPostText` and `searchTextOf` for the unchanged search link, and replace the builder's own `const TITLE_LIMIT = 52` with `TITLE_LIMIT` imported from `./card-content.mjs`, so the title cut and the search-text cut share one number), `deepSummarySources`, `publicEvidenceStatus`. Then:
 
@@ -1223,14 +1223,14 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
 
 `meta`: add `...cardCounts(notes)`; delete `verifiedNoteCount`, `videoMethod`. Keep the `forbidden` patterns and private-identifier checks exactly as they are (they now also scan the post text and transcripts). When one of them matches, find the first card and field that contains the match (scan each card's string fields with the same normalisation) and put that note id and field name in the error after `Public data safety check failed`; never put the matched text in the message. Remove the now-unused `verifiedNoteCount` constant, `frameVerifiedNoteIds`, the `open` import from `node:fs/promises` (only `loadDiandianRunStates` used it) and the `curationRevision` import. Keep `collectVideoEvidenceStats`, `frameEvidenceCount` and `evidenceStatsAutoUpdated`: they feed the unchanged "张可复核画面" counter (`#proof-frames`).
 
-- [ ] **Step 6: Rewrite the old judgement tests and fixtures** (disposition table). `public-judgement-fixtures.mjs` keeps `root hex profile config diandianReplyCases refusalReply normalReply TODAY skillResource note`; delete `PROMPT`, `acceptedSkill`, `pointFile`. Then clear the other users of the deleted functions and fixtures named in the disposition table (`test_curation_standard.mjs`, `stable-curation-rebuild.test.mjs`, `test_organization_contracts.mjs`, `test_formal_outputs.mjs`, `reviewed-evidence-only-rebuild.test.mjs`, `verification-max-age.test.mjs`) and the `test_public_site.mjs` cases Task 6 owns. Before Step 7, `grep -rln "acceptedSkill\|pointFile\|PROMPT" skills/xhs-favorites-organizer/tests` must list no file that still imports them from `public-judgement-fixtures.mjs`.
+- [x] **Step 6: Rewrite the old judgement tests and fixtures** (dcb9245) (disposition table). `public-judgement-fixtures.mjs` keeps `root hex profile config diandianReplyCases refusalReply normalReply TODAY skillResource note`; delete `PROMPT`, `acceptedSkill`, `pointFile`. Then clear the other users of the deleted functions and fixtures named in the disposition table (`test_curation_standard.mjs`, `stable-curation-rebuild.test.mjs`, `test_organization_contracts.mjs`, `test_formal_outputs.mjs`, `reviewed-evidence-only-rebuild.test.mjs`, `verification-max-age.test.mjs`) and the `test_public_site.mjs` cases Task 6 owns. Before Step 7, `grep -rln "acceptedSkill\|pointFile\|PROMPT" skills/xhs-favorites-organizer/tests` must list no file that still imports them from `public-judgement-fixtures.mjs`.
 
-- [ ] **Step 7: Run**
+- [x] **Step 7: Run** (dcb9245)
 
 Run: `node --test skills/xhs-favorites-organizer/tests/faithful-cards-builder.test.mjs skills/xhs-favorites-organizer/tests/public-judgement.test.mjs skills/xhs-favorites-organizer/tests/public-judgement-builders.test.mjs` then `npm.cmd run test:knowledge`, `npm.cmd run test:curation` and `npm.cmd run test:organization` (the last one runs `test_organization_contracts.mjs`, which this task edits and which is in no other list)
 Expected: PASS. (`test_public_site.mjs` and `diandian-summary-display.test.mjs` live in `test:site` and read the committed data, so they are run at the end of Step 8, not here.) Fix each remaining failure by the disposition rule, never by loosening an assertion.
 
-- [ ] **Step 8: RUN STEP (real data, read-only on replies, private output) — the frozen list and the data the committed tests read**
+- [x] **Step 8: RUN STEP (real data, read-only on replies, private output) — the frozen list and the data the committed tests read** (dcb9245)
 
 ```bash
 node skills/xhs-favorites-organizer/scripts/damaged-replies.mjs --catalog .xhs-favorites/catalog.json --diandian-dir .xhs-favorites/diandian-summaries --output .xhs-favorites/damaged-diandian-replies.json
@@ -1244,7 +1244,7 @@ node skills/xhs-favorites-organizer/scripts/build-public-site.mjs --candidates <
 
 where `<sealed-candidates.json>` is made by the scratch snippet `Object.fromEntries(Object.entries(bundle.curation).filter(([, entry]) => entry.review_status !== "accepted"))` over the most recently modified `.xhs-favorites/organization-transactions/*-curation-bundle.json` (print its file name, the number of sealed candidates written, and how many of the 31 formerly held notes they cover), and the other arguments take the builder defaults (catalog, config, curation, profile, resources, replies, video analysis). The damaged list has no default (Task 6 Step 5) and is the one passed explicitly above. Then update `tests/diandian-summary-display.test.mjs` and the `site/data/knowledge.json` readers in `test_public_site.mjs` (lines near 506, 1948, 1975, 2003) to the new fields. Then run `npm.cmd run test:site`. Expected: PASS (no case may be skipped).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit** (dcb9245)
 
 ```bash
 git add skills/xhs-favorites-organizer/scripts skills/xhs-favorites-organizer/tests site/data/knowledge.json package.json
