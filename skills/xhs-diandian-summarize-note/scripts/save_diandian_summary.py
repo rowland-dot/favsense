@@ -46,7 +46,13 @@ LOCK_POLL_SECONDS = 0.01
 # Windows refuses to delete a file another process is reading (sharing
 # violation, error 32; access denied, error 5, while a delete is pending).
 LOCK_RELEASE_RETRY_SECONDS = 2.0
-LOCK_RELEASE_RETRYABLE_WINDOWS_ERRORS = frozenset({5, 32})
+# Error 145 (directory not empty): a deleted file stays listed in its folder
+# until the last reader of it lets go.
+LOCK_RELEASE_RETRYABLE_WINDOWS_ERRORS = frozenset({5, 32, 145})
+# A lock is only ever put in place with its owner file already inside, so a
+# lock folder that stays without one this long was left by a holder that
+# stopped halfway through releasing it, and is taken over.
+LOCK_OWNERLESS_SECONDS = 1.0
 BATCH_JOURNAL_NAME = ".batch-journal.json"
 _PRIVATE_STORE_THREAD_LOCKS: dict[Path, threading.RLock] = {}
 _PRIVATE_STORE_THREAD_LOCKS_GUARD = threading.Lock()
@@ -434,11 +440,18 @@ def _validate_lock_directory(
     return identity
 
 
+# Returned by _read_lock_owner for a lock folder that has no owner file.
+_NO_OWNER_FILE: dict = {}
+
+
 def _read_lock_owner(lock_path: Path) -> dict | None:
-    """The lock's owner record, or None while its holder is deleting the file."""
+    """The lock's owner record; None while its holder is deleting the file
+    (it cannot be read now); _NO_OWNER_FILE when the folder has none."""
     try:
         owner = json.loads((lock_path / "owner.json").read_text(encoding="utf-8"))
-    except (FileNotFoundError, PermissionError):
+    except FileNotFoundError:
+        return _NO_OWNER_FILE
+    except PermissionError:
         return None
     except (OSError, ValueError, TypeError) as error:
         raise ValueError("organization mutation lock is invalid") from error
@@ -637,6 +650,7 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
     )
     deadline = time.monotonic() + PRIVATE_STORE_LOCK_TIMEOUT_SECONDS
     acquired = False
+    ownerless_seen: tuple[tuple[int, int], float] | None = None
     try:
         while not acquired:
             try:
@@ -661,6 +675,15 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
                 allow_missing=True,
             )
             owner = _read_lock_owner(lock_path) if lock_identity is not None else None
+            if owner is _NO_OWNER_FILE:
+                # Being deleted by its holder (over in moments) or left behind
+                # (taken over below once it has stayed as it is long enough).
+                if ownerless_seen is None or ownerless_seen[0] != lock_identity:
+                    ownerless_seen = (lock_identity, time.monotonic())
+                if time.monotonic() - ownerless_seen[1] < LOCK_OWNERLESS_SECONDS:
+                    owner = None
+            else:
+                ownerless_seen = None
             if owner is None or _process_is_active(owner.get("pid")):
                 _wait_for_organization_lock(deadline, rename_error)
                 continue

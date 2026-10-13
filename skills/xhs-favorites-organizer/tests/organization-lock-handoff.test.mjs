@@ -425,6 +425,105 @@ test("a lock that is already gone when its holder releases is not an error", asy
 });
 
 // ---------------------------------------------------------------------------------------------
+// A lock folder left with no owner file (issue 95, seen on CI: the release deleted the owner file, then
+// could not remove the folder because something was still inside, gave up, and everyone waited for ever)
+// ---------------------------------------------------------------------------------------------
+
+// Deletes the owner file for real, then refuses to remove the folder: as when a reader still has the
+// deleted file open and the system keeps it listed in the folder until the reader lets go.
+function deleteOwnerFileThenRefuseFolder(lock, code, { times = Infinity, afterRefusal = () => {} } = {}) {
+  let refused = 0;
+  return {
+    rm: (real) => async (target, ...rest) => {
+      if (samePath(target, lock) && refused < times) {
+        refused += 1;
+        fs.rmSync(path.join(lock, "owner.json"), { force: true });
+        await afterRefusal(refused);
+        throw fileError(code);
+      }
+      return real(target, ...rest);
+    },
+    refusals: () => refused,
+  };
+}
+
+test("a release that finds the folder not yet empty after deleting the owner file tries again", async (context) => {
+  const { root, lock } = workspace(context);
+  const release = await acquire(root);
+  const refusing = deleteOwnerFileThenRefuseFolder(lock, "ENOTEMPTY", { times: 2 });
+  await withStandIns({ rm: refusing.rm }, () => release());
+  assert.equal(refusing.refusals(), 2);
+  assert.equal(fs.existsSync(lock), false, "the release left an empty lock folder behind");
+});
+
+test("a release that cannot remove the folder in time fails, and the empty folder it leaves is taken over", async (context) => {
+  const { root, lock } = workspace(context);
+  timing.releaseMs = SHORT_WAIT_MS;
+  timing.ownerlessMs = 100;
+  timing.waitMs = 2_000;
+  const first = await acquire(root);
+  const refusing = deleteOwnerFileThenRefuseFolder(lock, "ENOTEMPTY");
+  fs.writeFileSync(path.join(lock, "lingering.tmp"), "x"); // something is still in the folder
+  await withStandIns({ rm: refusing.rm }, () => assert.rejects(first(), (error) => {
+    // The failure says what the folder held, so a stuck run on CI can be explained.
+    return error.code === "ENOTEMPTY" && /folder held: lingering\.tmp/.test(error.message);
+  }));
+  assert.equal(fs.existsSync(lock), true);
+  assert.equal(fs.existsSync(path.join(lock, "owner.json")), false);
+  await enterAndLeave(root);
+  assert.equal(fs.existsSync(lock), false);
+});
+
+test("a lock folder left with no owner file by a holder that stopped is taken over after a grace period", async (context) => {
+  const { root, lock } = workspace(context);
+  fs.mkdirSync(lock);
+  fs.writeFileSync(path.join(lock, "left-behind.tmp"), "x");
+  timing.ownerlessMs = 100;
+  timing.waitMs = 2_000;
+  await enterAndLeave(root);
+  assert.equal(fs.existsSync(lock), false);
+});
+
+test("a lock folder with no owner file is not taken over before the grace period ends", async (context) => {
+  const { root, lock } = workspace(context);
+  fs.mkdirSync(lock);
+  fs.writeFileSync(path.join(lock, "left-behind.tmp"), "x");
+  timing.ownerlessMs = 10_000;
+  timing.waitMs = SHORT_WAIT_MS;
+  await assert.rejects(acquire(root), /TEST_BUSY/);
+  assert.equal(fs.existsSync(path.join(lock, "left-behind.tmp")), true);
+});
+
+test("a folder seen without an owner file that gets a live holder's lock meanwhile is not taken over", async (context) => {
+  const { root, lock } = workspace(context);
+  fs.mkdirSync(lock);
+  fs.writeFileSync(path.join(lock, "left-behind.tmp"), "x");
+  timing.ownerlessMs = 400;
+  timing.waitMs = 3_000;
+  setTimeout(() => {
+    releaseAsAnotherWriter(lock);
+    holdAsAnotherWriter(lock); // a new holder, running
+  }, 100);
+  await assert.rejects(acquire(root), /TEST_BUSY/);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(lock, "owner.json"), "utf8")).nonce, "another-writer");
+});
+
+test("a release that is retrying leaves alone a new lock another writer has put in its place", async (context) => {
+  const { root, lock } = workspace(context);
+  const release = await acquire(root);
+  const refusing = deleteOwnerFileThenRefuseFolder(lock, "ENOTEMPTY", {
+    times: 1,
+    afterRefusal: () => {
+      // The stuck folder is taken over and a new writer is running by the time the release looks again.
+      releaseAsAnotherWriter(lock);
+      holdAsAnotherWriter(lock);
+    },
+  });
+  await withStandIns({ rm: refusing.rm }, () => release());
+  assert.equal(JSON.parse(fs.readFileSync(path.join(lock, "owner.json"), "utf8")).nonce, "another-writer");
+});
+
+// ---------------------------------------------------------------------------------------------
 // The snapshot builder's own lock, and the order it lets go of its two locks
 // ---------------------------------------------------------------------------------------------
 

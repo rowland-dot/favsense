@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { lstat, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 // Folder identity is compared on exact (bigint) values. Ordinary Number values round the 64-bit
@@ -46,6 +46,7 @@ export const LOCK_TIMING = {
   waitMs: 2_000, // how long a lock that is gone or being deleted is waited for before "already running"
   pollMs: 10, // average pause between looks; each pause is randomised so writers cannot fall into step
   releaseMs: 2_000, // how long a release retries a delete the operating system refuses
+  ownerlessMs: 1_000, // how long a lock folder with no owner file must stay as it is before it is taken over
 };
 
 // Errors from moving the candidate onto the lock that mean "somebody else is there (or just was)".
@@ -53,8 +54,9 @@ const CONTENDED_RENAME_ERRORS = new Set(["EEXIST", "ENOTEMPTY", "EPERM"]);
 // Errors from reading the owner file while its holder is deleting it. Windows refuses the read of a
 // file that is being deleted, and the file or folder may already be gone.
 const RELEASING_READ_ERRORS = new Set(["ENOENT", "EPERM", "EBUSY", "EACCES"]);
-// Errors from deleting the lock that Windows gives while another process still has a file in it open.
-const SHARING_ERRORS = new Set(["EBUSY", "EPERM"]);
+// Errors from deleting the lock that Windows gives while another process still has a file in it open
+// (ENOTEMPTY: a deleted file stays listed in the folder until its last reader lets go).
+const SHARING_ERRORS = new Set(["EBUSY", "EPERM", "ENOTEMPTY"]);
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -73,8 +75,9 @@ function processIsActive(pid) {
   }
 }
 
-// Who holds the lock right now: null when it is gone or is being deleted, else { owner }.
-// Only a lock that is present and wrong is refused.
+// Who holds the lock right now: null when it is gone or is being deleted; { ownerless: true, folder }
+// when the folder is there with no owner file; else { owner }. Only a lock that is present and wrong
+// is refused.
 async function lookAtHolder(lock, invalidError) {
   const lockMetadata = await metadata(lock);
   if (!lockMetadata) return null;
@@ -83,6 +86,7 @@ async function lookAtHolder(lock, invalidError) {
   try {
     source = await readFile(join(lock, "owner.json"), "utf8");
   } catch (error) {
+    if (error.code === "ENOENT") return { ownerless: true, folder: lockMetadata };
     if (RELEASING_READ_ERRORS.has(error.code)) return null;
     throw invalidError();
   }
@@ -93,11 +97,49 @@ async function lookAtHolder(lock, invalidError) {
   }
 }
 
+// A lock is only ever put in place with its owner file already inside, so a lock folder without one is
+// either being deleted by its holder (over in moments) or was left by a holder that stopped halfway.
+// Only a folder seen ownerless, and unchanged, for LOCK_TIMING.ownerlessMs counts as the second.
+function ownerlessLongEnough(seen, holder) {
+  return seen !== null && samePlainDirectory(seen.folder, holder.folder)
+    && performance.now() - seen.since >= LOCK_TIMING.ownerlessMs;
+}
+
+// Move the lock folder aside and put the candidate in its place. Returns true when the candidate is now
+// the lock. `expected` (the folder as it was seen) is checked again just before the move, so a new
+// lock that took its place meanwhile is never moved.
+async function replaceLockFolder(candidate, lock, invalidError, expected) {
+  if (expected && !samePlainDirectory(expected, await metadata(lock))) return false;
+  const stale = `${lock}.stale-${randomUUID()}`;
+  try {
+    await rename(lock, stale);
+  } catch {
+    return false; // another waiter took the stale lock first: look again
+  }
+  if (expected && await metadata(join(stale, "owner.json"))) {
+    // A holder's owner file is in what was moved: a real lock took the place of the folder in the
+    // instant between the check and the move. Put it back, untouched.
+    await rename(stale, lock).catch(() => {});
+    return false;
+  }
+  try {
+    await rename(candidate, lock);
+    return true;
+  } catch (error) {
+    if (!CONTENDED_RENAME_ERRORS.has(error.code)) throw error;
+    return false; // another waiter took the freed lock first: look again
+  } finally {
+    // Clearing the old folder away is housekeeping: failing at it must not turn a lock we hold into an error.
+    await rm(stale, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
 // Put `candidate` (a folder already holding its owner file) in place as `lock`. A lock held by a live
 // process is refused at once. A lock that is gone, or being deleted, was just released: look again
 // after a short random pause, up to LOCK_TIMING.waitMs, then report it as running.
 export async function claimLockFolder(candidate, lock, { busyError, invalidError }) {
   const deadline = performance.now() + LOCK_TIMING.waitMs;
+  let ownerlessSeen = null;
   for (;;) {
     try {
       await rename(candidate, lock);
@@ -106,26 +148,17 @@ export async function claimLockFolder(candidate, lock, { busyError, invalidError
       if (!CONTENDED_RENAME_ERRORS.has(error.code)) throw error;
     }
     const holder = await lookAtHolder(lock, invalidError);
-    if (holder) {
-      if (processIsActive(holder.owner?.pid)) throw busyError();
-      const stale = `${lock}.stale-${randomUUID()}`;
-      let tookOver = false;
-      try {
-        await rename(lock, stale);
-        tookOver = true;
-      } catch {
-        // another waiter took the stale lock first: look again
+    if (holder?.ownerless) {
+      if (!ownerlessSeen || !samePlainDirectory(ownerlessSeen.folder, holder.folder)) {
+        ownerlessSeen = { folder: holder.folder, since: performance.now() };
+      } else if (ownerlessLongEnough(ownerlessSeen, holder)) {
+        if (await replaceLockFolder(candidate, lock, invalidError, holder.folder)) return;
       }
-      if (tookOver) {
-        try {
-          await rename(candidate, lock);
-          return;
-        } catch (error) {
-          if (!CONTENDED_RENAME_ERRORS.has(error.code)) throw error;
-          // another waiter took the freed lock first: look again
-        } finally {
-          await rm(stale, { recursive: true, force: true });
-        }
+    } else {
+      ownerlessSeen = null;
+      if (holder) {
+        if (processIsActive(holder.owner?.pid)) throw busyError();
+        if (await replaceLockFolder(candidate, lock, invalidError, null)) return;
       }
     }
     await pauseOrGiveUp(deadline, busyError);
@@ -155,14 +188,42 @@ async function readOwnerForRelease(lock, deadline) {
   }
 }
 
-async function removeRetryingSharingErrors(lock, deadline) {
+// Is what sits at `lock` now still the folder we are deleting? Once the owner file is gone the nonce can
+// no longer say so, and waiters take over a folder left without one, so a new lock may be there.
+async function stillTheFolderBeingDeleted(lock, nonce, folder) {
+  const now = await metadata(lock);
+  if (!now) return false;
+  if (!samePlainDirectory(folder, now)) return false;
+  try {
+    const owner = JSON.parse(await readFile(join(lock, "owner.json"), "utf8"));
+    return owner?.nonce === nonce;
+  } catch {
+    return true; // no readable owner file: it is the emptied folder
+  }
+}
+
+// A delete that failed says what the folder still held, so a stuck lock can be explained afterwards.
+async function describedWithFolderContents(error, lock) {
+  try {
+    error.message = `${error.message} [folder held: ${(await readdir(lock)).join(", ") || "nothing"}]`;
+  } catch {
+    // the folder is gone or unreadable: the original error says enough
+  }
+  return error;
+}
+
+async function removeRetryingSharingErrors(lock, nonce, deadline) {
+  const folder = await metadata(lock);
   for (;;) {
     try {
       await rm(lock, { recursive: true, force: true });
       return;
     } catch (error) {
-      if (!SHARING_ERRORS.has(error.code) || performance.now() >= deadline) throw error;
+      if (!SHARING_ERRORS.has(error.code) || performance.now() >= deadline) {
+        throw await describedWithFolderContents(error, lock);
+      }
       await sleep(20);
+      if (!await stillTheFolderBeingDeleted(lock, nonce, folder)) return;
     }
   }
 }
@@ -172,7 +233,7 @@ async function removeRetryingSharingErrors(lock, deadline) {
 export async function releaseLockFolder(lock, nonce) {
   const deadline = performance.now() + LOCK_TIMING.releaseMs;
   const owner = await readOwnerForRelease(lock, deadline);
-  if (owner?.nonce === nonce) await removeRetryingSharingErrors(lock, deadline);
+  if (owner?.nonce === nonce) await removeRetryingSharingErrors(lock, nonce, deadline);
 }
 
 export async function acquireOrganizationMutationLock(root, {
