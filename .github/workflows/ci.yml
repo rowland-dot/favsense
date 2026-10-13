@@ -55,7 +55,14 @@ jobs:
           node --check skills/xhs-favorites-organizer/scripts/build-organization-snapshot.mjs
 
       - name: Run the complete release gate
+        if: runner.os != 'Windows'
         run: npm run release:check
+
+      # Windows records the machine's TCP connection state for the whole gate: the intermittent browser
+      # failure net::ERR_NO_BUFFER_SPACE leaves no cause in the Playwright trace (issue #52).
+      - name: Run the complete release gate with the connection log
+        if: runner.os == 'Windows'
+        run: node scripts/connection-log.mjs --out ci-diagnostics -- npm run release:check
 
       - name: Keep browser test traces when the release gate fails
         if: failure()
@@ -63,6 +70,15 @@ jobs:
         with:
           name: test-results-${{ matrix.os }}
           path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Keep the Windows connection log when the release gate fails
+        if: failure() && runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: connection-log-${{ matrix.os }}
+          path: ci-diagnostics/
           if-no-files-found: ignore
           retention-days: 14
 

@@ -209,7 +209,7 @@ test("Task 11 contributor and CI commands match executable package contracts", (
   }
 
   const ci = fs.readFileSync(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
-  assert.match(ci, /- name: Run the complete release gate\s+run: npm run release:check/);
+  // The release-gate step's own shape (one per platform) is pinned in ci-release-gate-steps.test.mjs.
   assert.match(ci, /- name: Run Windows setup safety contracts\s+if: runner\.os == 'Windows'\s+run: npm\.cmd run test:windows-contracts/);
 });
 
