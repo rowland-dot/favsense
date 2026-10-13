@@ -11,6 +11,7 @@ import hashlib
 import html
 import json
 import os
+import random
 import re
 import shutil
 import stat
@@ -41,6 +42,11 @@ MAX_TITLE_LENGTH = 200
 MAX_SUMMARY_LENGTH = 200_000
 MAX_SUMMARY_INPUT_BYTES = MAX_SUMMARY_LENGTH * 4
 PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 30.0
+LOCK_POLL_SECONDS = 0.01
+# Windows refuses to delete a file another process is reading (sharing
+# violation, error 32; access denied, error 5, while a delete is pending).
+LOCK_RELEASE_RETRY_SECONDS = 2.0
+LOCK_RELEASE_RETRYABLE_WINDOWS_ERRORS = frozenset({5, 32})
 BATCH_JOURNAL_NAME = ".batch-journal.json"
 _PRIVATE_STORE_THREAD_LOCKS: dict[Path, threading.RLock] = {}
 _PRIVATE_STORE_THREAD_LOCKS_GUARD = threading.Lock()
@@ -389,10 +395,16 @@ def _process_is_active(pid: object) -> bool:
         return False
 
 
-def _directory_identity(path: Path) -> tuple[int, int]:
+class _LockDirectoryChanged(ValueError):
+    """The lock directory being inspected was released or replaced meanwhile."""
+
+
+def _directory_identity(path: Path, *, missing_ok: bool = False) -> tuple[int, int] | None:
     try:
         metadata = path.lstat()
     except FileNotFoundError as error:
+        if missing_ok:
+            return None
         raise ValueError("organization mutation lock root is unsafe") from error
     if (
         path.is_symlink()
@@ -412,14 +424,53 @@ def _validate_lock_directory(
 ) -> tuple[int, int] | None:
     if _directory_identity(path.parent) != parent_identity:
         raise ValueError("organization mutation lock root is unsafe")
-    if not os.path.lexists(path):
+    identity = _directory_identity(path, missing_ok=True)
+    if identity is None:
         if allow_missing:
             return None
-        raise ValueError("organization mutation lock is unsafe")
-    identity = _directory_identity(path)
+        raise _LockDirectoryChanged("organization mutation lock is unsafe")
     if expected_identity is not None and identity != expected_identity:
-        raise ValueError("organization mutation lock identity changed")
+        raise _LockDirectoryChanged("organization mutation lock identity changed")
     return identity
+
+
+def _read_lock_owner(lock_path: Path) -> dict | None:
+    """The lock's owner record, or None while its holder is deleting the file."""
+    try:
+        owner = json.loads((lock_path / "owner.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, PermissionError):
+        return None
+    except (OSError, ValueError, TypeError) as error:
+        raise ValueError("organization mutation lock is invalid") from error
+    if not isinstance(owner, dict):
+        raise ValueError("organization mutation lock is invalid")
+    return owner
+
+
+def _wait_for_organization_lock(deadline: float, cause: BaseException) -> None:
+    if time.monotonic() >= deadline:
+        raise TimeoutError(
+            "timed out waiting for the organization mutation lock"
+        ) from cause
+    # Jittered: writers that poll at one fixed interval can fall into step
+    # with a holder that takes and releases the lock at a steady rhythm, and
+    # then never find it free.
+    time.sleep(LOCK_POLL_SECONDS * random.uniform(0.5, 1.5))
+
+
+def _remove_tree_retrying_sharing_violations(path: Path) -> None:
+    deadline = time.monotonic() + LOCK_RELEASE_RETRY_SECONDS
+    while True:
+        try:
+            shutil.rmtree(path)
+            return
+        except OSError as error:
+            if (
+                getattr(error, "winerror", None) not in LOCK_RELEASE_RETRYABLE_WINDOWS_ERRORS
+                or time.monotonic() >= deadline
+            ):
+                raise
+            time.sleep(0.02)
 
 
 def _rename_lock_directory(
@@ -464,8 +515,15 @@ def _remove_lock_directory(
         parent_identity=lock_parent_identity,
         expected_identity=expected_identity,
     )
-    shutil.rmtree(path)
-    if _directory_identity(lock_parent) != lock_parent_identity or os.path.lexists(path):
+    _remove_tree_retrying_sharing_violations(path)
+    if _directory_identity(lock_parent) != lock_parent_identity:
+        raise ValueError("organization mutation lock cleanup is unsafe")
+    # Another writer may already have put its own lock where ours was.
+    try:
+        remaining_identity = _directory_identity(path, missing_ok=True)
+    except ValueError as error:
+        raise ValueError("organization mutation lock cleanup is unsafe") from error
+    if remaining_identity == expected_identity:
         raise ValueError("organization mutation lock cleanup is unsafe")
 
 
@@ -479,7 +537,7 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
             parent_identity=root_parent_identity,
         )
     else:
-        lock_parent.mkdir()
+        lock_parent.mkdir(exist_ok=True)  # another writer may create it first
         lock_parent_identity = _validate_lock_directory(
             lock_parent,
             parent_identity=root_parent_identity,
@@ -523,58 +581,50 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
                 acquired = True
                 break
             except OSError as error:
-                if not os.path.lexists(lock_path):
-                    raise
-                lock_identity = _validate_lock_directory(
+                rename_error = error
+            # The lock is somebody else's. Whatever the look at it finds, a
+            # lock that is gone or being deleted was just released: wait
+            # briefly and try again. Only a lock that is present and wrong
+            # is refused.
+            lock_identity = _validate_lock_directory(
+                lock_path,
+                parent_identity=lock_parent_identity,
+                allow_missing=True,
+            )
+            owner = _read_lock_owner(lock_path) if lock_identity is not None else None
+            if owner is None or _process_is_active(owner.get("pid")):
+                _wait_for_organization_lock(deadline, rename_error)
+                continue
+            stale = lock_parent / f".apply-lock.stale-{uuid4().hex}"
+            try:
+                stale_identity = _rename_lock_directory(
                     lock_path,
-                    parent_identity=lock_parent_identity,
+                    stale,
+                    lock_parent=lock_parent,
+                    lock_parent_identity=lock_parent_identity,
+                    source_identity=lock_identity,
                 )
-                assert lock_identity is not None
-                try:
-                    owner = json.loads(
-                        (lock_path / "owner.json").read_text(encoding="utf-8")
-                    )
-                except (OSError, ValueError, TypeError, json.JSONDecodeError) as owner_error:
-                    raise ValueError("organization mutation lock is invalid") from owner_error
-                if _process_is_active(owner.get("pid")):
-                    if time.monotonic() >= deadline:
-                        raise TimeoutError(
-                            "timed out waiting for the organization mutation lock"
-                        ) from error
-                    time.sleep(0.05)
-                    continue
-                stale = lock_parent / f".apply-lock.stale-{uuid4().hex}"
-                try:
-                    stale_identity = _rename_lock_directory(
-                        lock_path,
-                        stale,
-                        lock_parent=lock_parent,
-                        lock_parent_identity=lock_parent_identity,
-                        source_identity=lock_identity,
-                    )
-                except OSError:
-                    if time.monotonic() >= deadline:
-                        raise TimeoutError(
-                            "timed out waiting for the organization mutation lock"
-                        ) from error
-                    time.sleep(0.05)
-                    continue
-                try:
-                    _rename_lock_directory(
-                        candidate,
-                        lock_path,
-                        lock_parent=lock_parent,
-                        lock_parent_identity=lock_parent_identity,
-                        source_identity=candidate_identity,
-                    )
-                    acquired = True
-                finally:
-                    _remove_lock_directory(
-                        stale,
-                        lock_parent=lock_parent,
-                        lock_parent_identity=lock_parent_identity,
-                        expected_identity=stale_identity,
-                    )
+            except (OSError, _LockDirectoryChanged) as stale_error:
+                _wait_for_organization_lock(deadline, stale_error)
+                continue
+            try:
+                _rename_lock_directory(
+                    candidate,
+                    lock_path,
+                    lock_parent=lock_parent,
+                    lock_parent_identity=lock_parent_identity,
+                    source_identity=candidate_identity,
+                )
+                acquired = True
+            except OSError:
+                pass  # another waiter took the freed lock first
+            finally:
+                _remove_lock_directory(
+                    stale,
+                    lock_parent=lock_parent,
+                    lock_parent_identity=lock_parent_identity,
+                    expected_identity=stale_identity,
+                )
         yield
     finally:
         if os.path.lexists(candidate):
