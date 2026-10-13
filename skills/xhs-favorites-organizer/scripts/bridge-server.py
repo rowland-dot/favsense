@@ -137,6 +137,10 @@ DIANDIAN_HALT_DIAGNOSTICS = {
         "浏览器无法建立点点 AI 整理通道；核心整理结果已保留。"
         "请确认浏览器允许当前页面通信后重试。"
     ),
+    "diandian-incomplete": (
+        "点点 AI 的回复不完整，列表中间丢了文字；核心整理结果已保留。"
+        "这篇没有保存总结，下一轮整理会重试，失败页面已保留。"
+    ),
     "diandian-refused": (
         "点点 AI 没有读取这篇笔记，只回复了无法访问；核心整理结果已保留。"
         "这篇没有保存总结，下一轮整理会重试，失败页面已保留。"
@@ -5478,6 +5482,10 @@ class Bridge:
             # failure of this note, not a summary: stop the batch and write nothing.
             if DIANDIAN_REFUSAL.is_refusal(summary):
                 raise DiandianPageStop("diandian-refused")
+            # A reply that lost text where list items were joined is not a summary either: the same handling,
+            # with its own reason so the workbench does not say DianDian refused to read the note.
+            if DIANDIAN_REFUSAL.is_incomplete(summary):
+                raise DiandianPageStop("diandian-incomplete")
             before_save = read_ai_page_state(session, state_expression)
             if self.diandian_is_halted(run_id):
                 raise DiandianPageStop("run-halted")
@@ -5578,6 +5586,11 @@ class Bridge:
             raise ValueError("DianDian result summary is empty or too long")
         if contains_diandian_credential_shape({"title": title, "summary": summary}):
             raise ValueError("DianDian result contains private source data")
+        # Both capture routes end here: the browser loop checks first for its own stop reason, the page's
+        # save request arrives here directly. The page reads this message as its failure code, so it is the
+        # stop reason itself.
+        if DIANDIAN_REFUSAL.is_incomplete(summary):
+            raise ValueError("diandian-incomplete")
         with self.summary_run_lock(run_id):
             with self.get_manual_sync_lock():
                 state = self.read_manual_sync()

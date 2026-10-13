@@ -9,6 +9,7 @@ next round's plan. The JavaScript copy is held to the same table in diandian-ref
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import importlib.util
 import json
@@ -176,82 +177,96 @@ class NextRoundPlanTests(unittest.TestCase):
             self.assertIsNone(bridge.saved_diandian_record(refused_id))
 
 
+@contextlib.contextmanager
+def collection_step(reply: str):
+    """Run the browser-driven collection step on one planned note whose DianDian reply is `reply`.
+
+    A second note waits behind it in the same batch. Yields what the assertions need; the temporary
+    workspace is removed when the block ends.
+    """
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        failed_id, waiting_id = "c" * 24, "d" * 24
+        board_id, run_id = "board", "manual_board"
+        bridge = bridge_support.make_bridge(BRIDGE, root)
+        bridge.boards = {board_id: "Board"}
+        bridge.board_order = [board_id]
+        bridge.diandian_enabled = True
+        bridge.diandian_cdp_enabled = True
+        bridge.diandian_cdp_spec = {
+            "ai_chat_url": AI_URL,
+            "selectors": {
+                "input_controls": ["textarea"],
+                "selected_note_card": ".card",
+                "assistant_message": ".message",
+                "finished_message_class": "finished",
+            },
+            "prompt": "总结",
+            "minimum_summary_chars": 20,
+            "timings_ms": {"response_wait": 300_000, "reply_text_stable": 2_000, "success_dwell": 1_500},
+        }
+        bridge.diandian_save_record = BRIDGE.load_diandian_save_record(SAVER)
+        configure_summary_service(bridge, root, [failed_id, waiting_id])
+        bridge.summary_plans = {run_id: {failed_id, waiting_id}}
+        bridge.diandian_sleep = mock.Mock()
+        BRIDGE.atomic_json(bridge.manual_sync_path, {
+            "batch": "manual", "state": "running", "run_board_ids": [board_id],
+            "summary_pending": 2, "summary_failed": 0,
+        })
+        BRIDGE.atomic_json(bridge.state_dir / "runs" / f"{run_id}.json", {
+            "run_id": run_id, "state": "completed", "next_board_id": None,
+        })
+
+        class FakeSession:
+            def __init__(self):
+                self.finished = ""
+                self.value = ""
+
+            def call(self, method, **params):
+                if method == "Input.insertText":
+                    self.value += params["text"]
+                return {}
+
+            def evaluate(self, expression):
+                return json.dumps({
+                    "href": AI_URL, "body": "DianDian chat is ready", "ready": "complete",
+                    "input_ready": True, "msgs": 1 if self.finished else 0,
+                    "fin": 1 if self.finished else 0, "cards": 0, "val": self.value,
+                    "last": self.finished,
+                })
+
+        session = FakeSession()
+        target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
+        bridge.attach_run_page = mock.Mock(return_value=target)
+
+        def ask(guarded, note_url, *, spec, tries, sleep):
+            guarded.call("Input.insertText", text=note_url)
+            guarded.call("Input.insertText", text=" 总结")
+            guarded.call("Input.dispatchKeyEvent", type="keyDown", key="Enter")
+            guarded.call("Input.dispatchKeyEvent", type="keyUp", key="Enter")
+            session.finished = reply
+            return session.finished
+
+        bridge.diandian_cdp_ask = mock.Mock(side_effect=ask)
+
+        result = bridge.run_diandian_cdp({
+            "run_id": run_id,
+            "board_id": board_id,
+            "note_id": failed_id,
+            "title": "Title",
+            "url": f"https://www.xiaohongshu.com/discovery/item/{failed_id}?xsec_token=private-token",
+        })
+        yield SimpleNamespace(
+            bridge=bridge, result=result, target=target, failed_id=failed_id, waiting_id=waiting_id,
+        )
+
+
 class CollectionStepTests(unittest.TestCase):
     def test_a_refused_reply_fails_the_note_aborts_the_rest_and_saves_nothing(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            refused_id, waiting_id = "c" * 24, "d" * 24
-            board_id, run_id = "board", "manual_board"
-            bridge = bridge_support.make_bridge(BRIDGE, root)
-            bridge.boards = {board_id: "Board"}
-            bridge.board_order = [board_id]
-            bridge.diandian_enabled = True
-            bridge.diandian_cdp_enabled = True
-            bridge.diandian_cdp_spec = {
-                "ai_chat_url": AI_URL,
-                "selectors": {
-                    "input_controls": ["textarea"],
-                    "selected_note_card": ".card",
-                    "assistant_message": ".message",
-                    "finished_message_class": "finished",
-                },
-                "prompt": "总结",
-                "minimum_summary_chars": 20,
-                "timings_ms": {"response_wait": 300_000, "reply_text_stable": 2_000, "success_dwell": 1_500},
-            }
-            bridge.diandian_save_record = BRIDGE.load_diandian_save_record(SAVER)
-            configure_summary_service(bridge, root, [refused_id, waiting_id])
-            bridge.summary_plans = {run_id: {refused_id, waiting_id}}
-            bridge.diandian_sleep = mock.Mock()
-            BRIDGE.atomic_json(bridge.manual_sync_path, {
-                "batch": "manual", "state": "running", "run_board_ids": [board_id],
-                "summary_pending": 2, "summary_failed": 0,
-            })
-            BRIDGE.atomic_json(bridge.state_dir / "runs" / f"{run_id}.json", {
-                "run_id": run_id, "state": "completed", "next_board_id": None,
-            })
-
-            class FakeSession:
-                def __init__(self):
-                    self.finished = ""
-                    self.value = ""
-
-                def call(self, method, **params):
-                    if method == "Input.insertText":
-                        self.value += params["text"]
-                    return {}
-
-                def evaluate(self, expression):
-                    return json.dumps({
-                        "href": AI_URL, "body": "DianDian chat is ready", "ready": "complete",
-                        "input_ready": True, "msgs": 1 if self.finished else 0,
-                        "fin": 1 if self.finished else 0, "cards": 0, "val": self.value,
-                        "last": self.finished,
-                    })
-
-            session = FakeSession()
-            target = SimpleNamespace(session=session, close=mock.Mock(), release=mock.Mock())
-            bridge.attach_run_page = mock.Mock(return_value=target)
-
-            def ask(guarded, note_url, *, spec, tries, sleep):
-                guarded.call("Input.insertText", text=note_url)
-                guarded.call("Input.insertText", text=" 总结")
-                guarded.call("Input.dispatchKeyEvent", type="keyDown", key="Enter")
-                guarded.call("Input.dispatchKeyEvent", type="keyUp", key="Enter")
-                session.finished = refusal_text()
-                return session.finished
-
-            bridge.diandian_cdp_ask = mock.Mock(side_effect=ask)
-
-            result = bridge.run_diandian_cdp({
-                "run_id": run_id,
-                "board_id": board_id,
-                "note_id": refused_id,
-                "title": "Title",
-                "url": f"https://www.xiaohongshu.com/discovery/item/{refused_id}?xsec_token=private-token",
-            })
-
-            self.assertEqual(result, {"saved": False, "halted": True, "reason": "diandian-refused"})
+        with collection_step(refusal_text()) as step:
+            bridge, target = step.bridge, step.target
+            refused_id, waiting_id = step.failed_id, step.waiting_id
+            self.assertEqual(step.result, {"saved": False, "halted": True, "reason": "diandian-refused"})
             self.assertFalse((bridge.diandian_dir / f"{refused_id}.json").exists())
             self.assertEqual(
                 [path.name for path in bridge.diandian_dir.glob("*")] if bridge.diandian_dir.exists() else [],
