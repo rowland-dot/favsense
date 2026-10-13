@@ -437,10 +437,16 @@ def _prepare_plain_lock_path(
     parent_identity = _plain_lock_path_identity(path.parent, directory=True)
     try:
         file_identity = _plain_lock_path_identity(path, directory=False)
-    except ValueError:
-        if path.exists() or path_is_reparse_point(path):
+    except ValueError as error:
+        if not (path.exists() or path_is_reparse_point(path)):
+            file_identity = None
+        elif isinstance(error.__cause__, FileNotFoundError):
+            # The first look found nothing and another service created the file since (first use
+            # of this lock). Judge what is there now in full: a plain file is taken, a link or any
+            # other kind is still refused by the same check.
+            file_identity = _plain_lock_path_identity(path, directory=False)
+        else:
             raise
-        file_identity = None
     if (
         _plain_lock_path_identity(root, directory=True) != root_identity
         or _plain_lock_path_identity(path.parent, directory=True) != parent_identity

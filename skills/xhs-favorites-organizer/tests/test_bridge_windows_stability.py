@@ -185,6 +185,28 @@ class FlakyLstat:
         return self._real(path, *args, **kwargs)
 
 
+class AbsentThenCreatedLstat:
+    """Stands in for `os.lstat`: the first look at the watched name reports "not there".
+
+    `create`, when given, is what the other writer does in the gap right after that look; it runs
+    before the next look, which is real. Every look at any other name is real.
+    """
+
+    def __init__(self, watched_name, create=None):
+        self.watched_name = watched_name
+        self.create = create
+        self.looks = 0
+        self._real = os.lstat
+
+    def __call__(self, path, *args, **kwargs):
+        if Path(path).name == self.watched_name and self.looks == 0:
+            self.looks += 1
+            if self.create is not None:
+                self.create(Path(path))
+            raise FileNotFoundError(2, "No such file or directory", str(path))
+        return self._real(path, *args, **kwargs)
+
+
 class PublishLockPathCheckTest(unittest.TestCase):
     def setUp(self):
         directory = tempfile.TemporaryDirectory()
@@ -192,6 +214,36 @@ class PublishLockPathCheckTest(unittest.TestCase):
         self.root = Path(directory.name)
         self.state_dir = self.root / ".xhs-favorites"
         self.state_dir.mkdir()
+
+    def test_a_lock_file_created_by_the_other_writer_after_the_first_look_is_taken(self):
+        # Two services creating the same lock file for the first time: the loser's first look says
+        # "not there", the winner creates it, and the loser must then judge the file as it now is.
+        racing = AbsentThenCreatedLstat("manual_board.lock", create=lambda path: path.write_bytes(b""))
+        self.assertTrue(self.hold_lock(racing))
+        self.assertEqual(racing.looks, 1)
+
+    def test_a_symlink_put_in_the_lock_file_place_in_that_gap_is_still_refused(self):
+        outside = self.root / "outside"
+        outside.mkdir()
+        target = outside / "elsewhere.lock"
+        target.write_bytes(b"keep")
+        probe = self.root / "symlink-probe"
+        try:
+            os.symlink(target, probe)
+        except (OSError, NotImplementedError) as error:
+            self.skipTest(f"symlinks unavailable here: {error!r}")
+        probe.unlink()
+        racing = AbsentThenCreatedLstat("manual_board.lock", create=lambda path: os.symlink(target, path))
+        with self.assertRaisesRegex(ValueError, "redirected or unsafe"):
+            self.hold_lock(racing)
+        self.assertEqual(target.read_bytes(), b"keep")
+        self.assertEqual([entry.name for entry in outside.iterdir()], ["elsewhere.lock"])
+
+    def test_a_lock_file_still_absent_after_the_first_look_is_created_and_taken(self):
+        racing = AbsentThenCreatedLstat("manual_board.lock")
+        self.assertTrue(self.hold_lock(racing))
+        self.assertEqual(racing.looks, 1)
+        self.assertTrue((self.state_dir / "publish-claims" / "manual_board.lock").is_file())
 
     def hold_lock(self, flaky):
         with mock.patch.object(BRIDGE.os, "lstat", flaky):
