@@ -35,7 +35,7 @@
     "test:knowledge": "node --test skills/xhs-favorites-organizer/tests/test_formal_outputs.mjs skills/xhs-favorites-organizer/tests/public-judgement.test.mjs skills/xhs-favorites-organizer/tests/public-judgement-builders.test.mjs skills/xhs-favorites-organizer/tests/private-output-short-path.test.mjs skills/xhs-favorites-organizer/tests/test_organization_snapshot.mjs skills/xhs-favorites-organizer/tests/web-only-snapshot.test.mjs skills/xhs-favorites-organizer/tests/site-code-in-build-version.test.mjs",
     "test:curation": "node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs skills/xhs-favorites-organizer/tests/stable-curation-rebuild.test.mjs skills/xhs-favorites-organizer/tests/verify-github-resources.test.mjs skills/xhs-favorites-organizer/tests/reviewed-evidence-only-rebuild.test.mjs skills/xhs-favorites-organizer/tests/verification-max-age.test.mjs skills/xhs-favorites-organizer/tests/verification-max-age-migration.test.mjs skills/xhs-favorites-organizer/tests/exact-file-identity.test.mjs skills/xhs-favorites-organizer/tests/organization-lock-handoff.test.mjs skills/xhs-favorites-organizer/tests/image-text-evidence-required.test.mjs skills/xhs-favorites-organizer/tests/diandian-refusal.test.mjs skills/xhs-favorites-organizer/tests/accepted-text-quality.test.mjs skills/xhs-favorites-organizer/tests/ci-release-gate-steps.test.mjs",
     "test:skill-sync": "node --test scripts/test-sync-diandian-skill.mjs",
-    "test:release-contracts": "node --test scripts/test-run-python-tests.mjs scripts/test-verify-release.mjs scripts/test-connection-log.mjs",
+    "test:release-contracts": "node --test scripts/test-run-python-tests.mjs scripts/test-verify-release.mjs scripts/test-connection-log.mjs scripts/test-check-test-script-paths.mjs",
     "test:lifecycle": "node --test scripts/test-verify-development-lifecycle.mjs scripts/test-check-syntax.mjs scripts/test-run-organization-tests.mjs",
     "test:organization": "node scripts/run-organization-tests.mjs",
     "verify:github-resources": "node skills/xhs-favorites-organizer/scripts/verify-github-resources.mjs",
@@ -44,7 +44,8 @@
     "lint:a11y": "eslint site/app.js site/local-bridge-utils.mjs site/resource-utils.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
     "test:python": "node scripts/run-python-tests.mjs",
-    "test": "npm run test:site && npm run test:publish && npm run test:knowledge && npm run test:curation && npm run test:skill-sync && npm run test:release-contracts && npm run test:lifecycle",
+    "check:test-paths": "node scripts/check-test-script-paths.mjs",
+    "test": "npm run check:test-paths && npm run test:site && npm run test:publish && npm run test:knowledge && npm run test:curation && npm run test:skill-sync && npm run test:release-contracts && npm run test:lifecycle",
     "verify": "node scripts/verify-release.mjs",
     "release:check": "npm run check:syntax && npm run lint:a11y && npm test && npm run test:organization && npm run test:python && npm run test:e2e && npm run verify"
   },
