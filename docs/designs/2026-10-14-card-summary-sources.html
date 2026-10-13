@@ -12,7 +12,7 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 .t-meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:0 0 8px;color:var(--ink-soft);font-size:12px}
 .t-cat{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono)}.t-cat i{width:22px;height:3px;background:var(--accent)}
 .t-sugg b{margin-right:6px;padding:2px 6px;border-radius:5px;background:color-mix(in srgb,var(--accent),var(--surface) 84%);color:var(--ink);font-size:11px}.t-sugg small{color:var(--ink-soft)}
-.t-title{margin-bottom:14px;max-width:none;font-size:clamp(24px,2.6vw,34px);text-wrap:balance}.t-title::after{margin-top:10px;height:5px;width:56px}
+.t-title{margin-bottom:14px;max-width:none;font-size:clamp(24px,2.6vw,34px);text-wrap:pretty}.t-title::after{margin-top:10px;height:5px;width:56px}
 .t-sec{padding:14px 0;border-top:1px solid var(--line)}
 .t-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .t-head h3{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--ink-soft)}
@@ -21,7 +21,7 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 .t-head--ev .t-chip{color:var(--text-blue);background:color-mix(in srgb,var(--cobalt),var(--surface) 88%)}
 .t-head--warn .t-chip{color:#8a5a00;background:#fff1cc}.t-head--meta .t-chip{color:var(--ink-soft);background:var(--surface-soft)}
 .t-edit{min-height:0;height:auto;line-height:1.3;margin-left:auto;padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface-soft);font-size:11px;font-weight:700}
-.t-line{margin:0 0 10px;color:var(--ink-soft);font-size:12px;line-height:1.6}
+.t-prov{align-items:center;margin-bottom:12px;padding:8px 10px}.t-prov span{line-height:1.55}
 .t-next{border:0}.t-next b{display:block;margin-bottom:4px;font-family:var(--mono);font-size:11px}
 .t-next p{margin:0;padding:12px 14px;border:1px solid color-mix(in srgb,var(--accent),transparent 45%);border-radius:12px;background:color-mix(in srgb,var(--accent),var(--surface) 82%);font-size:13.5px;line-height:1.75}
 .t-two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -82,8 +82,8 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 <p class="t-meta"><span class="t-cat"><i></i>AI自媒体 · Workflow</span><span>陈祝器 · 2026年8月13日</span><span class="t-sugg"><b>建议分类</b>内容增长与商业<small>（仍按“AI自媒体”归档）</small></span></p>
 <h2 class="detail-title t-title">把账号复盘经验产品化为 Codex 智能体</h2>
 <section class="t-sec">
-  <div class="t-head t-head--dd"><h3>点点 AI 深度总结</h3><span class="t-chip">原文未改动 · 805 字</span><button type="button" class="t-edit">编辑描述</button></div>
-  
+  <div class="t-head"><h3>内容总结</h3><button type="button" class="t-edit">编辑描述</button></div>
+  <div class="summary-provenance summary-provenance--diandian t-prov"><strong>点点 AI 深度总结</strong><span>点点 AI 的完整回复，原文未改动，共 805 字；只去掉开头的对话语句，按小标题与列表排版。</span></div>
   <div class="dd-fold" data-expanded="false"><div class="structured-summary dd-body">
 <h4>核心故事</h4><p>作者原本每月做小红书账号复盘要花一下午拉数据、看指标、写总结，觉得重复又烦。于是用 Codex 花了 3 天搭了一个"复盘智能体"，把数据丢进去就能自动分析。结果发群里炫耀时，被做护肤号的朋友问能不能按他们的品类定制，顺势接了 3 个定制客户（美妆、职场、本地生活），累计收入 10W。</p>
 <h4>搭建过程拆解</h4><ul><li>第 1 天：没急着写代码，先把自己脑子里的复盘逻辑一条条拆出来——看哪些指标、怎么判断爆款、什么情况追投、什么换选题。这些"脑子里的经验"才是智能体值钱的地方。</li><li>第 2 天：第一版出来了，但 AI 味太重，总结一堆却不敢下判断。于是推翻重来，加了 4 个核心问题逼它从"总结型"变成"判断型"。</li></ul>
@@ -138,8 +138,8 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 <p class="t-meta"><span class="t-cat"><i></i>Skills · Note</span><span>李叔聊AI · 2026年7月6日</span><span class="t-sugg"><b>建议分类</b>开发部署与Vibe Coding<small>（仍按“Skills”归档）</small></span></p>
 <h2 class="detail-title t-title">EdgeOne Makers：免费托管和部署 AI Agent</h2>
 <section class="t-sec">
-  <div class="t-head t-head--ev"><h3>原帖摘要</h3><span class="t-chip">本机视频证据整理</span><button type="button" class="t-edit">编辑描述</button></div>
-  <p class="t-line">点点没能读取这篇笔记；内容根据本机保存的视频转写等证据整理（按这张卡实际用到的证据列出）。</p>
+  <div class="t-head"><h3>原帖摘要</h3><button type="button" class="t-edit">编辑描述</button></div>
+  <div class="summary-provenance summary-provenance--evidence t-prov"><strong>本机视频证据整理</strong><span>点点没能读取这篇笔记；内容根据本机保存的视频转写等证据整理（按这张卡实际用到的证据列出）。</span></div>
   <div class="structured-summary"><p>视频介绍腾讯云新推出的 EdgeOne Makers 边缘 Web 与 Agent 托管平台，演示从模板部署一个“AI 趋势定时摘要助手”：工作台有 6 类场景、19 个预设模板，也可以用命令行、Git 和 CI/CD 把本地写好的 Agent 接进来；</p><p>点“部署”、选环境和环境变量即可上线，平台自动配置 SSL 并分配免费域名，依托腾讯云全球边缘节点，自带 DDoS 和 WAF 防护；浏览器、代码执行等动作在独立沙箱里运行，控制台能看到每一步调用的模型、Token 用量和耗时；不绑定专属 SDK，常见 Python、JS 框架和模型都能用。视频称注册用户每月有免费额度，属于上线活动宣传。</p></div>
 </section>
 
@@ -186,8 +186,8 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 <p class="t-meta"><span class="t-cat"><i></i>Skills · Note</span><span>AI小蔡狗 · 2026年6月12日</span></p>
 <h2 class="detail-title t-title">AI搜索引擎项目，GitHub TrendIing榜第一</h2>
 <section class="t-sec">
-  <div class="t-head t-head--ev"><h3>原帖摘要</h3><span class="t-chip">本机视频证据整理</span><button type="button" class="t-edit">编辑描述</button></div>
-  <p class="t-line">这篇没有点点总结；内容根据本机保存的视频转写等证据整理（按这张卡实际用到的证据列出）。</p>
+  <div class="t-head"><h3>原帖摘要</h3><button type="button" class="t-edit">编辑描述</button></div>
+  <div class="summary-provenance summary-provenance--evidence t-prov"><strong>本机视频证据整理</strong><span>这篇没有点点总结；内容根据本机保存的视频转写等证据整理（按这张卡实际用到的证据列出）。</span></div>
   <div class="structured-summary"><p>视频中的 GitHub 热门项目是 last30days Skill：聚合最近 30 天 Reddit、X、TikTok、Instagram、YouTube 等讨论，输出近期共识、争议、来源和研究简报。</p></div>
 </section>
 
@@ -234,8 +234,8 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 <p class="t-meta"><span class="t-cat"><i></i>AI视频生成 · Workflow</span><span>有点坏有点可爱 · 2026年7月18日</span><span class="t-sugg"><b>建议分类</b>AI设计与多媒体<small>（仍按“AI视频生成”归档）</small></span></p>
 <h2 class="detail-title t-title">本地部署AI绘画软件！</h2>
 <section class="t-sec">
-  <div class="t-head t-head--warn"><h3>核心结论</h3><span class="t-chip">证据未补齐，暂不发布</span><button type="button" class="t-edit">编辑描述</button></div>
-  <p class="t-line">已复核：视频和画面里找不到软件名称和下载来源，只显示原帖公开文字；补齐证据后会重新审核。</p>
+  <div class="t-head"><h3>核心结论</h3><button type="button" class="t-edit">编辑描述</button></div>
+  <div class="summary-provenance summary-provenance--warning t-prov"><strong>证据未补齐，暂不发布</strong><span>已复核：视频和画面里找不到软件名称和下载来源，只显示原帖公开文字；补齐证据后会重新审核。</span></div>
   <div class="structured-summary"><p>最强AI已无需确认！！#AI工具[话题]# #ai漫剧[话题]# #AIgc[话题]# #AI视频[话题]# #ai视频制作[话题]# #ai教程分享[话题]# #ai动态漫[话题]# #ai漫剧制作[话题]#</p></div>
 </section>
 
@@ -282,8 +282,8 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 <p class="t-meta"><span class="t-cat"><i></i>AI视频生成 · Workflow</span><span>Mx-Shell · 2026年6月3日</span><span class="t-sugg"><b>建议分类</b>AI设计与多媒体<small>（仍按“AI视频生成”归档）</small></span></p>
 <h2 class="detail-title t-title">国产“爱死机”《丧尸清道夫》创作思路分享</h2>
 <section class="t-sec">
-  <div class="t-head t-head--meta"><h3>核心结论</h3><span class="t-chip">已完成（原帖不可访问）</span><button type="button" class="t-edit">编辑描述</button></div>
-  <p class="t-line">原帖可能已被作者隐藏或删除；已保留现有记录并结束补证，不作为正式核验结果发布。</p>
+  <div class="t-head"><h3>核心结论</h3><button type="button" class="t-edit">编辑描述</button></div>
+  <div class="summary-provenance summary-provenance--metadata t-prov"><strong>已完成（原帖不可访问）</strong><span>原帖可能已被作者隐藏或删除；已保留现有记录并结束补证，不作为正式核验结果发布。</span></div>
   <div class="structured-summary"><p>国产“爱死机”《丧尸清道夫》创作思路分享</p></div>
 </section>
 
