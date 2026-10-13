@@ -39,7 +39,7 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 <p>每张卡都是网站真实数据，样式用网站样式表。“建议”一栏同时做了三件事：</p>
 <ul><li>来源标签如实：有点点总结只显示点点原文；没有时写明用的是本机视频/图片证据。</li>
 <li>点点原文默认折叠，按钮“展开全文 · 805 字”可直接点；展开后可“收起”。</li>
-<li>省空间：分类、作者、日期、建议分类并成一行；标题不再限宽；去掉“核心结论”标题行，来源标签与说明合成一行，“编辑”按钮放进来源框；去掉每张卡都相同的“整理依据”一节；“下一步”标签放到框上方。</li></ul>
+<li>省空间：分类、作者、日期、建议分类并成一行；标题不再限宽；去掉“核心结论”标题行，来源标签与说明合成一行，“编辑”按钮放进来源框；去掉每张卡都相同的“整理依据”一节；去掉“下一步”建议框；“下一步”标签放到框上方。</li></ul>
 </header>
 <section class="mock-case"><h2>① 有可用的点点总结（238 张）</h2><p class="ex">例：把账号复盘经验产品化为 Codex 智能体</p><div class="mock-pair">
 <div><span class="tag">现在</span><p class="why">显示 118 字整理摘要，却标成点点总结；标题两行、头部四行。</p><div class="detail-dialog mock-dialog" style="--accent:#6f3cc3"><div class="dialog-shell">
@@ -94,7 +94,6 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 <h4>核心观点</h4><p>AI 最大的机会不一定在 AI 行业里，电商、小红书、私域、外贸、招聘、教育……每个"每个月都要复盘"的岗位，都值得有一个智能体。真正有优势的，不是最会写提示词的人，而是既懂自己行业、又愿意把 AI 用起来的人。</p>
 <h4>互动引导</h4><p>作者预告下一篇会拆解这个 10W 智能体具体怎么搭，并邀请读者在评论区扣"复盘"领取一份"智能体 4 问框架"提示词模板。</p></div><button type="button" class="dd-toggle" aria-expanded="false">展开全文 · 805 字</button></div>
 </section>
-<section class="t-sec t-next"><b>下一步</b><p>先用一个月的历史数据复现人工复盘，把异常判断和行动建议逐条对照；对错误归因、缺失数据和不可执行建议建立驳回规则，连续三轮达到可接受准确度后再尝试行业模板与商业交付。</p></section>
 <section class="t-sec t-two">
   <div><h3>相关主题与工具</h3><div class="tools-row"><span class="tool-chip">商业验证</span><span class="tool-chip">复盘智能体</span><span class="tool-chip">经验产品化</span></div></div>
 </section>
@@ -144,7 +143,6 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
   <div class="summary-provenance summary-provenance--evidence t-prov"><strong>本机视频证据整理</strong><span>点点没能读取这篇笔记；内容根据本机保存的视频转写等证据整理（按这张卡实际用到的证据列出）。</span><button type="button" class="t-edit" aria-label="编辑描述" title="编辑描述"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>编辑</button></div>
   <div class="structured-summary"><p>视频介绍腾讯云新推出的 EdgeOne Makers 边缘 Web 与 Agent 托管平台，演示从模板部署一个“AI 趋势定时摘要助手”：工作台有 6 类场景、19 个预设模板，也可以用命令行、Git 和 CI/CD 把本地写好的 Agent 接进来；</p><p>点“部署”、选环境和环境变量即可上线，平台自动配置 SSL 并分配免费域名，依托腾讯云全球边缘节点，自带 DDoS 和 WAF 防护；浏览器、代码执行等动作在独立沙箱里运行，控制台能看到每一步调用的模型、Token 用量和耗时；不绑定专属 SDK，常见 Python、JS 框架和模型都能用。视频称注册用户每月有免费额度，属于上线活动宣传。</p></div>
 </section>
-
 <section class="t-sec t-two">
   <div><h3>相关主题与工具</h3><div class="tools-row"><span class="tool-chip">Agent部署</span><span class="tool-chip">EdgeOne Makers</span><span class="tool-chip">边缘托管</span></div></div>
 </section>
@@ -192,7 +190,6 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
   <div class="summary-provenance summary-provenance--evidence t-prov"><strong>本机视频证据整理</strong><span>这篇没有点点总结；内容根据本机保存的视频转写等证据整理（按这张卡实际用到的证据列出）。</span><button type="button" class="t-edit" aria-label="编辑描述" title="编辑描述"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>编辑</button></div>
   <div class="structured-summary"><p>视频中的 GitHub 热门项目是 last30days Skill：聚合最近 30 天 Reddit、X、TikTok、Instagram、YouTube 等讨论，输出近期共识、争议、来源和研究简报。</p></div>
 </section>
-
 <section class="t-sec t-two">
   <div><h3>相关主题与工具</h3><div class="tools-row"><span class="tool-chip">last30days</span><span class="tool-chip">社媒研究</span><span class="tool-chip">趋势</span></div></div>
 </section>
@@ -240,7 +237,6 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
   <div class="summary-provenance summary-provenance--warning t-prov"><strong>证据未补齐，暂不发布</strong><span>已复核：视频和画面里找不到软件名称和下载来源，只显示原帖公开文字；补齐证据后会重新审核。</span><button type="button" class="t-edit" aria-label="编辑描述" title="编辑描述"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>编辑</button></div>
   <div class="structured-summary"><p>最强AI已无需确认！！#AI工具[话题]# #ai漫剧[话题]# #AIgc[话题]# #AI视频[话题]# #ai视频制作[话题]# #ai教程分享[话题]# #ai动态漫[话题]# #ai漫剧制作[话题]#</p></div>
 </section>
-
 <section class="t-sec t-two">
   
 </section>
@@ -288,7 +284,6 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
   <div class="summary-provenance summary-provenance--metadata t-prov"><strong>已完成（原帖不可访问）</strong><span>原帖可能已被作者隐藏或删除；已保留现有记录并结束补证，不作为正式核验结果发布。</span><button type="button" class="t-edit" aria-label="编辑描述" title="编辑描述"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>编辑</button></div>
   <div class="structured-summary"><p>国产“爱死机”《丧尸清道夫》创作思路分享</p></div>
 </section>
-
 <section class="t-sec t-two">
   
 </section>
