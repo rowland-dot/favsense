@@ -524,6 +524,57 @@ test("a release that is retrying leaves alone a new lock another writer has put 
 });
 
 // ---------------------------------------------------------------------------------------------
+// Looking at a lock folder that is being deleted (seen on CI: Windows answers EPERM to a look at a folder
+// whose delete is pending)
+// ---------------------------------------------------------------------------------------------
+
+// The first `times` looks at the lock folder are refused with `code`; `onRefusal` runs at each refusal.
+function lookAtLockRefused(lock, code, { times = Infinity, onRefusal = () => {} } = {}) {
+  let refused = 0;
+  return {
+    lstat: (real) => async (target, ...rest) => {
+      if (samePath(target, lock) && refused < times) {
+        refused += 1;
+        onRefusal(refused);
+        throw fileError(code);
+      }
+      return real(target, ...rest);
+    },
+    refusals: () => refused,
+  };
+}
+
+for (const code of ["EPERM", "EBUSY", "EACCES"]) {
+  test(`a look at the lock folder refused with ${code} while its holder deletes it is a released lock`, async (context) => {
+    const { root, lock } = workspace(context);
+    holdAsAnotherWriter(lock);
+    const refusing = lookAtLockRefused(lock, code, { times: 1, onRefusal: () => releaseAsAnotherWriter(lock) });
+    await withStandIns({ lstat: refusing.lstat }, () => enterAndLeave(root));
+    assert.equal(refusing.refusals(), 1, "the refused look must actually have happened");
+    assert.equal(fs.existsSync(lock), false);
+  });
+}
+
+test("a look at the lock folder that is refused for as long as the wait lasts ends as already running", async (context) => {
+  const { root, lock } = workspace(context);
+  holdAsAnotherWriter(lock);
+  timing.waitMs = SHORT_WAIT_MS;
+  const refusing = lookAtLockRefused(lock, "EPERM");
+  await withStandIns({ lstat: refusing.lstat }, () => assert.rejects(acquire(root), /TEST_BUSY/));
+  assert.ok(refusing.refusals() > 1, "the look must have been repeated");
+});
+
+test("a release whose look at its own folder is refused for a moment still finishes", async (context) => {
+  const { root, lock } = workspace(context);
+  const release = await acquire(root);
+  const refusingDelete = deleteOwnerFileThenRefuseFolder(lock, "ENOTEMPTY", { times: 1 });
+  const refusingLook = lookAtLockRefused(lock, "EPERM", { times: 1 });
+  await withStandIns({ rm: refusingDelete.rm, lstat: refusingLook.lstat }, () => release());
+  assert.equal(refusingLook.refusals(), 1, "the refused look must actually have happened");
+  assert.equal(fs.existsSync(lock), false);
+});
+
+// ---------------------------------------------------------------------------------------------
 // The snapshot builder's own lock, and the order it lets go of its two locks
 // ---------------------------------------------------------------------------------------------
 

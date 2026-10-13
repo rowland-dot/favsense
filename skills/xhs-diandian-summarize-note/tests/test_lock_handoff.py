@@ -289,6 +289,43 @@ class WaitingForTheLockTests(unittest.TestCase):
 
         self.assertFalse(workspace.lock_path.exists())
 
+    def test_look_at_the_lock_folder_refused_while_its_holder_deletes_it_is_a_released_lock(self):
+        # Windows answers "access denied" to a look at a folder whose delete is pending.
+        module = load_module()
+        module.PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 5.0
+        workspace = Workspace(self)
+        workspace.hold_lock_as_another_writer()
+        real_lstat = Path.lstat
+        refusals = []
+
+        def lstat(path, *args, **kwargs):
+            if path == workspace.lock_path and not refusals:
+                refusals.append(path)
+                workspace.other_writer_releases()
+                raise PermissionError(13, "Access is denied")
+            return real_lstat(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "lstat", lstat):
+            enter_and_leave(module, workspace)
+
+        self.assertEqual(len(refusals), 1)
+
+    def test_look_at_the_lock_folder_that_stays_refused_ends_in_the_timeout(self):
+        module = load_module()
+        module.PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 0.3
+        workspace = Workspace(self)
+        workspace.hold_lock_as_another_writer()
+        real_lstat = Path.lstat
+
+        def lstat(path, *args, **kwargs):
+            if path == workspace.lock_path:
+                raise PermissionError(13, "Access is denied")
+            return real_lstat(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "lstat", lstat):
+            with self.assertRaisesRegex(TimeoutError, "organization mutation lock"):
+                enter_and_leave(module, workspace)
+
     def test_owner_file_that_stays_unreadable_ends_in_the_timeout_not_invalid(self):
         module = load_module()
         module.PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 0.3

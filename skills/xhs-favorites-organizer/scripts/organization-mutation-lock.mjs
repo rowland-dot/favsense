@@ -60,6 +60,19 @@ const SHARING_ERRORS = new Set(["EBUSY", "EPERM", "ENOTEMPTY"]);
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+// A look at the lock folder can be refused while its holder is deleting it (Windows answers "access
+// denied" for a folder whose delete is pending). That is the same moment as "gone", so it is not an error
+// here; whether it lasts is decided by the caller's own time limit.
+const STILL_BEING_DELETED = Symbol("the lock folder is being deleted");
+async function lookAtLockFolder(lock) {
+  try {
+    return await metadata(lock);
+  } catch (error) {
+    if (RELEASING_READ_ERRORS.has(error.code)) return STILL_BEING_DELETED;
+    throw error;
+  }
+}
+
 async function pauseOrGiveUp(deadline, busyError) {
   if (performance.now() >= deadline) throw busyError();
   await sleep(LOCK_TIMING.pollMs * (0.5 + Math.random()));
@@ -79,8 +92,8 @@ function processIsActive(pid) {
 // when the folder is there with no owner file; else { owner }. Only a lock that is present and wrong
 // is refused.
 async function lookAtHolder(lock, invalidError) {
-  const lockMetadata = await metadata(lock);
-  if (!lockMetadata) return null;
+  const lockMetadata = await lookAtLockFolder(lock);
+  if (!lockMetadata || lockMetadata === STILL_BEING_DELETED) return null;
   if (!lockMetadata.isDirectory() || lockMetadata.isSymbolicLink()) throw invalidError();
   let source;
   try {
@@ -109,7 +122,10 @@ function ownerlessLongEnough(seen, holder) {
 // the lock. `expected` (the folder as it was seen) is checked again just before the move, so a new
 // lock that took its place meanwhile is never moved.
 async function replaceLockFolder(candidate, lock, invalidError, expected) {
-  if (expected && !samePlainDirectory(expected, await metadata(lock))) return false;
+  if (expected) {
+    const now = await lookAtLockFolder(lock);
+    if (now === STILL_BEING_DELETED || !samePlainDirectory(expected, now)) return false;
+  }
   const stale = `${lock}.stale-${randomUUID()}`;
   try {
     await rename(lock, stale);
@@ -191,9 +207,10 @@ async function readOwnerForRelease(lock, deadline) {
 // Is what sits at `lock` now still the folder we are deleting? Once the owner file is gone the nonce can
 // no longer say so, and waiters take over a folder left without one, so a new lock may be there.
 async function stillTheFolderBeingDeleted(lock, nonce, folder) {
-  const now = await metadata(lock);
+  const now = await lookAtLockFolder(lock);
+  if (now === STILL_BEING_DELETED) return true; // the delete is pending: it is the folder being deleted
   if (!now) return false;
-  if (!samePlainDirectory(folder, now)) return false;
+  if (folder && !samePlainDirectory(folder, now)) return false;
   try {
     const owner = JSON.parse(await readFile(join(lock, "owner.json"), "utf8"));
     return owner?.nonce === nonce;
@@ -213,7 +230,12 @@ async function describedWithFolderContents(error, lock) {
 }
 
 async function removeRetryingSharingErrors(lock, nonce, deadline) {
-  const folder = await metadata(lock);
+  let folder = await lookAtLockFolder(lock);
+  while (folder === STILL_BEING_DELETED && performance.now() < deadline) {
+    await sleep(20);
+    folder = await lookAtLockFolder(lock);
+  }
+  if (folder === STILL_BEING_DELETED) folder = null;
   for (;;) {
     try {
       await rm(lock, { recursive: true, force: true });

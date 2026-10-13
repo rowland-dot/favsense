@@ -569,7 +569,10 @@ def _directory_is_still_ours(
     new lock, or one that is itself being deleted already, can carry ours.
     Only our own nonce in the owner record proves a directory is ours.
     """
-    identity = _directory_identity(path, missing_ok=True)
+    try:
+        identity = _directory_identity(path, missing_ok=True)
+    except PermissionError:
+        return False  # a delete is pending on it: the removal we just made
     if identity is None:
         return False
     if owner_nonce is None:
@@ -669,11 +672,17 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
             # lock that is gone or being deleted was just released: wait
             # briefly and try again. Only a lock that is present and wrong
             # is refused.
-            lock_identity = _validate_lock_directory(
-                lock_path,
-                parent_identity=lock_parent_identity,
-                allow_missing=True,
-            )
+            try:
+                lock_identity = _validate_lock_directory(
+                    lock_path,
+                    parent_identity=lock_parent_identity,
+                    allow_missing=True,
+                )
+            except PermissionError as refused:
+                # Windows answers "access denied" to a look at a folder whose
+                # delete is pending: the same moment as "gone".
+                _wait_for_organization_lock(deadline, refused)
+                continue
             owner = _read_lock_owner(lock_path) if lock_identity is not None else None
             if owner is _NO_OWNER_FILE:
                 # Being deleted by its holder (over in moments) or left behind
