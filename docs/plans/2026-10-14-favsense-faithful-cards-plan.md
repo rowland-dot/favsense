@@ -1264,7 +1264,7 @@ The commit body carries the damaged-reply count and ID list from Step 8.
 - Run, not changed: `web-only-snapshot.test.mjs` (its only literal is a `notEqual`), `private-output-short-path.test.mjs` (organizer, not the snapshot), and the `test:curation` files that call the functions this task changes: `exact-file-identity.test.mjs` (`captureBuilderInputs`; the `diandianReport` option it still passes is simply no longer read), `reviewed-evidence-only-rebuild.test.mjs` (`materializeCapturedInputs` with no inputs, which now also writes the empty frozen list) and `organization-lock-handoff.test.mjs` (`buildOrganizationSnapshot`)
 - Modify: `config/xhs-favorites.example.json`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests** (c2b03ad)
 
 In `test_organization_snapshot.mjs` add (reading the file's existing helpers first, then using them):
 1. a build whose frozen input folder receives `damaged-replies.json` when the private file exists, and receives `video-analysis/<id>/transcription.json` and `visual-ocr.json` byte for byte;
@@ -1276,12 +1276,12 @@ In `test_organization_snapshot.mjs` add (reading the file's existing helpers fir
 
 In `test_final_build.py` `SnapshotCommandTest` (it runs the real snapshot step and returns the command it was given) add assertions: the command contains no `--diandian-report` and no `--diandian-prompt-version`; it contains `--damaged-replies <state>/damaged-diandian-replies.json` when the test first writes that file, and no `--damaged-replies` when it does not. Rewrite the existing capture case of `test_organization_snapshot.mjs` and the snapshot-command case of `test_bridge.py` exactly as their disposition rows say. In `site-code-in-build-version.test.mjs`, the case "a build with no publish site keeps its version" (line 103) pins the version computed with `builders: { public_site: 7 }` (`bfd4f8e6…ccbab353`, recomputed at audit pass 3 from the version-3 preimage of that case's digests and date); replace it with the same preimage at builder 8, `a42d5a8d5bd959bb9eb1ec3022cf251ec1cbdc189c26151f37e39a13fe4f0c0b`, and reword its comment to say the literal moves only when the builder version moves. The assertion stays an exact `equal`.
 
-- [ ] **Step 2: Run them and see them fail**
+- [x] **Step 2: Run them and see them fail** (c2b03ad)
 
 Run: `node --test skills/xhs-favorites-organizer/tests/test_organization_snapshot.mjs`, `python -m unittest discover -s skills/xhs-favorites-organizer/tests -p "test_final_build.py"` and `python -m unittest discover -s skills/xhs-favorites-organizer/tests -p "test_bridge.py"`
 Expected: FAIL on the new and rewritten assertions only.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement** (c2b03ad)
 
 `build-organization-snapshot.mjs`:
 - `canonicalVersion` (line 22, currently not exported): change it to `export function canonicalVersion(...)` so the new test can import it, and set `builders: { public_site: 8 }`.
@@ -1302,12 +1302,12 @@ Leave `self.diandian_report_path` alone (other code still writes the report); le
 
 `config/xhs-favorites.example.json`: remove `"publish_only_accepted": true,` and `"baseline_file": ...,` from `curation_quality` (keep `audit_file`, `scope_file`).
 
-- [ ] **Step 4: Run**
+- [x] **Step 4: Run** (c2b03ad)
 
 Run: `npm.cmd run test:knowledge` then `npm.cmd run test:curation` (three of its files call the snapshot functions this task changes) then `npm.cmd run test:organization` then `python -m unittest discover -s skills/xhs-favorites-organizer/tests -p "test_*.py"`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit** (c2b03ad)
 
 ```bash
 git add skills/xhs-favorites-organizer config/xhs-favorites.example.json
