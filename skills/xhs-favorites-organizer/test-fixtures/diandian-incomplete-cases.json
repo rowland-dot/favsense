@@ -1,0 +1,95 @@
+{
+  "description": "One table for the rule that recognises a DianDian reply that lost text where list items were joined: a '- ' list marker straight after a full stop, comma, colon or exclamation mark in the middle of a line. The Python rule is tested against all of it. The damaged passages are short stretches taken verbatim from saved replies (zero-width spaces included), cut around the join; they hold no note ids and no whole reply. The normal passages are real too, except where 'why' says it was written by hand; no saved reply keeps dash list markers (the page text drops them), so the proper-list case has to be hand-written. Damaged passages marked constructed say so in 'why'.",
+  "cases": [
+    {
+      "id": "reported-selling-point-joined-to-next-case",
+      "text": "记录\n\u200b\u200b三个关键点记录\u200b\u200b：\n\u200b\u200b为什么会停下来看\u200b\u200b——第一眼在看什么\n案例拆解\n\u200b\u200b眉笔案例\u200b\u200b：发现第一眼被\"主图效果图是否自然\"吸引，第二眼看外观，点击是因为\"买一送一\"的卖点。- \u200b\u200b厨房置物架案例\u200b\u200b：发现买家会看置物架上的瓶瓶罐罐是否和自己家一样，于是把罐子换成本地家庭常用的外形，引发共鸣，做成",
+      "incomplete": true,
+      "why": "The reply the issue reported: after the first case's selling point a list marker is pasted straight after the full stop and the rest of that item is gone."
+    },
+    {
+      "id": "marker-after-comma-inside-list-item",
+      "text": "Claude Design\u200b\u200b 这款 AI 设计工具的视频评测与思考，核心内容总结如下：\n\n核心功能\n\u200b\u200b一句话生成 UI\u200b\u200b：通过自然语言对话，- \u200b\u200b快速改稿\u200b\u200b：可以用自然语言对局部进行修改，比如换按钮样式、加交互动效、换背景视频等，一步到位。\n\u200b\u200b复刻网站\u200b\u200b：",
+      "incomplete": true,
+      "why": "A list marker straight after a comma, in the middle of the first list item; the rest of that item and the next ones are missing."
+    },
+    {
+      "id": "marker-after-full-stop-after-bold-point",
+      "text": "根据你引用的笔记，这是一篇关于\u200b\u200bAI作图提示词（Prompt）结构化思维\u200b\u200b的深度教程，核心观点是：\u200b\u200b普通人写愿望，高手写规格\u200b\u200b。- \u200b\u200b用途\u200b\u200b：这张图用在哪里？（产品图/海报/网站主视觉等）\n\n\u200b\u200b场景\u200b\u200b：主体处在什么环境？",
+      "incomplete": true,
+      "why": "A list marker straight after the full stop that ends the lead-in sentence; the items between are missing."
+    },
+    {
+      "id": "marker-after-comma-mid-sentence-of-item",
+      "text": "格支持\u200b\u200b：内置 12 种电影风格（喜剧、动作、惊悚等），适配不同内容调性\n\u200b\u200b批量处理\u200b\u200b：支持批量生成，提升产出效率\n\u200b\u200b丰富模板\u200b\u200b：内置 93 部电影素材和 90 多种影视解说模板，- \u200b\u200b24 小时无人值守\u200b\u200b：自动化运行，适合长期稳定产出内容\n亮点优势\n\u200b\u200b免部署\u200b\u200b：不需要复杂配",
+      "incomplete": true,
+      "why": "A list marker straight after a comma in the middle of an item, with an unrelated item's bold heading right after it."
+    },
+    {
+      "id": "marker-after-comma-following-bold-term",
+      "text": "视频，而是给多种形式同时开绿灯：\n\n\u200b\u200b长视频（2分钟以上）\u200b\u200b：内容够干、完播率好，流量倾斜明显\n\u200b\u200b4K高清优质视频\u200b\u200b：画质好、剪辑精致会被打上\"高质量\"标签，- \u200b\u200b长图文\u200b\u200b：类似公众号的深度干货，平台也在推，适合知识分享类博主\n\u200b\u200b播客/语音笔记\u200b\u200b：通勤、",
+      "incomplete": true,
+      "why": "A list marker straight after a comma that follows a quoted term; the sentence it cuts is left unfinished."
+    },
+    {
+      "id": "two-damaged-joins-close-together",
+      "text": "时自动执行，比如每天晚上 11 点自动清理 console.log、汇总没做完的 todo、甚至自动提交代码。- \u200b\u200bPlan First（先规划再执行）\u200b\u200b：复杂任务别上来就让 AI 写代码，- \u200b\u200bagents.md（员工手册）\u200b\u200b：放在项目根目录的本地文件，超出这个范围才需要 MCP 给它\"装手脚\"\n\u200b\u200bSkills\u200b\u200b：把反复出现的操作模式打包成 SOP。比如每次新建 React 组件都要做同样几步，打",
+      "incomplete": true,
+      "why": "Two joins in a few lines: a marker after a full stop, then another after a comma."
+    },
+    {
+      "id": "marker-after-colon-constructed",
+      "text": "核心做法：- 先把样例整理成表格，再逐条核对来源。",
+      "incomplete": true,
+      "why": "Constructed from the shape of the real damage: no saved reply has a colon in front of the marker, but the rule names the colon."
+    },
+    {
+      "id": "marker-after-exclamation-mark-constructed",
+      "text": "这套方法特别适合新手！- 先从一个小样例开始，再慢慢加量。",
+      "incomplete": true,
+      "why": "Constructed from the shape of the real damage: no saved reply has an exclamation mark in front of the marker, but the rule names it."
+    },
+    {
+      "id": "zero-width-spaces-between-punctuation-and-marker",
+      "text": "为什么会停下来看——第一眼在看什么\n案例拆解\n\u200b\u200b眉笔案例\u200b\u200b：发现第一眼被\"主图效果图是否自然\"吸引，点击是因为\"买一送一\"的卖点。\u200b\u200b- \u200b\u200b厨房置物架案例\u200b\u200b：发现买家会看置物架上的瓶瓶罐罐。",
+      "incomplete": true,
+      "why": "Constructed from the reported passage: zero-width spaces sit between the full stop and the marker, as the page leaves them around bold words. The invisible characters must not hide the join."
+    },
+    {
+      "id": "normal-reply-opens-with-lead-in-ending-in-colon",
+      "text": "以下是核心总结：\n\n核心亮点\n\u200b\u200b项目背景\u200b\u200b：garrytan/gbrain 在 GitHub 上线一周多就收获了 \u200b\u200b10.1k Stars\u200b\u200b，专为 OpenClaw 和 Hermes Agent 打造。\n\u200b\u200b解决痛点\u200b\u200b：Karpathy 的方案依赖纯文本目录（index.md），在 100 篇左右时表现良好，但 Garry",
+      "incomplete": false,
+      "why": "A real reply that opens with a lead-in line ending in a colon, then a heading and bold-labelled lines. A colon at the end of a line is not damage."
+    },
+    {
+      "id": "normal-list-each-marker-starts-its-own-line",
+      "text": "以下是几个要点：\n- 先看主图是否自然\n- 再看外观细节\n- 最后看卖点是否打动人\n\n整体来说，先看图再看字。",
+      "incomplete": false,
+      "why": "A proper list: every marker starts its own line, one right after a colon and a line break. No saved reply keeps dash markers (the page text drops them), so this one is written by hand in the shape the rule must allow."
+    },
+    {
+      "id": "normal-hyphen-inside-a-model-name",
+      "text": "nAI 兼容的 API\n可以\u200b\u200b完全免费\u200b\u200b对接到本地 AI Agent，无需 OpenAI API Key\n支持调用 GPT-4o 或 GPT-5.5 模型，兼容 Windows、macOS、Linux 全平台\n部署步骤概览\n\u200b\u200b安装 Python",
+      "incomplete": false,
+      "why": "A real passage with a hyphen inside a model name (GPT-4o)."
+    },
+    {
+      "id": "normal-hyphen-inside-a-version-range",
+      "text": "根据你引用的笔记，这是一篇介绍 \u200b\u200bKimi K2.0/K2.6 模型\u200b\u200b如何通过 AI 降低高审美网站开发门槛的分享。核心内容总结如下：\n\n核心亮点\n\u200b\u200b零代码建站\u200b\u200b：普通人只需输入自然语言提示词，就能生成具有电影质感、",
+      "incomplete": false,
+      "why": "A real passage with version numbers joined by a slash and dots (K2.0/K2.6)."
+    },
+    {
+      "id": "normal-hyphen-inside-a-number-range",
+      "text": "动监控与调整\u200b\u200b：每隔半小时自动查看店铺数据并调整投放策略，无需人工盯盘。\n\u200b\u200b新店启动建议\u200b\u200b：与工具沟通后，建议建 2-3 条广告计划，帮助新店从 0 到 1 启动。\n作者强调的\"优势\"\n作者定位\n\n账号主",
+      "incomplete": false,
+      "why": "A real passage with a number range written with a hyphen (2-3 followed by a space)."
+    },
+    {
+      "id": "normal-negative-number-straight-after-a-mark",
+      "text": "同比变化：-5%，环比变化：-2.3%，整体仍在可控范围内。",
+      "incomplete": false,
+      "why": "Written by hand: a minus sign straight after a colon or a comma, with no space after it. Only a hyphen followed by a space is a list marker."
+    }
+  ]
+}
