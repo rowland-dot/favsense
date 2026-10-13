@@ -274,6 +274,58 @@ class WaitingForTheLockTests(unittest.TestCase):
         self.assertLessEqual(max(pauses), module.LOCK_POLL_SECONDS * 1.5 + 1e-9)
         self.assertGreater(len(set(pauses)), 6, pauses)
 
+    def test_lock_folder_left_without_an_owner_file_by_a_holder_that_stopped_is_taken_over(self):
+        # A lock is only ever put in place with its owner file already inside,
+        # so a folder that stays without one is the leftover of a holder that
+        # stopped halfway through releasing it.
+        module = load_module()
+        module.LOCK_OWNERLESS_SECONDS = 0.1
+        module.PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 5.0
+        workspace = Workspace(self)
+        workspace.lock_path.mkdir(parents=True)
+        (workspace.lock_path / "left-behind.tmp").write_text("x", encoding="utf-8")
+
+        enter_and_leave(module, workspace)
+
+        self.assertFalse(workspace.lock_path.exists())
+
+    def test_look_at_the_lock_folder_refused_while_its_holder_deletes_it_is_a_released_lock(self):
+        # Windows answers "access denied" to a look at a folder whose delete is pending.
+        module = load_module()
+        module.PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 5.0
+        workspace = Workspace(self)
+        workspace.hold_lock_as_another_writer()
+        real_lstat = Path.lstat
+        refusals = []
+
+        def lstat(path, *args, **kwargs):
+            if path == workspace.lock_path and not refusals:
+                refusals.append(path)
+                workspace.other_writer_releases()
+                raise PermissionError(13, "Access is denied")
+            return real_lstat(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "lstat", lstat):
+            enter_and_leave(module, workspace)
+
+        self.assertEqual(len(refusals), 1)
+
+    def test_look_at_the_lock_folder_that_stays_refused_ends_in_the_timeout(self):
+        module = load_module()
+        module.PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 0.3
+        workspace = Workspace(self)
+        workspace.hold_lock_as_another_writer()
+        real_lstat = Path.lstat
+
+        def lstat(path, *args, **kwargs):
+            if path == workspace.lock_path:
+                raise PermissionError(13, "Access is denied")
+            return real_lstat(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "lstat", lstat):
+            with self.assertRaisesRegex(TimeoutError, "organization mutation lock"):
+                enter_and_leave(module, workspace)
+
     def test_owner_file_that_stays_unreadable_ends_in_the_timeout_not_invalid(self):
         module = load_module()
         module.PRIVATE_STORE_LOCK_TIMEOUT_SECONDS = 0.3
@@ -367,6 +419,65 @@ class ReleasingTheLockTests(unittest.TestCase):
                 enter_and_leave(module, workspace)
 
         self.assertGreater(rmtree.call_count, 1)
+
+    def test_release_still_deletes_the_lock_when_reading_its_owner_file_is_refused_for_a_moment(self):
+        # Skipping the delete would leave the lock on disk with this live
+        # process's number in it, and this process would then wait for itself.
+        module = load_module()
+        workspace = Workspace(self)
+        owner_file = workspace.lock_path / "owner.json"
+        real_read_text = Path.read_text
+        refusals = []
+
+        def read_text(path, *args, **kwargs):
+            if path == owner_file and len(refusals) < 2:
+                refusals.append(path)
+                raise PermissionError(13, "Access is denied")
+            return real_read_text(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "read_text", read_text):
+            enter_and_leave(module, workspace)
+
+        self.assertEqual(len(refusals), 2)
+        self.assertFalse(workspace.lock_path.exists())
+
+    def test_release_reports_an_owner_file_that_stays_unreadable(self):
+        module = load_module()
+        module.LOCK_RELEASE_RETRY_SECONDS = 0.2
+        workspace = Workspace(self)
+        owner_file = workspace.lock_path / "owner.json"
+        real_read_text = Path.read_text
+
+        def read_text(path, *args, **kwargs):
+            if path == owner_file:
+                raise PermissionError(13, "Access is denied")
+            return real_read_text(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "read_text", read_text):
+            with self.assertRaises(PermissionError):
+                enter_and_leave(module, workspace)
+
+    def test_release_retries_a_folder_that_is_not_yet_empty(self):
+        # A deleted file stays listed in its folder until the last reader of it
+        # lets go, so the folder cannot be removed for a moment.
+        module = load_module()
+        workspace = Workspace(self)
+        not_empty = OSError(errno.ENOTEMPTY, "The directory is not empty")
+        not_empty.winerror = 145
+        real_rmtree = shutil.rmtree
+        attempts = []
+
+        def rmtree(path, *args, **kwargs):
+            attempts.append(path)
+            if len(attempts) < 3:
+                raise not_empty
+            return real_rmtree(path, *args, **kwargs)
+
+        with mock.patch.object(module.shutil, "rmtree", rmtree):
+            enter_and_leave(module, workspace)
+
+        self.assertEqual(len(attempts), 3)
+        self.assertFalse(workspace.lock_path.exists())
 
     def test_release_retries_access_denied_too(self):
         module = load_module()

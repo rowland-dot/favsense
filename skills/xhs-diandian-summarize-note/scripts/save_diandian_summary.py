@@ -46,7 +46,13 @@ LOCK_POLL_SECONDS = 0.01
 # Windows refuses to delete a file another process is reading (sharing
 # violation, error 32; access denied, error 5, while a delete is pending).
 LOCK_RELEASE_RETRY_SECONDS = 2.0
-LOCK_RELEASE_RETRYABLE_WINDOWS_ERRORS = frozenset({5, 32})
+# Error 145 (directory not empty): a deleted file stays listed in its folder
+# until the last reader of it lets go.
+LOCK_RELEASE_RETRYABLE_WINDOWS_ERRORS = frozenset({5, 32, 145})
+# A lock is only ever put in place with its owner file already inside, so a
+# lock folder that stays without one this long was left by a holder that
+# stopped halfway through releasing it, and is taken over.
+LOCK_OWNERLESS_SECONDS = 1.0
 BATCH_JOURNAL_NAME = ".batch-journal.json"
 _PRIVATE_STORE_THREAD_LOCKS: dict[Path, threading.RLock] = {}
 _PRIVATE_STORE_THREAD_LOCKS_GUARD = threading.Lock()
@@ -434,11 +440,18 @@ def _validate_lock_directory(
     return identity
 
 
+# Returned by _read_lock_owner for a lock folder that has no owner file.
+_NO_OWNER_FILE: dict = {}
+
+
 def _read_lock_owner(lock_path: Path) -> dict | None:
-    """The lock's owner record, or None while its holder is deleting the file."""
+    """The lock's owner record; None while its holder is deleting the file
+    (it cannot be read now); _NO_OWNER_FILE when the folder has none."""
     try:
         owner = json.loads((lock_path / "owner.json").read_text(encoding="utf-8"))
-    except (FileNotFoundError, PermissionError):
+    except FileNotFoundError:
+        return _NO_OWNER_FILE
+    except PermissionError:
         return None
     except (OSError, ValueError, TypeError) as error:
         raise ValueError("organization mutation lock is invalid") from error
@@ -556,12 +569,47 @@ def _directory_is_still_ours(
     new lock, or one that is itself being deleted already, can carry ours.
     Only our own nonce in the owner record proves a directory is ours.
     """
-    identity = _directory_identity(path, missing_ok=True)
+    try:
+        identity = _directory_identity(path, missing_ok=True)
+    except PermissionError:
+        return False  # a delete is pending on it: the removal we just made
     if identity is None:
         return False
     if owner_nonce is None:
         return identity == expected_identity
     return _lock_owner_nonce(path) == owner_nonce
+
+
+def _owner_record_at_release(
+    lock_path: Path,
+    *,
+    lock_parent_identity: tuple[int, int],
+    candidate_identity: tuple[int, int],
+) -> dict:
+    """The owner record of the lock being released; {} when nothing of ours is there to delete.
+
+    A read the system refuses for a moment (a scanner or another reader has
+    the file) is retried for LOCK_RELEASE_RETRY_SECONDS and then reported.
+    Skipping it would leave the lock on disk with this live process's number
+    in it, and every writer, this one included, would then wait for it.
+    """
+    deadline = time.monotonic() + LOCK_RELEASE_RETRY_SECONDS
+    while True:
+        try:
+            _validate_lock_directory(
+                lock_path,
+                parent_identity=lock_parent_identity,
+                expected_identity=candidate_identity,
+            )
+            owner = json.loads((lock_path / "owner.json").read_text(encoding="utf-8"))
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.02)
+            continue
+        except (OSError, ValueError, TypeError):
+            return {}
+        return owner if isinstance(owner, dict) else {}
 
 
 @contextmanager
@@ -605,6 +653,7 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
     )
     deadline = time.monotonic() + PRIVATE_STORE_LOCK_TIMEOUT_SECONDS
     acquired = False
+    ownerless_seen: tuple[tuple[int, int], float] | None = None
     try:
         while not acquired:
             try:
@@ -623,12 +672,27 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
             # lock that is gone or being deleted was just released: wait
             # briefly and try again. Only a lock that is present and wrong
             # is refused.
-            lock_identity = _validate_lock_directory(
-                lock_path,
-                parent_identity=lock_parent_identity,
-                allow_missing=True,
-            )
+            try:
+                lock_identity = _validate_lock_directory(
+                    lock_path,
+                    parent_identity=lock_parent_identity,
+                    allow_missing=True,
+                )
+            except PermissionError as refused:
+                # Windows answers "access denied" to a look at a folder whose
+                # delete is pending: the same moment as "gone".
+                _wait_for_organization_lock(deadline, refused)
+                continue
             owner = _read_lock_owner(lock_path) if lock_identity is not None else None
+            if owner is _NO_OWNER_FILE:
+                # Being deleted by its holder (over in moments) or left behind
+                # (taken over below once it has stayed as it is long enough).
+                if ownerless_seen is None or ownerless_seen[0] != lock_identity:
+                    ownerless_seen = (lock_identity, time.monotonic())
+                if time.monotonic() - ownerless_seen[1] < LOCK_OWNERLESS_SECONDS:
+                    owner = None
+            else:
+                ownerless_seen = None
             if owner is None or _process_is_active(owner.get("pid")):
                 _wait_for_organization_lock(deadline, rename_error)
                 continue
@@ -673,17 +737,11 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
                 owner_nonce=nonce,
             )
         if acquired:
-            try:
-                _validate_lock_directory(
-                    lock_path,
-                    parent_identity=lock_parent_identity,
-                    expected_identity=candidate_identity,
-                )
-                owner = json.loads(
-                    (lock_path / "owner.json").read_text(encoding="utf-8")
-                )
-            except (OSError, ValueError, TypeError, json.JSONDecodeError):
-                owner = {}
+            owner = _owner_record_at_release(
+                lock_path,
+                lock_parent_identity=lock_parent_identity,
+                candidate_identity=candidate_identity,
+            )
             if owner.get("nonce") == nonce:
                 _remove_lock_directory(
                     lock_path,
