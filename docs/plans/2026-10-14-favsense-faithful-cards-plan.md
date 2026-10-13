@@ -273,12 +273,12 @@ git commit -m "fix: keep the post's line breaks when saving note details and wri
 - Create: `skills/xhs-favorites-organizer/tests/extracted-text.test.mjs`
 - Modify: `package.json` (`test:knowledge` gains `skills/xhs-favorites-organizer/tests/extracted-text.test.mjs`)
 
-- [ ] **Step 1: Baseline for the refactor**
+- [x] **Step 1: Baseline for the refactor** (d70f06e)
 
 Run: `node --test skills/xhs-favorites-organizer/tests/test_curation_standard.mjs`
 Expected: PASS (this is the guard for the move in Step 3).
 
-- [ ] **Step 2: Write the failing test** (`extracted-text.test.mjs`)
+- [x] **Step 2: Write the failing test** (d70f06e) (`extracted-text.test.mjs`)
 
 ```js
 import test from "node:test";
@@ -354,7 +354,7 @@ test("no folder, no files, or an image post without picture text give null", asy
 });
 ```
 
-- [ ] **Step 3: Run it and see it fail**, then move the code
+- [x] **Step 3: Run it and see it fail** (d70f06e), then move the code
 
 Run: `node --test skills/xhs-favorites-organizer/tests/extracted-text.test.mjs`
 Expected: FAIL — module not found.
@@ -407,12 +407,12 @@ export function loadExtractedText(videoAnalysisRoot, noteId, mediaType) {
 }
 ```
 
-- [ ] **Step 4: Run both suites**
+- [x] **Step 4: Run both suites** (d70f06e)
 
 Run: `node --test skills/xhs-favorites-organizer/tests/extracted-text.test.mjs skills/xhs-favorites-organizer/tests/test_curation_standard.mjs`
 Expected: PASS (the review preparation behaves exactly as before).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit** (d70f06e)
 
 ```bash
 git add skills/xhs-favorites-organizer/scripts/evidence-files.mjs skills/xhs-favorites-organizer/scripts/extracted-text.mjs skills/xhs-favorites-organizer/scripts/prepare-curation-review.mjs skills/xhs-favorites-organizer/tests/extracted-text.test.mjs package.json
