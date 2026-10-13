@@ -9565,7 +9565,7 @@
   "6a1983cc00000000380231c0": {
     "id": "6a1983cc00000000380231c0",
     "content_sha256": "1e523c7382fb13169ea5d820f6db27e360a9029ede10dd030098bad6b35960c8",
-    "title": "这个网站几乎把世界上所有工作的skill全部收集起来了 热门榜里效率、办公、开发、设计、分类直接",
+    "title": "收录各类工作 Skill 的网站：分类榜单、精选推荐和安全检查",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -9610,14 +9610,14 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "bc853e3249950d994c4fa1686f189b9d5f2639430f2929099b345286c61ef6db",
+    "candidate_revision": "07e9e7c6d2acc667a2fc9a312b2435f81c5ad20c6667f9e0182d228109b5b9cc",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a1b6754000000003502b99a": {
     "id": "6a1b6754000000003502b99a",
     "content_sha256": "3f7bb7b4a242eed0a422efece1606a5e3284f286782868fc526a60dc1fcb9e0a",
-    "title": "这是一个能让AI读懂 各类复杂结构文档的硬核工具 目前已在github上 占获65k star",
+    "title": "开源文档解析工具：把含图表公式的复杂文档转成 AI 可读的 Markdown 或 JSON",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -9662,7 +9662,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "590f31f747f0dd0aafcf6fb03ec4d001af521507705e8fc73a55520d76121d3c",
+    "candidate_revision": "548dbc97b0b97f20abdf427ef738d2d53d5eba9c14c6fef93ad597f4382bdb62",
     "review_status": "accepted",
     "review_reason_code": ""
   },
