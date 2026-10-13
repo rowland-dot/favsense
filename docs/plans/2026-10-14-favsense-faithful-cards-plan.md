@@ -826,7 +826,7 @@ Mockup references for every step below: the right-hand "新设计" panels of `do
 **New public card data (the contract the front end reads; Task 6 produces it):**
 `mainText` (string, paragraphs kept), `mainSource` (`"diandian"` | `"post-text"` | `"video-transcript"` | `"image-text"`), `replyDamaged` (bool), `postUnreachable` (bool), `extracted` (`{kind, text}` or `null`), `tools` (string[]), `unverifiedTools` (string[]), plus the unchanged `id number title author sourceUrl publishedAt likes collections mediaType category categorySource categoryReason suggestedCategory sourceBoards themes kind resources resourceIds`. Meta gains `replyCount`, `transcriptCount`; it loses `verifiedNoteCount` and `videoMethod`. Removed per card: `summary deepSummary deepSummarySource curationRevision summaryStatus curationStatus summaryReason summaryState summaryReasonCode candidateKind reviewedAt action evidence`.
 
-- [ ] **Step 1: Freeze the cards** (scratch script in the session scratchpad, not committed)
+- [x] **Step 1: Freeze the cards** (1545ec9) (scratch script in the session scratchpad, not committed)
 
 Write `scripts/fixtures/faithful-cards.json` in the public-data shape above, meta copied from the old fixture (`meta.resourceIndex`, `kindLabels`, titles) with real counts computed by `cardCounts`. Cards, with the text lifted verbatim from the named source:
 1. `6a7dc92600000000250090ff` — case ①. Title `一个人，3天，Codex，10W`, author `陈祝器`, publishedAt `2026-08-13`, category `AI自媒体`, kind `Workflow`, suggestedCategory `内容增长与商业`, themes `["商业验证","复盘智能体","经验产品化"]`. `mainText` = the real DianDian reply: take `deepSummary` of that id from the **committed** `site/data/knowledge.json`, read with `git show HEAD:site/data/knowledge.json` (public data, old shape; the working copy can carry an uncommitted local rebuild) **only if** that card's `deepSummarySource` there is `xiaohongshu-diandian` (for an accepted card it is; check, do not assume).
@@ -836,7 +836,7 @@ Write `scripts/fixtures/faithful-cards.json` in the public-data shape above, met
 5. Synthetic, ids prefixed `fixture-`: `fixture-post-and-transcript` (CARD-07: `post-text` main of two paragraphs plus `extracted: {kind:"video-transcript", text:"…"}`), `fixture-paragraphs` (CARD-08: `mainText: "第一段。\n\n第二段。"`), `fixture-unreachable` (`postUnreachable: true`, `mainSource: "diandian"`), `fixture-image-text` (`mainSource: "image-text"`), `fixture-short-reply` (a `diandian` reply short enough to need no fold), `fixture-no-text` (`mainText: ""`, `mainSource: "post-text"`), `fixture-damaged-transcript` (`replyDamaged: true`, `mainSource: "video-transcript"`, a short transcript as `mainText`), `fixture-damaged-only-reply` (D10: `replyDamaged: true`, `mainSource: "diandian"`, `mainText` a short reply that stops on a comma, e.g. `这篇讲了两件事，第一件，`; it stands for the 13 real cards whose only text is a cut reply).
 Every card has `unverifiedTools: []` unless stated, `resources: []`, `resourceIds: []`, `extracted: null`, `postUnreachable: false`, `replyDamaged: false` unless stated. `meta.noteCount` is the number of cards in the file; `meta.replyCount` and `meta.transcriptCount` are produced by running `cardCounts` over them (never typed by hand).
 
-- [ ] **Step 2: Write the failing browser test** (`site/e2e/faithful-cards.spec.mjs`)
+- [x] **Step 2: Write the failing browser test** (1545ec9) (`site/e2e/faithful-cards.spec.mjs`)
 
 Keep the harness of the old spec (reset, scenario `faithful-cards`, `openCard`), compute expectations from the fixture instead of hard-coding lengths:
 
@@ -885,16 +885,16 @@ Tests (each runs on the desktop and phone projects automatically):
 
 Also keep the unchanged old cases that still describe live behaviour (compact detail view: no `核心结论` heading, no next-step box; short reply shows no fold button with `mask-image: none`).
 
-- [ ] **Step 3: Run it and see it fail**
+- [x] **Step 3: Run it and see it fail** (1545ec9)
 
 Run: `npx.cmd playwright test site/e2e/faithful-cards.spec.mjs --project=chromium`
 Expected: FAIL — the scenario name `faithful-cards` is unknown to the QA server and `app.js` still draws status banners.
 
-- [ ] **Step 4: QA server**
+- [x] **Step 4: QA server** (1545ec9)
 
 In `scripts/serve-qa-fixture.mjs`: add `"faithful-cards"` to `scenarios` in place of `"card-sources"`; load `scripts/fixtures/faithful-cards.json` instead of `card-summary-sources.json`; rewrite the four synthetic `knowledge.notes` (lines 31–35) to the new shape (add `mainText mainSource replyDamaged postUnreachable extracted tools unverifiedTools`, delete `summaryStatus summaryState summaryReason curationRevision reviewedAt evidence deepSummarySource candidateKind`, give `meta` `replyCount transcriptCount`); delete the note mutations for the `summary-failed`, `batch-aborted` and `stale` scenarios (lines 66–70: those scenarios keep driving the run panel, they no longer change a card). `git rm` the two old files.
 
-- [ ] **Step 5: `app.js`**
+- [x] **Step 5: `app.js`** (1545ec9)
 
 Make these changes (each is a deletion or a replacement of the named function):
 - `validateKnowledgeData`: require `typeof note.mainText === "string"`, `["diandian","post-text","video-transcript","image-text"].includes(note.mainSource)`, `[themes, tools, unverifiedTools, resources].every(isStringArray)`, `typeof note.replyDamaged === "boolean"`, `typeof note.postUnreachable === "boolean"`, and `note.extracted === null || (["video-transcript","image-text"].includes(note.extracted.kind) && typeof note.extracted.text === "string")`; delete the `evidence` check; the data fetch becomes `fetch(DATA_URL, { cache: "no-cache" })` so a page never pairs new code with a stale cached data file; `emptyKnowledgeData().meta` gets `replyCount: 0, transcriptCount: 0` and loses `verifiedNoteCount`.
@@ -965,7 +965,7 @@ function toolChip(note, name) {
 - `filteredNotes` haystack: `[note.title, note.author, note.category, note.suggestedCategory, noteDescription(note), note.extracted?.text ?? "", ...note.themes, ...note.tools]`.
 - `init`: set `#hero-counts` to exactly `` `${meta.noteCount} 条收藏 · ${meta.replyCount} 条有完整点点总结 · ${meta.transcriptCount} 条有视频转写` ``, set `#proof-replies` to `meta.replyCount` and `#proof-transcripts` to `meta.transcriptCount`; delete the `#proof-videos` line.
 
-- [ ] **Step 6: `index.html` and `styles.css`**
+- [x] **Step 6: `index.html` and `styles.css`** (1545ec9)
 
 `index.html`: inside `.hero-copy`, after `#hero-intro`, add `<p class="hero-counts" id="hero-counts"></p>`. In `.method-proof` replace the `#proof-videos` cell with `<div><strong id="proof-replies">—</strong><span>条有完整点点总结</span></div>` and add `<div><strong id="proof-transcripts">—</strong><span>条有视频转写</span></div>`.
 `styles.css`: the strip now has four number cells plus the note instead of three plus the note, so its grids change with it: line 339 `grid-template-columns: repeat(3, 1fr) 2fr` becomes `repeat(4, 1fr) 2fr`; the tablet rule at line 557 (`repeat(3, 1fr)`) becomes `repeat(2, 1fr)` (two rows of two; the note already spans the full row); the phone rule at line 589 (`1fr`) stays. Without this the fourth cell lands in the wide note column and the note drops to a second row. Then add
@@ -978,14 +978,14 @@ function toolChip(note, name) {
 
 (`--ink-soft`, `--ink`, `--sun` and `--surface` are the tokens `styles.css` defines; it has no `--gold`. The `.tool-unverified` text is the signal, colour is only reinforcement.)
 
-- [ ] **Step 7: Rewrite the tests Task 5 owns** (see the disposition table): the `app.js` and validator cases in `test_public_site.mjs`, the banner and overlay cases in `organization-recovery.spec.mjs`, and the overlay line in `design-text-legibility-regression.spec.mjs`. The static-app asset test must also expect `hero-counts`, `proof-replies`, `proof-transcripts`. The malformed-document cases gain three payloads the validator refuses: a note with `extracted: { kind: "x", text: "a" }`, one with `replyDamaged: "no"`, and one with `postUnreachable` missing. Do **not** touch the cases that read `site/data/knowledge.json` or run the builder: the committed data is still the old shape until Task 6, and those cases still describe it truthfully. In `diandian-summary-display.test.mjs` make only the Task 5 half of its disposition row (the `frozen` fixture read and the example case), and in `test_public_site.mjs` change the comment near line 739 that names the deleted `card-summary-sources.spec.mjs` to name `faithful-cards.spec.mjs`.
+- [x] **Step 7: Rewrite the tests Task 5 owns** (1545ec9) (see the disposition table): the `app.js` and validator cases in `test_public_site.mjs`, the banner and overlay cases in `organization-recovery.spec.mjs`, and the overlay line in `design-text-legibility-regression.spec.mjs`. The static-app asset test must also expect `hero-counts`, `proof-replies`, `proof-transcripts`. The malformed-document cases gain three payloads the validator refuses: a note with `extracted: { kind: "x", text: "a" }`, one with `replyDamaged: "no"`, and one with `postUnreachable` missing. Do **not** touch the cases that read `site/data/knowledge.json` or run the builder: the committed data is still the old shape until Task 6, and those cases still describe it truthfully. In `diandian-summary-display.test.mjs` make only the Task 5 half of its disposition row (the `frozen` fixture read and the example case), and in `test_public_site.mjs` change the comment near line 739 that names the deleted `card-summary-sources.spec.mjs` to name `faithful-cards.spec.mjs`.
 
-- [ ] **Step 8: Run**
+- [x] **Step 8: Run** (1545ec9)
 
 Run: `npx.cmd playwright test` (both projects, the whole e2e folder), then `npm.cmd run test:site` (it runs `test_public_site.mjs` and `diandian-summary-display.test.mjs`, which loses its old fixture in this task), then `npm.cmd run lint:a11y` and `npm.cmd run check:syntax`
 Expected: PASS everywhere. Other e2e specs (`organization-recovery`, `design-*`, `qa-accepted-skill-metadata.regression-1`) keep passing on the rewritten synthetic notes; fix any selector that depended on a removed field.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit** (1545ec9)
 
 ```bash
 git add site/app.js site/index.html site/styles.css scripts/serve-qa-fixture.mjs scripts/fixtures/faithful-cards.json site/e2e/faithful-cards.spec.mjs site/e2e/organization-recovery.spec.mjs site/e2e/design-text-legibility-regression.spec.mjs skills/xhs-favorites-organizer/tests/test_public_site.mjs skills/xhs-favorites-organizer/tests/diandian-summary-display.test.mjs
