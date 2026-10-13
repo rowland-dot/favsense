@@ -318,3 +318,5 @@ Final verdict: AUDIT-INCOMPLETE — Step 3 — PLAN (reviewed plan audit), 3-pas
 ## Step 4 — CODE
 
 - Stage A.3 HARD BLOCK: spec had no '## States' section for mockup tagging. Fixed by adding a States section that restates the spec's own §3.2 rows (no new behaviour); re-run below.
+- Stage A.3 first re-run: tagger split hyphenated state names and appended six empty placeholder sections to both mockups; edits undone (older #99 mockup restored from HEAD), states renamed to single words, the two undrawn states (posttranscript, unreachable) added to the rewrite mockup from real cards (spec CARD-07 and §3.1), tags placed on the drawn new-design cards. MOCKUP_PATHS = rewrite mockup only. Stage A verdict: ok (A1 ok, A3 ok, A4 warn: no behavior markers).
+- Stage A.2 Task Completion Inventory: Tasks 1-10 all missing (no implementation commits on the line yet).
