@@ -1,9 +1,9 @@
 {
   "meta": {
-    "buildVersion": "d84d249b832af9a293f27ed3e4f84725ba85181396993060b12c667a930f65bc",
+    "buildVersion": "25255ed7c09c8791ce652675dada86dbe8f5b104c88aaa9242481a18bb245b50",
     "title": "小红书收藏知识工作台",
     "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
-    "generatedAt": "2026-10-13T06:21:46.611Z",
+    "generatedAt": "2026-10-13T06:43:36.443Z",
     "source": "xiaohongshu",
     "sourceBoards": [
       "Skills",
@@ -658,7 +658,7 @@
     {
       "id": "6a4afd18000000001101092b",
       "number": 10,
-      "title": "手把手教你免费部署自己人生第一个AI Agent",
+      "title": "EdgeOne Makers：免费托管和部署 AI Agent",
       "author": "李叔聊AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E5%85%8D%E8%B4%B9%E9%83%A8%E7%BD%B2%E8%87%AA%E5%B7%B1%E4%BA%BA%E7%94%9F%E7%AC%AC%E4%B8%80%E4%B8%AAAI+Agent+%E6%9D%8E%E5%8F%94%E8%81%8AAI&source=web_search_result_notes",
       "publishedAt": "2026-07-06_21:10:41",
@@ -792,7 +792,7 @@
     {
       "id": "6a53c47800000000150268e6",
       "number": 13,
-      "title": "Claude Code 代币使用量减少最多 92%",
+      "title": "Headroom：在模型读取前压缩日志和文件以节省 Token",
       "author": "GitHunter",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Claude+Code+%E4%BB%A3%E5%B8%81%E4%BD%BF%E7%94%A8%E9%87%8F%E5%87%8F%E5%B0%91%E6%9C%80%E5%A4%9A+92%25+GitHunter&source=web_search_result_notes",
       "publishedAt": "2026-07-13_02:44:40",
@@ -1102,9 +1102,9 @@
     {
       "id": "6a43955b0000000015027d45",
       "number": 20,
-      "title": "Postiz",
+      "title": "太离谱了！月入14万美金，0个员工，全靠AI打工！",
       "author": "娜娜的AI冒险",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Postiz+%E5%A8%9C%E5%A8%9C%E7%9A%84AI%E5%86%92%E9%99%A9&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%A4%AA%E7%A6%BB%E8%B0%B1%E4%BA%86%EF%BC%81%E6%9C%88%E5%85%A514%E4%B8%87%E7%BE%8E%E9%87%91%EF%BC%8C0%E4%B8%AA%E5%91%98%E5%B7%A5%EF%BC%8C%E5%85%A8%E9%9D%A0AI%E6%89%93%E5%B7%A5%EF%BC%81+%E5%A8%9C%E5%A8%9C%E7%9A%84AI%E5%86%92%E9%99%A9&source=web_search_result_notes",
       "publishedAt": "2026-06-30_20:07:23",
       "likes": "1089",
       "collections": "2024",
@@ -1194,9 +1194,9 @@
     {
       "id": "6a36a67b0000000015027543",
       "number": 22,
-      "title": "Headroom",
+      "title": "Netflix 工程师开源 Headroom，主打压缩工具输出",
       "author": "小明AI",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Headroom+%E5%B0%8F%E6%98%8EAI&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Netflix+%E5%B7%A5%E7%A8%8B%E5%B8%88%E5%BC%80%E6%BA%90%E7%A5%9E%E5%99%A8%EF%BC%81GitHub+%E6%9A%B4%E6%B6%A8%E6%96%B0%E6%98%9F+Headroom%EF%BC%8CToken+%E6%B6%88%E8%80%97%E7%9B%B4%E9%99%8D+60%25-+%E5%B0%8F%E6%98%8EAI&source=web_search_result_notes",
       "publishedAt": "2026-06-21_10:30:15",
       "likes": "298",
       "collections": "838",
@@ -1286,9 +1286,9 @@
     {
       "id": "6a40ee50000000001502518f",
       "number": 24,
-      "title": "开源AI Agent记忆平台cognee，基于知识图谱实现持久化长时记忆，支持多场景部署，可与主流开发…",
+      "title": "cognee：基于知识图谱的开源 AI Agent 长时记忆平台",
       "author": "赛博吴同学",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%BC%80%E6%BA%90AI+Agent%E8%AE%B0%E5%BF%86%E5%B9%B3%E5%8F%B0cognee%EF%BC%8C%E5%9F%BA%E4%BA%8E%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1%E5%AE%9E%E7%8E%B0%E6%8C%81%E4%B9%85%E5%8C%96%E9%95%BF%E6%97%B6%E8%AE%B0%E5%BF%86%EF%BC%8C%E6%94%AF%E6%8C%81%E5%A4%9A%E5%9C%BA%E6%99%AF%E9%83%A8%E7%BD%B2%EF%BC%8C%E5%8F%AF%E4%B8%8E%E4%B8%BB%E6%B5%81%E5%BC%80%E5%8F%91%E2%80%A6+%E8%B5%9B%E5%8D%9A%E5%90%B4%E5%90%8C%E5%AD%A6&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%BC%80%E6%BA%90AI+Agent%E8%AE%B0%E5%BF%86%E5%B9%B3%E5%8F%B0cognee%EF%BC%8C%E5%9F%BA%E4%BA%8E%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1%E5%AE%9E%E7%8E%B0%E6%8C%81%E4%B9%85%E5%8C%96%E9%95%BF%E6%97%B6%E8%AE%B0%E5%BF%86%EF%BC%8C%E6%94%AF%E6%8C%81%E5%A4%9A%E5%9C%BA%E6%99%AF%E9%83%A8%E7%BD%B2%EF%BC%8C%E5%8F%AF%E4%B8%8E%E4%B8%BB%E6%B5%81%E5%BC%80%E5%8F%91%E5%B7%A5+%E8%B5%9B%E5%8D%9A%E5%90%B4%E5%90%8C%E5%AD%A6&source=web_search_result_notes",
       "publishedAt": "2026-06-28_19:50:08",
       "likes": "88",
       "collections": "235",
@@ -1706,7 +1706,7 @@
     {
       "id": "6a25baca000000000803d0c8",
       "number": 34,
-      "title": "一人自媒体公司全流程（内容创作、分发、互动、变现）打通的开源项目",
+      "title": "AiToEarn：打通一人自媒体内容创作、分发、互动和变现的开源项目",
       "author": "阿甘探AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%B8%80%E4%BA%BA%E8%87%AA%E5%AA%92%E4%BD%93%E5%85%AC%E5%8F%B8%E5%85%A8%E6%B5%81%E7%A8%8B%EF%BC%88%E5%86%85%E5%AE%B9%E5%88%9B%E4%BD%9C%E3%80%81%E5%88%86%E5%8F%91%E3%80%81%E4%BA%92%E5%8A%A8%E3%80%81%E5%8F%98%E7%8E%B0%EF%BC%89%E6%89%93%E9%80%9A%E7%9A%84%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE+%E9%98%BF%E7%94%98%E6%8E%A2AI&source=web_search_result_notes",
       "publishedAt": "2026-06-08_09:55:01",
@@ -1874,9 +1874,9 @@
     {
       "id": "6a26ddbb0000000017008a8b",
       "number": 38,
-      "title": "用 /artifacts 构建应用，并用 OODA、L99 和 god mode 解锁专家级 AI 提…",
+      "title": "5 个 Claude 提示写法：/ghost、/artifacts、OODA、L99 和 god mode",
       "author": "GitHunter",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%94%A8+%2Fartifacts+%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%EF%BC%8C%E5%B9%B6%E7%94%A8+OODA%E3%80%81L99+%E5%92%8C+god+mode+%E8%A7%A3%E9%94%81%E4%B8%93%E5%AE%B6%E7%BA%A7+AI+%E6%8F%90%E2%80%A6+GitHunter&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%94%A8+%2Fartifacts+%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%EF%BC%8C%E5%B9%B6%E7%94%A8+OODA%E3%80%81L99+%E5%92%8C+god+mode+%E8%A7%A3%E9%94%81%E4%B8%93%E5%AE%B6%E7%BA%A7+AI+%E6%8F%90%E7%A4%BA+GitHunter&source=web_search_result_notes",
       "publishedAt": "2026-06-09_01:20:27",
       "likes": "5221",
       "collections": "9716",
@@ -4265,7 +4265,7 @@
     {
       "id": "6a5c62f6000000001003da08",
       "number": 95,
-      "title": "AI“股神”来了，以后交易不再凭感觉！ 研究员、风控、投资经理，AI 一次配齐？",
+      "title": "TradingAgents：多个 AI 角色分工模拟交易公司的研究框架",
       "author": "青青王-AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=AI%E2%80%9C%E8%82%A1%E7%A5%9E%E2%80%9D%E6%9D%A5%E4%BA%86%EF%BC%8C%E4%BB%A5%E5%90%8E%E4%BA%A4%E6%98%93%E4%B8%8D%E5%86%8D%E5%87%AD%E6%84%9F%E8%A7%89%EF%BC%81+%E7%A0%94%E7%A9%B6%E5%91%98%E3%80%81%E9%A3%8E%E6%8E%A7%E3%80%81%E6%8A%95%E8%B5%84%E7%BB%8F%E7%90%86%EF%BC%8CAI+%E4%B8%80%E6%AC%A1%E9%85%8D%E9%BD%90%EF%BC%9F+%E9%9D%92%E9%9D%92%E7%8E%8B-AI&source=web_search_result_notes",
       "publishedAt": "2026-07-19_15:39:02",
@@ -4433,7 +4433,7 @@
     {
       "id": "6a368882000000001700bf8c",
       "number": 99,
-      "title": "两个好用的提示词，让AI输出质量翻倍",
+      "title": "两个提示词：先澄清需求，再让五个顾问辩论",
       "author": "QY的AI思考笔记",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%B8%A4%E4%B8%AA%E5%A5%BD%E7%94%A8%E7%9A%84%E6%8F%90%E7%A4%BA%E8%AF%8D%EF%BC%8C%E8%AE%A9AI%E8%BE%93%E5%87%BA%E8%B4%A8%E9%87%8F%E7%BF%BB%E5%80%8D+QY%E7%9A%84AI%E6%80%9D%E8%80%83%E7%AC%94%E8%AE%B0&source=web_search_result_notes",
       "publishedAt": "2026-06-21_13:30:17",
@@ -4475,7 +4475,7 @@
     {
       "id": "6a262697000000000800255e",
       "number": 100,
-      "title": "YouTube推荐的5个AI博主",
+      "title": "用 AI 搞钱值得关注的 5 个 YouTube 博主",
       "author": "鹅厂奇妙姐",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=YouTube%E6%8E%A8%E8%8D%90%E7%9A%845%E4%B8%AAAI%E5%8D%9A%E4%B8%BB+%E9%B9%85%E5%8E%82%E5%A5%87%E5%A6%99%E5%A7%90&source=web_search_result_notes",
       "publishedAt": "2026-06-08_12:19:03",
@@ -5066,7 +5066,7 @@
     {
       "id": "69e86028000000001a02043f",
       "number": 114,
-      "title": "不会写代码的设计师不是好前端，一个AI产品把这三个岗位给混合做一起了~！",
+      "title": "Claude Design 实测：一句需求生成网页界面，设计加前端合一",
       "author": "AK007设计师",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%B8%8D%E4%BC%9A%E5%86%99%E4%BB%A3%E7%A0%81%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%B8%88%E4%B8%8D%E6%98%AF%E5%A5%BD%E5%89%8D%E7%AB%AF%EF%BC%8C%E4%B8%80%E4%B8%AAAI%E4%BA%A7%E5%93%81%E6%8A%8A%E8%BF%99%E4%B8%89%E4%B8%AA%E5%B2%97%E4%BD%8D%E7%BB%99%E6%B7%B7%E5%90%88%E5%81%9A%E4%B8%80%E8%B5%B7%E4%BA%86%7E%EF%BC%81+AK007%E8%AE%BE%E8%AE%A1%E5%B8%88&source=web_search_result_notes",
       "publishedAt": "2026-04-22_15:44:08",
@@ -5486,7 +5486,7 @@
     {
       "id": "69c7ac430000000022027cb0",
       "number": 124,
-      "title": "别再说不会用！OpenClaw一键管理神器来了！",
+      "title": "ClawPanel：OpenClaw 可视化管理面板",
       "author": "吞吞AI成长之路",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%88%AB%E5%86%8D%E8%AF%B4%E4%B8%8D%E4%BC%9A%E7%94%A8%EF%BC%81OpenClaw%E4%B8%80%E9%94%AE%E7%AE%A1%E7%90%86%E7%A5%9E%E5%99%A8%E6%9D%A5%E4%BA%86%EF%BC%81+%E5%90%9E%E5%90%9EAI%E6%88%90%E9%95%BF%E4%B9%8B%E8%B7%AF&source=web_search_result_notes",
       "publishedAt": "2026-03-28_21:24:03",
@@ -5736,7 +5736,7 @@
     {
       "id": "6a1983cc00000000380231c0",
       "number": 130,
-      "title": "几乎把世界上所有工作的skill都收集起来了。",
+      "title": "收录各类工作 Skill 的网站：分类榜单、精选推荐和安全检查",
       "author": "欧耶学AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%87%A0%E4%B9%8E%E6%8A%8A%E4%B8%96%E7%95%8C%E4%B8%8A%E6%89%80%E6%9C%89%E5%B7%A5%E4%BD%9C%E7%9A%84skill%E9%83%BD%E6%94%B6%E9%9B%86%E8%B5%B7%E6%9D%A5%E4%BA%86%E3%80%82+%E6%AC%A7%E8%80%B6%E5%AD%A6AI&source=web_search_result_notes",
       "publishedAt": "2026-05-29_22:17:16",
@@ -5778,9 +5778,9 @@
     {
       "id": "6a1b6754000000003502b99a",
       "number": 131,
-      "title": "一款免费开源的文档解析工具。可以将含有图片、表格、复杂公式等内容的文档，解析成 AI 能读懂的格式，还…",
+      "title": "开源文档解析工具：把含图表公式的复杂文档转成 AI 可读的 Markdown 或 JSON",
       "author": "X小鹿同学",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%B8%80%E6%AC%BE%E5%85%8D%E8%B4%B9%E5%BC%80%E6%BA%90%E7%9A%84%E6%96%87%E6%A1%A3%E8%A7%A3%E6%9E%90%E5%B7%A5%E5%85%B7%E3%80%82%E5%8F%AF%E4%BB%A5%E5%B0%86%E5%90%AB%E6%9C%89%E5%9B%BE%E7%89%87%E3%80%81%E8%A1%A8%E6%A0%BC%E3%80%81%E5%A4%8D%E6%9D%82%E5%85%AC%E5%BC%8F%E7%AD%89%E5%86%85%E5%AE%B9%E7%9A%84%E6%96%87%E6%A1%A3%EF%BC%8C%E8%A7%A3%E6%9E%90%E6%88%90+AI+%E8%83%BD%E8%AF%BB%E6%87%82%E7%9A%84%E6%A0%BC%E5%BC%8F%EF%BC%8C%E8%BF%98%E2%80%A6+X%E5%B0%8F%E9%B9%BF%E5%90%8C%E5%AD%A6&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%B8%80%E6%AC%BE%E5%85%8D%E8%B4%B9%E5%BC%80%E6%BA%90%E7%9A%84%E6%96%87%E6%A1%A3%E8%A7%A3%E6%9E%90%E5%B7%A5%E5%85%B7%E3%80%82%E5%8F%AF%E4%BB%A5%E5%B0%86%E5%90%AB%E6%9C%89%E5%9B%BE%E7%89%87%E3%80%81%E8%A1%A8%E6%A0%BC%E3%80%81%E5%A4%8D%E6%9D%82%E5%85%AC%E5%BC%8F%E7%AD%89%E5%86%85%E5%AE%B9%E7%9A%84%E6%96%87%E6%A1%A3%EF%BC%8C%E8%A7%A3%E6%9E%90%E6%88%90+AI+%E8%83%BD%E8%AF%BB%E6%87%82%E7%9A%84%E6%A0%BC%E5%BC%8F%EF%BC%8C%E8%BF%98%E6%94%AF+X%E5%B0%8F%E9%B9%BF%E5%90%8C%E5%AD%A6&source=web_search_result_notes",
       "publishedAt": "2026-05-31_08:40:20",
       "likes": "351",
       "collections": "1167",
@@ -8975,7 +8975,7 @@
     {
       "id": "6a4bd81c000000002100bb24",
       "number": 207,
-      "title": "全网最适合小白的WorkBuddy入门指南！",
+      "title": "WorkBuddy 入门：三种模式、技能与专家团、连接器和项目空间",
       "author": "珍妮丁丁说AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%85%A8%E7%BD%91%E6%9C%80%E9%80%82%E5%90%88%E5%B0%8F%E7%99%BD%E7%9A%84WorkBuddy%E5%85%A5%E9%97%A8%E6%8C%87%E5%8D%97%EF%BC%81+%E7%8F%8D%E5%A6%AE%E4%B8%81%E4%B8%81%E8%AF%B4AI&source=web_search_result_notes",
       "publishedAt": "2026-07-07_14:01:15",
@@ -9232,7 +9232,7 @@
     {
       "id": "69c22ca9000000001a022c31",
       "number": 213,
-      "title": "告别低效人工调价 悟空 AI 一键搞定全店运营",
+      "title": "阿里悟空 AI：一个人搞定淘宝店的设计、客服、运营和推广",
       "author": "韩维电商观察",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%91%8A%E5%88%AB%E4%BD%8E%E6%95%88%E4%BA%BA%E5%B7%A5%E8%B0%83%E4%BB%B7+%E6%82%9F%E7%A9%BA+AI+%E4%B8%80%E9%94%AE%E6%90%9E%E5%AE%9A%E5%85%A8%E5%BA%97%E8%BF%90%E8%90%A5+%E9%9F%A9%E7%BB%B4%E7%94%B5%E5%95%86%E8%A7%82%E5%AF%9F&source=web_search_result_notes",
       "publishedAt": "2026-03-24_17:18:17",
@@ -9793,9 +9793,9 @@
     {
       "id": "6a795b5a0000000022015f1b",
       "number": 226,
-      "title": "TrendRadar",
+      "title": "TrendRadar：多平台热点聚合与推送",
       "author": "青青王-AI",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=TrendRadar+%E9%9D%92%E9%9D%92%E7%8E%8B-AI&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%81%9A%E8%87%AA%E5%AA%92%E4%BD%93%EF%BC%8C%E5%85%88%E7%8E%A9%E9%80%8F%E8%BF%99%E4%B8%AA6%E4%B8%87%E6%98%9FSkill%EF%BC%81%E5%85%A8%E7%BD%91%E7%83%AD%E7%82%B9%E4%B8%80%E9%94%AE%E6%B1%87%E6%80%BB%EF%BC%8C%E5%81%9A%E8%87%AA%E5%AA%92%E4%BD%93%E5%A4%AA%E9%A6%99%E4%BA%86+%E9%9D%92%E9%9D%92%E7%8E%8B-AI&source=web_search_result_notes",
       "publishedAt": "2026-08-10_15:02:18",
       "likes": "437",
       "collections": "1197",
@@ -9881,7 +9881,7 @@
     {
       "id": "6a4cbee30000000017029e77",
       "number": 228,
-      "title": "2026年死磕这两个工作流，过年回家开路虎.........",
+      "title": "两个 Coze 自动内容工作流",
       "author": "spuerAI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=2026%E5%B9%B4%E6%AD%BB%E7%A3%95%E8%BF%99%E4%B8%A4%E4%B8%AA%E5%B7%A5%E4%BD%9C%E6%B5%81%EF%BC%8C%E8%BF%87%E5%B9%B4%E5%9B%9E%E5%AE%B6%E5%BC%80%E8%B7%AF%E8%99%8E.........+spuerAI&source=web_search_result_notes",
       "publishedAt": "2026-07-07_18:54:59",
@@ -10099,7 +10099,7 @@
     {
       "id": "6a788e830000000022033bb3",
       "number": 233,
-      "title": "全站打出来对比很高怎么优化",
+      "title": "全站推广投产高、销量下滑时怎么排查",
       "author": "子鹏说电商",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%85%A8%E7%AB%99%E6%89%93%E5%87%BA%E6%9D%A5%E5%AF%B9%E6%AF%94%E5%BE%88%E9%AB%98%E6%80%8E%E4%B9%88%E4%BC%98%E5%8C%96+%E5%AD%90%E9%B9%8F%E8%AF%B4%E7%94%B5%E5%95%86&source=web_search_result_notes",
       "publishedAt": "2026-08-10_00:28:19",
@@ -10313,7 +10313,7 @@
     {
       "id": "6a5e0064000000001d02067d",
       "number": 238,
-      "title": "亚马逊精铺选品效率提升100倍",
+      "title": "亚马逊精铺选品：用感官训练优化主图与卖点",
       "author": "蟹老板亚马逊选品",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%BA%9A%E9%A9%AC%E9%80%8A%E7%B2%BE%E9%93%BA%E9%80%89%E5%93%81%E6%95%88%E7%8E%87%E6%8F%90%E5%8D%87100%E5%80%8D+%E8%9F%B9%E8%80%81%E6%9D%BF%E4%BA%9A%E9%A9%AC%E9%80%8A%E9%80%89%E5%93%81&source=web_search_result_notes",
       "publishedAt": "2026-07-20_21:03:00",
@@ -10393,9 +10393,9 @@
     {
       "id": "6a744c36000000000503049c",
       "number": 240,
-      "title": "Codex",
+      "title": "Codex 亚马逊选品 Go/No-Go 工作流",
       "author": "小七学跨境",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Codex+%E5%B0%8F%E4%B8%83%E5%AD%A6%E8%B7%A8%E5%A2%83&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%94%A8Codex%E5%B0%81%E8%A3%85%E4%BA%9A%E9%A9%AC%E9%80%8A%E9%80%89%E5%93%81Skill%E5%90%8E%EF%BC%8C%E6%88%91%E7%9A%84%E9%80%89%E5%93%81%E6%95%88%E7%8E%87%E6%8F%90%E5%8D%87%E6%9C%89%E5%A4%9A%E7%A6%BB%E8%B0%B1%EF%BC%81%E4%BB%8E%E7%BB%8F%E9%AA%8C%E6%B2%89%E6%B7%80%E5%88%B0Go%2FNo-Go%E5%86%B3%E7%AD%96%E5%85%A8%E6%B5%81%E7%A8%8B+%E5%B0%8F%E4%B8%83%E5%AD%A6%E8%B7%A8%E5%A2%83&source=web_search_result_notes",
       "publishedAt": "2026-08-06_18:56:22",
       "likes": "16",
       "collections": "24",
@@ -10439,9 +10439,9 @@
     {
       "id": "6a3a04110000000021021a89",
       "number": 241,
-      "title": "Codex",
+      "title": "用 Codex 和 LinkFox 的 Amazon Reviews Skill 挖掘买家评论",
       "author": "LinkFoxAI探索者",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Codex+LinkFoxAI%E6%8E%A2%E7%B4%A2%E8%80%85&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%88%AB%E4%BA%BA%E9%80%89%E5%93%81%E9%9D%A0%E7%9B%B4%E8%A7%89%EF%BC%8C%E6%88%91%E8%AE%A9Codex%E5%85%88%E8%AF%BB%E4%BA%86300%E6%9D%A1%E7%9C%9F%E5%AE%9E%E4%B9%B0%E5%AE%B6%E8%AF%84%E8%AE%BA+LinkFoxAI%E6%8E%A2%E7%B4%A2%E8%80%85&source=web_search_result_notes",
       "publishedAt": "2026-06-23_13:57:05",
       "likes": "5",
       "collections": "7",
@@ -10485,7 +10485,7 @@
     {
       "id": "6a69bf6c000000001d021a45",
       "number": 242,
-      "title": "适用于所有平台！我选品的思路其实就3步",
+      "title": "跨平台三步选品与差异化方法",
       "author": "姜姜在学做跨境（努力减脂版）",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E9%80%82%E7%94%A8%E4%BA%8E%E6%89%80%E6%9C%89%E5%B9%B3%E5%8F%B0%EF%BC%81%E6%88%91%E9%80%89%E5%93%81%E7%9A%84%E6%80%9D%E8%B7%AF%E5%85%B6%E5%AE%9E%E5%B0%B13%E6%AD%A5+%E5%A7%9C%E5%A7%9C%E5%9C%A8%E5%AD%A6%E5%81%9A%E8%B7%A8%E5%A2%83%EF%BC%88%E5%8A%AA%E5%8A%9B%E5%87%8F%E8%84%82%E7%89%88%EF%BC%89&source=web_search_result_notes",
       "publishedAt": "2026-07-29_18:53:00",
@@ -10565,7 +10565,7 @@
     {
       "id": "6a61f811000000001d021f36",
       "number": 244,
-      "title": "如何用Codex做亚马逊选品分析sop（含skill",
+      "title": "把亚马逊选品 SOP 封装为 Codex Skill",
       "author": "波微",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%A6%82%E4%BD%95%E7%94%A8Codex%E5%81%9A%E4%BA%9A%E9%A9%AC%E9%80%8A%E9%80%89%E5%93%81%E5%88%86%E6%9E%90sop%EF%BC%88%E5%90%ABskill+%E6%B3%A2%E5%BE%AE&source=web_search_result_notes",
       "publishedAt": "2026-07-23_21:16:33",
@@ -10611,7 +10611,7 @@
     {
       "id": "69d50977000000002301f67a",
       "number": 245,
-      "title": "我发现跨境电商真正有用的是这17个skill",
+      "title": "跨境电商全链路 SOP 的 17 个能力模块",
       "author": "Yomin Ma",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E6%88%91%E5%8F%91%E7%8E%B0%E8%B7%A8%E5%A2%83%E7%94%B5%E5%95%86%E7%9C%9F%E6%AD%A3%E6%9C%89%E7%94%A8%E7%9A%84%E6%98%AF%E8%BF%9917%E4%B8%AAskill+Yomin+Ma&source=web_search_result_notes",
       "publishedAt": "2026-04-07_23:41:11",
@@ -10653,7 +10653,7 @@
     {
       "id": "6a5e0769000000000f01f367",
       "number": 246,
-      "title": "53个Amazon AI Skill，真能替代运营？",
+      "title": "Nexscope Amazon Skills 能力审计",
       "author": "品牌出海AI课代表",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=53%E4%B8%AAAmazon+AI+Skill%EF%BC%8C%E7%9C%9F%E8%83%BD%E6%9B%BF%E4%BB%A3%E8%BF%90%E8%90%A5%EF%BC%9F+%E5%93%81%E7%89%8C%E5%87%BA%E6%B5%B7AI%E8%AF%BE%E4%BB%A3%E8%A1%A8&source=web_search_result_notes",
       "publishedAt": "2026-07-20_21:32:57",
@@ -10695,7 +10695,7 @@
     {
       "id": "6a4b9c5600000000220161ad",
       "number": 247,
-      "title": "亚马逊选品难，用产品分析skill一键选出",
+      "title": "一键产品分析 Skill 选品",
       "author": "AI跨境产品开发官",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%BA%9A%E9%A9%AC%E9%80%8A%E9%80%89%E5%93%81%E9%9A%BE%EF%BC%8C%E7%94%A8%E4%BA%A7%E5%93%81%E5%88%86%E6%9E%90skill%E4%B8%80%E9%94%AE%E9%80%89%E5%87%BA+AI%E8%B7%A8%E5%A2%83%E4%BA%A7%E5%93%81%E5%BC%80%E5%8F%91%E5%AE%98&source=web_search_result_notes",
       "publishedAt": "2026-07-06_22:15:18",
@@ -10737,7 +10737,7 @@
     {
       "id": "6a3cc206000000000f014ff4",
       "number": 248,
-      "title": "🔥跨境电商： Codex必装技能清单",
+      "title": "跨境电商常用 Skill 能力清单",
       "author": "熹贵妃回宫",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%F0%9F%94%A5%E8%B7%A8%E5%A2%83%E7%94%B5%E5%95%86%EF%BC%9A+Codex%E5%BF%85%E8%A3%85%E6%8A%80%E8%83%BD%E6%B8%85%E5%8D%95+%E7%86%B9%E8%B4%B5%E5%A6%83%E5%9B%9E%E5%AE%AB&source=web_search_result_notes",
       "publishedAt": "2026-06-25_15:52:06",
@@ -10779,7 +10779,7 @@
     {
       "id": "6a5626a70000000006031d80",
       "number": 249,
-      "title": "亚马逊AI自动化Skills全套",
+      "title": "53 份 Amazon AI 运营指令模板",
       "author": "杉杉资料PU-",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%BA%9A%E9%A9%AC%E9%80%8AAI%E8%87%AA%E5%8A%A8%E5%8C%96Skills%E5%85%A8%E5%A5%97+%E6%9D%89%E6%9D%89%E8%B5%84%E6%96%99PU-&source=web_search_result_notes",
       "publishedAt": "2026-07-15_13:07:01",
@@ -11079,7 +11079,7 @@
     {
       "id": "6a86cc450000000008011713",
       "number": 256,
-      "title": "这个skill能算出爆款！",
+      "title": "用数据辅助判断内容爆款潜力的项目线索",
       "author": "甲方需求又改了😭（学习AI版）",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%BF%99%E4%B8%AAskill%E8%83%BD%E7%AE%97%E5%87%BA%E7%88%86%E6%AC%BE%EF%BC%81+%E7%94%B2%E6%96%B9%E9%9C%80%E6%B1%82%E5%8F%88%E6%94%B9%E4%BA%86%F0%9F%98%AD%EF%BC%88%E5%AD%A6%E4%B9%A0AI%E7%89%88%EF%BC%89&source=web_search_result_notes",
       "publishedAt": "2026-08-20_21:43:01",
@@ -11121,7 +11121,7 @@
     {
       "id": "6a5b4ac2000000000100cac3",
       "number": 257,
-      "title": "怎么用workbuddy写爆款标题！（附提示词）",
+      "title": "用 WorkBuddy 批量生成并筛选小红书标题",
       "author": "🐏的学习日记",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E6%80%8E%E4%B9%88%E7%94%A8workbuddy%E5%86%99%E7%88%86%E6%AC%BE%E6%A0%87%E9%A2%98%EF%BC%81%EF%BC%88%E9%99%84%E6%8F%90%E7%A4%BA%E8%AF%8D%EF%BC%89+%F0%9F%90%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%97%A5%E8%AE%B0&source=web_search_result_notes",
       "publishedAt": "2026-07-18_19:43:30",
@@ -11163,7 +11163,7 @@
     {
       "id": "69a259ea00000000150238af",
       "number": 258,
-      "title": "Ai实在是太夸张了！生产效率直接提升10倍！",
+      "title": "面向小红书电商的 AI 内容工厂框架",
       "author": "米力互动信息科技",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Ai%E5%AE%9E%E5%9C%A8%E6%98%AF%E5%A4%AA%E5%A4%B8%E5%BC%A0%E4%BA%86%EF%BC%81%E7%94%9F%E4%BA%A7%E6%95%88%E7%8E%87%E7%9B%B4%E6%8E%A5%E6%8F%90%E5%8D%8710%E5%80%8D%EF%BC%81+%E7%B1%B3%E5%8A%9B%E4%BA%92%E5%8A%A8%E4%BF%A1%E6%81%AF%E7%A7%91%E6%8A%80&source=web_search_result_notes",
       "publishedAt": "2026-02-28_13:58:50",
@@ -11205,7 +11205,7 @@
     {
       "id": "6a37c5c3000000000f01f8c9",
       "number": 259,
-      "title": "​​AI做小红书30天，81.6万曝光是怎么来的",
+      "title": "把小红书运营判断拆成可执行的 AI 规则",
       "author": "Ray自动化日常研究所",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E2%80%8B%E2%80%8BAI%E5%81%9A%E5%B0%8F%E7%BA%A2%E4%B9%A630%E5%A4%A9%EF%BC%8C81.6%E4%B8%87%E6%9B%9D%E5%85%89%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84+Ray%E8%87%AA%E5%8A%A8%E5%8C%96%E6%97%A5%E5%B8%B8%E7%A0%94%E7%A9%B6%E6%89%80&source=web_search_result_notes",
       "publishedAt": "2026-06-21_21:06:43",
@@ -11247,7 +11247,7 @@
     {
       "id": "6a7dc92600000000250090ff",
       "number": 260,
-      "title": "一个人，3天，Codex，10W",
+      "title": "把账号复盘经验产品化为 Codex 智能体",
       "author": "陈祝器",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%B8%80%E4%B8%AA%E4%BA%BA%EF%BC%8C3%E5%A4%A9%EF%BC%8CCodex%EF%BC%8C10W+%E9%99%88%E7%A5%9D%E5%99%A8&source=web_search_result_notes",
       "publishedAt": "2026-08-13_23:39:50",
@@ -11373,7 +11373,7 @@
     {
       "id": "6a86f85d00000000170005c0",
       "number": 263,
-      "title": "这个AI设计工具太炸了❗️一键画logo",
+      "title": "Rikyu：展示设计推导过程的 AI 品牌工具",
       "author": "逸蒙的赛博空间",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%BF%99%E4%B8%AAAI%E8%AE%BE%E8%AE%A1%E5%B7%A5%E5%85%B7%E5%A4%AA%E7%82%B8%E4%BA%86%E2%9D%97%EF%B8%8F%E4%B8%80%E9%94%AE%E7%94%BBlogo+%E9%80%B8%E8%92%99%E7%9A%84%E8%B5%9B%E5%8D%9A%E7%A9%BA%E9%97%B4&source=web_search_result_notes",
       "publishedAt": "2026-08-20_22:51:41",
@@ -11415,7 +11415,7 @@
     {
       "id": "6a7e8a0a000000002800a8d9",
       "number": 264,
-      "title": "装完codex，先配这6个skill，视频剪辑工作流。",
+      "title": "用 Codex 串联六类视频制作 Skill",
       "author": "赵阿龙智能体",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%A3%85%E5%AE%8Ccodex%EF%BC%8C%E5%85%88%E9%85%8D%E8%BF%996%E4%B8%AAskill%EF%BC%8C%E8%A7%86%E9%A2%91%E5%89%AA%E8%BE%91%E5%B7%A5%E4%BD%9C%E6%B5%81%E3%80%82+%E8%B5%B5%E9%98%BF%E9%BE%99%E6%99%BA%E8%83%BD%E4%BD%93&source=web_search_result_notes",
       "publishedAt": "2026-08-14_13:22:50",
@@ -11457,7 +11457,7 @@
     {
       "id": "6a7d69eb000000002500c1c1",
       "number": 265,
-      "title": "用MCP+Codex批量做带货视频，原来这么简单",
+      "title": "Codex 与可灵 MCP 的批量带货视频流程",
       "author": "悠悠学姐聊AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%94%A8MCP%2BCodex%E6%89%B9%E9%87%8F%E5%81%9A%E5%B8%A6%E8%B4%A7%E8%A7%86%E9%A2%91%EF%BC%8C%E5%8E%9F%E6%9D%A5%E8%BF%99%E4%B9%88%E7%AE%80%E5%8D%95+%E6%82%A0%E6%82%A0%E5%AD%A6%E5%A7%90%E8%81%8AAI&source=web_search_result_notes",
       "publishedAt": "2026-08-13_20:02:03",
@@ -11499,7 +11499,7 @@
     {
       "id": "6a7ac32b0000000022014ad7",
       "number": 266,
-      "title": "视频创作必装的Skill！和剪映比：它是活的",
+      "title": "七类 Agent Skill 组成的视频生产流水线",
       "author": "阿尔法灵AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%A7%86%E9%A2%91%E5%88%9B%E4%BD%9C%E5%BF%85%E8%A3%85%E7%9A%84Skill%EF%BC%81%E5%92%8C%E5%89%AA%E6%98%A0%E6%AF%94%EF%BC%9A%E5%AE%83%E6%98%AF%E6%B4%BB%E7%9A%84+%E9%98%BF%E5%B0%94%E6%B3%95%E7%81%B5AI&source=web_search_result_notes",
       "publishedAt": "2026-08-11_18:00:27",
@@ -11541,7 +11541,7 @@
     {
       "id": "6a5f8797000000001003cc55",
       "number": 267,
-      "title": "AI作图提示词最佳实践：万能九格提示词公式",
+      "title": "把 AI 作图提示词写成可验收的画面规格",
       "author": "陆苍的全能AI制图笔记",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=AI%E4%BD%9C%E5%9B%BE%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%EF%BC%9A%E4%B8%87%E8%83%BD%E4%B9%9D%E6%A0%BC%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%85%AC%E5%BC%8F+%E9%99%86%E8%8B%8D%E7%9A%84%E5%85%A8%E8%83%BDAI%E5%88%B6%E5%9B%BE%E7%AC%94%E8%AE%B0&source=web_search_result_notes",
       "publishedAt": "2026-07-22_00:52:07",
@@ -11797,7 +11797,7 @@
     {
       "id": "6ac49b6a000000000201005e",
       "number": 273,
-      "title": "多个Al agent怎么协作?PaperClip帮你搞定",
+      "title": "多个AI agent怎么协作?PaperClip帮你搞定",
       "author": "重阳2077",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%A4%9A%E4%B8%AAAl+agent%E6%80%8E%E4%B9%88%E5%8D%8F%E4%BD%9C%3FPaperClip%E5%B8%AE%E4%BD%A0%E6%90%9E%E5%AE%9A+%E9%87%8D%E9%98%B32077&source=web_search_result_notes",
       "publishedAt": "2026-10-06_17:55:38",
@@ -11843,7 +11843,7 @@
     {
       "id": "6aa3d1ca0000000011038002",
       "number": 274,
-      "title": "设计圈开挂🚨登顶榜首的 AI 生图神器✨",
+      "title": "设计圈开挂登顶榜首的 AI 生图神器",
       "author": "陈凡Carina",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%AE%BE%E8%AE%A1%E5%9C%88%E5%BC%80%E6%8C%82%F0%9F%9A%A8%E7%99%BB%E9%A1%B6%E6%A6%9C%E9%A6%96%E7%9A%84+AI+%E7%94%9F%E5%9B%BE%E7%A5%9E%E5%99%A8%E2%9C%A8+%E9%99%88%E5%87%A1Carina&source=web_search_result_notes",
       "publishedAt": "2026-09-13_20:30:23",
@@ -11889,7 +11889,7 @@
     {
       "id": "6ac3c18f000000001c01f3ae",
       "number": 275,
-      "title": "GitHub每日AI项目推荐·第88期",
+      "title": "GitHub每日AI项目推荐·第88期：dbx",
       "author": "AI大事纪",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=GitHub%E6%AF%8F%E6%97%A5AI%E9%A1%B9%E7%9B%AE%E6%8E%A8%E8%8D%90%C2%B7%E7%AC%AC88%E6%9C%9F+AI%E5%A4%A7%E4%BA%8B%E7%BA%AA&source=web_search_result_notes",
       "publishedAt": "2026-10-06_02:26:07",
@@ -12377,7 +12377,7 @@
     {
       "id": "6aabb7c10000000026032f39",
       "number": 286,
-      "title": "告别手写提示词！把Agent变成视频工厂！",
+      "title": "告别手写提示词！把Agent变成视频工厂",
       "author": "王十三AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%91%8A%E5%88%AB%E6%89%8B%E5%86%99%E6%8F%90%E7%A4%BA%E8%AF%8D%EF%BC%81%E6%8A%8AAgent%E5%8F%98%E6%88%90%E8%A7%86%E9%A2%91%E5%B7%A5%E5%8E%82%EF%BC%81+%E7%8E%8B%E5%8D%81%E4%B8%89AI&source=web_search_result_notes",
       "publishedAt": "2026-09-19_10:51:00",
@@ -12507,9 +12507,9 @@
     {
       "id": "6aa76848000000002900fecd",
       "number": 289,
-      "title": "Audio8_TTS",
+      "title": "0.1B 参数的开源 TTS 模型 Audio8_TTS",
       "author": "青青王-AI",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Audio8_TTS+%E9%9D%92%E9%9D%92%E7%8E%8B-AI&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=0.1B%E5%8F%82%E6%95%B0%E7%9A%84%E6%A8%A1%E5%9E%8B%E5%B0%B1%E8%83%BD%E5%AE%9E%E7%8E%B0%E8%BD%AC%E8%AF%AD%E9%9F%B3%E5%8A%9F%E8%83%BD%E4%BA%86%E5%90%97+%E9%9D%92%E9%9D%92%E7%8E%8B-AI&source=web_search_result_notes",
       "publishedAt": "2026-09-14_13:21:44",
       "likes": "499",
       "collections": "1247",
@@ -12773,7 +12773,7 @@
     {
       "id": "6a7fc34900000000350152d8",
       "number": 295,
-      "title": "这2个Skill让AI开发效率提升10倍",
+      "title": "先查现成方案再写代码的两个 Skill：advise-project-approach 与 NeuroArxiv",
       "author": "非也Origin",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%BF%992%E4%B8%AASkill%E8%AE%A9AI%E5%BC%80%E5%8F%91%E6%95%88%E7%8E%87%E6%8F%90%E5%8D%8710%E5%80%8D+%E9%9D%9E%E4%B9%9FOrigin&source=web_search_result_notes",
       "publishedAt": "2026-08-15_11:39:21",
@@ -12867,9 +12867,9 @@
     {
       "id": "6aa1fbcc000000000b00c764",
       "number": 297,
-      "title": "Crawl4AI",
+      "title": "开源爬虫 Crawl4AI：网站改版也不用改代码",
       "author": "雨霖 AI 实验室",
-      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Crawl4AI+%E9%9B%A8%E9%9C%96+AI+%E5%AE%9E%E9%AA%8C%E5%AE%A4&source=web_search_result_notes",
+      "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%BD%91%E7%AB%99%E6%94%B9%E7%89%88%E7%88%AC%E8%99%AB%E7%9B%B4%E6%8E%A5%E5%A4%B1%E6%95%88%EF%BC%9F%E8%AF%95%E8%AF%95%E8%BF%99%E4%B8%AA%E5%BC%80%E6%BA%90%E7%88%AC%E8%99%AB%E9%A1%B9%E7%9B%AE+%E6%99%BA%E8%83%BD%E8%AF%86%E5%88%AB%E9%A1%B5%E9%9D%A2%E7%BB%93%E6%9E%84%E5%8F%98%E5%8C%96%EF%BC%8C%E8%87%AA%E5%8A%A8%E9%80%82%E9%85%8D%E5%90%84%E7%B1%BB%E5%8F%8D%E7%88%AC%E6%89%8B%E6%AE%B5%EF%BC%8C%E9%A1%B5%E9%9D%A2%E6%9B%B4%E6%96%B0%E5%85%A8%E7%A8%8B%E4%B8%8D%E7%94%A8+%E9%9B%A8%E9%9C%96+AI+%E5%AE%9E%E9%AA%8C%E5%AE%A4&source=web_search_result_notes",
       "publishedAt": "2026-09-10_10:37:32",
       "likes": "1014",
       "collections": "2594",
@@ -12961,7 +12961,7 @@
     {
       "id": "6aa4ec0c000000000d024ff1",
       "number": 299,
-      "title": "74亿Token",
+      "title": "74亿Token：聚合免费大模型额度的开源项目",
       "author": "青青",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=74%E4%BA%BFToken+%E9%9D%92%E9%9D%92&source=web_search_result_notes",
       "publishedAt": "2026-09-12_16:07:08",
@@ -13057,7 +13057,7 @@
     {
       "id": "6aa1ae74000000000e03f400",
       "number": 301,
-      "title": "装机顺序公开!AI写码效率起飞🚀",
+      "title": "装机顺序公开!AI写码效率起飞",
       "author": "科技YY",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%A3%85%E6%9C%BA%E9%A1%BA%E5%BA%8F%E5%85%AC%E5%BC%80%21AI%E5%86%99%E7%A0%81%E6%95%88%E7%8E%87%E8%B5%B7%E9%A3%9E%F0%9F%9A%80+%E7%A7%91%E6%8A%80YY&source=web_search_result_notes",
       "publishedAt": "2026-09-10_05:07:32",
@@ -13109,7 +13109,7 @@
     {
       "id": "6a9e86c90000000012034e7a",
       "number": 302,
-      "title": "这波操作厉害了！一个配置让GitHub上的这个",
+      "title": "这波操作厉害了！一个配置让GitHub上的这个项目关注度飙升",
       "author": "金拱门信徒",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%BF%99%E6%B3%A2%E6%93%8D%E4%BD%9C%E5%8E%89%E5%AE%B3%E4%BA%86%EF%BC%81%E4%B8%80%E4%B8%AA%E9%85%8D%E7%BD%AE%E8%AE%A9GitHub%E4%B8%8A%E7%9A%84%E8%BF%99%E4%B8%AA+%E9%87%91%E6%8B%B1%E9%97%A8%E4%BF%A1%E5%BE%92&source=web_search_result_notes",
       "publishedAt": "2026-09-07_19:41:29",
@@ -13197,7 +13197,7 @@
     {
       "id": "6ab630f20000000012037754",
       "number": 304,
-      "title": "JEV优化网站搜索完整教程！",
+      "title": "用 AI 检查网站内容的 SEO/GEO 教程",
       "author": "Better AI研究室",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=JEV%E4%BC%98%E5%8C%96%E7%BD%91%E7%AB%99%E6%90%9C%E7%B4%A2%E5%AE%8C%E6%95%B4%E6%95%99%E7%A8%8B%EF%BC%81+Better+AI%E7%A0%94%E7%A9%B6%E5%AE%A4&source=web_search_result_notes",
       "publishedAt": "2026-09-25_18:29:38",
@@ -13239,7 +13239,7 @@
     {
       "id": "6aa91da50000000012036324",
       "number": 305,
-      "title": "免费做好seo了！",
+      "title": "免费做好seo了！OpenSEO",
       "author": "靓仔AI 进化论",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%85%8D%E8%B4%B9%E5%81%9A%E5%A5%BDseo%E4%BA%86%EF%BC%81+%E9%9D%93%E4%BB%94AI+%E8%BF%9B%E5%8C%96%E8%AE%BA&source=web_search_result_notes",
       "publishedAt": "2026-09-15_20:27:49",
@@ -13323,7 +13323,7 @@
     {
       "id": "6ac7ad13000000001b02c88f",
       "number": 307,
-      "title": "PS平替最强免费开源软件只有11MB？没有之一",
+      "title": "PS平替免费开源软件Compositor",
       "author": "科技猎奇",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=PS%E5%B9%B3%E6%9B%BF%E6%9C%80%E5%BC%BA%E5%85%8D%E8%B4%B9%E5%BC%80%E6%BA%90%E8%BD%AF%E4%BB%B6%E5%8F%AA%E6%9C%8911MB%EF%BC%9F%E6%B2%A1%E6%9C%89%E4%B9%8B%E4%B8%80+%E7%A7%91%E6%8A%80%E7%8C%8E%E5%A5%87&source=web_search_result_notes",
       "publishedAt": "2026-10-09_01:47:47",
@@ -13411,7 +13411,7 @@
     {
       "id": "6abd11b500000000180123bb",
       "number": 309,
-      "title": "电商skill搞定电商详情页｜附skill🔥",
+      "title": "电商skill搞定电商详情页",
       "author": "黄鸭碎碎AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%94%B5%E5%95%86skill%E6%90%9E%E5%AE%9A%E7%94%B5%E5%95%86%E8%AF%A6%E6%83%85%E9%A1%B5%EF%BD%9C%E9%99%84skill%F0%9F%94%A5+%E9%BB%84%E9%B8%AD%E7%A2%8E%E7%A2%8EAI&source=web_search_result_notes",
       "publishedAt": "2026-10-01_00:30:51",
@@ -13495,7 +13495,7 @@
     {
       "id": "6ab5f49b000000001303f84d",
       "number": 311,
-      "title": "Ai图片转PSD🔥干货教学！从0-1手把手讲解，",
+      "title": "Ai图片转PSD干货教学：做成可复用Skill",
       "author": "阿辉玩Ai电商",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Ai%E5%9B%BE%E7%89%87%E8%BD%ACPSD%F0%9F%94%A5%E5%B9%B2%E8%B4%A7%E6%95%99%E5%AD%A6%EF%BC%81%E4%BB%8E0-1%E6%89%8B%E6%8A%8A%E6%89%8B%E8%AE%B2%E8%A7%A3%EF%BC%8C+%E9%98%BF%E8%BE%89%E7%8E%A9Ai%E7%94%B5%E5%95%86&source=web_search_result_notes",
       "publishedAt": "2026-09-25_14:12:11",
@@ -13785,7 +13785,7 @@
     {
       "id": "6aa39b4c000000000d024355",
       "number": 318,
-      "title": "Codex做电商图，这2个Skills怎",
+      "title": "Codex做电商图，这2个Skills怎么选",
       "author": "自由变量",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Codex%E5%81%9A%E7%94%B5%E5%95%86%E5%9B%BE%EF%BC%8C%E8%BF%992%E4%B8%AASkills%E6%80%8E+%E8%87%AA%E7%94%B1%E5%8F%98%E9%87%8F&source=web_search_result_notes",
       "publishedAt": "2026-09-11_16:10:20",
@@ -13827,7 +13827,7 @@
     {
       "id": "6a7ee39a0000000028006c52",
       "number": 319,
-      "title": "坏了！不会设计也能做电商设计了😭",
+      "title": "坏了！不会设计也能做电商设计了",
       "author": "木松子旭设计师",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%9D%8F%E4%BA%86%EF%BC%81%E4%B8%8D%E4%BC%9A%E8%AE%BE%E8%AE%A1%E4%B9%9F%E8%83%BD%E5%81%9A%E7%94%B5%E5%95%86%E8%AE%BE%E8%AE%A1%E4%BA%86%F0%9F%98%AD+%E6%9C%A8%E6%9D%BE%E5%AD%90%E6%97%AD%E8%AE%BE%E8%AE%A1%E5%B8%88&source=web_search_result_notes",
       "publishedAt": "2026-08-14_19:44:58",
@@ -13873,7 +13873,7 @@
     {
       "id": "6aa96fb0000000000d024e21",
       "number": 320,
-      "title": "离谱 GPT6全自动剪辑！ 今天直接把skill开源",
+      "title": "离谱 GPT6全自动剪辑！今天直接把skill开源",
       "author": "浩兰德",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%A6%BB%E8%B0%B1+GPT6%E5%85%A8%E8%87%AA%E5%8A%A8%E5%89%AA%E8%BE%91%EF%BC%81+%E4%BB%8A%E5%A4%A9%E7%9B%B4%E6%8E%A5%E6%8A%8Askill%E5%BC%80%E6%BA%90+%E6%B5%A9%E5%85%B0%E5%BE%B7&source=web_search_result_notes",
       "publishedAt": "2026-09-16_22:03:01",
@@ -14035,7 +14035,7 @@
     {
       "id": "6ac304d1000000001203c6b3",
       "number": 324,
-      "title": "如何发挥Opus5.5做视频的能力？",
+      "title": "如何发挥Opus5.5做视频的能力",
       "author": "陈与小金",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%A6%82%E4%BD%95%E5%8F%91%E6%8C%A5Opus5.5%E5%81%9A%E8%A7%86%E9%A2%91%E7%9A%84%E8%83%BD%E5%8A%9B%EF%BC%9F+%E9%99%88%E4%B8%8E%E5%B0%8F%E9%87%91&source=web_search_result_notes",
       "publishedAt": "2026-10-06_01:40:00",
@@ -14161,7 +14161,7 @@
     {
       "id": "6abac6e2000000000a0236aa",
       "number": 327,
-      "title": "吊打99%付费！原来做AI视频能这么简单？",
+      "title": "吊打99%付费！原来做AI视频能这么简单",
       "author": "ksr桑",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%90%8A%E6%89%9399%25%E4%BB%98%E8%B4%B9%EF%BC%81%E5%8E%9F%E6%9D%A5%E5%81%9AAI%E8%A7%86%E9%A2%91%E8%83%BD%E8%BF%99%E4%B9%88%E7%AE%80%E5%8D%95%EF%BC%9F+ksr%E6%A1%91&source=web_search_result_notes",
       "publishedAt": "2026-09-29_14:20:04",
@@ -14365,7 +14365,7 @@
     {
       "id": "6a7e8b9600000000050228d1",
       "number": 332,
-      "title": "转化率捷径｜同行的详情页已经视频化了！",
+      "title": "转化率捷径｜同行的详情页已经视频化了",
       "author": "百度一镜",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%BD%AC%E5%8C%96%E7%8E%87%E6%8D%B7%E5%BE%84%EF%BD%9C%E5%90%8C%E8%A1%8C%E7%9A%84%E8%AF%A6%E6%83%85%E9%A1%B5%E5%B7%B2%E7%BB%8F%E8%A7%86%E9%A2%91%E5%8C%96%E4%BA%86%EF%BC%81+%E7%99%BE%E5%BA%A6%E4%B8%80%E9%95%9C&source=web_search_result_notes",
       "publishedAt": "2026-08-14_13:29:26",
@@ -14491,7 +14491,7 @@
     {
       "id": "6a912e700000000028007814",
       "number": 335,
-      "title": "0基础也能用AI做出TVC广告了？！😳",
+      "title": "0基础也能用AI做出TVC广告了",
       "author": "居鲁仕",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=0%E5%9F%BA%E7%A1%80%E4%B9%9F%E8%83%BD%E7%94%A8AI%E5%81%9A%E5%87%BATVC%E5%B9%BF%E5%91%8A%E4%BA%86%EF%BC%9F%EF%BC%81%F0%9F%98%B3+%E5%B1%85%E9%B2%81%E4%BB%95&source=web_search_result_notes",
       "publishedAt": "2026-08-28_18:18:26",
@@ -14537,7 +14537,7 @@
     {
       "id": "6a9d2d61000000002b00341d",
       "number": 336,
-      "title": "ClipCat：一键复刻爆款带货视频，史",
+      "title": "ClipCat：一键复刻爆款带货视频",
       "author": "刘维森Weison",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=ClipCat%EF%BC%9A%E4%B8%80%E9%94%AE%E5%A4%8D%E5%88%BB%E7%88%86%E6%AC%BE%E5%B8%A6%E8%B4%A7%E8%A7%86%E9%A2%91%EF%BC%8C%E5%8F%B2+%E5%88%98%E7%BB%B4%E6%A3%AEWeison&source=web_search_result_notes",
       "publishedAt": "2026-09-06_19:07:45",
@@ -14625,7 +14625,7 @@
     {
       "id": "6a9bf0f1000000002502de90",
       "number": 338,
-      "title": "连暗网都惊动了！",
+      "title": "本地部署 Stable Diffusion 的步骤与注意事项",
       "author": "云间蛋炒饭",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%BF%9E%E6%9A%97%E7%BD%91%E9%83%BD%E6%83%8A%E5%8A%A8%E4%BA%86%EF%BC%81+%E4%BA%91%E9%97%B4%E8%9B%8B%E7%82%92%E9%A5%AD&source=web_search_result_notes",
       "publishedAt": "2026-09-05_20:37:37",
@@ -14709,7 +14709,7 @@
     {
       "id": "6a9eb12b0000000011034c08",
       "number": 340,
-      "title": "AI决策拆解｜5个顾问角色（建议收藏）",
+      "title": "AI决策拆解｜5个顾问角色",
       "author": "三玖AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=AI%E5%86%B3%E7%AD%96%E6%8B%86%E8%A7%A3%EF%BD%9C5%E4%B8%AA%E9%A1%BE%E9%97%AE%E8%A7%92%E8%89%B2%EF%BC%88%E5%BB%BA%E8%AE%AE%E6%94%B6%E8%97%8F%EF%BC%89+%E4%B8%89%E7%8E%96AI&source=web_search_result_notes",
       "publishedAt": "2026-09-08_09:43:01",
@@ -14751,7 +14751,7 @@
     {
       "id": "6aa0f9af00000000280327e7",
       "number": 341,
-      "title": "做自媒体必备6个skills！如何用AI起号？",
+      "title": "做自媒体必备6个skills！如何用AI起号",
       "author": "小巧见",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%81%9A%E8%87%AA%E5%AA%92%E4%BD%93%E5%BF%85%E5%A4%876%E4%B8%AAskills%EF%BC%81%E5%A6%82%E4%BD%95%E7%94%A8AI%E8%B5%B7%E5%8F%B7%EF%BC%9F+%E5%B0%8F%E5%B7%A7%E8%A7%81&source=web_search_result_notes",
       "publishedAt": "2026-09-09_16:16:15",
@@ -14793,7 +14793,7 @@
     {
       "id": "6a9e64dc0000000026009db1",
       "number": 342,
-      "title": "离线字幕 + 本地 TTS，开源多轨剪辑",
+      "title": "离线字幕 + 本地 TTS，开源多轨剪辑 Concat",
       "author": "广叔AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%A6%BB%E7%BA%BF%E5%AD%97%E5%B9%95+%2B+%E6%9C%AC%E5%9C%B0+TTS%EF%BC%8C%E5%BC%80%E6%BA%90%E5%A4%9A%E8%BD%A8%E5%89%AA%E8%BE%91+%E5%B9%BF%E5%8F%94AI&source=web_search_result_notes",
       "publishedAt": "2026-09-07_17:16:44",
@@ -14915,7 +14915,7 @@
     {
       "id": "6a9d5b26000000000d02627c",
       "number": 345,
-      "title": "GitHub每日AI项目推荐·第42期",
+      "title": "GitHub每日AI项目推荐·第42期：vphone",
       "author": "AI大事纪",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=GitHub%E6%AF%8F%E6%97%A5AI%E9%A1%B9%E7%9B%AE%E6%8E%A8%E8%8D%90%C2%B7%E7%AC%AC42%E6%9C%9F+AI%E5%A4%A7%E4%BA%8B%E7%BA%AA&source=web_search_result_notes",
       "publishedAt": "2026-09-06_22:23:02",
@@ -15083,7 +15083,7 @@
     {
       "id": "6a6afd1e000000000f006082",
       "number": 349,
-      "title": "howto | Github 零基础终极教程！",
+      "title": "howto | Github 零基础终极教程",
       "author": "木子不写代码",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=howto+%7C+Github+%E9%9B%B6%E5%9F%BA%E7%A1%80%E7%BB%88%E6%9E%81%E6%95%99%E7%A8%8B%EF%BC%81+%E6%9C%A8%E5%AD%90%E4%B8%8D%E5%86%99%E4%BB%A3%E7%A0%81&source=web_search_result_notes",
       "publishedAt": "2026-07-30_22:01:34",
@@ -15125,7 +15125,7 @@
     {
       "id": "6aafa978000000002a02f619",
       "number": 350,
-      "title": "腾讯把Agent项目开源并放到了GitHub上？",
+      "title": "腾讯开源 Agent 记忆系统 TencentDB Agent Memory",
       "author": "Serena | AI产品经理",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%85%BE%E8%AE%AF%E6%8A%8AAgent%E9%A1%B9%E7%9B%AE%E5%BC%80%E6%BA%90%E5%B9%B6%E6%94%BE%E5%88%B0%E4%BA%86GitHub%E4%B8%8A%EF%BC%9F+Serena+%7C+AI%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86&source=web_search_result_notes",
       "publishedAt": "2026-09-20_19:38:00",
@@ -15171,7 +15171,7 @@
     {
       "id": "6aa5313f0000000029018445",
       "number": 351,
-      "title": "77k星标的智能体教程，从使用者蜕变为",
+      "title": "77k星标的智能体教程 Hello-Agents",
       "author": "广叔AI",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=77k%E6%98%9F%E6%A0%87%E7%9A%84%E6%99%BA%E8%83%BD%E4%BD%93%E6%95%99%E7%A8%8B%EF%BC%8C%E4%BB%8E%E4%BD%BF%E7%94%A8%E8%80%85%E8%9C%95%E5%8F%98%E4%B8%BA+%E5%B9%BF%E5%8F%94AI&source=web_search_result_notes",
       "publishedAt": "2026-09-12_21:02:23",
@@ -15217,7 +15217,7 @@
     {
       "id": "6a979d2d000000000d0270fd",
       "number": 352,
-      "title": "一台u盘、几个AI模型，00后在客厅用AI干翻整个生物科技圈",
+      "title": "00后用二手设备和AI在客厅完成基因组测序",
       "author": "杭州AI嘉年华",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E4%B8%80%E5%8F%B0u%E7%9B%98%E3%80%81%E5%87%A0%E4%B8%AAAI%E6%A8%A1%E5%9E%8B%EF%BC%8C00%E5%90%8E%E5%9C%A8%E5%AE%A2%E5%8E%85%E7%94%A8AI%E5%B9%B2%E7%BF%BB%E6%95%B4%E4%B8%AA%E7%94%9F%E7%89%A9%E7%A7%91%E6%8A%80%E5%9C%88+%E6%9D%AD%E5%B7%9EAI%E5%98%89%E5%B9%B4%E5%8D%8E&source=web_search_result_notes",
       "publishedAt": "2026-09-02_13:51:09",
@@ -15259,7 +15259,7 @@
     {
       "id": "6a9430b30000000029035a35",
       "number": 353,
-      "title": "7种主流Agent架构深度解析！",
+      "title": "7种主流Agent架构深度解析",
       "author": "Agent工程师King",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=7%E7%A7%8D%E4%B8%BB%E6%B5%81Agent%E6%9E%B6%E6%9E%84%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%81+Agent%E5%B7%A5%E7%A8%8B%E5%B8%88King&source=web_search_result_notes",
       "publishedAt": "2026-08-30_23:31:31",
@@ -15339,7 +15339,7 @@
     {
       "id": "6aa15c1e0000000026030a2e",
       "number": 355,
-      "title": "我发现还有很多人都没用上AI",
+      "title": "我发现还有很多人都没用上AI：零代码做App变现",
       "author": "Daisy黛西",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E6%88%91%E5%8F%91%E7%8E%B0%E8%BF%98%E6%9C%89%E5%BE%88%E5%A4%9A%E4%BA%BA%E9%83%BD%E6%B2%A1%E7%94%A8%E4%B8%8AAI+Daisy%E9%BB%9B%E8%A5%BF&source=web_search_result_notes",
       "publishedAt": "2026-09-09_23:16:14",
@@ -15461,7 +15461,7 @@
     {
       "id": "6aad5b60000000002b011603",
       "number": 358,
-      "title": "干牛新功能，免费测主图，点击率提高20%！",
+      "title": "千牛新功能，免费测主图提升点击率",
       "author": "胖猫运营咨询",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%B9%B2%E7%89%9B%E6%96%B0%E5%8A%9F%E8%83%BD%EF%BC%8C%E5%85%8D%E8%B4%B9%E6%B5%8B%E4%B8%BB%E5%9B%BE%EF%BC%8C%E7%82%B9%E5%87%BB%E7%8E%87%E6%8F%90%E9%AB%9820%25%EF%BC%81+%E8%83%96%E7%8C%AB%E8%BF%90%E8%90%A5%E5%92%A8%E8%AF%A2&source=web_search_result_notes",
       "publishedAt": "2026-09-19_01:40:16",
@@ -15503,7 +15503,7 @@
     {
       "id": "6aa42ae6000000002900e07b",
       "number": 359,
-      "title": "全网最详细万相台降低点击费用的教程！",
+      "title": "万相台无界降低点击费用的方法",
       "author": "是大海呀",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%85%A8%E7%BD%91%E6%9C%80%E8%AF%A6%E7%BB%86%E4%B8%87%E7%9B%B8%E5%8F%B0%E9%99%8D%E4%BD%8E%E7%82%B9%E5%87%BB%E8%B4%B9%E7%94%A8%E7%9A%84%E6%95%99%E7%A8%8B%EF%BC%81+%E6%98%AF%E5%A4%A7%E6%B5%B7%E5%91%80&source=web_search_result_notes",
       "publishedAt": "2026-09-12_02:23:02",
@@ -15545,7 +15545,7 @@
     {
       "id": "6a9e1620000000002601eade",
       "number": 360,
-      "title": "淘宝无界的全景洞察，我建议系统关闭！",
+      "title": "淘宝无界的场景洞察，我建议系统关闭",
       "author": "胖猫运营咨询",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E6%B7%98%E5%AE%9D%E6%97%A0%E7%95%8C%E7%9A%84%E5%85%A8%E6%99%AF%E6%B4%9E%E5%AF%9F%EF%BC%8C%E6%88%91%E5%BB%BA%E8%AE%AE%E7%B3%BB%E7%BB%9F%E5%85%B3%E9%97%AD%EF%BC%81+%E8%83%96%E7%8C%AB%E8%BF%90%E8%90%A5%E5%92%A8%E8%AF%A2&source=web_search_result_notes",
       "publishedAt": "2026-09-08_02:56:00",
@@ -15629,7 +15629,7 @@
     {
       "id": "6a995ac9000000002900cc37",
       "number": 362,
-      "title": "关键词怎么出价更好？有什么技巧！",
+      "title": "直通车关键词出价公式：倒推基础出价",
       "author": "是大海呀",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%85%B3%E9%94%AE%E8%AF%8D%E6%80%8E%E4%B9%88%E5%87%BA%E4%BB%B7%E6%9B%B4%E5%A5%BD%EF%BC%9F%E6%9C%89%E4%BB%80%E4%B9%88%E6%8A%80%E5%B7%A7%EF%BC%81+%E6%98%AF%E5%A4%A7%E6%B5%B7%E5%91%80&source=web_search_result_notes",
       "publishedAt": "2026-09-03_21:32:25",
@@ -15713,7 +15713,7 @@
     {
       "id": "6a979426000000001001c00b",
       "number": 364,
-      "title": "💡人群推广截留实操，整理了详细步骤！",
+      "title": "人群推广截留实操，整理了详细步骤",
       "author": "欣姐电商",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%F0%9F%92%A1%E4%BA%BA%E7%BE%A4%E6%8E%A8%E5%B9%BF%E6%88%AA%E7%95%99%E5%AE%9E%E6%93%8D%EF%BC%8C%E6%95%B4%E7%90%86%E4%BA%86%E8%AF%A6%E7%BB%86%E6%AD%A5%E9%AA%A4%EF%BC%81+%E6%AC%A3%E5%A7%90%E7%94%B5%E5%95%86&source=web_search_result_notes",
       "publishedAt": "2026-09-02_13:12:39",
@@ -15885,7 +15885,7 @@
     {
       "id": "6a990e03000000002700a4e2",
       "number": 368,
-      "title": "别看泡泡玛特风生水起，做盲盒的潮玩工作室却在大批倒闭！",
+      "title": "泡泡玛特火热背后，潮玩工作室大批倒闭",
       "author": "知危",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E5%88%AB%E7%9C%8B%E6%B3%A1%E6%B3%A1%E7%8E%9B%E7%89%B9%E9%A3%8E%E7%94%9F%E6%B0%B4%E8%B5%B7%EF%BC%8C%E5%81%9A%E7%9B%B2%E7%9B%92%E7%9A%84%E6%BD%AE%E7%8E%A9%E5%B7%A5%E4%BD%9C%E5%AE%A4%E5%8D%B4%E5%9C%A8%E5%A4%A7%E6%89%B9%E5%80%92%E9%97%AD%EF%BC%81+%E7%9F%A5%E5%8D%B1&source=web_search_result_notes",
       "publishedAt": "2026-09-06_12:01:08",
@@ -16007,7 +16007,7 @@
     {
       "id": "6aa10c5b000000002802d1ae",
       "number": 371,
-      "title": "3亿人收藏提示词！挖掘潜力及副业机会！",
+      "title": "7条递进提示词挖掘潜力与副业机会",
       "author": "陈乔维Justin",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=3%E4%BA%BF%E4%BA%BA%E6%94%B6%E8%97%8F%E6%8F%90%E7%A4%BA%E8%AF%8D%EF%BC%81%E6%8C%96%E6%8E%98%E6%BD%9C%E5%8A%9B%E5%8F%8A%E5%89%AF%E4%B8%9A%E6%9C%BA%E4%BC%9A%EF%BC%81+%E9%99%88%E4%B9%94%E7%BB%B4Justin&source=web_search_result_notes",
       "publishedAt": "2026-09-09_17:35:55",
@@ -16049,7 +16049,7 @@
     {
       "id": "6abdf574000000001400113d",
       "number": 372,
-      "title": "4个万能古建筑拍照技巧‼️避开人群拍大片📷",
+      "title": "4个万能古建筑拍照技巧，避开人群拍大片",
       "author": "水果味儿",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=4%E4%B8%AA%E4%B8%87%E8%83%BD%E5%8F%A4%E5%BB%BA%E7%AD%91%E6%8B%8D%E7%85%A7%E6%8A%80%E5%B7%A7%E2%80%BC%EF%B8%8F%E9%81%BF%E5%BC%80%E4%BA%BA%E7%BE%A4%E6%8B%8D%E5%A4%A7%E7%89%87%F0%9F%93%B7+%E6%B0%B4%E6%9E%9C%E5%91%B3%E5%84%BF&source=web_search_result_notes",
       "publishedAt": "2026-10-01_15:53:56",
@@ -16133,7 +16133,7 @@
     {
       "id": "6aa253310000000011037d08",
       "number": 374,
-      "title": "论怎么杜绝AI音乐的“塑料味”",
+      "title": "去掉 Suno AI 音乐“塑料味”的三个方法",
       "author": "懒人AI音乐局*",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E8%AE%BA%E6%80%8E%E4%B9%88%E6%9D%9C%E7%BB%9DAI%E9%9F%B3%E4%B9%90%E7%9A%84%E2%80%9C%E5%A1%91%E6%96%99%E5%91%B3%E2%80%9D+%E6%87%92%E4%BA%BAAI%E9%9F%B3%E4%B9%90%E5%B1%80*&source=web_search_result_notes",
       "publishedAt": "2026-09-10_16:50:25",
@@ -16175,7 +16175,7 @@
     {
       "id": "6ac34fd40000000018005b2a",
       "number": 375,
-      "title": "Anthropic 新规：你对Skills的认知都已过时",
+      "title": "Anthropic 官方 Skill 编写最佳实践要点",
       "author": "马丁没有早晨",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=Anthropic+%E6%96%B0%E8%A7%84%EF%BC%9A%E4%BD%A0%E5%AF%B9Skills%E7%9A%84%E8%AE%A4%E7%9F%A5%E9%83%BD%E5%B7%B2%E8%BF%87%E6%97%B6+%E9%A9%AC%E4%B8%81%E6%B2%A1%E6%9C%89%E6%97%A9%E6%99%A8&source=web_search_result_notes",
       "publishedAt": "2026-10-06_00:30:00",
@@ -16217,7 +16217,7 @@
     {
       "id": "6ac85743000000001402cc7a",
       "number": 376,
-      "title": "给 Mac 修图软件做了个中文版！开源免费✨",
+      "title": "Compositor 中文版：开源 Mac 修图软件的社区汉化",
       "author": "哇哇叫",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=%E7%BB%99+Mac+%E4%BF%AE%E5%9B%BE%E8%BD%AF%E4%BB%B6%E5%81%9A%E4%BA%86%E4%B8%AA%E4%B8%AD%E6%96%87%E7%89%88%EF%BC%81%E5%BC%80%E6%BA%90%E5%85%8D%E8%B4%B9%E2%9C%A8+%E5%93%87%E5%93%87%E5%8F%AB&source=web_search_result_notes",
       "publishedAt": "2026-10-09_13:53:55",
@@ -16263,7 +16263,7 @@
     {
       "id": "6ac90e9a000000001501686d",
       "number": 377,
-      "title": "GitHub每日AI项目推荐·第93期",
+      "title": "VoxCPM：面壁智能开源的多语言语音生成模型",
       "author": "AI大事纪",
       "sourceUrl": "https://www.xiaohongshu.com/search_result?keyword=GitHub%E6%AF%8F%E6%97%A5AI%E9%A1%B9%E7%9B%AE%E6%8E%A8%E8%8D%90%C2%B7%E7%AC%AC93%E6%9C%9F+AI%E5%A4%A7%E4%BA%8B%E7%BA%AA&source=web_search_result_notes",
       "publishedAt": "2026-10-10_09:00:13",
