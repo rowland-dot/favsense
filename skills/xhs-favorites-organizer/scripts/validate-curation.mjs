@@ -23,6 +23,42 @@ function clean(value) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
+// The text of an accepted entry is shown on its public card as curated, so five kinds of copied-over
+// or placeholder text are refused (issue 86). isDiandianRefusal is deliberately not extended for the
+// reply opening: a saved DianDian record itself begins this way and is a valid reply.
+const DIANDIAN_REPLY_OPENING = /^(根据你(引用|分享|提供)的|根据获取到的|以下是核心总结)/;
+const TOPIC_TAG = /\[话题\]|(?<![\p{L}\p{N}])#[\p{L}\p{N}_]/u; // "C#" is not a topic: the # follows a letter
+const HAN = /\p{Script=Han}/u;
+const CHINESE_PUNCTUATION = /[，。；：！？、]/;
+// Zero-width space, non-joiner, joiner, word joiner, byte-order mark.
+const INVISIBLE_CODE_POINTS = new Set([0x200b, 0x200c, 0x200d, 0x2060, 0xfeff]);
+// Measured on the accepted entries: the longest sound summary without Chinese punctuation had 39
+// characters, the shortest copied-over source text had 64.
+const UNREWRITTEN_SUMMARY_MIN_LENGTH = 60;
+
+function withoutInvisible(text) {
+  return [...text].filter((character) => !INVISIBLE_CODE_POINTS.has(character.codePointAt(0))).join("");
+}
+
+function acceptedTextProblems(entry) {
+  const problems = [];
+  for (const field of ["title", "summary", "action"]) {
+    const text = String(entry[field] ?? "");
+    if (withoutInvisible(text).length !== text.length) problems.push(`invisible-character:${field}`);
+    if (DIANDIAN_REPLY_OPENING.test(clean(withoutInvisible(text)))) problems.push(`diandian-reply-opening:${field}`);
+    if (TOPIC_TAG.test(text)) problems.push(`hashtag:${field}`);
+  }
+  // Titles are not judged by language: many sound titles are product names.
+  for (const field of ["summary", "action"]) {
+    if (!HAN.test(String(entry[field] ?? ""))) problems.push(`no-chinese:${field}`);
+  }
+  const summary = clean(entry.summary);
+  if (summary.length >= UNREWRITTEN_SUMMARY_MIN_LENGTH && !CHINESE_PUNCTUATION.test(summary)) {
+    problems.push("unrewritten-source-text:summary");
+  }
+  return problems;
+}
+
 function readJson(filename, label) {
   try {
     return JSON.parse(fs.readFileSync(path.resolve(filename), "utf8").replace(/^\uFEFF/, ""));
@@ -144,6 +180,7 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
         if (!title || /未命名收藏/.test(title)) errors.push("title-invalid");
         if (clean(entry.summary).length < 32 || GENERIC_TEXT.some((pattern) => pattern.test(clean(entry.summary))) || isDiandianRefusal(entry.summary)) errors.push("summary-not-specific");
         if (clean(entry.action).length < 16 || GENERIC_TEXT.some((pattern) => pattern.test(clean(entry.action))) || isDiandianRefusal(entry.action)) errors.push("action-not-specific");
+        errors.push(...acceptedTextProblems(entry));
         if (!Array.isArray(entry.themes) || entry.themes.length < 1) errors.push("themes-missing");
         if (!Array.isArray(entry.tools)) errors.push("tools-invalid");
         if (entry.category_override === true && (!clean(entry.category) || !clean(entry.category_reason))) {

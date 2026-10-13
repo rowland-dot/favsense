@@ -363,8 +363,8 @@ async function buildProfileFixture(profileFile, options = {}) {
   const fixtureCuration = options.curation ?? (options.uncurated ? {} : {
     [noteId]: {
       category: "Fixture", themes: ["Fixture"],
-      summary: "Fixture summary with enough content for deterministic profile compilation.",
-      action: "Review the configured resource and its official evidence before taking action.",
+      summary: "这是一条用于确定性编译的测试摘要，写清了对象、工作方式与限制，长度足够通过质量门。",
+      action: "先核对配置的资源及其官方证据，再决定是否采用，并记录适用边界。",
       tools: [], kind: "Note"
     }
   });

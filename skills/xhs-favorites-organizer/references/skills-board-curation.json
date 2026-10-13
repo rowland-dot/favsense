@@ -2,25 +2,30 @@
   "6a5e0064000000001d02067d": {
     "id": "6a5e0064000000001d02067d",
     "content_sha256": "30053927392d54c6ee4e18d8ff0409721bff3cd50f6469c390b617d9811bf976",
-    "title": "亚马逊精铺选品：用感官训练优化主图与卖点",
+    "title": "亚马逊选品粗筛法：月销不超500单、售价不低于35美元、评论不超100个",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一条关于​​亚马逊选品​​的视频内容，核心分享了提升选品效率的\"500-35-100\"初筛法。以下是完整总结： 为什么选品这么难？ 很多人每天花五六个小时泡在选品软件里翻 BSR 榜单，但选出的产品要么刚上架就卷价格，要么广告点几十次才出一单。问题在于：​​BSR 榜单和搜索量只适合验证需求，不适合直接做选品对标​​。当产品冲上榜单时，所有人都能看见，早就被大量卖家盯上，等你打完样发去 FBA，市场机会早就变成了价格战场。",
-    "action": "连续一周每天抽取固定数量的同类商品，分别记录第一眼、第二眼和点击原因；把重复出现的视觉与卖点线索形成检查表，再用主图小范围测试验证点击变化，不能用感受替代市场需求与竞争数据。",
+    "summary": "讲亚马逊卖家如何用“500-35-100”条件先过滤掉不值得研究的商品：在卖家精灵里设月销量最多500单、售价最低35美元、评论最多100个，排除已被大量卖家盯上的爆款、利润被费用吃掉的低价品和竞争壁垒已高的老链接，再从剩下的陌生细分品类、评论少但稳定出单的链接里找方向。作者强调这只是粗筛，不能直接选出最终产品，三个数字可按结果多少放宽或收紧，筛出后还要分析热卖原因、运营难度、合并评论和侵权等风险。",
+    "action": "先在选品软件里照这三个条件筛一个自己熟悉的大类，挑出陌生的细分品类和评论少但稳定出单的链接，逐个弄清它卖给谁、解决什么需求；再核对合并评论、站外硬推和侵权风险，结果太少或太多时调整价格和评论上限。三个数字只是起点，不能照抄选品。",
     "themes": [
-      "主图与卖点",
       "亚马逊选品",
       "出海电商",
-      "消费者感知"
+      "选品初筛"
     ],
     "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "f38a99523ab9294cd655ebdd1960f682b747b95d1a18f7bc09bc902469f3a814",
-    "evidence_sha256": "492ae93c787fae1306d11cce597e4f9f515aa390ee2e725cacce02966d1b0f72",
+    "evidence_sha256": "6fe7c9d081e3761a8e1638cf64e55d1e273a7e5eaf1762847fa1fd3c03aa61cb",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "ee7f6a1498e4e1d3259912d890300ce088bfd2f1cb4bc899676cd3d74381de29"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -48,7 +53,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "a9b663fd6590b7f44d540a6a1a706858f5e066ec2d483e8b5a23dd8e81f9bfec",
+    "candidate_revision": "0af366d9889addf9e4a64aaa5feb36c4975a87c0fd45b48f3bce59e5c3f3abd6",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -283,28 +288,28 @@
   "69e63022000000002301c7df": {
     "id": "69e63022000000002301c7df",
     "content_sha256": "910d6442e12b197fd55f81bcdecf2edb742edb255dbace2b1a63c4e8eddd1775",
-    "title": "跟我学，做个好看的网站不是很简单吗？",
+    "title": "用 Kimi 2.6 复刻高级审美网站：找参考、复制提示词、加循环视频",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一篇关于​​如何用 AI 工具快速制作高级质感网站​​的教程视频，核心思路是\"找审美 + AI 复刻\"。以下是完整总结： 核心建站公式 好看的网站 = 找高级审美参考 + 用 AI 工具复刻 普通人很难用提示词精准描述想要的效果，所以更实用的做法是先找到符合审美的参考，再让 AI 帮你复刻出来。 具体操作步骤 ​​找审美参考​​：推荐去一些免费网站查找设计规范、元素特效甚至完整代码，复制喜欢的样式提示词，相当于拿到整套设计体系。",
-    "action": "按预算优先试用 Kimi 2.6；有 Vibe Coding 需求可搭配 Claude Code 或 Codex",
+    "summary": "教程视频讲普通人如何做出有高级质感、首页自带循环视频的个人或业务网站：先在几个免费网站找符合审美的设计规范和风格提示词，再交给 Kimi 复刻（作者认为它前端和审美能力强、国内可直接用，演示的是刚升级的 2.6 模型）；上传喜欢的图片或 15 秒以内的视频，就能让首页循环播放；之后可用文字或截图画框微调留白和位置，Kimi 还能生成数据库和登录验证。内容是作者自己的评测，音频里除 MotionSight 外没有念出参考网站的名字，也没有与其他工具做效果对比。",
+    "action": "先挑一个自己喜欢的现成网页，复制它的风格提示词交给 Kimi 复刻，再上传一张图片或一段 15 秒内的视频做首页循环背景；用 Claude Code 或 Codex 做同一个复刻，对比版式、动效和可用性，再决定用哪个工具。",
     "themes": [
-      "AI工具对比",
-      "Vibe Coding",
-      "工具推荐"
+      "AI做网站",
+      "Kimi",
+      "网页设计"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "7655ff504c085e62ae52bf63f093c498b5405e4ae6b5422edf4eed8b70172cb4",
-    "evidence_sha256": "3ee254f5ea14417df3010026cb3aeacc2f4aa9440d747571c9a0f91e870fd849",
+    "evidence_sha256": "ddbcf2e39d6c16a58d9eebfe734a2923cda6ce35dd689f5744ce3d4b3bc50cb8",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "c53608d1c66fe4949c304c602cadc42d2599e69d04c47aaf70fa230832d182b6"
       },
       {
@@ -334,35 +339,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "a448d53d9c1b8ff50621e197e628d32c5f267b386d19495d13593f4f7c2301be",
+    "candidate_revision": "3ed293bf7071cd0236a4aae400837f7b6ce5e89e02e4031fb6d6a1eb7830f1dd",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a4a67ca000000001603daba": {
     "id": "6a4a67ca000000001603daba",
     "content_sha256": "b3703a54c172f3847a62f4fd92de94ff929411e58397e151090bb9bda23c9579",
-    "title": "全球首个开源Agent视频制作神器，3万点赞。",
+    "title": "OpenMontage：开源的 Agent 视频生产系统，一个月涨近3万 star",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "这个github项目登上了本月开源热榜 一个月涨了接近3万的star 它是全球第一个开源的agent的视频生产系统 内置了12个workflow 52种工具 500多个skill 把你的clock code codex变成一整个视频工作室 大部分AI视频工具就是给一句话提示词 出一段5秒片段 openmontage给的是一整条的生产线 调研提案脚本 场景规划 素材生成 剪辑合成渲染 跟真实的视频制作团队的流程一模一样 这个开源项目应该是目前github上最优质的视频生产版sk",
-    "action": "收藏该GitHub仓库并探索适合自己业务场景的workflow和Skill。",
+    "summary": "介绍 GitHub 上的开源项目 OpenMontage：博主称它是首个开源的 Agent 视频生产系统，一个月内涨了近 3 万 star，内置 12 套工作流、52 种工具和 500 多个 skill，能把 Claude Code、Codex 这类编程 Agent 变成视频工作室。和多数只靠一句提示词生成 5 秒片段的 AI 视频工具不同，它按调研提案、脚本、场景规划、素材生成、剪辑合成渲染的完整流程来做。以上数字和“最优质”的评价都是博主口述，未经核实。",
+    "action": "到 GitHub 搜索 OpenMontage，核对仓库的 star 数、许可证和 README 列出的工作流是否与视频说法一致；再用一个 5 到 10 秒的小主题跑完整流程，看生成素材、剪辑和渲染各步在自己的 Claude Code 或 Codex 上能否跑通。",
     "themes": [
-      "AI Agent",
-      "GitHub",
-      "Skill仓库"
+      "AI视频",
+      "Agent工作流",
+      "开源项目"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "7d473282cd7b33aeca27f7a7cd894511da1d425dd703da7d6e175f764c27d0ee",
-    "evidence_sha256": "b93fc84b906e3b57c6f2e8983d038fb6da3a6b0b371a205dce61ee26dea207b5",
+    "evidence_sha256": "f5581f86ccb68f0f9d529117e7128f9483dc6a4bca3ee6bf792feee36edca359",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "dc5068d819b1c95140a89eaeabd2f92b082972057070f99828a7b1d0561dbe76"
       },
       {
@@ -392,35 +397,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "31cfd7efd5cb1c297cb4709344243efe9758726ab3a4d241e26670f10635e3ec",
+    "candidate_revision": "ba5d69c0d4086692bddeb02b15687de3385be3f8923eb0eefb66c4b398594f7a",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a3b9aa2000000001102e1ff": {
     "id": "6a3b9aa2000000001102e1ff",
     "content_sha256": "d35dfba6ad01b58e5778c2bd7cf1a527d1b01b1698738a2eca86102f08809c3a",
-    "title": "帮你打通一人自媒体全流程的开源项目",
+    "title": "一人自媒体全流程开源项目：多平台一键发布、自动回复评论、AI 做视频",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一个帮你打通一人自媒体全流程的开源项目，在 GitHub 上已经拿下了 ​​22k+ Star​​，热度相当高。 以下是核心功能总结： ​​多平台一键发布​​：支持国内十几个主流平台（抖音、小红书、B站等），每个平台的标题、封面、标签都能自动适配，不用来回切换账号挨个调整。 ​​AI 自动互动​​：AI 自动回复评论，精准对接意向客户，还能自动跟进热点和商单，解放双手。",
-    "action": "调研该21K Stars工具，评估用于AI训练数据处理的适用性。",
+    "summary": "介绍一个 GitHub 上约 2 万 star 的开源项目，用 AI Agent 把一人自媒体的运营串起来：向国内十几个主流平台一键发布，标题、封面和标签自动适配；AI 自动回复评论，对接意向客户并跟进热点和商单；只描述需求，由 AI 完成从选题到成品视频的创作。视频语音把 star 数说成 21K，点点总结写作 22k+ 并给出项目名 AiToEarn，语音里没有念出名称；部署方式、使用门槛和自动互动是否符合平台规则都没有交代。",
+    "action": "在 GitHub 搜索 AiToEarn，核对仓库名、star 数和许可证是否与视频一致；先用测试账号只试多平台发布，检查各平台标题、封面和标签的适配效果；自动回复评论和接商单的功能，先确认平台规则允许自动化再决定是否开启。",
     "themes": [
-      "AI训练数据",
-      "GitHub",
-      "数据工具"
+      "多平台发布",
+      "开源项目",
+      "自媒体运营"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "05eda715a5d2a0fa857ae16bbb166b71535bb014f816b5923f926a4d44adcb90",
-    "evidence_sha256": "12dece2d3e63e21bd3fc64d397a41351482f256c8fdd142e881c45afbc6c08a1",
+    "evidence_sha256": "8903a08cf0b673ba9c12318b291b941f3184ab6df5a02727c03846a5b2bd8fd0",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "0ec417fb849ee1f9bfad9836014244bd86f1645cc3a73c4d37665bee2b7f889d"
       },
       {
@@ -450,35 +455,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "69062c26f1f596ff6843b8aaec59c9e4fbb4c3d247659a85bcb911cdc6fe3318",
+    "candidate_revision": "4307ee00abf7b84f2f28000b06fbb069eb1bdb87f09a0897ea66343069cce781",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a43875c000000001700a2f4": {
     "id": "6a43875c000000001700a2f4",
     "content_sha256": "5ac29ee6aea0e5bde06e62e7add5bb246b95bed4f86fcb0fe3ac4622076198e0",
-    "title": "全自动一键剪辑视频",
+    "title": "Pixelle-Video：输入一个主题就自动生成短视频的阿里开源项目",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一条关于​​阿里开源的 AI 全自动视频剪辑 GitHub 项目​​的干货分享，核心内容总结如下： 核心功能 ​​一键生成视频​​：只需输入一个主题，系统就能自动完成从写文案、生成素材、合成语音、添加背景音乐到最终合成视频的全流程。 ​​智能剪辑能力​​：支持智能识别精彩片段、场景检测、自动拆条、精准转文字、字幕生成、画面稳定增强等，大幅减少人工操作。",
-    "action": "关注该GitHub AI工具合集，定期探索适合业务场景的新工具。",
+    "summary": "介绍阿里（AIDC-AI）开源的“AI 全自动短视频引擎”：输入一个主题，它自动写视频文案、生成对应素材、合成配音、添加背景音乐并一键合成视频，作者称数字人口播、小说解说、科普动画、人文纪实和历史解说等类型几乎都能生成，并有免费的本地部署方案。视频语音没有说出项目名，仓库名 Pixelle-Video、Apache-2.0 许可证和 Windows 一键整合包来自画面里的 GitHub 页面；“10 倍效率”之类的说法未经核实。",
+    "action": "到 GitHub 打开 AIDC-AI/Pixelle-Video，核对许可证、README 里的 Windows 一键整合包和系统要求；下载后用一个自己的短主题生成一条视频，检查文案、配音、素材和字幕质量，再决定是否用于批量内容。",
     "themes": [
-      "AI工具发现",
-      "GitHub",
-      "资源汇总"
+      "AI视频",
+      "开源项目",
+      "短视频生成"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "136648a29b0cb8d4d87735a310633deeb863abf73ed467c4a24be2f054d25b14",
-    "evidence_sha256": "26e1038b02a0fd2064b67538c507901048180e0fda820f8737d13adb0c7be787",
+    "evidence_sha256": "91ea3a0c1e35cecd0f5396e100721fb0e32e98297014641ed36d4cba68b83ba7",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "e9f2ad5b075b152750f0a4bdb29e2f396e79c04c32499b0123925d4edd035a45"
       },
       {
@@ -508,35 +513,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "1d676771503a753a3c918c096a155607457c2fee80bbbcb3b8c029a984cbb931",
+    "candidate_revision": "317d365d45f9e4681397c80fda0e0c0d373ee233cba22b881cb170e9b9956498",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a408c74000000001702dd1b": {
     "id": "6a408c74000000001702dd1b",
     "content_sha256": "4080a7ef83dffa65cfb993ba2b10389d3cda475698f8e8c5f8d53efb6678d341",
-    "title": "有码秒变无码，超强的视频马赛克修复神器！",
+    "title": "Lada：开源的视频马赛克修复工具，流畅运行需 6GB 以上显存",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一篇关于​​视频马赛克修复软件​​的分享，以下是核心内容总结： 软件简介 一款​​开源免费​​的马赛克去除工具，内置 AI 模型，可自动识别并修复视频中的马赛克。 目前在 GitHub 上已获得 ​​5.1k star​​，热度不错。 核心功能 自动识别马赛克位置并进行追踪修复。 支持​​一边修复一边观看​​，实时预览效果。 性能门槛 对电脑配置要求较高，流畅运行需要 ​​6G 以上显存​​ 以及 ​​6G 以上内存​​。",
-    "action": "查找并评估该5.1k Stars的AI练号工具，测试其在内容批量生产中的效果。",
+    "summary": "介绍一款开源免费的视频马赛克修复工具：内置 AI 模型，能自动识别马赛克位置并追踪修复，支持一边修复一边观看；对电脑要求较高，流畅运行需要 6GB 以上显存和 6GB 以上内存，边修复边看对内存要求更高；项目提供免安装的 Windows 绿色软件包，解压后双击即可使用。视频语音没有念出软件名，仓库 ladaapp/lada 和 AGPL-3.0 许可证来自画面里的 GitHub 页面，“5.1k star”是博主口述的数字；视频没有说明修复效果的上限。",
+    "action": "到 GitHub 核对 ladaapp/lada 的许可证和显存、内存要求；只拿自己有权处理的视频试跑，先用短片段看修复效果和速度，不要用它处理涉及他人隐私或版权的内容。",
     "themes": [
-      "AI练号",
-      "涨粉工具",
-      "自动化"
+      "开源项目",
+      "本地AI工具",
+      "视频修复"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "f746b08cbf9313cb81a1e5b040849fb26fd07e3a6045b7da14ac71ac3b1e020b",
-    "evidence_sha256": "687bcea08636fad2a504d7cf71100c2ab0b66c1022761580a8dc44b0ffae6758",
+    "evidence_sha256": "ea8bbd0f62212ac01d90b28d3c8f10f9bc8ac1a6a81aa925b52f7f6a8f9a2380",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "69a02e4b58705b4a2eca6d947df79a78520d00b961a9b74a9f9da296fe9b8aa0"
       },
       {
@@ -566,149 +571,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "147643c1ae51004a9343d707a19f3f78d05afcd13ba5322b5cbd3f7440d88d2c",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "6a3a0665000000002201a15d": {
-    "id": "6a3a0665000000002201a15d",
-    "content_sha256": "1c4de0d9e550eae1923f4b50de5bedca82ae38ba13d3d3f593b1802601ccaa64",
-    "title": "这个网站太棒啦❗️无需会员 直接使用",
-    "category": "",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "根据你引用的笔记，这是一篇关于​​AI 聚合网站​​的分享推荐，核心内容总结如下： 核心亮点 ​​无需会员​​：网站免费开放使用，不需要开通会员即可体验各项功能。 ​​国内直连​​：无需特殊网络环境，国内可直接访问。 ​​一站式聚合​​：集成了图片、视频、音频、文案等多种 AI 创作工具，不用在多个平台之间切换。 功能覆盖 ​​文案生成​​：提供 AI 写作模板和提示词，帮助快速产出文案。 ​​图片生成​​：内置多种 AI 图片模板，支持一键生图。",
-    "action": "Skip — entity name missing from visual; AI video workflow is too vague to be actionable without the tool name",
-    "themes": [
-      "AI创意",
-      "视频生成"
-    ],
-    "tools": [],
-    "kind": "Note",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "084f8db9749e0274d4d0a3750ac83b2012da11aa9bfedb0082556b60a8a5b683",
-    "evidence_sha256": "05a452f6c3f7f13907ce7d5dd95a894a40f3766fca45989d160653b8d26bfb8c",
-    "evidence_dependencies": [
-      {
-        "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
-        "result_sha256": "e13f5fffb648d4cc60bf2c09684d011fd13f7f75387c84f4f39806da7f3cacfb"
-      },
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "929272e2f2ccc5c313db5c7e57f33304fca832659d34f2d8bb0b3718f14ac2ae"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "801514796f1cbf778486f3ef9d4079d3cb20310afc4ad3bf91f96baf3f39a70b"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "cf1772d66202e6573ee8070b03ebc7026120b987932d95703e42c2b489dd8edd",
-    "review_status": "accepted",
-    "review_reason_code": ""
-  },
-  "6a3517de0000000022008c7f": {
-    "id": "6a3517de0000000022008c7f",
-    "content_sha256": "f302b351e6ee215c6039b0930a909c0a22bb1f86cb723484137e574397a53b82",
-    "title": "豆包的灰产让拍摄彻底要被洗牌了",
-    "category": "",
-    "category_override": false,
-    "category_reason": "",
-    "summary": "豆包的灰产让拍摄彻底要被洗牌了#ai[话题]##职场干货[话题]# #个人ip[话题]# a i 职 场 干 货 个 人 i p",
-    "action": "Skip — too brief and entity name missing; no actionable AI technique or specific tool can be identified",
-    "themes": [
-      "IP打造",
-      "内容创作"
-    ],
-    "tools": [],
-    "kind": "Note",
-    "status": "pending_review",
-    "blockers": [],
-    "candidate_seed_revision": "a508dab55c5708ab010ccee6de5ff67afde8e9ae3343cd77fd825629a0813e7f",
-    "evidence_sha256": "d2528a05593568f8f1b2835110059a051d20571b317a0b2a0c587eda3dbca2dc",
-    "evidence_dependencies": [
-      {
-        "method": "audio_transcript",
-        "provider": "faster-whisper",
-        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
-        "result_sha256": "2e6eae08d6f4358f6358ae74c14b35d2242b5d1dcd5b8d69c41b617eaa27957c"
-      },
-      {
-        "method": "diandian_summary",
-        "provider": "xiaohongshu-diandian",
-        "version": "28583f0323e6c571bc30f50135613c86b47adfdda03839238626d7702321a43e",
-        "result_sha256": "2c6ab0408071b36db64207cce6dc7e3248db9626b1999576eb96b70d429295ac"
-      },
-      {
-        "method": "public_text",
-        "provider": "favsense",
-        "version": "1",
-        "result_sha256": "587ff8bb87d731fc66fe28ecd5b3b64372bbe11875bbda5d34e28f2204648d29"
-      }
-    ],
-    "resource": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "resource_assessment": {
-      "status": "missing",
-      "resource_id": "",
-      "reason_code": "resource_not_applicable",
-      "resource_identity_sha256": "",
-      "verification_snapshot_sha256": ""
-    },
-    "candidate_revision": "a181f90ee9c8e6b8af4a70952efb9397a44c17b3bc794d76529ab73e7a53bced",
+    "candidate_revision": "28b7e5ba02ae63cce2298541a5827a5d466af5a438af466e08f9f8ecbdb11a09",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a169230000000003503b383": {
     "id": "6a169230000000003503b383",
     "content_sha256": "bbec46d3c0e2a107c42a21394817a13950d21a35f800b19090faf0f9a6f4875f",
-    "title": "这个开源skill直接把做视频的门口砸烂了",
+    "title": "HyperFrames：把视频当代码写的开源 skill，让 AI 一键生成可精确调整的视频",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你分享的小红书笔记，这是一篇介绍开源 AI 视频工具的推荐内容，核心总结如下： 核心亮点 ​​零门槛​​：不需要会编程、不需要会剪辑，把工具塞进 AI 技能库，告诉它你想生成的主题，就能自动出成品视频。 ​​全自动​​：AI 自动生成完整脚本、专业配音、字幕、转场特效，一键导出成品。 ​​高度可控​​：想改哪里改哪里，时长、画面、台词、特效都能随便调，告别\"抽盲盒\"式生成。",
-    "action": "参考提示词模板搭建自己的Claude Agent工作流，结合MCP扩展功能边界。",
+    "summary": "介绍一个塞进 AI 技能库就能用的开源视频 skill：不需要会编程或剪辑，告诉它想生成的主题，它自动生成完整脚本、配音、字幕和转场特效并一键导出成品；时长、画面、台词和特效都能再调。作者称它基于“视频即代码”的架构，输出百分之百精确可控，告别“抽盲盒”式生成。视频语音没有说出项目名，画面里的 GitHub 页面显示仓库为 heygen-com/hyperframes，star 数约 2.14 万；“百分之百可控”是作者说法，未经核实。",
+    "action": "到 GitHub 打开 heygen-com/hyperframes，核对许可证和 README 里给 AI Agent 的安装方式；装进自己的技能库后，用一个 15 秒的主题生成视频，检查脚本、配音、字幕和转场能否逐项修改，再和只给一句提示词的 AI 视频工具对比可控程度。",
     "themes": [
-      "AI Agent",
-      "Claude技能",
-      "提示工程"
+      "AI视频",
+      "Agent技能",
+      "开源项目"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "0406c4ccc9d3f155d1eb6ea0d031b00044f86374c6ddb93797a7b605310f5ac4",
-    "evidence_sha256": "ed452d4e4e7ba25e0d2ccfdf070614d65981bb69c5a25b8cf7f062cd5a3c12e8",
+    "evidence_sha256": "0b1364b963f5cb0d4773482ff85fd6a9698d3af07fa7afae0a4ccea5d52e2a84",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "35a31020d64edad57f12c7a2b8013a569f8b631b30ce0ff88ced821b43c69709"
       },
       {
@@ -738,35 +629,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "360ed05d69538658b9ab98869ab3628048d0de10cc1b8fd84247cddea6fad681",
+    "candidate_revision": "3109eabc7b00a5b35690f8c7e8f5fe757532202b1f0eee118a1d2fba12349534",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a1fffc40000000022024663": {
     "id": "6a1fffc40000000022024663",
     "content_sha256": "c52ea7bed210dfecc51d67c59d3c12732c44e6f1dd7f42565d4556101921b2a4",
-    "title": "爱死机爆火后，短剧最新Agent2.0更吊了！",
+    "title": "小云雀短剧 Agent 2.0：把小说直接转成分镜剧本和成片的 AI 漫剧工具",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你分享的笔记，这是一篇关于 ​​小云雀短剧Agent 2.0​​ 升级的介绍，核心内容是 AI 漫剧/短剧制作工具的最新进展。以下是总结： 核心升级 ​​集成 Gemini 3.0​​：大模型自动推理，把小说直接丢进去，就能输出连贯的电影级分镜剧本，不需要研究复杂提示词或写智能分镜指令。 ​​人物一致性解决​​：系统自动生成人物三视图、场景和道具，主角从头到尾长相完全相同，彻底解决了 AI 生成中人物走样的痛点。",
-    "action": "Save — quick overview of Google Gemini 3.0 and Agent 2.0 capabilities including 3D generation features",
+    "summary": "介绍小云雀短剧 Agent 2.0 的升级，作者认为它加上 Gemini 3.0 后，AI 漫剧赛道“直接宣布比赛结束”：把小说原文直接放进去，不需要预处理，大模型自动推理剧情并输出连贯的电影级分镜剧本，不用研究复杂提示词；系统自动生成人物三视图、场景和道具，让主角从头到尾长相一致；内置古风、赛璐璐、国风 3D、日系动漫等画风，一键应用；全程在云端运行，不占本地电脑配置。以上是作者的宣传式介绍，成片质量、价格和使用限制视频里没有交代。",
+    "action": "打开小云雀短剧 Agent，用一篇自己的短篇小说原文试跑，检查生成的分镜剧本是否连贯、不同镜头里的人物是否一致、画风切换是否可用；先确认免费额度和收费方式，再决定是否批量使用。",
     "themes": [
-      "AI Agent",
-      "Gemini",
-      "多模态"
+      "AI漫剧",
+      "分镜剧本",
+      "短剧制作"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "5eb4963bf7af106ccc7fcf098f39cd7de9bd777f95e5033d9042e70082fb0889",
-    "evidence_sha256": "8c407209be3abaae19e452c790481a383036569f0ccf68196ac327fb4cc9b344",
+    "evidence_sha256": "541ff59023b0ce6f9964e9f4dd26fe33672b613c31e9320f2a41d8080072f5d6",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "67f8ef1aabf3e262e0815ebf4e0791f7499972e761837545eb19e7e85cb926be"
       },
       {
@@ -796,22 +687,22 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "377593d637cf8106e41a3eabaa52152100e9b10a47ac6b5ef05aafe5d48821ed",
+    "candidate_revision": "378df14cf763959cac60775e5ea6273515bc1efdf81cb2c04250343b02e35057",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a05eef6000000003701ee63": {
     "id": "6a05eef6000000003701ee63",
     "content_sha256": "3c8723aca37234bd7af4ffc53bc68f266adc4a0df66bad654e068bdecaa885db",
-    "title": "华强买瓜天河福音AI演唱会现场｜喂饭式教程",
+    "title": "用 AI 音乐加一张九宫格分镜图，做出华强买瓜福音演唱会 MV 的流程",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一篇关于​​用AI工具将“华强买瓜”经典梗变成万人福音演唱会MV​​的喂饭级教程。以下是核心内容总结： 核心亮点 ​​创意脑洞​​：把《征服》里\"华强买瓜\"的对话，改造成一场在广州天河体育馆举办的福音演唱会。 ​​极简操作​​：不需要实拍，​​仅凭一张九宫格分镜图​​就能生成完整的现场演唱会MV。 ​​全流程拆解​​：从AI写歌到对口型视频，每一步都有具体操作指引。",
-    "action": "跟随视频教程，用AI视频与AI音乐生成工具完成一条完整MV的制作练习并发布。",
+    "summary": "教程拆解怎样只用一张图做出一条 AI 演唱会 MV：先用 AI 音乐工具写歌，提示词写上曲风和“华强买瓜”的原台词，关键一句是基于原对白扩展、保留九成原词，也可上传喜欢的歌来仿风格，多抽几次选满意的版本；再生成一张含主唱、观众、合唱团等不同角度的九宫格分镜图，当作整个场景的参考；因为视频模型 2.0 最长只支持 15 秒，要把歌切成小段，用同长度的图片在剪辑软件里量出每段时长；最后在视频生成界面上传九宫格图和音频切片，时长与切片一致，提示词里写清歌词和分镜，其余切片只换音频和歌词。作者提醒 2.0 做不到与参考音频百分之百同步，四舍五入会让时长有偏差，剪辑时不用视频自带音频，用变速对齐；他的八个切片里七个一次成功。具体用的音乐和视频工具名在转写里听不清，需要自行确认。",
+    "action": "先用一首半分钟内的短歌练手：写好曲风和台词提示词生成音乐，做一张九宫格分镜图，按 15 秒以内切片，在视频生成工具里逐段生成，再用变速对齐音频；工具名先到作者主页或评论区确认。",
     "themes": [
       "AI视频",
-      "AI音乐生成",
+      "AI音乐",
       "MV制作"
     ],
     "tools": [],
@@ -819,12 +710,12 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "1ee0167732383b5a3edeaf2bb9c9ca5219d7cb58e80a0f36ab851cab27344782",
-    "evidence_sha256": "cefe50ae189f092102187f593305691361440c2ebd7fb039f5e55f7248aba768",
+    "evidence_sha256": "76425c4d53fd90c1ac7538197f7bfde5231ed84fc08f025e94e36e14c855a44a",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "8bf32c1afa5d6623c9816b6a5c5123f78da7e8f23b0adf9aaa51e88d685f95d1"
       },
       {
@@ -854,35 +745,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "2ec8ee5e9a187ec0d730ebef5fb66b125e3ab89efa82bca24ec731312bb41809",
+    "candidate_revision": "73cc65e7b8ea64473128a38a340fb6ac1bfec760f4b718d746f8a211930cb1de",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a1969f90000000036003607": {
     "id": "6a1969f90000000036003607",
     "content_sha256": "8ad3d85fc2f07400dd8c13cf50b02de5078b746aa164ed3e34c16199f51446b4",
-    "title": "活人感ai台词配音技巧",
+    "title": "让 AI 配音更有活人感：用标点、情绪语速描述和场景状态写提示词",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "​​标点符号技巧​​：用不同标点改变语气节奏。 比如省略号能制造停顿，带出欲言又止的情绪。 ​​细化情绪描述​​：别只写\"愤怒\"，要加上语速、节奏、声音状态的细节描述。 比如\"声音又哑又抖，气息不稳，带着哭腔断断续续地说\"，情绪张力一下就出来了。 ​​补充场景环境氛围​​：加入人物状态和环境描写来强化效果。 比如不要只写\"小孩害怕\"，而是写\"他躲在黑暗的角落不敢动弹，耳边传来阵阵脚步声，满心恐惧，身体不停发抖\"，让 AI 有更丰富的上下文去演绎。",
-    "action": "围绕“活人感ai台词配音技巧”把正文中可核验的主张拆成检查项，只保留能够复现的部分并记录适用边界。",
+    "summary": "教程讲新手写 AI 配音提示词太笼统的问题，用同一句台词做对比试听，给出三招：用省略号等标点改变停顿和语气；别只写“愤怒”“委屈”，要补上语速、节奏和声音状态，比如声音发哑发抖、气息不稳、带着哭腔断断续续；再加入人物状态和环境描写，让 AI 有更丰富的上下文，比如把“害怕”写成躲在黑暗角落、听见脚步声、身体发抖。作者最后说全套提示词笔记已打包可领取；视频没有说明用的是哪个配音工具，效果对比靠试听，没有量化。",
+    "action": "挑一句自己的台词，分别用笼统情绪词、加了标点和语速描述的版本、再加场景状态的版本各生成一次配音，试听对比差异，把有效的写法记成自己的提示词模板；视频没说明配音工具，用现有的工具试即可。",
     "themes": [
-      "creative-tools",
-      "creative-workflow",
-      "roundup"
+      "AI短片",
+      "AI配音",
+      "提示词写法"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "bd9bd4ec1641e1f0b6e57ce3918480e409230344cf41eac5b0da99e776fb9765",
-    "evidence_sha256": "16e68d361626ebcc96bde00a9936228024e3c9b3571b4b6772d131c756adc58f",
+    "evidence_sha256": "625439ab69d9a5ac95c9c84ee421c11e20d6bcd590518a1b3bfff100d5815137",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "13da15d4f9c757d68d881fa6352708a8b9ecea8269d85449c82520151a9470e8"
       },
       {
@@ -912,35 +803,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "bc6360e8202842d7db2eab7ce2611dc1c3f66ec6e72608a645454b3d475c082a",
+    "candidate_revision": "b1e4abe1eebb7cb966c23e50342a446711e1498b124129f00d9fa31d2800bf6e",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a033907000000003502d46a": {
     "id": "6a033907000000003502d46a",
     "content_sha256": "ce6b415c776a6c735c804921702f58ef1ff516ef0b04f12409ec94520d43de8e",
-    "title": "AI 配音没感情？3 步调出演员级真实感！",
+    "title": "让 AI 配音像演员：用标点控制语气、描述发声方式、再加场景和人物状态",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一条关于​​AI配音去机械感​​的教程视频，作者“一帆”分享了3个让AI配音像演员一样自然的技巧。以下是核心内容总结： 为什么 AI 配音会\"一秒下头\" 很多人让 AI 配音时，提示词只写一句干巴巴的台词，比如\"你是不是也有一点想我呀\"，结果 AI 读出来毫无感情。问题不在于台词本身，而在于​​没有给 AI 足够的表演线索​​。 三步调出演员级真实感 ​​用标点控制语气​​：标点符号能瞬间让 AI 明白需要什么样的语气。感叹号加强强调感（\"别碰我的东西！",
-    "action": "参照定价框架重新审视自己的AI服务报价，设计一个高客单价服务包并测试市场反应。",
+    "summary": "教程视频以“你是不是也有一点想我呀”这类台词做前后对比，讲让 AI 配音摆脱机械感的三步：用标点控制语气，感叹号加强强调，逗号制造停顿和思考感；别只写“愤怒”“难过”这类情绪词，改写成声音大小、语速快慢、停顿位置和尾音变化，作者给了“语气等于声音大小加语速加停顿加尾音”的公式；最后加上场景和人物状态，按“场景加人物状态加发声方式加台词”的顺序写，同一句台词会读出完全不同的感觉。作者说所有提示词和语气符号对照已整理成文档，视频没有说明用的是哪个配音工具，效果靠试听判断。",
+    "action": "拿自己的一句台词，依次生成三个版本：原句、只改标点的版本、按公式补上场景与发声方式的版本，试听对比；把有效的标点和发声描述记成自己的提示词模板，再换一个场景重复一次，确认写法不是只对这一句有效。",
     "themes": [
       "AI视频",
-      "商业策略",
-      "高客单价服务"
+      "AI配音",
+      "提示词写法"
     ],
     "tools": [],
-    "kind": "Workflow",
+    "kind": "Note",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "f3f349e48f7c3d07ed9d1dae985dedce9350312a79f8936434c75fb4d8148596",
-    "evidence_sha256": "ef75d64724320cd2d06cc9fc977a42bab35a3dd4c7aa9fff66989de46ebcb088",
+    "candidate_seed_revision": "388537be28a6d89ce8c51736eb52c149bfa949e6ddceaeb5b6352f0baaba561b",
+    "evidence_sha256": "c73facabcdf0dd6289372a50b2b8fb166f91f5a9ef0049f5397ce141be151faa",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "4071cc306d5f6cb511110e19b86bc5de8320ebdbb50cafc7ec270d823fd241a5"
       },
       {
@@ -970,7 +861,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "5bef6446c994fff054b42eb09fb5110280bced8d6004d242f5d985b69fa541fe",
+    "candidate_revision": "fe6ed91617bce42342c657531ecc3e11b1f53827c7d508e9a35521d9e2f6a6eb",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -981,12 +872,12 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "这简直是AI圈的古神 目前在Gatehub上的数据高达93万克星 它不是一个指挥下单的交易智能体 而是一整套完整的AI交易公司 首先是它的信息分析团队 它会整理新闻 财报 市场数据等公开信息 尝试分析公司的基本面 市场情绪和宏观环境 接着报告会交给研究团队 这里面有看长分析师 也有看爹分析师 一方负责寻找机会 另一方专门挑问题找风险 双方经过多轮讨论后 形成一份相对完整的研究报告 然后模拟交易团队会根据研究结果 提出一个交易方案 但这个方案不会直接执行 风险团队还要继续检查",
-    "action": "关注AI Agent在量化投资领域的落地应用与策略框架。",
+    "summary": "介绍 GitHub 上受关注的多智能体金融交易框架 TradingAgents：它不是自动下单或“AI 股神”，而是模拟一家交易公司的实验场。分析团队整理新闻、财报和市场数据，判断基本面、市场情绪和宏观环境；研究团队里一方找机会、一方挑风险，多轮辩论后形成研究报告；模拟交易团队据此提出方案但不直接执行；风险团队检查仓位、波动放大、流动性和最坏情况；最后由投资经理模块做出模拟决策，继续观察、调整或放弃。博主口述的 star 数在转写里听成“93万”，与项目规模不符，需自行核对；视频没有给出实盘效果。",
+    "action": "到 GitHub 搜索 TradingAgents，核对许可证、star 数和 README 里说明的模型与数据源要求；先用模拟数据和一只自己熟悉的股票跑一遍，看分析、辩论、风控各环节的输出是否合理，并确认它只做研究参考，不接入真实下单。",
     "themes": [
       "AI Agent",
-      "自动化",
-      "量化交易"
+      "多智能体",
+      "金融研究"
     ],
     "tools": [],
     "kind": "Note",
@@ -1028,35 +919,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "9fe5f7605ce28806fa2eb572fd8f2ad126d1b5f4b823b2bb43ad9d4a3c06dec4",
+    "candidate_revision": "307ecd47b9957d6196d308e582f7d6d6090268faba89969769d4bf35cfd64e0c",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a354dba00000000170088c6": {
     "id": "6a354dba00000000170088c6",
     "content_sha256": "0d1a02d9b0dd566c7a92213923fddb104dc954c5d5b2ab7728e93f3c5e5ca0ed",
-    "title": "小公司最该先用AI",
+    "title": "AI 原生组织：让 Agent 加 skill 主动推着人干活的小公司转型思路",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一篇关于​​AI Native（AI原生）组织​​的深度分享，核心观点是：​​小公司用AI，不是简单的“降本增效”，而是要“重做组织”​​。以下是核心内容总结： 核心对比：AI辅助 vs AI Native ​​AI辅助​​：人为主，AI只是工具，提升某个节点效率。比如让AI生成一份采访大纲，主动权在人。 ​​AI Native​​：AI为主，人做和真实世界交互的事。",
-    "action": "Save — strategic deep-dive on AI-native business operations covering Agent layers, SOP automation, and skill building",
+    "summary": "一场访谈加演示，主张小公司现在最适合转成 AI 原生组织，区别在主动权：AI 辅助是人发起、AI 只提升某个环节；AI 原生是几个固定的 Agent 加上 skill 主动发起、分派待办并交给负责人审核，人只做与真实世界交互的事。演示里把客户反馈交给 AI 后，由 Agent 拆解技术方案、生成需求文档，经负责人审核后自动流转，研发周期从三到五周缩短到一两天，还能通过手机和飞书指挥多个数字员工，五到十分钟生成原型。嘉宾把企业用 AI 分成没用过、只做降本增效、AI 原生三个阶段，并强调要先把内部 SOP 和经验沉淀成知识库再做成 skill。转写只覆盖视频前 10 分钟，后面的“三拆一问”方法没听到；周期缩短等数字来自嘉宾现场介绍，未经核实。",
+    "action": "先挑一个最重复、最痛的业务流程，拆成步骤，整理相关 SOP 和做得好的案例，用一个 Agent 加一两个 skill 试跑，并安排人审核；把结果和人工周期对比，再决定是否扩展到更多环节。视频后半的“三拆一问”没有听到，需要回到原视频确认。",
     "themes": [
-      "AI Native",
-      "Agent分层",
-      "商业运营"
+      "AI原生组织",
+      "企业知识库",
+      "数字员工"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "1476f8d3f8746c59b93085be3b9b5122c2207daa81d0f5af26f293fcc64c8367",
-    "evidence_sha256": "3a10906e3d61f58014572f56c3b4feedb66173718227a5d05b7d2c0a60ed0c6f",
+    "evidence_sha256": "5cd538ad5ea54a3b3d97df067c6ffaca83fd86be045358cef971d914ffa00f0e",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "53675a228690c48c304b906e1bc7d395d937ca6eadec517a1f5018becf3f25c9"
       },
       {
@@ -1086,7 +977,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "570c0cdf40569f1d23748c0838168d4b9f7cce24a06d901c0d3268afb64ba572",
+    "candidate_revision": "d2f43d334447ffd74ab72a6bd2d8a0f18b0cafc4aaad92c62ba402258e18c96e",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -1145,15 +1036,16 @@
   "6a262697000000000800255e": {
     "id": "6a262697000000000800255e",
     "content_sha256": "9a86bada001dbda1515bbd20d97987b8b5c7655ad56f84a978027181b4f07ec3",
-    "title": "用 AI 搞钱值得关注的 5 个 YouTube 博主",
+    "title": "AI 搞钱值得关注的 5 个 YouTube 博主：项目侦察、电商、一人公司、内容自动化、小工具创业",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "推荐5个高质量AI主题YouTube频道：Wolfe AI、Zina Rizzi AI、Greg Eisenberg等，覆盖AI工具评测、商业应用和ChatGPT使用策略。",
-    "action": "Save — curated list of five high-signal AI YouTube channels covering tools, business use, and ChatGPT strategy",
+    "summary": "推荐五位讲 AI 赚钱的 YouTube 博主，各占一条赛道：一位盘点当下有真实需求的 AI 变现项目，如 AI 剪辑、虚拟助手、知识付费；一位用 AI 分析市场趋势和用户痛点做跨境电商，并公开靠一款普拉提防滑袜从选品、建品牌到投流的全流程；一位教用 AI 搭建轻资产的一人公司和数字产品；一位用 ChatGPT 写脚本、AI 配音、自动剪辑，搭建不露脸的 YouTube 频道流水线；一位分享 AI 小工具创业案例，如简历生成器，讲怎么找用户痛点和做最小可行产品。博主名字在语音转写和点点总结里拼法不一致（如 Wolfe AI 与 Mad Wolf、Greg Eisenberg 与 Isenberg），需要到 YouTube 核对，视频里的赚钱说法也未经核实。",
+    "action": "到 YouTube 搜索这五位博主，核对频道的真实拼写、订阅规模和近期内容；按自己感兴趣的一条赛道各看两三期，挑出能照着做的项目，再决定订阅哪一位。",
     "themes": [
-      "YouTube AI频道",
-      "信息订阅"
+      "AI变现",
+      "YouTube博主",
+      "一人公司"
     ],
     "tools": [],
     "kind": "Note",
@@ -1195,35 +1087,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "714985b2209dc67d8ac65988ee7653612e1192f6e121cb0e2b897089c8fb18d4",
+    "candidate_revision": "6676ead3d6f77c9dcd334eef18feebd0559aae91b534c7b2ba6c3c60f109be92",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a06e86e0000000007021df5": {
     "id": "6a06e86e0000000007021df5",
     "content_sha256": "7f94a3109fc625e3c12da3bba51d6979e08a63375cda342d189accb3f8d293a8",
-    "title": "是的！我做了个 AI 批量搜索插件—开源免费",
+    "title": "Q-Shot（子弹搜索）：一次提问同时搜多个 AI 的开源免费浏览器插件",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一位叫​​阿宁​​的个人开发者分享的一款开源免费浏览器插件 ​​Qshot​​（子弹搜索）的完整介绍视频。以下是核心内容总结： 插件是什么 Qshot 是一款完全免费、开源的浏览器插件，核心功能是​​批量搜索多个 AI​​，不用在多个 AI 网站之间反复切换，一次输入问题就能同时拿到多个模型的回答。 核心功能一览 ​​搜索组自定义​​：可以随意新增、删减、调整搜索组里的 AI 或社媒站点，还能按场景混搭， 方便后续整理或交给高级模型做交叉验证。",
-    "action": "参考报价与交付框架，整理自己的AI视频接单服务包并发布到目标接单渠道测试转化。",
+    "summary": "介绍一位个人开发者用 AI 写的免费开源浏览器插件 Q-Shot（子弹搜索）：输入一次问题，就能按“搜索组”同时向多个 AI 网站批量提问，回答以卡片并排显示，也可以新开标签页，不必在各个 AI 网站之间反复切换。搜索组可以自由增删和调整；可一键把所有卡片的回答导出成文件，配合内置的“多 AI 答案提炼”提示词交给高级模型做交叉验证；还支持保存和导出提示词、把其他网站按搜索结果链接自动识别成搜索规则、全局快捷键和选中文字后右键搜索。限制：插件还在早期阶段，社媒等网站用卡片模式显示不好，需要新开标签页；部分浏览器内置页面无法唤出，不是所有网站都能转换成功。",
+    "action": "安装前先核对插件来源和它申请的权限；装好后建一个搜索组，放进自己常用的两三个 AI，用同一个问题批量提问并导出回答，再配合“多 AI 答案提炼”提示词交给一个高级模型，对比各家回答的共同点和分歧，看这套流程是否真的省时间。",
     "themes": [
-      "AI视频",
-      "商业变现",
-      "接单实战"
+      "多AI对比",
+      "开源工具",
+      "浏览器插件"
     ],
     "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "ec7096ea836dbb48d13fab38d22ae9a26bf59a5cc7472505191d1302035db7bc",
-    "evidence_sha256": "2b76e3ea9bcc90dce9123be342a3bdcfdc70e7585a84d5d888a6e3f6029a73d6",
+    "evidence_sha256": "c419037e44c6dc309ebfd6843b69d1296e2a60712c1fde715072551bd368c560",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "5f92c30fcb43cb8f6771488f95e38e7e022a171aa76e1522a476e5cbdac65b88"
       },
       {
@@ -1253,35 +1145,34 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "8048075def6dc1a410bd433dbc62d3dabe305d466c8f0d522e3b439e87c203e1",
+    "candidate_revision": "4acba935bcae82eaeee6192fd37f7b4dbf28a86e5776242966751f781b9a10fa",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "69eee7950000000036031070": {
     "id": "69eee7950000000036031070",
     "content_sha256": "a427aa29b94a7f7ce281d3713e7f3442cddde8e29d870581a00bceae412e7c8d",
-    "title": "挖到宝藏✨大家都在用的工具库太顶了",
+    "title": "AI星踪岛：免费的中文 AI 工具导航站，分 15 个大类并带机器人频道",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你分享的笔记，这是一篇推荐 AI 工具导航站的内容，核心总结如下： 核心定位 笔记推荐了一个名为 ​​AI星踪岛​​ 的免费中文 AI 工具导航站，称其为\"收录最全、更新最快\"的 AI 工具库，整合了全网大模型、AI 神器和效率工具。 主要功能 ​​工具分类​​：将成百上千款 AI 工具按功能拆分为 15 个大类，涵盖 AI 绘画、视频生成、智能对话、效率办公等，方便快速定位。 ​​持续更新​​：每天都有新工具上线，包括热门工具和冷门神器。",
-    "action": "保存为AI创业思路参考，持续观察图像生成工具商业化落地的时机节点",
+    "summary": "笔记推广一个免费的中文 AI 工具导航站“AI星踪岛”（名字写在笔记正文里，语音转写听成“AI新冻岛”）：声称收录最全、更新最快，把成百上千个 AI 工具按功能分成 15 个大类，覆盖 AI 绘画、视频生成、智能对话和效率办公，每天上新，附保姆级入门教程，另有机器人频道可查看产地、性能参数、规格和应用场景。作者说邀请码放在评论区，这是一条带邀请码的推广，“收录最全”“没有之一”等评价没有对比依据，站点本身没有核实。",
+    "action": "先在搜索引擎核对站名和官方地址，再打开看一遍分类，和你已在用的 AI 工具导航站对比收录的工具是否更全；注册前确认是否收费、是否要提交个人信息，教程和机器人频道只看是否对自己有用。",
     "themes": [
-      "AI商业机会",
-      "副业思路",
-      "图像生成变现"
+      "AI工具导航",
+      "工具合集"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "091620199284aead54a4da3132273d602be4cc1cf91aa9a783a0dbe3803e267b",
-    "evidence_sha256": "e25be2034f8d33b6683e9cba5971cf34ab636fc80021fefa230e90962f7b9c5d",
+    "evidence_sha256": "c9dae1c3ee57f4b7b03557e218a9189534ff4c591f58ef8136b728a2be0274aa",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "f467dfe8c52fc0019d3f276aaa9122aa75c5982bff2465fe687a48b1be82f56b"
       },
       {
@@ -1311,36 +1202,36 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "b4c38eba4b83883738b292debf92a589b33d9b1aa2b498c37d9a5f80f3470a07",
+    "candidate_revision": "a124de4f5e9b67ffceee4257b301b55e3146a583e46d8d55e2fcc0a5e4a50a88",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "69ef32aa0000000020038f8a": {
     "id": "69ef32aa0000000020038f8a",
     "content_sha256": "f0a31809820d4b5edf38002b9d778f1a1c4f478edecdb5645333392f983d5650",
-    "title": "0-1学会智能体Agent",
+    "title": "Hello-Agents：Datawhale 开源的《从零开始构建智能体》系统教程",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一条关于 ​​GitHub 开源项目​​ 的干货分享，核心内容总结如下： 项目概述 博主发现了一个 GitHub 上的宝藏开源项目，主题是 ​​从 0 到 1 学习 AI Agent（智能体）​​，目前已经登顶 GitHub 开源热榜。 核心亮点 ​​系统化课程​​：把 AI Agent 从理论到实践的课程全部开源，学习路径清晰。 ​​涵盖核心技能​​：包括 Agent RAG、SFT（监督微调）、RLHF（人类反馈强化学习）等智能体高端岗位必备的技术。",
-    "action": "收录为AI Agent开发入门技能参考，适合希望自建Agent能力的工程师",
+    "summary": "介绍 GitHub 上登顶开源热榜的开源教程 Hello-Agents（画面显示仓库为 datawhalechina/hello-agents，书名《从零开始构建智能体》）：把 AI Agent 从理论到实践的系统化课程全部开源，课程文档和设计代码都能直接学习，目录里能看到智能体框架、记忆与 RAG、通信协议、Agentic RL（含 SFT、GRPO）等章节。视频语音没有念出项目名，仓库名来自画面；是否真的位列热榜、课程质量和前置知识要求都没有核实。",
+    "action": "到 GitHub 打开 datawhalechina/hello-agents，按目录挑一个基础章节读完并跑一遍配套代码；再看 Agentic RL 等进阶章节的前置知识和算力要求，决定是否按课程顺序学习。",
     "themes": [
-      "AI工程",
-      "Agent开发",
-      "编程入门"
+      "AI Agent",
+      "开源教程",
+      "智能体学习"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "2702295da0e00d3bf288f9bfee95cec16c6e8d225ad3704935436ba568b5bd8a",
-    "evidence_sha256": "71e578e4e47a9975bcffff4bab5cd4c5f43ece7a4fe59bb26b2bf64dba6948f4",
+    "evidence_sha256": "894ada691832a223a4290eb3a30771d6de9fed016ef16f6c82508e547e5cd85c",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
-        "result_sha256": "aff0e17108b8441246838587e46d9536d7958f7f866ebef0c8f8291e04e5a1d9"
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "0b3f86eb1f38fabc27d8d1c1a7d973c3d289954034f76bddffdb60643096bb82"
       },
       {
         "method": "diandian_summary",
@@ -1369,7 +1260,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "63c62dd850f5c784890fc392356dffa8606c1c7a02d86bf29d39fb48c0b1e464",
+    "candidate_revision": "3a5ca513aa2da4e4929ed72efb29341ea4710a7351a534c02920e4abab38f5db",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -1380,8 +1271,8 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一段关于 ​​Claude Design​​ 这款 AI 设计工具的视频评测与思考，核心内容总结如下： 核心功能 ​​一句话生成 UI​​：通过自然语言对话，- ​​快速改稿​​：可以用自然语言对局部进行修改，比如换按钮样式、加交互动效、换背景视频等，一步到位。 ​​复刻网站​​：输入网址或描述，能模拟出八九成效果，排版、动效、结构都比较舒服。 优势 对​​不会设计、不会写代码​​的人非常友好，普通人也能做出产品原型。 内置了很多写好的提示词，开箱即用。",
-    "action": "参考该工作流用 Claude Pro 做 UI 快速原型，探索 cloth code 工具替代传统设计软件",
+    "summary": "视频评测 Claude Design：根据一句需求自动生成网页界面甚至交互，相当于设计师加前端；站内有不少写好的产品提示词，复制就能做出很酷的页面；换成自己的内容也简单，作者用另一个工具生成一段符合页面风格的视频，上传后用自然语言就替换了页面背景；可以复刻现有网站，作者说能达到八九成效果，也能用自然语言改局部，比如把按钮改成光效、加交互动效。限制：作者用的是 Pro 版，一周的额度很少，做五六个产品页面就用完，要等下周一，也可以改用 Claude Code 生成；复杂页面还原度有限，只能替代大约八成基础工作。设计师与前端分工会不会消失，是作者抛出的个人看法。",
+    "action": "用一个自己的产品页需求在 Claude Design 里生成一版，再复刻一个喜欢的网站并改按钮和动效，记下用掉的额度；同样的需求再交给 Claude Code 生成，对比还原度和可修改性，判断哪种更适合自己的项目。",
     "themes": [
       "AI设计",
       "Vibe Coding",
@@ -1427,36 +1318,36 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "1e1218077c047a8aa3e75edd9fe485b80fece994a4d78b8a016687e129058804",
+    "candidate_revision": "4baf557e5bb7eb763eb517f0ab3282b3e16c8db0245f9a493d05ab0b919cc0ad",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "69f08cd6000000003502664e": {
     "id": "69f08cd6000000003502664e",
     "content_sha256": "b34599ac75b83dd6856c2ca8341e61bea8ba74750dccd3e510fdaea5e95de5fa",
-    "title": "面试三万的运营，值不值？",
+    "title": "模拟面试月薪三万的短视频运营：个人 IP 的四步快问快答",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一段​​模拟面试月薪3万短视频运营​​的视频内容，核心通过“快问快答”来检验候选人的专业能力。以下是关键总结： 核心考点与答案 视频中考官问了 4 个核心问题，面试者都给出了完整回答： ​​个人 IP 第一步​​：做商业定位，先梳理客户卖什么、卖给谁、怎么卖。 ​​第二步内容定位​​：分四类视频——置顶视频（创业故事、业务产品、自身实力，解决信任背书）、流量视频（做实时爆款）、转化视频（为了客资）、人设视频（为了信任）。",
-    "action": "归档为内容创业参考资料，聚焦短视频带货与IP变现实操策略",
+    "summary": "一段模拟面试视频，用快问快答检验月薪三万的短视频运营岗位。面试者的回答是：做个人 IP 先做商业定位，梳理客户卖什么、卖给谁、怎么卖；再做内容定位，分置顶视频（账号最上面三条，依次讲创业故事、业务产品、自身实力，解决信任和购买理由）、流量视频（做实时爆款）、转化视频（为了客资）、人设视频（为了信任）四类；然后建素材库，从行业关键词搜索、热点榜低粉爆款、评论区客户问题和跨行业案例里找选题，并按开篇钩子、呈现方式、剪辑技巧、音乐等分类；发布逻辑是缺流量就发流量视频，有了流量马上发成交视频。结尾考官开价实习期两万、达标后涨到三万，面试者坚持要三万，没有谈成。这套方法是一家之言，视频没有给出效果数据。",
+    "action": "照这四步搭自己账号的内容框架：先写下客户卖什么、卖给谁、怎么卖，再各做一条置顶、流量、转化、人设视频的选题；建一个素材库，从行业关键词搜索和评论区收集选题，跑两周后看流量视频与成交视频的数据，检验“缺流量发流量、有流量发成交”的判断是否成立。",
     "themes": [
-      "IP变现",
-      "短视频运营",
-      "视频带货"
+      "个人IP",
+      "内容定位",
+      "短视频运营"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "bf06b948a199f80f7fd0027d471e003ac9a76104a28e0b80ebcfb9e27ba85ca4",
-    "evidence_sha256": "de6a74e8314a38269672bce953d15e08eea47b0a217365d88a820522b811cb31",
+    "evidence_sha256": "b7e5aaaa6ed95bfc8c5f086ab394675a1bef7f7c84e3c8d60975b29c384d7206",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
-        "result_sha256": "2159ec4ea8590144de9e137c0de0d849a448ebe0f60e121901b1fa87595903d9"
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "e93db3bfa98a23a279e618522018721d9a08fbcbcf3358ff5c05179dea592b7d"
       },
       {
         "method": "diandian_summary",
@@ -1485,35 +1376,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "72f4d8c99dfaf480fa7018bb0976f0e1345e1bd1bcd0e6db34915803aa30b188",
+    "candidate_revision": "a3ee2e684b68674d40975f4ee97708014b554f5479578f62420a0515201f2ae4",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "69df912d0000000023005dfb": {
     "id": "69df912d0000000023005dfb",
     "content_sha256": "73e003b9e8967eab91ee4effd777476e33f6d99c4e536e909328321b384c5fc3",
-    "title": "你怎么知道？147个AI员工我一键部署了！",
+    "title": "agency-agents：147 个按岗位分工的 AI 员工角色，可装进 Claude Code 等工具",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你分享的笔记，这是一条关于​​AI 员工开源项目​​的干货分享，核心内容总结如下： 项目概览 ​​创作者​​：Michael Sitarzewski 在 GitHub 上开源了一个 AI 员工项目。 ​​规模​​：目前包含 ​​147 个 AI 员工​​，覆盖从开发、设计、销售、自媒体到跨境电商、产品经理、visionOS 空间工程师、3D 设计等几乎所有工作类型。 ​​热度​​：项目免费开源，在 GitHub 上已获得约 ​​7 万星​​，并附带了合作应用场景。",
-    "action": "通读清单，标记 3-5 款与当前工作流高度相关的工具优先试用。",
+    "summary": "介绍 GitHub 上的开源项目 agency-agents（作者 Michael Sitarzewski，画面显示约 7.3 万 star、MIT 许可证）：把开发、设计、销售、自媒体、跨境电商、产品经理、visionOS 空间工程师、3D 设计等各类岗位做成 147 个 AI 员工角色，每个角色写明身份与记忆、核心使命和工作流程，还附带合作场景。博主称 30 秒就能在 OpenCode、Claude Code 等工具上部署一整个 AI 团队：README 给出了把角色文件复制到 Claude Code 的 agents 目录的做法，以及为 Cursor、Aider、Windsurf、Gemini CLI、OpenCode、Kimi Code 生成集成文件的安装脚本。“一键部署”“30 秒”是博主说法，各角色的实际表现视频没有演示。",
+    "action": "到 GitHub 打开 msitarzewski/agency-agents，核对许可证、角色数量和安装说明；先读安装脚本再运行，只挑三到五个与自己工作相关的角色装进 Claude Code，各用一个真实任务试用，看输出是否比不加角色时更好，再决定是否装全部。",
     "themes": [
-      "automation",
-      "productivity",
-      "tool-discovery"
+      "AI员工",
+      "Agent角色库",
+      "开源项目"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "bf26978ff5be41caa9632967416621d874a228ac46f54d3a2be9011ba31c1312",
-    "evidence_sha256": "bcab8aef2bd7701fedc3f0e6a7f9695b6a448c5ad4f2888db9a6cdf04301f5d1",
+    "evidence_sha256": "bfdf26e50b626ca4eda4e527889b672697b5430d01fd79fe255a09dbfd45a293",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "a4c0e723cd3586e963532486acd4cbcb2ed3af58d9286fb7e8e3d66285f5b506"
       },
       {
@@ -1543,35 +1434,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "a772a6c6a7d6b9e2b42b987daef5b68365536e115c6a6a76dc1c22df0d9d3494",
+    "candidate_revision": "1f5f35be025ff01bff5ce8f83768560c6eb60d2d737004cb8081d40b2ed14884",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "69c35e0b000000001d01cce7": {
     "id": "69c35e0b000000001d01cce7",
     "content_sha256": "28e7f1e5ecb3a0b6c9297436cb52510537e4e6840ff92e4f5b233c24149023cc",
-    "title": "养个电商🦞团队，让它们自主开店、谈客户",
+    "title": "Accio Work：阿里面向海外推出的电商 Agent，可组队开店、比价采购、邮件砍价",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "当你的龙虾还在给你整理文件做PPC的时候 我的龙虾已经学会自己开店做生意了 阿里这个刚推出的Axio Walk太离谱了 你看我只是给它丢了一句话 让它去美国市场做一个卖龙虾周边的网店 ok 30分钟 它就可以从乌道有手搓出一家真实的网店 从市场动茶选品定价 到视觉设计和详情落地 整个链路它自己往下跑 它甚至可以自动给你的新店发推文和印词 帮你做推广 而且不是瞎发 它还会解释为什么选这12个产品 以及这些产品的利润率是怎么算的 这就说明Axio Walk已经不是只会把页面做漂亮",
-    "action": "了解Axiowork，评估AI Agent自动化团队工作流的可行性。",
+    "summary": "介绍阿里新推出的面向海外的 Agent 产品 Accio Work（转写写作 Axio Walk）：作者演示丢一句话让它去美国市场做卖龙虾周边的网店，30 分钟内从选品定价、视觉设计到详情页落地跑完整条链路，还能自动发推文做推广，并解释为什么选这 12 个产品、利润率怎么算；可以拉一整个 Agent 团队、配一个 Team Leader 分头做事，比如同时分析几十家供应商的报价单，筛出最值得继续谈的前十，不只看单价也看报价是否齐全；接入 Gmail 后能自动询盘砍价，演示里一方想把价格压到 30 元，来回六封邮件后谈到 38 元。作者称它封装了阿里二十多年的全球电商经验、幻觉更少、开箱即用。这些都是博主的演示和判断，价格、可用地区和真实成功率没有交代。",
+    "action": "到官网核对 Accio Work 是否对你所在地区开放、怎么收费，以及接入 Gmail 时申请的授权范围；先用一个小品类做一次选品加供应商比价的试用，对照人工结果检查利润率计算和供应商筛选，再决定是否让它代发邮件砍价。",
     "themes": [
-      "AI Agent",
-      "任务自动化",
-      "团队协作"
+      "Agent团队",
+      "电商Agent",
+      "跨境电商"
     ],
     "tools": [],
     "kind": "Product",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "f33bf340021c60338587f586f5693dd35c25d6058bd00b5168598ac0475ec5d7",
-    "evidence_sha256": "8ae1ec2b15a9af80721d1b83fec2e99d83d62ef4e7e3f73660dbfb6166ea997f",
+    "evidence_sha256": "0c9815a37809c279d3b5d92a8abd3ce5a988cbd7db15f5295ed40f8644b440d9",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "13788fe22e748b97c91bde176b8d80114f5c8790367038ac3e26a50cb1605dce"
       },
       {
@@ -1601,35 +1492,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "7239c47620a58e0c4b5251626ad9b385091d88c62ce72083b5b440890cace092",
+    "candidate_revision": "965a989907e335e1a7fa8e80aeaedad5eb94ed90e114155c267ac7f9a0575b7b",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "69b8d4e2000000001f000870": {
     "id": "69b8d4e2000000001f000870",
     "content_sha256": "7f805921e36eb66fb688805ed3505f5a70e52626ee632bf21b4a11af3d24d78c",
-    "title": "OpenClaw工具解决数据抓取网页访问绕过痛点",
+    "title": "Scrapling：自适应网页抓取框架，可配合 OpenClaw 应对验证码拦截并省 token",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你分享的笔记，这是一篇关于开源爬虫工具 ​​OpenClaw​​ 的推荐视频，核心内容总结如下： 核心痛点 很多开发者在使用 OpenClaw 进行网页数据抓取时，经常会被​​验证码​​和​​登录拦截​​挡住，导致采集无法持续进行。 核心功能 ​​智能绕过反机器人系统​​：能够自动识别并绕过网站的验证码和登录验证，实现 24 小时稳定数据采集。 ​​智能相似算法​​：即使网站页面结构发生变化，工具也能自动重新定位目标元素，不需要手动重新配置。",
-    "action": "深入了解Claude Code的MCP生态，合理规划Token用量以控制使用成本。",
+    "summary": "推荐开源网页抓取框架 Scrapling（画面显示仓库为 D4Vinci/Scrapling，约 3 万 star；语音只说“记住这个名字”，没有念出名称）：针对 OpenClaw 抓取网页时总被验证码和登录拦住的问题，作者称它能智能绕过反机器人系统，实现 24 小时稳定采集；用智能相似算法，网站改版后也能自动重新定位页面元素；提供 MCP 模式，先精简页面内容再交给 AI，降低 token 成本。这些能力来自视频口述，绕过验证码与登录是否合规、实际成功率如何都没有说明。",
+    "action": "到 GitHub 打开 D4Vinci/Scrapling，核对许可证和 README 里自适应定位与 MCP 模式的用法；只在自己有权抓取、且不违反目标站点条款的页面上试跑：先抓一个小页面，页面改版后看自适应定位能否找回元素，并比较接入 MCP 模式前后的 token 用量；遇到验证码就停下，不要硬绕过。",
     "themes": [
-      "Claude Code",
-      "MCP协议",
-      "工具对比"
+      "MCP",
+      "开源项目",
+      "网页抓取"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "e76e57ae6bdcc40333c49719bc52c7440f08bf6b0ea0fb11b346788925f51dea",
-    "evidence_sha256": "b9fc75e2426ae1af063a0ce79299b987204360704437bdc0590f2fcebc1a1e27",
+    "evidence_sha256": "1c231eb300604f8107315cbb4a8c10d87656eb2bf48030b8ff5cbf6237fd6e80",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "28ea1282e301ae624e193afe6b327df4328cc617d7794c3effeb0bfc5a6135ce"
       },
       {
@@ -1659,35 +1550,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "1636bc7cb858918dc6c8cf4b8e868735ad51e322cee9d59bdae6db0588a8a8dd",
+    "candidate_revision": "8822db118fcc3fbe2eadf9caa7c0441b240e73fc65c82feaad7b21b9ca3f3957",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a2ba768000000002201866e": {
     "id": "6a2ba768000000002201866e",
     "content_sha256": "858ef5cdcf13aeddd01156b78b4b645f466d22252fa1026befb231314dfbd2b7",
-    "title": "2026 年普通人做自媒体，只需要搞懂这两件事",
+    "title": "2026 年普通人做小红书自媒体：先选内容载体，再找变现渠道（附官方课程引流）",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "做自媒体最闪的方法就是自己摸索 我是北大本说比也文科转商科 干过金融也干过互联网 现在就开始做内容 灌赛道这件事我干了不止一次 最大的教训就一个 没人带你进门 全凭自己是错三年起步 如果你也想做自媒体 但不知道从哪里下手 今天这条视频就是给你拍的 官方免费带路人已经摆在面前了 你没需要做的 就是别在自己摸和走路了 大家可以直接私信好生意属 点击了解更多 添写表单就能强占官方克制名额 官方手把手的教你 2026年真的是普通人做自媒体最好的时机 不是因为封口来了 是因为平台终于把",
-    "action": "Save — 2026 content-creator hardware buying guide covering 4K cameras and IT peripherals with price analysis",
+    "summary": "引流型视频：作者自称北大本硕、文科转商科，建议普通人做自媒体别自己摸索，并讲两件事。一是选内容载体，称小红书现在同时扶持两分钟以上的长视频、4K 高清优质视频、类似公众号的长图文和播客语音笔记，擅长什么就用什么；二是弄清变现渠道，包括做买手直播（不必自己有货）、开店（据称不需要粉丝，先发商品、后缴保证金）和笔记带货（挂商品链接、佣金自动结算）。结尾推广“官方免费营销课程”，要求私信“好生意薯”填表领取。内容是对平台政策的口头转述，没有数据或来源，课程具体内容视频里没有展开。",
+    "action": "先别私信领课：到小红书官方的创作者和商家入口核对长视频、4K 优质内容扶持，以及买手、开店、笔记带货的规则与门槛；再按自己擅长的形式发一两条内容，两周后看数据，决定是否投入某种变现方式。",
     "themes": [
-      "2026年",
-      "内容创作硬件",
-      "设备选购"
+      "变现渠道",
+      "小红书运营",
+      "自媒体"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "673a0e1f97215a4224a3b4939810a338758f869c694ceca8c71663dcc02a939f",
-    "evidence_sha256": "576674390a44e15bfef76d57750e2970940981eef9552aa2ba099ca9d53e73ac",
+    "evidence_sha256": "1bb145a3c8d649d4ded0aef89e9c57d83564dd60bd519a11f6c4f068450c939e",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "da3a10e40ea05f4f2d458d5e219d56b65c1fdc6c303ac80199e35bde11b26fa8"
       },
       {
@@ -1717,35 +1608,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "2d84daf331e59b991f20d693b22e5f8a06e30ba721225369de28befef549eb07",
+    "candidate_revision": "77f9914a64cbc2b673149f85bdb4d63ee0dd17c288fd69066575e1da9d9c0276",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a54d0d600000000110149c0": {
     "id": "6a54d0d600000000110149c0",
     "content_sha256": "e93273e50c735b08f559141f0300e15145e35a1dc473063b2e15180af231a0ce",
-    "title": "Codex自动剪视频，完整流程SOP开源！",
+    "title": "Codex 自动剪视频：38 页完整流程 SOP 的六个步骤，以及对挑刺评论的回应",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "前两天我不是发了一个 codex自动剪视频的这样一个视频吗 结果呢 大家反映令我非常的惊讶 80%的人都是在挑字 说什么这个token太贵 太稍token 然后呢 长视频剪不了 还有说这个只能剪口播 没什么用 等等吧 这80%的人 他基本上都是从这个负面的角度 来看这个问题 然后呢 得到一个结论 没用 这是非常可怕的一种思路呀 其实他们不会去想一下 就是在半年之前 用AI来剪视频这件事情 还只是非常小众在极客圈发生的事情 对于大部分人来说 ai 检视频是做不到的 即便是口播",
-    "action": "采用checkpoint+Skill组合方法管理SubAgent任务，控制Claude会话的token消耗。",
+    "summary": "作者回应上一条 Codex 自动剪视频视频里八成评论只挑刺（token 太贵、长视频剪不了、只能剪口播），认为任何新技术都要靠反馈迭代：半年前 AI 剪口播还做不到，现在用好一点的 skill 或插件，能把 45 分钟口播剪成还可以的视频。随后介绍同事整理的 38 页完整 SOP，共六步：环境搭建、素材准备、自动剪辑、包装设计、实施迭代、沉淀总结；素材阶段要准备原始视频、口播文案和参考风格视频，AI 会对参考视频抽帧分析风格。领取方式是评论区回复指定数字。视频没有展示成片，也没有说出具体的插件名、token 用量或长视频的限制，SOP 本身不在视频里。",
+    "action": "不必先领文档：用自己一段 5 到 10 分钟的口播和一条参考风格视频，在 Codex 里试一次自动剪辑，记录 token 消耗、成片是否可用和长视频的卡点；效果值得的话，再向作者领取 SOP，对照补全环境和包装步骤。",
     "themes": [
+      "AI剪辑",
       "Codex",
-      "Token管理",
-      "工作方法"
+      "工作流SOP"
     ],
     "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "065d7e7920f3948bde71a19a09ecf975e8fb3e7cb44d1c450f359e7a8cccd093",
-    "evidence_sha256": "56d2a08ce528299d3dcce1f58d45a2ce9266eebe58a516997882d6abff9eff4f",
+    "evidence_sha256": "89199abcafbcb09ab08f7442e54b07f2b2f567d66d9c1fee000fa7b686754543",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "4db04f6356bc1be13b6d013d1eef78f67610ea0389b2b956c3b947cc49ad2cff"
       },
       {
@@ -1775,7 +1666,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "f1db14e8126969e26a65076e9be86ca7d300ac295ca3ed9906479d7f7bc16d10",
+    "candidate_revision": "4f6ad5bff2cb8701bbc468a74580abfb60287450f5555b21478cc08c0a29e84d",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -1890,17 +1781,18 @@
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "阿里最近新出来的这个悟空啊 它是直接对接的生意产品还有无界的 我们现在一看呢是可以一个人 你靠这一个AI就能够搞定设计 搞定客服 然后呢整个店的运营还有推广 这个很多小卖家还在死磕手动计划 你这样做很吃力的 以前的时候我们做淘宝 中小卖家觉得说研究手动计划 去标准计划 对吧 开车票销站一点就做 但是你这样很耗费精力啊 所以现在不要去固执的认为 嗯这个我们靠手动才能靠谱 电商未来的他一定是一个ai接替这个人工人去操作ai 嗯 物控ai现在就可以实现一个人网店一个人设计一个人科普",
-    "action": "梳理自己的AI辅助学习工作流，参考视频中的方法建立个人成长体系。",
+    "summary": "推广视频，介绍阿里新出的“悟空”AI：作者称它对接生意参谋和无界，一个人靠它就能做完整家网店的设计、客服、运营和推广；认为中小卖家还在手动做投放计划，操作繁琐、极度依赖个人经验，在 AI 面前会被淘汰，现阶段 AI 尚未普及，早了解才不会落后。视频没有演示具体操作，也没有说明收费、能力边界或实际案例，“效率和效果一定超过人”是作者的判断。",
+    "action": "先到淘宝商家后台或官方公告核对悟空 AI 是否对你的店铺开放、能调用哪些权限和功能、怎么收费；挑一个现在手动操作最繁琐的投放计划，用它做一次对照，记录节省的时间和效果差异。",
     "themes": [
-      "AI学习",
-      "自我管理"
+      "投放计划",
+      "淘宝运营",
+      "电商AI"
     ],
     "tools": [],
-    "kind": "Workflow",
+    "kind": "Product",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "0d3f6e41880f6aee6e51ef9c1fbd67a638663a3ab641e7ddc8bfe2283fcb6b1c",
+    "candidate_seed_revision": "fd8b23066923b216a97356474f318a0ee989be22dc3084838928c875f5bc491b",
     "evidence_sha256": "a4d44d16f79011a202e474bd0aa3a1a32015d6969ab0490a6c54ae77cb8d8686",
     "evidence_dependencies": [
       {
@@ -1936,35 +1828,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "377b05fe139f39cffe2eb117c8e393278d8c7e8c914eb7f62315ef0d685cf5e3",
+    "candidate_revision": "79f19705588e87aac8199b1ca2c10795f9bb20d822d50045480dd843e1f1c883",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "69c55de2000000001e00fed0": {
     "id": "69c55de2000000001e00fed0",
     "content_sha256": "1c25d04930dfb56e7869f673461a49cd4179996371e6106265892774feaf727c",
-    "title": "阿里悄悄上线电商Agent五步做完电商全流程",
+    "title": "阿里 Accio：一位外行一下午用 AI Agent 走完电商创业五步（选品、痛点、设计、找厂、询盘）",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "288悄悄上线的一个AI Agent非常牛 叫Axio 免费的 而且现在几乎没有人讨论 但有个老外 他用他做了一个实验 直接把我看到的 这根本是个软件创业者 但是之前从来没有碰过电商 按照他自己说的 电商不是他的赛道 结果他用Axio 一个下午的时间 从零走完了电商创业的全电路 他怎么做的 一共就五步 全部让AI Agent搞定 第一步能让AI分析市场趋势 Axio直接对接亚马逊数据 告诉他哪个品内在涨 第二步让AI挖用户的痛点 从哪里挖呢 从亚马逊的插屏 从Ready的贴子",
-    "action": "参考其接单流程与定价策略，评估是否可将Agent能力转化为接单服务。",
+    "summary": "介绍阿里悄悄上线的免费电商 AI Agent Accio（转写写作 Axio）：作者转述一位从没做过电商的软件创业者一个下午走完五步——对接亚马逊数据分析哪类产品在涨；从亚马逊差评和 Reddit 帖子里挖用户痛点，按用户愿意花多少钱解决来排序；他想做面向 Z 世代女生的键盘，AI 给出品牌名、产品设计图和产品规划图；在阿里巴巴上匹配四家工厂并按能力排序；写好询盘邮件并换成行业术语，免得被供应商看出是外行。作者称这条链路以前要五个人干三个月，背后是阿里十亿条商品数据和五千万供应商信息，但也提醒供应商是否靠谱、样品行不行仍要亲自验证。案例是转述，没有给出成品和销量，“三个月缩成一个下午”是作者说法。",
+    "action": "到 Accio 官网核对是否免费、是否对你所在地区开放，以及它引用的亚马逊和阿里数据来源；挑一个自己熟悉的小品类，照这五步各让它做一遍，把给出的趋势、痛点和工厂名单与自己的判断对照，再亲自联系供应商验证样品。",
     "themes": [
-      "AI变现",
-      "Agent副业",
-      "商业模式"
+      "供应链",
+      "电商Agent",
+      "选品"
     ],
     "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "7e0d632da9f22a5363522f77406ee449142e9a4915746aa023dd36eaccce644e",
-    "evidence_sha256": "c7df9f00cc95537e8e0fd50af968317cdc307abc6a4c4a9565f1509f484e8866",
+    "evidence_sha256": "0200eb12d3b4e77dba69482703376af5f8530faf0049b84aa684ce837f4d9292",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "d697377c7e6e58c72fb8e5e57764e4636b6da091cfa959945d083422d92b14c0"
       },
       {
@@ -1994,35 +1886,35 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "d6868114f29e3b910934bd66430cd03eb38e23bc574a8e6bc77e00be455221d1",
+    "candidate_revision": "dd8f64d84cdbdc5633b8b9ce247cd00ecb86e041719efc33143ddb5f05fc1c1b",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a5270d1000000001102f163": {
     "id": "6a5270d1000000001102f163",
     "content_sha256": "3d5c740fb4cafa0905f2cb7d685ecccdd5e7c59ed8fa0264fb79293e1bb4e9f1",
-    "title": "淘宝的搜索底层逻辑以及推广的底层逻辑",
+    "title": "淘宝搜索与推广的底层逻辑：用抖音的人群标签类比手动计划和智能计划",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一期关于​​淘宝搜索与推广底层逻辑​​的讲解视频，作者用抖音的逻辑来类比解释，核心内容总结如下： 搜索逻辑：\"鬼打墙\"机制 淘宝现在的搜索不再单纯看关键词排名和坑位，而是基于​​人群行为​​。就像你在抖音上跟某个主播互动过，系统就会给你打标签，后续优先推同类内容。淘宝也一样——你浏览过某类商品，系统就会给你打标签，然后在同类商家中反复展示，形成\"鬼打墙\"式的触达。 手动计划 vs 智能计划 ​​手动计划​​：相当于在抖音\"拉新粉\"。",
-    "action": "参照该起号节奏规划内容发布计划，分阶段验证账号数据。",
+    "summary": "讲解淘宝搜索和推广的逻辑，用抖音做类比：现在搜索不只看关键词排名和坑位，更看人群行为，你浏览过某类商品就被打上标签，之后在同类商家里被反复展示，作者称之为“鬼打墙”式触达；推广上，手动计划相当于拉新粉，平台卖的是访客，成不成交取决于商品竞争力，作者说用户通常要经过六七次浏览才下单；最大化拿量、全站推广等智能计划，平台卖的是成交，可以凭黑盒数据决定从利润里抽成多少，商品弱也能成交但利润被平台拿走，卖家更像中间供货商，并预告平台将推出“全站费比模式”。结论是商品竞争力强就开手动计划，商品弱时智能计划能成交但难赚钱。这是作者的经验类比，没有数据，也没有平台官方说明。",
+    "action": "把自己店铺的商品按竞争力分成强弱两组：强的用手动计划拉新并观察多次浏览后的成交，弱的先优化商品再投；分别记录手动计划与最大化拿量、全站推广的利润率，用两周数据检验平台是否在智能计划里抽走了大部分利润。",
     "themes": [
-      "做号经验",
-      "变现",
-      "账号运营"
+      "投放计划",
+      "搜索逻辑",
+      "淘宝推广"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "41ba4f1b94f23e623dbc43e0030546280653f555b69e7deebceef45f6ff31f34",
-    "evidence_sha256": "5da2a78ac6767d0a9a2bd29da677d7973ca67decc048ca8702ec2c8c51208c88",
+    "evidence_sha256": "d6d0ccbce90069e8dcdb3b9f84ceb6b8cf43a94357630bb88a852eeaf1483c9b",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "eb333279ce9484332479718fa705ffdb8eb47424746421105b6cc11dc44836aa"
       },
       {
@@ -2052,7 +1944,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "451f8c73a3b66f58ae79b0d2f430bd340f004676d78a265db14bfe79e678dfd1",
+    "candidate_revision": "fe3aa5b4dcb19b4e025fb558c2b54ff7444d44b8a65e0b8a6dd25342f16c9888",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -2117,25 +2009,30 @@
   "6a69bf6c000000001d021a45": {
     "id": "6a69bf6c000000001d021a45",
     "content_sha256": "d9f916f42a8fae9f61ad4624763e2d37aef806d475eab9dc2178b21b858e03fe",
-    "title": "跨平台三步选品与差异化方法",
+    "title": "跨境选品三步法：看差评找需求、毛利率低于 30% 不碰、看前二十有没有新链接",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一条关于​​跨境电商选品思路​​的视频总结，博主“姜姜”分享了她适用于所有平台的三步选品法： 核心思路 选品不能靠直觉碰运气，必须靠数据说话。 三步选品法 ​​第一步：找需求​​不要凭感觉觉得什么好卖，而是用数据验证。拉出 BSR 排名、关键词搜索量，看竞品评论区有多少条评论。重点盯​​差评​​——客户骂什么，你就在什么上面做文章。博主第一款跑起来的产品，就是看到竞品评论区一堆人抱怨没收纳袋，直接加上收纳袋就卖起来了。",
-    "action": "取得合规文字证据后，为三步分别记录所需数据、处理动作、输出和停止条件；用同一商品在亚马逊与 TikTok 场景各跑一次，比较通用规则与平台特定规则。",
+    "summary": "跨境电商博主讲适用于所有平台的三步选品。第一步找需求，不凭直觉，拉出 BSR 排名、关键词搜索量并数竞品评论条数，重点看差评：客户骂什么就在什么上做文章，她第一款跑起来的产品，就是看到竞品评论里一堆人抱怨没有收纳袋，加上收纳袋就卖起来了。第二步算清账，拿货价、头程、FBA 佣金、广告和退货损耗都要算进去，她给自己定的线是毛利率低于 30% 不碰，不能靠走量。第三步掂量竞争，看品类被头部卖家占了多少流量，她的习惯是看前二十名里有没有最近半年冒出来的新链接，有就还能进，前十都是老链接就跳过。30% 和前二十名等标准是博主个人经验，没有数据支撑。",
+    "action": "拿一个候选品照三步各做一遍：拉出 BSR、搜索量和评论数，把差评分类，找可改进的点；把拿货价、头程、FBA 佣金、广告和退货损耗全算进去，对照 30% 的毛利线；再看前二十名里有没有半年内的新链接；三项都过再小批量测款，并记下自己的毛利线和判断标准。",
     "themes": [
-      "亚马逊与 TikTok",
-      "产品差异化",
-      "出海电商",
-      "跨平台选品"
+      "亚马逊",
+      "差评分析",
+      "跨境电商选品"
     ],
     "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "0c9edcebbef1dd3967949be37c2404cd94da86452b5f980626ae90fb3c7f87a4",
-    "evidence_sha256": "81423649a1a756824c72b60e404709ba0d2897ddf3a355973e961f7176d4e42a",
+    "evidence_sha256": "2590799be0daec8e17802832ff2cdf405fde2d3b076bdb785c0947d4da2dd47d",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "2dd132537c455ec0d4857ee07d95bb5c3e4a0953af6cbc66c6e6450dbee246f0"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -2163,32 +2060,37 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "b78809123633e2794218060a72c22028bbe4160c2aaba677d091103ae5dbf4d4",
+    "candidate_revision": "03c5ef737a2c9ff9c33b86a48f9b20af325a9d55b79e4519eb82d7fec59a43ba",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a4b9c5600000000220161ad": {
     "id": "6a4b9c5600000000220161ad",
     "content_sha256": "e94b6a47f579ec87b99b0281221e142801e5134892ca337a56cd5bc5a1339f1c",
-    "title": "一键产品分析 Skill 选品",
+    "title": "用 Codex 做亚马逊产品开发的 6 个 Skill：从产品剖析到利润测算",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "根据你引用的笔记，这是一期关于​​用 Codex 做亚马逊产品开发​​的干货分享，核心内容是 6 个实用的 Skill，帮你把选品和开发流程跑通。 以下是 6 个 Skill 的总结： ​​产品剖析 Skill​​：快速理清产品的结构、参数、卖点和适用场景，把产品\"拆明白\"。 ​​产品洞察 Skill​​：判断市场状态，分析需求是否在增长，避免踩进萎缩市场。 ​​评价洞察 Skill​​：通过用户评价找痛点和场景问题，挖掘改良机会，从差评里找灵感。",
-    "action": "取得合规文字证据后，先确认 Skill 身份、数据来源和完整步骤； 再用固定数据集复测同一候选商品，要求缺失指标显式报缺，禁止用推测数值补全结果。",
+    "summary": "介绍用 Codex 做亚马逊产品开发的六个 skill，把选品和开发流程串起来：产品剖析（理清产品结构、参数、卖点和使用场景）、产品洞察（判断市场状态和需求是否增长）、评价洞察（从用户评价找痛点和场景问题，挖掘改良机会）、差异化研发（基于前面的数据提出可落地的差异化方向）、设计生图（把产品方案视觉化）、利润测算（判断商业价值是否值得做）。作者说 skill 包已经整理好，还会每天分享一个亚马逊产品开发 skill 小技巧；视频只是简短列举，没有演示每个 skill 的输入输出、数据来源，也没有给出获取地址。",
+    "action": "先拿一个自己在做的候选品，手动把这六个环节做一遍并记下需要的数据和输出；再向作者索取 skill 包，装之前逐个审查它的权限、数据来源和步骤，用同一个候选品对照手动结果验证每个 skill，要求缺失的数据明确报缺，不接受推测补全。",
     "themes": [
-      "AI 工作流",
-      "亚马逊选品",
-      "产品分析",
-      "出海电商"
+      "Codex技能",
+      "亚马逊产品开发",
+      "选品"
     ],
     "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "9b802e8e63a0c64cbf8f7629c705c3374566254fe0724b798735a39ed8415452",
-    "evidence_sha256": "80af613b035a92688b4e5b107bd53d0bd2726b7ff060a25569aeaacd879d0fb1",
+    "evidence_sha256": "3f0ebaf56fcbbfd0907c19fd2d023653b7cd713c83f7cdd0e1f41abf49570e1b",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "3be6e30e2214e8fc18a379056b619b29d75cea68f9fd83f091a49737a7504c89"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -2216,7 +2118,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "57d791cb247f7cbe47f4d8ad9693ca483cb8000e92955400ca213760b659bf86",
+    "candidate_revision": "bf766a7cb08e2a72d069faf43fc46a681b6b6411e4aa091ee6b2917edcb40d25",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -2992,7 +2894,7 @@
   "6a5420d500000000060310a2": {
     "id": "6a5420d500000000060310a2",
     "content_sha256": "d5e1b8c553503ee39fc7e487f39e9078c84eb096317adefc98726e4a46fc6f89",
-    "title": "X上那些搬运号的内容到底哪来的？终于被我",
+    "title": "MediaCrawler：借浏览器登录态拿签名，抓取多个平台公开内容和评论互动的工具",
     "category": "信息采集与搜索",
     "category_override": false,
     "category_reason": "",
@@ -3010,8 +2912,14 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "0b235e463d936bdea401ee013e5d7475ef3728a5fff0ab698c7b6f454ea04fee",
-    "evidence_sha256": "6c1117f063fe4115371500ec854a5e4e58316e9449d5f2330663233708628f56",
+    "evidence_sha256": "60cf7fb170527e8b636ad907ea2a8f79d427c4c4108ebc5c44411bf051e84f94",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "1ec16d563fc7d1a7700d960c314f5704d58b985b93c4ae26400f20991598bb34"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -3039,7 +2947,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "234f2a204ff6a0f59bfa64899a3316f338e6c1caae5a8c51277a585b39e65f4b",
+    "candidate_revision": "0cae21ca3b467f89ea2225e1f501d8e473fa8c95d5b05d41102270c5cde7f345",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -3316,7 +3224,7 @@
   "6a43955b0000000015027d45": {
     "id": "6a43955b0000000015027d45",
     "content_sha256": "e8f401fcfaa5f67a76628412cca3ca27b7ef45dab1b94ec5047ffd4219e7aa39",
-    "title": "太离谱了！月入14万美金，0个员工，全靠AI打工！",
+    "title": "Postiz：开源社交媒体运营工具，AI 写内容并排期发布到三十多个平台",
     "category": "内容增长与商业",
     "category_override": false,
     "category_reason": "",
@@ -3334,8 +3242,14 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "d9124b68aeee08aeb765b7b1242c5daa16066949a841f03303af8258bc40852f",
-    "evidence_sha256": "94581d573482c6d9208f5f7840cef9c0e673a75d6709113e61561c4100f48a58",
+    "evidence_sha256": "7d749e6c5ea87c1bc0bc01fd6f760efa0e1b18796258789c20c6b27fea8ac2cb",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "d25c98183970b344d1f8edf0da6b2f0621bd30b7d4d20241a9f931ddfbcb5f5e"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -3363,7 +3277,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "a26063cd8f4310fdda01bfffb827854892f4a0e9ee224c5219059405e6059134",
+    "candidate_revision": "52ae3ca2662345aba06668d2ff6ab8d3cab64c4a48eeca3a39cb1a4b6a810d8f",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -5626,7 +5540,7 @@
   "6a8245b90000000025013986": {
     "id": "6a8245b90000000025013986",
     "content_sha256": "d815cc4ccaf66ec7da5302cb35c3460203ce37b8f8a1cb6aebc189cdad436124",
-    "title": "🔥上线不到一周，GitHub狂飙1.3万Star！这",
+    "title": "anydoc：Firecrawl 团队的本地文档转 Markdown 开源项目，几毫秒转出 Word、PDF、PPT",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -5644,8 +5558,14 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "eee4edef8892d102b2d7f85ad50d071a5312935ba5f567fdbf6b068ebc92b2e1",
-    "evidence_sha256": "61ce3a7c395eb9652762c76deb5405fda4ea0279f2519e2bd56d762ac3ae9766",
+    "evidence_sha256": "f79f49053a6f105aeec283a3f9754594493030987cf5059cec64dbbcb1335e6f",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "e86cc05c8406eab0c4f24b17ab7c74e1559e9561e35ab89075ec1385ac7e6f23"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -5673,7 +5593,7 @@
       "resource_identity_sha256": "05761bf19e87d44199be6c63616571e1499025edb623f20d1f6a035eeee896f6",
       "verification_snapshot_sha256": "7f3b0f47688e7777bdde852c6e418364dd44dee687c1c0fbd03fd8fe88bea8f9"
     },
-    "candidate_revision": "f3d07943cf43ff9e0a38fe77021066af95aeb04abaaae9afb94269b44fbcdda5",
+    "candidate_revision": "0427e9bbb19b28b60048367513ac799458d7fbe9e3d2519c90b34711985832d6",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -6486,7 +6406,7 @@
   "6a8e4e8700000000060109a7": {
     "id": "6a8e4e8700000000060109a7",
     "content_sha256": "71355c29f8ba65ec3228d2557b484915d3ca104a1e76ac937f6927f849868b6a",
-    "title": "万象台无界关键词推广拉新 收割 稳定放量计",
+    "title": "万象台无界关键词推广的三个计划：手动拉新、智能收割、稳定投产比放量",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -6537,7 +6457,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "9ea77a9bc29f10ef0fcab4990b2b9c226076c2f29c0d86b24dda1d26291ecc38",
+    "candidate_revision": "ee91d576e9dfd79f86a7d066aaf7bb1edb467e80f115b96c261a4ee47802f2e6",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -7296,24 +7216,30 @@
   "6a226ba9000000002202f4e3": {
     "id": "6a226ba9000000002202f4e3",
     "content_sha256": "a1de518323f4ef992e670923ef946e3caab184cdbb58c5c9edfad2bc4b9a57fc",
-    "title": "三个Codex神级Skill，用上直接拉开一个段位",
+    "title": "Codex 的三个 skill：Remotion、HyperFrames 和图像生成，用对话做视频与图",
     "category": "AI创作",
     "category_override": false,
     "category_reason": "",
-    "summary": "使用Codex技能包结合Remotion（48.8K stars）可在1-2分钟生成Logo动画、3分钟完成3D视觉效果；Image Gun技能可批量生成图片素材。",
-    "action": "Save — workflow: Codex skills plus Remotion generate Logo animations in 1-2 min and 3D visuals in under 3 min",
+    "summary": "介绍在 Codex 里用的三个 skill：Remotion（作者称 GitHub 上 48.8k star，只写四五条提示词就自动生成一条完整宣传视频，页面滚动、功能高亮、镜头切换和动感字幕都自动完成，有人用它做的视频播放量几十万）；HyperFrames（程序化剪辑，精确控制每一帧，在 Codex 里一键安装，用提示词指定开头一两秒出现两个合作方 Logo、接着出公司 Logo、整体风格简洁，修改也是对 Codex 说）；Codex 自带的图像生成 skill（一句话生成科技感的 3D 人物介绍卡片，并能结合最新财报自己搜索整理资料）。作者称以前一个人三天的活现在半天搞定。以上是作者的演示和说法，star 数、播放量和“三天变半天”未经核实，视频没有给出安装命令和提示词全文。",
+    "action": "在 Codex 里分别安装 Remotion 和 HyperFrames，各用四五条提示词做一条 15 秒的宣传视频，对比哪种更容易按提示词精确修改；图像生成则用一句话生成一张信息卡片，核对卡片里的资料和财务数据是否与原始来源一致，不要照搬 AI 搜到的数据。",
     "themes": [
+      "AI视频",
       "Codex技能",
-      "Logo制作",
-      "视频生成"
+      "图像生成"
     ],
     "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "7ae8eea01351408970ccdd3d572f5e71da7b43a96e40ebd4474f5cbeb77e15cb",
-    "evidence_sha256": "2fbaf2235aad9e5f32c454caa0a1085fd093428867ceabc43b5c9b8ea28e6abf",
+    "evidence_sha256": "d13de244166e258360ff05e586ef5d44c3089078450c0bac7950b7e737463cb2",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "acaba570cc64cd76f137543c99132ee0142a7c8becae6472fc0b24c2c10d5137"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -7341,7 +7267,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "7d259ebab1af66cfb30c4da3af11ba44219411d61677a972a40417d973bc1340",
+    "candidate_revision": "7c64483469b515224336c67111c860931be72b557273c2673a64c99f6b3d1165",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -7660,24 +7586,30 @@
   "6a3a7a8200000000110193b6": {
     "id": "6a3a7a8200000000110193b6",
     "content_sha256": "686a1ba566571d5c8ad8bdee9e3e09c8e0340823bd83e291678322aa74ceb50c",
-    "title": "微软 Copilot 遭“破解”！GPT-5 竟能白嫖",
+    "title": "逆向 Windows Copilot 接口做成 OpenAI 兼容 API：本地部署教程与封号风险",
     "category": "AI工具",
     "category_override": false,
     "category_reason": "",
-    "summary": "通过第三方工具将Windows Copilot后端替换为OpenAI GPT-4o/GPT-5.5 API，搭建Python 3.9/3.10环境并在127.0.0.1:8000启动本地服务，实现自定义AI助手。",
-    "action": "Save — practical tutorial for routing Windows Copilot through a custom OpenAI API local server endpoint",
+    "summary": "教程视频讲 GitHub 上的一个开源项目：开发者逆向了 Windows Copilot 的内部接口，包装成 OpenAI 兼容的 API，可以免费对接本地 AI Agent，不需要 OpenAI 的 API key，作者称能调用 GPT-4o 或 GPT-5.5。部署要求是 Python 3.9 以上（安装时勾选加入系统路径）、一个免费微软账号、Windows 或 macOS 等系统；步骤是下载项目压缩包、在 PowerShell 里创建虚拟环境并安装依赖、安装浏览器自动化框架、运行登录命令用微软账号登录 Copilot 并保存凭证、运行 app.py 启动本地服务；再在 Cherry Studio 里添加 OpenAI 类型的模型，接口地址填本机 8000 端口加 /v1，密钥随便填。作者用它建任务、生成一个两层的 3D 室内场景代码，基本可用但有路线被卡住的设计问题。视频没有念出项目名；它依赖逆向接口，微软随时可能修复或封号，账号条款风险视频没有评估。",
+    "action": "不建议直接照做：先弄清项目名和仓库，读它的许可证和微软的 Copilot 使用条款，评估用账号登录逆向接口被封号的风险；真要试，只用一个不重要的小号和隔离的虚拟环境，不放敏感数据，也不要接入正式工具；需要稳定调用大模型时仍以官方渠道为准。",
     "themes": [
-      "AI助手替换",
-      "OpenAI API",
-      "本地部署"
+      "Copilot",
+      "本地API",
+      "风险提示"
     ],
     "tools": [],
     "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "538ac0e088947dea0d257eee6bc7b7de6448339496f4f54cf2bfac02cf706f9f",
-    "evidence_sha256": "c891cc73b3ebe3a6bb4c1b263a750e394d5ff1575b14a78781f294d797716950",
+    "evidence_sha256": "554cb97a25a054c58f2a755d5adbf055239b233b3f234ba0b60d3908222fbd1d",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "6e017c4aeeab8c8f6869acd248cbe0ceaa12e2e6e42a7788853b28eaf2d49030"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -7705,31 +7637,37 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "41d56e84b68acc645aac4bd0bf097e273f7bf9665897f07f89ac70f96b313a10",
+    "candidate_revision": "46619b30c630a3e539eed229cd2108800f9711789901c9212ed0dfec3e27ce94",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a2ea6fa0000000021020f92": {
     "id": "6a2ea6fa0000000021020f92",
     "content_sha256": "3d655081d26ebe640a1b25e9bb2d25d815fe258adce1bd71d942c574cd1a78de",
-    "title": "5 Tips",
+    "title": "刚开始用 Claude 要做的 5 件事：个人资料、记忆、写作风格、Projects 和连接器",
     "category": "AI效率",
     "category_override": false,
     "category_reason": "",
-    "summary": "Claude 5个实用技巧：Profile填写个人信息建立记忆（moveaimemory.com可迁移ChatGPT记忆）、Prompt库管理、Projects隔离上下文、Connectors接入Google Drive/Gmail/Notion/Slack/Asana实现自动化。",
-    "action": "Save — five actionable Claude productivity tips covering memory setup, Projects, prompt libraries, and tool connectors",
+    "summary": "英文视频（语音转写里混有繁体）讲刚开始用 Claude 该做的五件事：一，在设置的个人资料大文本框里写清你是谁、做什么、日常流程、每周安排和常用工具，也可以让 Claude 反过来向你提问再把答案贴进去，作者做了个 moveaimemory.com，教你从 ChatGPT 或 Gemini 导出记忆；二，打开记忆功能，让 Claude 记住跨对话的偏好和项目；三，在聊天框加号菜单的“使用风格”里新建写作风格，贴上自己的邮件等样例，之后一键套用；四，为经常做的任务建 Projects，上传文档并写专属指令，与日常聊天隔离；五，在 Customize 的 Connectors 里连接 Google Drive、Gmail、日历、Slack、Notion、Asana 等，权限设为始终允许后 Claude 可自行搜索邮件和文件、建日历事件。界面名称和选项以作者录制时为准，可能已变化。",
+    "action": "按五步在自己的 Claude 里各设置一遍：写好个人资料，开启记忆，建一个写作风格并用一封真实邮件测试，为一项常做任务建 Projects，再连接一个工具并先选每次询问而不是始终允许，用一周后再决定是否放宽权限；moveaimemory.com 是第三方站点，使用前先看它的隐私说明。",
     "themes": [
-      "Claude技巧",
-      "工作流优化",
-      "工具集成"
+      "Claude设置",
+      "Projects",
+      "记忆"
     ],
     "tools": [],
     "kind": "Note",
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "a3de694c5e3a66f45d031bf669151a068ed4fb031652c00c005b9ca35e2c73fa",
-    "evidence_sha256": "81c569c9e7e3f7b12e6e1e6f09d9d8ea50bc6ef4efa8b007d50013ae82086300",
+    "evidence_sha256": "3af00b2951616d37ec53fc3bcc38a8cdf7068d8959fa028d4e7a7a3ef22d6195",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "d6090c15602d2bc6c83e74758734abeeff7e727133c125b435f0cde2af070472"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -7757,31 +7695,37 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "15978b305c6ca7a8f808ac5ef221a7f5be70152b1719b6d2e0dc74e7f8ce6a54",
+    "candidate_revision": "25987dd2cf5ff8fc95c99280090dfa5a7e66228d2aee5cfcade73bfc6a82280d",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "69e89e2c000000002102d175": {
     "id": "69e89e2c000000002102d175",
     "content_sha256": "2d899fda862307d4bb7eed0d7aa411a423ead65165738d587880a77644b4d606",
-    "title": "Github宝藏开源项目",
+    "title": "Hello-Agents 教程目录速览：从智能体基础、框架到 Agentic RL（SFT、GRPO）",
     "category": "AI工具",
     "category_override": false,
     "category_reason": "",
-    "summary": "推荐 GitHub 上的 AI Agent 开源项目，重点介绍 Gatehub 和 AgentRail 两款工具",
-    "action": "访问 GitHub 收藏并试用 Gatehub、AgentRail，评估其在 AI Agent 自动化场景的适用性",
+    "summary": "又一条介绍 Hello-Agents 的视频（画面显示仓库 datawhalechina/hello-agents，约 3.9 万 star、四千多 fork，标注为 GitHub 当日第一）：《从零开始构建智能体》系统教程把 AI Agent 从理论到实践的课程文档和设计代码全部开源，目录分智能体与语言模型基础、构建大语言模型智能体、高阶知识扩展、综合案例和毕业设计几部分，其中 Agentic RL 一章讲 SFT 和 GRPO 等训练方法，作者称这是智能体高端岗位的必备技能。视频语音没有念出项目名，课程质量没有核实。",
+    "action": "到 GitHub 打开 datawhalechina/hello-agents，按目录从第一部分读起，先跑通一个基础章节的代码，再判断是否需要学习 Agentic RL 一章（涉及模型训练，先查算力要求）。",
     "themes": [
       "AI Agent",
-      "GitHub",
-      "开源工具"
+      "Agentic RL",
+      "开源教程"
     ],
     "tools": [],
-    "kind": "Tool",
+    "kind": "Note",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "d019e97c1d06d07fff05d993dd012f15641aae1b6a435e1ffc53fb855fcce7ea",
-    "evidence_sha256": "0c7627abb5bd74aed45e7e2873f6ec06f2bfa9805572f48d09de28c46dd6c5bd",
+    "candidate_seed_revision": "2421e363d12c0b9c6969d383be798b3f8f8530356765f24b44d5a3ff144360f1",
+    "evidence_sha256": "594d03033256e5248dbf7742dbfec040b2841209efe579e1596b1d36360c144a",
     "evidence_dependencies": [
+      {
+        "method": "audio_transcript",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
+        "result_sha256": "6f5aa66c1509544e75134e7ba038b89c86077dc57c1a255a40b69fa96deb01c8"
+      },
       {
         "method": "diandian_summary",
         "provider": "xiaohongshu-diandian",
@@ -7809,7 +7753,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "711cac9058fb243c6a95ad41b07e62aa31a37ac305de3a7d3e8d1518975ba586",
+    "candidate_revision": "aede93e6c223f54d58e5ceee47f3ac3b823b35ee1f4ca23b3ffb0a6dd6902bff",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -9513,16 +9457,16 @@
   "6a2526d10000000006022091": {
     "id": "6a2526d10000000006022091",
     "content_sha256": "7c35dbb5b42c5b8b3351c326015a8442eb1a34b728f813d2f4af18423e8d2686",
-    "title": "OpenHands，GitHub上超50K Star的",
+    "title": "OpenHands：能自己读需求、写代码、跑测试、修 Bug 的开源 AI 软件工程 Agent",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "OpenHands（原OpenDevin）在GitHub达50K+ stars，开源AI编程Agent框架，SWEbench评分77.6%，支持CLI和GUI模式，是Devin的有力开源替代方案。",
-    "action": "Save — OpenHands AI coding agent (50K+ stars, 77.6% SWE-bench) is a strong open-source alternative to Devin",
+    "summary": "介绍 GitHub 上超 5 万 star 的 AI 驱动开发平台 OpenHands：不是简单的代码补全，而是全自主的软件工程 Agent，像虚拟程序员一样自己读需求、写代码、跑测试、修 Bug。作者称论文已发表，SWE-bench 评测达到 77.6%，是开源圈顶级水平；底层是可组合的 Agentic SDK，把代码编写、环境交互、工具调用模块化，可由 GPT 等任意大模型驱动；使用方式有命令行、本地图形界面和云端托管三种，体验与 Devin 相近但开源免费，还能接 Slack 等工具自动修 issue（转写不清）。以上数字来自作者口述，未经核实。",
+    "action": "到 GitHub 核对 OpenHands 的 star 数、许可证和 SWE-bench 成绩的出处；先在本地用命令行或图形界面接一个自己的小仓库，让它修一个真实的小 bug，检查它是否能读懂需求、改对代码并跑通测试，同时记下消耗的模型调用量。",
     "themes": [
       "AI编程Agent",
-      "SWE-bench",
-      "代码生成"
+      "开源项目",
+      "软件工程"
     ],
     "tools": [],
     "kind": "Tool",
@@ -9558,23 +9502,23 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "32c26a3da9e97befd5eb71b87bca80a8bf07bff727f908d68d42d096b8445106",
+    "candidate_revision": "831b2198d8a06ae344143c6eaaf8ab7469a88fe3a0d2d16257b018f19f3973a0",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a1983cc00000000380231c0": {
     "id": "6a1983cc00000000380231c0",
     "content_sha256": "1e523c7382fb13169ea5d820f6db27e360a9029ede10dd030098bad6b35960c8",
-    "title": "收录各类工作 Skill 的网站：分类榜单、精选推荐和安全检查",
+    "title": "CocoLoop：收录一万多个 AI skill 的网站，带分类榜单和恶意代码检测",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "Claude Code 实用 skill 合集，包含 Humanize Tag 去 AI 腔、Summarize 摘要提取和 SQL Query 自然语言转 SQL 三个功能。",
-    "action": "将 Humanize Tag、Summarize 和 SQL Query 三个 skill 添加至 Claude Code，各用一个真实任务验证输出质量后记录最佳调用方式。",
+    "summary": "介绍一个收录各类工作 skill 的网站（画面显示站名 CocoLoop，首页显示一万两千多个 skill，语音没有念出站名）：热门榜按效率、办公、开发、设计分类，精选榜经人工加 AI 双重筛选，可按自媒体创作、知识管理等分类挑选；比如做自媒体可用榜单里的 humanize-ai-text 优化 AI 写作痕迹，Summarize 一键生成摘要，也有设计资产导出类的 skill；每个 skill 页面能看到安全评级、使用说明和相关推荐；站内还有“安全管家”，画面显示六个维度的检测，站外找到的 skill 也可以拿来检查有没有恶意代码、会不会偷数据。以上是博主介绍，安全检测准确与否没有演示。",
+    "action": "先核对站名和官方地址再打开，按自己的职业分类看精选榜靠前的几个 skill；装之前看它的安全评级和使用说明，再用站内检测功能扫一个从别处找来的 skill，并自己通读 skill 文件确认，不要只信评级。",
     "themes": [
-      "prompt-engineering",
-      "sql",
-      "text-processing"
+      "Skill市场",
+      "skill安全",
+      "工具合集"
     ],
     "tools": [],
     "kind": "Note",
@@ -9610,7 +9554,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "07e9e7c6d2acc667a2fc9a312b2435f81c5ad20c6667f9e0182d228109b5b9cc",
+    "candidate_revision": "cb0bf2c92e2aee1877193e6d1640b8e6cd5fa4b563db61407c999e7baff5f4b9",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -9669,15 +9613,15 @@
   "6a2146a20000000038034360": {
     "id": "6a2146a20000000038034360",
     "content_sha256": "4ef3208d04dc792284110f3311812a48f20d6febe939dfb321861d965b1a37b8",
-    "title": "这个神级skills让人人都能成为产品经理",
+    "title": "Product Manager Skills：49 个产品管理框架做成的 Claude Skill 集合",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "Scales是GitHub 4.6K stars的PM专用Claude Skill插件，内置49个PRD模板，让Claude直接输出专业产品需求文档，大幅提升产品规划效率。",
-    "action": "Save — Scales PM skill for Claude (4.6K stars, 49 PRD templates) accelerates product requirement document creation",
+    "summary": "介绍 GitHub 上由一位资深产品经理开源的 Claude skill 集合（转写里写作 Scales，应为 Skills；作者称叫 Product Manager Skills，约 4.6K star）：共 49 个产品管理框架，把 PRD 写作、优先级排序等真实的产品经理方法拆成 Claude 能理解的模块，装上后 Claude 会按框架主动引导工作，而不是写出不能用的 PRD；作者说运营可以用来做用户洞察，创业者可以用来梳理产品定位，项目经理可以用来管理需求池。视频没有念出仓库地址，star 数和作者背景未经核实。",
+    "action": "在 GitHub 搜索 Product Manager Skills，找到由资深产品经理发布的仓库，核对作者、许可证和 49 个框架的清单；装进 Claude 前通读它的 SKILL 文件，再拿同一个需求分别让装与不装的 Claude 写 PRD，对比是否按框架提问并给出可用的优先级排序。",
     "themes": [
       "Claude Skill",
-      "PRD生成",
+      "PRD",
       "产品经理"
     ],
     "tools": [],
@@ -9714,7 +9658,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "6a0e0c5e5602a0a66efd6cbad19d28e39404885985f998f09ecddb892e9f25aa",
+    "candidate_revision": "e0b66f7c0e65a4f9147381ae2616de02ff5eb42d8c4ee637fb216b0e3f957583",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -9825,14 +9769,14 @@
   "6a1f7bab0000000036003da7": {
     "id": "6a1f7bab0000000036003da7",
     "content_sha256": "961779937111491df25e43208ce2152023a79d0c56ac956676832b61eec0f90a",
-    "title": "Supervision-AI视觉方案开源",
+    "title": "Supervision：不挑模型的开源视觉工具，检测、追踪和标注一起做",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "Supervision是roboflow出品的GitHub 40K+ stars Python视觉工具库，统一封装Ultralytics/Transformers/MMDetection等模型的标注、检测、追踪API，大幅简化CV工程集成。",
-    "action": "Save — Supervision Python library (40K+ stars) unifies CV model APIs across Ultralytics, Transformers, and MMDetection",
+    "summary": "介绍一个近期涨星、即将突破 4 万 star 的开源计算机视觉工具（笔记标题称为 Supervision）：支持目标检测、语义分割、图像分类和实时追踪，不挑模型，可接 Ultralytics、Transformers、MMDetection 等；带有标注器，把检测框画出来并一键出可视化效果，可用于停留时间分析、速度估计和客流统计。视频只是口播式安利，没有演示代码或效果，仓库归属、许可证和 star 数都没有核实。",
+    "action": "到 GitHub 搜索 Supervision，核对仓库归属、许可证和 star 数；装好后用一段自己的监控或行人视频，接上一个 Ultralytics 检测模型，试画检测框、追踪和停留时间或客流统计，看官方示例代码是否能直接跑通。",
     "themes": [
-      "Python库",
+      "开源工具",
       "目标检测",
       "计算机视觉"
     ],
@@ -9870,23 +9814,23 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "c6ac2dfb1a210efd21239322be37b91722a1f3650a256e9ee8b0eda23b3cb07f",
+    "candidate_revision": "6ca733462cd4851cb70920f168eb7c2468706eebd28621cced6a87638ae281bc",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a1ef04a000000003502f194": {
     "id": "6a1ef04a000000003502f194",
     "content_sha256": "f99d3d0889f296d2c66540aa6bb0299e01c22ad96fdbf860ff9b05ea87c8d629",
-    "title": "独立开发SaaS？这3个降成本的神器爽翻了",
+    "title": "独立开发 SaaS 的免费 Serverless 组合：Hono 加 Cloudflare 做接口、Clerk 做登录、Neon 做数据库",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "Serverless SaaS极简技术栈：Hono + Cloudflare Workers（10ms响应）、Clerk Auth（一行代码认证）、Neon Postgres（无限分支数据库）；适合vibe coding从0到1快速验证产品。",
-    "action": "Save — minimal Serverless SaaS stack (Hono + Clerk + Neon) optimised for fast 0-to-1 vibe coding validation",
+    "summary": "笔记推荐独立开发者零成本验证 SaaS 的三件套：Hono 写后端接口，一键部署到 Cloudflare 边缘网络，作者称冷启动很快，每天 10 万次请求额度免费；Clerk 做用户鉴权，不必自己存用户表和写鉴权逻辑，十分钟集成各大社交账号登录，称 1 万月活用户额度免费；Neon 做关系型数据库 Postgres，闲置时自动缩容到零，一秒钟克隆出带数据的独立测试分支，个人额度免费。作者说用这套搭 Openclaw 桌面端的基础架构十分钟搭好。免费额度是作者发布时的说法，可能已变；三个名称在语音里没有念清，写在笔记正文里。",
+    "action": "到三家官网核对当前免费额度和限制，用 Hono 写一个最小接口部署到 Cloudflare，接上 Clerk 的社交登录和 Neon 的 Postgres，跑通“登录后读写一条数据”的最小流程；再用 Neon 的分支功能克隆一份数据做测试，并确认超出免费额度后的计费方式。",
     "themes": [
-      "SaaS开发",
+      "SaaS技术栈",
       "Serverless",
-      "技术栈"
+      "独立开发"
     ],
     "tools": [],
     "kind": "Workflow",
@@ -9922,23 +9866,23 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "7e33823427ba570a0212eaa6aa7cc4d0bd827fcc04654b0e2826e963701f9790",
+    "candidate_revision": "5a3c1e2e2100be272ede9c801322a3eae977777fdd62462adb6b1284398ba1e0",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a1ecee20000000035025b68": {
     "id": "6a1ecee20000000035025b68",
     "content_sha256": "6444477e45fa113ab0244a7a734d9b87a323fba324a9f42297d4069d51111c6b",
-    "title": "🔶 横评 5️⃣ 个ui网页还原度设计skills",
+    "title": "横评 5 个让 AI 还原网页设计的 skill：web-design 评为夯，taste-design 只算 NPC",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "推荐5个AI辅助UI设计Skill/工具：Scale平台Web Design技能、Skele框架、Figma集成工具、Tanot等AI SQL工具、Notion模板方案；可系统提升vibe coding的界面输出质量。",
-    "action": "Save — five vibe-coding UI skills: Scale web design, Skele framework, Figma integration, SQL tools, and Notion templates",
+    "summary": "作者用同一个需求（生成个人笔记管理页面）横评 5 个网页设计 skill，并按“夯到拉”分级：taste-design（Stitch 的设计品味 skill）生成的页面简约清新但没有亮点，评为 NPC；web-design 会在生成前先让你选偏好和风格，成品普遍很好、风格高级，评为夯；emilkowalski skill 用 Figma 设计稿链接给页面补首屏入场动效和页面内交互动效（图表和数字有生长效果、元素有悬停效果），评为人上人；magicslide 由国内团队开发，生成效果像 PPT，更适合做演示稿，评为人上人；Design MD Collection 收录 72 家大厂的设计规范，可按 Notion、苹果等风格出页面，细节几乎没有错位，评为顶级。评分是作者的主观感受，只用了一个页面需求；安装地址作者称在群里发放，需自行搜索核对。",
+    "action": "挑自己最近要做的一个页面需求，用同一句话分别让 web-design 和 Design MD Collection 生成，再选一种大厂风格（如 Notion）重做一版，对比还原度；动效 skill 另拿一张 Figma 设计稿链接试，最后只保留真正提升效果的一两个。安装前先核对仓库来源并通读 skill 文件。",
     "themes": [
-      "Skill推荐",
-      "UI设计技能",
-      "vibe coding"
+      "UI设计skill",
+      "Vibe Coding",
+      "网页还原"
     ],
     "tools": [],
     "kind": "Note",
@@ -9974,23 +9918,23 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "d400000409b6ef376d1e0643890931f3b686ce399ed36a6f3ddf778c30774d62",
+    "candidate_revision": "27c44c0fc103e6697968e3b806ee50b001265d001d19cf75bbb38645576b8313",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a1e97df0000000020039582": {
     "id": "6a1e97df0000000020039582",
     "content_sha256": "bffa0250380862e19c14186a3171868f55ceafabc0cc77ee833a1d6e9ddfa4e8",
-    "title": "1亿粉丝的游戏大神开源，手搓本地AI全家桶",
+    "title": "Odysseus：游戏博主开源的纯本地 AI 工作区，内置自我进化的 agent",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "1分钟速览多款AI工具：Odysseus浏览器自动化agent、gethop工作流平台、Deep Safe V4安全检测工具等，涵盖agent自动化和生产力多个方向。",
-    "action": "Save — quick roundup of emerging AI agent tools including Odysseus browser agent and Deep Safe V4 security tool",
+    "summary": "介绍一位一亿粉丝的游戏博主（转写写作“PUDA派”）新开源的 AI 项目 Odysseus：作者称上线两天在 GitHub 涨了两万多 star；它是纯本地的 AI 工作区，所有数据和计算都在自己的硬件上跑；内置能“自我进化”的 agent，可自动浏览网页、编辑文件、处理文档、写研究报告，甚至读邮件并自动回复；底层接的模型在转写里听成 Deep Safe V4，疑为 DeepSeek V4，未核实，博主名字也需要核对。视频全是口播式安利，没有演示，邮件自动回复的权限和隐私风险没有交代。",
+    "action": "到 GitHub 搜索 Odysseus，核对作者、许可证和 star 数；先在隔离环境按 README 安装，只给它读取一个测试文件夹和一个空邮箱，试自动浏览网页和写研究报告，确认本地运行时确实没有数据发往外部，再决定是否开放邮件自动回复等权限。",
     "themes": [
-      "AI浏览器Agent",
-      "工具合集",
-      "生产力"
+      "AI Agent",
+      "开源项目",
+      "本地AI"
     ],
     "tools": [],
     "kind": "Note",
@@ -10026,23 +9970,23 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "7b04d6e2147c17f5b901a9cbf48c21784aed432c01d7dff2729cccc57f1833af",
+    "candidate_revision": "b8804727e8015ddb2df4391ab8b0a266bd4ea9e57dbc2d72f1ba3af174521352",
     "review_status": "accepted",
     "review_reason_code": ""
   },
   "6a1e8ffe0000000007020b34": {
     "id": "6a1e8ffe0000000007020b34",
     "content_sha256": "00409bf789088efa49aa38e8a1e793f113cda9824a969851bfe75de7bcb6fceb",
-    "title": "这是一款可以让你直接复刻大厂UI的开源项目",
+    "title": "ai-website-cloner-template：让 AI 一键复刻大厂网页 UI 的开源模板",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "GitHub 16K stars AI UI生成工具，通过自然语言描述直接生成CSS组件代码；结合Claude Code（Claudical）调用和ShadcnUI组件库，可快速搭建界面原型。",
-    "action": "Save — AI UI generator (16K stars) converts natural language to CSS components; integrates with Claude Code and ShadcnUI",
+    "summary": "介绍 GitHub 上约 1.6 万 star 的开源“AI 网站克隆器模板”（画面显示仓库名 ai-website-cloner-template、MIT 许可证，所有者名被画面截断）：把它交给 Claude Code 等 AI 编程 Agent（README 推荐用 Claude Code 搭配 Opus 4.7），对一个网址运行克隆命令，AI 会自动截图分析页面结构，精准提取原网站的 CSS 颜色、字体和间距，自动探测悬停、点击、滚动等交互状态，并用 shadcn/ui 设计系统生成响应式的 Next.js 代码，作者称代码美观又好改。视频只展示了原站与克隆结果的并排画面，效果没有量化，复刻他人网站涉及的版权和品牌素材问题也没有交代。",
+    "action": "到 GitHub 搜索 ai-website-cloner-template，核对所有者、许可证和 README 的使用步骤；用自己有权复刻的页面（比如自己的旧站）运行克隆命令，对比颜色、字体和交互状态是否还原；不要把复刻来的他人品牌素材和受版权保护的内容用于商用。",
     "themes": [
-      "CSS组件",
+      "AI编程",
       "UI生成",
-      "vibe coding"
+      "网页复刻"
     ],
     "tools": [],
     "kind": "Tool",
@@ -10078,7 +10022,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "479afe5eafa8f9560bfc28b7fbf8b6dfca99a2db47a5c72634fb9dd9aaeb1b64",
+    "candidate_revision": "c4fb96a6fe6f4f18b7fe37b04129868cd5ed7e533139f17e8833270cd46eccb3",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -11174,22 +11118,22 @@
   "69e81334000000002102e69d": {
     "id": "69e81334000000002102e69d",
     "content_sha256": "ee9f80b8319ed47033735fa1c57179f355a3afa4c271512a8f5141bc41275ca7",
-    "title": "大厂架构直接开源",
+    "title": "architecture-of-internet-product：按公司和技术主题整理的国内大厂架构资料库",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "A 20k-star GitHub tool for document parsing and format conversion, supporting PPT and PDF inputs with structured output — suitable for building document ingestion pipelines.",
-    "action": "Identify the exact tool name from the original post, then evaluate for document-to-markdown or document-to-structured-data workflows.",
+    "summary": "介绍 GitHub 上约 2 万 star 的架构资料仓库（画面显示仓库名 architecture-of-internet-product）：收集国内各大互联网公司一线工程师的内部分享 PPT 和 PDF 原文，按公司和按技术主题两个维度整理，可以横向对比，比如腾讯怎么解分布式、阿里怎么解消息队列；还收录了一批影响现代软件架构的经典论文（画面里能看到 Google F1 的在线异步表结构变更论文）。视频只做了目录浏览，没有评价资料的新旧和质量，star 数是博主说法。",
+    "action": "到 GitHub 搜索 architecture-of-internet-product，先按自己关心的技术主题（如分布式或消息队列）挑两三份 PPT，核对分享的年份、是否已经过时；再选一篇经典论文读完，记下哪些做法今天仍然适用。",
     "themes": [
-      "Document AI",
-      "File Conversion",
-      "PDF & PPT"
+      "分布式系统",
+      "技术资料库",
+      "软件架构"
     ],
     "tools": [],
-    "kind": "Tool",
+    "kind": "Note",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "dfaf2569219ee6a803abb939e95df228b904467e38e2aefd963cbd17d41533a7",
+    "candidate_seed_revision": "d6cbe6b8a2af2b3158326db2d155d7b1f853713f826b8c212095ad73737df66d",
     "evidence_sha256": "1fb9860e2e50021dd71be863ef61b428c02edd159b9397a33a6270d1638b7b0b",
     "evidence_dependencies": [
       {
@@ -11219,7 +11163,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "adc3c2447d1932a50bd01336cd66ea9ee5578edff9810f3565f7e243541a93b9",
+    "candidate_revision": "761491a31c399c168f48d1a27666933b6696ff200cec4e0f6194aac338fbe8c4",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -13512,22 +13456,22 @@
   "6a6a035f000000000e03f400": {
     "id": "6a6a035f000000000e03f400",
     "content_sha256": "2cf2cd7894af0e97c169dc3f656c023f92a03530be789b4403c6a3822e2ddf07",
-    "title": "突然发现朋友的直通车优化口诀好清晰啊",
+    "title": "关键词推广（原直通车）优化口诀：按展现量、出价、点击率、转化率的 16 种组合处理关键词",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "突然发现朋友的直通车优化口诀好清晰啊 #新手开网店[话题]# #电商运营[话题]# #电商干货[话题]# #淘宝运营[话题]# #淘宝商家[话题]# #淘宝[话题]# #淘宝那点事[话题]# 新 手 开 网 店 电 商 运 营 电 商 干 货 淘 宝 运 营 淘 宝 商 家 淘 宝 淘 宝 那 点 事",
-    "action": "评估视频中提到的AI工具是否适合当前业务流程",
+    "summary": "图文口诀把淘宝关键词推广（原直通车）的词，按展现量大小、出价高低、点击率高低、转化率高低分成 16 种组合，各给处理办法：展现小、出价高、点击和转化都高的，继续保持或适当加价；点击高但转化低的，看 ROI 先降价；点击低但转化高的，多半是图片创意有问题，先优化创意；展现小、出价高、点击和转化都低的，直接删除；展现小、出价低、点击和转化都高的，以 ROI 为重点加价拿流量；展现大、出价高、点击和转化都高的，什么都不做，继续保持并增加投放时间；展现大、出价高、点击和转化都低的类目大词，降价或删除，免得拖低计划权重；展现小、出价低、点击和转化都低的，先适当加价并优化创意，仍无改善就删。口诀来自作者朋友，没有给出判断“大小高低”的数字阈值，也没有数据验证。",
+    "action": "导出自己店铺一个推广计划的关键词，先自己定好展现量、出价、点击率、转化率的高低阈值（比如取行业或店铺平均值），再对每个词套用口诀的处理办法；先只改前 20 个词，按 ROI 观察一周，看加价、降价和删词是否带来更好的投产，再推广到其他计划。",
     "themes": [
-      "AI工具",
-      "店铺运营",
-      "效率提升"
+      "关键词优化",
+      "投放计划",
+      "淘宝推广"
     ],
     "tools": [],
-    "kind": "Tool",
+    "kind": "Workflow",
     "status": "pending_review",
     "blockers": [],
-    "candidate_seed_revision": "26df577ff9c1a65894a738c78990844f5689e407b1b4de7761428bba6bd4ddef",
+    "candidate_seed_revision": "a82364cbbb798e9481bd121fefe2951ef6040460864611b5c0f051862c6ea099",
     "evidence_sha256": "eb0f0be04e9ee57655aa1a1c9cf2200e1e8585fa62fe85a36abac5c96852372c",
     "evidence_dependencies": [
       {
@@ -13557,7 +13501,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "110587b730f7ec0ad29a12f6a7cbcf6b488d262d13dac9a8117fe7a9d4e0632f",
+    "candidate_revision": "a3279be0021b7873604426a64032eac282f3932b62a8cffb6369799c3cc14872",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -13668,16 +13612,16 @@
   "69e595c20000000023020a09": {
     "id": "69e595c20000000023020a09",
     "content_sha256": "0749a444f98d903824a6256ecf2705d62407077be695975c5bc05c372e850294",
-    "title": "这个开源的视频自动剪辑项目太🐮了！",
+    "title": "Pixelle-Video：输入主题就自动生成短视频的阿里开源项目（4.3k star 时的介绍）",
     "category": "",
     "category_override": false,
     "category_reason": "",
-    "summary": "这是阿里开源的AI全自动视频剪辑项目 在github上已经获得4.3K的star 一天一个神奇的工具第87期 今天要讲的是 只需要给它输入一个主题 它就能自动写文案脚本 生成素材 合成语音 添加背景音乐 最后一键合成视频 不管是数字人口波 小说解说 知识科普 还是人文计时 历史解说等等 几乎所有类型都能生成 更离谱的是 居然有免费本地画部署的方案 就很省心",
-    "action": "按照自身使用场景（写作、编程、设计、自动化）逐类浏览清单，优先试用 Stars 数较高且近期活跃的工具，记录实际体验并筛选出个人 AI 工具箱的核心成员。",
+    "summary": "介绍阿里开源的“AI 全自动短视频引擎”Pixelle-Video（画面显示 Apache-2.0 许可证，拍摄时约 4.3k star，属于系列栏目“一天一个神奇的工具”第 87 期）：只需输入一个主题，它自动撰写视频文案、生成 AI 配图或视频、合成语音解说、添加背景音乐并一键合成视频，作者称数字人口播、小说解说、知识科普、人文纪实和历史解说等类型几乎都能生成；README 的常见问题里给出完全免费的本地方案（语言模型用 Ollama，图像用本地部署的 ComfyUI）。视频没有演示完整的生成过程和成片质量，免费本地方案的硬件要求也没有说明。",
+    "action": "到 GitHub 打开 AIDC-AI/Pixelle-Video（这条视频的画面只显示项目名，仓库归属请核对），按 README 的免费本地方案配置 Ollama 和 ComfyUI，先看硬件要求；用一个自己的短主题生成一条视频，评估文案、配图、配音和成片质量，再决定是否用于内容生产。",
     "themes": [
-      "AI工具集",
-      "效率提升",
-      "资源整理"
+      "AI视频",
+      "开源项目",
+      "短视频生成"
     ],
     "tools": [],
     "kind": "Note",
@@ -13713,7 +13657,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "19fc8998f7b288604c76fb6645f36b43fb0e56fd5339549f3e78c5a546fd5e74",
+    "candidate_revision": "5001ae983308a68451f705215565ceb575578a16962d737a21790f80a4f59552",
     "review_status": "accepted",
     "review_reason_code": ""
   },
