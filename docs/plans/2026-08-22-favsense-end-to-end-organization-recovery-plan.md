@@ -8,9 +8,9 @@
 
 **Tech Stack:** Python 3.12 `unittest`/本地 HTTP Bridge、Node.js 20 ESM/`node:test`、原生 HTML/CSS/JavaScript、Playwright Chromium、PowerShell、GitHub Actions。
 
-**Governing Spec:** `docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`（APPROVED，v1.0）。
+**Governing Spec:** `docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`（APPROVED，v1.0）。
 
-**Verification Checklist:** `docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md`。
+**Verification Checklist:** `docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md`。
 
 **Design inputs:** 本次批准范围没有 `docs/designs/*.html` mockup。UI 的结构与行为 source of truth 是 governing Spec 的 UX-01..UX-14 Entry → Action → Expected Result；视觉细节只按现有站点模式实现，并由 `VC-QA-14/15` 复核，不在计划中发明新信息架构。
 

@@ -4,9 +4,9 @@ Date completed: 2026-08-26
 Pipeline step: 4 / CODE
 Branch: `codex/favsense-organization-recovery`
 Base / Step 4 pre-SHA: `fc0a22094dcbb1c41e99e333449ab5293baa5421`
-Governing Spec: `docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`
+Governing Spec: `docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`
 Reviewed Plan: `docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md`
-Verification checklist: `docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md`
+Verification checklist: `docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md`
 
 ## Task Completion Inventory
 

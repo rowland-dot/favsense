@@ -2,7 +2,7 @@
 
 > 状态：由 APPROVED Spec 派生，供 `/dev-pipeline` TDD、Review、QA、Audit 和 review brief 共同引用。
 >
-> Governing Spec：`docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`
+> Governing Spec：`docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`
 >
 > Implementation Plan：`docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md`
 
