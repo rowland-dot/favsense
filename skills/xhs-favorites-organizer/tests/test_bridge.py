@@ -504,11 +504,10 @@ class BridgeHelpersTest(unittest.TestCase):
             self.assertNotIn("PATH", child_env)
 
     def test_curation_pipeline_input_matches_the_evidence_methods_audits_were_sealed_with(self):
-        # An accepted note keeps its audit only if the rebuild lists the same evidence the audit
-        # was sealed with. Early transcripts on disk carry only a status and the text, and the
-        # audit recorded them under a fixed provider and version; image text is recorded as image_ocr.
-        # An early transcript has no provenance of its own, so it counts only where an audit
-        # sealed that exact text; one the audit never used is not new evidence for that note.
+        # The rebuild lists the evidence methods an audit is sealed with: transcripts and image text carry
+        # their own provenance (provider, version, hash of the text) and are listed as audio_transcript and
+        # image_ocr. An early transcript on disk carries only a status and the text, so it has no provenance
+        # of its own and is not evidence at all, whatever an older audit once recorded for it.
         def sha(text):
             return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -561,12 +560,8 @@ class BridgeHelpersTest(unittest.TestCase):
 
             sent = json.loads((bridge.state_dir / "organization-transactions" / "manual-curation-input.json").read_text(encoding="utf-8"))
             methods = {item["note_id"]: [m for m in item["methods"] if m["method"] != "public_text"] for item in sent["evidence"]}
-            self.assertEqual(methods[early], [
-                {"method": "audio_transcript", "provider": "local-transcription", "version": "1", "result_sha256": sha("早期转写正文")},
-            ])
-            self.assertEqual(methods[partial], [
-                {"method": "audio_transcript", "provider": "local-transcription", "version": "1", "result_sha256": sha("只转写了一部分")},
-            ])
+            self.assertEqual(methods[early], [])
+            self.assertEqual(methods[partial], [])
             self.assertEqual(methods[failed], [])
             self.assertEqual(methods[unused], [])
             self.assertEqual(methods[edited], [])
@@ -577,10 +572,9 @@ class BridgeHelpersTest(unittest.TestCase):
                 {"method": "image_ocr", "provider": "human_frame_review", "version": "codex-visual-review@2026-08-29", "result_sha256": sha("画面文字")},
             ])
 
-    def test_curation_pipeline_input_adds_a_saved_point_summary_only_where_the_audit_used_one(self):
-        # A summary saved after a note was reviewed is not new evidence for it: an accepted audit that
-        # never listed the summary keeps its evidence version only if the rebuild leaves the summary out.
-        # Notes without an accepted audit, and audits that did use the summary, still count it.
+    def test_curation_pipeline_input_adds_a_saved_point_summary_whether_or_not_the_audit_used_one(self):
+        # A saved reply is evidence for its note whenever it exists: an accepted audit that never listed it
+        # no longer hides it, so a note whose reply arrived after its review goes back to review.
         def summary_dependency(sha):
             return {"method": "diandian_summary", "provider": "xiaohongshu-diandian", "version": "v" * 64, "result_sha256": sha}
 
@@ -613,8 +607,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 item["note_id"]: [m for m in item["methods"] if m["method"] == "diandian_summary"]
                 for item in sent["evidence"]
             }
-            self.assertEqual(summary_methods[unused], [])
-            for counted in (used, no_audit, pending, legacy):
+            for counted in (unused, used, no_audit, pending, legacy):
                 self.assertEqual(len(summary_methods[counted]), 1, counted)
                 self.assertEqual(summary_methods[counted][0]["result_sha256"], "5" * 64)
 

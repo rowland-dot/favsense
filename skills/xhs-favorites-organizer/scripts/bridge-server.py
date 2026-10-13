@@ -6684,7 +6684,6 @@ class Bridge:
             current_audit = json.loads(audit_path.read_text(encoding="utf-8-sig"))
         except FileNotFoundError:
             current_audit = {"schema_version": 2, "notes": {}}
-        audited_notes = current_audit.get("notes") if isinstance(current_audit, dict) else None
         scoped = []
         evidence = []
         for note_id in sorted(set(note_ids)):
@@ -6692,18 +6691,6 @@ class Bridge:
             if not isinstance(note, dict) or not NOTE_ID.fullmatch(note_id):
                 raise ValueError("sealed curation scope is unavailable")
             scoped.append({"id": note_id, **note})
-            audit_entry = audited_notes.get(note_id) if isinstance(audited_notes, dict) else None
-            audited_dependencies = audit_entry.get("evidence_dependencies") if isinstance(audit_entry, dict) else None
-            # Early transcripts carry only a status and the text, so they have no provenance of their
-            # own. Audits recorded them under a fixed provider and version, hashed over the text itself.
-            sealed_early_transcripts = {
-                dependency.get("result_sha256")
-                for dependency in (audited_dependencies if isinstance(audited_dependencies, list) else [])
-                if isinstance(dependency, dict)
-                and dependency.get("method") == "audio_transcript"
-                and dependency.get("provider") == "local-transcription"
-                and dependency.get("version") == "1"
-            }
             methods = []
             public_text = str(note.get("description") or "").strip()
             methods.append({
@@ -6711,15 +6698,6 @@ class Bridge:
                 "result_sha256": hashlib.sha256(public_text.encode("utf-8")).hexdigest(),
             })
             point = self.saved_diandian_record(note_id)
-            # A summary saved after a note was reviewed is not new evidence for it: an accepted audit
-            # that never listed the summary is rebuilt without it, so its evidence version still matches.
-            audit_methods = audit_entry.get("evidence_methods") if isinstance(audit_entry, dict) else None
-            audit_used_summary = "diandian_summary" in (audit_methods if isinstance(audit_methods, list) else []) or any(
-                isinstance(dependency, dict) and dependency.get("method") == "diandian_summary"
-                for dependency in (audited_dependencies if isinstance(audited_dependencies, list) else [])
-            )
-            if isinstance(audit_entry, dict) and audit_entry.get("status") == "accepted" and not audit_used_summary:
-                point = None
             if point is not None:
                 methods.append({
                     "method": "diandian_summary", "provider": point["provider"],
@@ -6737,18 +6715,6 @@ class Bridge:
                 result_sha256 = local_evidence.get("result_sha256")
                 version = str(local_evidence.get("tool_version") or local_evidence.get("model") or "").strip()
                 provider = str(local_evidence.get("provider") or "configured-local-tool").strip()
-                early_text = local_evidence.get("text")
-                if (
-                    result_sha256 is None
-                    and filename == "transcription.json"
-                    and local_evidence.get("status") in {"transcribed", "partial"}
-                    and isinstance(early_text, str)
-                    and hashlib.sha256(early_text.encode("utf-8")).hexdigest() in sealed_early_transcripts
-                ):
-                    # Counted only where an audit sealed this exact text; one it never used is not
-                    # new evidence for the note, and an edited one no longer matches what was audited.
-                    result_sha256 = hashlib.sha256(early_text.encode("utf-8")).hexdigest()
-                    version, provider = "1", "local-transcription"
                 if isinstance(result_sha256, str) and re.fullmatch(r"[a-f0-9]{64}", result_sha256) and version and provider:
                     methods.append({"method": method_name, "provider": provider, "version": version, "result_sha256": result_sha256})
             evidence.append({

@@ -186,17 +186,9 @@ export function loadFormalPointSummary(directory, noteId, expectedPromptVersion)
   }
 }
 
-export function currentFormalRevisions(note, entry, resource = null, expectedPromptVersion = "") {
+export function currentFormalRevisions(note, entry, resource = null) {
   const dependencies = canonicalDependencies(entry?.evidence_dependencies);
   if (!dependencies) return null;
-  const pointDependencies = dependencies.filter((dependency) => dependency.method === "diandian_summary");
-  if (
-    pointDependencies.length
-    && (
-      !HASH.test(expectedPromptVersion)
-      || pointDependencies.some((dependency) => dependency.version !== expectedPromptVersion)
-    )
-  ) return null;
   const candidate = {
     content_sha256: clean(note?.content_sha256),
     evidence_sha256: clean(entry?.evidence_sha256),

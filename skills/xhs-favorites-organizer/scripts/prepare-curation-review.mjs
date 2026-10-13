@@ -2,9 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
-import { HASH, clean, containedEvidenceFile, currentEvidence, readContainedText, readEvidence } from "./evidence-files.mjs";
+import { clean, containedEvidenceFile, currentEvidence, readContainedText, readEvidence } from "./evidence-files.mjs";
 import { parseFormalPointSummaryRecord } from "./curation-quality.mjs";
-import { reviewPacketRevision } from "./curation-revision.mjs";
 
 function parseArgs(argv) {
   const result = {};
@@ -15,8 +14,7 @@ function parseArgs(argv) {
     result[key.slice(2)] = value;
   }
   for (const required of [
-    "catalog", "scope", "candidates", "resources", "evidence-root",
-    "diandian-prompt-version", "output"
+    "catalog", "scope", "candidates", "resources", "evidence-root", "output"
   ]) {
     if (!result[required]) throw new Error(`--${required} is required`);
   }
@@ -40,8 +38,8 @@ function isStableNoteId(value) {
     && !UNSAFE_OBJECT_KEYS.has(value);
 }
 
-function readDiandianSummary(root, noteId, contentSha256, expectedPromptVersion) {
-  if (!root || !isStableNoteId(noteId) || !HASH.test(expectedPromptVersion)) return "";
+function readDiandianSummary(root, noteId, contentSha256) {
+  if (!root || !isStableNoteId(noteId)) return "";
   const source = readContainedText(
     containedEvidenceFile(root, noteId, `${noteId}.json`, 512 * 1024, false)
   );
@@ -49,8 +47,7 @@ function readDiandianSummary(root, noteId, contentSha256, expectedPromptVersion)
   try {
     const record = parseFormalPointSummaryRecord(
       JSON.parse(source.replace(/^\uFEFF/, "")),
-      noteId,
-      expectedPromptVersion
+      noteId
     );
     return record?.content_sha256 === contentSha256 ? record.summary : "";
   } catch {
@@ -75,7 +72,6 @@ export function prepareReview({
   resources,
   evidenceRoot,
   diandianRoot,
-  expectedPromptVersion = "",
   supplementalReview = null
 }) {
   if (
@@ -84,9 +80,6 @@ export function prepareReview({
     || scope.note_ids.some((noteId) => !isStableNoteId(noteId))
     || new Set(scope.note_ids).size !== scope.note_ids.length
   ) throw new Error("Review scope contains an invalid or duplicate note ID");
-  if (expectedPromptVersion && !HASH.test(expectedPromptVersion)) {
-    throw new Error("DianDian prompt version is invalid");
-  }
   const notes = catalog.notes || catalog;
   const resourceItems = Array.isArray(resources) ? resources : resources.resources || [];
   const resourceLookup = new Map();
@@ -119,12 +112,7 @@ export function prepareReview({
     );
     const transcriptText = transcript?.text || "";
     const visualText = visualOcr?.text || "";
-    const diandianSummaryText = readDiandianSummary(
-      diandianRoot,
-      noteId,
-      contentSha256,
-      expectedPromptVersion
-    );
+    const diandianSummaryText = readDiandianSummary(diandianRoot, noteId, contentSha256);
     const diandianSummarySha256 = diandianSummaryText
       ? createHash("sha256").update(diandianSummaryText, "utf8").digest("hex")
       : "";
@@ -179,7 +167,6 @@ export function prepareReview({
       tool_checks: toolChecks,
       blockers: [...new Set(blockers)]
     };
-    item.review_packet_sha256 = reviewPacketRevision(item);
     items.push(item);
   }
   return {
@@ -200,7 +187,6 @@ function main() {
     resources: readJson(options.resources, "resources"),
     evidenceRoot: path.resolve(options["evidence-root"]),
     diandianRoot: path.resolve(options["diandian-dir"] || ".xhs-favorites/diandian-summaries"),
-    expectedPromptVersion: options["diandian-prompt-version"],
     supplementalReview: options["supplemental-review"]
       ? readJson(options["supplemental-review"], "supplemental review")
       : null
