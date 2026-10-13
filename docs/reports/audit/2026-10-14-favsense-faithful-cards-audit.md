@@ -320,3 +320,12 @@ Final verdict: AUDIT-INCOMPLETE — Step 3 — PLAN (reviewed plan audit), 3-pas
 - Stage A.3 HARD BLOCK: spec had no '## States' section for mockup tagging. Fixed by adding a States section that restates the spec's own §3.2 rows (no new behaviour); re-run below.
 - Stage A.3 first re-run: tagger split hyphenated state names and appended six empty placeholder sections to both mockups; edits undone (older #99 mockup restored from HEAD), states renamed to single words, the two undrawn states (posttranscript, unreachable) added to the rewrite mockup from real cards (spec CARD-07 and §3.1), tags placed on the drawn new-design cards. MOCKUP_PATHS = rewrite mockup only. Stage A verdict: ok (A1 ok, A3 ok, A4 warn: no behavior markers).
 - Stage A.2 Task Completion Inventory: Tasks 1-10 all missing (no implementation commits on the line yet).
+- Stage B: 10 tasks committed (dfa5182..dbed2c6 + plan ticks). Stage C: Mount warn (no components/ dir — vanilla JS site); Mockup-Coverage ok after tagging CARD-07 test with state 'posttranscript' (067f505; the gate's file filter omits .mjs, so the check was run with .mjs included); Destructive-Flow, Mid-drag, Callsite, Fetch-Duplication, Assertion-Correctness ok (no matching constructs; the checks scan components/ and app/, which this site does not have).
+- Code-gate Step 4: PASS (syntax, a11y lint, node suites, organization, python).
+- Prereq 2: ok. User walk (gstack-browse): green, 0 failures. Notes: checklist V-P0-11 names the wrong origin (127.0.0.1 is treated as the local workbench; public behaviour verified on a LAN address); one real reply (…03cc55) keeps the opener '根据你引用的笔记' because it shares a line with list items.
+
+---
+
+## Step 5 — REVIEW (review-and-fix self-loop)
+
+Skills: /review then /design-review then /mockup-parity
