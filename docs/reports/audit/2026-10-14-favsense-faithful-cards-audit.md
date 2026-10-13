@@ -175,3 +175,140 @@ UNASSIGNED: 0. Nothing auto-deferred; TODOS.md and the spec unchanged.
 Artifact: docs/plans/2026-10-14-favsense-faithful-cards-plan.md
 Skill: /autoplan (audit mode)
 Machine checks: PASS (Test Plan Artifact, NOT-in-scope, manual-only tags)
+
+### Pass 1
+
+Read whole: the plan (2149 lines), the spec, the verification checklist; cross-checked against `public-judgement.mjs`, `curation-quality.mjs`, `build-public-site.mjs` (arguments, search text), `site/app.js` (every removed card field), `site/diandian-text.mjs`, `site/styles.css` tokens, `scripts/serve-qa-fixture.mjs`, `package.json` test lists, `run-organization-tests.mjs`, the snapshot capture test, `test_bridge.py` and `test_final_build.py` snapshot-command cases, and the bridge method signatures Task 10 calls. Every autoplan accepted block (CEO, design, DX, eng) is present in the task text; every task traces to spec §3, §5.2, §6.3, §7, the frozen list or CARD-08/AC-PARA (D12); the Test Plan Artifact is on disk; NOT-in-scope sections exist. Vague-word scan: no undecided "consider/could/may/should" in any instruction; the one undecided phrase ("deleted or updated") is fixed below.
+
+**Issues fixed (8)**
+- **Medium** — The existing snapshot capture case in `test_organization_snapshot.mjs` (line ~266) writes a reply file with no damaged list, so Task 7's new rule would stop it with `DAMAGED_REPLY_LIST_MISSING`; it also mutates `report` and `baseline` (no longer captured), asserts the prompt version, and expects a default audit path to be read with no `audit_file` (D3 removes that). The disposition row only said these cases are "deleted or updated in Tasks 7 and 8".
+  → New disposition row, owned by Task 7, listing exactly what is added, removed and kept in that case; the lumped row split into one row per file with its owning task.
+  Completeness: 9/10  Confidence: 9/10
+- **Medium** — `test_bridge.py::test_snapshot_command_delegates_complete_input_capture_to_the_coordinator` asserts `--diandian-report` and `--diandian-prompt-version` on the snapshot command, which Task 7 removes; no step changed it. Task 7 Step 1 pointed at `test_no_direct_rebuild.py`, which mocks the snapshot step and asserts nothing about its command.
+  → Disposition row for that case (both flags become `assertNotIn`); Task 7 Step 1 targets `test_final_build.py` `SnapshotCommandTest` and the two rewritten cases; Step 2 also runs `test_bridge.py`; `test_no_direct_rebuild.py` dropped from Task 7's file list with the reason.
+  Completeness: 9/10  Confidence: 9/10
+- **Medium** — Task 6 edits `test_organization_contracts.mjs` (it imports functions Task 6 deletes), but that file runs only in `test:organization`, which Task 6 Step 7 never ran, so Task 6's commit could be red unnoticed until Task 7.
+  → Task 6 Step 7 also runs `npm.cmd run test:organization`.
+  Completeness: 10/10  Confidence: 9/10
+- **Medium** — The verification checklist cites plan tests as evidence for assertions those tests did not make: V-P2-07 (filtered grid, PW 1), V-P0-05/V-P4-03 (`收起`, PW 3), V-P5-03 (extracted section `aria-label` and `h3`, PW 7), V-P4-02 (explanation on its own row on the phone, PW 12), V-P3-19 (stale config with a missing audit file, builder test 13). The live check would have had no evidence for five rows.
+  → Playwright tests 1, 3, 7 and 12 and builder test 13 (a third build with `publish_only_accepted` and a missing audit file) now carry those assertions.
+  Completeness: 9/10  Confidence: 8/10
+- **Low** — Task 5's `.tool-unverified` rule used `var(--gold)`, which `styles.css` does not define, and then said "use the real token names", an open instruction.
+  → Rule uses `var(--sun)` (the stylesheet's yellow) mixed with `--surface`; the sentence names the four defined tokens.
+  Completeness: 10/10  Confidence: 9/10
+- **Low** — The disposition row said `reviewed-evidence-only-rebuild.test.mjs` is in `test:knowledge`; it is in `test:curation` (`test_formal_outputs.mjs` is in `test:knowledge` and `test:organization`).
+  → Row corrected; Task 6 Step 7 runs all three lists.
+  Completeness: 10/10  Confidence: 10/10
+- **Low** — Builder test 15 did not say the note has its own title; without one, the title (first line of the post) or the search link would carry the token first, so the error would name `title` or `sourceUrl`, not `mainText`.
+  → Test 15 states the note has its own title.
+  Completeness: 9/10  Confidence: 8/10
+- **Low** — Task 5 Step 1 lifted card ①'s reply from the "currently committed" `site/data/knowledge.json` while the working copy carries an uncommitted local rebuild (build version and date changed).
+  → Step reads it with `git show HEAD:site/data/knowledge.json`.
+  Completeness: 9/10  Confidence: 9/10
+
+**Auto-accept decisions (3)**
+- Checklist V-P1-03 says Task 10 Step 5 used "only `build_organization_snapshot`"; the plan (pass 3 of Step 2) calls `run_curation_pipeline` first. Editing the checklist from this step is refused by the spec-authoring gate (the file is in `docs/specs/`).
+  → Auto-accepted: leave the checklist unchanged and record the mismatch here; the plan is the source the checklist is derived from, and the evidence the row needs (no browser, no `trigger_local_rebuild`) is unchanged. The orchestrator corrects the row wording through the route that owns spec files.
+  Completeness: 7/10  Confidence: 8/10
+- V-P3-19 (stale config, missing audit) could get its own builder test or extend test 13.
+  → Auto-accepted: a third build inside test 13 — same subject (no review state changes a card), no new helper.
+  Completeness: 9/10  Confidence: 9/10
+- The unverified-tool badge colour (the mockup's yellow tint has no matching token).
+  → Auto-accepted: `--sun` mixed 30% into `--surface`; colour is only reinforcement and the existing contrast regression test covers it.
+  Completeness: 8/10  Confidence: 8/10
+
+Verdict: ISSUES_FOUND
+
+### Pass 2
+
+Read whole: the plan (2151 lines before this pass), the spec, the verification checklist, `build-organization-snapshot.mjs`, `build-public-site.mjs`, `public-judgement.mjs`, `curation-quality.mjs`; read the parts that the run steps call in `bridge-server.py` (`Bridge.__init__`, `require_plain_directory`, `local_rebuild_scope`, `trigger_local_rebuild`, `run_final_build`, `build_organization_snapshot`), the snapshot cases of `test_final_build.py`, `exact-file-identity.test.mjs`, the documentation contract fixture, and the document-reading cases of `test_public_site.mjs` and `test_organization_contracts.mjs`. A read-only script (session scratchpad, project modules imported, counts and ids only) applied the plan's card rules to the real catalog, replies, transcripts and audit: 377 cards, 79 damaged, 0 empty, 13 shown as a cut reply, 3 unreachable, 196 complete replies, 103 transcripts; the four mockup notes come out as Task 10 Step 5a expects; 0 safety-pattern or private-identifier hits over every shown text; 0 add-on entries the new `classify` call would throw on; the newest bundle covers 377 notes with 34 sealed candidates. Mockup lines 51, 62, 73 and 84 and card ①'s committed reply checked against Task 5. Vague-word scan: one "etc." in an instruction (fixed below).
+
+**Issues fixed (10)**
+- **Medium** — Task 10 Step 5 builds `module.Bridge(workspace, …)` without saying what `workspace` is. The Bridge refuses any workspace, skill folder or config path that passes through a link (`require_plain_directory`, `bridge-server.py:1304`), and the repository is also reachable as the `C:\Users\rowla\favsense` junction; from there the overnight run's main step would stop with "workspace is unavailable or redirected", and `workspace.parent / "SOP - 小红书"` would name a folder that does not exist (the real one is `C:\Users\rowla\Codex\SOP - 小红书`).
+  → Step 5 sets `workspace = Path(os.path.realpath(<repository root>))` (the real folder on this machine), forbids the junction, and checks the catalog file and the SOP folder before the Bridge is built, stopping and reporting otherwise.
+  Completeness: 9/10  Confidence: 9/10
+- **Medium** — The documentation contract fixture also pins three `forbidden_phrases` that forbid saying what this plan makes true (`curation-standard.md` `raw 点点回复可以直接发布`, `README.md` `公开页面直接采用 raw 点点回复`, `docs/PUBLISHING.md` `captured/pending 证据可以公开`). Task 9 only replaced required phrases, so the contract would keep encoding the retired gate and the new documents would have to be worded around it, which spec §9 rules out.
+  → Task 9 replaces each with the old gate's own claim (keys kept): `还必须通过 accepted/current/resource 门`, `公开页面不会直接采用 raw 点点回复`, `captured/pending 证据只留在本机 overlay`; every other forbidden phrase stays.
+  Completeness: 9/10  Confidence: 8/10
+- **Low** — Task 10 Step 4 ended "moving `issue86-local-rebuild.py` first is safe", contradicting the order note that Steps 3–4 run after Steps 5–7.
+  → Sentence now says the move happens after Steps 5 and 7 and the Step 5 driver never runs that script.
+  Completeness: 10/10  Confidence: 10/10
+- **Low** — Task 10 Step 5a justified card ③'s expected kind `Tool` by "its sealed candidate says `Skill`"; in the newest bundle (`localrebuild20261014051436004066`) it says `Tool`.
+  → Rationale corrected (sealed `Tool`; a `Skill` with no verified resource would fall back to the profile default, also `Tool`). The expected value is unchanged.
+  Completeness: 9/10  Confidence: 9/10
+- **Low** — Task 5 Step 5 said mockup ① omits the opener clause "because that reply has no opener"; card ①'s committed and saved reply both start with `根据你引用的笔记`, so the live sentence will carry the clause.
+  → Note rewritten: the live #99 sentence is longer than the mockup's, the 805 count is the same, the mockup governs structure not this sentence, and Playwright test 3's substring check holds.
+  Completeness: 9/10  Confidence: 9/10
+- **Low** — Task 10 Step 7 compares the re-run with "the Step 5 result", but the re-run swaps `site/data/knowledge.json` in place, leaving nothing to compare with.
+  → Step 7 copies the Step 5 data to the scratchpad first, re-runs with a new batch id, and compares title, main text and main source with that copy.
+  Completeness: 10/10  Confidence: 9/10
+- **Low** — Playwright test 2 said "`fixture-post-and-transcript` etc. likewise" (undecided set).
+  → Every fixture card's detail title equals its fixture `title`.
+  Completeness: 10/10  Confidence: 10/10
+- **Low** — Task 9 moves the 2026-08-22 plan into the archive without touching the five documents that name its old path (one markdown link in the 2026-08-25 brief).
+  → Task 9 rewrites the five inbound mentions in the same commit and greps that none is left.
+  Completeness: 9/10  Confidence: 9/10
+- **Low** — Task 9 Step 1 said "the six documents" without naming them.
+  → Named; `ARCHITECTURE.md` and `PUBLISHING.md` are stated to be held by the contract fixture.
+  Completeness: 10/10  Confidence: 10/10
+- **Low** — Task 7 Step 3's `DAMAGED_REPLY_LIST_MISSING` rule said "no `damaged-replies` entry was captured", but an optional capture of a missing file still records an entry (state `missing`), so the check could read as satisfied with no list.
+  → Rule names the entry state (`file`) for the list and for the reply files.
+  Completeness: 10/10  Confidence: 9/10
+
+**Auto-accept decisions (3)**
+- Whether the three forbidden phrases that encode the old gate are deleted, kept and worded around, or replaced.
+  → Auto-accepted: replaced by the retired gate's own claims, keys kept — the contract keeps its shape and now guards the new rule, and spec §9 forbids keeping a test of the old rule by working around it.
+  Completeness: 9/10  Confidence: 8/10
+- How the rebuild driver finds its workspace when the repository is reachable through a junction.
+  → Auto-accepted: `os.path.realpath` of the repository root, plus a check of the catalog and SOP folder before the Bridge is built — the Bridge's own link refusal stays untouched.
+  Completeness: 9/10  Confidence: 9/10
+- Whether archiving the superseded plan should also edit the historical reports that cite its path.
+  → Auto-accepted: yes, only the path string, in the same commit — file governance requires inbound references to move with the file, and one of them is a markdown link that would otherwise be dead.
+  Completeness: 9/10  Confidence: 8/10
+
+Verdict: ISSUES_FOUND
+
+### Pass 3
+
+Read whole: the plan (2154 lines before this pass), the spec, this audit log; `build-organization-snapshot.mjs`, `build-public-site.mjs`, `public-judgement.mjs`, `curation-quality.mjs`, `public-tree-policy.mjs`, `sensitive-data.mjs`, `content-revision.mjs`, `site/diandian-text.mjs`, `scripts/run-python-tests.mjs`, `run-organization-tests.mjs`, `check-syntax.mjs`, `check-test-script-paths.mjs`, `verify-release.mjs`, `diandian-summary-display.test.mjs`, `site-code-in-build-version.test.mjs`, `web-only-snapshot.test.mjs`, `private-output-short-path.test.mjs`; read the parts the plan touches of `site/app.js`, `organize.mjs` (lines 1–135, 145–239, 282–371 and 426–586), `prepare-curation-review.mjs` (lines 1–215), and the bridge's `build_organization_snapshot`, `run_curation_pipeline`, detail-import path and `parse_fetch_payload`/`valid_fetch_note`. Probes (read-only scratch scripts importing the project's own modules, counts and id tails only): the publish-time public-tree check over every post text, title, loadable reply and verified transcript of the 377 notes (0 hits; the builder's own scan also 0); the four sweeps of `diandian-summary-display.test.mjs` over all 275 loadable replies (0 failures); the Task 10 Step 3 archive rule against the curation file and the starting public data; the site-less build version at builder 7 and 8; every test that reads `card-summary-sources.json`, a 64-hex version literal, or the snapshot functions Task 7 changes. Vague-word scan of the plan: no undecided wording in an instruction.
+
+**Issues fixed (7)**
+- **Critical** — The post text is flattened twice on its way into the catalog, and the plan fixed only the first place. `organize.mjs` line 212 writes `description: cleanText(...)`, whose `cleanText` (line 149) collapses every whitespace run to one space, and the bridge pipes every fetched note through it (`bridge-server.py` ~6880–6946: fetcher → `parse_fetch_payload` → `node organize.mjs --input -`). With only the fetcher fixed, no real catalog description could ever carry a paragraph break, so CARD-08 and CAP-06's offline half could never hold even after the Slice B re-fetch, and risk (4) would have told the owner they would.
+  → Task 1 now also changes `organize.mjs` (`cleanParagraphs`, the same rule as the fetcher's, for `description` only; the private daily report keeps its one-line bullet) with a new `organize-paragraphs.test.mjs` (paragraphs kept, spaces tidied, other fields one line, report bullet one line, `content_sha256` unchanged) added to `test:knowledge`; Steps 2, 4 and 5 run and commit it; D12, risk (4) (now also says a re-fetched note's public-text review hash changes), the file map, the coverage rows for CARD-08 and AC-PARA and the test-layer table updated.
+  Completeness: 9/10  Confidence: 9/10
+- **Medium** — `diandian-summary-display.test.mjs` (in `test:site`) reads `scripts/fixtures/card-summary-sources.json` at module load (line 15), and Task 5 `git rm`s that file; Task 5 Step 8 ran only `test_public_site.mjs`, so Task 5's commit would leave `test:site` failing until Task 6, whose disposition row covered only the `published` half.
+  → Disposition row split by owner: Task 5 points `frozen` at `faithful-cards.json` and reads `example.mainText` (card ①'s reply is byte-identical in the old fixture and the committed data, checked), and fixes the two comments naming the deleted spec; Task 6 keeps the `published` change, with the 209-card count (≥ 200 holds) stated. Task 5 files list, Step 7, Step 8 (`npm.cmd run test:site`) and the commit updated.
+  Completeness: 9/10  Confidence: 9/10
+- **Medium** — `site-code-in-build-version.test.mjs` line 103 pins the exact build version of a site-less build, computed with `builders: { public_site: 7 }` (recomputed: `bfd4f8e6…ccbab353`); Task 7 sets the builder version to 8 and listed the file under "Modify" without saying what changes, so `test:knowledge` would fail and an unattended run would have to choose between loosening an assertion and reverting the version bump.
+  → Task 7 Step 1 replaces the literal with the builder-8 value of the same preimage (`a42d5a8d…3fe4f0c0b`, computed), keeping an exact `equal`; a disposition row added.
+  Completeness: 9/10  Confidence: 9/10
+- **Medium** — Task 10 Step 3 archived "every curation-file entry whose note has no complete reply" and expected "about 105" (spec §7). On today's data that rule selects 171 of the 343 curation entries; the spec's 105 are the cards whose public text came from the curation file (the starting public data has 238 DianDian, 105 curation and 34 metadata cards).
+  → Step 3 now archives `{id, title, summary: deepSummary, action}` of the `deepSummarySource === "curation"` cards in `git show 1a9ef29:site/data/knowledge.json`, expects exactly 105 and stops and reports otherwise.
+  Completeness: 9/10  Confidence: 8/10
+- **Medium** — Task 10 Step 6 said "build twice with `build-public-site.mjs`" without naming its arguments. Left to defaults, the builder writes to `site/data/knowledge.json` (overwriting the Step 5 data that Steps 5a and 7 rely on), reads no damaged list (so the contact-detail count would measure cut replies instead of post text), and reads the live private folder rather than the copies; which bundle the sealed candidates come from was also unstated.
+  → Step 6 names every argument (copies, `--damaged-replies`, `--candidates` from the Step 5 bundle, `--effective-date`, a scratch `--output`) and forbids omitting `--output`, with the reason.
+  Completeness: 9/10  Confidence: 9/10
+- **Low** — Task 7 changes `captureBuilderInputs` and `materializeCapturedInputs`, which three `test:curation` files exercise (`exact-file-identity`, `reviewed-evidence-only-rebuild`, `organization-lock-handoff`), but Step 4 never ran `test:curation`; its files list named two tests that need no change and the disposition row said Task 7 "updates" a case without saying how.
+  → Step 4 runs `npm.cmd run test:curation`; the files list separates "modify" from "run, not changed" with the reason for each; the row says the case stays unchanged and is proved by that run.
+  Completeness: 9/10  Confidence: 9/10
+- **Low** — Task 6 Step 8 listed "damaged list" among the builder defaults, contradicting Task 6 Step 5 (no default path) and the explicit argument two lines above.
+  → Sentence corrected.
+  Completeness: 10/10  Confidence: 10/10
+
+**Auto-accept decisions (4)**
+- Spec §1 names `fetch-xhs-details.py:144` as the cause of the lost paragraph breaks; `organize.mjs` is a second one it does not name.
+  → Auto-accepted: fix both in Task 1 and record the second cause in D12; CAP-06's required behaviour is "post text is saved with its line breaks", which the named line alone cannot deliver. The approved spec text is not edited.
+  Completeness: 9/10  Confidence: 9/10
+- Whether the private daily report (`xhs-favorites/<date>.md`) should show the restored paragraphs.
+  → Auto-accepted: no, its description bullet stays on one line, so the report's format and its note-id parsing are unchanged; only the catalog keeps the breaks.
+  Completeness: 8/10  Confidence: 8/10
+- How to repair the pinned build-version literal.
+  → Auto-accepted: the builder-8 value of the same preimage, still an exact match, rather than a format check, so a silent revert of the builder version still fails.
+  Completeness: 9/10  Confidence: 9/10
+- Where the 105 archived card texts come from.
+  → Auto-accepted: the starting public data at `1a9ef29` (the texts the cards actually showed), not the curation file, which stays in the repository anyway.
+  Completeness: 9/10  Confidence: 8/10
+
+Verdict: ISSUES_FOUND
+
+Final verdict: AUDIT-INCOMPLETE — Step 3 — PLAN (reviewed plan audit), 3-pass cap exhausted
