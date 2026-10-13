@@ -158,7 +158,7 @@ class TranscriptionPipelineTests(unittest.TestCase):
                 ffprobe=str(ffprobe), model="small", model_dir=str(root / "models"),
                 language="zh", device="cpu", compute_type="int8", max_items=20,
                 max_item_seconds=600, max_batch_seconds=900, status_file=None,
-                keep_audio=False, reassess_only=False, note_id=[],
+                keep_audio=False, reassess_only=False, note_id=[], include_curated=False,
             )
 
             with (
@@ -200,6 +200,7 @@ class TranscriptionPipelineTests(unittest.TestCase):
                 language="zh", device="cpu", compute_type="int8", max_items=20,
                 max_item_seconds=600, max_batch_seconds=900, status_file=None,
                 keep_audio=False, reassess_only=False, note_id=[selected, selected],
+                include_curated=False,
             )
             captured = {}
 
