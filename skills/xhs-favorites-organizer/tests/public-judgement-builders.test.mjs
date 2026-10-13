@@ -147,3 +147,76 @@ test("the web builder reads the resource freshness limit from the profile, and k
   assert.notEqual(strict[id].kind, "Skill");
   assert.deepEqual(strict[id].resourceIds, []);
 });
+
+// Issue 74: a card shows the title the reviewer wrote, and "search the original post" searches the post's own words.
+
+const reviewedTitle = "Codex 亚马逊选品 Go/No-Go 工作流";
+const postDescription = "用Codex封装亚马逊选品Skill后…#codex[话题]#";
+
+// One reviewed, publishable note ("n1") whose reviewed entry names a tool and carries a reviewed title.
+function reviewedNote({ entry: entryOverrides = {}, note: noteOverrides = {}, published = true } = {}) {
+  const entry = {
+    category: "Synthetic", themes: ["testing"], summary: "Reviewed summary with enough detail to be published.",
+    action: "Try the workflow on one product before relying on it.", tools: ["Codex"], kind: "Note",
+    title: reviewedTitle, ...entryOverrides,
+  };
+  return {
+    notes: { n1: note({ title: "", description: postDescription, author: "创作者", ...noteOverrides }) },
+    curation: { n1: entry }, audit: {},
+    baseline: published ? { note_ids: ["n1"], curation_hashes: { n1: curationRevision(entry) } } : undefined,
+  };
+}
+
+test("a reviewed note shows its reviewed title when the platform gave no title, never its first tool name", async () => {
+  const web = await buildWeb(reviewedNote());
+  assert.equal(web.n1.title, reviewedTitle);
+});
+
+test("a reviewed note shows its reviewed title instead of the original post title", async () => {
+  const web = await buildWeb(reviewedNote({ note: { title: "原帖自己的标题" } }));
+  assert.equal(web.n1.title, reviewedTitle);
+});
+
+test("a reviewed title has its whitespace tidied once and is not cut short", async () => {
+  const tidy = await buildWeb(reviewedNote({ entry: { title: "  Codex   亚马逊选品\n工作流 " } }));
+  assert.equal(tidy.n1.title, "Codex 亚马逊选品 工作流");
+  const long = await buildWeb(reviewedNote({ entry: { title: `${"长".repeat(60)}  结尾` } }));
+  assert.equal(long.n1.title, `${"长".repeat(60)} 结尾`);
+});
+
+test("a reviewed title that is not published yet is not shown, and the card keeps the post's own words", async () => {
+  const web = await buildWeb(reviewedNote({ published: false }));
+  assert.equal(web.n1.curationStatus, "pending_review");
+  assert.equal(web.n1.title, "用Codex封装亚马逊选品Skill后…");
+});
+
+const searchKeyword = (item) => new URL(item.sourceUrl).searchParams.get("keyword");
+
+test("searching for the original post uses the post's own words, not the tool name or the reviewed title", async () => {
+  const web = await buildWeb(reviewedNote());
+  assert.equal(searchKeyword(web.n1), "用Codex封装亚马逊选品Skill后… 创作者");
+  assert.notEqual(searchKeyword(web.n1), "Codex 创作者");
+  assert.doesNotMatch(searchKeyword(web.n1), /Go\/No-Go/);
+});
+
+test("searching for the original post uses the original post title when there is one", async () => {
+  const web = await buildWeb(reviewedNote({ note: { title: "原帖自己的标题" } }));
+  assert.equal(searchKeyword(web.n1), "原帖自己的标题 创作者");
+});
+
+test("search words are cut at the same length limit as before but never end in an ellipsis", async () => {
+  const fromDescription = await buildWeb(reviewedNote({ note: { description: "字".repeat(80) } }));
+  assert.equal(searchKeyword(fromDescription.n1), `${"字".repeat(52)} 创作者`);
+  const fromTitle = await buildWeb(reviewedNote({ note: { title: "题".repeat(80) } }));
+  assert.equal(searchKeyword(fromTitle.n1), `${"题".repeat(52)} 创作者`);
+});
+
+test("a post with neither title nor text is searched by the card title", async () => {
+  const web = await buildWeb(reviewedNote({ note: { description: "" } }));
+  assert.equal(searchKeyword(web.n1), `${reviewedTitle} 创作者`);
+});
+
+test("a note with no reviewed entry keeps the title taken from its own text", async () => {
+  const web = await buildWeb({ notes: { n1: note({ title: "", description: "整理收藏的三个办法#效率[话题]#" }) } });
+  assert.equal(web.n1.title, "整理收藏的三个办法");
+});

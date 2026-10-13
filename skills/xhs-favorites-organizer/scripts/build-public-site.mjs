@@ -74,7 +74,10 @@ const resourceRegistry = profile.features?.resource_index
   ? await parseJson(paths.resources)
   : { verified_at: "", resources: [] };
 
-function titleFromText(value) {
+const TITLE_LIMIT = 52;
+
+// The wording of a post's text before its topics, whole.
+function cleanedPostText(value) {
   const normalized = String(value || "").replace(/\s+/g, " ").trim();
   if (!normalized) return "";
   const beforeTopics = normalized.split("#")[0].trim();
@@ -84,12 +87,27 @@ function titleFromText(value) {
     .replace(/#+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  const title = beforeTopics || withoutTopics;
-  return title.length > 52 ? `${title.slice(0, 51)}…` : title;
+  return beforeTopics || withoutTopics;
 }
 
-function displayTitle(raw, entry, noteId) {
-  const candidates = [raw.title, entry.tools?.[0], raw.description, entry.summary];
+function titleFromText(value) {
+  const title = cleanedPostText(value);
+  return title.length > TITLE_LIMIT ? `${title.slice(0, TITLE_LIMIT - 1)}…` : title;
+}
+
+// What to type into the platform's search to find the original post: the post's own words, cut at the
+// same limit as a title but without the ellipsis a title gets, since an ellipsis is not in the post.
+function searchTextOf(raw) {
+  return cleanedPostText(raw.title).slice(0, TITLE_LIMIT) || cleanedPostText(raw.description).slice(0, TITLE_LIMIT);
+}
+
+const tidySpaces = (value) => String(value || "").replace(/\s+/g, " ").trim();
+
+function displayTitle(raw, verdict, noteId) {
+  // A note shown from its reviewed entry shows the title the reviewer wrote, as written.
+  const reviewedTitle = verdict.curated ? tidySpaces(verdict.entry.title) : "";
+  if (reviewedTitle) return reviewedTitle;
+  const candidates = [raw.title, raw.description, verdict.entry.summary];
   for (const candidate of candidates) {
     const title = titleFromText(candidate);
     if (title) return title;
@@ -226,7 +244,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     promptVersion: expectedPromptVersion
   });
   const isFrameVerified = frameVerifiedNoteIds.has(noteId);
-  const title = displayTitle(raw, verdict.entry, noteId);
+  const title = displayTitle(raw, verdict, noteId);
   const auditEntry = curationAudit?.notes?.[noteId];
   const formalSummaryReasonCode = String(verdict.reasonCode || "");
   const runState = diandianRunStateById.get(noteId);
@@ -243,7 +261,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     number: index + 1,
     title,
     author: raw.author || "",
-    sourceUrl: publicSourceUrl(title, raw.author || ""),
+    sourceUrl: publicSourceUrl(searchTextOf(raw) || title, raw.author || ""),
     publishedAt: raw.published_at || "",
     likes: raw.liked_count || "",
     collections: raw.collected_count || "",
