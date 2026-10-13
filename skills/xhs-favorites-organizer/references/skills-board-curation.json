@@ -630,7 +630,7 @@
   "6a3517de0000000022008c7f": {
     "id": "6a3517de0000000022008c7f",
     "content_sha256": "f302b351e6ee215c6039b0930a909c0a22bb1f86cb723484137e574397a53b82",
-    "title": "根据你提供的链接，这篇小红书笔记是一条短视频，内容主要围绕​​\"豆包的灰产让拍摄彻底要被洗牌了\"",
+    "title": "豆包的灰产让拍摄彻底要被洗牌了",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -645,12 +645,12 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "a508dab55c5708ab010ccee6de5ff67afde8e9ae3343cd77fd825629a0813e7f",
-    "evidence_sha256": "b5edb48291df1e8e6603fe11d8ecccdfe6fe6f0a1463c4fce08db0d17577fb7a",
+    "evidence_sha256": "d2528a05593568f8f1b2835110059a051d20571b317a0b2a0c587eda3dbca2dc",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "2e6eae08d6f4358f6358ae74c14b35d2242b5d1dcd5b8d69c41b617eaa27957c"
       },
       {
@@ -680,7 +680,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "1096984d01cf2bb69b9c4b8bafeb9ca9cfc96883da93c04bfb5616fc5bfeb1e1",
+    "candidate_revision": "a181f90ee9c8e6b8af4a70952efb9397a44c17b3bc794d76529ab73e7a53bced",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -977,7 +977,7 @@
   "6a5c62f6000000001003da08": {
     "id": "6a5c62f6000000001003da08",
     "content_sha256": "f541c58131d051c999444715b0910f723a9a675f25f96638c3d89a308a368a2c",
-    "title": "根据你引用的笔记，这篇内容主要介绍了 GitHub 上一个备受关注的 AI 项目 ​​Tradi",
+    "title": "TradingAgents：多个 AI 角色分工模拟交易公司的研究框架",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -993,12 +993,12 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "b25a0494c78fba9a62de4b64e2e7ccf41e14dcdd0126ffdd0592014539ddd82a",
-    "evidence_sha256": "1efabe1c0139404378349ae70186eca8e99bcb9ec83a79af332fb655ef553dfc",
+    "evidence_sha256": "2193ab41cbe937834ef3a01d1696555caacc5158000874a27326727c20935add",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "c628e671a41e6d48712ba893bfcb91c6017c455779d17768810553ca67e4ac63"
       },
       {
@@ -1028,7 +1028,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "8c0194d38cd7545a4f22d1bd3d218f7a80d788911e27e323c24793824be244bc",
+    "candidate_revision": "9fe5f7605ce28806fa2eb572fd8f2ad126d1b5f4b823b2bb43ad9d4a3c06dec4",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -1145,7 +1145,7 @@
   "6a262697000000000800255e": {
     "id": "6a262697000000000800255e",
     "content_sha256": "9a86bada001dbda1515bbd20d97987b8b5c7655ad56f84a978027181b4f07ec3",
-    "title": "根据你分享的笔记，这是一期​​推荐 5 位 YouTube AI 搞钱博主​​的视频，核心思路是",
+    "title": "用 AI 搞钱值得关注的 5 个 YouTube 博主",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -1160,12 +1160,12 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "3673b28274fa586be1553f9e0cfb9b1307989d2d3b045bd9daf787fd32b418e8",
-    "evidence_sha256": "ac3a5fcfdb255c1b2bbb077702d3f934a60a51a19a83ebd432c450ecaf53e48e",
+    "evidence_sha256": "f9569beaf25d954b03457258c09a38c69623a0d3b5c27b0173e7b536ca43a119",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "af0ab657073e15a939ff1b429be6edf09c6e8c463bbdbf090162bb005b64b7ba"
       },
       {
@@ -1195,7 +1195,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "2a07cbed9a0ff2b9e5f438906192e2ee560cb077bd85242178c2ed5afedd6c26",
+    "candidate_revision": "714985b2209dc67d8ac65988ee7653612e1192f6e121cb0e2b897089c8fb18d4",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -1376,7 +1376,7 @@
   "69e86028000000001a02043f": {
     "id": "69e86028000000001a02043f",
     "content_sha256": "b7c95d845f63baa0812a5302937bde203ff084eb86053722da3cb2f6e6302e8a",
-    "title": "根据你引用的笔记，这是一段关于 ​​Claude Design​​ 这款 AI 设计工具的视频评",
+    "title": "Claude Design 实测：一句需求生成网页界面，设计加前端合一",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -1392,12 +1392,12 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "581e8d48317147bfc20c6ee37eb2db979f3bc2f6afd7b196787c42d2fb5ef3e1",
-    "evidence_sha256": "c4013a7aaf2c7f8d2889808aa0d50e8c270f4c38535119f605d7ef75ab6d0771",
+    "evidence_sha256": "2fedda4d5f9345a7c81d7a809c6f6895bcefb89a66564f3d942f0a9bc4539bf2",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "fdfcc112ddc53c6f2d9f36556287b73fb2b5aa00fa40f666cf5583e6e7914c56"
       },
       {
@@ -1427,7 +1427,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "b50bda1439234c53bea9c0671e5d99eb227e4c627beba1675c240c3248c0f14a",
+    "candidate_revision": "1e1218077c047a8aa3e75edd9fe485b80fece994a4d78b8a016687e129058804",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -1886,7 +1886,7 @@
   "69c22ca9000000001a022c31": {
     "id": "69c22ca9000000001a022c31",
     "content_sha256": "948f902a46c6a8afc4c0e3e06e5e865c9f909a2ce7032403a364355edd87c78a",
-    "title": "根据你分享的这篇小红书笔记，这是一段关于​​阿里悟空AI​​的推广视频，核心内容总结如下： 核心",
+    "title": "阿里悟空 AI：一个人搞定淘宝店的设计、客服、运营和推广",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -1901,12 +1901,12 @@
     "status": "pending_review",
     "blockers": [],
     "candidate_seed_revision": "0d3f6e41880f6aee6e51ef9c1fbd67a638663a3ab641e7ddc8bfe2283fcb6b1c",
-    "evidence_sha256": "f63dc50cf2cdce018509038c051b1171acd37c8b649974f22562e84c916c3b98",
+    "evidence_sha256": "a4d44d16f79011a202e474bd0aa3a1a32015d6969ab0490a6c54ae77cb8d8686",
     "evidence_dependencies": [
       {
         "method": "audio_transcript",
-        "provider": "local-transcription",
-        "version": "1",
+        "provider": "faster-whisper",
+        "version": "faster-whisper@1.2.1;identity_sha256=a6597dc6e54dae4aa19edb47a8ec598d2fb2b3366da9343de7f899978b5222ee",
         "result_sha256": "42d84666deeb1058d3d332c9d82f3689efc94f57214658966579ef22f96feae3"
       },
       {
@@ -1936,7 +1936,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "87faee724ceb2967c4bc7192fbd3173869ca762e018c1dfebd2ec5bad8e0be59",
+    "candidate_revision": "377b05fe139f39cffe2eb117c8e393278d8c7e8c914eb7f62315ef0d685cf5e3",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -12316,7 +12316,7 @@
   "6a25baca000000000803d0c8": {
     "id": "6a25baca000000000803d0c8",
     "content_sha256": "abbba2011b5f08e548d30bdd631d6a2debf482c933fa8b5c9c4f6a16d2196d83",
-    "title": "一人自媒体公司全流程（内容创作、分发、互动、变现）打通的开源项目 #开源项目 #自媒体 #开发者",
+    "title": "AiToEarn：打通一人自媒体内容创作、分发、互动和变现的开源项目",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -12361,7 +12361,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "70119c275e125ee272f06a71575e7f484dc88cd772f1747b235eda9265f93d6b",
+    "candidate_revision": "d9b3a6725b0278722e1408c95f0cb9a085952a80313fa1d649f26c89e8072af1",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -12472,7 +12472,7 @@
   "6a26ddbb0000000017008a8b": {
     "id": "6a26ddbb0000000017008a8b",
     "content_sha256": "f6221b5e3005c07f9d38bc43ce3065885557ff3e063da9090921c6ae76af1593",
-    "title": "用 /artifacts 构建应用，并用 OODA、L99 和 god mode 解锁专家级 A",
+    "title": "5 个 Claude 提示写法：/ghost、/artifacts、OODA、L99 和 god mode",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -12517,7 +12517,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "982bc41ae287a473a1fa52bccf72e9dd6756cbf94f69b3693e3be248bf18b377",
+    "candidate_revision": "c58db623089bad0a20feb138db4b2ae0c2ffd679d1d5c6bf70b37415543ed72a",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -13876,7 +13876,7 @@
   "6a40ee50000000001502518f": {
     "id": "6a40ee50000000001502518f",
     "content_sha256": "9303f45ca8f217f6c2b00cdb4d7bab9ac08c0243e530cb3c8581ae91a75fae5f",
-    "title": "开源AI Agent记忆平台cognee，基于知识图谱实现持久化长时记忆，支持多场景部署，可与主",
+    "title": "cognee：基于知识图谱的开源 AI Agent 长时记忆平台",
     "category": "",
     "category_override": false,
     "category_reason": "",
@@ -13921,7 +13921,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "c03a08b8ad46ed0d12dc7da7795d8756c3d953f11987f8693bd19cca1213e7f3",
+    "candidate_revision": "aee70ee45a9e667361141b2d7b1871aa4283295f92b6d4230150ec6f37645986",
     "review_status": "accepted",
     "review_reason_code": ""
   },
