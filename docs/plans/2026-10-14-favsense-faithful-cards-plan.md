@@ -114,7 +114,7 @@ The post text is flattened in **two** places on its way into the catalog, and bo
 - Create: `skills/xhs-favorites-organizer/tests/organize-paragraphs.test.mjs`
 - Modify: `package.json` (`test:knowledge` gains `skills/xhs-favorites-organizer/tests/organize-paragraphs.test.mjs`)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test** (dfa5182)
 
 ```python
 """AC-PARA: the detail cleanup keeps the post's line breaks (spec CAP-06)."""
@@ -214,12 +214,12 @@ test("keeping paragraphs does not change a note's content revision", (t) => {
 });
 ```
 
-- [ ] **Step 2: Run them and see them fail**
+- [x] **Step 2: Run them and see them fail** (dfa5182)
 
 Run: `python -m unittest discover -s skills/xhs-favorites-organizer/tests -p "test_post_text_paragraphs.py"` then `node --test skills/xhs-favorites-organizer/tests/organize-paragraphs.test.mjs`
 Expected: FAIL — the first Python test gets `"第一段 有空格 第二段 第三行"`, and the first Node test gets the same single line from the catalog.
 
-- [ ] **Step 3: Minimal implementation**
+- [x] **Step 3: Minimal implementation** (dfa5182)
 
 Add next to `clean_text` and change one line in `normalize` (leave `clean_text` for every other field):
 
@@ -250,12 +250,12 @@ function cleanParagraphs(value) {
 
 In `noteEntryLines` (line 316) the private daily report keeps its one-line bullet: `lines.push(\`- 原文描述：${markdownText(description.replace(/\s+/g, " "))}\`);`.
 
-- [ ] **Step 4: Run the new tests and the neighbours that load the same files**
+- [x] **Step 4: Run the new tests and the neighbours that load the same files** (dfa5182)
 
 Run: `python -m unittest discover -s skills/xhs-favorites-organizer/tests -p "test_post_text_paragraphs.py"` then `python -m unittest discover -s skills/xhs-favorites-organizer/tests -p "test_safety_stop_sources.py"` then `python -m unittest discover -s skills/xhs-favorites-organizer/tests -p "test_import_result_shape.py"` then `node --test skills/xhs-favorites-organizer/tests/organize-paragraphs.test.mjs skills/xhs-favorites-organizer/tests/private-output-short-path.test.mjs`
 Expected: PASS. (The content hash collapses whitespace in `scripts/content-revision.mjs`, so restoring paragraphs does not change any note's `content_sha256`; the second Node test proves it.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit** (dfa5182)
 
 ```bash
 git add skills/xhs-favorites-organizer/scripts/fetch-xhs-details.py skills/xhs-favorites-organizer/scripts/organize.mjs skills/xhs-favorites-organizer/tests/test_post_text_paragraphs.py skills/xhs-favorites-organizer/tests/organize-paragraphs.test.mjs package.json
