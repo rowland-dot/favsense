@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": [
+          "site/styles.css"
+        ],
+        "createdAt": "2026-10-13T17:35:05.892Z",
+        "reason": "Agent: original card design since 2026-07-29; the top accent band encodes each card's category colour"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "site/styles.css"
+        ],
+        "createdAt": "2026-10-13T17:35:06.419Z",
+        "reason": "Agent: original resource-card design since 2026-07-29; the top accent band encodes the category colour"
+      }
+    ]
+  }
+}
