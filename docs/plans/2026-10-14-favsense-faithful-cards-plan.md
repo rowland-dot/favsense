@@ -428,7 +428,7 @@ git commit -m "refactor: share the evidence-file reader and add the extracted-te
 - Create: `skills/xhs-favorites-organizer/tests/card-content.test.mjs`
 - Modify: `package.json` (`test:knowledge` gains the test)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test** (2a14c92)
 
 ```js
 import test from "node:test";
@@ -530,12 +530,12 @@ test("cardCounts counts complete replies and transcripts shown, never a cut repl
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail** (2a14c92)
 
 Run: `node --test skills/xhs-favorites-organizer/tests/card-content.test.mjs`
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Minimal implementation** (`card-content.mjs`)
+- [x] **Step 3: Minimal implementation** (2a14c92) (`card-content.mjs`)
 
 ```js
 // One deterministic step: what a card says. Its inputs are the catalog record, the saved DianDian reply,
@@ -593,12 +593,12 @@ export function cardCounts(cards) {
 }
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass** (2a14c92)
 
 Run: `node --test skills/xhs-favorites-organizer/tests/card-content.test.mjs`
 Expected: PASS, 15 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit** (2a14c92)
 
 ```bash
 git add skills/xhs-favorites-organizer/scripts/card-content.mjs skills/xhs-favorites-organizer/tests/card-content.test.mjs package.json
