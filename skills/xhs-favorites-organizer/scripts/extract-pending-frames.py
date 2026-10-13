@@ -31,6 +31,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--note-id", action="append", default=[])
     parser.add_argument("--review-pages-only", action="store_true")
     parser.add_argument(
+        "--include-curated",
+        action="store_true",
+        help="Re-review: also queue the named notes that are already in curation. Needs --note-id.",
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="Extract sparse evidence without a transcription recommendation.",
@@ -52,17 +57,27 @@ def build_frame_queue(
     max_items: int,
     allowed_note_ids: set[str] | None = None,
     require_visual_recommendation: bool = True,
+    include_curated: bool = False,
+    skipped_notes: dict[str, str] | None = None,
 ) -> list[dict]:
+    """Videos that need frames for review. `include_curated` lifts only the "already in curation" skip.
+
+    When `skipped_notes` is given, it is filled with {note_id: reason} for every note in
+    `allowed_note_ids` that is not queued, so a named note never disappears without a reason.
+    """
     if max_items < 1 or max_items > 25:
         raise ValueError("--max-items must be between 1 and 25")
+    reasons = skipped_notes if skipped_notes is not None else {}
     queue = []
     for video in sorted(media_dir.glob("*.mp4"), key=lambda item: item.name):
         note_id = video.stem
         if (
             not NOTE_ID.fullmatch(note_id)
-            or note_id in curation
             or (allowed_note_ids is not None and note_id not in allowed_note_ids)
         ):
+            continue
+        if note_id in curation and not include_curated:
+            reasons[note_id] = "curated"
             continue
         if require_visual_recommendation:
             transcript_path = analysis_dir / note_id / "transcription.json"
@@ -72,12 +87,14 @@ def build_frame_queue(
                 visual_level = visual_review.get("level")
                 missing_facts = visual_review.get("missing_facts") or []
             except (OSError, json.JSONDecodeError):
+                reasons[note_id] = "no_visual_recommendation"
                 continue
             if (
                 transcript.get("status") != "transcribed"
                 or visual_level not in {"sparse", "dense"}
                 or not missing_facts
             ):
+                reasons[note_id] = "no_visual_recommendation"
                 continue
         else:
             missing_facts = ["manual-visual-check"]
@@ -90,6 +107,7 @@ def build_frame_queue(
                     "frames-extracted", "visual-evidence-extracted",
                     "visual-evidence-resolved", "visual-source-exhausted",
                 }:
+                    reasons[note_id] = "frame_extraction_complete"
                     continue
                 start_seconds = float(existing.get("next_start_seconds") or 0.0)
             except (OSError, json.JSONDecodeError):
@@ -102,6 +120,12 @@ def build_frame_queue(
         })
         if len(queue) >= max_items:
             break
+    if skipped_notes is not None:
+        queued = {item["note_id"] for item in queue}
+        for note_id in set(allowed_note_ids or ()) - queued - set(reasons):
+            reasons[note_id] = (
+                "over_max_items" if (media_dir / f"{note_id}.mp4").exists() else "no_local_video"
+            )
     return queue
 
 
@@ -110,18 +134,23 @@ def build_review_queue(
     curation: dict,
     max_items: int,
     allowed_note_ids: set[str] | None = None,
+    include_curated: bool = False,
+    skipped_notes: dict[str, str] | None = None,
 ) -> list[dict]:
     if max_items < 1 or max_items > 25:
         raise ValueError("--max-items must be between 1 and 25")
+    reasons = skipped_notes if skipped_notes is not None else {}
     queue = []
     for note_dir in sorted(analysis_dir.iterdir(), key=lambda item: item.name):
         note_id = note_dir.name
         if (
             not note_dir.is_dir()
             or not NOTE_ID.fullmatch(note_id)
-            or note_id in curation
             or (allowed_note_ids is not None and note_id not in allowed_note_ids)
         ):
+            continue
+        if note_id in curation and not include_curated:
+            reasons[note_id] = "curated"
             continue
         manifest_path = note_dir / "extraction.json"
         frames_dir = note_dir / "frames"
@@ -138,10 +167,16 @@ def build_review_queue(
         }:
             continue
         if review_dir.is_dir() and any(review_dir.glob("page_*.jpg")):
+            reasons[note_id] = "review_pages_exist"
             continue
         queue.append({"note_id": note_id, "note_dir": note_dir, "manifest": manifest})
         if len(queue) >= max_items:
             break
+    if skipped_notes is not None:
+        queued = {item["note_id"] for item in queue}
+        left_over = "over_max_items" if len(queue) >= max_items else "no_extracted_frames"
+        for note_id in set(allowed_note_ids or ()) - queued - set(reasons):
+            reasons[note_id] = left_over
     return queue
 
 
@@ -390,6 +425,8 @@ def extract_video(
 
 def main() -> None:
     args = parse_args()
+    if args.include_curated and not args.note_id:
+        raise ValueError("--include-curated requires --note-id")
     media_dir = Path(args.media_dir).resolve()
     analysis_dir = Path(args.analysis_dir).resolve()
     ffmpeg = Path(args.ffmpeg).resolve()
@@ -409,6 +446,8 @@ def main() -> None:
         )
     elif args.note_id:
         raise ValueError("--note-id requires --catalog")
+    # Only a call that names notes reports why a note was left out; a batch call keeps its output shape.
+    skipped_notes = {} if args.note_id else None
     queue = build_frame_queue(
         media_dir,
         curation,
@@ -416,8 +455,11 @@ def main() -> None:
         args.max_items,
         allowed_note_ids=allowed_note_ids,
         require_visual_recommendation=not args.force,
+        include_curated=args.include_curated,
+        skipped_notes=skipped_notes,
     ) if not args.review_pages_only else build_review_queue(
-        analysis_dir, curation, args.max_items, allowed_note_ids=allowed_note_ids
+        analysis_dir, curation, args.max_items, allowed_note_ids=allowed_note_ids,
+        include_curated=args.include_curated, skipped_notes=skipped_notes,
     )
     completed = 0
     failed = 0
@@ -443,7 +485,13 @@ def main() -> None:
         except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired):
             failed += 1
     result_key = "review_pages_generated" if args.review_pages_only else "frames_extracted"
-    print(json.dumps({"queued": len(queue), result_key: completed, "failed": failed}))
+    result = {"queued": len(queue), result_key: completed, "failed": failed}
+    if skipped_notes is not None:
+        result["skipped_notes"] = [
+            {"note_id": note_id, "reason": reason}
+            for note_id, reason in sorted(skipped_notes.items())
+        ]
+    print(json.dumps(result))
 
 
 if __name__ == "__main__":

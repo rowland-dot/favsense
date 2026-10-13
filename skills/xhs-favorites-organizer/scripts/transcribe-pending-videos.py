@@ -78,6 +78,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--note-id", action="append", default=[])
     parser.add_argument("--keep-audio", action="store_true")
     parser.add_argument("--reassess-only", action="store_true")
+    parser.add_argument(
+        "--include-curated",
+        action="store_true",
+        help="Re-review: also queue the named notes that are already in curation. Needs --note-id.",
+    )
     return parser.parse_args()
 
 
@@ -163,14 +168,28 @@ def build_transcription_queue(
     allowed_note_ids: set[str] | None = None,
     content_sha256_by_id: dict[str, str] | None = None,
     tool_version: str | None = None,
+    include_curated: bool = False,
+    skipped_notes: dict[str, str] | None = None,
 ) -> list[dict]:
+    """Videos still needing a transcript, smallest first.
+
+    `include_curated` (re-review of accepted notes) lifts only the "already in curation" skip.
+    When `skipped_notes` is given, it is filled with {note_id: reason} for every note in
+    `allowed_note_ids` that is not queued, so a named note never disappears without a reason.
+    """
     if max_items < 1 or max_items > 100:
         raise ValueError("--max-items must be between 1 and 100")
+    reasons = skipped_notes if skipped_notes is not None else {}
     if not _is_plain_directory(media_dir):
+        reasons.update({note_id: "media_or_analysis_path_unavailable" for note_id in allowed_note_ids or ()})
         return []
     candidates = []
+    seen_videos = set()
     for video in media_dir.glob("*.mp4"):
         note_id = video.stem
+        if allowed_note_ids is not None and note_id not in allowed_note_ids:
+            continue
+        seen_videos.add(note_id)
         expected_revision = (content_sha256_by_id or {}).get(note_id)
         curated = curation.get(note_id)
         curation_current = note_id in curation and (
@@ -180,20 +199,21 @@ def build_transcription_queue(
                 and curated.get("content_sha256") == expected_revision
             )
         )
-        if (
-            not _is_plain_file(video)
-            or not NOTE_ID.fullmatch(note_id)
-            or curation_current
-            or (allowed_note_ids is not None and note_id not in allowed_note_ids)
-        ):
+        if curation_current and not include_curated:
+            reasons[note_id] = "curated"
+            continue
+        if not _is_plain_file(video) or not NOTE_ID.fullmatch(note_id):
+            reasons[note_id] = "media_or_analysis_path_unavailable"
             continue
         note_dir = analysis_dir / note_id
         if note_dir.exists() and not _is_plain_directory(note_dir):
+            reasons[note_id] = "media_or_analysis_path_unavailable"
             continue
         transcript_path = note_dir / "transcription.json"
         resume_start = 0.0
         if transcript_path.is_file():
             if not _is_plain_file(transcript_path):
+                reasons[note_id] = "media_or_analysis_path_unavailable"
                 continue
             try:
                 transcript = json.loads(transcript_path.read_text(encoding="utf-8"))
@@ -218,6 +238,7 @@ def build_transcription_queue(
                 )
                 needs_continuation = bool(window.get("truncated") and missing_facts)
                 if status == "transcribed" and not needs_continuation:
+                    reasons[note_id] = "current_transcription"
                     continue
                 if status in {"partial", "transcribed"} and needs_continuation:
                     resume_start = float(window.get("next_start", window.get("end", 0.0)) or 0.0)
@@ -229,7 +250,12 @@ def build_transcription_queue(
             "resume_start_seconds": resume_start,
         })
     candidates.sort(key=lambda item: (item["video"].stat().st_size, item["video"].name))
-    return candidates[:max_items]
+    queue = candidates[:max_items]
+    for item in candidates[max_items:]:
+        reasons[item["note_id"]] = "over_max_items"
+    for note_id in set(allowed_note_ids or ()) - seen_videos:
+        reasons[note_id] = "no_local_video"
+    return queue
 
 
 def probe_duration(ffprobe: Path, video: Path) -> float:
@@ -672,8 +698,17 @@ def transcribe_video(
             pass
 
 
+def not_queued_report(skipped_notes: dict[str, str]) -> list[dict]:
+    return [
+        {"note_id": note_id, "reason": reason}
+        for note_id, reason in sorted(skipped_notes.items())
+    ]
+
+
 def main() -> None:
     args = parse_args()
+    if args.include_curated and not args.note_id:
+        raise ValueError("--include-curated requires --note-id")
     ffmpeg = Path(os.path.abspath(args.ffmpeg))
     ffprobe = Path(os.path.abspath(args.ffprobe))
     if not _is_plain_file(ffmpeg) or not _is_plain_file(ffprobe):
@@ -720,6 +755,8 @@ def main() -> None:
             reassess_transcripts(analysis_dir, notes, tool_version=tool_version)
         ))
         return
+    # Only a call that names notes reports why a note was left out; a batch call keeps its output shape.
+    skipped_notes = {} if args.note_id else None
     candidates = build_transcription_queue(
         media_dir,
         curation,
@@ -731,6 +768,8 @@ def main() -> None:
             for note_id, note in notes.items()
         },
         tool_version=tool_version,
+        include_curated=args.include_curated,
+        skipped_notes=skipped_notes,
     )
     queue, skipped = apply_duration_budget(
         candidates,
@@ -747,6 +786,8 @@ def main() -> None:
             "queued": 0, "transcribed": 0, "visual_review_needed": 0, "failed": 0,
             "skipped": skipped,
         }
+        if skipped_notes is not None:
+            result["skipped_notes"] = not_queued_report(skipped_notes)
         write_status(status_file, result)
         print(json.dumps(result))
         return
@@ -805,6 +846,8 @@ def main() -> None:
         "failed": failed,
         "skipped": skipped,
     }
+    if skipped_notes is not None:
+        final["skipped_notes"] = not_queued_report(skipped_notes)
     write_status(status_file, final)
     print(json.dumps(final))
 

@@ -4,7 +4,9 @@ param(
     [Parameter()][string]$Config = (Join-Path (Get-Location).Path 'config\xhs-favorites.json'),
     [Parameter()][int]$MaxItems = 20,
     [Parameter()][string[]]$NoteId = @(),
-    [Parameter()][switch]$PrepareVisualEvidence
+    [Parameter()][switch]$PrepareVisualEvidence,
+    # Re-review of accepted notes: also produce evidence for named notes already in curation. Needs -NoteId.
+    [Parameter()][switch]$IncludeCurated
 )
 
 $ErrorActionPreference = 'Stop'
@@ -58,6 +60,9 @@ $ocr = $configObject.image_ocr
 $analysisEnabled = $analysis -and $analysis.enabled -eq $true
 $ocrEnabled = $ocr -and $ocr.enabled -eq $true
 $requestedNoteIds = @($NoteId | Select-Object -Unique)
+if ($IncludeCurated -and -not $requestedNoteIds.Count) {
+    throw 'IncludeCurated requires NoteId.'
+}
 foreach ($requestedNoteId in $requestedNoteIds) {
     if ($requestedNoteId -notmatch '^[a-f0-9]{24}$') {
         throw 'NoteId must use a supported note identifier.'
@@ -145,6 +150,7 @@ if ($analysisEnabled) {
     foreach ($requestedNoteId in $requestedNoteIds) {
         $transcriptionArguments += @('--note-id', $requestedNoteId)
     }
+    if ($IncludeCurated) { $transcriptionArguments += '--include-curated' }
     & $transcriptionPython @transcriptionArguments
     if ($LASTEXITCODE -ne 0) { throw 'Audio-first transcription failed.' }
 }
@@ -235,6 +241,7 @@ if ($PrepareVisualEvidence) {
     foreach ($requestedNoteId in $requestedNoteIds) {
         $visualArguments += @('--note-id', $requestedNoteId)
     }
+    if ($IncludeCurated) { $visualArguments += '--include-curated' }
     & $python @visualArguments
     if ($LASTEXITCODE -ne 0) { throw 'On-demand sparse visual extraction failed.' }
 }
