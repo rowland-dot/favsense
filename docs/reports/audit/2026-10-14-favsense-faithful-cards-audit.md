@@ -312,3 +312,9 @@ Read whole: the plan (2154 lines before this pass), the spec, this audit log; `b
 Verdict: ISSUES_FOUND
 
 Final verdict: AUDIT-INCOMPLETE — Step 3 — PLAN (reviewed plan audit), 3-pass cap exhausted
+
+---
+
+## Step 4 — CODE
+
+- Stage A.3 HARD BLOCK: spec had no '## States' section for mockup tagging. Fixed by adding a States section that restates the spec's own §3.2 rows (no new behaviour); re-run below.

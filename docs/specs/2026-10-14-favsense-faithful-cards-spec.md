@@ -93,6 +93,17 @@ The 3 cards whose post is unreachable keep the source line approved in #99, "已
 
 The mockup `docs/designs/2026-10-14-card-design-rewrite.html` is authoritative for structure, placement and behaviour; styling comes from the site's own stylesheet.
 
+## States
+
+The card states above, named for mockup tagging (each restates a row of §3.2; no new behaviour):
+
+- diandian-reply: a card with a complete DianDian reply — source line "点点 AI 深度总结", reply folded with "展开全文 · N 字" (CARD-03; mockup case ①)
+- damaged-reply: a card whose saved reply lost text and has not been re-fetched — source line "原帖公开文字", main text the post's full text (CARD-04; mockup case ②)
+- formerly-held: a formerly held card shown as diandian-reply, with an unconfirmed tool name marked "未核实" (CARD-05; mockup case ③)
+- transcript-main: a video card with no DianDian reply after 3 tries whose post has only topic tags — source line "视频转写与画面文字", main text the transcript and on-screen text (CARD-06; mockup case ④)
+- post-and-transcript: a video card with no DianDian reply after 3 tries whose post has text — post text, then a "视频转写与画面文字" section (CARD-07)
+- unreachable-post: a card whose post is unreachable — source line "已完成（原帖不可访问）" (§3.1, last paragraph)
+
 ## 4. Capturing DianDian's reply `[Slice: B — after the captcha hold clears]`
 
 Root cause (owner's ruling): DianDian's reply is always complete; the missing text comes from how we read the page. Today the reply is the `innerText` of the last finished assistant message (`bridge-server.py:1821`), accepted as "stable" when two reads two seconds apart match (`:2037–2057`). Nothing checks it against DianDian's own text.
