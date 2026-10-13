@@ -127,7 +127,7 @@ test("CARD-06: a tags-only video post shows its transcript and says why", async 
   await expect(explanation(withDamagedReply)).toContainText("保存的点点回复缺了内容（是我们采集出错），下一轮重新获取；原帖只有话题标签");
 });
 
-test("CARD-07: the post's text first, then the transcript as its own labelled section above the footer", async ({ page }) => {
+test("CARD-07 [mockup state: posttranscript]: the post's text first, then the transcript as its own labelled section above the footer", async ({ page }) => {
   const detail = await openCard(page, "fixture-post-and-transcript");
   await expect(detail.locator(".structured-summary")).toHaveText(card("fixture-post-and-transcript").mainText, { useInnerText: true });
   const section = detail.locator('section[aria-label="视频转写与画面文字"]');
