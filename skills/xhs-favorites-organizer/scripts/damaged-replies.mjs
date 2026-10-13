@@ -9,8 +9,9 @@ import { loadFormalPointSummary } from "./curation-quality.mjs";
 import { isBareLine } from "../../../site/diandian-text.mjs";
 
 const INVISIBLE = /[​-‍﻿]/g;
-// Same line only: a bullet on the NEXT line after a colon is ordinary formatting, not lost text.
-const JOINED_LIST_ITEM = /[，,；;：:、][ \t]*[-•·][ \t]+\S/;
+// Same line only: a bullet on the NEXT line after a colon is ordinary formatting, not lost text. A bullet glued
+// after a sentence end (。？！) is the same join: no reply puts a list marker mid-line after a full stop.
+const JOINED_LIST_ITEM = /[，,；;：:、。？！?!][ \t]*[-•·][ \t]+\S/;
 const HASHTAG_LINE = /^(?:#\S+\s*)+$/;
 const COMMA_OR_COLON_END = /[，,：:]$/;
 const HASH = /^[a-f0-9]{64}$/;

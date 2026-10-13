@@ -29,6 +29,14 @@ test("sign 1: a list marker glued after a comma means text was lost where two it
   assert.deepEqual(damageSigns("A - B 是一个普通的连字符用法，不算。"), []);
 });
 
+test("sign 1 also holds when the glued marker follows a sentence end (。？！), as in real saved replies", () => {
+  // Shape of saved reply …03cc55: the opener sentence and the first list item share a line.
+  assert.deepEqual(damageSigns("根据你引用的笔记，核心观点是：普通人写愿望，高手写规格。- 用途：这张图用在哪里？\n\n结束。"), ["joined-list-items"]);
+  assert.deepEqual(damageSigns("构图：画面如何组织？- 色彩：配色方案是什么？\n\n结束。"), ["joined-list-items"]);
+  assert.deepEqual(damageSigns("真不错！- 下一项\n\n结束。"), ["joined-list-items"]);
+  assert.deepEqual(damageSigns("第一句。\n- 第二句是新的一行\n\n结束。"), []);
+});
+
 test("sign 1 needs the bullet on the same line: a colon line followed by a bullet line is normal formatting", () => {
   assert.deepEqual(damageSigns("核心内容：\n- 第一点\n- 第二点\n\n整体来说，值得收藏。"), []);
 });
