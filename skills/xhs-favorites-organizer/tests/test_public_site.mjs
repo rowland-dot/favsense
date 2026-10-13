@@ -13,7 +13,6 @@ import { assertPrivateDataset, repositoryIsMissing, repositoryWriteConflict } fr
 import { collectVideoEvidenceStats } from "../scripts/evidence-stats.mjs";
 import { resolveCategoryPolicy, sourceBoardNames } from "../scripts/category-policy.mjs";
 import { containsCredentialShape } from "../scripts/sensitive-data.mjs";
-import { curationRevision } from "../scripts/curation-revision.mjs";
 import { assertPublicTextSafe, validatePublicTree } from "../scripts/public-tree-policy.mjs";
 import {
   normalizeLocalBridgeDiagnostic,
@@ -364,9 +363,6 @@ async function buildProfileFixture(profileFile, options = {}) {
   const curationPath = resolve(work, "curation.json");
   const outputPath = resolve(work, "knowledge.json");
   const diandianPath = resolve(work, "diandian-summaries");
-  const diandianReportPath = resolve(work, "diandian-rerun-report.json");
-  const auditPath = resolve(work, "curation-audit.json");
-  const baselinePath = resolve(work, "curation-baseline.json");
   const fixtureCuration = options.curation ?? (options.uncurated ? {} : {
     [noteId]: {
       category: "Fixture", themes: ["Fixture"],
@@ -375,7 +371,6 @@ async function buildProfileFixture(profileFile, options = {}) {
       tools: [], kind: "Note"
     }
   });
-  const promptVersion = "9".repeat(64);
   const contentSha256 = "c".repeat(64);
   const diandianFixtureRecord = options.diandianRecord || (options.diandianSummary ? (() => {
     const summary = String(options.diandianSummary).replace(/\r\n?/g, "\n").trim();
@@ -383,7 +378,7 @@ async function buildProfileFixture(profileFile, options = {}) {
       version: 2,
       provider: "xiaohongshu-diandian",
       prompt: "总结",
-      prompt_version: promptVersion,
+      prompt_version: "9".repeat(64),
       note_id: noteId,
       title: "Fixture note",
       summary,
@@ -397,94 +392,21 @@ async function buildProfileFixture(profileFile, options = {}) {
     ...(options.note || { title: "Fixture note", description: "Fixture description", source_boards: ["Fixture"] }),
     ...(options.diandianSummary ? { content_sha256: contentSha256 } : {})
   };
-  if (options.auditStatus === "accepted" && options.diandianSummary && fixtureCuration[noteId]) {
-    Object.assign(fixtureCuration[noteId], {
-      evidence_sha256: "e".repeat(64),
-      candidate_revision: "f".repeat(64),
-      evidence_dependencies: [{
-        method: "diandian_summary",
-        provider: "xiaohongshu-diandian",
-        version: promptVersion,
-        result_sha256: diandianFixtureRecord.summary_sha256
-      }]
-    });
-  }
-  const qualityPolicy = options.curationQuality
-    ? {
-        ...options.curationQuality,
-        audit_file: auditPath,
-        ...(options.baselineIds ? { baseline_file: baselinePath } : {})
-      }
-    : (options.auditStatus ? {
-        publish_only_accepted: true,
-        audit_file: auditPath
-      } : null);
   await Promise.all([
     writeFile(configPath, JSON.stringify({
       version: 1,
       domain_profile: `config/domain-profiles/${profileFile}`,
       curation_file: curationPath,
       public_stats: {},
-      ...(qualityPolicy ? { curation_quality: qualityPolicy } : {}),
       ...(options.publishedSince ? { published_since: options.publishedSince } : {}),
       boards: options.boards || [{ id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "Fixture", enabled: true }]
     })),
     writeFile(catalogPath, JSON.stringify({ notes: { [noteId]: catalogNote } })),
     writeFile(curationPath, JSON.stringify(fixtureCuration))
   ]);
-  if (qualityPolicy) {
-    const auditRecord = options.auditRecord || (options.auditStatus ? {
-      status: options.auditStatus,
-      ...(options.auditStatus === "accepted" ? {
-        reviewed_at: "2026-08-12",
-        evidence_methods: ["description", "comments", "diandian_summary"],
-        comments_checked: true,
-        claims_supported: true,
-        resource_status: "not_applicable",
-        unresolved_facts: []
-      } : {})
-    } : null);
-    if (auditRecord && diandianFixtureRecord && options.auditStatus === "accepted" && options.omitAuditHash !== true) {
-      const summary = String(diandianFixtureRecord.summary || "").replace(/\r\n?/g, "\n").trim();
-      auditRecord.diandian_summary_sha256 = options.auditSummaryHash
-        || createHash("sha256").update(summary, "utf8").digest("hex");
-    }
-    if (auditRecord && options.auditStatus === "accepted" && fixtureCuration[noteId]) {
-      auditRecord.curation_sha256 = options.auditCurationHash
-        || curationRevision(fixtureCuration[noteId]);
-      if (options.diandianSummary) {
-        Object.assign(auditRecord, {
-          content_sha256: contentSha256,
-          evidence_sha256: fixtureCuration[noteId].evidence_sha256,
-          candidate_revision: fixtureCuration[noteId].candidate_revision,
-          curation_revision: options.auditCurationHash || curationRevision(fixtureCuration[noteId]),
-          evidence_dependencies: [{
-            ...fixtureCuration[noteId].evidence_dependencies[0],
-            result_sha256: options.auditSummaryHash || diandianFixtureRecord.summary_sha256
-          }]
-        });
-      }
-    }
-    await writeFile(auditPath, JSON.stringify({
-      version: 1,
-      notes: auditRecord ? { [noteId]: auditRecord } : {}
-    }));
-  }
-  if (options.baselineIds) {
-    await writeFile(baselinePath, JSON.stringify({
-      version: 1,
-      note_ids: options.baselineIds,
-      curation_hashes: Object.fromEntries(options.baselineIds
-        .filter((id) => fixtureCuration[id])
-        .map((id) => [id, curationRevision(fixtureCuration[id])]))
-    }));
-  }
-  if (options.diandianSummary || options.diandianRecord) {
+  if (diandianFixtureRecord) {
     await mkdir(diandianPath, { recursive: true });
     await writeFile(resolve(diandianPath, `${noteId}.json`), JSON.stringify(diandianFixtureRecord));
-  }
-  if (options.diandianReport) {
-    await writeFile(diandianReportPath, JSON.stringify(options.diandianReport));
   }
   const args = [
     resolve(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"),
@@ -495,10 +417,7 @@ async function buildProfileFixture(profileFile, options = {}) {
     "--video-analysis", resolve(work, "video-analysis"),
     "--output", outputPath
   ];
-  if (options.diandianSummary || options.diandianRecord) {
-    args.push("--diandian-dir", diandianPath, "--diandian-prompt-version", promptVersion);
-  }
-  if (options.diandianReport) args.push("--diandian-report", diandianReportPath);
+  args.push("--diandian-dir", diandianPath);
   if (options.resources) args.push("--resources", options.resources);
   const result = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8" });
   try {
@@ -522,10 +441,12 @@ test("public site ships complete, structured knowledge data", async () => {
   for (const note of data.notes) {
     assert.match(note.id, /^[a-f0-9]{24}$/);
     assert.ok(note.title.length > 0);
-    assert.ok(note.summary.length > 0);
-    assert.ok(note.deepSummary.length > 0);
-    assert.equal(typeof note.action, "string");
-    if (note.action) assert.ok(note.action.length > 20);
+    // Every card carries its own text; a card with none is the one case the data allows to be empty.
+    assert.equal(typeof note.mainText, "string");
+    assert.match(note.mainSource, /^(diandian|post-text|video-transcript|image-text)$/);
+    assert.equal(typeof note.replyDamaged, "boolean");
+    assert.equal(typeof note.postUnreachable, "boolean");
+    assert.ok(Array.isArray(note.unverifiedTools));
     assert.match(note.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/search_result\?/);
     assert.equal(Object.hasOwn(note, "priority"), false);
     assert.equal(Object.hasOwn(note, "risk"), false);
@@ -538,7 +459,16 @@ test("public site ships complete, structured knowledge data", async () => {
   assert.equal(Object.hasOwn(data.meta, "priorityLabels"), false);
   assert.ok(data.meta.sourceBoards.includes("Skills"));
   assert.equal(data.notes.some((note) => note.title === "未命名收藏"), false);
-  assert.equal(data.notes.some((note) => note.action === "内容解读完成后，这里会直接呈现核心结论、相关项目和具体用法。"), false);
+  // The old gate's fields are gone, and the home counts are what the cards show.
+  for (const note of data.notes) {
+    for (const gone of ["summary", "deepSummary", "deepSummarySource", "summaryStatus", "curationStatus", "summaryState", "candidateKind", "action", "evidence"]) {
+      assert.equal(Object.hasOwn(note, gone), false, `${note.id}.${gone}`);
+    }
+  }
+  assert.equal(data.meta.replyCount, data.notes.filter((note) => note.mainSource === "diandian" && !note.replyDamaged).length);
+  assert.equal(data.meta.transcriptCount, data.notes.filter((note) => note.mainSource === "video-transcript" || note.extracted?.kind === "video-transcript").length);
+  assert.equal(Object.hasOwn(data.meta, "verifiedNoteCount"), false);
+  assert.equal(Object.hasOwn(data.meta, "videoMethod"), false);
 });
 
 test("missing titles are inferred and public source navigation never publishes expiring direct links", async () => {
@@ -563,152 +493,14 @@ test("missing titles are inferred and public source navigation never publishes e
   assert.doesNotMatch(note.sourceUrl, /xsec_token|\/explore\/|\/discovery\/item\//);
 });
 
-test("uncurated notes do not expose a generic action placeholder", async () => {
-  const data = await buildProfileFixture("software.json", { uncurated: true });
-  assert.equal(data.notes[0].action, "");
-});
-
-test("published notes carry the exact structured curation revision", async () => {
-  const noteId = "aaaaaaaaaaaaaaaaaaaaaaaa";
-  const entry = {
-    category: "Fixture",
-    themes: ["Fixture"],
-    summary: "Fixture summary with enough content for deterministic profile compilation.",
-    action: "Review the configured resource and its official evidence before taking action.",
-    tools: [],
-    kind: "Note"
-  };
+test("a saved DianDian reply becomes the card's main text without leaking source links", async () => {
   const data = await buildProfileFixture("software.json", {
-    curation: { [noteId]: entry }
+    diandianSummary: "这是点点 AI 对图文或视频内容生成的完整深度总结。"
   });
-  assert.equal(data.notes[0].curationRevision, curationRevision(entry));
-});
-
-test("private DianDian summaries become keyed deep summaries without leaking source links", async () => {
-  const data = await buildProfileFixture("software.json", {
-    diandianSummary: "这是点点 AI 对图文或视频内容生成的完整深度总结。",
-    auditStatus: "accepted"
-  });
-  assert.equal(data.notes[0].deepSummary, "这是点点 AI 对图文或视频内容生成的完整深度总结。 ".trim());
-  assert.equal(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.equal(data.notes[0].summaryState, "captured");
-  assert.equal(data.notes[0].summaryReasonCode, "");
+  assert.equal(data.notes[0].mainText, "这是点点 AI 对图文或视频内容生成的完整深度总结。");
+  assert.equal(data.notes[0].mainSource, "diandian");
+  assert.equal(data.notes[0].replyDamaged, false);
   assert.doesNotMatch(JSON.stringify(data), /xsec_token|source_url/i);
-});
-
-test("accepted production builds keep a longer formal summary separate from the point evidence", async () => {
-  const noteId = "aaaaaaaaaaaaaaaaaaaaaaaa";
-  const formalSummary = "PocketBay 是面向 AI 编程项目的部署与托管产品；正式策展总结会补充一次性配对、浏览器授权、支持的运行时，以及多服务、后台任务、GPU 和固定 SLA 等平台边界。";
-  const pointSummary = "PocketBay 可以帮助用户部署 AI 生成的应用。";
-  const data = await buildProfileFixture("software.json", {
-    curation: {
-      [noteId]: {
-        category: "开发部署与 Vibe Coding",
-        themes: ["AI 应用部署"],
-        summary: formalSummary,
-        action: "先用不含密钥的小型项目试跑，并在浏览器授权前核对项目名与部署类型。",
-        tools: [],
-        kind: "Product"
-      }
-    },
-    note: {
-      title: "部署产品",
-      description: "PocketBay 部署说明",
-      source_boards: ["AI基础知识"],
-      type: "视频",
-      comment_evidence_checked: true
-    },
-    boards: [{ id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "AI基础知识", enabled: true }],
-    diandianSummary: pointSummary,
-    auditStatus: "accepted"
-  });
-
-  assert.equal(data.notes[0].summary, formalSummary);
-  assert.equal(data.notes[0].deepSummary, pointSummary);
-  assert.equal(data.notes[0].curationStatus, "accepted");
-});
-
-test("a completed rejection is not rendered as waiting for review", async () => {
-  const data = await buildProfileFixture("software.json", {
-    auditStatus: "rejected",
-    auditRecord: {
-      status: "rejected",
-      reviewed_at: "2026-08-26",
-      evidence_methods: ["description", "comments"],
-      comments_checked: true,
-      claims_supported: false,
-      resource_status: "not_applicable",
-      unresolved_facts: [],
-      reason: "当前证据不足"
-    }
-  });
-  assert.equal(data.notes[0].summaryStatus, "rejected");
-  assert.equal(data.notes[0].curationStatus, "rejected");
-  assert.equal(data.notes[0].summaryReasonCode, "audit_rejected");
-});
-
-test("production knowledge build projects failed and batch-aborted summary states from the private run report", async () => {
-  const noteId = "aaaaaaaaaaaaaaaaaaaaaaaa";
-  const failed = await buildProfileFixture("software.json", {
-    uncurated: true,
-    diandianReport: {
-      version: 1,
-      unresolved: [{
-        note_id: noteId,
-        status: "unresolved",
-        reason: "transport-failed",
-        summary_status: "failed",
-      }],
-    },
-  });
-  assert.equal(failed.notes[0].summaryState, "failed");
-  assert.equal(failed.notes[0].summaryReasonCode, "transport_failed");
-
-  const aborted = await buildProfileFixture("software.json", {
-    uncurated: true,
-    diandianReport: {
-      version: 1,
-      unresolved: [{
-        note_id: noteId,
-        status: "unresolved",
-        reason: "summary-plan-abandoned",
-        summary_status: "batch_aborted",
-      }],
-    },
-  });
-  assert.equal(aborted.notes[0].summaryState, "batch_aborted");
-  assert.equal(aborted.notes[0].summaryReasonCode, "batch_aborted");
-  assert.doesNotMatch(JSON.stringify(aborted), /summary-plan-abandoned/);
-
-  const legacy = await buildProfileFixture("software.json", {
-    uncurated: true,
-    diandianReport: {
-      version: 1,
-      unresolved: [{
-        note_id: noteId,
-        status: "unresolved",
-        reason: "attachment-not-supported",
-      }],
-    },
-  });
-  assert.equal(legacy.notes[0].summaryState, "stale");
-  assert.equal(legacy.notes[0].summaryReasonCode, "unknown_legacy");
-
-  const retainedAccepted = await buildProfileFixture("software.json", {
-    diandianSummary: "这是已审核并保留的历史点点总结，用于验证后续失败不会被界面隐藏。",
-    auditStatus: "accepted",
-    diandianReport: {
-      version: 1,
-      unresolved: [{
-        note_id: noteId,
-        status: "unresolved",
-        reason: "transport-failed",
-        summary_status: "failed",
-      }],
-    },
-  });
-  assert.equal(retainedAccepted.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.equal(retainedAccepted.notes[0].summaryState, "failed");
 });
 
 test("knowledge cards disclose where their text came from and format it safely", async () => {
@@ -1307,81 +1099,6 @@ test("mounted note detail starts one local-only DianDian validation without chan
   assert.equal(result.startedHere, true);
 });
 
-test("pending DianDian evidence remains private until the curation audit accepts it", async () => {
-  const data = await buildProfileFixture("software.json", {
-    diandianSummary: "这份点点总结仍在等待评论与资源核验，因此不能进入公开网页。",
-    auditStatus: "pending"
-  });
-  assert.equal(data.notes[0].deepSummary, "Fixture description");
-  assert.notEqual(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.doesNotMatch(JSON.stringify(data), /这份点点总结仍在等待/);
-});
-
-test("accepted audit cannot publish DianDian text without a publishable curation entry", async () => {
-  const data = await buildProfileFixture("software.json", {
-    uncurated: true,
-    diandianSummary: "Accepted evidence still needs a publishable structured curation entry.",
-    auditStatus: "accepted"
-  });
-  assert.notEqual(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.doesNotMatch(JSON.stringify(data), /Accepted evidence still needs/);
-});
-
-test("accepted audit is bound to the exact DianDian summary revision", async () => {
-  const data = await buildProfileFixture("software.json", {
-    diandianSummary: "A regenerated AI answer must not inherit approval for older bytes.",
-    auditStatus: "accepted",
-    auditSummaryHash: "0".repeat(64)
-  });
-  assert.notEqual(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.doesNotMatch(JSON.stringify(data), /regenerated AI answer/);
-});
-
-test("DianDian publication requires acceptance of the exact curation revision", async () => {
-  const data = await buildProfileFixture("software.json", {
-    diandianSummary: "A stale curation review must not approve newly associated private AI text.",
-    auditStatus: "accepted",
-    auditCurationHash: "0".repeat(64)
-  });
-  assert.notEqual(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.doesNotMatch(JSON.stringify(data), /stale curation review/);
-});
-
-test("an under-specified accepted audit cannot publish private DianDian text", async () => {
-  const data = await buildProfileFixture("software.json", {
-    diandianSummary: "A status label alone is not the full evidence acceptance contract.",
-    auditStatus: "accepted",
-    auditRecord: { status: "accepted" }
-  });
-  assert.notEqual(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.doesNotMatch(JSON.stringify(data), /status label alone/);
-});
-
-test("baseline publication does not grandfather a newly captured DianDian summary", async () => {
-  const data = await buildProfileFixture("software.json", {
-    diandianSummary: "New private AI evidence must not inherit an older card publication decision.",
-    curationQuality: { publish_only_accepted: true },
-    baselineIds: ["aaaaaaaaaaaaaaaaaaaaaaaa"]
-  });
-  assert.notEqual(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.doesNotMatch(JSON.stringify(data), /New private AI evidence/);
-});
-
-test("pre-policy publication does not grandfather a newly captured DianDian summary", async () => {
-  const data = await buildProfileFixture("software.json", {
-    diandianSummary: "New private AI evidence still requires an explicit current acceptance.",
-    curationQuality: { publish_only_accepted: true, required_since: "2026-01-01" },
-    note: {
-      title: "Published before the quality policy",
-      description: "Existing public description",
-      published_at: "2025-12-31_23:59:59",
-      source_boards: ["Fixture"]
-    }
-  });
-  assert.notEqual(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.doesNotMatch(JSON.stringify(data), /New private AI evidence/);
-});
-
 test("public compilation ignores mismatched or credential-shaped DianDian records", async () => {
   const mismatched = await buildProfileFixture("software.json", {
     diandianRecord: {
@@ -1393,11 +1110,10 @@ test("public compilation ignores mismatched or credential-shaped DianDian record
       summary: "不应按标题或文件位置关联这份摘要。"
     }
   });
-  assert.notEqual(mismatched.notes[0].deepSummarySource, "xiaohongshu-diandian");
-  assert.doesNotMatch(mismatched.notes[0].deepSummary, /不应按标题/);
+  assert.notEqual(mismatched.notes[0].mainSource, "diandian");
+  assert.doesNotMatch(mismatched.notes[0].mainText, /不应按标题/);
 
   const credentialShaped = await buildProfileFixture("software.json", {
-    auditStatus: "accepted",
     diandianRecord: {
       version: 1,
       provider: "xiaohongshu-diandian",
@@ -1408,13 +1124,12 @@ test("public compilation ignores mismatched or credential-shaped DianDian record
       xsec_token: "credential-shaped-value"
     }
   });
-  assert.notEqual(credentialShaped.notes[0].deepSummarySource, "xiaohongshu-diandian");
+  assert.notEqual(credentialShaped.notes[0].mainSource, "diandian");
   assert.doesNotMatch(JSON.stringify(credentialShaped), /credential-shaped-value|这份文本不应被公开/);
 });
 
-test("public compilation rejects encoded sensitive data in accepted DianDian records", async () => {
+test("public compilation rejects encoded sensitive data in saved DianDian records", async () => {
   const data = await buildProfileFixture("software.json", {
-    auditStatus: "accepted",
     diandianRecord: {
       version: 1,
       provider: "xiaohongshu-diandian",
@@ -1424,7 +1139,7 @@ test("public compilation rejects encoded sensitive data in accepted DianDian rec
       summary: "Encoded source %78%73%65%63%5f%74%6f%6b%65%6e%3dsecret"
     }
   });
-  assert.notEqual(data.notes[0].deepSummarySource, "xiaohongshu-diandian");
+  assert.notEqual(data.notes[0].mainSource, "diandian");
   assert.doesNotMatch(JSON.stringify(data), /Encoded source/);
 });
 
@@ -1441,11 +1156,10 @@ test("sensitive scanner rejects composed encoding and normalized object keys", (
   ]) assert.equal(containsCredentialShape(value), true);
 });
 
-test("public compilation fails closed when private board identifiers appear in accepted AI text", async () => {
+test("public compilation fails closed when private board identifiers appear in a saved reply", async () => {
   await assert.rejects(
     () => buildProfileFixture("software.json", {
-      diandianSummary: "Accidentally echoed private identifier bbbbbbbbbbbbbbbbbbbbbbbb.",
-      auditStatus: "accepted"
+      diandianSummary: "Accidentally echoed private identifier bbbbbbbbbbbbbbbbbbbbbbbb."
     }),
     /Public data safety check failed/
   );
@@ -1611,7 +1325,6 @@ test("uncurated software notes infer candidates while unverified Skill stays neu
       "aaaaaaaaaaaaaaaaaaaaaaaa": "Tool",
       ...Object.fromEntries(Object.entries(cases).slice(1).map(([id, values]) => [id, values[2]]))
     });
-    assert.equal(data.notes.find((note) => note.id === "aaaaaaaaaaaaaaaaaaaaaaaa").candidateKind, "Skill");
   } finally {
     await rm(work, { recursive: true, force: true });
   }
@@ -2010,15 +1723,14 @@ test("VividDub keeps its verified GitHub project identity", async () => {
   assert.doesNotMatch(vividdub.usage_note, /没有 GitHub|不是已确认的 GitHub/);
 });
 
-test("verified video evidence does not claim every frame was reviewed", async () => {
+test("no card in the shipped data is left without a way to read it", async () => {
   const data = JSON.parse(await read("site/data/knowledge.json"));
-  const vividdub = data.notes.find((note) => note.id === "6a603e4e000000001d00c0a0");
-  assert.ok(vividdub);
-  assert.equal(vividdub.evidence.method, "已结合本地视频证据核验内容");
-  assert.equal(vividdub.evidence.locallyAvailable, true);
-  assert.doesNotMatch(vividdub.evidence.method, /完整查看视频/);
-  assert.doesNotMatch(vividdub.evidence.method, /音频转写/);
-  assert.doesNotMatch(data.meta.videoMethod, /完整视频解读/);
+  // A saved reply that lost text is shown only when nothing else exists, so no card is empty and no cut reply passes as complete.
+  assert.deepEqual(data.notes.filter((note) => !note.mainText.trim()).map((note) => note.id), []);
+  for (const note of data.notes.filter((item) => item.replyDamaged)) {
+    assert.ok(note.mainSource !== "diandian" || note.mainText.trim(), note.id);
+  }
+  assert.equal(data.notes.filter((note) => note.postUnreachable).length, 3);
 });
 
 test("static app has the required deployment assets", async () => {

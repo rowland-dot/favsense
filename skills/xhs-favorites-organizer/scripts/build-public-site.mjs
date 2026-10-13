@@ -1,17 +1,15 @@
 #!/usr/bin/env node
 
-import { open, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizeSensitiveText } from "./sensitive-data.mjs";
 import { collectVideoEvidenceStats } from "./evidence-stats.mjs";
-import { curationRevision } from "./curation-revision.mjs";
-import {
-  loadFormalPointSummary,
-  loadCurationAudit,
-  publicEvidenceStatus
-} from "./curation-quality.mjs";
+import { loadFormalPointSummary, loadUnreachableNoteIds, sealedCandidateFor } from "./curation-quality.mjs";
 import { judgePublicNote, validateContentKindProfile } from "./public-judgement.mjs";
+import { TITLE_LIMIT, cardCounts, cardText, cardTitle, postBody, replyState } from "./card-content.mjs";
+import { loadExtractedText } from "./extracted-text.mjs";
+import { loadDamagedReplies } from "./damaged-replies.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
 import { atomicWriteTextFile } from "./public-tree-policy.mjs";
 
@@ -40,17 +38,10 @@ const paths = {
   videoAnalysis: arg("video-analysis", resolve(workspace, ".xhs-favorites/video-analysis")),
   diandian: arg("diandian-dir", resolve(workspace, ".xhs-favorites/diandian-summaries")),
   candidates: arg("candidates", ""),
-  diandianReport: arg("diandian-report", resolve(workspace, ".xhs-favorites/diandian-rerun-report.json")),
+  // No default: a build that names no list treats no reply as damaged, so a test or a direct run never reads the private folder.
+  damaged: arg("damaged-replies", ""),
   output: arg("output", resolve(workspace, "site/data/knowledge.json"))
 };
-const promptVersionIndex = process.argv.indexOf("--diandian-prompt-version");
-const explicitPromptVersion = promptVersionIndex >= 0
-  ? String(process.argv[promptVersionIndex + 1] || "")
-  : "";
-if (explicitPromptVersion && !/^[a-f0-9]{64}$/.test(explicitPromptVersion)) {
-  throw new Error("DianDian prompt version is invalid");
-}
-const expectedPromptVersion = explicitPromptVersion;
 const buildVersionIndex = process.argv.indexOf("--build-version");
 const buildVersion = buildVersionIndex >= 0 ? String(process.argv[buildVersionIndex + 1] || "") : "";
 if (buildVersion && !/^[a-f0-9]{64}$/.test(buildVersion)) throw new Error("--build-version must be a 64-character lowercase SHA-256");
@@ -64,17 +55,11 @@ const [catalog, curation, sealedCandidates] = await Promise.all([
   parseJson(paths.curation),
   paths.candidates ? parseJson(paths.candidates) : {}
 ]);
-const {
-  policy: curationQuality,
-  audit: curationAudit,
-  baselineIds: curationBaselineIds,
-  baselineRevisions: curationBaselineRevisions
-} = loadCurationAudit(workspace, config);
+// Only the audit's list of unreachable posts is read, and only to pick one source-line label.
+const unreachableIds = loadUnreachableNoteIds(workspace, config);
 const resourceRegistry = profile.features?.resource_index
   ? await parseJson(paths.resources)
   : { verified_at: "", resources: [] };
-
-const TITLE_LIMIT = 52;
 
 // The wording of a post's text before its topics, whole.
 function cleanedPostText(value) {
@@ -90,30 +75,10 @@ function cleanedPostText(value) {
   return beforeTopics || withoutTopics;
 }
 
-function titleFromText(value) {
-  const title = cleanedPostText(value);
-  return title.length > TITLE_LIMIT ? `${title.slice(0, TITLE_LIMIT - 1)}…` : title;
-}
-
 // What to type into the platform's search to find the original post: the post's own words, cut at the
 // same limit as a title but without the ellipsis a title gets, since an ellipsis is not in the post.
 function searchTextOf(raw) {
   return cleanedPostText(raw.title).slice(0, TITLE_LIMIT) || cleanedPostText(raw.description).slice(0, TITLE_LIMIT);
-}
-
-const tidySpaces = (value) => String(value || "").replace(/\s+/g, " ").trim();
-
-function displayTitle(raw, verdict, noteId) {
-  // A note shown from its reviewed entry shows the title the reviewer wrote, as written.
-  const reviewedTitle = verdict.curated ? tidySpaces(verdict.entry.title) : "";
-  if (reviewedTitle) return reviewedTitle;
-  const candidates = [raw.title, raw.description, verdict.entry.summary];
-  for (const candidate of candidates) {
-    const title = titleFromText(candidate);
-    if (title) return title;
-  }
-  const author = titleFromText(raw.author);
-  return author ? `${author}的收藏` : `收藏条目 · ${noteId.slice(-6)}`;
 }
 
 function publicSourceUrl(title, author) {
@@ -165,96 +130,19 @@ const resources = rawResources.map((raw, index) => {
 const rawNotes = Object.fromEntries(
   Object.entries(catalog.notes || {})
 );
-async function loadDiandianRunStates(path, noteIds) {
-  let handle;
-  try {
-    handle = await open(path, "r");
-    const metadata = await handle.stat();
-    if (metadata.size > 512 * 1024) throw new Error("DianDian rerun report is too large");
-    const buffer = Buffer.alloc(metadata.size + 1);
-    let bytesRead = 0;
-    while (bytesRead < buffer.length) {
-      const chunk = await handle.read(buffer, bytesRead, buffer.length - bytesRead, bytesRead);
-      if (!chunk.bytesRead) break;
-      bytesRead += chunk.bytesRead;
-    }
-    if (bytesRead > metadata.size) throw new Error("DianDian rerun report changed while reading");
-    const report = JSON.parse(buffer.subarray(0, bytesRead).toString("utf8").replace(/^\uFEFF/, ""));
-    const unresolved = Array.isArray(report?.unresolved)
-      ? report.unresolved
-      : Object.entries(report?.unresolved || {}).map(([note_id, entry]) => ({ ...entry, note_id }));
-    if (unresolved.length > 5000) throw new Error("DianDian rerun report contains too many entries");
-    const states = new Map();
-    for (const entry of unresolved) {
-      const noteId = String(entry?.note_id || "");
-      if (!/^[a-f0-9]{24}$/.test(noteId) || !noteIds.has(noteId)) continue;
-      const reason = String(entry?.reason || "");
-      const summaryState = entry?.summary_status === "batch_aborted"
-        || (!entry?.summary_status && ["batch-aborted", "summary-plan-abandoned"].includes(reason))
-        ? "batch_aborted"
-        : entry?.summary_status === "failed"
-          ? "failed"
-          : entry?.status === "unresolved"
-            ? "stale"
-            : "";
-      if (!summaryState) continue;
-      const summaryReasonCode = summaryState === "batch_aborted"
-        ? "batch_aborted"
-        : summaryState === "stale"
-          ? "unknown_legacy"
-        : reason === "transport-failed"
-          ? "transport_failed"
-          : reason === "safety-halt"
-            ? "safety_signal"
-            : "contract_invalid";
-      states.set(noteId, { summaryState, summaryReasonCode });
-    }
-    return states;
-  } catch (error) {
-    if (error?.code === "ENOENT") return new Map();
-    throw error;
-  } finally {
-    await handle?.close();
-  }
-}
-const diandianRunStateById = await loadDiandianRunStates(paths.diandianReport, new Set(Object.keys(rawNotes)));
-const diandianById = new Map(Object.keys(rawNotes)
-  .map((noteId) => [noteId, loadFormalPointSummary(paths.diandian, noteId, expectedPromptVersion)])
-  .filter(([, summary]) => summary));
+const damagedReplies = paths.damaged ? loadDamagedReplies(paths.damaged) : new Map();
 const evidenceStats = await collectVideoEvidenceStats(paths.videoAnalysis, config.public_stats, Object.keys(rawNotes));
-const frameVerifiedNoteIds = new Set(evidenceStats.verifiedNoteIds);
 const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
-  const diandian = diandianById.get(noteId);
-  const verdict = judgePublicNote({
-    noteId,
-    note: raw,
-    curation,
-    sealedCandidates,
-    quality: {
-      policy: curationQuality,
-      audit: curationAudit,
-      baselineIds: curationBaselineIds,
-      baselineRevisions: curationBaselineRevisions
-    },
-    point: diandian,
-    resourceRegistry,
-    config,
-    profile,
-    effectiveDate,
-    promptVersion: expectedPromptVersion
-  });
-  const isFrameVerified = frameVerifiedNoteIds.has(noteId);
-  const title = displayTitle(raw, verdict, noteId);
-  const auditEntry = curationAudit?.notes?.[noteId];
-  const formalSummaryReasonCode = String(verdict.reasonCode || "");
-  const runState = diandianRunStateById.get(noteId);
-  const summaryState = runState?.summaryState || (diandian
-    ? (["content_changed", "provider_changed", "prompt_changed", "summary_changed"].includes(formalSummaryReasonCode)
-        ? "stale"
-        : "captured")
-    : "not_started");
-  const summaryReasonCode = runState?.summaryReasonCode || formalSummaryReasonCode;
-  const deepSummarySources = { point: "xiaohongshu-diandian", curation: "curation", metadata: "source-metadata" };
+  // The add-on: the reviewed curation entry, else the candidate sealed for the note. It never decides whether
+  // the card shows in full or what its title and text are.
+  const addOn = Object.hasOwn(curation, noteId) ? curation[noteId] : sealedCandidateFor(sealedCandidates, noteId);
+  const verdict = judgePublicNote({ noteId, note: raw, addOn, unreachableIds, resourceRegistry, config, profile, effectiveDate });
+  const body = postBody(raw.description);
+  // The reply is read whatever prompt version saved it and whichever version of the post it was made for.
+  const point = loadFormalPointSummary(paths.diandian, noteId);
+  const state = replyState(noteId, point, damagedReplies);
+  const text = cardText({ body, point, state, extracted: loadExtractedText(paths.videoAnalysis, noteId, raw.type) });
+  const title = cardTitle({ title: raw.title, body, author: raw.author, noteId });
 
   return {
     id: noteId,
@@ -272,25 +160,16 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     suggestedCategory: verdict.suggestedCategory,
     sourceBoards: verdict.sourceBoards,
     themes: verdict.themes,
-    summary: verdict.summary,
-    deepSummary: verdict.deepSummary,
-    deepSummarySource: deepSummarySources[verdict.summarySource],
-    curationRevision: verdict.curated ? curationRevision(verdict.entry) : "",
-    summaryStatus: verdict.curationStatus,
-    curationStatus: verdict.curationStatus,
-    summaryReason: verdict.reasonCode,
-    summaryState,
-    summaryReasonCode,
-    ...(verdict.candidateKind ? { candidateKind: verdict.candidateKind } : {}),
-    reviewedAt: verdict.accepted || auditEntry?.status === "unavailable"
-      ? String(auditEntry?.reviewed_at || "")
-      : "",
-    action: verdict.action,
+    mainText: text.mainText,
+    mainSource: text.mainSource,
+    replyDamaged: state === "damaged",
+    postUnreachable: verdict.postUnreachable,
+    extracted: text.extractedSection,
     tools: verdict.tools,
+    unverifiedTools: verdict.unverifiedTools,
     kind: verdict.kind,
     resources: verdict.resourceNames,
-    resourceIds: verdict.resourceIds,
-    evidence: publicEvidenceStatus(noteId, curationAudit, isFrameVerified, verdict.accepted)
+    resourceIds: verdict.resourceIds
   };
 });
 
@@ -303,7 +182,6 @@ const fallbackBoard = config.boards.find((board) => board.id === config.legacy_s
   || config.boards.find((board) => board.enabled);
 const visibleBoards = sourceBoards.length ? sourceBoards : [fallbackBoard?.name].filter(Boolean);
 const frameEvidenceCount = evidenceStats.frameEvidenceCount;
-const verifiedNoteCount = notes.filter((note) => note.evidence.locallyAvailable).length;
 
 const output = {
   meta: {
@@ -319,7 +197,7 @@ const output = {
     categoryStrategy: profile.classification?.category_strategy || "source-board-first",
     hero: profile.presentation?.hero || {},
     noteCount: notes.length,
-    verifiedNoteCount,
+    ...cardCounts(notes),
     categoryCount: categories.length,
     resourceCount: resources.length,
     resourceIndexEnabled: Boolean(profile.features?.resource_index),
@@ -327,7 +205,6 @@ const output = {
     resourceIndex,
     frameEvidenceCount,
     evidenceStatsAutoUpdated: evidenceStats.derivedFromLocalEvidence,
-    videoMethod: `${verifiedNoteCount} 条收藏已完成视频内容核验；其余条目目前按原帖公开文字展示`,
     kindLabels: profile.content_kinds || {}
   },
   categories,
@@ -343,8 +220,21 @@ const forbidden = [
   /author_id/i,
   /["']?(?:cookie|cookies)["']?\s*[:=]\s*["'][^"']+/i
 ];
+
+// Where the first match sits, so the person who has to fix it knows which note and field, without the matched text.
+function locateUnsafe(pattern) {
+  for (const note of notes) {
+    for (const [key, value] of Object.entries(note)) {
+      const texts = key === "extracted" && value ? [value.text] : Array.isArray(value) ? value : [value];
+      if (texts.some((text) => typeof text === "string" && pattern.test(normalizeSensitiveText(text)))) {
+        return ` (note ${note.id}, field ${key === "extracted" ? "extracted.text" : key})`;
+      }
+    }
+  }
+  return "";
+}
 for (const pattern of forbidden) {
-  if (pattern.test(normalizedSerialized)) throw new Error(`Public data safety check failed: ${pattern}`);
+  if (pattern.test(normalizedSerialized)) throw new Error(`Public data safety check failed: ${pattern}${locateUnsafe(pattern)}`);
 }
 
 const privateIdentifiers = new Set([
@@ -359,7 +249,8 @@ try {
 for (const identifier of privateIdentifiers) {
   const privateValue = String(identifier || "").trim();
   if (privateValue && normalizedSerialized.includes(normalizeSensitiveText(privateValue))) {
-    throw new Error("Public data safety check failed: private source identifier");
+    const where = notes.find((note) => JSON.stringify(note).includes(privateValue) || normalizeSensitiveText(JSON.stringify(note)).includes(normalizeSensitiveText(privateValue)));
+    throw new Error(`Public data safety check failed: private source identifier${where ? ` (note ${where.id})` : ""}`);
   }
 }
 

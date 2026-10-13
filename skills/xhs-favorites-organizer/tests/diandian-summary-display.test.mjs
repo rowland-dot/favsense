@@ -11,18 +11,19 @@ import { diandianBlocks, stripDiandianOpener } from "../../../site/diandian-text
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const readJson = async (path) => JSON.parse(await readFile(resolve(root, path), "utf8"));
 const published = (await readJson("site/data/knowledge.json")).notes
-  .filter((note) => note.deepSummarySource === "xiaohongshu-diandian");
+  .filter((note) => note.mainSource === "diandian");
 const frozen = (await readJson("scripts/fixtures/faithful-cards.json")).notes;
 const letters = (text) => [...text.matchAll(/\p{L}/gu)].map((match) => match[0]).join("");
 
 test("the published set holds the DianDian replies this sweep is meant to cover", () => {
+  // Complete replies, plus the cut ones shown alone because nothing else exists for those cards.
   assert.ok(published.length >= 200, `expected the 200+ published DianDian replies, found ${published.length}`);
 });
 
 test("only the chat-style opening is left out of a real reply, and never everything", () => {
   for (const note of published) {
-    const original = note.deepSummary.trim();
-    const { text, removed } = stripDiandianOpener(note.deepSummary);
+    const original = note.mainText.trim();
+    const { text, removed } = stripDiandianOpener(note.mainText);
     assert.ok(text.length > 0, `${note.id}: nothing left to show`);
     assert.ok(original.endsWith(text), `${note.id}: the shown text is not the tail of the stored reply`);
     const dropped = original.slice(0, original.length - text.length);
@@ -50,7 +51,7 @@ test("opening lines are recognised by what they are, not by position alone", () 
 
 test("formatting never changes the words of any real reply", () => {
   for (const note of published) {
-    const { text } = stripDiandianOpener(note.deepSummary);
+    const { text } = stripDiandianOpener(note.mainText);
     const shown = diandianBlocks(text).map((block) => block.type === "list" ? block.items.join("") : block.text).join("");
     assert.equal(letters(shown), letters(text), `${note.id}: letters differ after formatting`);
   }
@@ -58,7 +59,7 @@ test("formatting never changes the words of any real reply", () => {
 
 test("every real reply formats into well-formed blocks", () => {
   for (const note of published) {
-    const blocks = diandianBlocks(stripDiandianOpener(note.deepSummary).text);
+    const blocks = diandianBlocks(stripDiandianOpener(note.mainText).text);
     assert.ok(blocks.length > 0, `${note.id}: no blocks`);
     for (const block of blocks) {
       if (block.type === "list") {

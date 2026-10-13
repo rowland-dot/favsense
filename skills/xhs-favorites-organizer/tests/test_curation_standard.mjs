@@ -11,10 +11,7 @@ import { prepareReview } from "../scripts/prepare-curation-review.mjs";
 import {
   acceptedRevisionsCurrent,
   currentFormalRevisions,
-  formalCurationDecision,
-  isPublishableCuration,
-  loadFormalPointSummary,
-  publicEvidenceStatus
+  loadFormalPointSummary
 } from "../scripts/curation-quality.mjs";
 import { prepareScope } from "../scripts/prepare-curation-scope.mjs";
 import { initializeAudit } from "../scripts/initialize-curation-audit.mjs";
@@ -894,70 +891,6 @@ test("a curated category stays a suggestion unless an explicit override has a re
   assert.match(result.fatal.join("\n"), /category-override-unexplained/);
 });
 
-test("publication gate binds the historical baseline and accepted audit to the current curation revision", () => {
-  const entry = fixture({ type: "图文" }).curation["note-current"];
-  const curation = { old: entry, current: entry, pending: entry };
-  const policy = { publish_only_accepted: true };
-  const accepted = {
-    status: "accepted", reviewed_at: "2026-08-12",
-    evidence_methods: ["description", "comments", "image_review"],
-    comments_checked: true, claims_supported: true,
-    resource_status: "not_applicable", unresolved_facts: [],
-    content_sha256: "a".repeat(64),
-    evidence_sha256: "b".repeat(64),
-    candidate_revision: "c".repeat(64),
-    curation_revision: curationRevision(entry),
-    evidence_dependencies: [],
-    curation_sha256: curationRevision(entry)
-  };
-  const audit = { notes: { current: accepted, pending: { ...accepted, status: "pending" } } };
-  const note = { title: "具体标题", type: "图文", source_boards: ["主题甲"], published_at: "2026-08-12" };
-  const context = {
-    config: { boards: [{ name: "主题甲", category: "主题甲" }] },
-    resources: { resources: [] },
-    currentRevisions: {
-      content_sha256: "a".repeat(64),
-      evidence_sha256: "b".repeat(64),
-      candidate_revision: "c".repeat(64),
-      curation_revision: curationRevision(entry),
-      evidence_dependencies: []
-    }
-  };
-  const baselineHashes = new Map([["old", curationRevision(entry)]]);
-  assert.equal(isPublishableCuration("old", note, curation, policy, audit, new Set(["old"]), baselineHashes, context), true);
-  assert.equal(isPublishableCuration("current", note, curation, policy, audit, new Set(), new Map(), context), true);
-  assert.equal(isPublishableCuration("pending", note, curation, policy, audit, new Set(), new Map(), context), false);
-  assert.equal(isPublishableCuration("old", note, { ...curation, old: { ...entry, summary: `${entry.summary} 已修改` } }, policy, audit, new Set(["old"]), baselineHashes, context), false);
-  for (const explicitAudit of [
-    { ...accepted, status: "pending", reason: "仍待复核" },
-    { ...accepted, status: "rejected", reason: "证据不足" },
-    { ...accepted, content_sha256: "f".repeat(64) }
-  ]) {
-    assert.equal(
-      isPublishableCuration(
-        "old",
-        note,
-        curation,
-        policy,
-        { notes: { old: explicitAudit } },
-        new Set(["old"]),
-        baselineHashes,
-        {
-          ...context,
-          currentRevisions: {
-            content_sha256: "a".repeat(64),
-            evidence_sha256: "b".repeat(64),
-            candidate_revision: "c".repeat(64),
-            curation_revision: curationRevision(entry),
-            evidence_dependencies: []
-          }
-        }
-      ),
-      false
-    );
-  }
-});
-
 test("published baseline is preserved while its catalog difference becomes the review scope", () => {
   const publishedEntry = { summary: "published" };
   const publishedRevision = curationRevision(publishedEntry);
@@ -972,14 +905,6 @@ test("published baseline is preserved while its catalog difference becomes the r
   assert.deepEqual(result.baseline.note_ids, ["published"]);
   assert.equal(result.baseline.curation_hashes.published, publishedRevision);
   assert.deepEqual(result.scope.note_ids.sort(), ["newOne", "newTwo"]);
-  assert.equal(
-    isPublishableCuration(
-      "published", {}, { published: { summary: "published" } },
-      { publish_only_accepted: true }, { notes: {} }, new Set(["published"]),
-      new Map(Object.entries(result.baseline.curation_hashes))
-    ),
-    true
-  );
 });
 
 test("an explicit one-click enrichment run re-enters baseline notes into the review scope", () => {
@@ -1458,22 +1383,6 @@ test("an unavailable source is a completed unpublished terminal state", () => {
   assert.deepEqual(quality.report.totals, {
     scoped: 1, accepted: 0, unavailable: 1, pending: 0, rejected: 0, invalid: 0
   });
-  assert.deepEqual(formalCurationDecision({
-    publishable: false,
-    auditEntry: unavailableAudit
-  }), {
-    accepted: false,
-    reason_code: "source_unavailable",
-    summary_source: "metadata",
-    content_sha256: "",
-    evidence_sha256: "",
-    resource_ids: []
-  });
-  assert.deepEqual(publicEvidenceStatus("unavailable", input.audit), {
-    method: "原帖当前不可访问，已保留此前记录并结束补证",
-    locallyAvailable: false
-  });
-
   const merged = mergeResults({
     catalog: input.catalog,
     config: input.config,
@@ -1730,18 +1639,6 @@ test("explicit scope audits the baseline difference instead of post publication 
   const result = auditCuration(input);
   assert.equal(result.report.totals.scoped, 1);
   assert.equal(result.report.totals.accepted, 1);
-});
-
-test("accepted audit is exposed as verified without leaking private evidence", () => {
-  const audit = { notes: { current: { status: "accepted", evidence_methods: ["audio_transcript", "comments"] } } };
-  assert.deepEqual(publicEvidenceStatus("current", audit, false, true), {
-    method: "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
-    locallyAvailable: true
-  });
-  assert.deepEqual(publicEvidenceStatus("current", audit, true, true), {
-    method: "已结合本地视频证据核验内容",
-    locallyAvailable: true
-  });
 });
 
 test("audit initialization preserves accepted work and makes every other scoped item pending", () => {

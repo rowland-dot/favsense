@@ -64,51 +64,6 @@ test("accepted restoration requires final current revisions and conditional depe
   assert.equal(acceptedRevisionsCurrent(audit, { ...current, resource_required: true }), false);
 });
 
-test("formal output decision binds acceptance, current point evidence, and verified Skill resources", async () => {
-  const { formalCurationDecision } = await import("../scripts/curation-quality.mjs");
-  const current = {
-    content_sha256: hex("a"), evidence_sha256: hex("b"), candidate_revision: hex("c"),
-    curation_revision: hex("d"), evidence_dependencies: [{ method: "diandian_summary", provider: "xiaohongshu-diandian", version: hex("2"), result_sha256: hex("e") }],
-    resource_required: true, resource_id: "github-owner-repo", resource_identity_sha256: hex("f"),
-    verification_snapshot_sha256: hex("1"), resource_fresh: true,
-  };
-  const decision = formalCurationDecision({
-    publishable: true,
-    auditEntry: { status: "accepted", ...current },
-    currentRevisions: current,
-    point: { version: 2, provider: "xiaohongshu-diandian", prompt_version: hex("2"), content_sha256: hex("a"), summary: "Current point summary", summary_sha256: hex("e") },
-    kind: "Skill",
-    resource: { id: "github-owner-repo" }
-  });
-  assert.deepEqual(decision, {
-    accepted: true,
-    reason_code: "",
-    summary_source: "point",
-    content_sha256: hex("a"),
-    evidence_sha256: hex("b"),
-    resource_ids: ["github-owner-repo"]
-  });
-  assert.equal(formalCurationDecision({ ...decision, publishable: false }).accepted, false);
-  assert.equal(formalCurationDecision({ publishable: true, currentRevisions: current }).accepted, false);
-  assert.equal(formalCurationDecision({ publishable: true, auditEntry: { status: "accepted", ...current } }).accepted, false);
-  assert.equal(formalCurationDecision({
-    publishable: true,
-    auditEntry: { status: "accepted", ...current },
-    currentRevisions: current,
-    point: { version: 2, provider: "xiaohongshu-diandian", prompt_version: hex("9"), content_sha256: hex("a"), summary: "Stale prompt", summary_sha256: hex("e") },
-    kind: "Skill",
-    resource: { id: "github-owner-repo" }
-  }).summary_source, "curation");
-  assert.equal(formalCurationDecision({
-    publishable: true,
-    auditEntry: { status: "accepted", ...current },
-    currentRevisions: { ...current, evidence_sha256: hex("9") },
-    point: null,
-    kind: "Skill",
-    resource: null
-  }).reason_code, "resource_stale");
-});
-
 test("formal point loader rejects legacy and incomplete prompt contracts", async () => {
   const { loadFormalPointSummary } = await import("../scripts/curation-quality.mjs");
   const root = await mkdtemp(join(tmpdir(), "favsense-formal-point-"));
