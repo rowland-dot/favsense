@@ -7,7 +7,7 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { executeJournaledTransaction, recoverJournaledTransaction } from "./journaled-transaction.mjs";
-import { acquireOrganizationMutationLock } from "./organization-mutation-lock.mjs";
+import { acquireOrganizationMutationLock, claimLockFolder, releaseLockFolder } from "./organization-mutation-lock.mjs";
 
 const HASH = /^[a-f0-9]{64}$/;
 const validDate = (value) => {
@@ -64,29 +64,14 @@ async function acquireSnapshotLock(storageRoot) {
   await mkdir(candidate);
   await writeFile(join(candidate, "owner.json"), `${JSON.stringify({ schema_version: 1, pid: process.pid, nonce })}\n`, { encoding: "utf8", flag: "wx" });
   try {
-    await rename(candidate, lock);
-  } catch (error) {
-    if (!["EEXIST", "ENOTEMPTY"].includes(error.code) && !(error.code === "EPERM" && await exists(lock))) throw error;
-    const lockMetadata = await lstat(lock);
-    if (!lockMetadata.isDirectory() || lockMetadata.isSymbolicLink()) throw new Error("SNAPSHOT_LOCK_INVALID");
-    let owner = null;
-    try { owner = JSON.parse(await readFile(join(lock, "owner.json"), "utf8")); } catch { throw new Error("SNAPSHOT_LOCK_INVALID"); }
-    let active = false;
-    if (Number.isSafeInteger(owner?.pid) && owner.pid > 0) {
-      try { process.kill(owner.pid, 0); active = true; } catch (probeError) { active = probeError.code === "EPERM"; }
-    }
-    if (active) throw new Error("SNAPSHOT_ALREADY_RUNNING");
-    const stale = `${lock}.stale-${randomUUID()}`;
-    try { await rename(lock, stale); } catch { throw new Error("SNAPSHOT_ALREADY_RUNNING"); }
-    try { await rename(candidate, lock); } finally { await rm(stale, { recursive: true, force: true }); }
+    await claimLockFolder(candidate, lock, {
+      busyError: () => new Error("SNAPSHOT_ALREADY_RUNNING"),
+      invalidError: () => new Error("SNAPSHOT_LOCK_INVALID"),
+    });
   } finally {
     await rm(candidate, { recursive: true, force: true });
   }
-  return async () => {
-    let owner = null;
-    try { owner = JSON.parse(await readFile(join(lock, "owner.json"), "utf8")); } catch { return; }
-    if (owner.nonce === nonce) await rm(lock, { recursive: true, force: true });
-  };
+  return () => releaseLockFolder(lock, nonce);
 }
 
 // Before issue 39 a snapshot swapped two outputs, so a crash of that version leaves a journal naming both.
@@ -194,8 +179,12 @@ export async function buildOrganizationSnapshot(options) {
     if (stagingRoot) await rm(stagingRoot, { recursive: true, force: true });
     throw error;
   } finally {
-    await releaseLock?.();
-    await releaseMutationLock();
+    // A snapshot lock that cannot be released must not keep the mutation lock too.
+    try {
+      await releaseLock?.();
+    } finally {
+      await releaseMutationLock();
+    }
   }
 }
 

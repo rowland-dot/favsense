@@ -40,6 +40,123 @@ async function ensurePlainDirectory(path, parentPath, expectedParent, invalidErr
   return current;
 }
 
+// How long writers wait out a hand-over of a lock, in milliseconds. One object so tests can shorten it.
+// The Python writer of the same lock (save_diandian_summary.py) waits the same way, with the same release window.
+export const LOCK_TIMING = {
+  waitMs: 2_000, // how long a lock that is gone or being deleted is waited for before "already running"
+  pollMs: 10, // average pause between looks; each pause is randomised so writers cannot fall into step
+  releaseMs: 2_000, // how long a release retries a delete the operating system refuses
+};
+
+// Errors from moving the candidate onto the lock that mean "somebody else is there (or just was)".
+const CONTENDED_RENAME_ERRORS = new Set(["EEXIST", "ENOTEMPTY", "EPERM"]);
+// Errors from reading the owner file while its holder is deleting it. Windows refuses the read of a
+// file that is being deleted, and the file or folder may already be gone.
+const RELEASING_READ_ERRORS = new Set(["ENOENT", "EPERM", "EBUSY", "EACCES"]);
+// Errors from deleting the lock that Windows gives while another process still has a file in it open.
+const SHARING_ERRORS = new Set(["EBUSY", "EPERM"]);
+
+const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+async function pauseOrGiveUp(deadline, busyError) {
+  if (performance.now() >= deadline) throw busyError();
+  await sleep(LOCK_TIMING.pollMs * (0.5 + Math.random()));
+}
+
+function processIsActive(pid) {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (probeError) {
+    return probeError.code === "EPERM";
+  }
+}
+
+// Who holds the lock right now: null when it is gone or is being deleted, else { owner }.
+// Only a lock that is present and wrong is refused.
+async function lookAtHolder(lock, invalidError) {
+  const lockMetadata = await metadata(lock);
+  if (!lockMetadata) return null;
+  if (!lockMetadata.isDirectory() || lockMetadata.isSymbolicLink()) throw invalidError();
+  let source;
+  try {
+    source = await readFile(join(lock, "owner.json"), "utf8");
+  } catch (error) {
+    if (RELEASING_READ_ERRORS.has(error.code)) return null;
+    throw invalidError();
+  }
+  try {
+    return { owner: JSON.parse(source) };
+  } catch {
+    throw invalidError();
+  }
+}
+
+// Put `candidate` (a folder already holding its owner file) in place as `lock`. A lock held by a live
+// process is refused at once. A lock that is gone, or being deleted, was just released: look again
+// after a short random pause, up to LOCK_TIMING.waitMs, then report it as running.
+export async function claimLockFolder(candidate, lock, { busyError, invalidError }) {
+  const deadline = performance.now() + LOCK_TIMING.waitMs;
+  for (;;) {
+    try {
+      await rename(candidate, lock);
+      return;
+    } catch (error) {
+      if (!CONTENDED_RENAME_ERRORS.has(error.code)) throw error;
+    }
+    const holder = await lookAtHolder(lock, invalidError);
+    if (holder) {
+      if (processIsActive(holder.owner?.pid)) throw busyError();
+      const stale = `${lock}.stale-${randomUUID()}`;
+      let tookOver = false;
+      try {
+        await rename(lock, stale);
+        tookOver = true;
+      } catch {
+        // another waiter took the stale lock first: look again
+      }
+      if (tookOver) {
+        try {
+          await rename(candidate, lock);
+          return;
+        } catch (error) {
+          if (!CONTENDED_RENAME_ERRORS.has(error.code)) throw error;
+          // another waiter took the freed lock first: look again
+        } finally {
+          await rm(stale, { recursive: true, force: true });
+        }
+      }
+    }
+    await pauseOrGiveUp(deadline, busyError);
+  }
+}
+
+async function removeRetryingSharingErrors(lock) {
+  const deadline = performance.now() + LOCK_TIMING.releaseMs;
+  for (;;) {
+    try {
+      await rm(lock, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      if (!SHARING_ERRORS.has(error.code) || performance.now() >= deadline) throw error;
+      await sleep(20);
+    }
+  }
+}
+
+// Delete the lock if it is still ours. Whether it is ours is decided by the random id in its owner
+// file alone, never by the folder's number.
+export async function releaseLockFolder(lock, nonce) {
+  let owner;
+  try {
+    owner = JSON.parse(await readFile(join(lock, "owner.json"), "utf8"));
+  } catch {
+    return;
+  }
+  if (owner?.nonce === nonce) await removeRetryingSharingErrors(lock);
+}
+
 export async function acquireOrganizationMutationLock(root, {
   busyError = () => new Error("ORGANIZATION_MUTATION_ALREADY_RUNNING"),
   invalidError = () => new Error("ORGANIZATION_MUTATION_LOCK_INVALID"),
@@ -73,50 +190,9 @@ export async function acquireOrganizationMutationLock(root, {
     nonce,
   })}\n`, { encoding: "utf8", flag: "wx" });
   try {
-    await rename(candidate, lock);
-  } catch (error) {
-    if (!["EEXIST", "ENOTEMPTY"].includes(error.code) && !(error.code === "EPERM" && await metadata(lock))) {
-      throw error;
-    }
-    const lockMetadata = await metadata(lock);
-    if (!lockMetadata?.isDirectory() || lockMetadata.isSymbolicLink()) throw invalidError();
-    let owner;
-    try {
-      owner = JSON.parse(await readFile(join(lock, "owner.json"), "utf8"));
-    } catch {
-      throw invalidError();
-    }
-    let active = false;
-    if (Number.isSafeInteger(owner?.pid) && owner.pid > 0) {
-      try {
-        process.kill(owner.pid, 0);
-        active = true;
-      } catch (probeError) {
-        active = probeError.code === "EPERM";
-      }
-    }
-    if (active) throw busyError();
-    const stale = `${lock}.stale-${randomUUID()}`;
-    try {
-      await rename(lock, stale);
-    } catch {
-      throw busyError();
-    }
-    try {
-      await rename(candidate, lock);
-    } finally {
-      await rm(stale, { recursive: true, force: true });
-    }
+    await claimLockFolder(candidate, lock, { busyError, invalidError });
   } finally {
     await rm(candidate, { recursive: true, force: true });
   }
-  return async () => {
-    let owner;
-    try {
-      owner = JSON.parse(await readFile(join(lock, "owner.json"), "utf8"));
-    } catch {
-      return;
-    }
-    if (owner.nonce === nonce) await rm(lock, { recursive: true, force: true });
-  };
+  return () => releaseLockFolder(lock, nonce);
 }
