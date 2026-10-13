@@ -132,8 +132,30 @@ export async function claimLockFolder(candidate, lock, { busyError, invalidError
   }
 }
 
-async function removeRetryingSharingErrors(lock) {
-  const deadline = performance.now() + LOCK_TIMING.releaseMs;
+// The owner record of a lock we are about to release: null when there is nothing of ours to delete (the
+// lock is gone, or its record is not readable as one). A read the system refuses for a moment (a scanner
+// or another reader has the file) is retried until `deadline`; skipping it would leave the lock on disk
+// with this live process's number in it, and every writer, this one included, would then wait for it.
+async function readOwnerForRelease(lock, deadline) {
+  for (;;) {
+    let source;
+    try {
+      source = await readFile(join(lock, "owner.json"), "utf8");
+    } catch (error) {
+      if (error.code === "ENOENT") return null;
+      if (!RELEASING_READ_ERRORS.has(error.code) || performance.now() >= deadline) throw error;
+      await sleep(20);
+      continue;
+    }
+    try {
+      return JSON.parse(source);
+    } catch {
+      return null;
+    }
+  }
+}
+
+async function removeRetryingSharingErrors(lock, deadline) {
   for (;;) {
     try {
       await rm(lock, { recursive: true, force: true });
@@ -148,13 +170,9 @@ async function removeRetryingSharingErrors(lock) {
 // Delete the lock if it is still ours. Whether it is ours is decided by the random id in its owner
 // file alone, never by the folder's number.
 export async function releaseLockFolder(lock, nonce) {
-  let owner;
-  try {
-    owner = JSON.parse(await readFile(join(lock, "owner.json"), "utf8"));
-  } catch {
-    return;
-  }
-  if (owner?.nonce === nonce) await removeRetryingSharingErrors(lock);
+  const deadline = performance.now() + LOCK_TIMING.releaseMs;
+  const owner = await readOwnerForRelease(lock, deadline);
+  if (owner?.nonce === nonce) await removeRetryingSharingErrors(lock, deadline);
 }
 
 export async function acquireOrganizationMutationLock(root, {

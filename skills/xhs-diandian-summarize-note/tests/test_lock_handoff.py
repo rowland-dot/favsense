@@ -368,6 +368,43 @@ class ReleasingTheLockTests(unittest.TestCase):
 
         self.assertGreater(rmtree.call_count, 1)
 
+    def test_release_still_deletes_the_lock_when_reading_its_owner_file_is_refused_for_a_moment(self):
+        # Skipping the delete would leave the lock on disk with this live
+        # process's number in it, and this process would then wait for itself.
+        module = load_module()
+        workspace = Workspace(self)
+        owner_file = workspace.lock_path / "owner.json"
+        real_read_text = Path.read_text
+        refusals = []
+
+        def read_text(path, *args, **kwargs):
+            if path == owner_file and len(refusals) < 2:
+                refusals.append(path)
+                raise PermissionError(13, "Access is denied")
+            return real_read_text(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "read_text", read_text):
+            enter_and_leave(module, workspace)
+
+        self.assertEqual(len(refusals), 2)
+        self.assertFalse(workspace.lock_path.exists())
+
+    def test_release_reports_an_owner_file_that_stays_unreadable(self):
+        module = load_module()
+        module.LOCK_RELEASE_RETRY_SECONDS = 0.2
+        workspace = Workspace(self)
+        owner_file = workspace.lock_path / "owner.json"
+        real_read_text = Path.read_text
+
+        def read_text(path, *args, **kwargs):
+            if path == owner_file:
+                raise PermissionError(13, "Access is denied")
+            return real_read_text(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "read_text", read_text):
+            with self.assertRaises(PermissionError):
+                enter_and_leave(module, workspace)
+
     def test_release_retries_access_denied_too(self):
         module = load_module()
         workspace = Workspace(self)

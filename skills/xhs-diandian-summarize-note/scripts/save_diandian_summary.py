@@ -564,6 +564,38 @@ def _directory_is_still_ours(
     return _lock_owner_nonce(path) == owner_nonce
 
 
+def _owner_record_at_release(
+    lock_path: Path,
+    *,
+    lock_parent_identity: tuple[int, int],
+    candidate_identity: tuple[int, int],
+) -> dict:
+    """The owner record of the lock being released; {} when nothing of ours is there to delete.
+
+    A read the system refuses for a moment (a scanner or another reader has
+    the file) is retried for LOCK_RELEASE_RETRY_SECONDS and then reported.
+    Skipping it would leave the lock on disk with this live process's number
+    in it, and every writer, this one included, would then wait for it.
+    """
+    deadline = time.monotonic() + LOCK_RELEASE_RETRY_SECONDS
+    while True:
+        try:
+            _validate_lock_directory(
+                lock_path,
+                parent_identity=lock_parent_identity,
+                expected_identity=candidate_identity,
+            )
+            owner = json.loads((lock_path / "owner.json").read_text(encoding="utf-8"))
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.02)
+            continue
+        except (OSError, ValueError, TypeError):
+            return {}
+        return owner if isinstance(owner, dict) else {}
+
+
 @contextmanager
 def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
     lock_parent = resolved_root.parent / "organization-migration"
@@ -673,17 +705,11 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
                 owner_nonce=nonce,
             )
         if acquired:
-            try:
-                _validate_lock_directory(
-                    lock_path,
-                    parent_identity=lock_parent_identity,
-                    expected_identity=candidate_identity,
-                )
-                owner = json.loads(
-                    (lock_path / "owner.json").read_text(encoding="utf-8")
-                )
-            except (OSError, ValueError, TypeError, json.JSONDecodeError):
-                owner = {}
+            owner = _owner_record_at_release(
+                lock_path,
+                lock_parent_identity=lock_parent_identity,
+                candidate_identity=candidate_identity,
+            )
             if owner.get("nonce") == nonce:
                 _remove_lock_directory(
                     lock_path,
