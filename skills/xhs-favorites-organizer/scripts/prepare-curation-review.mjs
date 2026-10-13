@@ -294,7 +294,8 @@ export function prepareReview({
       blockers.push("image-text-review-required");
     }
     if (clean(candidate?.summary).length < 32) blockers.push("summary-too-short");
-    if (clean(candidate?.action).length < 16) blockers.push("action-too-short");
+    // Optional since issue 99; one that is written must still be real.
+    if (clean(candidate?.action) && clean(candidate.action).length < 16) blockers.push("action-too-short");
     if (!clean(candidate?.kind)) blockers.push("kind-missing");
     if (!Array.isArray(candidate?.themes) || !candidate.themes.length) blockers.push("themes-missing");
 

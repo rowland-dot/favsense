@@ -722,6 +722,7 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
     aborted: summarySourcePresentation({ summaryState: "batch_aborted" }),
     captured: summarySourcePresentation({ summaryState: "captured" }),
     evidenceBlocked: summarySourcePresentation({ summaryState: "captured", summaryReasonCode: "audit_pending", curationStatus: "pending_review" }),
+    evidenceBlockedFailed: summarySourcePresentation({ summaryState: "failed", summaryReasonCode: "audit_pending", curationStatus: "pending_review" }),
     unavailable: summarySourcePresentation({ summaryState: "captured", summaryReasonCode: "source_unavailable", curationStatus: "unavailable" }),
     rejected: summarySourcePresentation({ summaryState: "captured", curationStatus: "rejected" }),
     rejectedFailed: summarySourcePresentation({ summaryState: "failed", curationStatus: "rejected" }),
@@ -734,7 +735,9 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
 
   assert.equal(result.dianDian.label, "点点 AI 深度总结");
   assert.equal(result.retainedFailure.label, "本篇总结失败，可在下次继续");
-  assert.equal(result.curated.label, "使用其他证据整理");
+  // Issue 99: a card without a usable DianDian reply says what its own evidence is, by kind of post; this
+  // fixture records no media type. The label per kind of post is checked in site/e2e/card-summary-sources.spec.mjs.
+  assert.equal(result.curated.label, "本机证据整理");
   assert.equal(result.metadata.label, "尚未开始深度整理");
   assert.equal(result.failed.label, "本篇总结失败，可在下次继续");
   assert.equal(result.aborted.label, "本次未尝试，可继续整理");
@@ -742,6 +745,8 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
   assert.equal(result.evidenceBlocked.label, "证据未补齐，暂不发布");
   assert.equal(result.unavailable.label, "已完成（原帖不可访问）");
   assert.match(result.evidenceBlocked.explanation, /已完成复核/);
+  // A card still short of evidence whose run failed keeps the resumable failure label (issue 99).
+  assert.equal(result.evidenceBlockedFailed.label, "本篇总结失败，可在下次继续");
   assert.equal(result.rejected.label, "总结未通过审核");
   assert.equal(result.rejectedFailed.label, "总结未通过审核");
   assert.equal(result.stale.label, "正文已变化，需重新核验");
@@ -761,7 +766,7 @@ test("knowledge cards disclose summary provenance and format DianDian structure 
   assert.ok(app.includes('class="card-summary-source card-summary-source--${summarySource.tone}"'));
   assert.ok(app.includes('class="card-summary structured-summary structured-summary--card"'));
   assert.ok(css.indexOf(".structured-summary.structured-summary--card") > css.indexOf(".structured-summary {"));
-  assert.match(app, /formatSummaryHtml\(noteDescription\(note\)\)/);
+  assert.match(app, /\$\{descriptionHtml\(note\)\}/);
   assert.match(app, /summarySourcePresentation\(note\)/);
   assert.match(css, /\.structured-summary\s*\{[^}]*display:\s*grid[^}]*gap:/);
   assert.match(css, /\.summary-provenance--diandian/);
@@ -878,9 +883,10 @@ test("the production detail open and close path wires the scroll lock", async ()
       scrollY: 480,
       scrollTo(options) { scrollCalls.push(options); }
     },
-    state: { data: { notes: [{ id: "note-a" }] }, editingDescriptionId: "note-a" },
+    state: { data: { notes: [{ id: "note-a" }] }, editingDescriptionId: "note-a", expandedSummaries: new Set() },
     elements: { dialog },
     renderDetail() { metrics.renderCount += 1; },
+    settleSummaryFolds() {},
     history: { replaceState(_state, _title, url) { historyUrls.push(url); } },
     location: { pathname: "/", search: "" },
     metrics,
@@ -1062,6 +1068,7 @@ test("local actions stay inert until the SOP scanner browser becomes ready, then
     function safeUrl() { return "#"; }
     function formatDate() { return "2026-08-01"; }
     function descriptionSection() { return ""; }
+    function settleSummaryFolds() {}
     function bookmarkIcon() { return ""; }
     function isLocalWorkbenchLocation() { return true; }
     function toggleBookmark() {}
@@ -1199,6 +1206,7 @@ test("mounted note detail starts one local-only DianDian validation without chan
     safeUrl: () => "#",
     formatDate: () => "2026-08-01",
     descriptionSection: () => "",
+    settleSummaryFolds: () => {},
     bookmarkIcon: () => "",
     window: { location: { protocol: "https:", hostname: "leeroyy1288-favsense.hf.space" } }
   });
@@ -2039,7 +2047,8 @@ test("static app has the required deployment assets", async () => {
   assert.match(html, /<kbd[^>]*>按 \/ 搜索<\/kbd>/);
   assert.doesNotMatch(html, /项目雷达|资源雷达|同步与方法/);
   assert.doesNotMatch(html, /项目、风险与下一步|视频核验后的判断|证据方法|TRY →/);
-  assert.match(js, /note\.kind === "Note" \|\| !String\(note\.action \|\| ""\)\.trim\(\)/);
+  // Issue 99: the card no longer shows a next-step box, so nothing in the page reads the curated action to draw one.
+  assert.doesNotMatch(js, /action-box|具体用法/);
   assert.match(html, /id="board-manager"/);
   assert.match(html, /id="board-list"/);
   assert.match(html, /id="board-enabled-count"/);
@@ -2134,7 +2143,8 @@ test("static app has the required deployment assets", async () => {
   assert.match(css, /\.dialog-close\s*\{[^}]*position:\s*sticky;[^}]*z-index:\s*2;[^}]*top:\s*0;/s);
   assert.match(js, /function lockDialogBackground\(\)[\s\S]*document\.body\.style\.top = `-\$\{scrollY\}px`;/);
   assert.match(js, /function unlockDialogBackground\(\)[\s\S]*window\.scrollTo\(\{ left:\s*0, top:\s*scrollY, behavior:\s*"instant" \}\);/);
-  assert.match(css, /\.detail-title\s*\{[^}]*font-size:\s*clamp\(30px,\s*4vw,\s*44px\);[^}]*line-height:\s*1\.08;[^}]*text-wrap:\s*balance;/s);
+  // Issue 99 (approved design): the title is smaller and no longer held to a narrow column, so it fits on one line where it can.
+  assert.match(css, /\.detail-title\s*\{[^}]*max-width:\s*none;[^}]*font-size:\s*clamp\(26px,\s*2\.5vw,\s*33px\);[^}]*line-height:\s*1\.12;[^}]*text-wrap:\s*pretty;/s);
   assert.match(html, /<dialog[^>]*id="detail-dialog"[^>]*aria-labelledby="detail-title"/);
   assert.match(js, /<h2 class="detail-title" id="detail-title">/);
   assert.doesNotMatch(html, /priority-filter|data-priority|保存到本机/);

@@ -141,6 +141,21 @@ test("guard: real entries that are fine today still pass, including a short summ
   }).input).fatal, []);
 });
 
+// Issue #99 (owner ruling 2026-10-14): cards no longer show a next-step box, so the standard no longer
+// asks every entry for an action. One that is written is still held to the text rules above.
+test("an accepted entry with no action passes, and is published", () => {
+  for (const overrides of [{ action: "" }, { action: undefined }]) {
+    const built = accepted(overrides);
+    assert.deepEqual(auditCuration(built.input).fatal, [], JSON.stringify(overrides));
+    assert.equal(hasCompleteAcceptedAudit(NOTE_ID, built.input.catalog.notes[NOTE_ID], built.entry, built.input.audit, { config: built.input.config, resources: built.input.resources }), true);
+  }
+});
+
+test("an action that is written is still refused when it is a placeholder", () => {
+  assert.match(fatal({ action: "继续关注" }), /action-not-specific/);
+  assert.match(fatal({ action: PLACEHOLDER_ACTION_SKIP }), /no-chinese:action/);
+});
+
 test("the publish decision refuses the same entries, so a card falls back instead of showing the text", () => {
   const context = (built) => ({ config: built.input.config, resources: built.input.resources });
   const publishable = (overrides) => {

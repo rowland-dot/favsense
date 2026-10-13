@@ -64,10 +64,10 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 
 ## 3. 写一篇一总结
 
-每条策展至少包含 `title`、`summary`、`action`、`themes`、`tools` 和 `kind`：
+每条策展至少包含 `title`、`summary`、`themes`、`tools` 和 `kind`；`action` 可选：
 
 - `summary` 写清对象、解决的问题、工作方式和限制；禁止“这篇介绍了……”式空摘要。
-- `action` 必须针对该笔记给出具体核验、试用或应用方法；禁止重复模板句。
+- `action` 可以不写（知识卡不再显示“下一步”建议框，2026-10-14 所有者裁定）；写了就必须针对该笔记给出具体核验、试用或应用方法，禁止重复模板句。
 - 原帖观点、评论线索、系统推断和官方事实必须分开判断。
 - 数字、能力、兼容性和实体名称必须能回溯到证据或官方来源。
 - 不确定的信息写入私有审计的 `unresolved_facts`，该条保持 `pending`，不对外发布。
@@ -177,7 +177,7 @@ node ".\skills\xhs-favorites-organizer\scripts\validate-curation.mjs" `
   --report ".\.xhs-favorites\curation-quality-report.json"
 ```
 
-质量门检查范围完整性、证据方法、评论检查、摘要与具体用法、分类覆盖理由、资源关联，以及 Skill 的仓库/许可证/manifest。`pending` 可以存在，但不会进入发布结果；任何伪造、缺审计却写入策展、或不合格的 `accepted` 都会使命令失败。
+质量门检查范围完整性、证据方法、评论检查、摘要（以及已写出的具体用法）、分类覆盖理由、资源关联，以及 Skill 的仓库/许可证/manifest。`pending` 可以存在，但不会进入发布结果；任何伪造、缺审计却写入策展、或不合格的 `accepted` 都会使命令失败。
 
 ## 9. 构建与验收顺序
 
