@@ -17,7 +17,7 @@ git status --short --ignored
 - `config/xhs-favorites.json`：包含个人主页、收藏夹和发布目标的私有配置；
 - `site/.local/`：本机回环服务地址。
 
-`site/data/knowledge.json` 是允许发布的网页数据。只有通过 current curation 与 accepted audit 的正式摘要可以进入；captured/pending 证据只留在本机 overlay。提交或发布前，请确认你愿意公开其中的帖子标题、作者名、安全原帖入口和 FavSense 生成的总结。原始视频、抽帧图片、浏览器登录态和访问令牌不会进入该文件。
+`site/data/knowledge.json` 是允许发布的网页数据。每张卡片的文字是原帖自己的文字、点点回复原文，或视频与图片里提取的文字；审核状态不决定卡片显示什么。提交或发布前，请确认你愿意公开其中的帖子标题、作者名、帖子全文、点点回复全文、视频转写、图片文字和安全原帖入口。原始视频、抽帧图片、浏览器登录态和访问令牌不会进入该文件。
 
 ## 2. 发布开源代码到 GitHub
 

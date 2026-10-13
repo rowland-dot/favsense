@@ -17,7 +17,7 @@ Branch: `codex/favsense-organization-recovery`
 审计来源：
 
 - `docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`
-- `docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md`
+- `docs/plans/archive/2026-08-22-favsense-end-to-end-organization-recovery-plan.md`
 - `docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md`
 - `docs/reports/qa/2026-08-25-favsense-end-to-end-organization-recovery-qa-report.md`
 

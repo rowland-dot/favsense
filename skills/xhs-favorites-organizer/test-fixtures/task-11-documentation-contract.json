@@ -4,7 +4,7 @@
       "required_phrases": [
         "点点原子保存后是 `captured`，证据或资源不完整时是 `pending`，只有当前正文/证据 revision 与完整审计相符时才是 `accepted`。",
         "真正尝试失败的当前笔记写 `failed`，尚未尝试的剩余笔记写 `batch_aborted`；二者不得共用失败语义。",
-        "关键词只能产生 `candidateKind=\"Skill\"`；公开 `confirmed Skill` 必须是 accepted，并且恰好关联一个当前、完整、已核验的官方资源",
+        "关键词只能让策展层把笔记当作 Skill 候选；卡片的内容形态只有在笔记恰好关联一个当前、完整、已核验的官方资源时才是 Skill。",
         "最后一个收藏夹完成只形成核心 checkpoint；Bridge 必须等待冻结范围内的总结、证据、候选、资源与 curation 状态确定",
         "网页数据 staging 验证并原子交换成功后，才允许调用 `publish-huggingface.mjs`，同一运行最多发布一次。",
         "Spec → Plan → TDD → Review → QA → Audit → Brief → 用户批准 → PR"
@@ -23,9 +23,9 @@
       "required_phrases": [
         "每篇成功原子保存为 captured；真实失败为 failed，未尝试剩余项为 batch_aborted",
         "缺证据保持 pending，只有完整当前记录进入 accepted",
-        "关键词候选只输出 candidateKind；confirmed Skill 必须恰好关联一个 verified resource",
+        "关键词只让策展层留下 Skill 候选；confirmed Skill 必须恰好关联一个 verified resource",
         "网页数据 staging 验证并交换成功后，按配置最多发布一次到 Hugging Face Static Space",
-        "`captured` 只表示点点回复已按当前正文版本安全保存；`pending` 表示还缺审核、证据或资源；`accepted` 才能进入公开页面。"
+        "`captured` 只表示点点回复已按当前正文版本安全保存；`pending` 表示还缺审核、证据或资源；`accepted` 才能写入正式 curation；卡片不受审核状态控制。"
       ],
       "forbidden_phrases": [
         "每个面板最多发布一次",
@@ -37,18 +37,18 @@
     "skills/xhs-favorites-organizer/references/curation-standard.md": {
       "required_phrases": [
         "点点记录成功原子保存后为 `captured`，不等于 `accepted`。当前真实尝试失败为 `failed`；因停批而未尝试的其余项为 `batch_aborted`。",
-        "确定性分类只能留下 `candidateKind=\"Skill\"`；公开 `confirmed Skill` 还必须通过 accepted/current/resource 门。",
+        "确定性分类只能让策展层留下 Skill 候选；卡片的内容形态只有在笔记恰好关联一个 fresh verified resource 时才是 `Skill`",
         "迁移默认 dry-run，只生成不含笔记 ID、标题或绝对路径的计数报告",
         "只有最终快照成功后才允许最多发布一次。"
       ],
       "forbidden_phrases": [
-        "raw 点点回复可以直接发布",
+        "还必须通过 accepted/current/resource 门",
         "允许对真实收藏数据执行 `--apply`"
       ]
     },
     "skills/xhs-favorites-organizer/references/organization-schema.md": {
       "required_phrases": [
-        "规则判断为 Skill 但未满足 accepted/current/resource 门时，正式 `kind` 使用领域中性 fallback，并额外输出 `candidateKind=\"Skill\"`；只有 accepted 且恰好关联一个 fresh verified resource 时才是 `confirmed Skill`。",
+        "规则判断为 Skill 但没有恰好一个 fresh verified resource 时，卡片的 `kind` 使用领域中性 fallback，它提到的工具标为 `unverifiedTools`；只有恰好关联一个 fresh verified resource 时才是 `confirmed Skill`。",
         "`resource_identity_sha256`：绑定 canonical repo、官方名称/类型、license、manifest、compatibility 与官方证据位置；",
         "`verification_snapshot_sha256`：绑定 identity、默认分支、下载地址、Star 与核验日期；",
         "confirmed Skill 的资源动作必须至少包含名称可区分的“官方仓库”和“下载 ZIP”"
@@ -60,22 +60,22 @@
     "README.md": {
       "required_phrases": [
         "核心目录保存完成时先显示“核心收藏已保存”；点点回复原子保存后是 `captured`，缺证据、资源或语义审核时保持 `pending`，只有当前 revision 与质量门全部匹配时才是 `accepted`。",
-        "本机详情可以通过鉴权的“待审核证据” overlay 查看清理后的 captured 内容，公开页面不会直接采用 raw 点点回复。",
-        "关键词只会产生 `candidateKind=\"Skill\"`。公开 `confirmed Skill` 必须是 accepted，并恰好关联一个完整、当前、已核验的官方资源",
+        "公开卡片展示点点回复原文（只去掉开头的对话语句），不展示其记录里的其他字段。",
+        "关键词只会让策展层留下 Skill 候选。公开 confirmed Skill 恰好关联一个完整、当前、已核验的官方资源",
         "最后一个收藏夹完成只建立核心 checkpoint；curation 完成后才构建一个带版本号的网页数据快照，验证成功后按配置最多发布一次。"
       ],
       "forbidden_phrases": [
         "最后一个收藏夹完成后立即发布",
-        "公开页面直接采用 raw 点点回复",
+        "公开页面不会直接采用 raw 点点回复",
         "知识库与网页快照"
       ]
     },
     "docs/ARCHITECTURE.md": {
       "required_phrases": [
         "点点或离线证据先形成 candidate；资源评估与 audit 明确产生 pending/rejected/accepted",
-        "网页构建器按公开判定 module 给出的唯一 acceptance decision，在 staging 中生成带 `build_version`",
+        "网页构建器用确定性的卡片步骤决定每张卡片的标题与文字，用公开判定 module 给出的内容形态、资源与工具，在 staging 中生成带 `build_version`",
         "发布只在最终快照成功后按配置执行，单个 run 最多一次",
-        "`candidateKind=Skill` 只有在 accepted 且恰好一个 fresh verified resource 时才提升为 confirmed Skill。"
+        "Skill 候选只有在恰好一个 fresh verified resource 时才提升为 confirmed Skill。"
       ],
       "forbidden_phrases": [
         "每个面板最多发布一次",
@@ -84,7 +84,7 @@
     },
     "docs/PUBLISHING.md": {
       "required_phrases": [
-        "只有通过 current curation 与 accepted audit 的正式摘要可以进入；captured/pending 证据只留在本机 overlay。",
+        "每张卡片的文字是原帖自己的文字、点点回复原文，或视频与图片里提取的文字；审核状态不决定卡片显示什么。",
         "curation 质量门通过后，快照步骤构建带 `build_version`",
         "同一运行最多发布一次；",
         "构建失败设置 `held_previous` 并保留同一上一版；",
@@ -93,7 +93,7 @@
       ],
       "forbidden_phrases": [
         "每个面板最多发布一次",
-        "captured/pending 证据可以公开",
+        "captured/pending 证据只留在本机 overlay",
         "双输出协调器"
       ]
     }

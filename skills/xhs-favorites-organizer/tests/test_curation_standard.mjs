@@ -34,14 +34,15 @@ const prepareReviewCli = path.join(
   "skills/xhs-favorites-organizer/scripts/prepare-curation-review.mjs"
 );
 
-test("public Skill rebuild examples preserve the Bridge-frozen DianDian prompt contract", () => {
+test("public Skill rebuild examples no longer carry the DianDian prompt version", () => {
   const skill = fs.readFileSync(
     path.join(repositoryRoot, "skills/xhs-favorites-organizer/SKILL.md"),
     "utf8"
   );
   assert.match(skill, /正式网页数据只由快照步骤写入/);
   assert.match(skill, /“仅本地重建”/);
-  assert.match(skill, /不要直接运行缺少该值的底层 builder/);
+  // The builder reads saved replies without checking the prompt version, so no document asks for one.
+  assert.doesNotMatch(skill, /不要直接运行缺少该值的底层 builder|prompt_version.*传给网页 builder/);
   assert.doesNotMatch(skill, /rebuild_knowledge_base/);
   assert.doesNotMatch(skill, /统一编排/);
   assert.doesNotMatch(skill, /完成 catalog 与 Obsidian 重建后，同时运行/);
@@ -50,8 +51,8 @@ test("public Skill rebuild examples preserve the Bridge-frozen DianDian prompt c
   const examples = skill.match(/```powershell[\s\S]*?```/g) || [];
   assert.equal(examples.some((example) => example.includes("build-knowledge-base.mjs")), false);
   const publicSite = examples.find((example) => example.includes("build-public-site.mjs")) || "";
-  assert.match(publicSite, /--diandian-prompt-version \$promptVersion/);
-  assert.match(publicSite, /\$promptVersion = "</);
+  assert.doesNotMatch(publicSite, /--diandian-prompt-version|\$promptVersion/);
+  assert.match(publicSite, /--damaged-replies/);
 });
 
 test("curation merge documentation requires the prepared evidence packet", () => {

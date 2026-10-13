@@ -7,7 +7,7 @@ Branch: codex/favsense-organization-recovery
 
 ## Step 2 — HOW (plan audit)
 
-Artifact: docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md
+Artifact: docs/plans/archive/2026-08-22-favsense-end-to-end-organization-recovery-plan.md
 Skill: /writing-plans (audit mode)
 
 ### Pass 1
@@ -44,7 +44,7 @@ No auto-accept decisions.
 
 ## Step 3 — PLAN (reviewed plan audit)
 
-Artifact: docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md
+Artifact: docs/plans/archive/2026-08-22-favsense-end-to-end-organization-recovery-plan.md
 Skill: /autoplan (audit mode)
 
 ### Pass 1

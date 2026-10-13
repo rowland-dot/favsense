@@ -11,7 +11,7 @@ Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成�
 
 当私有配置显式启用 `diandian.enabled` 且加载 v1.2 CDP transport 时，同一个“开始整理”按钮会先保存核心 catalog checkpoint，再尝试点点 AI 深度总结，最后从同一已验证快照生成网页数据。整轮只使用一个小红书页面（AGENTS.md“单页串行”）：Bridge 在本轮开始时先关闭以前各轮遗留的 FavSense 页面，再准备本轮唯一的页面；扫描收藏夹、打开笔记并复制链接、点点总结都在这同一个页面里依次跳转完成，任何时刻不另开小红书页面，也不关闭或跳转不是 FavSense 打开的页面。Tampermonkey 每篇只负责在该页面打开真实笔记、分享并复制一次临时签名链接，再把精确的 transient payload 交给 Bridge；Bridge 校验后只把同一稳定 ID 的无查询 plain URL 传给外部 Skill `ask(session, note_url, spec=...)`。外部 Skill 独占真实鼠标聚焦和原生输入实现；Bridge 独占该页面上的点点导航、输入前的空对话检查、登录与安全页检查、严格新回复和稳定性证明、保存确认与成功驻留。每篇必须是一个原子事务：链接只输入一次、提示词只提交一次、本轮新回复完成且稳定、私有保存获确认后，才允许离开点点页面进入下一篇。任一失败都必须放弃当前及剩余点点计划并停止，页面停留在失败处原样保留供检查（此时它是唯一的 FavSense 页面），由下一轮开始时关闭；一轮正常结束后立即关闭该页面。点点阶段是可选增强，不得阻断或回滚已完成的核心同步。
 
-整理状态必须区分可信层级：点点原子保存后是 `captured`，证据或资源不完整时是 `pending`，只有当前正文/证据 revision 与完整审计相符时才是 `accepted`。真正尝试失败的当前笔记写 `failed`，尚未尝试的剩余笔记写 `batch_aborted`；二者不得共用失败语义。关键词只能产生 `candidateKind="Skill"`；公开 `confirmed Skill` 必须是 accepted，并且恰好关联一个当前、完整、已核验的官方资源，同时提供官方仓库和下载 ZIP 等全部安全动作。
+整理状态必须区分可信层级：点点原子保存后是 `captured`，证据或资源不完整时是 `pending`，只有当前正文/证据 revision 与完整审计相符时才是 `accepted`。真正尝试失败的当前笔记写 `failed`，尚未尝试的剩余笔记写 `batch_aborted`；二者不得共用失败语义。关键词只能让策展层把笔记当作 Skill 候选；卡片的内容形态只有在笔记恰好关联一个当前、完整、已核验的官方资源时才是 Skill。公开 confirmed Skill 恰好关联一个当前、完整、已核验的官方资源，同时提供官方仓库和下载 ZIP 等全部安全动作。
 
 单篇浏览器完成条件、固定提示词、回复容器和私有保存规则由私有配置 `diandian.skill_path` 指向的 `xhs-diandian-summarize-note` Skill 定义；启用点点时必须显式填写该路径。批量链路必须逐篇满足该 Skill 的同一完成条件。Skill 路径必须包含名称匹配的 `SKILL.md`、版本绑定的 `release.json`、声明式 `runtime/browser-contract.json` 和 API 1 `scripts/save_diandian_summary.py`；v1.2 还必须精确声明、包含并导出合法的 `scripts/cdp_transport.py` / `ask(session, note_url, spec=None, tries=60, sleep=...)`。organizer 不复制 Skill 的鼠标或输入逻辑，也不使用 Cookie/Storage CDP 命令；v1.1 仅保留兼容加载，不暴露 CDP 能力。
 
@@ -22,7 +22,7 @@ Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成�
 视觉网页输出到 `site/`，作为日常阅读入口：
 
 - `site/index.html`：Hugging Face Static Space 入口；
-- `site/data/knowledge.json`：只包含可公开的原创策展字段、无 Token 的小红书站内检索入口和 GitHub 核验，不包含个人主页、收藏夹 ID、Cookie、Token、视频或帧文件；
+- `site/data/knowledge.json`：只包含卡片文字（原帖自己的文字、点点回复、视频转写与图片文字，原样展示）、可选的策展附加信息、无 Token 的小红书站内检索入口和 GitHub 核验，不包含个人主页、收藏夹 ID、Cookie、Token、视频或帧文件；
 - 网页数据由快照步骤生成并交换（同步的最终构建与“仅本地重建”）；
 - “同步设置”页通过仅信任固定工作台 Origin `http://127.0.0.1:8766` 的本机凭据接口管理全部收藏夹开关并主动触发整理；每轮开始时按稳定收藏夹 ID 合并名称变更和新增收藏夹，新收藏夹默认启用，暂时不可见的收藏夹保留历史但不扫描。“开始整理”只在本地桥接成功后出现。被 Git 忽略的 `site/.local/bridge.json` 只记录回环地址、不保存凭据，公共部署只显示本机连接说明；
 - 网页是纯 HTML/CSS/JavaScript，不依赖 Codex、Claude、后端服务或付费 Hugging Face 硬件。
@@ -31,7 +31,7 @@ Codex、Claude 或其他 Agent 只能作为可选的二次研究者，不能成�
 
 收藏夹只是来源字段，不等于最终分类。默认主题包含信息采集与搜索、Skills 与工作流、Agent 与自动化、知识管理与记忆、开发部署与 Vibe Coding、内容增长与商业、AI 设计与多媒体、本地模型与成本、垂直工具与数据。
 
-深度处理日期范围由私有配置的 `published_since` 控制，格式为 `YYYY-MM-DD`。待下载媒体队列、音频转写和抽帧队列必须使用这一范围。该字段不得用于隐藏 catalog 中已有的历史收藏：知识卡与网页保留完整 catalog，并明确区分“已深度整理”“使用其他证据整理”和“尚未获得深度总结”。
+深度处理日期范围由私有配置的 `published_since` 控制，格式为 `YYYY-MM-DD`。待下载媒体队列、音频转写和抽帧队列必须使用这一范围。该字段不得用于隐藏 catalog 中已有的历史收藏：知识卡与网页保留完整 catalog；每张卡片都显示原帖自己的文字、点点回复或视频转写与图片文字，并在来源行里说明文字来自哪里。
 
 ## 安全边界
 
@@ -75,15 +75,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
 
 一次性历史回溯使用 `-Mode history`。历史模式会谨慎滚动每个启用面板，最多读取 200 个可见条目；触发风控即停止。不得把历史模式设为每日任务。
 
-正式网页数据只由快照步骤写入（同步的最终构建与下文的“仅本地重建”），不访问平台网络，并把已验证 DianDian Skill 合同的冻结 `prompt_version` 传给网页 builder。Agent 改完策展后，用“仅本地重建”刷新正式输出。不要直接运行缺少该值的底层 builder，否则含点点证据的正式总结会安全降级。
+正式网页数据只由快照步骤写入（同步的最终构建与下文的“仅本地重建”），不访问平台网络。快照步骤冻结受损回复名单（见下文）和各笔记的提取文字。Agent 改完策展后，用“仅本地重建”刷新正式输出。
 
-仅在测试隔离环境中由 Bridge/整理编排器提供冻结值后，才可直接运行网页构建器：
+仅在测试隔离环境中才可直接运行网页构建器（它读取点点回复时不比对 `prompt_version`；不传 `--damaged-replies` 就当作没有受损回复）：
 
 ```powershell
-$promptVersion = "<Bridge/整理编排器已验证并冻结的 64 位 prompt_version>"
 node ".\skills\xhs-favorites-organizer\scripts\build-public-site.mjs" `
   --diandian-dir ".\.xhs-favorites\diandian-summaries" `
-  --diandian-prompt-version $promptVersion
+  --damaged-replies ".\.xhs-favorites\damaged-diandian-replies.json"
 ```
 
 当私有配置中的 `publish.enabled` 为 `true` 时，最后一个收藏夹完成只形成核心 checkpoint；Bridge 必须等待冻结范围内的总结、证据、候选、资源与 curation 状态确定，再为公开数据构建一个带 `build_version` 的最终快照。网页数据 staging 验证并原子交换成功后，才允许调用 `publish-huggingface.mjs`，同一运行最多发布一次。发布会排除 `site/.local/`，并仅把 Space 根目录 README 前置配置中的 `header` 规范为 `mini`，保留其余元数据与正文。发布凭据必须来自系统 Git 凭据管理器，不能写入配置、脚本或仓库；构建失败保留上一版本地快照，发布失败保留本地新快照与远端上一版。
@@ -155,7 +154,11 @@ python -m http.server 8000 --directory site
 - 媒体下载失败（超时、崩溃、输出无效、另一个平台请求进程占用）：收藏夹仍按已提交的笔记完成，该收藏夹结果的 `media.state` 为 `failed` 并附脱敏原因，整轮继续下一个收藏夹；仍缺的视频由下一轮的待下载队列补上。下载器报告安全限制仍然停止整轮。
 - 安全停止与遗留安全停止：详情抓取、媒体下载、页面上报、点点总结任一触发安全限制，都会在 `.xhs-favorites/media-download-safety-stop.json` 记录发生时间与阶段。本轮触发的停止终止整轮（不做最终构建、不发布）；记录留到下一轮就是遗留安全停止——“开始整理”在打开扫描浏览器之前拒绝，工作台加载时即显示“<日期> 的安全停止尚未清除”，不输出任何数量。在 SOP 扫描浏览器确认访问恢复后，点“已确认恢复，清除并继续”：记录被改名归档保留（`media-download-safety-stop.archived-<日期>.json`，不删除）并立即开始一轮整理。清除只能由操作者执行，没有自动清除或按时间过期。遗留安全停止不阻止“仅本地重建”、本地转写与 OCR。
 
-逐篇深度整理必须执行 [curation-standard.md](references/curation-standard.md) 的证据、分类、资源与发布质量门；不得把“已抓取”或 `captured` 当成“已整理”。每轮冻结请求看板后封存稳定笔记集合，为范围内每篇建立私有审计记录，再运行确定性的 candidate → evidence → resource → audit → validate 链。只有 `accepted` 条目可以写入正式 curation 与公开站点；`pending` 必须说明缺失证据且不得发布，不能为了凑齐数量而降级标准。本机可通过鉴权的待审核 overlay 查看清理后的 captured 证据；公开站不得直接消费 raw 点点记录。
+逐篇深度整理必须执行 [curation-standard.md](references/curation-standard.md) 的证据、分类、资源与发布质量门；不得把“已抓取”或 `captured` 当成“已整理”。每轮冻结请求看板后封存稳定笔记集合，为范围内每篇建立私有审计记录，再运行确定性的 candidate → evidence → resource → audit → validate 链。审核通过（accepted）的条目写入正式 curation，作为卡片的可选附加信息；卡片本身不受审核状态控制。`pending` 必须说明缺失证据，不能为了凑齐数量而降级标准。公开卡片展示点点回复原文（只去掉开头的对话语句），不展示其记录里的其他字段。
+
+每张卡片都由确定性的卡片步骤（`scripts/card-content.mjs`，由网页构建器调用）生成，不需要任何模型：标题取原帖自己的标题，没有则取正文第一行，再没有则取作者的收藏；主要文字取点点回复全文（只去掉开头的对话语句）。点点回复缺失、被拒答或属于下面的受损名单时，主要文字取原帖自己的文字；帖子只有话题标签时取视频转写或图片文字；这些文字原样展示，不经 AI 改写。策展文件或封存候选只是可选的附加信息，补充主题、工具、分类建议和内容形态，从不决定卡片的标题和主要文字。点点那条规则“任一失败都必须放弃当前及剩余点点计划并停止”在需要接触小红书的第二阶段改动上线之前保持不变。
+
+受损回复名单：点点回复偶尔在采集时丢了文字。运行 `node skills/xhs-favorites-organizer/scripts/damaged-replies.mjs --catalog .xhs-favorites/catalog.json --diandian-dir .xhs-favorites/diandian-summaries --output .xhs-favorites/damaged-diandian-replies.json`，它按两个特征找出这样的回复：一行中间的逗号、分号、冒号或顿号后面直接跟着列表符号；或回复停在逗号、冒号，或一个下面没有内容的小标题上。结果写入私有文件 `.xhs-favorites/damaged-diandian-replies.json`（被 Git 忽略，不进入公开数据）。快照步骤冻结这份名单，卡片读取它：名单上的回复改用原帖自己的文字，并在来源行里说明是我们采集出错；重新获取回复之后重新生成名单，换了内容的回复自动回到完整状态。
 
 完整链路见 [automatic-workflow.md](references/automatic-workflow.md)，知识卡片规则见 [organization-schema.md](references/organization-schema.md)。
 

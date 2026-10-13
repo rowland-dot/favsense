@@ -17,10 +17,10 @@
   -> 每篇成功原子保存为 captured；真实失败为 failed，未尝试剩余项为 batch_aborted
   -> 无法附着且未触发安全限制：只使用已有缓存进入音频/OCR/评论证据回退，不伪造成功
   -> 确定性编排 candidate -> evidence -> resource -> audit；缺证据保持 pending，只有完整当前记录进入 accepted
-  -> 关键词候选只输出 candidateKind；confirmed Skill 必须恰好关联一个 verified resource
-  -> build-organization-snapshot.mjs 生成带 build_version 的脱敏网页数据快照
+  -> 关键词只让策展层留下 Skill 候选；confirmed Skill 必须恰好关联一个 verified resource
+  -> build-organization-snapshot.mjs 冻结受损回复名单与各笔记的提取文字，生成带 build_version 的脱敏网页数据快照
   -> 网页数据 staging 验证并交换成功后，按配置最多发布一次到 Hugging Face Static Space
-  -> 本地设置页显示真实阶段结果；captured/pending 证据只在鉴权待审核 overlay 显示
+  -> 本地设置页显示真实阶段结果；每张卡片由确定性的卡片步骤用原帖文字、点点回复或提取文字生成
 ```
 
 视频分析使用独立的离线工作任务，不阻塞收藏同步：
@@ -89,12 +89,15 @@
 - `.xhs-favorites/runs/*.json`：每个面板的运行状态；不含临时链接。
 - `.xhs-favorites/diandian-summaries/<note-id>.json`：可选点点回复；只含稳定 ID、标题和清理后的正文，不含来源链接或登录凭据。
 - `.xhs-favorites/diandian-rerun-report.json`：本轮点点覆盖统计和待补证 ID；不含临时链接。
+- `.xhs-favorites/damaged-diandian-replies.json`：受损点点回复名单（`scripts/damaged-replies.mjs` 生成，列出笔记 ID 与那份回复的哈希）；私有，快照步骤冻结它，卡片据此改用原帖文字。
 - `.xhs-favorites/organization-state/`：正交 run/note 状态和恢复依据；状态使用 `captured`、`failed`、`batch_aborted`、`pending_review`、`accepted` 等封闭枚举。
 - `.xhs-favorites/resource-assessments.json`：候选、歧义、缺失或过期资源的私有评估；只有完整 verified 快照进入正式资源注册表。
 - `xhs-favorites/YYYY-MM-DD.md`：同步日报。
 - 旧版本地 `knowledge-base/` 目录（若仍在磁盘上）不再更新，可手动删除；正式输出只有 `site/data/knowledge.json`。
 
-`captured` 只表示点点回复已按当前正文版本安全保存；`pending` 表示还缺审核、证据或资源；`accepted` 才能进入公开页面。`candidateKind="Skill"` 是候选提示，不是 `confirmed Skill`。本地待审核 overlay 只经鉴权 loopback 返回清理后的摘要、证据方法和 blocker；公共 Origin 不请求也不渲染该区域。
+`captured` 只表示点点回复已按当前正文版本安全保存；`pending` 表示还缺审核、证据或资源；`accepted` 才能写入正式 curation；卡片不受审核状态控制。策展层的 Skill 候选只是提示，不是 `confirmed Skill`。
+
+公开卡片字段：`mainText`（卡片的主要文字，保留段落）、`mainSource`（`diandian`、`post-text`、`video-transcript` 或 `image-text`）、`replyDamaged`（保存的点点回复在受损名单上）、`postUnreachable`（原帖已无法访问，只决定来源行的标签）、`extracted`（点点没有回复且帖子有文字时另附的视频转写或图片文字，没有则为 `null`）、`tools` 与 `unverifiedTools`（没有匹配到官方来源的工具标“未核实”），外加分类、主题、内容形态和资源字段。首页数字 `replyCount`（主要文字是完整点点回复的卡片数）和 `transcriptCount`（显示了视频转写的卡片数）由这些卡片算出。
 
 ## 可移植性
 

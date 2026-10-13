@@ -1,6 +1,6 @@
 # 收藏深度整理与发布标准
 
-本标准是 FavSense 的逐篇策展契约。采集成功不等于整理合格；只有通过本地质量门的条目才能进入知识卡和公开网页。
+本标准是 FavSense 的逐篇策展契约。采集成功不等于整理合格；只有通过本地质量门的条目才能写入正式 curation，成为卡片的可选附加信息。卡片本身由确定性的卡片步骤用原帖文字、点点回复或提取文字生成，不受审核状态控制。
 
 ## 1. 冻结本轮范围
 
@@ -35,7 +35,7 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 2. 只接受通过固定流程附着到当前笔记、发送精确提示词“总结”、并从本轮新完成助手消息中提取的回复。
 3. 链接没有被点点识别成笔记卡片时记录 `link-not-recognized`，转入音频转写、按需 OCR 与评论证据回退；不得把它误称为“笔记附件不受支持”，也不得把标题、简介或旧回复冒充点点结果。
 4. 每份私有点点记录必须按稳定笔记 ID 保存，并在审计中记录该回复正文的 SHA-256。重新生成或覆盖回复后，旧审计立即失效并回到 `pending`。
-5. 只有正式 curation 可发布、审计完整为 `accepted`、且审计哈希与当前回复完全一致时，点点正文才可进入公开页面。
+5. 公开卡片直接展示已保存的点点回复全文（只去掉开头的对话语句），不再经过审核门；审核只决定这份回复能否作为策展 `summary` 的证据，而审计哈希与当前回复不一致时审计失效、回到 `pending`。
 
 点点记录成功原子保存后为 `captured`，不等于 `accepted`。当前真实尝试失败为 `failed`；因停批而未尝试的其余项为 `batch_aborted`。重跑跳过当前哈希、provider、prompt version 和 `summary_sha256` 全部匹配的 captured 项，只恢复 failed、batch_aborted、stale 或用户显式选择项。
 
@@ -78,7 +78,7 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 1. 主分类默认采用来源收藏夹或其领域映射。
 2. 内容明显不属于原收藏夹时可设置 `category_override: true`，并填写具体 `category_reason`。
 3. `kind` 只描述内容形态，不表示处理状态。软件领域可用 `Note / Tool / Skill / Workflow / Product`，其他领域使用自己的 domain profile。
-4. 不能因为标题含有 Skill、GitHub、Agent 等词就判为 `Skill`。确定性分类只能留下 `candidateKind="Skill"`；公开 `confirmed Skill` 还必须通过 accepted/current/resource 门。
+4. 不能因为标题含有 Skill、GitHub、Agent 等词就判为 `Skill`。确定性分类只能让策展层留下 Skill 候选；卡片的内容形态只有在笔记恰好关联一个 fresh verified resource 时才是 `Skill`，否则使用领域中性的默认形态。
 
 ## 5. 资源与 GitHub 核验
 
@@ -107,13 +107,13 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-scope.mjs" `
 }
 ```
 
-使用点点正文时，`evidence_methods` 必须包含 `diandian_summary`，并额外写入 `diandian_summary_sha256`；其值必须是当前私有点点回复正文的 64 位小写十六进制 SHA-256。仅写 `status: accepted` 不足以发布该回复。
+使用点点正文时，`evidence_methods` 必须包含 `diandian_summary`，并额外写入 `diandian_summary_sha256`；其值必须是当前私有点点回复正文的 64 位小写十六进制 SHA-256，它把审计与这份回复绑定在一起。
 
 状态只有：
 
 - `accepted`：证据与资源核验均满足本标准，可以发布；
 - `unavailable`：原帖已无法访问，保留此前记录并结束补证；这是已完成但不可发布的终态，必须记录 `source_unavailable` 方法和具体原因；
-- `pending`：缺少正文、实体、仓库或其他关键证据；收藏仍以原始公开摘要留在本地界面，但不得使用候选深度总结或未经核验的资源结论；
+- `pending`：缺少正文、实体、仓库或其他关键证据；该条不写入正式 curation，不得使用候选深度总结或未经核验的资源结论，收藏照常以原帖自己的文字显示为卡片；
 - `rejected`：不在范围、重复、用户排除或不应出现在网页中。
 
 候选摘要不能直接视为完成。先生成私有复核队列，逐篇阅读 `public_text`、`transcript_text` 或图文证据，并清除所有 blocker 后才能写 `accepted`：
@@ -126,14 +126,13 @@ node ".\skills\xhs-favorites-organizer\scripts\prepare-curation-review.mjs" `
   --resources ".\skills\xhs-favorites-organizer\references\software-resources.json" `
   --evidence-root ".\.xhs-favorites\video-analysis" `
   --diandian-dir ".\.xhs-favorites\diandian-summaries" `
-  --diandian-prompt-version "<Bridge/整理编排器已验证并冻结的 64 位 prompt_version>" `
   --supplemental-review ".\.xhs-favorites\diandian-fallback-review.json" `
   --output ".\.xhs-favorites\curation-review.json"
 ```
 
 该命令只准备证据包和 blocker，不会自动把候选标记为合格；禁止把结构检查等同于语义复核。
 
-逐篇语义复核完成后，每个 review item 必须原样回显对应证据包的 `review_packet_sha256`；`accepted` candidate 还必须保留该包的 `id` 与 `content_sha256`。用受约束的合并器写回候选、审计和正式 curation；它会拒绝 packet 缺失或错配、正文 revision 变化、candidate 身份错位、重复、越界、私密来源数据和缺字段，并且只把 `accepted` 项写入公开策展源：
+逐篇语义复核完成后，`accepted` candidate 还必须保留该包的 `id` 与 `content_sha256`（证据包本身不再带哈希）。用受约束的合并器写回候选、审计和正式 curation；它会拒绝证据包缺失或越界、正文 revision 变化、candidate 身份错位、重复、越界、私密来源数据和缺字段，并且只把 `accepted` 项写入策展源：
 
 ```powershell
 node ".\skills\xhs-favorites-organizer\scripts\merge-curation-results.mjs" `
@@ -147,11 +146,10 @@ node ".\skills\xhs-favorites-organizer\scripts\merge-curation-results.mjs" `
   --audit ".\.xhs-favorites\curation-audit.json" `
   --curation ".\skills\xhs-favorites-organizer\references\skills-board-curation.json" `
   --diandian-root ".\.xhs-favorites\diandian-summaries" `
-  --diandian-prompt-version "<Bridge/整理编排器已验证并冻结的 64 位 prompt_version>" `
   --expected-count 12
 ```
 
-`prompt_version` 必须由已验证的 Bridge/整理编排器提供；这些 Node CLI 不读取外部 Skill release 或 browser contract，也不接受人工推导的替代值。缺少或不匹配该冻结值时，点点正文及依赖它的正式 curation 一律降级，不得发布。
+审核准备和合并读取点点回复时不再比对 `prompt_version`：回复是否属于这篇笔记、是否对应当前正文版本由笔记 ID 与 `content_sha256` 判断。Bridge 仍用 `prompt_version` 校验自己保存的记录，但它不再决定审核输入，也不决定卡片显示什么。
 
 合并器从 `--config` 指向的收藏配置里的 `domain_profile` 找到领域配置（缺省 `config/domain-profiles/software.json`，相对运行目录），并按其中 `resource_index.verification_max_age_days` 判断 Skill 资源是否过期；键不存在时按 30 天，键存在但不是非负整数时直接报错并指出该配置文件和键。构建器、策展流水线、公开判定和迁移都用同一个数字。
 
@@ -177,13 +175,13 @@ node ".\skills\xhs-favorites-organizer\scripts\validate-curation.mjs" `
   --report ".\.xhs-favorites\curation-quality-report.json"
 ```
 
-质量门检查范围完整性、证据方法、评论检查、摘要（以及已写出的具体用法）、分类覆盖理由、资源关联，以及 Skill 的仓库/许可证/manifest。`pending` 可以存在，但不会进入发布结果；任何伪造、缺审计却写入策展、或不合格的 `accepted` 都会使命令失败。
+质量门检查范围完整性、证据方法、评论检查、摘要（以及已写出的具体用法）、分类覆盖理由、资源关联，以及 Skill 的仓库/许可证/manifest。`pending` 可以存在，但不会写入正式 curation（对应的卡片不受影响）；任何伪造、缺审计却写入策展、或不合格的 `accepted` 都会使命令失败。
 
 ## 9. 构建与验收顺序
 
 1. 先运行质量门并阅读报告。
-2. 只把 `accepted` 条目写入正式 curation；`pending` 只留在私有审计。所有已同步收藏仍以安全 fallback 显示，质量门只控制深度策展字段，不删除收藏。
-3. 使用快照步骤构建带 `build_version` 的网页数据 staging；检查正式摘要都来自 accepted/current curation，Skill 卡片都满足 confirmed Skill 资源门。
+2. 只把 `accepted` 条目写入正式 curation；`pending` 只留在私有审计。所有已同步收藏都显示为卡片，质量门只控制可选的策展附加信息，不删除收藏，也不改变卡片的标题和文字。
+3. 使用快照步骤构建带 `build_version` 的网页数据 staging；检查每张卡片的文字都来自原帖、点点回复或提取文字，Skill 卡片都满足 confirmed Skill 资源门。
 4. 检查公开 JSON 不含原始评论、Cookie、Token、个人主页、收藏夹 ID、视频或帧路径。
 5. 网页数据验证后才交换 live；失败时恢复同一上一版，不发布半成品。
 6. 运行项目测试与发布检查；只有最终快照成功后才允许最多发布一次。发布失败保留本地新快照和远端上一版。

@@ -4,7 +4,7 @@
 >
 > Governing Spec：`docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`
 >
-> Implementation Plan：`docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md`
+> Implementation Plan：`docs/plans/archive/2026-08-22-favsense-end-to-end-organization-recovery-plan.md`
 
 ## 使用规则
 
