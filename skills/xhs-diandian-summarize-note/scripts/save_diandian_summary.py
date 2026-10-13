@@ -509,22 +509,59 @@ def _remove_lock_directory(
     lock_parent: Path,
     lock_parent_identity: tuple[int, int],
     expected_identity: tuple[int, int],
+    owner_nonce: str | None = None,
 ) -> None:
     _validate_lock_directory(
         path,
         parent_identity=lock_parent_identity,
         expected_identity=expected_identity,
     )
-    _remove_tree_retrying_sharing_violations(path)
+    try:
+        _remove_tree_retrying_sharing_violations(path)
+    except OSError:
+        # POSIX renames a new lock over a directory that is already empty, so
+        # the next writer can take the lock while ours is half deleted, and
+        # the final removal then finds that lock instead of ours. Only a
+        # readable owner record naming someone else proves that happened.
+        seen = _lock_owner_nonce(path) if owner_nonce is not None else None
+        if seen is None or seen == owner_nonce:
+            raise
     if _directory_identity(lock_parent) != lock_parent_identity:
         raise ValueError("organization mutation lock cleanup is unsafe")
     # Another writer may already have put its own lock where ours was.
     try:
-        remaining_identity = _directory_identity(path, missing_ok=True)
+        still_ours = _directory_is_still_ours(path, expected_identity, owner_nonce)
     except ValueError as error:
         raise ValueError("organization mutation lock cleanup is unsafe") from error
-    if remaining_identity == expected_identity:
+    if still_ours:
         raise ValueError("organization mutation lock cleanup is unsafe")
+
+
+def _lock_owner_nonce(path: Path) -> str | None:
+    try:
+        owner = json.loads((path / "owner.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    nonce = owner.get("nonce") if isinstance(owner, dict) else None
+    return nonce if isinstance(nonce, str) else None
+
+
+def _directory_is_still_ours(
+    path: Path, expected_identity: tuple[int, int], owner_nonce: str | None
+) -> bool:
+    """Whether what sits at `path` after a removal is the directory we removed.
+
+    Directory numbers cannot settle it for a lock: POSIX filesystems hand a
+    deleted directory's number to the next one created, so another writer's
+    new lock, or one that is itself being deleted already, can carry ours.
+    Only our own nonce in the owner record proves a directory is ours.
+    """
+    identity = _directory_identity(path, missing_ok=True)
+    if identity is None:
+        return False
+    if owner_nonce is None:
+        return identity == expected_identity
+    return _lock_owner_nonce(path) == owner_nonce
 
 
 @contextmanager
@@ -633,6 +670,7 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
                 lock_parent=lock_parent,
                 lock_parent_identity=lock_parent_identity,
                 expected_identity=candidate_identity,
+                owner_nonce=nonce,
             )
         if acquired:
             try:
@@ -652,6 +690,7 @@ def _organization_mutation_lock(resolved_root: Path) -> Iterator[None]:
                     lock_parent=lock_parent,
                     lock_parent_identity=lock_parent_identity,
                     expected_identity=candidate_identity,
+                    owner_nonce=nonce,
                 )
 
 

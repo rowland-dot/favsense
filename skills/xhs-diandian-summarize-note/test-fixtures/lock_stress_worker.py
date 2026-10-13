@@ -2,9 +2,10 @@
 """Take and release the DianDian private store lock over and over.
 
 Run by tests/test_save_summary.py, several copies at once, to prove that
-writers handing the lock to each other never fail and never wait long.
-Prints one JSON line: cycles done, the failures seen (type and message), and
-the longest time any single acquisition waited.
+writers handing the lock to each other never fail or get stuck.
+Prints one JSON line: cycles done, the failures seen (type, message and
+traceback), and the longest time any single acquisition waited (shown when a
+test fails; how long a wait takes depends on how busy the machine is).
 
 Usage: lock_stress_worker.py <save_diandian_summary.py> <private root> <cycles> <hold seconds>
 """
@@ -15,6 +16,7 @@ import importlib.util
 import json
 import sys
 import time
+import traceback
 from pathlib import Path
 
 MAX_RECORDED_FAILURES = 5
@@ -42,7 +44,9 @@ def main() -> None:
             longest_wait = max(longest_wait, time.monotonic() - started)
             if len(failures) < MAX_RECORDED_FAILURES:
                 cause = f" <- {type(error.__cause__).__name__}: {error.__cause__}" if error.__cause__ else ""
-                failures.append(f"{type(error).__name__}: {error}{cause}")
+                failures.append(
+                    f"{type(error).__name__}: {error}{cause}" + chr(10) + traceback.format_exc()
+                )
     print(json.dumps({
         "cycles_done": done,
         "failure_count": failure_count,
