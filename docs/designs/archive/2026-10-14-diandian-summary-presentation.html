@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>点点总结显示方案</title>
+<link rel="stylesheet" href="../../../site/styles.css" />
+<style>
+  body { background: var(--paper, #f4f1ea); padding: 32px 16px 80px; }
+  .mock-intro { max-width: 1560px; margin: 0 auto 28px; }
+  .mock-intro h1 { font-family: var(--display); font-size: 30px; margin: 0 0 8px; }
+  .mock-intro p { margin: 0; color: var(--ink-soft); font-size: 15px; line-height: 1.7; max-width: 900px; }
+  .mock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(560px, 1fr)); gap: 28px; max-width: 1560px; margin: 0 auto; align-items: start; }
+  .mock-col h2 { margin: 0 0 4px; font-size: 18px; }
+  .mock-col .mock-tag { display: inline-block; margin-bottom: 6px; padding: 3px 9px; border-radius: 999px; background: var(--ink); color: var(--surface); font-size: 12px; font-family: var(--mono); }
+  .mock-col .mock-tag.is-rec { background: #6f3cc3; }
+  .mock-col > p { margin: 0 0 12px; color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
+  .mock-dialog { position: static; display: block; width: 100%; max-height: none; margin: 0; box-shadow: 0 10px 40px rgba(0,0,0,.12); }
+  .mock-dd summary { list-style: none; cursor: pointer; }
+  .mock-dd summary::-webkit-details-marker { display: none; }
+  .mock-dd-preview { position: relative; max-height: 168px; overflow: hidden; }
+  .mock-dd-preview::after { content: ""; position: absolute; inset: auto 0 0 0; height: 64px; background: linear-gradient(transparent, var(--surface)); }
+  .mock-dd-toggle { display: inline-block; margin-top: 10px; padding: 8px 14px; border: 1px solid var(--ink); border-radius: 999px; font-size: 13px; font-weight: 700; }
+  .mock-dd summary:focus-visible .mock-dd-toggle { outline: 3px solid #6f3cc3; outline-offset: 2px; }
+  .mock-tabs { display: inline-flex; gap: 4px; margin-bottom: 14px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; }
+  .mock-tabs button { border: 0; background: transparent; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .mock-tabs button.is-on { background: var(--ink); color: var(--surface); }
+  .mock-gist { margin-bottom: 18px; }
+  @media (max-width: 640px) { .mock-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="mock-intro">
+  <h1>点点总结怎么显示：现状与三个方案</h1>
+  <p>以卡片“把账号复盘经验产品化为 Codex 智能体”为例。所有文字都是这张卡的真实数据：整理摘要 118 字，点点原文 805 字（未改动，包括点点自带的“根据你引用的笔记”开头）。样式直接引用网站自己的样式表。新标签文字（“整理摘要”“点点 AI 原文”及说明）是提议，待你确认。</p>
+</header>
+<main class="mock-grid">
+<section class="mock-col"><span class="mock-tag">现在</span><h2>现在：整理摘要被标成“点点 AI 深度总结”</h2><p>页面显示的是整理时写的 118 字摘要，却挂着点点的标签；点点的 805 字原文存在数据里，但从不显示。</p><div class="detail-dialog mock-dialog" data-mockup-state="current" style="--accent:#6f3cc3"><div class="dialog-shell">
+    <p class="detail-kicker"><i></i> AI自媒体 · Workflow</p>
+    <h2 class="detail-title">把账号复盘经验产品化为 Codex 智能体</h2>
+    <div class="detail-meta"><span>陈祝器</span><span>2026年8月13日</span></div>
+    <p class="category-suggestion"><span>内容建议分类</span>内容增长与商业<small>当前仍按收藏夹“AI自媒体”归档</small></p>
+    <section class="detail-section"><div class="detail-section-heading"><h3>核心结论</h3><button type="button">编辑描述</button></div>
+      <div class="summary-provenance summary-provenance--diandian"><strong>点点 AI 深度总结</strong><span>这份内容来自点点 AI 对原帖的总结，并已通过当前知识卡的整理检查。</span></div>
+      <div class="structured-summary"><p>笔记描述了一个三步方法：先把账号复盘经验拆成指标和判断规则，再用四个问题要求 AI 找异常、解释原因、评估影响并给出下周行动，最后按行业改写规则形成定制服务。作者披露的三天搭建、十分钟初稿和商业收入属于个人案例，不能直接外推为普遍回报。</p></div></section>
+    <section class="detail-section"><h3>具体用法</h3><div class="action-box"><span>下一步</span><p>先用一个月的历史数据复现人工复盘，把异常判断和行动建议逐条对照；对错误归因、缺失数据和不可执行建议建立驳回规则，连续三轮达到可接受准确度后再尝试行业模板与商业交付。</p></div></section>
+    <section class="detail-section"><h3>相关主题与工具</h3><div class="tools-row"><span class="tool-chip">商业验证</span><span class="tool-chip">复盘智能体</span><span class="tool-chip">经验产品化</span></div></section></div></div></section>
+<section class="mock-col"><span class="mock-tag is-rec">方案 A · 推荐</span><h2>方案 A：两层——结论在上，点点原文在下，可展开</h2><p>核心结论如实标为“整理摘要”。点点原文单独一节，默认露出开头几行，点“展开全文”看完整 805 字。两样都看得到，来源一目了然。</p><div class="detail-dialog mock-dialog" data-mockup-state="a-collapsed" style="--accent:#6f3cc3"><div class="dialog-shell">
+    <p class="detail-kicker"><i></i> AI自媒体 · Workflow</p>
+    <h2 class="detail-title">把账号复盘经验产品化为 Codex 智能体</h2>
+    <div class="detail-meta"><span>陈祝器</span><span>2026年8月13日</span></div>
+    <p class="category-suggestion"><span>内容建议分类</span>内容增长与商业<small>当前仍按收藏夹“AI自媒体”归档</small></p>
+    <section class="detail-section"><div class="detail-section-heading"><h3>核心结论</h3><button type="button">编辑描述</button></div>
+      
+      <div class="summary-provenance summary-provenance--evidence"><strong>整理摘要</strong><span>根据原帖、点点总结与本机证据核对后写成，是这张卡的结论。</span></div>
+      <div class="structured-summary"><p>笔记描述了一个三步方法：先把账号复盘经验拆成指标和判断规则，再用四个问题要求 AI 找异常、解释原因、评估影响并给出下周行动，最后按行业改写规则形成定制服务。作者披露的三天搭建、十分钟初稿和商业收入属于个人案例，不能直接外推为普遍回报。</p></div></section>
+    <section class="detail-section"><h3>点点 AI 深度总结</h3>
+      <div class="summary-provenance summary-provenance--diandian"><strong>点点 AI 原文</strong><span>点点 AI 对原帖的完整回复，未经改写，共 805 字。</span></div>
+      <details class="mock-dd"><summary><div class="mock-dd-preview"><div class="structured-summary"><p>根据你引用的笔记，这是一篇关于​​用 AI 打造复盘智能体并实现商业化​​的实战分享。以下是核心内容总结：</p><p>核心故事</p><p>作者原本每月做小红书账号复盘要花一下午拉数据、看指标、写总结，觉得重复又烦。于是用 ​​Codex​​ 花了 3 天搭了一个"复盘智能体"，把数据丢进去就能自动分析。结果发群里炫耀时，被做护肤号的朋友问能不能按他们的品类定制，顺势接了 3 个定制客户（美妆、职场、本地生活），累计收入 ​​10W​​。</p><p>搭建过程拆解</p><p>​​第 1 天​​：没急着写代码，先把自己脑子里的复盘逻辑一条条拆出来——看哪些指标、怎么判断爆款、什么情况追投、什么换选题。这些"脑子里的经验"才是智能体值钱的地方。</p><p>​​第 2 天​​：第一版出来了，但 AI 味太重，总结一堆却不敢下判断。于是推翻重来，加了 ​​4 个核心问题​​逼它从"总结型"变成"判断型"。</p><p>让 AI 敢下判断的 4 个问题</p><p>哪条数据异常了？</p><p>为什么会异常？</p><p>对账号影响有多大？</p><p>下周具体发什么、怎么改？</p><p>就这 4 个问题，让 AI 从"写年终表彰稿"变成了"敢找问题、给原因、出方案"的运营搭子。</p><p>商业化逻辑</p><p>客户买的不是 Codex，也不是提示词，而是​​"我不用自己看表，也知道下个月该发什么"​​这个结果。作者总结选项目只看 3 个问题：</p><p>解决谁的问题？（越具体越好）</p><p>这个问题值多少钱？（客户愿意付费才说明真痛）</p><p>能不能标准化交付？（能复制才叫生意）</p><p>核心观点</p><p>AI 最大的机会不一定在 AI 行业里，电商、小红书、私域、外贸、招聘、教育……每个"每个月都要复盘"的岗位，都值得有一个智能体。真正有优势的，不是最会写提示词的人，而是​​既懂自己行业、又愿意把 AI 用起来的人​​。</p><p>互动引导</p><p>作者预告下一篇会拆解这个 10W 智能体具体怎么搭，并邀请读者在评论区扣"复盘"领取一份"智能体 4 问框架"提示词模板。</p></div></div><span class="mock-dd-toggle">展开全文 · 805 字</span></summary></details></section>
+    <section class="detail-section"><h3>具体用法</h3><div class="action-box"><span>下一步</span><p>先用一个月的历史数据复现人工复盘，把异常判断和行动建议逐条对照；对错误归因、缺失数据和不可执行建议建立驳回规则，连续三轮达到可接受准确度后再尝试行业模板与商业交付。</p></div></section>
+    <section class="detail-section"><h3>相关主题与工具</h3><div class="tools-row"><span class="tool-chip">商业验证</span><span class="tool-chip">复盘智能体</span><span class="tool-chip">经验产品化</span></div></section></div></div></section>
+<section class="mock-col"><span class="mock-tag">方案 A · 展开后</span><h2>方案 A：点开“展开全文”之后</h2><p>完整显示点点原文；按钮变成“收起”。</p><div class="detail-dialog mock-dialog" data-mockup-state="a-expanded" style="--accent:#6f3cc3"><div class="dialog-shell">
+    <p class="detail-kicker"><i></i> AI自媒体 · Workflow</p>
+    <h2 class="detail-title">把账号复盘经验产品化为 Codex 智能体</h2>
+    <div class="detail-meta"><span>陈祝器</span><span>2026年8月13日</span></div>
+    <p class="category-suggestion"><span>内容建议分类</span>内容增长与商业<small>当前仍按收藏夹“AI自媒体”归档</small></p>
+    <section class="detail-section"><div class="detail-section-heading"><h3>核心结论</h3><button type="button">编辑描述</button></div>
+      
+      <div class="summary-provenance summary-provenance--evidence"><strong>整理摘要</strong><span>根据原帖、点点总结与本机证据核对后写成，是这张卡的结论。</span></div>
+      <div class="structured-summary"><p>笔记描述了一个三步方法：先把账号复盘经验拆成指标和判断规则，再用四个问题要求 AI 找异常、解释原因、评估影响并给出下周行动，最后按行业改写规则形成定制服务。作者披露的三天搭建、十分钟初稿和商业收入属于个人案例，不能直接外推为普遍回报。</p></div></section>
+    <section class="detail-section"><h3>点点 AI 深度总结</h3>
+      <div class="summary-provenance summary-provenance--diandian"><strong>点点 AI 原文</strong><span>点点 AI 对原帖的完整回复，未经改写，共 805 字。</span></div>
+      <div class="structured-summary"><p>根据你引用的笔记，这是一篇关于​​用 AI 打造复盘智能体并实现商业化​​的实战分享。以下是核心内容总结：</p><p>核心故事</p><p>作者原本每月做小红书账号复盘要花一下午拉数据、看指标、写总结，觉得重复又烦。于是用 ​​Codex​​ 花了 3 天搭了一个"复盘智能体"，把数据丢进去就能自动分析。结果发群里炫耀时，被做护肤号的朋友问能不能按他们的品类定制，顺势接了 3 个定制客户（美妆、职场、本地生活），累计收入 ​​10W​​。</p><p>搭建过程拆解</p><p>​​第 1 天​​：没急着写代码，先把自己脑子里的复盘逻辑一条条拆出来——看哪些指标、怎么判断爆款、什么情况追投、什么换选题。这些"脑子里的经验"才是智能体值钱的地方。</p><p>​​第 2 天​​：第一版出来了，但 AI 味太重，总结一堆却不敢下判断。于是推翻重来，加了 ​​4 个核心问题​​逼它从"总结型"变成"判断型"。</p><p>让 AI 敢下判断的 4 个问题</p><p>哪条数据异常了？</p><p>为什么会异常？</p><p>对账号影响有多大？</p><p>下周具体发什么、怎么改？</p><p>就这 4 个问题，让 AI 从"写年终表彰稿"变成了"敢找问题、给原因、出方案"的运营搭子。</p><p>商业化逻辑</p><p>客户买的不是 Codex，也不是提示词，而是​​"我不用自己看表，也知道下个月该发什么"​​这个结果。作者总结选项目只看 3 个问题：</p><p>解决谁的问题？（越具体越好）</p><p>这个问题值多少钱？（客户愿意付费才说明真痛）</p><p>能不能标准化交付？（能复制才叫生意）</p><p>核心观点</p><p>AI 最大的机会不一定在 AI 行业里，电商、小红书、私域、外贸、招聘、教育……每个"每个月都要复盘"的岗位，都值得有一个智能体。真正有优势的，不是最会写提示词的人，而是​​既懂自己行业、又愿意把 AI 用起来的人​​。</p><p>互动引导</p><p>作者预告下一篇会拆解这个 10W 智能体具体怎么搭，并邀请读者在评论区扣"复盘"领取一份"智能体 4 问框架"提示词模板。</p></div><p class="mock-dd-toggle mock-dd-toggle--open">收起</p></section>
+    <section class="detail-section"><h3>具体用法</h3><div class="action-box"><span>下一步</span><p>先用一个月的历史数据复现人工复盘，把异常判断和行动建议逐条对照；对错误归因、缺失数据和不可执行建议建立驳回规则，连续三轮达到可接受准确度后再尝试行业模板与商业交付。</p></div></section>
+    <section class="detail-section"><h3>相关主题与工具</h3><div class="tools-row"><span class="tool-chip">商业验证</span><span class="tool-chip">复盘智能体</span><span class="tool-chip">经验产品化</span></div></section></div></div></section>
+<section class="mock-col"><span class="mock-tag">方案 B</span><h2>方案 B：同一位置用两个标签切换</h2><p>核心结论处放两个标签：“整理摘要”（默认）和“点点原文 · 805 字”。占地最小，但原文要多点一下才看得到。</p><div class="detail-dialog mock-dialog" data-mockup-state="b-tabs" style="--accent:#6f3cc3"><div class="dialog-shell">
+    <p class="detail-kicker"><i></i> AI自媒体 · Workflow</p>
+    <h2 class="detail-title">把账号复盘经验产品化为 Codex 智能体</h2>
+    <div class="detail-meta"><span>陈祝器</span><span>2026年8月13日</span></div>
+    <p class="category-suggestion"><span>内容建议分类</span>内容增长与商业<small>当前仍按收藏夹“AI自媒体”归档</small></p>
+    <section class="detail-section"><div class="detail-section-heading"><h3>核心结论</h3><button type="button">编辑描述</button></div>
+      <div class="mock-tabs" role="tablist"><button role="tab" aria-selected="true" class="is-on">整理摘要</button><button role="tab" aria-selected="false">点点原文 · 805 字</button></div>
+      
+      <div class="summary-provenance summary-provenance--evidence"><strong>整理摘要</strong><span>根据原帖、点点总结与本机证据核对后写成，是这张卡的结论。</span></div>
+      <div class="structured-summary"><p>笔记描述了一个三步方法：先把账号复盘经验拆成指标和判断规则，再用四个问题要求 AI 找异常、解释原因、评估影响并给出下周行动，最后按行业改写规则形成定制服务。作者披露的三天搭建、十分钟初稿和商业收入属于个人案例，不能直接外推为普遍回报。</p></div></section>
+    <section class="detail-section"><h3>具体用法</h3><div class="action-box"><span>下一步</span><p>先用一个月的历史数据复现人工复盘，把异常判断和行动建议逐条对照；对错误归因、缺失数据和不可执行建议建立驳回规则，连续三轮达到可接受准确度后再尝试行业模板与商业交付。</p></div></section>
+    <section class="detail-section"><h3>相关主题与工具</h3><div class="tools-row"><span class="tool-chip">商业验证</span><span class="tool-chip">复盘智能体</span><span class="tool-chip">经验产品化</span></div></section></div></div></section>
+<section class="mock-col"><span class="mock-tag">方案 C</span><h2>方案 C：点点原文为主，整理摘要缩成一句要点</h2><p>主体直接显示点点完整原文；整理摘要放在上方的小框里作要点。最接近点点本来的样子，但页面最长，读者先看到的是未核对的原文。</p><div class="detail-dialog mock-dialog" data-mockup-state="c-original-first" style="--accent:#6f3cc3"><div class="dialog-shell">
+    <p class="detail-kicker"><i></i> AI自媒体 · Workflow</p>
+    <h2 class="detail-title">把账号复盘经验产品化为 Codex 智能体</h2>
+    <div class="detail-meta"><span>陈祝器</span><span>2026年8月13日</span></div>
+    <p class="category-suggestion"><span>内容建议分类</span>内容增长与商业<small>当前仍按收藏夹“AI自媒体”归档</small></p>
+    <section class="detail-section"><div class="detail-section-heading"><h3>核心结论</h3><button type="button">编辑描述</button></div>
+      <div class="action-box mock-gist"><span>整理要点</span><p>笔记描述了一个三步方法：先把账号复盘经验拆成指标和判断规则，再用四个问题要求 AI 找异常、解释原因、评估影响并给出下周行动，最后按行业改写规则形成定制服务。作者披露的三天搭建、十分钟初稿和商业收入属于个人案例，不能直接外推为普遍回报。</p></div>
+      <div class="summary-provenance summary-provenance--diandian"><strong>点点 AI 原文</strong><span>点点 AI 对原帖的完整回复，未经改写，共 805 字。</span></div>
+      <div class="structured-summary"><p>根据你引用的笔记，这是一篇关于​​用 AI 打造复盘智能体并实现商业化​​的实战分享。以下是核心内容总结：</p><p>核心故事</p><p>作者原本每月做小红书账号复盘要花一下午拉数据、看指标、写总结，觉得重复又烦。于是用 ​​Codex​​ 花了 3 天搭了一个"复盘智能体"，把数据丢进去就能自动分析。结果发群里炫耀时，被做护肤号的朋友问能不能按他们的品类定制，顺势接了 3 个定制客户（美妆、职场、本地生活），累计收入 ​​10W​​。</p><p>搭建过程拆解</p><p>​​第 1 天​​：没急着写代码，先把自己脑子里的复盘逻辑一条条拆出来——看哪些指标、怎么判断爆款、什么情况追投、什么换选题。这些"脑子里的经验"才是智能体值钱的地方。</p><p>​​第 2 天​​：第一版出来了，但 AI 味太重，总结一堆却不敢下判断。于是推翻重来，加了 ​​4 个核心问题​​逼它从"总结型"变成"判断型"。</p><p>让 AI 敢下判断的 4 个问题</p><p>哪条数据异常了？</p><p>为什么会异常？</p><p>对账号影响有多大？</p><p>下周具体发什么、怎么改？</p><p>就这 4 个问题，让 AI 从"写年终表彰稿"变成了"敢找问题、给原因、出方案"的运营搭子。</p><p>商业化逻辑</p><p>客户买的不是 Codex，也不是提示词，而是​​"我不用自己看表，也知道下个月该发什么"​​这个结果。作者总结选项目只看 3 个问题：</p><p>解决谁的问题？（越具体越好）</p><p>这个问题值多少钱？（客户愿意付费才说明真痛）</p><p>能不能标准化交付？（能复制才叫生意）</p><p>核心观点</p><p>AI 最大的机会不一定在 AI 行业里，电商、小红书、私域、外贸、招聘、教育……每个"每个月都要复盘"的岗位，都值得有一个智能体。真正有优势的，不是最会写提示词的人，而是​​既懂自己行业、又愿意把 AI 用起来的人​​。</p><p>互动引导</p><p>作者预告下一篇会拆解这个 10W 智能体具体怎么搭，并邀请读者在评论区扣"复盘"领取一份"智能体 4 问框架"提示词模板。</p></div></section>
+    <section class="detail-section"><h3>具体用法</h3><div class="action-box"><span>下一步</span><p>先用一个月的历史数据复现人工复盘，把异常判断和行动建议逐条对照；对错误归因、缺失数据和不可执行建议建立驳回规则，连续三轮达到可接受准确度后再尝试行业模板与商业交付。</p></div></section>
+    <section class="detail-section"><h3>相关主题与工具</h3><div class="tools-row"><span class="tool-chip">商业验证</span><span class="tool-chip">复盘智能体</span><span class="tool-chip">经验产品化</span></div></section></div></div></section>
+</main>
+</body>
+</html>

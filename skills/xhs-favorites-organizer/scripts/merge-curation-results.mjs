@@ -67,7 +67,8 @@ function validateCandidate(candidate, { noteId = "", contentSha256 = "", require
   ) throw new Error("candidate note binding is missing or stale");
   if (clean(candidate.title).length < 2) throw new Error("candidate title is too short");
   if (clean(candidate.summary).length < 32) throw new Error("candidate summary is too short");
-  if (clean(candidate.action).length < 16) throw new Error("candidate action is too short");
+  // The action is optional (cards no longer show a next-step box, issue 99); one that is written must still be real.
+  if (clean(candidate.action) && clean(candidate.action).length < 16) throw new Error("candidate action is too short");
   if (!clean(candidate.kind)) throw new Error("candidate kind is required");
   if (!Array.isArray(candidate.themes) || candidate.themes.length === 0) throw new Error("candidate themes are required");
   if (!Array.isArray(candidate.tools)) throw new Error("candidate tools must be an array");

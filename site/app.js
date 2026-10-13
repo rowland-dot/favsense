@@ -10,6 +10,7 @@ import {
   normalizeLocalBridgeDiagnostic
 } from "./local-bridge-utils.mjs";
 import { hasHuggingFaceMiniHeader, resolveHuggingFaceHeaderLayout } from "./huggingface-layout.mjs";
+import { diandianBlocks, stripDiandianOpener } from "./diandian-text.mjs";
 import {
   MAX_DESCRIPTION_LENGTH,
   PERSONAL_DATA_VERSION,
@@ -21,6 +22,7 @@ import {
   validatePersonalDataPayload
 } from "./personal-store.mjs";
 const DATA_URL = new URL("./data/knowledge.json", import.meta.url);
+const FOLDED_SUMMARY_HEIGHT = 420; // keep equal to .summary-fold-body max-height in styles.css
 let hfPersonalSync = null;
 let hfHostViewportBaseline = null;
 let dialogScrollLock = null;
@@ -219,6 +221,7 @@ const state = {
   bookmarkStates: {},
   descriptionOverrides: {},
   editingDescriptionId: null,
+  expandedSummaries: new Set(),
   cloud: { available: false, authenticated: false, username: "", repository: "", ready: false, oauth: null },
   sort: "newest",
   layout: savedLayoutPreference(),
@@ -240,6 +243,10 @@ function sopBrowserReady() {
 
 function bookmarkIcon() {
   return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5c0-1.1.9-2 2-2h7c1.1 0 2 .9 2 2v17L12 18l-5.5 3.5v-17Z" /></svg>';
+}
+
+function pencilIcon() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>';
 }
 
 function validNoteIds() {
@@ -280,8 +287,19 @@ function noteDescription(note) {
   const curationStatus = String(
     note.curationStatus || note.curation_status || note.summaryStatus || note.summary_status || ""
   );
+  if (showsDianDianReply(note)) return stripDiandianOpener(note.deepSummary).text;
   if (curationStatus === "accepted") return note.summary || "";
   return note.deepSummary || note.summary;
+}
+
+// A card whose usable DianDian reply is the text to show (the reply itself, not the curation summary).
+function showsDianDianReply(note) {
+  return note.deepSummarySource === "xiaohongshu-diandian" && Boolean(String(note.deepSummary || "").trim());
+}
+
+function hasPersonalRevision(note) {
+  const override = state.descriptionOverrides[note.id];
+  return Boolean(override && !override.deleted && override.description);
 }
 
 function renderPersonalControls() {
@@ -455,6 +473,24 @@ function formatSummaryHtml(value) {
   return blocks.join("");
 }
 
+function formatDiandianHtml(reply) {
+  return diandianBlocks(reply).map((block) => {
+    if (block.type === "heading") return `<h4>${escapeHtml(block.text)}</h4>`;
+    if (block.type === "list") {
+      const tag = block.ordered ? "ol" : "ul";
+      return `<${tag}>${block.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</${tag}>`;
+    }
+    return `<p>${escapeHtml(block.text)}</p>`;
+  }).join("");
+}
+
+// The shown summary as HTML: the person's own revision wins, then the DianDian reply, then the curated text.
+function descriptionHtml(note) {
+  return showsDianDianReply(note) && !hasPersonalRevision(note)
+    ? formatDiandianHtml(noteDescription(note))
+    : formatSummaryHtml(noteDescription(note));
+}
+
 function summarySourcePresentation(note) {
   const summaryStatus = String(
     note.summaryState || note.summary_state || note.summaryStatus || note.summary_status || "not_started"
@@ -475,53 +511,75 @@ function summarySourcePresentation(note) {
     tone: "warning",
     explanation: "当前证据或质量门不足，因此不会作为正式总结展示；后续获得新证据时会重新审核。"
   };
-  if (summaryStatus === "failed") return {
+  const media = localEvidenceDescription(note);
+  // A run that failed, was cut short or went stale still says so (it can be resumed); otherwise the gap is the news.
+  const resumable = ["failed", "batch_aborted", "stale"].includes(summaryStatus);
+  if (curationStatus === "pending_review" && reason === "audit_pending" && !resumable) return {
+    label: "证据未补齐，暂不发布",
+    tone: "warning",
+    explanation: `已完成复核：${media.gap}仍不完整，所以只显示原帖公开文字；补齐证据后会重新审核。`
+  };
+  // A card that passed review never shows a run's failure: its text stands on the evidence it was accepted with.
+  const accepted = curationStatus === "accepted";
+  if (!accepted && summaryStatus === "failed") return {
     label: "本篇总结失败，可在下次继续",
     tone: "warning",
     explanation: "核心收藏已保存；本篇深度总结已尝试但未完成。"
   };
-  if (summaryStatus === "batch_aborted") return {
+  if (!accepted && summaryStatus === "batch_aborted") return {
     label: "本次未尝试，可继续整理",
     tone: "warning",
     explanation: "核心收藏已保存；本轮在处理本篇前已经停止。"
   };
-  if (summaryStatus === "stale" && reason === "unknown_legacy") return {
+  if (!accepted && summaryStatus === "stale" && reason === "unknown_legacy") return {
     label: "历史整理状态待确认，需重新整理",
     tone: "warning",
     explanation: "核心收藏已保留；旧版记录无法确认是否曾完成总结。"
   };
-  if (summaryStatus === "stale") return {
+  if (!accepted && summaryStatus === "stale") return {
     label: reason === "evidence_changed"
         ? "证据已变化，需重新核验"
         : "正文已变化，需重新核验",
     tone: "warning",
     explanation: "历史整理结果仍保留，但不会作为当前正式总结展示。"
   };
-  if (note.deepSummarySource === "xiaohongshu-diandian") return {
-    label: "点点 AI 深度总结",
-    tone: "diandian",
-    explanation: "这份内容来自点点 AI 对原帖的总结，并已通过当前知识卡的整理检查。"
-  };
+  if (note.deepSummarySource === "xiaohongshu-diandian") {
+    const reply = String(note.deepSummary || "").trim();
+    return {
+      label: "点点 AI 深度总结",
+      tone: "diandian",
+      explanation: reply
+        ? `点点 AI 的完整回复，原文未改动，共 ${reply.length} 字；${stripDiandianOpener(reply).removed ? "只去掉开头的对话语句，" : ""}按小标题与列表排版。`
+        : "这份内容来自点点 AI 对原帖的总结，并已通过当前知识卡的整理检查。"
+    };
+  }
   if (summaryStatus === "captured" && reason === "audit_pending") return {
     label: "证据未补齐，暂不发布",
     tone: "warning",
     explanation: "该条已完成复核，但正文、媒体或官方资源证据仍不完整；补齐前只展示原帖公开信息。"
   };
-  if (summaryStatus === "captured") return {
+  if (summaryStatus === "captured" && !accepted) return {
     label: "总结已保存，尚未完成证据核验",
     tone: "warning",
     explanation: "点点总结已安全保存在本机；证据核验完成前不会替换当前公开内容。"
   };
-  if (note.deepSummarySource === "curation") return {
-    label: "使用其他证据整理",
+  if (accepted || note.deepSummarySource === "curation") return {
+    label: media.label,
     tone: "evidence",
-    explanation: "未获得可用于这张卡的点点总结；当前内容根据已记录的其他证据整理。"
+    explanation: `这篇没有可用的点点总结；内容根据本机保存的${media.used}整理。`
   };
   return {
     label: "尚未开始深度整理",
     tone: "metadata",
     explanation: "核心收藏已保存；这张卡尚未完成深度总结。"
   };
+}
+
+// What the card's evidence is, by the kind of post: only what the public data records (the media type).
+function localEvidenceDescription(note) {
+  if (note.mediaType === "视频") return { label: "本机视频证据整理", used: "视频转写等证据", gap: "视频转写和画面等证据" };
+  if (note.mediaType === "图文") return { label: "本机图片文字整理", used: "图片文字等证据", gap: "图片文字等证据" };
+  return { label: "本机证据整理", used: "证据", gap: "媒体证据" };
 }
 
 function safeUrl(value, allowedHosts = null) {
@@ -927,7 +985,7 @@ function noteCard(note) {
       <div class="card-body">
         <h3 class="card-title">${escapeHtml(note.title)}</h3>
         <p class="card-summary-source card-summary-source--${summarySource.tone}"><i aria-hidden="true"></i>${personallyEdited ? "个人修订 · " : ""}${escapeHtml(summarySource.label)}</p>
-        <div class="card-summary structured-summary structured-summary--card">${formatSummaryHtml(noteDescription(note))}</div>
+        <div class="card-summary structured-summary structured-summary--card">${descriptionHtml(note)}</div>
         <div class="tools-row">${tools}</div>
       </div>
       <footer class="card-footer">
@@ -1009,17 +1067,17 @@ function renderResourceSortOptions() {
 
 function descriptionSection(note) {
   const override = state.descriptionOverrides[note.id]?.deleted ? null : state.descriptionOverrides[note.id];
-  const heading = note.kind === "Note" ? "原帖摘要" : "核心结论";
   const summarySource = summarySourcePresentation(note);
-  const provenance = `
+  const provenanceHtml = (editButton) => `
     <div class="summary-provenance summary-provenance--${summarySource.tone}">
       <strong>${escapeHtml(summarySource.label)}</strong>
       <span>${override ? "正文已使用你的个人修订。原系统内容：" : ""}${escapeHtml(summarySource.explanation)}</span>
+      ${editButton}
     </div>`;
   if (state.editingDescriptionId === note.id) {
     return `
       <section class="detail-section">
-        ${provenance}
+        ${provenanceHtml("")}
         <form class="description-editor" data-description-form="${escapeHtml(note.id)}">
           <label for="description-${escapeHtml(note.id)}">知识卡描述</label>
           <textarea id="description-${escapeHtml(note.id)}" name="description" maxlength="${MAX_DESCRIPTION_LENGTH}" rows="8">${escapeHtml(noteDescription(note))}</textarea>
@@ -1033,15 +1091,33 @@ function descriptionSection(note) {
       </section>`;
   }
   return `
-    <section class="detail-section">
-      <div class="detail-section-heading">
-        <h3>${heading}</h3>
-        <button type="button" data-edit-description="${escapeHtml(note.id)}">编辑描述</button>
-      </div>
-      ${provenance}
-      <div class="structured-summary">${formatSummaryHtml(noteDescription(note))}</div>
+    <section class="detail-section" aria-label="${note.kind === "Note" ? "原帖摘要" : "核心结论"}">
+      ${provenanceHtml(`<button type="button" class="provenance-edit" data-edit-description="${escapeHtml(note.id)}" aria-label="编辑描述" title="编辑描述">${pencilIcon()}编辑</button>`)}
+      ${summaryBodyHtml(note)}
       ${override ? '<span class="personal-edit-label">已使用你的个人修订</span>' : ""}
     </section>`;
+}
+
+// A DianDian reply is long, so it starts folded to its first lines; the person's own revision and curated text are not.
+function summaryBodyHtml(note) {
+  if (!showsDianDianReply(note) || hasPersonalRevision(note)) return `<div class="structured-summary">${descriptionHtml(note)}</div>`;
+  const expanded = state.expandedSummaries.has(note.id);
+  return `
+    <div class="summary-fold" data-expanded="${expanded}">
+      <div class="structured-summary summary-fold-body">${descriptionHtml(note)}</div>
+      <button type="button" class="summary-fold-toggle" data-fold-toggle="${escapeHtml(note.id)}" data-fold-label="展开全文 · ${note.deepSummary.length} 字" aria-expanded="${expanded}">${expanded ? "收起" : `展开全文 · ${note.deepSummary.length} 字`}</button>
+    </div>`;
+}
+
+// A reply that fits inside the folded height needs no fold: show it whole and drop the button. A closed
+// dialog has no layout yet, so openNote settles the folds again once the dialog is on screen.
+function settleSummaryFolds() {
+  for (const fold of elements.dialogContent.querySelectorAll(".summary-fold")) {
+    const body = fold.querySelector(".summary-fold-body");
+    if (!body.clientHeight || body.scrollHeight > FOLDED_SUMMARY_HEIGHT + 1) continue;
+    fold.dataset.expanded = "true";
+    fold.querySelector(".summary-fold-toggle")?.remove();
+  }
 }
 
 function isLocalWorkbenchLocation(locationValue = window.location) {
@@ -1084,9 +1160,6 @@ function renderDetail(note) {
       <p>证据：${localOrganization.evidence_methods.map((evidence) => evidence.method === "point" ? "点点总结" : escapeHtml(evidence.method)).join(" · ")}。当前证据尚未满足发布门槛，不会进入公开知识库。</p>
     </section>
   ` : "";
-  const actionHtml = note.kind === "Note" || !String(note.action || "").trim() ? "" : `
-    <section class="detail-section"><h3>具体用法</h3><div class="action-box"><span>下一步</span><p>${escapeHtml(note.action)}</p></div></section>
-  `;
   const tags = [...note.themes, ...note.tools];
   const tagsHtml = tags.length ? `
     <section class="detail-section"><h3>相关主题与工具</h3><div class="tools-row">${tags.map((item) => `<span class="tool-chip">${escapeHtml(item)}</span>`).join("")}</div></section>
@@ -1116,10 +1189,8 @@ function renderDetail(note) {
     ${categorySuggestionHtml}
     ${localOrganizationHtml}
     ${descriptionSection(note)}
-    ${actionHtml}
     ${resourceHtml}
     ${tagsHtml}
-    <section class="detail-section"><h3>整理依据</h3><p>${escapeHtml(note.evidence.method)}。原视频和分析画面只保存在本机，不进入公开页面。</p></section>
     <footer class="detail-footer">
       ${sourceActionHtml}
       ${singleNoteActionHtml}
@@ -1127,6 +1198,7 @@ function renderDetail(note) {
       <button class="detail-bookmark ${state.bookmarks.has(note.id) ? "is-active" : ""}" type="button" data-bookmark-note="${escapeHtml(note.id)}" aria-pressed="${state.bookmarks.has(note.id)}">${bookmarkIcon()} ${state.bookmarks.has(note.id) ? "已加书签" : "添加书签"}</button>
     </footer>
   `;
+  settleSummaryFolds();
 }
 
 async function loadLocalNoteOrganizationStatus(note) {
@@ -1164,12 +1236,14 @@ function openNote(noteId, updateHash = true) {
     else elements.dialog.setAttribute("open", "");
   }
   lockDialogBackground();
+  settleSummaryFolds();
   if (typeof loadLocalNoteOrganizationStatus === "function") void loadLocalNoteOrganizationStatus(note);
   if (updateHash) history.replaceState(null, "", `#note=${encodeURIComponent(noteId)}`);
 }
 
 function closeDialog() {
   state.editingDescriptionId = null;
+  state.expandedSummaries.clear();
   if (elements.dialog.open) elements.dialog.close();
   unlockDialogBackground();
   history.replaceState(null, "", location.pathname + location.search);
@@ -1356,6 +1430,16 @@ function bindEvents() {
       toggleBookmark(bookmarkButton.dataset.bookmarkNote);
       return;
     }
+    const foldToggle = event.target.closest("[data-fold-toggle]");
+    if (foldToggle) {
+      const fold = foldToggle.closest(".summary-fold");
+      const expand = fold.dataset.expanded !== "true";
+      fold.dataset.expanded = String(expand);
+      foldToggle.setAttribute("aria-expanded", String(expand));
+      foldToggle.textContent = expand ? "收起" : foldToggle.dataset.foldLabel;
+      state.expandedSummaries[expand ? "add" : "delete"](foldToggle.dataset.foldToggle);
+      return;
+    }
     const editButton = event.target.closest("[data-edit-description]");
     if (editButton) {
       state.editingDescriptionId = editButton.dataset.editDescription;
@@ -1450,6 +1534,7 @@ function bindEvents() {
   document.querySelector("#dialog-close").addEventListener("click", closeDialog);
   elements.dialog.addEventListener("click", (event) => { if (event.target === elements.dialog) closeDialog(); });
   elements.dialog.addEventListener("close", () => {
+    state.expandedSummaries.clear();
     unlockDialogBackground();
     history.replaceState(null, "", location.pathname + location.search);
   });

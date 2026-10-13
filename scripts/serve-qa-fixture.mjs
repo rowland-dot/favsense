@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { createServer } from "node:http";
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,7 +13,7 @@ const testHeader = "favsense-synthetic-v1";
 const scenarios = new Set([
   "success", "running-success", "partial", "summary-failed", "batch-aborted", "stale",
   "build-failed", "publish-failed", "safety-stopped", "local-rebuild", "legacy-safety-stop",
-  "resume-core-running", "resume-summary-running",
+  "resume-core-running", "resume-summary-running", "card-sources",
 ]);
 // A round already under way when the page opens: the first reads show it running, then it ends.
 const resuming = () => scenario === "resume-core-running" || scenario === "resume-summary-running";
@@ -55,7 +56,11 @@ const knowledge = {
   }],
 };
 
+// Real published cards frozen for the summary-source cases (one or more per case), so display tests use real data.
+const cardSources = JSON.parse(readFileSync(resolve(root, "scripts", "fixtures", "card-summary-sources.json"), "utf8"));
+
 function scenarioKnowledge() {
+  if (scenario === "card-sources") return structuredClone(cardSources);
   const value = structuredClone(knowledge);
   const note = value.notes[1];
   if (scenario === "summary-failed") note.summaryState = "failed";

@@ -22,3 +22,5 @@ ci-diagnostics/
 # Python caches
 __pycache__/
 *.pyc
+test-results/
+.impeccable/hook.cache.json
