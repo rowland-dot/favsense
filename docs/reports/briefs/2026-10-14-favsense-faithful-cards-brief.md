@@ -2,6 +2,7 @@
 
 - Branch `feat/faithful-cards`, last commit `6f2a099` (the commit that recorded the Step 7 result in the run log).
 - Written 2026-10-14 from: the spec, the plan, the run log, the code review, the design review, the six comparison reports, the QA report, the test-outcome report and `TODOS.md` (paths are listed at the bottom).
+- RED/GREEN evidence: docs/reports/test-outcomes/2026-10-14-favsense-faithful-cards-test-outcome.md
 - I did not re-run any test for this brief. Every count below comes from the report named next to it, and I say so where it matters.
 
 ## Headline
