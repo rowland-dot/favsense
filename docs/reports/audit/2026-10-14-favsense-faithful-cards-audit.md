@@ -359,3 +359,13 @@ Step 5 code-gate: PASS (syntax, a11y lint, node suites, organization, python; e2
 ## Step 6 — QA
 
 Report: docs/reports/qa/2026-10-14-favsense-faithful-cards-qa-report.md. Bugs 2, fixed 2: BUG-001 garbled picture text on …1ff7a (reader treats U+FFFD text as absent, 1c4e733; offline data rebuild e102d52 changed only that card, transcriptCount 103 -> 102, no U+FFFD left in published data — checked by orchestrator); BUG-002 mixed-encoding runner output in a Python test (73fdda4). Primary gate: triggers=6/6 states=6/6 regressions=0 destructive=0 callsites=0/0 — ok. Code-gate: PASS (unit suites; e2e 104/104). Note: QA found both preview servers down at start and ran its own.
+
+---
+
+## Step 7 — COVERAGE-FILL
+
+Stage A: /full-stack-tdd audit, report docs/reports/test-outcomes/2026-10-14-favsense-faithful-cards-test-outcome.md. Two real bugs fixed: long tool name clipped the 未核实 marker (5a4fd21); page builder accepted text the publisher refuses (8eb644a, builder now reuses the publisher list PUBLIC_FORBIDDEN, list content unchanged). Tests 275ff2f, 851a2fc, 03aa3c9; e2e 104 -> 122. knowledge.json unchanged.
+Stage B.1 Mount: warn (no components dir; vanilla JS site).
+Stage B.2 parity companion (docs/reports/parity/2026-10-14-step7-favsense-faithful-cards-card-design-rewrite-parity.md, base http://192.168.0.157:8790, all six states): CRITICAL=0 HIGH=6 MEDIUM=4 LOW=2; all six HIGH are anchor-position geometry (modal at viewport top vs drawing inside the comparison document). STEP7_PARITY_STATUS=BLOCK (CRIT=0 HIGH=6). Escalation not dispatched: parity-remediation is limited to CRITICAL and the only code change that would clear it is moving the live modal to match a comparison-page coordinate, which degrades the product. Recorded FAILED — geometry, for the owner.
+Code-gate: PASS (unit suites; e2e 122/122).
+Stage C walk (app code touched): green, 74/74 checklist rows. Walk notes: real data has 81 damaged replies and 14 cut-reply-only cards (checklist says 79 and 13; widened by f93455f); V-P2-09 clipboard ran with a stub on the http LAN origin.
