@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { auditCuration } from "../scripts/validate-curation.mjs";
@@ -152,4 +153,40 @@ test("an accepted entry with no action passes the standard", () => {
 test("an action that is written is still refused when it is a placeholder", () => {
   assert.match(fatal({ action: "继续关注" }), /action-not-specific/);
   assert.match(fatal({ action: PLACEHOLDER_ACTION_SKIP }), /no-chinese:action/);
+});
+
+// Issue #118: the standard refused "待确认" in a summary or action but not in a topic, so two accepted
+// entries published it as a topic chip ("实体待确认" and "工具待确认", their real topic lists below).
+// The wording the standard asks for when a fact is not established is "未核实".
+test("a topic that says 待确认 is refused, on the two real topic lists that carried it", () => {
+  assert.match(fatal({ themes: ["AI虚拟朋友", "实体待确认", "项目核验"] }), /placeholder-theme/);
+  assert.match(fatal({ themes: ["工具待确认", "账户安全", "跨境广告"] }), /placeholder-theme/);
+  // Wherever the word sits in the topic, and whichever position the topic has in the list.
+  assert.match(fatal({ themes: ["待确认"] }), /placeholder-theme/);
+  assert.match(fatal({ themes: ["账户安全", "跨境广告", "待确认的工具"] }), /placeholder-theme/);
+});
+
+test("guard: the same topics without the placeholder, and a topic saying 未核实, pass", () => {
+  assert.deepEqual(auditCuration(accepted({ themes: ["AI虚拟朋友", "项目核验"] }).input).fatal, []);
+  assert.deepEqual(auditCuration(accepted({ themes: ["账户安全", "跨境广告"] }).input).fatal, []);
+  assert.deepEqual(auditCuration(accepted({ themes: ["实体未核实", "项目核验"] }).input).fatal, []);
+});
+
+const SKILL_DIR = new URL("../", import.meta.url);
+const readSkillFile = (relative) => fs.readFileSync(new URL(relative, SKILL_DIR), "utf8");
+
+test("the curation instructions tell the curator to write 未核实, never 待确认", () => {
+  const skill = readSkillFile("SKILL.md");
+  assert.equal(skill.includes("待确认"), false, "SKILL.md still tells curators to write 待确认");
+  assert.match(skill, /事实不充分时必须写“未核实”/);
+  assert.match(skill, /不能唯一确认项目时必须保留“未核实”/);
+});
+
+test("the committed curation entries and card topics carry no 待确认 topic", () => {
+  const curation = JSON.parse(readSkillFile("references/skills-board-curation.json"));
+  const withPlaceholder = Object.values(curation).filter((entry) => (entry.themes || []).some((theme) => theme.includes("待确认")));
+  assert.deepEqual(withPlaceholder.map((entry) => entry.id), []);
+  const knowledge = JSON.parse(fs.readFileSync(new URL("../../../site/data/knowledge.json", import.meta.url), "utf8"));
+  const cards = knowledge.notes.filter((note) => (note.themes || []).some((theme) => theme.includes("待确认")));
+  assert.deepEqual(cards.map((note) => note.id), []);
 });
