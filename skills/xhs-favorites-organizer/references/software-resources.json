@@ -11,7 +11,7 @@
       "download": "https://github.com/anysearch-ai/anysearch-skill/archive/refs/heads/main.zip",
       "stars": "4.8k",
       "stars_numeric": 4800,
-      "usage_note": "使用前确认远程数据来源，以及凭据会被发送到哪里。"
+      "usage_note": "面向 AI Agent 的统一实时搜索 Skill，支持通用网页搜索、垂直领域搜索、并行批量搜索和整页内容提取。"
     },
     {
       "name": "Graphify",
@@ -21,7 +21,7 @@
       "download": "https://github.com/Graphify-Labs/graphify/archive/refs/heads/main.zip",
       "stars": "97.0k",
       "stars_numeric": 97000,
-      "usage_note": "建议先在仓库副本中建立图谱，避免直接影响工作目录。"
+      "usage_note": "把代码库连同文档、SQL 表结构、配置和 PDF 转成可查询的知识图谱，以 /graphify 技能用于 Claude Code、Cursor、Codex 等。"
     },
     {
       "name": "last30days Skill",
@@ -33,7 +33,7 @@
       "download": "https://github.com/mvanhorn/last30days-skill/archive/refs/heads/main.zip",
       "stars": "54.5k",
       "stars_numeric": 54500,
-      "usage_note": "MIT；部分来源需要 Cookie、平台登录或第三方 API，先限制来源与凭据范围。"
+      "usage_note": "研究任意主题的 AI Agent 技能：跨 Reddit、X、YouTube、HN、Polymarket 和网页检索，再综合成有依据的摘要。"
     },
     {
       "name": "Agent-Reach",
@@ -43,7 +43,7 @@
       "download": "https://github.com/Panniantong/Agent-Reach/archive/refs/heads/main.zip",
       "stars": "61.4k",
       "stars_numeric": 61400,
-      "usage_note": "建议启用只读和安全模式，再逐步开放能力。"
+      "usage_note": "让 AI Agent 读取并搜索 Twitter、Reddit、YouTube、GitHub、B 站和小红书的命令行工具，无需 API 费用。"
     },
     {
       "name": "mattpocock/skills",
@@ -53,7 +53,7 @@
       "download": "https://github.com/mattpocock/skills/archive/refs/heads/main.zip",
       "stars": "191.2k",
       "stars_numeric": 191200,
-      "usage_note": "建议逐项选择和测试，不要直接安装整个合集。"
+      "usage_note": "Matt Pocock 每天用来做真实工程开发的 Agent Skills 合集，强调扎实工程而不是凭感觉写代码。"
     },
     {
       "name": "andrej-karpathy-skills",
@@ -63,7 +63,7 @@
       "download": "https://github.com/multica-ai/andrej-karpathy-skills/archive/refs/heads/main.zip",
       "stars": "196.8k",
       "stars_numeric": 196800,
-      "usage_note": "使用前检查其中的编码规则是否与现有项目约定冲突。"
+      "usage_note": "一个 CLAUDE.md 文件，依据 Andrej Karpathy 对大模型写代码常见问题的观察，改善 Claude Code 的行为。"
     },
     {
       "name": "PPT Master",
@@ -75,7 +75,7 @@
       "download": "https://github.com/hugohe3/ppt-master/archive/refs/heads/main.zip",
       "stars": "41.4k",
       "stars_numeric": 41400,
-      "usage_note": "需要确认素材授权和导出后的可编辑性。"
+      "usage_note": "用 AI 把文档或主题生成原生 PowerPoint 演示文稿，含原生形状、动画、图表，并支持自带 .pptx 模板。"
     },
     {
       "name": "dot-skill / colleague-skill",
@@ -88,7 +88,7 @@
       "download": "https://github.com/titanwings/colleague-skill/archive/refs/heads/main.zip",
       "stars": "20.5k",
       "stars_numeric": 20500,
-      "usage_note": "只处理本人资料或已经取得明确授权的内容。"
+      "usage_note": "把一个人的经验、判断、语气和工作方式提炼成可复用的人物档案，供 AI Agent 和机器人使用。"
     },
     {
       "name": "PUA / PIP",
@@ -101,7 +101,7 @@
       "download": "https://github.com/tanweai/pua/archive/refs/heads/main.zip",
       "stars": "19.1k",
       "stars_numeric": 19100,
-      "usage_note": "可借鉴持续验证循环，不建议照搬其中的对抗性措辞。"
+      "usage_note": "给 AI Agent 用的高能动性 Skill，以“P8 工程师”“绩效改进计划（PIP）”式的话术驱动它更主动地完成任务。"
     },
     {
       "name": "web-access",
@@ -111,7 +111,7 @@
       "download": "https://github.com/eze-is/web-access/archive/refs/heads/main.zip",
       "stars": "8.5k",
       "stars_numeric": 8500,
-      "usage_note": "建议在隔离浏览器中使用，并限制下载和网页访问权限。"
+      "usage_note": "给 Claude Code 补上完整联网能力的 Skill，包含三层通道调度、浏览器 CDP 操作和并行分治。"
     },
     {
       "name": "Microsoft MarkItDown",
@@ -123,7 +123,7 @@
       "download": "https://github.com/microsoft/markitdown/archive/refs/heads/main.zip",
       "stars": "169.4k",
       "stars_numeric": 169400,
-      "usage_note": "适合优先测试 Markdown 转换的格式保真度。"
+      "usage_note": "把各类文件和办公文档转换成 Markdown 的 Python 工具。"
     },
     {
       "name": "Crawl4AI",
@@ -133,7 +133,7 @@
       "download": "https://github.com/unclecode/crawl4ai/archive/refs/heads/main.zip",
       "stars": "75.3k",
       "stars_numeric": 75300,
-      "usage_note": "重点测试动态页面抓取与 Markdown 输出质量。"
+      "usage_note": "面向大模型和 AI Agent 的开源网页爬取工具，把任意网站转成干净、可直接喂给大模型的 Markdown。"
     },
     {
       "name": "Wigolo",
@@ -143,7 +143,7 @@
       "download": "https://github.com/KnockOutEZ/wigolo/archive/refs/heads/main.zip",
       "stars": "3.7k",
       "stars_numeric": 3700,
-      "usage_note": "使用前确认索引来源、覆盖范围和更新时间。"
+      "usage_note": "面向 AI 编程助手的本地优先联网工具，通过 MCP 提供搜索、抓取、爬取与研究，无需 API Key 和云端。"
     },
     {
       "name": "Headroom",
@@ -153,7 +153,7 @@
       "download": "https://github.com/headroomlabs-ai/headroom/archive/refs/heads/main.zip",
       "stars": "74.9k",
       "stars_numeric": 74886,
-      "usage_note": "Apache-2.0；评估压缩率时同时检查答案正确率是否下降，并确认压缩发生在本地还是外部服务。",
+      "usage_note": "在工具输出、日志、文件和检索片段送进大模型之前先压缩，用更少 token 得到同样的答案，提供库、代理和 MCP 服务器。",
       "canonical_repo": "headroomlabs-ai/headroom",
       "default_branch": "main",
       "license": "Apache-2.0",
@@ -172,7 +172,7 @@
       "download": "https://github.com/cocoindex-io/cocoindex/archive/refs/heads/main.zip",
       "stars": "11.1k",
       "stars_numeric": 11100,
-      "usage_note": "重点比较 AST 索引质量、增量更新时间和运行成本。"
+      "usage_note": "面向长周期运行 Agent 的增量引擎，让 Agent 始终拿到新鲜的上下文。"
     },
     {
       "name": "Cognee",
@@ -182,7 +182,7 @@
       "download": "https://github.com/topoteretes/cognee/archive/refs/heads/main.zip",
       "stars": "29.5k",
       "stars_numeric": 29500,
-      "usage_note": "采用前确认数据能否完整导出和彻底删除。"
+      "usage_note": "开源的 AI 记忆平台，让 Agent 拥有跨会话的长期记忆，把文档、代码和对话变成可自托管的知识图谱。"
     },
     {
       "name": "Meetily",
@@ -192,7 +192,7 @@
       "download": "https://github.com/Zackriya-Solutions/meetily/archive/refs/heads/main.zip",
       "stars": "27.0k",
       "stars_numeric": 27000,
-      "usage_note": "需要实测中文转写质量，并确认所有参会者同意录音。"
+      "usage_note": "注重隐私的 AI 会议助手，在本机完成实时转写、说话人区分和摘要，不需要云端。"
     },
     {
       "name": "MediaCrawler",
@@ -202,7 +202,7 @@
       "download": "https://github.com/NanmiCoder/MediaCrawler/archive/refs/heads/main.zip",
       "stars": "58.1k",
       "stars_numeric": 58100,
-      "usage_note": "只处理自有、公开或已授权数据；遇到平台限制立即停止。"
+      "usage_note": "自媒体平台爬虫，抓取小红书、抖音、快手、B 站、微博、百度贴吧和知乎的内容与评论。"
     },
     {
       "name": "ScrapeGraphAI",
@@ -214,7 +214,7 @@
       "download": "https://github.com/ScrapeGraphAI/Scrapegraph-ai/archive/refs/heads/main.zip",
       "stars": "28.7k",
       "stars_numeric": 28700,
-      "usage_note": "开始前应明确允许采集的公开字段和禁止采集的信息。"
+      "usage_note": "一个基于 AI 的 Python 网页抓取库。"
     },
     {
       "name": "FinanceDatabase",
@@ -224,7 +224,7 @@
       "download": "https://github.com/JerBouma/FinanceDatabase/archive/refs/heads/main.zip",
       "stars": "8.3k",
       "stars_numeric": 8300,
-      "usage_note": "它提供标的元数据，不是实时行情来源。"
+      "usage_note": "收录 30 万以上股票、ETF、基金、指数、货币、加密货币和货币市场代码的金融标的数据库。"
     },
     {
       "name": "Mano-P",
@@ -234,7 +234,7 @@
       "download": "https://github.com/Mininglamp-AI/Mano-P/archive/refs/heads/main.zip",
       "stars": "2.5k",
       "stars_numeric": 2500,
-      "usage_note": "需要核对硬件要求，并设置防止误操作的保护措施。"
+      "usage_note": "面向边缘设备的开源 GUI-VLA 智能体，可在 Mac 上本地运行，纯视觉驱动跨平台 GUI 自动化，数据不出本机。"
     },
     {
       "name": "Grok Build",
@@ -244,7 +244,7 @@
       "download": "https://github.com/xai-org/grok-build/archive/refs/heads/main.zip",
       "stars": "23.0k",
       "stars_numeric": 23000,
-      "usage_note": "建议用相同任务与现有 Coding Agent 做对比测试。"
+      "usage_note": "SpaceXAI 的终端 AI 编程 Agent，全屏 TUI 界面，能理解代码库、改文件、执行命令和联网搜索。"
     },
     {
       "name": "Postiz",
@@ -254,7 +254,7 @@
       "download": "https://github.com/gitroomhq/postiz-app/archive/refs/heads/main.zip",
       "stars": "30.9k",
       "stars_numeric": 30900,
-      "usage_note": "采用 AGPL；自动发布前应保留人工确认。"
+      "usage_note": "社交媒体管理平台，用于内容排期、自动发布和数据分析，可用云端版或自行部署开源版。"
     },
     {
       "name": "awesome-selfhosted",
@@ -264,7 +264,7 @@
       "download": "https://github.com/awesome-selfhosted/awesome-selfhosted/archive/refs/heads/master.zip",
       "stars": "308.7k",
       "stars_numeric": 308700,
-      "usage_note": "适合发现项目，不建议按目录整体安装。"
+      "usage_note": "收录可自行托管的免费软件网络服务和 Web 应用的清单。"
     },
     {
       "name": "Pake",
@@ -274,7 +274,7 @@
       "download": "https://github.com/tw93/Pake/archive/refs/heads/master.zip",
       "stars": "60.3k",
       "stars_numeric": 60300,
-      "usage_note": "是否采用取决于桌面封装需求和目标平台。"
+      "usage_note": "用一条命令把任意网页变成体积小、速度快的桌面应用，支持 macOS、Windows 和 Linux。"
     },
     {
       "name": "Palmier Pro",
@@ -284,7 +284,7 @@
       "download": "https://github.com/palmier-io/palmier-pro/archive/refs/heads/main.zip",
       "stars": "12.3k",
       "stars_numeric": 12300,
-      "usage_note": "使用前确认媒体访问权限和输出是否可继续编辑。"
+      "usage_note": "为 AI 打造的 macOS 视频编辑器。"
     },
     {
       "name": "codebase-memory-mcp",
@@ -294,7 +294,7 @@
       "download": "https://github.com/DeusData/codebase-memory-mcp/archive/refs/heads/main.zip",
       "stars": "35.9k",
       "stars_numeric": 35900,
-      "usage_note": "与 CocoIndex、Graphify 功能重叠，建议先做同题比较。"
+      "usage_note": "高性能的代码智能 MCP 服务器，把代码库索引成持久的知识图谱，用于代码搜索并减少 token 用量。"
     },
     {
       "name": "Scritty",
@@ -304,7 +304,7 @@
       "download": "https://github.com/scritty-org/scritty/archive/refs/heads/main.zip",
       "stars": "9",
       "stars_numeric": 9,
-      "usage_note": "GitHub 主要提供文档和发布包；使用前确认加密、遥测与删除机制。"
+      "usage_note": "一个终端模拟器，让 Claude、Codex、Copilot、Gemini 等 AI 命令行工具共用一份可搜索的本地记忆。"
     },
     {
       "name": "whichllm",
@@ -314,7 +314,7 @@
       "download": "https://github.com/Andyyyy64/whichllm/archive/refs/heads/main.zip",
       "stars": "6k",
       "stars_numeric": 6000,
-      "usage_note": "会读取本机硬件并访问 Hugging Face；使用前确认联网行为与模型缓存位置。"
+      "usage_note": "按真实基准榜单，找出在你的硬件上真正跑得动且表现最好的本地大模型。"
     },
     {
       "name": "Cloud Mail",
@@ -326,7 +326,7 @@
       "download": "https://github.com/maillab/cloud-mail/archive/refs/heads/main.zip",
       "stars": "12.9k",
       "stars_numeric": 12900,
-      "usage_note": "先用测试域名核对 DNS、转发、访问控制、垃圾邮件和数据保留策略。"
+      "usage_note": "基于 Cloudflare 的简约响应式邮箱服务，一个域名即可创建多个邮箱，支持收发邮件和附件。"
     },
     {
       "name": "AiToEarn",
@@ -336,7 +336,7 @@
       "download": "https://github.com/yikart/AiToEarn/archive/refs/heads/main.zip",
       "stars": "24.4k",
       "stars_numeric": 24400,
-      "usage_note": "先使用草稿和人工审核，不要直接授权自动发布到正式账号。"
+      "usage_note": "面向一人公司的 AI 内容营销智能体，帮创作者和品牌在抖音、小红书等平台构建、分发并变现内容。"
     },
     {
       "name": "aliang-skills",
@@ -348,7 +348,7 @@
       "download": "https://github.com/aliang2052/aliang-skills/archive/refs/heads/main.zip",
       "stars": "20",
       "stars_numeric": 20,
-      "usage_note": "依赖百炼 CLI 和 API Key；视频生成可能产生费用，必须保留显式确认。"
+      "usage_note": "阿亮开源的 AIGC Skills 合集，一句话触发短剧成片、电商详情图、儿童故事、有声绘本、配音和播客。"
     },
     {
       "name": "AutoResearch",
@@ -360,7 +360,7 @@
       "download": "https://github.com/karpathy/autoresearch/archive/refs/heads/master.zip",
       "stars": "92.2k",
       "stars_numeric": 92200,
-      "usage_note": "必须设置隔离环境、固定预算、单一指标和停止条件，防止指标投机。"
+      "usage_note": "让 AI Agent 在单张 GPU 上自动开展 nanochat 训练研究的项目。"
     },
     {
       "name": "Build Your Own X",
@@ -372,7 +372,7 @@
       "download": "https://github.com/codecrafters-io/build-your-own-x/archive/refs/heads/master.zip",
       "stars": "532.4k",
       "stars_numeric": 532400,
-      "usage_note": "它是教程目录而不是可安装 Skill；应按学习目标选择单个项目。"
+      "usage_note": "收录分步教程的合集，教你从零重新实现自己喜欢的技术，在复刻中掌握编程。"
     },
     {
       "name": "pm-skills",
@@ -384,7 +384,7 @@
       "download": "https://github.com/phuryn/pm-skills/archive/refs/heads/main.zip",
       "stars": "24.6k",
       "stars_numeric": 24600,
-      "usage_note": "按具体产品阶段选择单项 Skill，不要默认安装全部工作流。"
+      "usage_note": "产品经理技能市场，提供从发现、策略到执行、发布和增长的大量 Agent 技能、命令和插件。"
     },
     {
       "name": "Hermes Agent",
@@ -396,7 +396,7 @@
       "download": "https://github.com/NousResearch/hermes-agent/archive/refs/heads/main.zip",
       "stars": "221.8k",
       "stars_numeric": 221800,
-      "usage_note": "启用自我改进和外部工具前，先限制文件、网络与执行权限。"
+      "usage_note": "Nous Research 开发的自我改进 AI Agent，内置学习闭环，能从经验中创建并改进技能、检索过往对话。"
     },
     {
       "name": "Open Notebook",
@@ -408,7 +408,7 @@
       "download": "https://github.com/lfnovo/open-notebook/archive/refs/heads/main.zip",
       "stars": "36.1k",
       "stars_numeric": 36100,
-      "usage_note": "部署前确认模型提供商、存储位置、引用质量和内容删除机制。"
+      "usage_note": "开源、注重隐私的 Google NotebookLM 替代品，功能更灵活。"
     },
     {
       "name": "Impeccable",
@@ -418,7 +418,7 @@
       "download": "https://github.com/pbakaus/impeccable/archive/refs/heads/main.zip",
       "stars": "52.1k",
       "stars_numeric": 52100,
-      "usage_note": "Apache-2.0；先初始化项目设计约束，再使用审查和改进命令。"
+      "usage_note": "面向 AI 编程助手的设计指导，提供设计 Skill、命令、实时浏览器迭代和检测 AI 生成前端设计问题的规则。"
     },
     {
       "name": "Open-LLM-VTuber",
@@ -428,7 +428,7 @@
       "download": "https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/archive/refs/heads/main.zip",
       "stars": "12.8k",
       "stars_numeric": 12800,
-      "usage_note": "代码、前端和 Live2D 素材可能适用不同许可证；商用前逐项核对。"
+      "usage_note": "可在本地跨平台运行的语音交互项目：免提对话、语音打断，并带 Live2D 虚拟形象，可接任意大模型。"
     },
     {
       "name": "Harness",
@@ -440,7 +440,7 @@
       "download": "https://github.com/revfactory/harness/archive/refs/heads/main.zip",
       "stars": "8.5k",
       "stars_numeric": 8500,
-      "usage_note": "生成的 Agent 和 Skill 仍需人工审查权限、边界与验收条件；采用 Apache-2.0。"
+      "usage_note": "为特定领域设计 Agent 团队、定义专门 Agent 并生成其所用技能的元技能。"
     },
     {
       "name": "Taste Skill",
@@ -452,7 +452,7 @@
       "download": "https://github.com/Leonxlnx/taste-skill/archive/refs/heads/main.zip",
       "stars": "68.6k",
       "stars_numeric": 68600,
-      "usage_note": "MIT；默认 v2 仍标注为实验版，应按项目选择单一设计 Skill 并锁定版本。"
+      "usage_note": "让编程 Agent 有审美的 Skill，用艺术指导、参考图和浏览器检查取代千篇一律的 AI 页面。"
     },
     {
       "name": "CRMEB",
@@ -464,7 +464,7 @@
       "download": "https://github.com/crmeb/CRMEB/archive/refs/heads/master.zip",
       "stars": "9.2k",
       "stars_numeric": 9200,
-      "usage_note": "Apache-2.0；真实交易前必须审计支付、用户数据、权限、备份与升级路径。"
+      "usage_note": "开源多语言商城系统，含小程序、H5、公众号、PC 和 App 商城，支持分销、拼团、秒杀、优惠券和会员等营销功能。"
     },
     {
       "name": "Higgsfield Skills",
@@ -476,7 +476,7 @@
       "download": "https://github.com/higgsfield-ai/skills/archive/refs/heads/main.zip",
       "stars": "622",
       "stars_numeric": 622,
-      "usage_note": "MIT；传播预测只是创作启发，上传视频前确认素材权利与隐私。"
+      "usage_note": "用 Higgsfield AI 生成图像和视频、搭建完整视觉品牌体系的 Agent 技能，含 Marketing Studio 与视频评分。"
     },
     {
       "name": "Higgsfield CLI",
@@ -488,7 +488,7 @@
       "download": "https://github.com/higgsfield-ai/cli/archive/refs/heads/main.zip",
       "stars": "425",
       "stars_numeric": 425,
-      "usage_note": "MIT；使用前核对账号凭据、付费调用、生成素材保存位置和版权条件。"
+      "usage_note": "在终端里调用多种 Higgsfield AI 模型生成图片、视频、3D 素材和音频，并分析成片的命令行工具。"
     },
     {
       "name": "Marketing Skills",
@@ -500,7 +500,7 @@
       "download": "https://github.com/coreyhaines31/marketingskills/archive/refs/heads/main.zip",
       "stars": "42.1k",
       "stars_numeric": 42108,
-      "usage_note": "MIT；按角色选择单项 Skill，并用产品事实、品牌语气、合规与人工发布统一验收。"
+      "usage_note": "面向 Claude Code 等 AI 编程助手的营销技能合集，覆盖转化优化、文案、SEO、数据分析和增长工程。"
     },
     {
       "name": "Aaron Marketing Skills",
@@ -513,7 +513,7 @@
       "download": "https://github.com/aaron-he-zhu/aaron-marketing-skills/archive/refs/heads/main.zip",
       "stars": "2.5k",
       "stars_numeric": 2473,
-      "usage_note": "Apache-2.0；视频中的旧仓库已迁移到这里，安装时使用当前主仓库。"
+      "usage_note": "把 AI 做成营销团队的 Skill 合集，覆盖叙事、SEO/GEO、社媒、邮件、付费投放、红人和发布七个方向。"
     },
     {
       "name": "AI HOT",
@@ -526,7 +526,7 @@
       "download": "https://github.com/KKKKhazix/khazix-skills/archive/refs/heads/main.zip",
       "stars": "18.6k",
       "stars_numeric": 18574,
-      "usage_note": "MIT；Skill 位于 aihot 目录，热点结论必须回到原始来源核验并保留日期。"
+      "usage_note": "数字生命卡兹克开源的 AI Skills 合集，含 leader、neat-freak、hv-analysis、khazix-writer 等。"
     },
     {
       "name": "OpenCLI",
@@ -538,7 +538,7 @@
       "download": "https://github.com/jackwener/opencli/archive/refs/heads/main.zip",
       "stars": "27.3k",
       "stars_numeric": 27300,
-      "usage_note": "Apache-2.0；会使用已登录浏览器，先限制站点、命令与写操作，并用专用会话测试。"
+      "usage_note": "把任意网站变成命令行，并让 AI Agent 使用你已登录的 Chrome 浏览器完成导航、填表、点击和提取。"
     },
     {
       "name": "NotebookLM Skill",
@@ -550,7 +550,7 @@
       "download": "https://github.com/PleasePrompto/notebooklm-skill/archive/refs/heads/master.zip",
       "stars": "7.5k",
       "stars_numeric": 7500,
-      "usage_note": "MIT；仅本地 Claude Code，依赖非官方浏览器自动化并保存 Google 会话，建议使用专用账号且不要共享认证目录。"
+      "usage_note": "让 Claude Code 直接与 Google NotebookLM 笔记本对话的 Skill，只依据你上传的资料给出带引用的回答。"
     },
     {
       "name": "ListenHub Skills",
@@ -563,7 +563,7 @@
       "download": "https://github.com/marswaveai/skills/archive/refs/heads/main.zip",
       "stars": "75",
       "stars_numeric": 75,
-      "usage_note": "MIT；部分能力需要 ListenHub API Key 或 OAuth，生成音视频前核对费用、声音授权和素材出口。"
+      "usage_note": "MarsWave 为编程 Agent 提供的 AI 技能合集，来自 ListenHub.ai 与 ColaOS，涵盖内容创作等能力。"
     },
     {
       "name": "Stitch Remotion Skill",
@@ -576,7 +576,7 @@
       "download": "https://github.com/google-labs-code/stitch-skills/archive/refs/heads/main.zip",
       "stars": "7.8k",
       "stars_numeric": 7800,
-      "usage_note": "Apache-2.0；目标 Skill 位于 stitch-build/remotion，并依赖 Stitch MCP；不要与 Remotion 框架主仓库混淆。"
+      "usage_note": "与 Stitch MCP 服务器配合的 Agent Skills 库，遵循开放标准，适用于 Claude Code、Gemini CLI、Cursor 等。"
     },
     {
       "name": "Humanizer-zh",
@@ -588,7 +588,7 @@
       "download": "https://github.com/op7418/Humanizer-zh/archive/refs/heads/main.zip",
       "stars": "14.0k",
       "stars_numeric": 14000,
-      "usage_note": "MIT；用于改善表达而不是规避检测，改写后仍需人工核对事实、引文与作者声音。"
+      "usage_note": "中文文本润色 Skill，编辑已有文章里的空话、重复和模板化表达，同时保留事实、确定程度和作者声音。"
     },
     {
       "name": "baoyu-skills",
@@ -601,7 +601,7 @@
       "download": "https://github.com/JimLiu/baoyu-skills/archive/refs/heads/main.zip",
       "stars": "24.3k",
       "stars_numeric": 24300,
-      "usage_note": "MIT；只安装所需 Skill，逐项核对 API Key、付费生成、第三方素材和自动发布权限。"
+      "usage_note": "宝玉分享的 Agent Skills 合集，用 Claude Code、Codex 等 AI Agent 提升日常工作效率。"
     },
     {
       "name": "FreeDomain",
@@ -613,7 +613,7 @@
       "download": "https://github.com/DigitalPlatDev/FreeDomain/archive/refs/heads/main.zip",
       "stars": "189.2k",
       "stars_numeric": 189201,
-      "usage_note": "AGPL-3.0；提供子域名而非自有顶级域名，长期业务需评估控制权、续期、滥用政策与服务连续性。"
+      "usage_note": "提供免费域名注册和实用的 DNS 学习资源，帮助项目从注册域名一路走到上线。"
     },
     {
       "name": "AiWind",
@@ -703,7 +703,7 @@
       "download": "https://github.com/anthropics/skills/archive/refs/heads/main.zip",
       "stars": "164.8k",
       "stars_numeric": 164800,
-      "usage_note": "仓库包含混合许可证内容；frontend-design 的具体许可应读取其 LICENSE.txt，不要把整仓统一视为 Apache-2.0。"
+      "usage_note": "Anthropic 官方的 Agent Skills 仓库，技能是 Claude 按需动态加载、用来完成专门任务的说明、脚本和资源文件夹。"
     },
     {
       "name": "UI/UX Pro Max",
@@ -715,7 +715,7 @@
       "download": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/archive/refs/heads/main.zip",
       "stars": "111.1k",
       "stars_numeric": 111100,
-      "usage_note": "MIT；安装前核对当前 CLI 包名和实际交付的 Skill 数量，必要时使用官方仓库源码安装。"
+      "usage_note": "为多平台、多框架的专业 UI/UX 设计提供设计智能的 AI Skill。"
     },
     {
       "name": "UI Skills",
@@ -728,7 +728,7 @@
       "download": "https://github.com/ibelick/ui-skills/archive/refs/heads/main.zip",
       "stars": "6.7k",
       "stars_numeric": 6700,
-      "usage_note": "MIT；按 baseline、accessibility、motion 等单项安装，不必整套同时启用。"
+      "usage_note": "面向设计工程师的 Skills 合集，可通过命令行或 MCP 在注册库里浏览并获取。"
     },
     {
       "name": "OpenPencil",
@@ -741,7 +741,7 @@
       "download": "https://github.com/open-pencil/open-pencil/archive/refs/heads/master.zip",
       "stars": "7.4k",
       "stars_numeric": 7400,
-      "usage_note": "MIT；MCP 默认可操作设计文件，使用 OPENPENCIL_MCP_ROOT 限定文件范围，并在导出前人工检查。"
+      "usage_note": "AI 原生的开源设计编辑器，Figma 的开源替代品，可打开 .fig 和 .pen 文件并内置 AI。"
     },
     {
       "name": "video-use",
@@ -753,7 +753,7 @@
       "download": "https://github.com/browser-use/video-use/archive/refs/heads/main.zip",
       "stars": "8.5k",
       "stars_numeric": 8500,
-      "usage_note": "MIT；官方流程依赖 FFmpeg 与 ElevenLabs Scribe API。处理私人素材前核对上传范围、费用和声音/肖像授权，也可替换为本地 ASR。"
+      "usage_note": "用 Claude Code 剪辑视频的开源工具：素材放进文件夹，对话后得到成片，可剪掉口头禅等。"
     },
     {
       "name": "MiniMind",
@@ -765,7 +765,7 @@
       "download": "https://github.com/jingyaogong/minimind/archive/refs/heads/master.zip",
       "stars": "53.9k",
       "stars_numeric": 53900,
-      "usage_note": "Apache-2.0；官方‘两小时’基准是单张 RTX 3090 上的一次 SFT epoch，不代表任意硬件或完整生产训练。"
+      "usage_note": "从零开始、约两小时训练出一个 64M 参数大模型的开源项目。"
     },
     {
       "name": "Browser Harness",
@@ -777,7 +777,7 @@
       "download": "https://github.com/browser-use/browser-harness/archive/refs/heads/main.zip",
       "stars": "13.9k",
       "stars_numeric": 13900,
-      "usage_note": "MIT；可直接操作真实浏览器且扩展 helper，自由度高。应使用隔离配置、最小权限、动作日志和写操作确认门。"
+      "usage_note": "通过一条可编辑的 CDP websocket 把大模型直接连到你的真实浏览器，Agent 会在工作中自己补写缺少的辅助函数。"
     },
     {
       "name": "RTK",
@@ -789,7 +789,7 @@
       "download": "https://github.com/rtk-ai/rtk/archive/refs/heads/develop.zip",
       "stars": "74.6k",
       "stars_numeric": 74557,
-      "usage_note": "Apache-2.0；压缩比例因命令而异。启用前用固定任务验证关键错误、diff 与日志行没有被过滤。",
+      "usage_note": "压缩常见开发命令输出的命令行代理，可减少 60% 到 90% 的大模型 token 消耗，单个 Rust 二进制文件。",
       "license": "Apache-2.0",
       "verified_at": "2026-08-04"
     },
@@ -803,7 +803,7 @@
       "download": "https://github.com/D4Vinci/Scrapling/archive/refs/heads/main.zip",
       "stars": "71.6k",
       "stars_numeric": 71600,
-      "usage_note": "BSD-3-Clause；只采集自有、公开或已授权页面。遇到验证码、频控或平台安全限制立即停止。"
+      "usage_note": "自适应的网页抓取框架，从单次请求到大规模爬取都能处理。"
     },
     {
       "name": "VividDub",
@@ -817,7 +817,7 @@
       "website": "https://vividdub.com/",
       "stars": "30",
       "stars_numeric": 30,
-      "usage_note": "官方 GitHub 仓库已确认。仓库公开，但截至 2026-07-29 主要包含产品说明与仓库治理文件，未见应用源码或开源许可证；它不是 Agent Skill。使用产品前仍需核对素材权利、声音克隆授权、隐私与计费。",
+      "usage_note": "AI 视频翻译、配音、字幕与硬字幕移除产品，面向创作者、工作室和全球内容团队。",
       "license": "未声明",
       "verified_at": "2026-08-04"
     },
@@ -898,7 +898,7 @@
       "website": "https://openai.com/codex/",
       "stars": "105.3k",
       "stars_numeric": 105300,
-      "usage_note": "OpenAI 官方编码 Agent 与开源 CLI。把业务 SOP 封装为 Skill 前，应限制文件、联网和命令权限，并用可回滚样例验证输出。",
+      "usage_note": "OpenAI 出品、在本机终端运行的编程 Agent（Codex CLI）。",
       "license": "Apache-2.0",
       "verified_at": "2026-08-12"
     },
@@ -913,7 +913,7 @@
       "download": "https://github.com/nexscope-ai/Amazon-Skills/archive/refs/heads/main.zip",
       "stars": "524",
       "stars_numeric": 524,
-      "usage_note": "MIT；官方仓库包含 53 个 Amazon 卖家 Skill，并明确 Skill 本身不能访问实时市场数据。采用前逐项核对费率、数据日期、脚本与外部权限。",
+      "usage_note": "面向亚马逊卖家的免费 AI Agent 技能，涵盖关键词研究、竞品分析、Listing 审核、FBA 计算和广告投放。",
       "license": "MIT",
       "skill_manifest": "amazon-global-selling/SKILL.md",
       "verified_at": "2026-08-12"
@@ -959,7 +959,7 @@
         "README.md"
       ],
       "status": "verified",
-      "usage_note": "先审查插件 hooks 与 Node 依赖，再在测试分支用同一任务对比代码量、正确性和测试完整性；94% 是官方基准中的单任务上限，不是普遍保证。",
+      "usage_note": "让 AI Agent 像团队里最懒的资深开发者那样思考的 Skill：最好的代码就是你没写过的代码。",
       "source_urls": [
         "https://github.com/DietrichGebert/ponytail",
         "https://github.com/DietrichGebert/ponytail/blob/main/README.md",
@@ -985,7 +985,7 @@
       "verified_at": "2026-08-27",
       "stars_numeric": 27337,
       "status": "verified",
-      "usage_note": "Apache-2.0；会调用第三方模型、TTS、图像或视频服务。只用测试凭据和自有素材，先核对供应商费用、素材版权、网络访问与本地缓存。",
+      "usage_note": "AI 全自动短视频引擎：只需输入主题，就能自动写文案、生成配图或视频、合成语音解说、配背景音乐并合成成片。",
       "source_urls": [
         "https://github.com/ATH-MaaS/Pixelle-Video",
         "https://github.com/ATH-MaaS/Pixelle-Video/blob/main/README.md",
@@ -1017,7 +1017,7 @@
         "README.md"
       ],
       "status": "verified",
-      "usage_note": "MIT；首次 npx 使用会下载预编译包。扫描或纯图片 PDF 不受本地转换支持，需要另行受控文字识别；先用无敏感内容的样本文档验证格式保真。",
+      "usage_note": "把 Word、PowerPoint、Excel、RTF、EPUB、CSV 和 PDF 等转成干净 Markdown 的 Rust 库，带 Node.js 和 Python 绑定。",
       "source_urls": [
         "https://github.com/firecrawl/anydoc",
         "https://github.com/firecrawl/anydoc/blob/main/README.md",
@@ -1050,7 +1050,7 @@
         "README.md"
       ],
       "status": "verified",
-      "usage_note": "MIT；安装前先阅读 SKILL.md，确认它会读写哪些文件、是否联网。",
+      "usage_note": "用于项目规划、纠偏与评审的便携 Agent Skill，先看证据再给构建建议，Codex、Claude Code 等都能加载。",
       "source_urls": [
         "https://github.com/AaravKashyap12/advise-project-approach",
         "https://github.com/AaravKashyap12/advise-project-approach/blob/main/README.md",
@@ -1077,7 +1077,7 @@
       "verified_at": "2026-08-28",
       "stars_numeric": 117620,
       "status": "verified",
-      "usage_note": "项目会调用文本、语音和素材服务生成视频；只用自有或已授权素材，在隔离环境审查第三方 API、凭据、网络访问、缓存与输出版权，不采信批量产量或收益承诺。",
+      "usage_note": "只需提供主题或关键词，就能自动生成视频脚本、匹配素材、生成字幕和背景音乐并合成高清短视频的一站式工具。",
       "source_urls": [
         "https://github.com/harry0703/MoneyPrinterTurbo",
         "https://github.com/harry0703/MoneyPrinterTurbo/blob/main/README.md",
@@ -1100,7 +1100,7 @@
       "verified_at": "2026-08-29",
       "stars_numeric": 61897,
       "status": "verified",
-      "usage_note": "GPL-3.0；支持多平台热点、RSS、AI 分析和多种推送渠道。启用前只配置必要来源，审查第三方模型、消息推送、邮箱和 MCP 的凭据与数据外发范围。",
+      "usage_note": "AI 驱动的舆情与热点监控工具，聚合多平台热点和 RSS，按关键词筛选，并把 AI 分析简报推送到手机。",
       "source_urls": [
         "https://github.com/sansan0/TrendRadar",
         "https://github.com/sansan0/TrendRadar/blob/master/README.md",
@@ -1123,7 +1123,7 @@
       "verified_at": "2026-08-29",
       "stars_numeric": 12919,
       "status": "verified",
-      "usage_note": "Apache-2.0；本地语音 Agent 由 VAD、语音识别、语言模型和语音合成组成。使用前核对模型下载、麦克风、网络后端、显存与语音数据留存范围。",
+      "usage_note": "用开源模型构建语音 Agent 的项目，在本机运行低延迟语音对话，无需 API Key 和云服务。",
       "source_urls": [
         "https://github.com/huggingface/speech-to-speech",
         "https://github.com/huggingface/speech-to-speech/blob/main/README.md",
@@ -1148,7 +1148,7 @@
       "stars_numeric": 2814,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；npm 全局安装后用 omm setup 接入编码 Agent。云端分享（omm push）会把架构描述上传到 ohmymermaid.com，私有代码库先确认可上传范围。",
+      "usage_note": "借助 Claude Code 把复杂代码库变成清晰、可浏览的架构图。",
       "source_urls": [
         "https://github.com/oh-my-mermaid/oh-my-mermaid"
       ]
@@ -1169,7 +1169,7 @@
       "stars_numeric": 3236,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "CC-BY-4.0；会把观察记录写入本地工作区，改动 Skill 前需人工审核。",
+      "usage_note": "监视工作会话、捕捉模式与纠正，并把它们转成 Skill 改进建议和新 Skill 候选的元技能。",
       "source_urls": [
         "https://github.com/rebelytics/one-skill-to-rule-them-all",
         "https://www.rebelytics.com/task-observer/"
@@ -1190,7 +1190,7 @@
       "stars_numeric": 212,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；为同一组件生成四个设计变体供比较，先在分支上试用并人工挑选。",
+      "usage_note": "为同一个组件生成四个设计变体、方便比较迭代的精简设计 Skill，适用于 Claude Code、Codex CLI 和 opencode。",
       "source_urls": [
         "https://github.com/Nutlope/variate",
         "https://variate-skill.vercel.app"
@@ -1212,7 +1212,7 @@
       "stars_numeric": 10861,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "仓库未声明标准许可证；内容基于《The Minimalist Entrepreneur》，复用或分发前先确认授权。",
+      "usage_note": "基于 Sahil Lavingia《The Minimalist Entrepreneur》一书制作的 Claude Code 技能。",
       "source_urls": [
         "https://github.com/slavingia/skills",
         "https://minimalistentrepreneur.com"
@@ -1234,7 +1234,7 @@
       "stars_numeric": 33633,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；find-skills 用于检索与安装第三方 Skill，安装前逐个审查来源与权限。",
+      "usage_note": "开放 Agent Skills 生态的命令行工具，用来查找、添加和使用各类 Agent Skill，支持 OpenCode、Claude Code、Codex 等。",
       "source_urls": [
         "https://github.com/vercel-labs/skills",
         "https://skills.sh"
@@ -1253,7 +1253,7 @@
       "stars_numeric": 74875,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；聚合多家免费额度并自动切换，需遵守各提供商条款，API Key 只存本机并定期轮换。",
+      "usage_note": "免费的 AI 网关，用一个入口接入大量模型提供商，带额度感知的自动切换，可配合 Claude Code、Codex、Cursor 使用。",
       "source_urls": [
         "https://github.com/diegosouzapw/OmniRoute",
         "https://omniroute.online"
@@ -1274,7 +1274,7 @@
       "stars_numeric": 4532,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "抓取前确认目标站点条款与 robots 规则，不用于绕过登录或付费墙。",
+      "usage_note": "开源网页抓取 API，把任意网站转成干净的 Markdown 或结构化 JSON，带反检测浏览器与代理自动选择，可自托管。",
       "source_urls": [
         "https://github.com/Anakin-Inc/anakin",
         "https://anakin.io"
@@ -1295,7 +1295,7 @@
       "stars_numeric": 3835,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "仓库未声明标准许可证；卡网渠道属第三方转售，购买前核对官方条款、账号安全与退款风险。",
+      "usage_note": "AI 订阅卡网渠道比价工具，汇总多个渠道的 ChatGPT、Claude、Gemini、Grok 等报价，展示有货最低价与库存。",
       "source_urls": [
         "https://github.com/dimthink/PriceAI",
         "https://priceai.cc"
@@ -1316,7 +1316,7 @@
       "stars_numeric": 2916,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "仓库未声明标准许可证；模板复用前确认授权，并按自己的任务补齐上下文。",
+      "usage_note": "覆盖提示词工程、工作、学习、内容、营销和生活场景的中英双语 AI 提示词库。",
       "source_urls": [
         "https://github.com/yaojingang/yao-open-prompts",
         "https://yaojingang.github.io/yao-open-prompts/"
@@ -1337,7 +1337,7 @@
       "stars_numeric": 34259,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；同名仓库较多，以 freestylefly 版本为准；生成图涉及品牌或人像时自行确认版权与肖像授权。",
+      "usage_note": "GPT Image 2 / 2.5 的提示词与案例库，收录大量案例和工业级模板，附完整提示词与生成记录。",
       "source_urls": [
         "https://github.com/freestylefly/awesome-gpt-image-2",
         "https://gpt-image2.canghe.ai"
@@ -1358,7 +1358,7 @@
       "stars_numeric": 32800,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；聚合多家免费额度，需遵守各平台条款，不把生产或敏感数据发往免费层，密钥加密存储并可随时吊销。",
+      "usage_note": "把几十家免费 LLM 提供商聚合到单一 OpenAI 兼容端点，带智能路由和自动故障转移，仅供个人实验。",
       "source_urls": [
         "https://github.com/tashfeenahmed/freellmapi",
         "https://freellmapi.co"
@@ -1396,7 +1396,7 @@
       "stars_numeric": 1603,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "Apache-2.0；0.1B 版本可在 CPU 运行并支持零样本音色克隆。只克隆本人或已获授权的声音，生成内容标注为合成语音。",
+      "usage_note": "0.6B 参数的多语言文本转语音模型，支持零样本音色克隆。",
       "source_urls": [
         "https://github.com/Edge0-AI/Audio8_TTS"
       ]
@@ -1417,7 +1417,7 @@
       "stars_numeric": 13,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "Sand.ai 官方 VidMuse Agent 入口，仓库未声明标准许可证；安装脚本通过管道执行，先阅读仓库内镜像脚本再运行，并确认生成额度计费与素材版权。",
+      "usage_note": "让 AI Agent 创建和查看 VidMuse 视频项目、管理对话与素材、查询风格和声音的公开技能。",
       "source_urls": [
         "https://github.com/SandAI-org/vidmuse-skills"
       ]
@@ -1453,7 +1453,7 @@
       "stars_numeric": 27298,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；只对自有代码运行，审计结论需人工复核后再修复。",
+      "usage_note": "把编程 Agent 变成安全审计员的 Skill，分阶段完成侦察、猎取、候选验证、结构化输出与独立核验。",
       "source_urls": [
         "https://github.com/cloudflare/security-audit-skill"
       ]
@@ -1474,7 +1474,7 @@
       "stars_numeric": 45789,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "Apache-2.0；接入外部模型前确认代码可发送范围，先在非关键仓库试跑。",
+      "usage_note": "源自阿里巴巴内部 AI 代码评审助手的命令行工具，结合确定性流水线与大模型 Agent，给出精确到行的评审意见。",
       "source_urls": [
         "https://github.com/alibaba/open-code-review",
         "https://open-codereview.ai"
@@ -1495,7 +1495,7 @@
       "stars_numeric": 8563,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；会使用已登录浏览器，限定站点与写操作，用独立浏览器配置测试。",
+      "usage_note": "让 AI Agent 在你已登录的浏览器里工作而不打断你，由命令行和浏览器扩展组成，适用于能用 shell 的 Agent。",
       "source_urls": [
         "https://github.com/Tencent/BrowserSkill"
       ]
@@ -1516,7 +1516,7 @@
       "stars_numeric": 13409,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "Apache-2.0；先在沙箱或测试集群运行，限制并发与外部写权限。",
+      "usage_note": "Google 开源的 Agent 编排运行时：声明带工作区的 Agent 任务，由 AX 沙箱化执行并支持规模化运行。",
       "source_urls": [
         "https://github.com/google/ax",
         "https://agentexecutor.io"
@@ -1538,7 +1538,7 @@
       "stars_numeric": 18054,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；把 github.com 换成 gitdiagram.com 即可生成，私有仓库需授权，图为 AI 推断结果需对照代码。",
+      "usage_note": "把任意公开或私有 GitHub 仓库转成交互式架构图或一分钟讲解视频的工具。",
       "source_urls": [
         "https://github.com/ahmedkhaleel2004/gitdiagram",
         "https://gitdiagram.com"
@@ -1559,7 +1559,7 @@
       "stars_numeric": 15892,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；把 github 换成 gitingest 获取文本摘要，私有代码优先用本地 CLI，粘贴给 AI 前检查是否含密钥。",
+      "usage_note": "把任意 Git 仓库转成便于喂给大模型的文本摘要。",
       "source_urls": [
         "https://github.com/coderamp-labs/gitingest",
         "https://gitingest.com"
@@ -1581,7 +1581,7 @@
       "stars_numeric": 81556,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；生成交互式架构图，结论需对照代码核实。",
+      "usage_note": "把任意想法、方案或代码库变成漂亮交互式图表的 Agent Skill，适用于 Claude Code、Codex 等。",
       "source_urls": [
         "https://github.com/tt-a1i/archify",
         "https://archify.si"
@@ -1603,7 +1603,7 @@
       "stars_numeric": 56914,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "AGPL-3.0；完全本地运行，只克隆本人或获授权的声音，二次分发注意 AGPL 义务。",
+      "usage_note": "开源、完全本地运行的 ElevenLabs 替代品，支持声音克隆、声音设计、视频配音、听写、转写和有声书制作。",
       "source_urls": [
         "https://github.com/debpalash/VoiceStudio",
         "https://voicestudio.sh"
@@ -1624,7 +1624,7 @@
       "stars_numeric": 48276,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；科研结论需人工复核，接入外部数据库前检查数据使用条款。",
+      "usage_note": "面向科研的 Agent Skills 库，含大量经验证的技能和科学数据库，覆盖生物、化学、医学与药物发现。",
       "source_urls": [
         "https://github.com/K-Dense-AI/scientific-agent-skills",
         "https://arxiv.org/abs/2609.00065"
@@ -1645,7 +1645,7 @@
       "stars_numeric": 3402,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "Apache-2.0；会拉取账号数据并跨平台发布，先关闭自动发布、只读测试；未配置联网搜索时输出的“事实”须逐条核对来源，遵守各平台规则。",
+      "usage_note": "开源 AI 社交媒体智能体：发现热点、创作内容、一键发布到小红书、抖音、知乎、B 站等平台，并分析什么内容有效。",
       "source_urls": [
         "https://github.com/ZJU-REAL/Easel",
         "https://zju-real.github.io/Easel/"
@@ -1666,7 +1666,7 @@
       "stars_numeric": 25571,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "Apache-2.0；先连测试库验证，接入 AI 助手生成 SQL 时用只读账号并在执行前人工审阅语句。",
+      "usage_note": "轻量的跨平台数据库客户端，支持 MySQL、PostgreSQL、SQLite、Redis、MongoDB 等上百种数据库，内置 AI 助手和 MCP。",
       "source_urls": [
         "https://github.com/t8y2/dbx",
         "https://dbxio.com"
@@ -1688,7 +1688,7 @@
       "stars_numeric": 99532,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；为每个 Agent 设置预算上限与人工审批点，先在本地部署并用低风险任务试跑。",
+      "usage_note": "开源的 AI Agent 团队编排应用，由 Node.js 服务和 React 界面组成，用来管理为工作而运行的多个 Agent。",
       "source_urls": [
         "https://github.com/paperclipai/paperclip",
         "https://paperclip.ing"
@@ -1710,7 +1710,7 @@
       "stars_numeric": 22953,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；可自托管，关键词与外链数据通过 DataForSEO 按量计费，先设好额度上限再接入 MCP。",
+      "usage_note": "开源的 Semrush 和 Ahrefs 替代品，面向你和你的 AI Agent 的一体化 SEO 工具。",
       "source_urls": [
         "https://github.com/every-app/open-seo",
         "https://openseo.so"
@@ -1731,7 +1731,7 @@
       "stars_numeric": 15346,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；官方定位为 Mac 上的 Photoshop 替代，Windows 用户不可用；处理商用素材前先用副本测试 PSD 等格式兼容性。",
+      "usage_note": "面向 Mac 的免费开源 Photoshop 替代品，围绕合成与后期处理流程打造的完整图像编辑器。",
       "source_urls": [
         "https://github.com/robbietilton/Compositor"
       ]
@@ -1797,7 +1797,7 @@
       "stars_numeric": 242,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "仓库未声明许可证；会调用 Clipcat 的数据与生成服务并可发布到 TikTok 账号，先关闭自动发布，复刻他人爆款时只借鉴结构、不搬运原素材。",
+      "usage_note": "面向 TikTok Shop 的 AI 带货视频技能：查找爆款、拆解视频为何热卖，并生成和复刻带货视频提示词。",
       "source_urls": [
         "https://github.com/Clipcat-ai/clipcat-skill",
         "https://clipcat.ai"
@@ -1833,7 +1833,7 @@
       "stars_numeric": 66033,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "AGPL-3.0；运行在 Claude Code、Codex 等编码 Agent 中编排配音、配图与渲染工具，外部生成服务按各自计费，素材与音乐需确认授权。",
+      "usage_note": "开源的 Agent 化视频制作系统，让 AI 编程助手变成完整的视频制作工作室，含多条制作流水线和大量工具。",
       "source_urls": [
         "https://github.com/calesthio/OpenMontage",
         "https://www.openmontage.video/"
@@ -1855,7 +1855,7 @@
       "stars_numeric": 15143,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；需要 Apple 芯片 Mac，属于研究用途的虚拟化方案，使用前核对 Apple 软件许可条款，测试账号与真实账号分开。",
+      "usage_note": "在 Apple 芯片 Mac 上运行虚拟 iPhone，用于安全研究、逆向工程和调试。",
       "source_urls": [
         "https://github.com/Lakr233/vphone-cli"
       ]
@@ -1876,7 +1876,7 @@
       "stars_numeric": 4628,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "AGPL-3.0；本地运行、自带离线字幕与 TTS，二次分发或改造需遵守 AGPL 义务。",
+      "usage_note": "完全免费、开源的跨平台剪映（CapCut）替代品，支持 MCP 与 API。",
       "source_urls": [
         "https://github.com/jub0t/concat",
         "https://concatenate.pages.dev"
@@ -1898,7 +1898,7 @@
       "stars_numeric": 82434,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "仓库未声明标准许可证；配套代码调用的大模型 API 自行准备并控制费用，转载教程内容前确认授权。",
+      "usage_note": "Datawhale 出品的《从零开始构建智能体》教程，系统讲解智能体的原理与实践。",
       "source_urls": [
         "https://github.com/datawhalechina/hello-agents",
         "https://hello-agents.datawhale.cc"
@@ -1920,7 +1920,7 @@
       "stars_numeric": 27887,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "腾讯云开源的 Agent 记忆层；先在本地或测试环境部署，确认写入记忆的数据范围与删除机制后再接入生产 Agent。",
+      "usage_note": "面向团队的 AI Agent 记忆中心，把对话、文档和代码变成可治理、可共享的四类可复用记忆资产。",
       "source_urls": [
         "https://github.com/TencentCloud/TencentDB-Agent-Memory",
         "https://tencentcloud.github.io/TencentDB-Agent-Memory/"
@@ -1959,7 +1959,7 @@
       "stars_numeric": 252,
       "verified_at": "2026-10-11",
       "status": "verified",
-      "usage_note": "MIT；Sealeap 社区维护，含 amazon-official 目录（作者称来自官方授权材料）。逐个审阅要用的 Skill，核对广告与费率规则的日期，不批量安装。",
+      "usage_note": "把亚马逊选品、Listing、广告、库存与运营经验整理成可复用 Agent Skill 的开源项目。",
       "source_urls": [
         "https://github.com/xjli360/sealeap-amazon-skills",
         "https://sealeap.cn/"
@@ -1982,7 +1982,7 @@
       "stars_numeric": 39141,
       "verified_at": "2026-10-12",
       "status": "verified",
-      "usage_note": "Apache-2.0，代码与权重公开、可商用；VoxCPM2 为 2B 参数、30 种语言加 9 种中文方言、48kHz 输出，官方标注约 8GB 显存、RTX 4090 上 RTF 约 0.3。官方明令禁止用于冒充、诈骗或虚假信息，只克隆本人或已授权的声音并标注为合成语音。",
+      "usage_note": "无需分词器的多语言语音合成系统，支持创意声音设计和高保真声音克隆。",
       "source_urls": [
         "https://github.com/OpenBMB/VoxCPM",
         "https://voxcpm.com"
@@ -2005,7 +2005,7 @@
       "stars_numeric": 16,
       "verified_at": "2026-10-12",
       "status": "verified",
-      "usage_note": "MIT；基于 Compositor 1.4.7 的非官方社区中文构建，仅支持 Apple 芯片与 macOS 26 及以上；发布包本地签名、未经 Apple 公证，不随原版自动更新，安装前核对 Release 中的 SHA256SUMS。",
+      "usage_note": "Compositor 1.4.7 的非官方社区中文构建，支持简体与繁体中文界面。",
       "source_urls": [
         "https://github.com/Wawajiao-Wwj/Compositor-Chinese",
         "https://wawajiao-wwj.github.io/Compositor-Chinese/"
@@ -2028,7 +2028,7 @@
       "stars_numeric": 435,
       "verified_at": "2026-10-12",
       "status": "verified",
-      "usage_note": "MIT；官方说明支持 Claude Code 与 Codex CLI，会联网读取 arXiv 论文并为每篇论文单独调用一次模型，消耗随论文数增加；把它的结论当作带出处的建议，落地前自己核对被引论文的限制。",
+      "usage_note": "让 Claude 在设计新架构之前先核查真实 arXiv 先行研究的 Skill，避免从零开始编码。",
       "source_urls": [
         "https://github.com/UditAkhourii/neuroarxiv",
         "https://www.divergent.sh/blog/neuroarxiv-never-build-from-scratch"
@@ -2058,7 +2058,7 @@
         "README.md"
       ],
       "status": "verified",
-      "usage_note": "MIT；依赖 FFmpeg（需带 libx264）、whisper.cpp 与约 3.1GB 的 large-v3 模型、Node.js 和 Remotion，Windows 官方注明未实测；Remotion 对超过 3 人的公司商用需另购许可。开剪前会先出提案等你确认。",
+      "usage_note": "把连续录制的中文口播剪成 16:9 金色包装成片的 Claude Code Skill，基于 FFmpeg、whisper.cpp 和 Remotion。",
       "source_urls": [
         "https://github.com/heloraai/hollandcut",
         "https://github.com/heloraai/hollandcut/blob/main/README.md",
@@ -2091,7 +2091,7 @@
         "README.md"
       ],
       "status": "verified",
-      "usage_note": "MIT；转换在本机运行，只处理你有权使用的书或文档，生成的技能不要再分发受版权保护的内容。项目自己写明在 Claude Code 下不会原生发现生成的技能，这里只列 Codex。",
+      "usage_note": "把技术书籍、文档文件夹等资料整合成可学习、可查阅的统一 Agent Skill。",
       "source_urls": [
         "https://github.com/virgiliojr94/book-to-skill",
         "https://github.com/virgiliojr94/book-to-skill/blob/master/README.md",
