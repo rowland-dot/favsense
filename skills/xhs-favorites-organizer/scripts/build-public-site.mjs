@@ -7,7 +7,7 @@ import { normalizeSensitiveText } from "./sensitive-data.mjs";
 import { collectVideoEvidenceStats } from "./evidence-stats.mjs";
 import { loadFormalPointSummary, loadUnreachableNoteIds, sealedCandidateFor } from "./curation-quality.mjs";
 import { judgePublicNote, validateContentKindProfile } from "./public-judgement.mjs";
-import { cardCounts, cardText, cardTitle, postBody, replyState } from "./card-content.mjs";
+import { TITLE_LIMIT, cardCounts, cardText, cardTitle, postBody, replyState } from "./card-content.mjs";
 import { loadExtractedText } from "./extracted-text.mjs";
 import { loadDamagedReplies } from "./damaged-replies.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
@@ -61,9 +61,33 @@ const resourceRegistry = profile.features?.resource_index
   ? await parseJson(paths.resources)
   : { verified_at: "", resources: [] };
 
-// The post itself, by its token-free address (spec LINK-02: the owner confirmed on 2026-10-14 that it opens the
-// post). The signed share link is never public; the public-file check still refuses xsec_token.
-const postUrl = (noteId) => `https://www.xiaohongshu.com/explore/${encodeURIComponent(noteId)}`;
+// The wording of a post's text before its topics, whole.
+function cleanedPostText(value) {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  const beforeTopics = normalized.split("#")[0].trim();
+  const withoutTopics = normalized
+    .replace(/#[^#]*?\[话题\]#?/gi, " ")
+    .replace(/\[[^\]]*话题[^\]]*\]/gi, " ")
+    .replace(/#+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return beforeTopics || withoutTopics;
+}
+
+// What to type into the platform's search to find the original post: the post's own words, cut at the
+// same limit as a title but without the ellipsis a title gets, since an ellipsis is not in the post.
+function searchTextOf(raw) {
+  return cleanedPostText(raw.title).slice(0, TITLE_LIMIT) || cleanedPostText(raw.description).slice(0, TITLE_LIMIT);
+}
+
+function publicSourceUrl(title, author) {
+  const params = new URLSearchParams({
+    keyword: [title, author].filter(Boolean).join(" "),
+    source: "web_search_result_notes"
+  });
+  return `https://www.xiaohongshu.com/search_result?${params.toString()}`;
+}
 
 const field = (value, path) => String(path || "").split(".").filter(Boolean).reduce((current, key) => current?.[key], value);
 const rawResources = resourceRegistry[resourceIndex.collection || "resources"] || [];
@@ -125,7 +149,7 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
     number: index + 1,
     title,
     author: raw.author || "",
-    sourceUrl: postUrl(noteId),
+    sourceUrl: publicSourceUrl(searchTextOf(raw) || title, raw.author || ""),
     publishedAt: raw.published_at || "",
     likes: raw.liked_count || "",
     collections: raw.collected_count || "",

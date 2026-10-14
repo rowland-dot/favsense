@@ -155,28 +155,25 @@ test("V-P4-06: the 未核实 marker stays readable on a long tool name, on the c
   await inside(detail.locator(".tool-chip", { hasText: "Claude Code" }));
 });
 
-test("V-P0-11 (LINK-02): on a public address the footer opens with the link to the post itself, then copy link and bookmark", async ({ page }) => {
+test("V-P0-11: on a public address the footer opens with the search link to the post, then copy link and bookmark", async ({ page }) => {
   await useFixture(page);
   const detail = await openCard(page, REPLY, PUBLIC);
   const footer = detail.locator(".detail-footer");
   const first = footer.locator(":scope > :first-child");
   await expect(first).toHaveJSProperty("tagName", "A");
-  await expect(first).toHaveText("在小红书中查看原帖");
-  await expect(first).toHaveAttribute("href", `https://www.xiaohongshu.com/explore/${REPLY}`);
+  await expect(first).toHaveText("在小红书搜索原帖");
+  expect(await first.getAttribute("href")).toMatch(/^https:\/\/www\.xiaohongshu\.com\/search_result\?/);
   await expect(first).toHaveAttribute("target", "_blank");
   expect(await first.getAttribute("rel")).toContain("noreferrer");
   const controls = (await footer.locator(":scope > *").allTextContents()).map((text) => text.trim());
-  expect(controls[0]).toBe("在小红书中查看原帖");
+  expect(controls[0]).toBe("在小红书搜索原帖");
   expect(controls[1]).toBe("复制卡片链接");
   expect(controls.at(-1)).toMatch(/书签/);
-  // The only address that leaves the site is the post itself: no search page, no session token, and no search wording left.
-  expect(await page.locator("a[href*='xsec_token'], a[href*='search_result']").count()).toBe(0);
-  expect(await page.locator("a[href*='/explore/']").count()).toBe(1);
-  expect(await page.evaluate(() => document.body.textContent)).not.toContain("搜索原帖");
+  expect(await page.locator("a[href*='/explore/'], a[href*='/discovery/item/'], a[href*='xsec_token']").count()).toBe(0);
   await page.goto("about:blank");
   await page.goto(PUBLIC);
   await expect(page.locator(".note-card")).toHaveCount(fixture.notes.length);
-  expect(await page.locator("a[href*='xsec_token'], a[href*='search_result']").count()).toBe(0);
+  expect(await page.locator("a[href*='/explore/'], a[href*='/discovery/item/'], a[href*='xsec_token']").count()).toBe(0);
 });
 
 async function expectVisibleFocusRing(locator) {
@@ -198,7 +195,7 @@ test("V-P5-04: the keyboard reaches the edit button, the fold button and the foo
   const wanted = [
     detail.getByRole("button", { name: "编辑描述" }),
     detail.locator(".summary-fold-toggle"),
-    detail.getByRole("link", { name: "在小红书中查看原帖" }),
+    detail.getByRole("link", { name: "在小红书搜索原帖" }),
     detail.getByRole("button", { name: "复制卡片链接" }),
     detail.locator(".detail-bookmark"),
   ];

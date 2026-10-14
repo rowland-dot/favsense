@@ -12,9 +12,9 @@ const publisher = path.resolve(
 const privateConfigFixture = path.resolve(
   "skills/xhs-favorites-organizer/test-fixtures/publisher-private-config.json"
 );
-test("public JSON may contain the token-free Xiaohongshu post address", () => {
+test("public JSON may contain the deliberate token-free Xiaohongshu search fallback", () => {
   assert.doesNotThrow(() => assertPublicTextSafe(JSON.stringify({
-    sourceUrl: "https://www.xiaohongshu.com/explore/6a7dc92600000000250090ff",
+    sourceUrl: "https://www.xiaohongshu.com/search_result?keyword=example&source=web_search_result_notes",
   }), "knowledge.json"));
 });
 
