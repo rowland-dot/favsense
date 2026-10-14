@@ -4,10 +4,10 @@ body{background:var(--paper,#f4f1ea);padding:32px 16px 80px}
 .mock-intro{max-width:1560px;margin:0 auto 24px}.mock-intro h1{font-family:var(--display);font-size:30px;margin:0 0 8px}
 .mock-intro p,.mock-intro li{color:var(--ink-soft);font-size:14.5px;line-height:1.7;max-width:980px}.mock-intro p{margin:0 0 6px}.mock-intro ul{margin:0;padding-left:20px}
 .mock-case{max-width:1560px;margin:0 auto 40px}.mock-case>h2{font-size:20px;margin:0 0 2px}.mock-case>.ex{margin:0 0 12px;color:var(--ink-soft);font-size:13px}
-.mock-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:start}
+.mock-pair{display:grid;grid-template-columns:minmax(0,1fr) 800px;gap:24px;align-items:start}
 .tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-family:var(--mono);background:var(--ink);color:var(--surface);margin-bottom:6px}.tag.next{background:#6f3cc3}
 p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
-.mock-dialog{position:static;display:block;width:100%;max-height:none;margin:0;box-shadow:0 10px 40px rgba(0,0,0,.12)}
+.mock-dialog{position:static;display:block;max-width:calc(100% - 38px);max-height:none;margin:0}
 .t-shell{padding:26px 32px}
 .t-meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:0 0 8px;color:var(--ink-soft);font-size:12px}
 .t-cat{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono)}.t-cat i{width:22px;height:3px;background:var(--accent)}
@@ -32,9 +32,9 @@ p.why{margin:0 0 10px;color:var(--ink-soft);font-size:14px;line-height:1.6}
 .dd-fold[data-expanded="false"] .dd-body{max-height:420px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 80%,transparent);mask-image:linear-gradient(#000 80%,transparent)}
 .dd-toggle{margin-top:10px;padding:7px 14px;border:1px solid var(--ink);border-radius:999px;font-size:12.5px;font-weight:700;background:var(--surface);cursor:pointer}
 .dd-toggle:focus-visible{outline:3px solid #6f3cc3;outline-offset:2px}
-@media (max-width:900px){.mock-pair{grid-template-columns:1fr}}
+@media (max-width:1200px){.mock-pair{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:560px){.t-shell{padding:20px 18px}.t-prov{grid-template-columns:auto auto}.t-prov span{grid-column:1/-1;grid-row:2}.t-prov .t-edit{justify-self:end}}
-.now-shot{width:100%;border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.12)}.t-unv{margin-left:4px;padding:1px 5px;border-radius:5px;background:#fff1cc;color:#8a5a00;font-size:10.5px;font-weight:700}.t-tr{white-space:pre-wrap;font-size:13px!important;color:var(--ink)!important}</style></head><body>
+.now-shot{width:100%;max-width:760px;border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.12)}.t-unv{margin-left:4px;padding:1px 5px;border-radius:5px;background:#fff1cc;color:#8a5a00;font-size:10.5px;font-weight:700}.t-tr{white-space:pre-wrap;font-size:13px!important;color:var(--ink)!important}</style></head><body>
 <header class="mock-intro"><h1>知识卡重做：每条收藏都是一张完整、忠实的卡</h1>
 <p>左边是线上网站现在的样子（截图），右边是新设计；都用真实收藏。新设计的规则：</p>
 <ul><li>标题永远是原帖自己的标题。</li><li>正文：点点完整回复；点点试 3 次仍拿不到回复时，显示原帖全文（去话题标签、不截断），视频转写与画面文字另列一节。</li>
