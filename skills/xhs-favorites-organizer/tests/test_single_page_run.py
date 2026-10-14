@@ -650,7 +650,7 @@ class PageTaskTest(unittest.TestCase):
             request = Request(
                 f"http://{BRIDGE.HOST}:{bridge.port}{path}",
                 data=None if body is None else json.dumps(body).encode("utf-8"),
-                headers={"Content-Type": "application/json", "X-XHS-Bridge-Token": token},
+                headers=bridge_support.userscript_headers(token),
                 method=method,
             )
             try:

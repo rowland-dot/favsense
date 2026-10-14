@@ -76,7 +76,7 @@ const SYNC_NUMBERS = new Set([
   "summary_total", "summary_pending", "summary_failed", "summary_batch_aborted"
 ]);
 const SYNC_BOOLEANS = new Set([
-  "summary_plan_pending", "summary_finalizing", "core_completed"
+  "summary_plan_pending", "summary_finalizing", "core_completed", "userscript_outdated"
 ]);
 const SYNC_SHORT_TEXT = new Set([
   "started_at", "completed_at", "current_board", "publish_status", "summary_halt_reason"
@@ -205,7 +205,8 @@ export function syncStatusCopy(status, sourceContract) {
 
 function validateV2SyncStatus(value, sourceContract) {
   const contract = organizationContract(sourceContract);
-  const { legacy_safety_stop: leftoverStop, ...organizationKeys } = value;
+  const { legacy_safety_stop: leftoverStop, userscript_outdated: outdatedScript, ...organizationKeys } = value;
+  if (outdatedScript !== undefined && typeof outdatedScript !== "boolean") throw new Error("本机整理状态不可用");
   const keys = Object.keys(organizationKeys).sort().join(",");
   if (keys !== "build_version,copy_key,counts,ok,phases,run_id,schema_version,state") throw new Error("本机整理状态不可用");
   // The server picks the sentence; the page only accepts a key the contract actually has.
@@ -231,7 +232,11 @@ function validateV2SyncStatus(value, sourceContract) {
     const unknown = SYNC_NULLABLE_NUMBERS.has(key) && value.counts[key] === null;
     if (!unknown && (!Number.isSafeInteger(value.counts[key]) || value.counts[key] < 0 || value.counts[key] > 10_000_000)) throw new Error("本机整理状态不可用");
   }
-  return { ...value, phases, counts: { ...value.counts }, ...(leftover ? { legacy_safety_stop: leftover } : {}) };
+  return {
+    ...value, phases, counts: { ...value.counts },
+    ...(leftover ? { legacy_safety_stop: leftover } : {}),
+    ...(outdatedScript === true ? { userscript_outdated: true } : {})
+  };
 }
 
 export function validateLocalBridgeSyncStatus(value, contract = null) {

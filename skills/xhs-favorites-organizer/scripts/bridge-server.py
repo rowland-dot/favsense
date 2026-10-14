@@ -133,6 +133,16 @@ USERSCRIPT_INSTALL_PATH = re.compile(
     r"^/install/([a-f0-9]{64})/xhs-favorites\.user\.js$"
 )
 USERSCRIPT_INSTALL_TTL_SECONDS = 10 * 60
+USERSCRIPT_VERSION_HEADER = "X-XHS-Userscript-Version"
+USERSCRIPT_OUTDATED_REASON = "userscript-outdated"
+# Every path the installed user script calls. A request to one of these must name the template version
+# the script came from; the workbench's own routes are not here because the workbench is not the script.
+USERSCRIPT_ROUTES = frozenset({
+    "/import-sync", "/install/complete", "/status",
+    "/sync/board-context", "/sync/diandian-click", "/sync/diandian-halt", "/sync/diandian-result",
+    "/sync/diandian-skip", "/sync/discover", "/sync/failure", "/sync/page-result", "/sync/page-task",
+    "/sync/summary-plan",
+})
 MANUAL_TERMINAL_STATES = frozenset({"completed", "failed", "safety-stopped"})
 DIANDIAN_SAFETY_STOP_REASON = "xhs-safety-stop"
 PLATFORM_SAFETY_SIGNAL = PLATFORM_ACCESS.SAFETY_SIGNAL
@@ -236,7 +246,9 @@ DIANDIAN_HALT_DIAGNOSTICS = {
         "点点 AI 的回复在保存前后发生变化；核心整理结果已保留。"
         "请检查保留的失败页面后重试。"
     ),
+    USERSCRIPT_OUTDATED_REASON: ORGANIZATION_STATE.copy_text("userscript_outdated"),
 }
+USERSCRIPT_OUTDATED_MESSAGE = DIANDIAN_HALT_DIAGNOSTICS[USERSCRIPT_OUTDATED_REASON]
 EMPTY_DIAGNOSTIC_ERROR = "No diagnostic output was returned."
 MANUAL_SYNC_FALLBACK_ERROR = "请检查 SOP 扫描浏览器的登录状态后再次整理。"
 DETAIL_NOTE_FIELDS = frozenset({
@@ -594,10 +606,9 @@ def userscript_install_capability_record(path: Path) -> dict | None:
     return value
 
 
-def userscript_install_version(template_path: Path, state_path: Path) -> str:
-    record = userscript_install_capability_record(state_path)
-    if record is None:
-        raise ValueError("userscript installer state is missing or invalid; run setup-autosync.ps1")
+def userscript_template_version(template_path: Path) -> str:
+    """The numeric version the user script template declares: the one value the service and every
+    generated script compare, so they cannot disagree about it."""
     template = template_path.read_text(encoding="utf-8")
     versions = re.findall(
         r"(?m)^// @version\s+([0-9]+(?:\.[0-9]+){2,})\s*$",
@@ -605,6 +616,14 @@ def userscript_install_version(template_path: Path, state_path: Path) -> str:
     )
     if len(versions) != 1:
         raise ValueError("userscript template must contain one numeric @version")
+    return versions[0]
+
+
+def userscript_install_version(template_path: Path, state_path: Path) -> str:
+    record = userscript_install_capability_record(state_path)
+    if record is None:
+        raise ValueError("userscript installer state is missing or invalid; run setup-autosync.ps1")
+    template_version = userscript_template_version(template_path)
     issued_at = datetime.fromisoformat(str(record["issued_at"])).astimezone(timezone.utc)
     revision = ".".join(str(value) for value in (
         issued_at.year,
@@ -615,7 +634,7 @@ def userscript_install_version(template_path: Path, state_path: Path) -> str:
         issued_at.second,
         issued_at.microsecond,
     ))
-    return f"{versions[0]}.{revision}"
+    return f"{template_version}.{revision}"
 
 
 def valid_userscript_install_capability(path: Path, candidate: str) -> bool:
@@ -636,15 +655,24 @@ def valid_userscript_install_capability(path: Path, candidate: str) -> bool:
     return hmac.compare_digest(digest, str(value["digest"]))
 
 
-def invalidate_userscript_install_capability(path: Path, candidate: str) -> bool:
+def invalidate_userscript_install_capability(path: Path, candidate: str, template_version: str) -> bool:
+    """Spend the install capability and record which template the script that spent it came from."""
     if not valid_userscript_install_capability(path, candidate):
         return False
     value = userscript_install_capability_record(path)
     if value is None:
         return False
     value["completed_at"] = datetime.now().astimezone().isoformat()
+    value["template_version"] = template_version
     atomic_json(path, value)
     return True
+
+
+def installed_userscript_version(path: Path) -> str | None:
+    """The template version of the script that completed the last install, or None when none is recorded."""
+    value = userscript_install_capability_record(path)
+    version = None if value is None else value.get("template_version")
+    return version if isinstance(version, str) and version else None
 
 
 def normalize_sensitive_scan(value: object) -> str:
@@ -2712,6 +2740,7 @@ class Bridge:
             require_plain_file(required, f"required file {required}")
         if self.diandian_enabled:
             self.diandian_save_record = load_diandian_save_record(self.diandian_saver_path)
+        self.userscript_template_version = userscript_template_version(self.userscript_template)
         self.userscript_install_version = userscript_install_version(
             self.userscript_template,
             self.userscript_install_state,
@@ -2983,11 +3012,38 @@ class Bridge:
         """The safety stop an earlier round left behind and the operator has not cleared."""
         return PLATFORM_ACCESS.legacy_stop(self.state_dir, self.active_round_started_at())
 
+    def userscript_is_outdated(self) -> bool:
+        """True unless the script that completed the last install came from today's template.
+
+        An install record from before versions were recorded has none, so it reads as outdated too.
+        """
+        return installed_userscript_version(self.userscript_install_state) != self.userscript_template_version
+
+    def stop_round_for_outdated_userscript(self, worker_id: str = "") -> None:
+        """A request from an outdated script arrived: end the round it belongs to, with the reinstall sentence.
+
+        A page waiting on a share or chat task is halted through its task, so the step that was waiting
+        for it does not time out into a different reason. With no round running there is nothing to stop.
+        """
+        if self.read_manual_sync().get("state") not in {"starting", "running"}:
+            return
+        try:
+            task = self.find_page_task(worker_id)
+        except ValueError:
+            task = None
+        if task is not None:
+            self.halt_driven_step(task.run_id, task.board_id, task.note_id, USERSCRIPT_OUTDATED_REASON)
+            return
+        with self.get_manual_sync_lock():
+            self.report_run_event("userscript_outdated", error=USERSCRIPT_OUTDATED_MESSAGE)
+
     def manual_sync_status(self) -> dict:
         status = self.project_manual_sync_status()
         leftover = self.legacy_safety_stop()
         if leftover is not None:
             status = {**status, "legacy_safety_stop": PLATFORM_ACCESS.public_view(leftover)}
+        if self.userscript_is_outdated():
+            status = {**status, "userscript_outdated": True}
         return status
 
     def project_manual_sync_status(self) -> dict:
@@ -3157,6 +3213,14 @@ class Bridge:
                     raise BridgeBusyError("organization is already running in Chrome")
             if self.processing_lock.locked():
                 raise BridgeBusyError("organization is already processing a collection")
+            if self.userscript_is_outdated():
+                # Refused before a round exists, for the same reason a leftover stop is: the scan browser is untouched.
+                return {
+                    "refused": True,
+                    "state": USERSCRIPT_OUTDATED_REASON,
+                    "error": USERSCRIPT_OUTDATED_MESSAGE,
+                    "userscript_outdated": True,
+                }
             leftover = self.legacy_safety_stop()
             if leftover is not None and clear_legacy:
                 PLATFORM_ACCESS.clear_stop(self.state_dir)
@@ -3211,7 +3275,8 @@ class Bridge:
 
     def clear_safety_stop(self) -> dict:
         """The operator's confirmation that platform access is back: archive the leftover stop, start a round."""
-        if self.legacy_safety_stop() is None:
+        if self.legacy_safety_stop() is None or self.userscript_is_outdated():
+            # An outdated script would refuse the start, so the stop stays on record until a round can run.
             return {"cleared": False, "started": False, "status": self.manual_sync_status()}
         status = self.trigger_manual_sync(clear_legacy=True)
         return {"cleared": True, "started": True, "status": status}
@@ -6020,6 +6085,7 @@ class Bridge:
             .replace("__PORT__", str(self.port))
             .replace("__TOKEN__", self.token)
             .replace("__INSTALL_CAPABILITY__", self.install_capability)
+            .replace("__TEMPLATE_VERSION__", self.userscript_template_version)
             .replace("__BOARDS__", json.dumps(board_map, ensure_ascii=False, separators=(",", ":")))
             .replace(
                 "__DIANDIAN_CONTRACT__",
@@ -6027,7 +6093,7 @@ class Bridge:
             )
         )
         if any(placeholder in userscript for placeholder in (
-            "__PORT__", "__TOKEN__", "__INSTALL_CAPABILITY__", "__BOARDS__",
+            "__PORT__", "__TOKEN__", "__INSTALL_CAPABILITY__", "__TEMPLATE_VERSION__", "__BOARDS__",
             "__DIANDIAN_CONTRACT__", "__DIANDIAN_MATCH_LINE__",
         )):
             raise ValueError("userscript template contains unresolved placeholders")
@@ -6919,6 +6985,41 @@ def make_handler(bridge: Bridge):
             supplied = self.headers.get("X-XHS-Bridge-Token", "")
             return hmac.compare_digest(supplied, bridge.token)
 
+        def userscript_is_current(self) -> bool:
+            # A version is not a secret, so a plain comparison; it also tolerates non-ASCII junk.
+            return self.headers.get(USERSCRIPT_VERSION_HEADER, "") == bridge.userscript_template_version
+
+        @staticmethod
+        def worker_id_in(body: bytes) -> str:
+            """The page worker a script request names, when its body is JSON that does; otherwise empty."""
+            try:
+                value = json.loads(body.decode("utf-8")).get("worker_id", "")
+            except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+                return ""
+            return value if isinstance(value, str) else ""
+
+        def refuse_outdated_userscript(self, worker_id: str = "") -> None:
+            """Answer a script of another version with the reinstall sentence, and stop the round it belongs to."""
+            append_bridge_log(
+                getattr(bridge, "state_dir", None),
+                self.command,
+                urlparse(self.path).path,
+                int(HTTPStatus.CONFLICT),
+                "UserscriptOutdated",
+                USERSCRIPT_OUTDATED_MESSAGE,
+            )
+            try:
+                bridge.stop_round_for_outdated_userscript(worker_id)
+            except (OSError, RuntimeError, ValueError) as error:
+                # The refusal still has to reach the script; the round then ends through its own timeout.
+                append_bridge_log(
+                    getattr(bridge, "state_dir", None), "INTERNAL", "script-outdated", "-",
+                    type(error).__name__, sanitize_error(str(error)),
+                )
+            self.send_json(HTTPStatus.CONFLICT, {
+                "ok": False, "error": USERSCRIPT_OUTDATED_MESSAGE, "reason": USERSCRIPT_OUTDATED_REASON,
+            })
+
         def send_json(self, status: int, value: dict) -> None:
             body = json.dumps(value, ensure_ascii=False).encode("utf-8")
             self.send_response(status)
@@ -6991,6 +7092,9 @@ def make_handler(bridge: Bridge):
                 self.send_header("Referrer-Policy", "no-referrer")
                 self.end_headers()
                 self.wfile.write(body)
+                return
+            if parsed.path in USERSCRIPT_ROUTES and self.authorized() and not self.userscript_is_current():
+                self.refuse_outdated_userscript(parse_qs(parsed.query).get("worker_id", [""])[0])
                 return
             if parsed.path == "/health":
                 if not self.authorized():
@@ -7118,6 +7222,9 @@ def make_handler(bridge: Bridge):
             } and not is_manager_origin(self.headers.get("Origin")):
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
+            if self.path in USERSCRIPT_ROUTES and not self.userscript_is_current():
+                self.refuse_outdated_userscript(self.worker_id_in(body))
+                return
             try:
                 length = int(self.headers.get("Content-Length", "0"))
                 if length < 1 or length > MAX_BODY_BYTES:
@@ -7138,7 +7245,7 @@ def make_handler(bridge: Bridge):
                             self.command,
                             urlparse(self.path).path,
                             int(HTTPStatus.CONFLICT),
-                            "LegacySafetyStop",
+                            "UserscriptOutdated" if refusal.get("userscript_outdated") else "LegacySafetyStop",
                             sanitize_error(str(refusal.get("error", ""))),
                         )
                         self.send_json(HTTPStatus.CONFLICT, {"ok": False, **refusal})
@@ -7167,6 +7274,7 @@ def make_handler(bridge: Bridge):
                         "invalidated": invalidate_userscript_install_capability(
                             bridge.userscript_install_state,
                             str(payload.get("capability", "")),
+                            bridge.userscript_template_version,
                         ),
                     })
                     return

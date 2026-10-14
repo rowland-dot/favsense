@@ -35,6 +35,7 @@ class RunningHandler:
         self.bridge = bridge
         self.server = BRIDGE.ThreadingHTTPServer((BRIDGE.HOST, 0), BRIDGE.make_handler(bridge))
         bridge.port = self.server.server_address[1]
+        bridge.userscript_template_version = bridge_support.USERSCRIPT_VERSION
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
     def __enter__(self):
@@ -50,11 +51,7 @@ class RunningHandler:
         request = Request(
             f"http://{BRIDGE.HOST}:{self.bridge.port}{path}",
             data=None if payload is None else json.dumps(payload).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "Origin": BRIDGE.MANAGER_ORIGIN,
-                "X-XHS-Bridge-Token": TOKEN,
-            },
+            headers={**bridge_support.userscript_headers(TOKEN), "Origin": BRIDGE.MANAGER_ORIGIN},
             method=method,
         )
         try:

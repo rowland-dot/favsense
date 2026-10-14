@@ -23,6 +23,8 @@ __DIANDIAN_MATCH_LINE__
   const PORT = __PORT__;
   const TOKEN = "__TOKEN__";
   const INSTALL_CAPABILITY = "__INSTALL_CAPABILITY__";
+  // Which template this script was generated from. The sync service refuses a script whose template differs from its own.
+  const TEMPLATE_VERSION = "__TEMPLATE_VERSION__";
   const INSTALLED_BOARDS = __BOARDS__;
   const DIANDIAN = Object.freeze(__DIANDIAN_CONTRACT__);
   const boardId = location.pathname.match(/^\/board\/([a-z0-9]{1,80})$/)?.[1];
@@ -131,7 +133,7 @@ __DIANDIAN_MATCH_LINE__
     return new Promise((resolve, reject) => GM_xmlhttpRequest({
       method,
       url: `http://127.0.0.1:${PORT}${path}`,
-      headers: { "Content-Type": "application/json", "X-XHS-Bridge-Token": TOKEN },
+      headers: { "Content-Type": "application/json", "X-XHS-Bridge-Token": TOKEN, "X-XHS-Userscript-Version": TEMPLATE_VERSION },
       data: payload === undefined ? undefined : JSON.stringify(payload),
       timeout,
       onload: (response) => {

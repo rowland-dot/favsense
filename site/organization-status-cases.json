@@ -216,6 +216,43 @@
       }
     },
     {
+      "name": "the installed user script is older than the sync service before any board is imported",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["userscript_outdated", {"error": "扫描浏览器里的用户脚本版本过旧，请先通过安装设置重新安装用户脚本，再开始整理。"}]
+      ],
+      "expect": {
+        "state": "failed",
+        "build_version": "",
+        "phases": {
+          "core": ["failed", "userscript_outdated"], "summary": ["not_started", ""], "evidence": ["not_started", ""],
+          "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "copy_key": "userscript_outdated"
+      }
+    },
+    {
+      "name": "the installed user script is older than the sync service once the summaries are under way",
+      "events": [
+        ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
+        ["board_started", {"board_name": "收藏夹A"}],
+        ["board_imported", {"run_id": "manual20261012090000_b1", "board_id": "b1", "board_name": "收藏夹A", "outcome": "completed", "scanned": 30, "new": 4, "note_ids": ["n1", "n2"], "summary_pending": false, "summary_plan_pending": true, "diandian_enabled": true, "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+        ["summary_planned", {"run_id": "manual20261012090000_b1", "board_name": "收藏夹A", "planned": 2}],
+        ["summary_halted", {"run_id": "manual20261012090000_b1", "safety": false, "reason": "userscript-outdated", "attempted": 1, "remaining": 1, "error": "扫描浏览器里的用户脚本版本过旧，请先通过安装设置重新安装用户脚本，再开始整理。"}]
+      ],
+      "expect": {
+        "state": "organization_partial",
+        "build_version": "",
+        "phases": {
+          "core": ["completed", ""], "summary": ["failed", "userscript_outdated"], "evidence": ["missing", "evidence_missing"],
+          "curation": ["pending_review", "audit_pending"], "build": ["not_started", ""], "publish": ["not_enabled", ""]
+        },
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 1, "summary_batch_aborted": 1, "curation_accepted": 0, "curation_pending": 0},
+        "copy_key": "userscript_outdated"
+      }
+    },
+    {
       "name": "the core import of the first board is running",
       "events": [
         ["round_started", {"batch": "manual20261012090000", "started_at": "2026-10-12T09:00:00+10:00", "run_board_ids": ["b1"], "mode": "incremental"}],
