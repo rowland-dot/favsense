@@ -11,7 +11,7 @@ import { TITLE_LIMIT, cardCounts, cardText, cardTitle, postBody, replyState } fr
 import { loadExtractedText } from "./extracted-text.mjs";
 import { loadDamagedReplies } from "./damaged-replies.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
-import { atomicWriteTextFile } from "./public-tree-policy.mjs";
+import { PUBLIC_FORBIDDEN, atomicWriteTextFile } from "./public-tree-policy.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const workspace = resolve(scriptDir, "../../..");
@@ -218,7 +218,10 @@ const forbidden = [
   /xsec_token\s*=/i,
   /\/user\/profile\//i,
   /author_id/i,
-  /["']?(?:cookie|cookies)["']?\s*[:=]\s*["'][^"']+/i
+  /["']?(?:cookie|cookies)["']?\s*[:=]\s*["'][^"']+/i,
+  // Everything the publisher refuses in the data file too: the whole post text and the transcripts are public now,
+  // so a build that passed here and was refused at publish time would waste the run's one publish.
+  ...PUBLIC_FORBIDDEN
 ];
 
 // Where the first match sits, so the person who has to fix it knows which note and field, without the matched text.

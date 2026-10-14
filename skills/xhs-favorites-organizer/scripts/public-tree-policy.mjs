@@ -14,7 +14,8 @@ const TEXT_SUFFIXES = new Set([
   ".html", ".htm", ".css", ".js", ".mjs", ".json", ".md", ".txt",
   ".xml", ".svg", ".yml", ".yaml", ".map", ".webmanifest"
 ]);
-const PUBLIC_FORBIDDEN = [
+// Exported so the page builder refuses exactly what the publisher refuses (one list, no drift between the two).
+export const PUBLIC_FORBIDDEN = [
   /xsec[\s_-]*token\s*[:=]/i,
   /\b(?:access_token|refresh_token|authorization|password|secret)\s*[:=]\s*["']?[^\s"']{8,}/i,
   /\b(?:cookie|cookies|set-cookie)\s*[:=]\s*["']?[^\s"']{8,}/i,
