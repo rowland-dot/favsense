@@ -353,3 +353,9 @@ Region-aware pixel diff: never ran inside the pipeline. Three tool defects: the 
 Final verdict: AUDIT-INCOMPLETE-STUCK — Step 5 (review self-loop), HIGH=6 parity geometry unresolved; outer iteration cannot change it (no Phase 1/2 findings to Fix-First). CRITICAL=0.
 
 Step 5 code-gate: PASS (syntax, a11y lint, node suites, organization, python; e2e 104/104). 110 -> 104 e2e is the plan disposition: card-summary-sources.spec.mjs replaced by faithful-cards.spec.mjs, banner/overlay cases removed from organization-recovery and design-text-legibility. One non-fatal Python UnicodeDecodeError (byte 0xba, GBK) printed during test:python; routed to Step 6 with the garbled-transcript bug.
+
+---
+
+## Step 6 — QA
+
+Report: docs/reports/qa/2026-10-14-favsense-faithful-cards-qa-report.md. Bugs 2, fixed 2: BUG-001 garbled picture text on …1ff7a (reader treats U+FFFD text as absent, 1c4e733; offline data rebuild e102d52 changed only that card, transcriptCount 103 -> 102, no U+FFFD left in published data — checked by orchestrator); BUG-002 mixed-encoding runner output in a Python test (73fdda4). Primary gate: triggers=6/6 states=6/6 regressions=0 destructive=0 callsites=0/0 — ok. Code-gate: PASS (unit suites; e2e 104/104). Note: QA found both preview servers down at start and ran its own.
