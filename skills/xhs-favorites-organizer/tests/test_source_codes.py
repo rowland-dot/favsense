@@ -165,8 +165,11 @@ class SourceCodeStoreTests(unittest.TestCase):
 
             store_path = bridge.state_dir / "source-codes.json"
             self.assertIn("FAKEcodeA1abcdefghijkl", store_path.read_text(encoding="utf-8"))
+            # The service resolves its workspace; on Windows CI the temp folder's raw path uses 8.3 short
+            # names, so compare against the resolved root or the store itself is never recognised.
+            root = Path(directory).resolve()
             checked = 0
-            for path in sorted(Path(directory).rglob("*")):
+            for path in sorted(root.rglob("*")):
                 if not path.is_file() or path == store_path:
                     continue
                 try:
@@ -174,7 +177,7 @@ class SourceCodeStoreTests(unittest.TestCase):
                 except (UnicodeDecodeError, OSError):
                     continue
                 checked += 1
-                self.assertNotIn("FAKEcodeA1abcdefghijkl", text, str(path.relative_to(directory)))
+                self.assertNotIn("FAKEcodeA1abcdefghijkl", text, str(path.relative_to(root)))
             for name in ("catalog.json", "manual-sync.json", f"runs/{bridge.manual_run_id(BATCH, 'board')}.json"):
                 text = (bridge.state_dir / name).read_text(encoding="utf-8")
                 self.assertNotIn("xsec_token", text, name)
