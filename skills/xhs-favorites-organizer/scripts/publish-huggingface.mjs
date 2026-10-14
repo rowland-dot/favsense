@@ -8,7 +8,7 @@ import {
   readFrozenSiteManifest,
   siteTreeManifest,
 } from "./build-organization-snapshot.mjs";
-import { assertPublicTextSafe, validatePublicTree } from "./public-tree-policy.mjs";
+import { assertPublicTextSafe, loadBridgeTokenIdentifiers, validatePublicTree } from "./public-tree-policy.mjs";
 
 function readOption(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
@@ -190,7 +190,10 @@ async function main() {
       throw new Error("frozen public snapshot manifest does not match");
     }
   }
-  const privateIdentifiers = await loadPrivateIdentifiers(configPath);
+  const privateIdentifiers = [
+    ...await loadPrivateIdentifiers(configPath),
+    ...loadBridgeTokenIdentifiers(path.join(workspace, ".xhs-favorites", "bridge-token")),
+  ];
   await validatePublicTree(publicSite, { privateIdentifiers });
 
   const temporary = await mkdtemp(path.join(tmpdir(), "favsense-hf-publish-"));

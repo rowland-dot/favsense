@@ -11,7 +11,8 @@ import { TITLE_LIMIT, cardCounts, cardText, cardTitle, postBody, replyState } fr
 import { loadExtractedText } from "./extracted-text.mjs";
 import { loadDamagedReplies } from "./damaged-replies.mjs";
 import { validateResourceIndex } from "../../../site/resource-utils.mjs";
-import { PUBLIC_FORBIDDEN, atomicWriteTextFile } from "./public-tree-policy.mjs";
+import { PUBLIC_FORBIDDEN, atomicWriteTextFile, loadBridgeTokenIdentifiers } from "./public-tree-policy.mjs";
+import { loadSourceCodes, signedPostLink, sourceCodeMaxAgeDays, usableSourceCode, withoutOwnSignedLinks } from "./source-links.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const workspace = resolve(scriptDir, "../../..");
@@ -40,6 +41,8 @@ const paths = {
   candidates: arg("candidates", ""),
   // No default: a build that names no list treats no reply as damaged, so a test or a direct run never reads the private folder.
   damaged: arg("damaged-replies", ""),
+  // No default either: only a build that names the private store gives any card a signed post link.
+  sourceCodes: arg("source-codes", ""),
   output: arg("output", resolve(workspace, "site/data/knowledge.json"))
 };
 const buildVersionIndex = process.argv.indexOf("--build-version");
@@ -131,6 +134,9 @@ const rawNotes = Object.fromEntries(
   Object.entries(catalog.notes || {})
 );
 const damagedReplies = paths.damaged ? loadDamagedReplies(paths.damaged) : new Map();
+// The setting is read before any card is built, so a mistake in it stops the build instead of changing some links.
+const codeMaxAgeDays = sourceCodeMaxAgeDays(profile);
+const sourceCodes = paths.sourceCodes ? loadSourceCodes(paths.sourceCodes) : new Map();
 const evidenceStats = await collectVideoEvidenceStats(paths.videoAnalysis, config.public_stats, Object.keys(rawNotes));
 const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   // The add-on: the reviewed curation entry, else the candidate sealed for the note. It never decides whether
@@ -143,13 +149,16 @@ const notes = Object.entries(rawNotes).map(([noteId, raw], index) => {
   const state = replyState(noteId, point, damagedReplies);
   const text = cardText({ body, point, state, extracted: loadExtractedText(paths.videoAnalysis, noteId, raw.type) });
   const title = cardTitle({ title: raw.title, body, author: raw.author, noteId });
+  // A note with a usable stored code opens the post itself; every other note keeps the search link.
+  const stored = usableSourceCode(sourceCodes, noteId, { today: effectiveDate, maxAgeDays: codeMaxAgeDays });
 
   return {
     id: noteId,
     number: index + 1,
     title,
     author: raw.author || "",
-    sourceUrl: publicSourceUrl(searchTextOf(raw) || title, raw.author || ""),
+    sourceUrl: stored ? signedPostLink(noteId, stored.code, stored.source) : publicSourceUrl(searchTextOf(raw) || title, raw.author || ""),
+    linkKind: stored ? "post" : "search",
     publishedAt: raw.published_at || "",
     likes: raw.liked_count || "",
     collections: raw.collected_count || "",
@@ -213,7 +222,11 @@ const output = {
 };
 
 const serialized = `${JSON.stringify(output, null, 2)}\n`;
-const normalizedSerialized = normalizeSensitiveText(serialized);
+// The safety checks read the data without each card's own signed link: that link is the one place a code may
+// sit. A code anywhere else (the card's text, another field, another card's link) still stops the build.
+const checkedOutput = withoutOwnSignedLinks(output);
+const checkedNotes = checkedOutput.notes;
+const normalizedSerialized = normalizeSensitiveText(`${JSON.stringify(checkedOutput, null, 2)}\n`);
 const forbidden = [
   /xsec_token\s*=/i,
   /\/user\/profile\//i,
@@ -226,7 +239,7 @@ const forbidden = [
 
 // Where the first match sits, so the person who has to fix it knows which note and field, without the matched text.
 function locateUnsafe(pattern) {
-  for (const note of notes) {
+  for (const note of checkedNotes) {
     for (const [key, value] of Object.entries(note)) {
       const texts = key === "extracted" && value ? [value.text] : Array.isArray(value) ? value : [value];
       if (texts.some((text) => typeof text === "string" && pattern.test(normalizeSensitiveText(text)))) {
@@ -243,6 +256,8 @@ for (const pattern of forbidden) {
 const privateIdentifiers = new Set([
   config.legacy_source_board_id,
   ...(config.boards || []).map((board) => board?.id),
+  // The local service's token, read here and never printed: the sync service keeps it beside its other private state.
+  ...loadBridgeTokenIdentifiers(arg("bridge-token-file", resolve(workspace, ".xhs-favorites/bridge-token"))),
 ]);
 try {
   const profileUrl = new URL(String(config.profile_url || ""));
@@ -252,7 +267,7 @@ try {
 for (const identifier of privateIdentifiers) {
   const privateValue = String(identifier || "").trim();
   if (privateValue && normalizedSerialized.includes(normalizeSensitiveText(privateValue))) {
-    const where = notes.find((note) => JSON.stringify(note).includes(privateValue) || normalizeSensitiveText(JSON.stringify(note)).includes(normalizeSensitiveText(privateValue)));
+    const where = checkedNotes.find((note) => JSON.stringify(note).includes(privateValue) || normalizeSensitiveText(JSON.stringify(note)).includes(normalizeSensitiveText(privateValue)));
     throw new Error(`Public data safety check failed: private source identifier${where ? ` (note ${where.id})` : ""}`);
   }
 }

@@ -397,9 +397,6 @@ class Round:
     def saved(self, note_id: str) -> bool:
         return self.bridge.saved_diandian_record(note_id) is not None
 
-    def private_bytes(self) -> bytes:
-        return b"\n".join(path.read_bytes() for path in self.root.rglob("*") if path.is_file())
-
     def unresolved(self) -> dict:
         report = json.loads(self.bridge.diandian_report_path.read_text(encoding="utf-8"))
         return {entry["note_id"]: entry.get("summary_status") for entry in report["unresolved"]}
@@ -407,9 +404,13 @@ class Round:
     def assert_nothing_secret_is_kept(self) -> None:
         self.test.assertEqual(self.bridge.run_note_links, {})
         self.test.assertEqual(self.bridge.page_tasks, {})
-        data = self.private_bytes()
+        # The access codes of the imported links are kept in one private file (issue 106) and nowhere else.
         for marker in PRIVATE_MARKERS:
-            self.test.assertNotIn(marker, data)
+            holders = {
+                path.name for path in self.root.rglob("*")
+                if path.is_file() and marker in path.read_bytes()
+            }
+            self.test.assertLessEqual(holders, {"source-codes.json"}, marker)
 
 
 def note_kinds(notes: list[str]) -> list[str]:

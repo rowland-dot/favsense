@@ -14,6 +14,7 @@ import { collectVideoEvidenceStats } from "../scripts/evidence-stats.mjs";
 import { resolveCategoryPolicy, sourceBoardNames } from "../scripts/category-policy.mjs";
 import { containsCredentialShape } from "../scripts/sensitive-data.mjs";
 import { assertPublicTextSafe, validatePublicTree } from "../scripts/public-tree-policy.mjs";
+import { isSignedPostLinkOf, withoutOwnSignedLinks } from "../scripts/source-links.mjs";
 import {
   normalizeLocalBridgeDiagnostic,
   validateLocalBridgeBoards,
@@ -228,7 +229,7 @@ test("knowledge payload failures keep a recoverable shell with accurate guidance
     try { validateKnowledgeData(unsafeResource); } catch { unsafeResourceRejected = true; }
     const card = (id, changes = {}) => ({
       id, title: id, category: "A", kind: "Note", publishedAt: "2026-01-01", themes: [], tools: [], unverifiedTools: [], resources: [],
-      mainText: "text", mainSource: "post-text", replyDamaged: false, postUnreachable: false, extracted: null, ...changes
+      mainText: "text", mainSource: "post-text", replyDamaged: false, postUnreachable: false, extracted: null, linkKind: "search", ...changes
     });
     const refuses = (note) => {
       const data = emptyKnowledgeData();
@@ -237,6 +238,8 @@ test("knowledge payload failures keep a recoverable shell with accurate guidance
     };
     const withoutPostUnreachable = card("note-e");
     delete withoutPostUnreachable.postUnreachable;
+    const withoutLinkKind = card("note-i");
+    delete withoutLinkKind.linkKind;
     const invalidDateRejected = refuses(card("note-a", { publishedAt: 123 }));
     const missingDate = emptyKnowledgeData();
     missingDate.notes = [card("note-b", { publishedAt: "" })];
@@ -247,13 +250,15 @@ test("knowledge payload failures keep a recoverable shell with accurate guidance
       postUnreachableMissing: refuses(withoutPostUnreachable),
       mainSource: refuses(card("note-f", { mainSource: "curation" })),
       mainText: refuses(card("note-g", { mainText: null })),
-      unverifiedTools: refuses(card("note-h", { unverifiedTools: "none" }))
+      unverifiedTools: refuses(card("note-h", { unverifiedTools: "none" })),
+      linkKindMissing: refuses(withoutLinkKind),
+      linkKindUnknown: refuses(card("note-j", { linkKind: "direct" }))
     };
     const goodCards = (() => {
       const data = emptyKnowledgeData();
       data.notes = [
         card("g1", { extracted: { kind: "video-transcript", text: "t" } }),
-        card("g2", { mainSource: "diandian", replyDamaged: true, postUnreachable: true, mainText: "" })
+        card("g2", { mainSource: "diandian", replyDamaged: true, postUnreachable: true, mainText: "", linkKind: "post" })
       ];
       return validateKnowledgeData(data).notes.length;
     })();
@@ -272,7 +277,8 @@ test("knowledge payload failures keep a recoverable shell with accurate guidance
   assert.equal(context.result.unsafeResourceRejected, true);
   assert.equal(context.result.invalidDateRejected, true);
   assert.deepEqual({ ...context.result.newFieldsRefused }, {
-    extractedKind: true, extractedText: true, replyDamaged: true, postUnreachableMissing: true, mainSource: true, mainText: true, unverifiedTools: true
+    extractedKind: true, extractedText: true, replyDamaged: true, postUnreachableMissing: true, mainSource: true, mainText: true, unverifiedTools: true,
+    linkKindMissing: true, linkKindUnknown: true
   });
   assert.equal(context.result.goodCards, 2);
   assert.equal(context.result.missingDateAccepted, 1);
@@ -447,7 +453,10 @@ test("public site ships complete, structured knowledge data", async () => {
     assert.equal(typeof note.replyDamaged, "boolean");
     assert.equal(typeof note.postUnreachable, "boolean");
     assert.ok(Array.isArray(note.unverifiedTools));
-    assert.match(note.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/search_result\?/);
+    // A card links to its post only with its own signed link; every other card keeps the search link.
+    assert.match(note.linkKind, /^(post|search)$/);
+    if (note.linkKind === "post") assert.equal(isSignedPostLinkOf(note.sourceUrl, note.id), true, note.id);
+    else assert.match(note.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/search_result\?/);
     assert.equal(Object.hasOwn(note, "priority"), false);
     assert.equal(Object.hasOwn(note, "risk"), false);
     assert.match(note.kind, /^(Note|Tool|Skill|Workflow|Product)$/);
@@ -1669,7 +1678,8 @@ test("skincare sunscreen resource points to a sunscreen-specific guide", async (
 });
 
 test("public payload excludes private account state", async () => {
-  const payload = await read("site/data/knowledge.json");
+  // A card's own signed post link is the one thing a code may sit in; the rest of the data is checked without it.
+  const payload = JSON.stringify(withoutOwnSignedLinks(JSON.parse(await read("site/data/knowledge.json"))));
   for (const forbidden of [
     /xsec_token/i,
     /\/user\/profile\//i,

@@ -284,6 +284,7 @@ async function captureWorkspace({ withDamagedList = true, configuration } = {}) 
     profile: join(root, "profile.json"),
     resources: join(root, "resources.json"),
     damaged: join(state, "damaged-diandian-replies.json"),
+    sourceCodes: join(state, "source-codes.json"),
     audit: join(state, "curation-audit.json"),
     point: join(points, `${noteId}.json`),
     analysis: join(noteVideo, "analysis.json"),
@@ -297,6 +298,7 @@ async function captureWorkspace({ withDamagedList = true, configuration } = {}) 
     curation: "{}",
     bundle: JSON.stringify({ schema_version: 1, outcome: "ready_for_safe_build", scope: { note_ids: [noteId] }, curation: { [noteId]: { review_status: "pending" } } }),
     profile: "{}", resources: "{}", damaged: JSON.stringify({ schema_version: 1, entries: [] }),
+    sourceCodes: JSON.stringify({ schema_version: 1, notes: { [noteId]: { code: "FAKEcodeA1", source: "pc_collect", captured_at: "2026-10-09T08:00:00.000Z", batch: "batch-late" } } }),
     audit: "{}", point: "{}", analysis: "{}", transcript: "{\"text\":\"spoken\"}", pictureText: "{\"text\":\"on screen\"}", image: "{}",
   };
   for (const [label, path] of Object.entries(files)) {
@@ -306,7 +308,7 @@ async function captureWorkspace({ withDamagedList = true, configuration } = {}) 
   const options = {
     root, catalog: files.catalog, config: files.config, curation: files.curation,
     curationBundle: files.bundle, profile: files.profile, resources: files.resources,
-    diandianDir: points, videoAnalysis: video, damagedReplies: files.damaged,
+    diandianDir: points, videoAnalysis: video, damagedReplies: files.damaged, sourceCodes: files.sourceCodes,
   };
   return { root, noteId, state, video, noteVideo, points, files, original, options };
 }
@@ -392,6 +394,58 @@ test("a missing damaged list is an empty one only when there is no saved reply t
   await assert.rejects(captureBuilderInputs({ ...withReply.options, damagedReplies: undefined }, "2026-08-25"), /DAMAGED_REPLY_LIST_MISSING/);
 });
 
+test("the private source code store is frozen byte for byte and reaches the builder, which gives that card its post link", async () => {
+  const { captureBuilderInputs, materializeCapturedInputs } = await import("../scripts/build-organization-snapshot.mjs");
+  const profile = await readFile(join(dirname(fileURLToPath(import.meta.url)), "../../../config/domain-profiles/software.json"), "utf8");
+  const { root, noteId, files, original, options } = await captureWorkspace({
+    configuration: JSON.stringify({ boards: [{ id: "private-board-id", name: "Synthetic", enabled: true }], public_stats: {} }),
+  });
+  await writeFile(files.profile, profile);
+  await writeFile(files.resources, JSON.stringify({ verified_at: "2026-10-10", resources: [] }));
+  await writeFile(files.catalog, JSON.stringify({ notes: { [noteId]: { title: "有码的帖子", description: "文字", source_boards: ["Synthetic"] } } }));
+  const frozen = await materializeCapturedInputs(root, await captureBuilderInputs(options, "2026-10-10"), {});
+  try {
+    assert.equal(await readFile(frozen.sourceCodes, "utf8"), original.sourceCodes);
+    // The live file changing after the capture does not reach the frozen copy.
+    await writeFile(files.sourceCodes, "{}");
+    assert.equal(await readFile(frozen.sourceCodes, "utf8"), original.sourceCodes);
+    const built = join(frozen.root, "knowledge.json");
+    const run = spawnSync(process.execPath, [
+      fileURLToPath(new URL("../scripts/build-public-site.mjs", import.meta.url)),
+      "--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile,
+      "--resources", frozen.resources, "--candidates", frozen.candidates, "--diandian-dir", frozen.diandian,
+      "--video-analysis", frozen.video, "--damaged-replies", frozen.damaged, "--source-codes", frozen.sourceCodes,
+      "--effective-date", "2026-10-10", "--output", built,
+    ], { encoding: "utf8" });
+    assert.equal(run.status, 0, run.stderr);
+    const card = JSON.parse(await readFile(built, "utf8")).notes[0];
+    assert.equal(card.sourceUrl, `https://www.xiaohongshu.com/explore/${noteId}?xsec_token=FAKEcodeA1&xsec_source=pc_collect`);
+    assert.equal(card.linkKind, "post");
+  } finally {
+    await rm(frozen.root, { recursive: true, force: true });
+  }
+});
+
+test("a different source code store is a different build version, and a store that is not there freezes nothing", async () => {
+  const { captureBuilderInputs, materializeCapturedInputs } = await import("../scripts/build-organization-snapshot.mjs");
+  const { root, noteId, files, original, options } = await captureWorkspace();
+  const before = await captureBuilderInputs(options, "2026-08-25");
+  await writeFile(files.sourceCodes, JSON.stringify({ schema_version: 1, notes: { [noteId]: { code: "FAKEcodeOTHER", source: "pc_collect", captured_at: "2026-10-09T08:00:00.000Z", batch: "batch-late" } } }));
+  assert.notEqual((await captureBuilderInputs(options, "2026-08-25")).inputRevisionDigest, before.inputRevisionDigest);
+  await rm(files.sourceCodes);
+  const missing = await captureBuilderInputs(options, "2026-08-25");
+  const frozen = await materializeCapturedInputs(root, missing, {});
+  try {
+    assert.equal(frozen.sourceCodes, undefined);
+  } finally {
+    await rm(frozen.root, { recursive: true, force: true });
+  }
+  // A build that names no store at all gives the same answer as one whose store file is absent.
+  const unnamed = await captureBuilderInputs({ ...options, sourceCodes: undefined }, "2026-08-25");
+  assert.equal(JSON.stringify(unnamed.inputs.filter((entry) => entry.name !== "source-codes")), JSON.stringify(missing.inputs.filter((entry) => entry.name !== "source-codes")));
+  await writeFile(files.sourceCodes, original.sourceCodes);
+});
+
 test("the command line no longer takes the run report or the prompt version", async () => {
   const script = fileURLToPath(new URL("../scripts/build-organization-snapshot.mjs", import.meta.url));
   const required = {
@@ -407,22 +461,23 @@ test("the command line no longer takes the run report or the prompt version", as
   }
   // Without the removed flags the arguments are accepted (the run then fails later on the files it cannot find).
   assert.doesNotMatch(run({}).stderr, /SNAPSHOT_ARGUMENT_INVALID/);
+  assert.doesNotMatch(run({ "--source-codes": "x" }).stderr, /SNAPSHOT_ARGUMENT_INVALID/);
 });
 
-test("the builder version is 8, so a silent revert changes the version", async () => {
+test("the builder version is 9, so a silent revert changes the version", async () => {
   const { canonicalVersion } = await import("../scripts/build-organization-snapshot.mjs");
   const sha = (value) => createHash("sha256").update(value, "utf8").digest("hex");
   const without = canonicalVersion({ ...COMMON });
   assert.equal(without, sha(JSON.stringify({
     schema_version: 3, sealed_scope_sha256: COMMON.sealedScopeDigest, curation_input_sha256: COMMON.curationInputDigest,
     public_config_sha256: COMMON.configDigest, input_revision_sha256: COMMON.inputRevisionDigest,
-    effective_date: COMMON.effectiveDate, builders: { public_site: 8 },
+    effective_date: COMMON.effectiveDate, builders: { public_site: 9 },
   })));
   const withSite = canonicalVersion({ ...COMMON, publishSiteDigest: "f".repeat(64) });
   assert.equal(withSite, sha(JSON.stringify({
     schema_version: 4, sealed_scope_sha256: COMMON.sealedScopeDigest, curation_input_sha256: COMMON.curationInputDigest,
     public_config_sha256: COMMON.configDigest, input_revision_sha256: COMMON.inputRevisionDigest,
-    publish_site_sha256: "f".repeat(64), effective_date: COMMON.effectiveDate, builders: { public_site: 8 },
+    publish_site_sha256: "f".repeat(64), effective_date: COMMON.effectiveDate, builders: { public_site: 9 },
   })));
 });
 

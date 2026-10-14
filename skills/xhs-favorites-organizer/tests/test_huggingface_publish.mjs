@@ -473,3 +473,64 @@ test("publisher disables terminal and Git Credential Manager prompts", async () 
   assert.match(source, /GCM_INTERACTIVE:\s*"0"/);
   assert.match(source, /credential\.interactive=false/);
 });
+
+// Issue 106: a card's own signed post link is public data now; the bridge token never is.
+const SIGNED_ID = "6a7dc92600000000250090ff";
+const signedLink = `https://www.xiaohongshu.com/explore/${SIGNED_ID}?xsec_token=FAKEcodeA1%3D%3D&xsec_source=pc_collect`;
+const bridgeTokenValue = "9f".repeat(32);
+
+async function publishFixture(prefix, { knowledge, extraFiles = {}, bridgeToken = null }) {
+  const root = await mkdtemp(path.join(tmpdir(), prefix));
+  const remote = await createRemoteFixture(root);
+  const workspace = path.join(root, "workspace");
+  await mkdir(path.join(workspace, "site", "data"), { recursive: true });
+  await writeFile(path.join(workspace, "site", "index.html"), "ok", "utf8");
+  await writeFile(path.join(workspace, "site", "data", "knowledge.json"), knowledge, "utf8");
+  for (const [name, text] of Object.entries(extraFiles)) await writeFile(path.join(workspace, "site", name), text, "utf8");
+  if (bridgeToken) {
+    await mkdir(path.join(workspace, ".xhs-favorites"), { recursive: true });
+    await writeFile(path.join(workspace, ".xhs-favorites", "bridge-token"), bridgeToken, "utf8");
+  }
+  const result = spawnSync(
+    process.execPath,
+    [publisher, "--workspace", workspace, "--repository", remote, "--branch", "main"],
+    { encoding: "utf8", env: { ...process.env, FAVSENSE_ALLOW_LOCAL_PUBLISH: "1" } }
+  );
+  return { root, remote, result };
+}
+
+test("publisher sends a card's own signed post link inside the data file", async () => {
+  const { root, remote, result } = await publishFixture("favsense-publish-signed-", {
+    knowledge: JSON.stringify({ notes: [{ id: SIGNED_ID, sourceUrl: signedLink }] }),
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const checkout = path.join(root, "checkout");
+  git(["clone", remote, checkout], root);
+  assert.match(await readFile(path.join(checkout, "site", "data", "knowledge.json"), "utf8"), /xsec_token=FAKEcodeA1/);
+});
+
+test("publisher refuses a signed post link anywhere but a card's own source link", async () => {
+  const wrongCard = await publishFixture("favsense-publish-signed-other-", {
+    knowledge: JSON.stringify({ notes: [{ id: "6a7dc92600000000250090aa", sourceUrl: signedLink }] }),
+  });
+  assert.notEqual(wrongCard.result.status, 0);
+  assert.match(wrongCard.result.stderr, /sensitive public content/);
+  const inNotes = await publishFixture("favsense-publish-signed-notes-", {
+    knowledge: JSON.stringify({ notes: [] }),
+    extraFiles: { "notes.md": signedLink },
+  });
+  assert.notEqual(inNotes.result.status, 0);
+  assert.match(inNotes.result.stderr, /sensitive public content/);
+});
+
+test("publisher refuses the bridge token, bare or labelled, and never prints it", async () => {
+  for (const text of [bridgeTokenValue, `bridge_token=${bridgeTokenValue}`]) {
+    const { result } = await publishFixture("favsense-publish-bridge-token-", {
+      knowledge: JSON.stringify({ notes: [{ id: SIGNED_ID, mainText: text }] }),
+      bridgeToken: `${bridgeTokenValue}\n`,
+    });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /private source identifier/);
+    assert.doesNotMatch(`${result.stdout}${result.stderr}`, new RegExp(bridgeTokenValue));
+  }
+});

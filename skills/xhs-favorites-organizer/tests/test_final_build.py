@@ -330,7 +330,7 @@ class SnapshotCommandTest(unittest.TestCase):
         "counts": {"notes": 1, "categories": 1, "resources": 0},
     }
 
-    def final_build(self, root: Path, scope: dict | None, damaged_list: bool = False) -> list[str]:
+    def final_build(self, root: Path, scope: dict | None, damaged_list: bool = False, source_codes: bool = False) -> list[str]:
         """Run the one final build with the real snapshot step; return the command it was given."""
         runner = bridge_support.ScriptRunnerDouble(bridge_support.completed(json.dumps(self.RESULT)))
         bridge = bridge_support.make_bridge(BRIDGE, root, script_runner=runner)
@@ -348,6 +348,8 @@ class SnapshotCommandTest(unittest.TestCase):
         )
         if damaged_list:
             BRIDGE.atomic_json(bridge.state_dir / "damaged-diandian-replies.json", {"schema_version": 1, "entries": []})
+        if source_codes:
+            BRIDGE.atomic_json(bridge.state_dir / "source-codes.json", {"schema_version": 1, "notes": {}})
         bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 0, "pending": 1}})
         published = []
         bridge.run_final_build(
@@ -391,6 +393,16 @@ class SnapshotCommandTest(unittest.TestCase):
             )
         with tempfile.TemporaryDirectory() as directory:
             self.assertNotIn("--damaged-replies", self.final_build(Path(directory), None))
+
+    def test_the_private_source_code_store_is_passed_when_the_file_exists_and_left_out_when_it_does_not(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with_store = self.final_build(Path(directory), None, source_codes=True)
+            self.assertEqual(
+                Path(with_store[with_store.index("--source-codes") + 1]).name,
+                "source-codes.json",
+            )
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertNotIn("--source-codes", self.final_build(Path(directory), None))
 
     def test_a_private_config_that_still_names_a_knowledge_base_folder_does_not_stop_the_bridge_starting(self):
         with tempfile.TemporaryDirectory() as directory:
