@@ -136,6 +136,9 @@ export function evidenceText(record, contract) {
   const resultSha256 = clean(record.result_sha256);
   if (
     !text
+    // U+FFFD marks bytes that were decoded with the wrong encoding when the record was saved. The record's
+    // own hash was computed over that damage, so the hash cannot catch it: text we cannot read truthfully is absent.
+    || text.includes("�")
     || !HASH.test(resultSha256)
     || createHash("sha256").update(text, "utf8").digest("hex") !== resultSha256
   ) return null;

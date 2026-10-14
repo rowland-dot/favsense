@@ -5,6 +5,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadExtractedText } from "../scripts/extracted-text.mjs";
+import { currentEvidence, evidenceText } from "../scripts/evidence-files.mjs";
 
 const NOTE = "6a2a81d1000000001702d3de";
 const sha = (text) => createHash("sha256").update(text, "utf8").digest("hex");
@@ -76,5 +77,39 @@ test("no folder, no files, or an image post without picture text give null", asy
   await withRoot({}, async (root) => {
     assert.equal(loadExtractedText(root, NOTE, "视频"), null);
     assert.equal(loadExtractedText(root, NOTE, "图文"), null);
+  });
+});
+
+// Regression: BUG-001 — a picture-text record saved while the engine's Windows code-page bytes were
+// decoded as UTF-8 keeps U+FFFD replacement characters, and its own hash was computed over that
+// damage, so the hash check alone passes it. Text that cannot be decoded truthfully is absent.
+// Found by /qa on 2026-10-14. Report: docs/reports/qa/2026-10-14-favsense-faithful-cards-qa-report.md
+const GARBLED = "K K \uFFFD\u01F3\uFFFD\uFFFD\u043B\uFFFD\uFFFD\u04B6\uFFFD\uFFFD\u04B5\uFFFD\u03F2\uFFFD\uFFFD\uFFFD\u05A7\uFFFD K K";
+
+test("a record whose text carries replacement characters is not used, whichever record it is", async () => {
+  await withRoot({ "visual-ocr.json": imageText(GARBLED) }, async (root) => {
+    assert.equal(loadExtractedText(root, NOTE, "视频"), null);
+    assert.equal(loadExtractedText(root, NOTE, "图文"), null);
+  });
+  await withRoot({ "transcription.json": transcript(`口播${GARBLED}`) }, async (root) => {
+    assert.equal(loadExtractedText(root, NOTE, "视频"), null);
+  });
+});
+
+test("a damaged picture-text record is dropped but a sound transcript beside it is still shown", async () => {
+  await withRoot({ "transcription.json": transcript("口播"), "visual-ocr.json": imageText(GARBLED) }, async (root) => {
+    assert.deepEqual(loadExtractedText(root, NOTE, "视频"), { kind: "video-transcript", text: "口播" });
+  });
+});
+
+test("the review's reading of evidence refuses a damaged record too, since both read through one function", () => {
+  const record = imageText(GARBLED, { content_sha256: "c".repeat(64) });
+  assert.equal(currentEvidence(record, "c".repeat(64), { status: "extracted", method: "local_image_ocr" }), null);
+  assert.equal(evidenceText(record, { status: "extracted", method: "local_image_ocr" }), null);
+});
+
+test("a legitimate middle dot or multiplication sign is not mistaken for damage", async () => {
+  await withRoot({ "visual-ocr.json": imageText("乔布斯·史蒂夫 3×4") }, async (root) => {
+    assert.equal(loadExtractedText(root, NOTE, "视频").text, "乔布斯·史蒂夫 3×4");
   });
 });
