@@ -20,9 +20,8 @@ export const PUBLIC_FORBIDDEN = [
   /\b(?:access_token|refresh_token|authorization|password|secret)\s*[:=]\s*["']?[^\s"']{8,}/i,
   /\b(?:cookie|cookies|set-cookie)\s*[:=]\s*["']?[^\s"']{8,}/i,
   /\bBearer\s+[A-Za-z0-9._~+/-]{8,}/i,
-  // A token-free post address (/explore/<id>, /discovery/item/<id>) is public; the profile and folder pages are not.
-  /xiaohongshu\.com\/(?:user\/profile|board)\//i,
-  /(?:^|["'\s])\/(?:user\/profile|board)\/[A-Za-z0-9_-]{6,}/i,
+  /xiaohongshu\.com\/(?:user\/profile|board|explore|discovery\/item)\//i,
+  /(?:^|["'\s])\/(?:user\/profile|board|explore|discovery\/item)\/[A-Za-z0-9_-]{6,}/i,
   /ChromeUserData|AppData\\Local/i
 ];
 const STRUCTURED_CREDENTIAL_KEY = /^(?:api_key|client_secret|cookie|cookies|xsec_token|token|access_token|refresh_token|authorization|password|secret)$/i;

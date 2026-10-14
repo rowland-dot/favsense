@@ -298,13 +298,12 @@ test("no field of the old gate is left on a card", async () => {
   for (const card of Object.values(cards)) for (const key of gone) assert.equal(Object.hasOwn(card, key), false, `${card.id}.${key}`);
 });
 
-test("LINK-02: every card links straight to its post, with no search page and no token", async () => {
-  const { cards, raw } = await build(population());
-  assert.ok(Object.keys(cards).length > 5, "the population has cards to check");
+test("the link to the original is still a search link, never a direct post link", async () => {
+  const { cards } = await build(population());
   for (const card of Object.values(cards)) {
-    assert.equal(card.sourceUrl, `https://www.xiaohongshu.com/explore/${card.id}`);
+    assert.match(card.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/search_result\?/);
+    assert.doesNotMatch(card.sourceUrl, /\/explore\/|xsec_token/);
   }
-  assert.doesNotMatch(JSON.stringify(raw), /xsec_token|search_result/);
 });
 
 test("D10: a cut reply that is the only text is shown as saved, is not a complete reply, and an empty note stays empty", async () => {

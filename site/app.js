@@ -1133,7 +1133,7 @@ function renderDetail(note) {
       ? '<button type="button" disabled title="请先启动并登录 SOP 扫描浏览器">SOP 扫描浏览器未就绪</button>'
     : isLocalWorkbenchLocation()
       ? '<button type="button" disabled title="请先启动 FavSense 本地服务">请先启动 FavSense 本地服务</button>'
-      : `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">在小红书中查看原帖</a>`;
+      : `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">在小红书搜索原帖</a>`;
   const singleNoteActionHtml = state.localBridge?.diandianAvailable && sopBrowserReady() ? `
     <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${manualSyncRunning(state.manualSync) || state.manualSync.legacy_safety_stop ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
   ` : state.localBridge
