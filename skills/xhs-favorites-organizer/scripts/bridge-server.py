@@ -2585,7 +2585,6 @@ class Bridge:
         self.token_path = self.state_dir / "bridge-token"
         self.status_path = self.state_dir / "bridge-status.json"
         self.manual_sync_path = self.state_dir / "manual-sync.json"
-        self.open_note_page_path = self.state_dir / "open-note-page.json"
         self.catalog_path = self.state_dir / "catalog.json"
         self.diandian_dir = self.state_dir / "diandian-summaries"
         self.diandian_report_path = self.state_dir / "diandian-rerun-report.json"
@@ -3110,24 +3109,22 @@ class Bridge:
     def close_leftover_run_pages(self, recorded_page_id: object) -> None:
         """Before a round opens its page, close the pages earlier rounds left behind.
 
-        Only three kinds are FavSense's: a page whose address carries a sync marker, the page the
-        previous round recorded (a failed round keeps one, and the DianDian address cannot be marked),
-        and the page "open original" recorded. Every other Xiaohongshu page belongs to someone else
-        and is neither closed nor moved.
+        Only two kinds are FavSense's: a page whose address carries a sync marker, and the page the
+        previous round recorded (a failed round keeps one, and the DianDian address cannot be marked).
+        Every other Xiaohongshu page belongs to someone else and is neither closed nor moved.
         """
         try:
             pages = self.list_sop_browser_pages()
         except (OSError, RuntimeError, ValueError) as error:
             append_bridge_log(self.state_dir, "INTERNAL", "run-page-cleanup", "-", type(error).__name__, str(error))
             return
-        owned_page_ids = {recorded_page_id, self.recorded_open_note_page_id()}
         for page in pages:
             parsed = urlparse(page["url"])
             marked = (
                 parsed.hostname == "www.xiaohongshu.com"
                 and bool(SYNC_PAGE_QUERY_KEYS & set(parse_qs(parsed.query)))
             )
-            if not marked and page["id"] not in owned_page_ids:
+            if not marked and page["id"] != recorded_page_id:
                 continue
             try:
                 self.close_sop_browser_page(page["id"])
@@ -5772,67 +5769,6 @@ class Bridge:
             "finalization_started": False,
         }
 
-    def open_original_note(self, note_id: str) -> dict:
-        if not NOTE_ID.fullmatch(note_id):
-            raise ValueError("invalid note_id")
-        if not self.catalog_path.is_file():
-            raise ValueError("catalog is unavailable")
-        catalog = json.loads(self.catalog_path.read_text(encoding="utf-8-sig"))
-        note = catalog.get("notes", {}).get(note_id)
-        if not isinstance(note, dict):
-            raise ValueError("unknown note_id")
-        source_ids = note.get("source_board_ids")
-        if not isinstance(source_ids, list):
-            raise ValueError("note has no source board")
-        available_ids = {
-            item.get("id") for item in self.all_boards
-            if isinstance(item, dict) and item.get("available") is not False
-        }
-        board_id = next((value for value in source_ids if value in available_ids), None)
-        if board_id is None or not BOARD_ID.fullmatch(str(board_id)):
-            raise ValueError("note source board is unavailable")
-
-        query = urlencode({"source": "web_user_page", "xhs_kb_open_note": note_id})
-        # One lookup page at a time: the previous one is closed first, and the trigger lock keeps a
-        # round start (which closes it too) and a second click from opening pages at the same moment.
-        if not self.trigger_lock.acquire(blocking=False):
-            raise BridgeBusyError("another request is already opening a page")
-        try:
-            self.manual_sync_status()
-            if self.round_is_running():
-                raise BridgeBusyError("organization is already running in Chrome")
-            self.close_open_note_page()
-            opened = self.open_sop_browser_page(
-                f"https://www.xiaohongshu.com/board/{board_id}?{query}"
-            )
-            page_id = opened.get("id") if isinstance(opened, dict) else None
-            if isinstance(page_id, str) and PAGE_ID.fullmatch(page_id):
-                atomic_json(self.open_note_page_path, {"page_id": page_id})
-        finally:
-            self.trigger_lock.release()
-        return {"status": "opened"}
-
-    def round_is_running(self) -> bool:
-        current = self.read_manual_sync()
-        return current.get("state") in {"starting", "running"} and (
-            self.run_age_seconds(current, unreadable=0) < MANUAL_RUN_TIMEOUT_SECONDS
-        )
-
-    def recorded_open_note_page_id(self) -> str | None:
-        """The page "open original" last opened, or None. Its record holds nothing but this id."""
-        try:
-            record = json.loads(self.open_note_page_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return None
-        page_id = record.get("page_id") if isinstance(record, dict) else None
-        return page_id if isinstance(page_id, str) and PAGE_ID.fullmatch(page_id) else None
-
-    def close_open_note_page(self) -> None:
-        """Close the page "open original" last opened, unless the browser no longer has it."""
-        page_id = self.recorded_open_note_page_id()
-        if page_id is not None and page_id in {page["id"] for page in self.list_sop_browser_pages()}:
-            self.close_sop_browser_page(page_id)
-
     def note_organization_status(self, note_id: str) -> dict:
         if not isinstance(note_id, str) or not NOTE_ID.fullmatch(note_id):
             raise ValueError("invalid note_id")
@@ -7167,7 +7103,7 @@ def make_handler(bridge: Bridge):
                 "/import-sync", "/boards", "/sync/start", "/sync/local-rebuild", "/sync/safety-stop/clear",
                 "/sync/failure", "/sync/discover",
                 "/sync/summary-plan", "/sync/diandian-result", "/sync/diandian-skip",
-                "/sync/diandian-halt", "/sync/diandian-click", "/sync/page-result", "/notes/open",
+                "/sync/diandian-halt", "/sync/diandian-click", "/sync/page-result",
                 "/notes/organization-status",
                 "/install/complete",
             }:
@@ -7178,7 +7114,7 @@ def make_handler(bridge: Bridge):
                 return
             if self.path in {
                 "/boards", "/sync/start", "/sync/local-rebuild", "/sync/safety-stop/clear",
-                "/notes/open", "/notes/organization-status",
+                "/notes/organization-status",
             } and not is_manager_origin(self.headers.get("Origin")):
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
@@ -7258,14 +7194,6 @@ def make_handler(bridge: Bridge):
                     return
                 if self.path == "/sync/page-result":
                     self.send_json(HTTPStatus.OK, {"ok": True, **bridge.record_page_result(payload)})
-                    return
-                if self.path == "/notes/open":
-                    if set(payload) != {"note_id"}:
-                        raise ValueError("open request must contain only note_id")
-                    self.send_json(
-                        HTTPStatus.ACCEPTED,
-                        {"ok": True, **bridge.open_original_note(str(payload.get("note_id", "")))},
-                    )
                     return
                 if self.path == "/notes/organization-status":
                     if set(payload) != {"note_id"}:

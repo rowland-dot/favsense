@@ -99,7 +99,6 @@ def stand_in_bridge():
         port=0,
         token=TOKEN,
         trigger_manual_sync=mock.Mock(return_value={"state": "starting", "board_count": 1}),
-        open_original_note=mock.Mock(return_value={"opened": True}),
     )
 
 
@@ -122,16 +121,15 @@ class RefusedPostIsAlwaysAnsweredTest(unittest.TestCase):
         self.assertEqual(wrong, [])
         # A refusal is never a way in: nothing behind the handler ran.
         bridge.trigger_manual_sync.assert_not_called()
-        bridge.open_original_note.assert_not_called()
 
     def test_wrong_token_gets_401_every_time(self):
-        self.assert_every_refusal_arrives(401, path="/notes/open", token="b" * 64)
+        self.assert_every_refusal_arrives(401, path="/sync/start", token="b" * 64)
 
     def test_wrong_origin_gets_401_every_time(self):
         self.assert_every_refusal_arrives(401, path="/sync/start", origin="https://attacker.invalid")
 
     def test_wrong_host_gets_404_every_time(self):
-        self.assert_every_refusal_arrives(404, path="/notes/open", host="evil.invalid")
+        self.assert_every_refusal_arrives(404, path="/sync/start", host="evil.invalid")
 
     def test_unknown_path_gets_404_every_time(self):
         self.assert_every_refusal_arrives(404, path="/not-a-route")
@@ -140,10 +138,10 @@ class RefusedPostIsAlwaysAnsweredTest(unittest.TestCase):
         bridge = stand_in_bridge()
         body = json.dumps({"note_id": "n" * 24}).encode("utf-8")
         with RunningHandler(bridge) as handler:
-            status, reply = handler.post("/notes/open", body)
+            status, reply = handler.post("/sync/start", body)
         self.assertEqual(status, 202)
-        self.assertEqual(reply, {"ok": True, "opened": True})
-        bridge.open_original_note.assert_called_once_with("n" * 24)
+        self.assertEqual(reply, {"ok": True, "state": "starting", "board_count": 1})
+        bridge.trigger_manual_sync.assert_called_once_with({"note_id": "n" * 24})
 
     def test_a_body_over_the_size_limit_is_refused_without_being_read(self):
         # The client sends the headers and nothing else: a handler that waited for the claimed
@@ -154,11 +152,11 @@ class RefusedPostIsAlwaysAnsweredTest(unittest.TestCase):
                 bridge = stand_in_bridge()
                 with RunningHandler(bridge) as handler:
                     try:
-                        status, _ = handler.raw_post_headers_only("/notes/open", oversize, token=token)
+                        status, _ = handler.raw_post_headers_only("/sync/start", oversize, token=token)
                     except (socket.timeout, OSError) as error:
                         self.fail(f"the handler waited for an oversize body: {error!r}")
                 self.assertEqual(status, expected)
-                bridge.open_original_note.assert_not_called()
+                bridge.trigger_manual_sync.assert_not_called()
 
 
 def sharing_violation(code=32):

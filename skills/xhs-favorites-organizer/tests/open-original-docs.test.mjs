@@ -4,27 +4,40 @@ import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// The paragraph that describes the workbench's "打开原帖" must say how many Xiaohongshu pages it may hold
-// and when it closes the one it opened, in the organizer skill's instructions and in the README.
+// Issue 112: the workbench's post button is the same link the public site shows. The instructions, the README and
+// the workflow reference say so, and no longer describe the retired "打开原帖" that opened a favourites folder in
+// the scan browser and scrolled it to find the post.
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const read = (path) => readFile(resolve(root, path), "utf8");
 
-const BEHAVIOURS = [
-  ["at most one page at a time", "同一时刻最多占用 1 个小红书页面"],
-  ["the previous page is closed before the next opens", "再次点击时先关闭上一个"],
-  ["a round start closes it before opening the round's page", "一轮整理开始时，在打开本轮页面之前也先关闭它"],
-  ["it is refused while a round is running", "整理进行中拒绝"],
+const SAME_BUTTON = "显示同一个来源按钮";
+const NO_FOLDER_DIGGING = "不会为了找一篇笔记而打开收藏夹";
+
+const RETIRED = [
+  "同一时刻最多占用 1 个小红书页面",
+  "再次点击时先关闭上一个",
+  "整理进行中拒绝",
+  "在现有 SOP 扫描浏览器中打开来源收藏夹",
+  "实时签名精确定位原帖",
+  "用户脚本从当前页面取得实时签名链接",
 ];
 
 for (const path of ["skills/xhs-favorites-organizer/SKILL.md", "README.md"]) {
-  test(`${path} describes the one-page behaviour of 打开原帖`, async () => {
+  test(`${path} says the workbench shows the same source button as the public site`, async () => {
     const text = await read(path);
-    for (const [name, phrase] of BEHAVIOURS) {
-      assert.ok(text.includes(phrase), `${path} does not say: ${name} (${phrase})`);
+    assert.ok(text.includes(SAME_BUTTON), `${path} does not say: ${SAME_BUTTON}`);
+    assert.ok(text.includes(NO_FOLDER_DIGGING), `${path} does not say: ${NO_FOLDER_DIGGING}`);
+    for (const phrase of RETIRED) {
+      assert.ok(!text.includes(phrase), `${path} still describes the retired folder lookup: ${phrase}`);
     }
   });
 }
+
+test("the workflow reference no longer mentions the retired 打开原帖", async () => {
+  const text = await read("skills/xhs-favorites-organizer/references/automatic-workflow.md");
+  assert.ok(!text.includes("打开原帖"));
+});
 
 test("AGENTS.md is untouched by this behaviour: its single-page rule stays the one source", async () => {
   const text = await read("AGENTS.md");

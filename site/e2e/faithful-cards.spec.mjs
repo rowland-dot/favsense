@@ -183,10 +183,10 @@ test("CARD-09: the home page counts what the reader can actually find", async ({
 
 test("the footer controls and the source box keep their places", async ({ page, context }) => {
   const detail = await openCard(page, REPLY);
-  // Local workbench: the first control is a button, never a link to the post.
+  // Local workbench: the first control is the same search link the public site shows (this card has no access code).
   const first = detail.locator(".detail-footer > :first-child");
-  await expect(first).toHaveJSProperty("tagName", "BUTTON");
-  await expect(first).toHaveText(/打开原帖|请先启动 FavSense 本地服务/);
+  await expect(first).toHaveJSProperty("tagName", "A");
+  await expect(first).toHaveText("在小红书搜索原帖");
   const controls = (await detail.locator(".detail-footer > *").allTextContents()).map((text) => text.trim());
   expect(controls.indexOf("复制卡片链接")).toBeGreaterThan(0);
   expect(controls.at(-1)).toMatch(/书签/);

@@ -1088,15 +1088,6 @@ function settleSummaryFolds() {
   }
 }
 
-function isLocalWorkbenchLocation(locationValue = window.location) {
-  const protocol = String(locationValue?.protocol || "").toLowerCase();
-  const hostname = String(locationValue?.hostname || "").toLowerCase();
-  return protocol === "file:"
-    || hostname === "127.0.0.1"
-    || hostname === "localhost"
-    || hostname === "[::1]";
-}
-
 async function initStatusContract() {
   const response = await fetch("./organization-status-contract.json", { cache: "no-store" });
   if (!response.ok) throw new Error("整理状态契约不可用");
@@ -1130,13 +1121,8 @@ function renderDetail(note) {
   const categorySuggestionHtml = note.suggestedCategory && note.suggestedCategory !== note.category ? `
     <p class="category-suggestion"><span>内容建议分类</span>${escapeHtml(note.suggestedCategory)}<small>当前仍按收藏夹“${escapeHtml(note.category)}”归档</small></p>
   ` : "";
-  const sourceActionHtml = state.localBridge && sopBrowserReady()
-    ? `<button type="button" data-open-source-note="${escapeHtml(note.id)}">打开原帖</button>`
-    : state.localBridge
-      ? '<button type="button" disabled title="请先启动并登录 SOP 扫描浏览器">SOP 扫描浏览器未就绪</button>'
-    : isLocalWorkbenchLocation()
-      ? '<button type="button" disabled title="请先启动 FavSense 本地服务">请先启动 FavSense 本地服务</button>'
-      : `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">${note.linkKind === "post" ? "在小红书中查看原帖" : "在小红书搜索原帖"}</a>`;
+  // The same link on the public site and in the local workbench, whether or not the local service is up.
+  const sourceActionHtml = `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">${note.linkKind === "post" ? "在小红书中查看原帖" : "在小红书搜索原帖"}</a>`;
   const singleNoteActionHtml = state.localBridge?.diandianAvailable && sopBrowserReady() ? `
     <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${manualSyncRunning(state.manualSync) || state.manualSync.legacy_safety_stop ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
   ` : state.localBridge
@@ -1411,23 +1397,6 @@ function bindEvents() {
       summarizeButton.disabled = true;
       await startSingleNoteSync(summarizeButton.dataset.summarizeNote);
       summarizeButton.disabled = manualSyncRunning(state.manualSync) || Boolean(state.manualSync.legacy_safety_stop);
-      return;
-    }
-    const sourceButton = event.target.closest("[data-open-source-note]");
-    if (sourceButton) {
-      if (!sopBrowserReady()) return;
-      sourceButton.disabled = true;
-      try {
-        await localBridgeRequest("/notes/open", {
-          method: "POST",
-          body: JSON.stringify({ note_id: sourceButton.dataset.openSourceNote })
-        });
-        showToast("已在 SOP 扫描浏览器中定位原帖");
-      } catch (error) {
-        showToast(`没有打开原帖：${error.message}`);
-      } finally {
-        sourceButton.disabled = false;
-      }
       return;
     }
     const copyButton = event.target.closest("[data-copy-note]");
