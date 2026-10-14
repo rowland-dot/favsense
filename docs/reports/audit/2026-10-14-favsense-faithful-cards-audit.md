@@ -369,3 +369,12 @@ Stage B.1 Mount: warn (no components dir; vanilla JS site).
 Stage B.2 parity companion (docs/reports/parity/2026-10-14-step7-favsense-faithful-cards-card-design-rewrite-parity.md, base http://192.168.0.157:8790, all six states): CRITICAL=0 HIGH=6 MEDIUM=4 LOW=2; all six HIGH are anchor-position geometry (modal at viewport top vs drawing inside the comparison document). STEP7_PARITY_STATUS=BLOCK (CRIT=0 HIGH=6). Escalation not dispatched: parity-remediation is limited to CRITICAL and the only code change that would clear it is moving the live modal to match a comparison-page coordinate, which degrades the product. Recorded FAILED — geometry, for the owner.
 Code-gate: PASS (unit suites; e2e 122/122).
 Stage C walk (app code touched): green, 74/74 checklist rows. Walk notes: real data has 81 damaged replies and 14 cut-reply-only cards (checklist says 79 and 13; widened by f93455f); V-P2-09 clipboard ran with a stub on the http LAN origin.
+
+---
+
+## Owner decisions after the brief (2026-10-14)
+
+- Merge and publish now, accepting the six card-position differences (answered through the question tool).
+- The cut-reply-only source line is approved as written (plan D10 sentence no longer pending).
+- Transcripts fold like replies; trailing plain hashtags stripped — both follow-ups after the merge, tracked in TODOS.md.
+- Brief Decisions 4 (keep the two doubtful entries) and 5 (keep both drawing edits) took their recommended no-change option.
