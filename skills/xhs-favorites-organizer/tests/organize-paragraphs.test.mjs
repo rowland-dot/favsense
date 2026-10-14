@@ -36,3 +36,24 @@ test("keeping paragraphs does not change a note's content revision", (t) => {
   const { notes } = organizeOnce(t, [{ note_id: "n1", title: "t", description: "甲\n\n乙" }]);
   assert.equal(notes.n1.content_sha256, contentRevision({ title: "t", description: "甲 乙" }));
 });
+
+test("CAP-06: a note already saved on one line regains its paragraphs when its details are fetched again, with the same content revision", (t) => {
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "favsense-organize-regain-"));
+  t.after(() => fs.rmSync(work, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(work, ".gitignore"), ".xhs-favorites/\n", "utf8");
+  assert.equal(spawnSync("git", ["init", "--quiet"], { cwd: work }).status, 0);
+  fs.mkdirSync(path.join(work, ".xhs-favorites"));
+  const catalog = path.join(work, ".xhs-favorites", "catalog.json");
+  const organize = (date, description) => {
+    const input = path.join(work, ".xhs-favorites", `input-${date}.json`);
+    fs.writeFileSync(input, JSON.stringify({ notes: [{ note_id: "n1", title: "t", description }] }), "utf8");
+    const run = spawnSync(process.execPath, [organizeScript, "--input", input, "--catalog", catalog, "--date", date], { cwd: work, encoding: "utf8" });
+    assert.equal(run.status, 0, run.stderr);
+    return JSON.parse(fs.readFileSync(catalog, "utf8")).notes.n1;
+  };
+  const flat = organize("2026-10-13", "甲 乙 丙");
+  assert.equal(flat.description, "甲 乙 丙");
+  const regained = organize("2026-10-14", "甲\n\n乙\n丙");
+  assert.equal(regained.description, "甲\n\n乙\n丙");
+  assert.equal(regained.content_sha256, flat.content_sha256);
+});

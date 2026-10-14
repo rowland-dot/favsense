@@ -113,3 +113,30 @@ test("a legitimate middle dot or multiplication sign is not mistaken for damage"
     assert.equal(loadExtractedText(root, NOTE, "视频").text, "乔布斯·史蒂夫 3×4");
   });
 });
+
+test("a record file that is not valid JSON, or is empty, is treated as no text rather than stopping the build", async () => {
+  const root = await mkdtemp(join(tmpdir(), "favsense-extracted-"));
+  try {
+    await mkdir(join(root, NOTE), { recursive: true });
+    await writeFile(join(root, NOTE, "transcription.json"), "{ not json");
+    await writeFile(join(root, NOTE, "visual-ocr.json"), "");
+    assert.equal(loadExtractedText(root, NOTE, "视频"), null);
+    assert.equal(loadExtractedText(root, NOTE, "图文"), null);
+    // A good record beside a broken one is still used.
+    await writeFile(join(root, NOTE, "visual-ocr.json"), JSON.stringify(imageText("画面字")));
+    assert.deepEqual(loadExtractedText(root, NOTE, "视频"), { kind: "video-transcript", text: "画面字" });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("a record file that starts with a byte-order mark is read", async () => {
+  const root = await mkdtemp(join(tmpdir(), "favsense-extracted-"));
+  try {
+    await mkdir(join(root, NOTE), { recursive: true });
+    await writeFile(join(root, NOTE, "transcription.json"), `﻿${JSON.stringify(transcript("口播"))}`);
+    assert.deepEqual(loadExtractedText(root, NOTE, "视频"), { kind: "video-transcript", text: "口播" });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

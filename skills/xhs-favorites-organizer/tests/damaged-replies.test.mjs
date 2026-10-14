@@ -94,3 +94,31 @@ test("a missing list means nothing is damaged; a malformed one is an error, not 
     await rm(work, { recursive: true, force: true });
   }
 });
+
+test("the list loads when an editor saved it with a byte-order mark, and a note the owner takes off the list is complete again", async () => {
+  const work = await mkdtemp(join(tmpdir(), "favsense-damaged-"));
+  try {
+    const list = (ids) => `﻿${JSON.stringify({ schema_version: 1, entries: ids.map((id) => ({ note_id: id, summary_sha256: sha(id), signs: ["ends-on-comma-or-colon"] })) })}`;
+    await writeFile(join(work, "list.json"), list(["a".repeat(24), "b".repeat(24)]));
+    assert.deepEqual([...loadDamagedReplies(join(work, "list.json")).keys()], ["a".repeat(24), "b".repeat(24)]);
+    await writeFile(join(work, "list.json"), list(["b".repeat(24)]));
+    assert.deepEqual([...loadDamagedReplies(join(work, "list.json")).keys()], ["b".repeat(24)]);
+  } finally {
+    await rm(work, { recursive: true, force: true });
+  }
+});
+
+test("a list that is not valid JSON, or has a malformed entry among good ones, is an error and never an empty list", async () => {
+  const work = await mkdtemp(join(tmpdir(), "favsense-damaged-"));
+  try {
+    await writeFile(join(work, "broken.json"), "{ \"entries\": [");
+    assert.throws(() => loadDamagedReplies(join(work, "broken.json")));
+    const good = { note_id: "a".repeat(24), summary_sha256: sha("x"), signs: [] };
+    await writeFile(join(work, "mixed.json"), JSON.stringify({ entries: [good, { note_id: "../escape", summary_sha256: sha("y") }] }));
+    assert.throws(() => loadDamagedReplies(join(work, "mixed.json")), /damaged reply list/i);
+    await writeFile(join(work, "notalist.json"), JSON.stringify({ entries: "none" }));
+    assert.throws(() => loadDamagedReplies(join(work, "notalist.json")), /damaged reply list/i);
+  } finally {
+    await rm(work, { recursive: true, force: true });
+  }
+});
