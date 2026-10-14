@@ -1,9 +1,9 @@
 {
   "meta": {
-    "buildVersion": "8210b87069ebcd6195100dec284ac9d145d8d0e2eaa1642b6058553bd03282c2",
+    "buildVersion": "5d9c5f3a55b9013834ed9866a28bc3ffc3f1c60c56e93b86d8982dbc639c27c1",
     "title": "小红书收藏知识工作台",
     "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
-    "generatedAt": "2026-10-14T19:48:22.744Z",
+    "generatedAt": "2026-10-14T21:45:13.441Z",
     "source": "xiaohongshu",
     "sourceBoards": [
       "Skills",
