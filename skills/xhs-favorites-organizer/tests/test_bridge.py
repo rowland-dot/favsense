@@ -4613,37 +4613,9 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             self.assertEqual(phases["core"]["status"], "completed")
             self.assertEqual(phases["build"]["status"], "succeeded")
 
-    def test_local_open_note_opens_the_lookup_in_the_shared_sop_browser(self):
+    def test_the_sync_service_cannot_open_a_favourites_folder_to_find_a_post(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            fixture = json.loads(
-                (Path(__file__).parents[1] / "test-fixtures" / "open-original-current-browser.json")
-                .read_text(encoding="utf-8")
-            )
-            note_id = fixture["note_id"]
-            board_id = fixture["board_id"]
-            bridge = make_bridge(root)
-            bridge.catalog_path = root / "catalog.json"
-            BRIDGE.atomic_json(bridge.catalog_path, {"version": 1, "notes": {
-                note_id: {"source_board_ids": [board_id]},
-            }})
-            bridge.all_boards = [{"id": board_id, "name": "测试收藏夹", "available": True}]
-            bridge.open_sop_browser_page = mock.Mock(return_value={"id": "target"})
-
-            with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
-                result = bridge.open_original_note(note_id)
-
-            self.assertEqual(result, {"status": "opened"})
-            popen.assert_not_called()
-            bridge.open_sop_browser_page.assert_called_once()
-            navigation = urlparse(bridge.open_sop_browser_page.call_args.args[0])
-            self.assertEqual(navigation.scheme, "https")
-            self.assertEqual(navigation.netloc, "www.xiaohongshu.com")
-            self.assertEqual(navigation.path, f"/board/{board_id}")
-            self.assertEqual(parse_qs(navigation.query), {
-                key: [value] for key, value in fixture["required_query"].items()
-            })
-            self.assertNotIn("navigation_url", result)
+            self.assertFalse(hasattr(make_bridge(Path(directory)), "open_original_note"))
 
     def test_local_note_organization_status_returns_only_current_pending_evidence(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -4922,12 +4894,10 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             popen.assert_not_called()
             self.assertFalse((root / ".xhs-favorites" / "browser-profile").exists())
 
-    def test_local_open_note_http_route_requires_manager_token_origin_and_exact_payload(self):
-        fixture = json.loads(
-            (Path(__file__).parents[1] / "test-fixtures" / "open-original-current-browser.json")
-            .read_text(encoding="utf-8")
-        )
+    def test_the_open_in_folder_http_route_is_gone_even_for_a_fully_authorised_request(self):
+        note_id = "dddddddddddddddddddddddd"
         token = "a" * 64
+        # The stand-in still offers the old method: if the route survived, it would be called and answer 202.
         bridge = SimpleNamespace(
             port=0,
             token=token,
@@ -4956,24 +4926,14 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
                 return error.code, json.loads(error.read().decode("utf-8"))
 
         try:
-            status, body = post({"note_id": fixture["note_id"]})
-            self.assertEqual(status, 202)
-            self.assertEqual(body, {
-                "ok": True,
-                "status": "opened",
-            })
-            bridge.open_original_note.assert_called_once_with(fixture["note_id"])
-
-            bridge.open_original_note.reset_mock()
             for status, body in (
-                post({"note_id": fixture["note_id"]}, supplied_token="b" * 64),
-                post({"note_id": fixture["note_id"]}, origin="https://attacker.invalid"),
+                post({"note_id": note_id}),
+                post({"note_id": note_id}, supplied_token="b" * 64),
+                post({"note_id": note_id}, origin="https://attacker.invalid"),
+                post({"note_id": note_id, "unexpected": True}),
             ):
-                self.assertEqual(status, 401)
+                self.assertEqual(status, 404)
                 self.assertEqual(body, {"ok": False})
-            status, body = post({"note_id": fixture["note_id"], "unexpected": True})
-            self.assertEqual(status, 400)
-            self.assertEqual(body["ok"], False)
             self.assertFalse(bridge.open_original_note.called)
         finally:
             server.shutdown()

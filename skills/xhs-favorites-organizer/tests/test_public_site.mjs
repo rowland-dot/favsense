@@ -718,83 +718,6 @@ test("the production detail open and close path wires the scroll lock", async ()
   assert.equal(JSON.stringify(result.scrollCalls), JSON.stringify([{ left: 0, top: 480, behavior: "instant" }]));
 });
 
-test("local original is located by the bridge in the shared SOP scanner browser", async () => {
-  const app = await read("site/app.js");
-  const readyStart = app.indexOf("function sopBrowserReady()");
-  const readyEnd = app.indexOf("\nfunction bookmarkIcon", readyStart);
-  const readySource = readyStart >= 0 && readyEnd > readyStart ? app.slice(readyStart, readyEnd).trim() : "";
-  assert.ok(readySource, "the SOP browser readiness guard must be registered");
-  const listenerStart = app.indexOf('elements.dialogContent.addEventListener("click", async (event) => {');
-  const listenerEnd = app.indexOf('\n  elements.dialogContent.addEventListener("submit"', listenerStart);
-  assert.ok(listenerStart >= 0 && listenerEnd > listenerStart, "the production click handler must be registered");
-  const listenerSource = app.slice(listenerStart, listenerEnd).trim();
-  const outcomes = JSON.parse(await runInNewContext(`
-    let clickHandler;
-    let mode = "success";
-    let events = [];
-    let sourceButton;
-    const elements = {
-      dialogContent: {
-        dataset: {},
-        addEventListener(type, handler) { if (type === "click") clickHandler = handler; }
-      }
-    };
-    const window = {};
-    async function localBridgeRequest(path, options) {
-      events.push(["request", path, options.method, options.body]);
-      if (mode === "failure") throw new Error("bridge unavailable");
-      return { ok: true, browser: "favsense-dedicated" };
-    }
-    function showToast(message) { events.push(["toast", message]); }
-    function toggleBookmark() { throw new Error("wrong click branch"); }
-    function renderDetail() { throw new Error("wrong click branch"); }
-    function persistPersonalData() { throw new Error("wrong click branch"); }
-    function renderNotes() { throw new Error("wrong click branch"); }
-    const state = {
-      localBridge: { browserSession: { owner: "sop-cdp", ready: true } },
-      data: { notes: [] },
-      descriptionOverrides: {}
-    };
-    const location = { origin: "http://127.0.0.1:8766", pathname: "/", search: "" };
-    const navigator = { clipboard: { writeText() { throw new Error("wrong click branch"); } } };
-    ${readySource}
-    ${listenerSource}
-    async function runScenario(nextMode) {
-      mode = nextMode;
-      events = [];
-      sourceButton = { disabled: false, dataset: { openSourceNote: "note-a" } };
-      const event = {
-        target: {
-          closest(selector) { return selector === "[data-open-source-note]" ? sourceButton : null; }
-        }
-      };
-      await clickHandler(event);
-      return {
-        mode,
-        events,
-        disabled: sourceButton.disabled
-      };
-    }
-    (async () => JSON.stringify([
-      await runScenario("success"),
-      await runScenario("failure")
-    ]))()
-  `, { URL }));
-
-  const [success, failure] = outcomes;
-  assert.deepEqual(success.events, [
-    ["request", "/notes/open", "POST", JSON.stringify({ note_id: "note-a" })],
-    ["toast", "已在 SOP 扫描浏览器中定位原帖"]
-  ]);
-  assert.equal(success.disabled, false);
-  assert.equal(failure.disabled, false);
-  assert.deepEqual(failure.events, [
-    ["request", "/notes/open", "POST", JSON.stringify({ note_id: "note-a" })],
-    ["toast", "没有打开原帖：bridge unavailable"]
-  ]);
-  assert.doesNotMatch(app, /window\.open\("about:blank", "_blank"\)/);
-});
-
 test("local actions stay inert until the SOP scanner browser becomes ready, then recover through the full state arc", async () => {
   const app = await read("site/app.js");
   const readyStart = app.indexOf("function sopBrowserReady()");
@@ -882,7 +805,6 @@ test("local actions stay inert until the SOP scanner browser becomes ready, then
     function descriptionSection() { return ""; }
     function settleSummaryFolds() {}
     function bookmarkIcon() { return ""; }
-    function isLocalWorkbenchLocation() { return true; }
     function toggleBookmark() {}
     function persistPersonalData() {}
     function renderNotes() {}
@@ -898,10 +820,6 @@ test("local actions stay inert until the SOP scanner browser becomes ready, then
       };
       await startManualSync();
       await startSingleNoteSync("note-a");
-      const staleSourceButton = { disabled: false, dataset: { openSourceNote: "note-a" } };
-      await clickHandler({ target: { closest(selector) {
-        return selector === "[data-open-source-note]" ? staleSourceButton : null;
-      } } });
       const unavailableRequests = requests.slice();
 
       requests = [];
@@ -916,11 +834,6 @@ test("local actions stay inert until the SOP scanner browser becomes ready, then
       };
       await startManualSync();
       state.manualSync = { state: "idle" };
-      const sourceButton = { disabled: false, dataset: { openSourceNote: "note-a" } };
-      await clickHandler({ target: { closest(selector) {
-        return selector === "[data-open-source-note]" ? sourceButton : null;
-      } } });
-      state.manualSync = { state: "idle" };
       await startSingleNoteSync("note-a");
       return JSON.stringify({ unavailable, unavailableRequests, ready, requests, toasts });
     })();
@@ -928,21 +841,21 @@ test("local actions stay inert until the SOP scanner browser becomes ready, then
 
   assert.equal(result.unavailable.startDisabled, true);
   assert.match(`${result.unavailable.title} ${result.unavailable.detail}`, /SOP (?:小红书)?扫描浏览器/);
-  assert.match(result.unavailable.detailHtml, /SOP 扫描浏览器未就绪/);
-  assert.doesNotMatch(result.unavailable.detailHtml, /data-open-source-note|data-summarize-note/);
+  // The post button is the same link whether or not the scan browser is ready; only the local actions are inert.
+  assert.match(result.unavailable.detailHtml, /<a href="#" target="_blank"[^>]*>在小红书搜索原帖<\/a>/);
+  assert.doesNotMatch(result.unavailable.detailHtml, /SOP 扫描浏览器未就绪|data-open-source-note|data-summarize-note/);
   assert.deepEqual(result.unavailableRequests, [], "disabled local actions must not POST while the SOP browser is unavailable");
 
   assert.equal(result.ready.startDisabled, false);
-  assert.match(result.ready.detailHtml, /data-open-source-note="note-a"/);
+  assert.match(result.ready.detailHtml, /<a href="#" target="_blank"[^>]*>在小红书搜索原帖<\/a>/);
+  assert.doesNotMatch(result.ready.detailHtml, /data-open-source-note/);
   assert.match(result.ready.detailHtml, /data-summarize-note="note-a"/);
   assert.deepEqual(result.requests, [
     ["/sync/start", "POST", "{}"],
-    ["/notes/open", "POST", JSON.stringify({ note_id: "note-a" })],
     ["/sync/start", "POST", JSON.stringify({ note_id: "note-a" })]
   ]);
   assert.equal(result.toasts.every((message) => /SOP 扫描浏览器|没有/.test(message)), true);
   assert.equal(result.toasts.some((message) => /SOP 扫描浏览器中开始整理收藏/.test(message)), true);
-  assert.equal(result.toasts.some((message) => /SOP 扫描浏览器中定位原帖/.test(message)), true);
   assert.equal(result.toasts.some((message) => /SOP 扫描浏览器中仅校验并重新总结/.test(message)), true);
 });
 
@@ -952,12 +865,6 @@ test("mounted note detail starts one local-only DianDian validation without chan
   const readyEnd = app.indexOf("\nfunction bookmarkIcon", readyStart);
   const readySource = readyStart >= 0 && readyEnd > readyStart ? app.slice(readyStart, readyEnd).trim() : "";
   assert.ok(readySource, "the SOP browser readiness guard must be available to the mounted detail");
-  const localLocationStart = app.indexOf("function isLocalWorkbenchLocation(");
-  const localLocationEnd = app.indexOf("\nfunction renderDetail", localLocationStart);
-  const localLocationSource = localLocationStart >= 0 && localLocationEnd > localLocationStart
-    ? app.slice(localLocationStart, localLocationEnd).trim()
-    : "";
-  assert.ok(localLocationSource, "the app must distinguish a local workbench from a public deployment");
   const renderStart = app.indexOf("function renderDetail(note)");
   const renderEnd = app.indexOf("\nfunction openNote", renderStart);
   const renderSource = renderStart >= 0 && renderEnd > renderStart
@@ -971,7 +878,6 @@ test("mounted note detail starts one local-only DianDian validation without chan
 
   const rendered = runInNewContext(`${readySource}
     ${runningCheckSource}
-    ${localLocationSource}
     ${renderSource}
     renderDetail(note);
     const publicHtml = elements.dialogContent.innerHTML;
@@ -1024,9 +930,10 @@ test("mounted note detail starts one local-only DianDian validation without chan
   });
   assert.match(rendered.publicHtml, /target="_blank"/);
   assert.match(rendered.publicHtml, /在小红书搜索原帖/);
-  assert.doesNotMatch(rendered.disconnectedLocalHtml, /target="_blank"/);
-  assert.match(rendered.disconnectedLocalHtml, /请先启动 FavSense 本地服务/);
-  assert.match(rendered.disconnectedLocalHtml, /disabled/);
+  // The same link on a local address with no service connected: the address no longer changes the post button.
+  assert.match(rendered.disconnectedLocalHtml, /target="_blank"/);
+  assert.match(rendered.disconnectedLocalHtml, /在小红书搜索原帖/);
+  assert.doesNotMatch(rendered.disconnectedLocalHtml, /请先启动 FavSense 本地服务|data-open-source-note/);
   assert.doesNotMatch(rendered.publicHtml, /data-summarize-note/);
   assert.doesNotMatch(rendered.unavailableLocalHtml, /data-summarize-note/);
   assert.match(rendered.unavailableLocalHtml, /disabled/);
@@ -2548,11 +2455,9 @@ test("one-click workflow imports first, hands the plan to the sync service and o
   assert.deepEqual(openedTabs, [], "the board page never opens a tab; the sync service moves the one page");
   assert.deepEqual(assigned, [], "the sync service, not the board page, takes the page to the next step");
   assert.doesNotMatch(template, /GM_setValue|localStorage|sessionStorage/);
-  assert.match(app, /\/notes\/open/);
-  assert.match(app, /已在 SOP 扫描浏览器中定位原帖/);
-  const openHandler = app.match(/const sourceButton = event\.target\.closest\("\[data-open-source-note\]"\);[\s\S]*?(?=\n    const copyButton)/)?.[0] || "";
-  assert.match(openHandler, /JSON\.stringify\(\{ note_id: sourceButton\.dataset\.openSourceNote \}\)/);
-  assert.doesNotMatch(openHandler, /title|sourceUrl|xsec_token|window\.open/);
+  assert.doesNotMatch(app, /\/notes\/open|data-open-source-note|定位原帖/);
+  assert.doesNotMatch(app, /window\.open\("about:blank", "_blank"\)/);
+  assert.doesNotMatch(template, /xhs_kb_open_note|xhs_kb_opened|openRequestedNote/);
 });
 
 test("target-note mode imports, plans, and summarizes exactly the requested visible note", async () => {
@@ -3647,31 +3552,10 @@ test("userscript metadata covers the exact Xiaohongshu page opened by setup", as
   assert.ok(matchUrls.includes(setupLandingUrl));
 });
 
-test("exact-note navigation replaces the signed history entry with a token-free URL", async () => {
+test("an ordinary note page keeps its address: the userscript rewrites no history entry there", async () => {
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
   const userscript = renderUserscriptTemplate(template);
   let replacement = "";
-  runInNewContext(userscript, {
-    location: {
-      origin: "https://www.xiaohongshu.com",
-      href: "https://www.xiaohongshu.com/discovery/item/note-id?xsec_token=private&xsec_source=pc_share&xhs_kb_opened=1",
-      pathname: "/discovery/item/note-id",
-      search: "?xsec_token=private&xsec_source=pc_share&xhs_kb_opened=1",
-      hash: ""
-    },
-    history: {
-      state: null,
-      replaceState(_state, _title, url) { replacement = url; }
-    },
-    document: { readyState: "complete" },
-    URL,
-    URLSearchParams,
-    GM_registerMenuCommand() {}
-  });
-  assert.equal(replacement, "/discovery/item/note-id");
-  assert.doesNotMatch(replacement, /xsec_token|xsec_source/);
-
-  replacement = "";
   runInNewContext(userscript, {
     location: {
       origin: "https://www.xiaohongshu.com",
@@ -3692,13 +3576,13 @@ test("exact-note navigation replaces the signed history entry with a token-free 
   assert.equal(replacement, "");
 });
 
-test("board lookup resolves the exact signed note inside the caller-created tab", async () => {
+test("a favourites folder opened with the retired lookup query is left alone: no scrolling, no jump to a note", async () => {
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
   const userscript = renderUserscriptTemplate(template);
   const noteId = "note-id";
   const boardId = "boardfixture";
-  const signedTarget = `https://www.xiaohongshu.com/discovery/item/${noteId}?xsec_token=transient&xsec_source=pc_share&xhs_kb_opened=1`;
   let replacement = "";
+  let scrolls = 0;
   let privilegedTabOpens = 0;
   const anchor = {
     href: `https://www.xiaohongshu.com/board/${boardId}/${noteId}?xsec_token=transient&xsec_source=pc_share`,
@@ -3725,7 +3609,7 @@ test("board lookup resolves the exact signed note inside the caller-created tab"
       getElementById: () => null,
       createElement: () => ({ style: {} })
     },
-    window: { scrollTo() {}, scrollBy() {}, setTimeout, clearTimeout },
+    window: { scrollTo() { scrolls += 1; }, scrollBy() { scrolls += 1; }, setTimeout, clearTimeout },
     innerHeight: 800,
     URL,
     URLSearchParams,
@@ -3736,7 +3620,8 @@ test("board lookup resolves the exact signed note inside the caller-created tab"
   });
   await new Promise((resolve) => setTimeout(resolve, 0));
 
-  assert.equal(replacement, signedTarget);
+  assert.equal(replacement, "", "the folder page must not jump to the note it was asked for");
+  assert.equal(scrolls, 0, "the folder page must not be scrolled looking for a note");
   assert.equal(privilegedTabOpens, 0);
 });
 

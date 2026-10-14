@@ -412,7 +412,6 @@ __DIANDIAN_MATCH_LINE__
         if (source.origin !== "https://www.xiaohongshu.com" || pathId !== noteId || !source.searchParams.get("xsec_token")) continue;
         source.pathname = `/discovery/item/${noteId}`;
         source.searchParams.delete("xhs_kb_share_worker");
-        source.searchParams.delete("xhs_kb_opened");
         return source.href;
       } catch { /* keep looking for the exact copied note link */ }
     }
@@ -551,31 +550,6 @@ __DIANDIAN_MATCH_LINE__
       }
     }
     throw workflowError("diandian-plan-abandon-unconfirmed", "核心入库已保留，但本地服务没有确认结束点点计划；已停止继续整理");
-  }
-
-  async function openRequestedNote(noteId) {
-    if (!/^[A-Za-z0-9_-]{1,128}$/.test(noteId)) throw new Error("原帖标识无效");
-    let stable = 0;
-    let knownCount = 0;
-    const deadline = Date.now() + 5 * 60 * 1000;
-    while (Date.now() < deadline) {
-      assertSafePage();
-      const visible = collectNotes(boardId);
-      const note = visible.get(noteId);
-      if (note) {
-        const target = new URL(note.source_url);
-        target.searchParams.set("xhs_kb_opened", "1");
-        location.replace(target.href);
-        return;
-      }
-      stable = visible.size === knownCount ? stable + 1 : 0;
-      knownCount = Math.max(knownCount, visible.size);
-      show("正在收藏夹中定位原帖…");
-      if (stable > 0 && stable % 10 === 0) window.scrollBy({ top: -Math.round(innerHeight * 0.7), behavior: "instant" });
-      else window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
-      await sleep(1800);
-    }
-    throw new Error("当前收藏夹中没有找到原帖；可能已被删除或暂时不可见");
   }
 
   function setAiInput(input, value) {
@@ -980,19 +954,9 @@ __DIANDIAN_MATCH_LINE__
     if (transientNoteWorkerId) history.replaceState(history.state, "", location.pathname);
     GM_registerMenuCommand("打开拾光台后开始整理", () => show("请在本地拾光台的“同步与设置”页面点击“开始整理”"));
     const query = new URLSearchParams(location.search);
-    if (notePageId) {
-      if (!transientNoteWorkerId && query.get("xhs_kb_opened") === "1") {
-        history.replaceState(history.state, "", location.pathname);
-      }
-      return;
-    }
+    if (notePageId) return;
     if (onAiChat) {
       runAiChatWorker().catch((error) => show(error.message || String(error), true));
-      return;
-    }
-    const requestedNoteId = query.get("xhs_kb_open_note");
-    if (boardId && requestedNoteId) {
-      openRequestedNote(requestedNoteId).catch((error) => show(error.message || String(error), true));
       return;
     }
     if (query.get("xhs_kb_sync") !== "1") return;

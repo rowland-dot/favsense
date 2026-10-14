@@ -9,7 +9,7 @@ const WITHOUT_CODE = "6a44938c0000000006021e9e";
 // Spelled in pieces: this file sits under site/, which the pre-publish check scans, and that check refuses a written-out
 // signed link in any file but the data file.
 const SIGNED = ["https://www.xiaohongshu.com", "explore", WITH_CODE].join("/") + `?${["xsec", "token"].join("_")}=FAKEcodeA1%3D%3D&${["xsec", "source"].join("_")}=pc_collect`;
-// The app treats 127.0.0.1 and localhost as the local workbench; the public site is opened under a *.localhost name.
+// The public site is opened under a *.localhost name (the local workbench has its own spec, workbench-source-link).
 const PUBLIC = "http://public.localhost:8767";
 // The page's own data request is answered from here: Node cannot resolve the *.localhost name the page is opened under.
 const DATA_URL = "http://127.0.0.1:8766/data/knowledge.json";
