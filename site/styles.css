@@ -267,7 +267,7 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .card-summary { display: -webkit-box; margin: 13px 0 16px; overflow: hidden; color: var(--ink-soft); font-size: 12px; line-height: 1.75; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 .tools-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto; }
 .hero-counts { margin: 12px 0 0; color: var(--ink-soft); font-size: 14px; font-weight: 700; }
-.extracted-text p { margin: 0 0 8px; color: var(--ink); font-size: 13px; line-height: 1.75; }
+.detail-section .extracted-text p { margin: 0 0 8px; color: var(--ink); font-size: 13px; line-height: 1.75; }
 .tool-unverified { margin-left: 4px; padding: 1px 5px; border-radius: 5px; background: color-mix(in srgb, var(--sun), var(--surface) 70%); color: var(--ink); font-size: var(--text-xs); font-weight: 700; }
 .tool-chip { max-width: 100%; padding: 5px 8px; overflow: hidden; border-radius: 7px; background: var(--surface-soft); color: var(--ink); font-size: var(--text-xs); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .card-footer { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-top: 1px solid var(--line); }
