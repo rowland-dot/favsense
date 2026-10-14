@@ -5443,7 +5443,6 @@
     "summary": "视频推广一款称为“酷袋子”的 TikTok 电商广告工具，声称可批量上传素材、定时检查数据并调整投放；销售额和自动优化效果属于营销案例。",
     "action": "在官方主体、产品入口、账户授权、预算保护和撤销机制核验前，不连接广告账户或上传素材。",
     "themes": [
-      "工具待确认",
       "账户安全",
       "跨境广告"
     ],
@@ -5481,7 +5480,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "ca8704ea94a1fad85447436df1aa087153b8f4fa3d4dc095bb7d9aab812001a9",
+    "candidate_revision": "8b2631253fdd72cea26f73ed34ff76ba91ad94d85c1ae508200a61ff7f0403de",
     "review_status": "accepted",
     "review_reason_code": ""
   },
@@ -5840,7 +5839,6 @@
     "action": "先在隔离环境核对模型下载、显存、麦克风权限、网络后端和语音数据留存，再用短对话测试延迟、中断、隐私和失败恢复。",
     "themes": [
       "AI虚拟朋友",
-      "实体待确认",
       "项目核验"
     ],
     "tools": [
@@ -5891,7 +5889,7 @@
       "resource_identity_sha256": "",
       "verification_snapshot_sha256": ""
     },
-    "candidate_revision": "1fdb8d9d04057bbc1e55f515283c0aeb2a5708f336de9ce2a8d28e0da5f510d4",
+    "candidate_revision": "063efe16bc841d1044ac42babb96441bcb2d95d57f27716959996ab5e6ac1017",
     "review_status": "accepted",
     "review_reason_code": ""
   },

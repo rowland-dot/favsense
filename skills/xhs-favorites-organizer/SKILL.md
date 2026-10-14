@@ -103,7 +103,7 @@ python -m http.server 8000 --directory site
 
 无论由 Claude、Codex 还是其他 Agent 执行，都只编辑 `references/*-curation.json` 的结构化策展字段，随后用“仅本地重建”刷新正式输出（由快照步骤运行网页构建器）。不得让 Agent 创建每日或开机整理任务，也不得要求用户复制粘贴链接。
 
-策展字段为：`category`、`themes`、`summary`、`action`、`tools`，以及可选人工覆盖字段 `kind`、`category_override`、`category_reason`。默认 `source-board-first`：收藏夹名称（或收藏夹配置的 `category`）是网页的主分类；内容规则和策展 `category` 只产生详情页建议并独立纳入搜索。仅在有明确语义依据时设置 `category_override: true` 跨收藏夹归档，并填写 `category_reason`；自动内容规则不得触发此覆盖。同一条目来自多个收藏夹时使用数值较高的 `category_priority`；不得把演示库的分类写死到其他用户的领域。系统自动完成分类和应用建议，不要求用户逐篇维护等级或处理状态；`kind` 省略时按当前领域配置自动判断。事实不充分时必须写“待确认”，不能从标题臆测工具名称。
+策展字段为：`category`、`themes`、`summary`、`action`、`tools`，以及可选人工覆盖字段 `kind`、`category_override`、`category_reason`。默认 `source-board-first`：收藏夹名称（或收藏夹配置的 `category`）是网页的主分类；内容规则和策展 `category` 只产生详情页建议并独立纳入搜索。仅在有明确语义依据时设置 `category_override: true` 跨收藏夹归档，并填写 `category_reason`；自动内容规则不得触发此覆盖。同一条目来自多个收藏夹时使用数值较高的 `category_priority`；不得把演示库的分类写死到其他用户的领域。系统自动完成分类和应用建议，不要求用户逐篇维护等级或处理状态；`kind` 省略时按当前领域配置自动判断。事实不充分时必须写“未核实”，不能从标题臆测工具名称。
 
 `kind` 只回答“内容本身是什么”，绝不能表示“是否已经处理”。未进入人工策展的收藏也必须先按领域配置和公开元数据推断内容形态，不能统一写成 `Note`；`Note` 只用于观点、资讯或一般知识说明。深度解读是否完成由证据文本和策展内容体现，不得复用内容形态字段。每个领域配置必须声明有效的 `classification.default`；如需针对原始收藏使用不同规则，应提供 `fallback.default_kind` 与 `fallback.kind_rules`。构建器必须拒绝未在 `content_kinds` 中声明的默认值或规则结果。
 
@@ -130,7 +130,7 @@ python -m http.server 8000 --directory site
 
 对超长视频同样使用停止条件：默认先转写前 10 分钟，并记录 `audio_window.truncated`。如果已补齐 Skill 名称、用途和当前缺失事实，停止处理剩余音频；仍有缺失时才继续下一个时间窗口。不得把截断转写标记成“已完整听完”。
 
-运行 `scripts/run-video-analysis.ps1` 批量准备转写；默认不得自动批量抽帧。阅读转写并确认确有缺失事实后，才使用 `-PrepareVisualEvidence`，而且每次只准备一个条目的一个短时间窗。复核该窗口后，缺失事实已补齐就立即结束；仍未补齐才允许下一次从 `next_start_seconds` 继续。视觉处理必须同时受总帧数、总字节数与墙钟时间预算限制。转写脚本必须先处理体积较小的视频并逐条输出进度，以尽快形成可交付结果。复审已接受（已在策展文件里）的笔记时，用 `-NoteId` 点名加 `-IncludeCurated`，不要改策展文件：不带这个开关，点名的已策展笔记会被跳过，输出的 `skipped_notes` 里会列出它和原因；开关必须同时点名笔记，同步服务的自动证据回退不使用它。只有完成与该笔记相匹配的证据级别，才允许把 `tools`、确定性 `summary` 和 Skill 名称写入策展文件。不得把视频中的营销数字当作当前事实；不能唯一确认项目时必须保留“待确认”。
+运行 `scripts/run-video-analysis.ps1` 批量准备转写；默认不得自动批量抽帧。阅读转写并确认确有缺失事实后，才使用 `-PrepareVisualEvidence`，而且每次只准备一个条目的一个短时间窗。复核该窗口后，缺失事实已补齐就立即结束；仍未补齐才允许下一次从 `next_start_seconds` 继续。视觉处理必须同时受总帧数、总字节数与墙钟时间预算限制。转写脚本必须先处理体积较小的视频并逐条输出进度，以尽快形成可交付结果。复审已接受（已在策展文件里）的笔记时，用 `-NoteId` 点名加 `-IncludeCurated`，不要改策展文件：不带这个开关，点名的已策展笔记会被跳过，输出的 `skipped_notes` 里会列出它和原因；开关必须同时点名笔记，同步服务的自动证据回退不使用它。只有完成与该笔记相匹配的证据级别，才允许把 `tools`、确定性 `summary` 和 Skill 名称写入策展文件。不得把视频中的营销数字当作当前事实；不能唯一确认项目时必须保留“未核实”。
 
 只要收藏提到 Skill，Agent 还必须在资源注册表（`references/software-resources.json`）里维护它的核验记录，网页读取该注册表并在对应知识卡片显示“Skill 核验”信息；不另建核验清单文件。每个 Skill 至少记录：
 

@@ -14,6 +14,8 @@ const GENERIC_TEXT = [
   /进一步了解|继续关注|按需使用|可以尝试$/,
   /尚未完整解读|待确认/
 ];
+// "待确认" is the old placeholder; a fact that is not established is written "未核实".
+const PLACEHOLDER_THEME = /待确认/;
 const EVIDENCE_METHODS = new Set([
   "description", "comments", "audio_transcript", "visual_ocr", "image_ocr", "image_review",
   "video_analysis", "diandian_summary", "official_source", "source_unavailable"
@@ -184,6 +186,8 @@ export function auditCuration({ catalog, config, curation, resources, audit, fro
         if (clean(entry.action) && (clean(entry.action).length < 16 || GENERIC_TEXT.some((pattern) => pattern.test(clean(entry.action))) || isDiandianRefusal(entry.action))) errors.push("action-not-specific");
         errors.push(...acceptedTextProblems(entry));
         if (!Array.isArray(entry.themes) || entry.themes.length < 1) errors.push("themes-missing");
+        // A topic is shown as a chip on the public card, so it is held to the same placeholder ban as the summary (issue 118).
+        else if (entry.themes.some((theme) => PLACEHOLDER_THEME.test(clean(theme)))) errors.push("placeholder-theme");
         if (!Array.isArray(entry.tools)) errors.push("tools-invalid");
         if (entry.category_override === true && (!clean(entry.category) || !clean(entry.category_reason))) {
           errors.push("category-override-unexplained");
