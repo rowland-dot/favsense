@@ -1,6 +1,6 @@
 # FavSense 收藏整理端到端闭环与回归修复 Spec
 
-> 状态：**APPROVED — 用户已批准**
+> 状态：**SUPERSEDED — 已被 `docs/specs/2026-10-14-favsense-faithful-cards-spec.md` 取代（2026-10-14）**
 > 版本：v1.0
 > 日期：2026-08-22
 > 批准日期：2026-08-22

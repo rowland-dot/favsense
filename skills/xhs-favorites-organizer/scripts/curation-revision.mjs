@@ -27,10 +27,3 @@ export function curationRevision(entry) {
     .update(JSON.stringify(publicCurationProjection(entry)), "utf8")
     .digest("hex");
 }
-
-export function reviewPacketRevision(entry = {}) {
-  const { review_packet_sha256: _ignored, ...packet } = entry;
-  return createHash("sha256")
-    .update(JSON.stringify(packet), "utf8")
-    .digest("hex");
-}

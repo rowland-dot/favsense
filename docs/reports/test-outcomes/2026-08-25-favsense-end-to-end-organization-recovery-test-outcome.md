@@ -16,9 +16,9 @@ Branch: `codex/favsense-organization-recovery`
 
 审计来源：
 
-- `docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`
-- `docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md`
-- `docs/specs/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md`
+- `docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-spec.md`
+- `docs/plans/archive/2026-08-22-favsense-end-to-end-organization-recovery-plan.md`
+- `docs/specs/archive/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md`
 - `docs/reports/qa/2026-08-25-favsense-end-to-end-organization-recovery-qa-report.md`
 
 Step 6 QA 的 QA-001 与 QA-002 均已有 RED→GREEN、修复提交和最终回归证据，因此本轮没有重复创建同义测试。全仓 `.todo()` 扫描结果为 0；唯一条件 skip 是 Git for Windows 可能把 symlink 物化为普通文件的已记录平台差异。

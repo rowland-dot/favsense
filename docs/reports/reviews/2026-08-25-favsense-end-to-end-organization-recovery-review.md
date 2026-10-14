@@ -97,11 +97,11 @@ All migration checks used synthetic temporary fixtures. No migration apply was r
 
 ### LOW-004 — Overlay transport verb differs from the approved Plan
 
-The Plan specifies authenticated `GET /notes/organization-status?note_id=...` at `docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md:576`, while `skills/xhs-favorites-organizer/scripts/bridge-server.py:5421` and `:5495` plus `site/app.js:1068` implement an authenticated POST body. Host/origin/token and payload validation still enforce the private boundary, so this is contract wording/implementation drift without a demonstrated security or user-result failure.
+The Plan specifies authenticated `GET /notes/organization-status?note_id=...` at `docs/plans/archive/2026-08-22-favsense-end-to-end-organization-recovery-plan.md:576`, while `skills/xhs-favorites-organizer/scripts/bridge-server.py:5421` and `:5495` plus `site/app.js:1068` implement an authenticated POST body. Host/origin/token and payload validation still enforce the private boundary, so this is contract wording/implementation drift without a demonstrated security or user-result failure.
 
 ### LOW-005 — Authorized overlay failures are distinguishable
 
-The Plan requests non-enumerating responses for invalid, unknown, and stale IDs at `docs/plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md:580`. `skills/xhs-favorites-organizer/scripts/bridge-server.py:4171`–`:4182` raises distinct messages and `:5505` returns the sanitized message. Exposure is limited to the authenticated loopback manager origin, so this is LOW defense-in-depth drift rather than an external enumeration vulnerability.
+The Plan requests non-enumerating responses for invalid, unknown, and stale IDs at `docs/plans/archive/2026-08-22-favsense-end-to-end-organization-recovery-plan.md:580`. `skills/xhs-favorites-organizer/scripts/bridge-server.py:4171`–`:4182` raises distinct messages and `:5505` returns the sanitized message. Exposure is limited to the authenticated loopback manager origin, so this is LOW defense-in-depth drift rather than an external enumeration vulnerability.
 
 ## Gate handoff
 

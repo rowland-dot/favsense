@@ -11,15 +11,12 @@ import { prepareReview } from "../scripts/prepare-curation-review.mjs";
 import {
   acceptedRevisionsCurrent,
   currentFormalRevisions,
-  formalCurationDecision,
-  isPublishableCuration,
-  loadFormalPointSummary,
-  publicEvidenceStatus
+  loadFormalPointSummary
 } from "../scripts/curation-quality.mjs";
 import { prepareScope } from "../scripts/prepare-curation-scope.mjs";
 import { initializeAudit } from "../scripts/initialize-curation-audit.mjs";
 import { mergeResults as mergeResultsWithProfile } from "../scripts/merge-curation-results.mjs";
-import { curationRevision, reviewPacketRevision } from "../scripts/curation-revision.mjs";
+import { curationRevision } from "../scripts/curation-revision.mjs";
 import { executeJournaledTransaction } from "../scripts/journaled-transaction.mjs";
 import { expectedResourceRevisions } from "../scripts/resource-quality.mjs";
 
@@ -37,14 +34,15 @@ const prepareReviewCli = path.join(
   "skills/xhs-favorites-organizer/scripts/prepare-curation-review.mjs"
 );
 
-test("public Skill rebuild examples preserve the Bridge-frozen DianDian prompt contract", () => {
+test("public Skill rebuild examples no longer carry the DianDian prompt version", () => {
   const skill = fs.readFileSync(
     path.join(repositoryRoot, "skills/xhs-favorites-organizer/SKILL.md"),
     "utf8"
   );
   assert.match(skill, /正式网页数据只由快照步骤写入/);
   assert.match(skill, /“仅本地重建”/);
-  assert.match(skill, /不要直接运行缺少该值的底层 builder/);
+  // The builder reads saved replies without checking the prompt version, so no document asks for one.
+  assert.doesNotMatch(skill, /不要直接运行缺少该值的底层 builder|prompt_version.*传给网页 builder/);
   assert.doesNotMatch(skill, /rebuild_knowledge_base/);
   assert.doesNotMatch(skill, /统一编排/);
   assert.doesNotMatch(skill, /完成 catalog 与 Obsidian 重建后，同时运行/);
@@ -53,8 +51,8 @@ test("public Skill rebuild examples preserve the Bridge-frozen DianDian prompt c
   const examples = skill.match(/```powershell[\s\S]*?```/g) || [];
   assert.equal(examples.some((example) => example.includes("build-knowledge-base.mjs")), false);
   const publicSite = examples.find((example) => example.includes("build-public-site.mjs")) || "";
-  assert.match(publicSite, /--diandian-prompt-version \$promptVersion/);
-  assert.match(publicSite, /\$promptVersion = "</);
+  assert.doesNotMatch(publicSite, /--diandian-prompt-version|\$promptVersion/);
+  assert.match(publicSite, /--damaged-replies/);
 });
 
 test("curation merge documentation requires the prepared evidence packet", () => {
@@ -127,11 +125,9 @@ function mergeCliFixture(workspace) {
     content_sha256: "a".repeat(64),
     blockers: ["synthetic-rejection"]
   };
-  evidencePacket.review_packet_sha256 = reviewPacketRevision(evidencePacket);
   writeJson(paths.evidenceReview, { items: [evidencePacket] });
   writeJson(paths.review, { items: [{
     note_id: "current",
-    review_packet_sha256: evidencePacket.review_packet_sha256,
     candidate,
     audit: {
       status: "rejected",
@@ -270,10 +266,9 @@ test("DianDian summary is valid body evidence for video and image without bypass
   assert.match(resourceResult.fatal.join("\n"), /resource-not-indexed:Missing Skill/);
 });
 
-test("review preparation uses only a matching keyed DianDian summary as body evidence", () => {
+test("review preparation uses a keyed DianDian summary of this note and this version of it, whatever prompt saved it", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-diandian-review-"));
   const noteId = "note-current";
-  const currentPromptVersion = "7".repeat(64);
   const catalog = { notes: { [noteId]: {
     note_id: noteId,
     title: "具体标题",
@@ -306,20 +301,20 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       summary_sha256: createHash("sha256").update(summary, "utf8").digest("hex"),
       captured_at: "2026-08-26T00:00:00.000Z"
     }), "utf8");
+    // Saved under another prompt version than any "current" one: it is still this note's reply, so it is read.
     let review = prepareReview({
       catalog,
       scope: { note_ids: [noteId] },
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory,
-      expectedPromptVersion: currentPromptVersion
+      diandianRoot: directory
     });
-    assert.equal(review.items[0].diandian_summary_text, "");
+    assert.equal(review.items[0].diandian_summary_text.includes("EvidenceTool"), true);
     assert.equal(review.items[0].blockers.includes("image-text-review-required"), true);
 
     const currentRecord = JSON.parse(fs.readFileSync(path.join(directory, `${noteId}.json`), "utf8"));
-    currentRecord.prompt_version = currentPromptVersion;
+    currentRecord.prompt_version = "7".repeat(64);
     fs.writeFileSync(path.join(directory, `${noteId}.json`), JSON.stringify(currentRecord), "utf8");
     review = prepareReview({
       catalog,
@@ -327,8 +322,7 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory,
-      expectedPromptVersion: currentPromptVersion
+      diandianRoot: directory
     });
     assert.equal(review.items[0].diandian_summary_text.includes("EvidenceTool"), true);
     assert.equal(review.items[0].content_sha256, "a".repeat(64));
@@ -347,8 +341,7 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory,
-      expectedPromptVersion: currentPromptVersion
+      diandianRoot: directory
     });
     assert.equal(review.items[0].diandian_summary_text, "");
     assert.equal(review.items[0].blockers.includes("image-text-review-required"), true);
@@ -363,8 +356,7 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory,
-      expectedPromptVersion: currentPromptVersion
+      diandianRoot: directory
     });
     assert.equal(review.items[0].diandian_summary_text, "");
 
@@ -378,8 +370,7 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory,
-      expectedPromptVersion: currentPromptVersion
+      diandianRoot: directory
     });
     assert.equal(review.items[0].diandian_summary_text, "");
 
@@ -398,8 +389,7 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
       candidates,
       resources: { resources: [{ name: "EvidenceTool" }] },
       evidenceRoot: path.join(directory, "video"),
-      diandianRoot: directory,
-      expectedPromptVersion: currentPromptVersion
+      diandianRoot: directory
     });
     assert.equal(review.items[0].diandian_summary_text, "");
   } finally {
@@ -407,7 +397,7 @@ test("review preparation uses only a matching keyed DianDian summary as body evi
   }
 });
 
-test("review preparation CLI requires the validated frozen DianDian prompt version", () => {
+test("review preparation CLI no longer asks for the DianDian prompt version", () => {
   const result = spawnSync(process.execPath, [
     prepareReviewCli,
     "--catalog", "catalog.json",
@@ -417,8 +407,21 @@ test("review preparation CLI requires the validated frozen DianDian prompt versi
     "--evidence-root", "evidence",
     "--output", "review.json"
   ], { cwd: repositoryRoot, encoding: "utf8" });
+  // It fails later, on the files it cannot find, not on a missing prompt version.
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /--diandian-prompt-version is required/);
+  assert.doesNotMatch(result.stderr, /prompt-version/);
+  assert.match(result.stderr, /could not be read/);
+});
+
+test("current formal revisions bind a DianDian dependency whatever prompt version saved the reply", () => {
+  const entry = {
+    title: "具体标题", summary: "这是一段包含明确对象、工作方式、适用情境与限制条件的具体内容总结。", action: "", themes: ["主题"], tools: [], kind: "Note",
+    evidence_sha256: "b".repeat(64), candidate_revision: "c".repeat(64),
+    evidence_dependencies: [{ method: "diandian_summary", provider: "xiaohongshu-diandian", version: "9".repeat(64), result_sha256: "e".repeat(64) }]
+  };
+  const current = currentFormalRevisions({ content_sha256: "a".repeat(64) }, entry);
+  assert.notEqual(current, null);
+  assert.equal(current.evidence_dependencies[0].version, "9".repeat(64));
 });
 
 test("formal point loader rejects a direct-child symlink or reparse point", (context) => {
@@ -522,7 +525,6 @@ test("producer evidence must be successful, revision-bound, and tool-versioned t
       evidenceReview,
       review: { items: [{
         note_id: noteId,
-        review_packet_sha256: evidenceReview.items[0].review_packet_sha256,
         candidate,
         audit: {
           status: "accepted",
@@ -663,7 +665,6 @@ test("successful revision-bound video frame OCR prepares and merges as image_ocr
       evidenceReview,
       review: { items: [{
         note_id: noteId,
-        review_packet_sha256: evidenceReview.items[0].review_packet_sha256,
         candidate,
         audit: {
           status: "accepted",
@@ -894,70 +895,6 @@ test("a curated category stays a suggestion unless an explicit override has a re
   assert.match(result.fatal.join("\n"), /category-override-unexplained/);
 });
 
-test("publication gate binds the historical baseline and accepted audit to the current curation revision", () => {
-  const entry = fixture({ type: "图文" }).curation["note-current"];
-  const curation = { old: entry, current: entry, pending: entry };
-  const policy = { publish_only_accepted: true };
-  const accepted = {
-    status: "accepted", reviewed_at: "2026-08-12",
-    evidence_methods: ["description", "comments", "image_review"],
-    comments_checked: true, claims_supported: true,
-    resource_status: "not_applicable", unresolved_facts: [],
-    content_sha256: "a".repeat(64),
-    evidence_sha256: "b".repeat(64),
-    candidate_revision: "c".repeat(64),
-    curation_revision: curationRevision(entry),
-    evidence_dependencies: [],
-    curation_sha256: curationRevision(entry)
-  };
-  const audit = { notes: { current: accepted, pending: { ...accepted, status: "pending" } } };
-  const note = { title: "具体标题", type: "图文", source_boards: ["主题甲"], published_at: "2026-08-12" };
-  const context = {
-    config: { boards: [{ name: "主题甲", category: "主题甲" }] },
-    resources: { resources: [] },
-    currentRevisions: {
-      content_sha256: "a".repeat(64),
-      evidence_sha256: "b".repeat(64),
-      candidate_revision: "c".repeat(64),
-      curation_revision: curationRevision(entry),
-      evidence_dependencies: []
-    }
-  };
-  const baselineHashes = new Map([["old", curationRevision(entry)]]);
-  assert.equal(isPublishableCuration("old", note, curation, policy, audit, new Set(["old"]), baselineHashes, context), true);
-  assert.equal(isPublishableCuration("current", note, curation, policy, audit, new Set(), new Map(), context), true);
-  assert.equal(isPublishableCuration("pending", note, curation, policy, audit, new Set(), new Map(), context), false);
-  assert.equal(isPublishableCuration("old", note, { ...curation, old: { ...entry, summary: `${entry.summary} 已修改` } }, policy, audit, new Set(["old"]), baselineHashes, context), false);
-  for (const explicitAudit of [
-    { ...accepted, status: "pending", reason: "仍待复核" },
-    { ...accepted, status: "rejected", reason: "证据不足" },
-    { ...accepted, content_sha256: "f".repeat(64) }
-  ]) {
-    assert.equal(
-      isPublishableCuration(
-        "old",
-        note,
-        curation,
-        policy,
-        { notes: { old: explicitAudit } },
-        new Set(["old"]),
-        baselineHashes,
-        {
-          ...context,
-          currentRevisions: {
-            content_sha256: "a".repeat(64),
-            evidence_sha256: "b".repeat(64),
-            candidate_revision: "c".repeat(64),
-            curation_revision: curationRevision(entry),
-            evidence_dependencies: []
-          }
-        }
-      ),
-      false
-    );
-  }
-});
-
 test("published baseline is preserved while its catalog difference becomes the review scope", () => {
   const publishedEntry = { summary: "published" };
   const publishedRevision = curationRevision(publishedEntry);
@@ -972,14 +909,6 @@ test("published baseline is preserved while its catalog difference becomes the r
   assert.deepEqual(result.baseline.note_ids, ["published"]);
   assert.equal(result.baseline.curation_hashes.published, publishedRevision);
   assert.deepEqual(result.scope.note_ids.sort(), ["newOne", "newTwo"]);
-  assert.equal(
-    isPublishableCuration(
-      "published", {}, { published: { summary: "published" } },
-      { publish_only_accepted: true }, { notes: {} }, new Set(["published"]),
-      new Map(Object.entries(result.baseline.curation_hashes))
-    ),
-    true
-  );
 });
 
 test("an explicit one-click enrichment run re-enters baseline notes into the review scope", () => {
@@ -1062,7 +991,51 @@ test("review merge publishes only accepted candidates and keeps pending work pri
   assert.equal(Object.hasOwn(merged.candidates.pending, "content_sha256"), false);
 });
 
-test("production review merge requires a current packet and candidate identity binding", () => {
+test("a review item with no packet hash merges, and the prepared review carries none", () => {
+  const noteId = "note-a";
+  const contentSha256 = "a".repeat(64);
+  const catalog = { notes: { [noteId]: { description: "A", content_sha256: contentSha256, comment_evidence_checked: true } } };
+  const candidate = {
+    id: noteId,
+    content_sha256: contentSha256,
+    title: "Candidate without a packet hash",
+    summary: "这条复核候选没有证据包哈希，仍应按笔记编号与内容版本合并，不再校验包哈希。",
+    action: "发布这条合成候选之前，先核对它所对应的证据。",
+    themes: ["binding"],
+    tools: [],
+    kind: "Note"
+  };
+  const reviewItem = {
+    note_id: noteId,
+    candidate,
+    audit: {
+      status: "accepted",
+      reviewed_at: "2026-08-27",
+      evidence_methods: ["description", "comments"],
+      comments_checked: true,
+      claims_supported: true,
+      resource_status: "not_applicable",
+      unresolved_facts: []
+    }
+  };
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "xhs-no-packet-hash-"));
+  try {
+    const prepared = prepareReview({
+      catalog, scope: { note_ids: [noteId] }, candidates: { [noteId]: candidate }, resources: { resources: [] }, evidenceRoot: directory
+    });
+    assert.equal(Object.hasOwn(prepared.items[0], "review_packet_sha256"), false);
+    const merged = mergeResults({
+      catalog, config: { boards: [] }, resources: { resources: [] }, scope: { note_ids: [noteId] },
+      candidates: {}, audit: { notes: {} }, curation: {},
+      evidenceReview: prepared, review: { items: [reviewItem] }, requirePacketBinding: true
+    });
+    assert.equal(merged.counts.accepted, 1);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("production review merge requires the packet set, a current content revision and candidate identity binding", () => {
   const noteId = "note-a";
   const contentSha256 = "a".repeat(64);
   const packet = {
@@ -1070,7 +1043,6 @@ test("production review merge requires a current packet and candidate identity b
     content_sha256: contentSha256,
     blockers: []
   };
-  packet.review_packet_sha256 = reviewPacketRevision(packet);
   const candidate = {
     id: noteId,
     content_sha256: contentSha256,
@@ -1083,7 +1055,6 @@ test("production review merge requires a current packet and candidate identity b
   };
   const reviewItem = {
     note_id: noteId,
-    review_packet_sha256: packet.review_packet_sha256,
     candidate,
     audit: {
       status: "accepted",
@@ -1112,32 +1083,17 @@ test("production review merge requires a current packet and candidate identity b
     () => mergeResults({ ...base, evidenceReview: null }),
     /review packet/i
   );
-  assert.throws(
-    () => mergeResults({
-      ...base,
-      evidenceReview: { items: [{ ...packet, review_packet_sha256: "" }] }
-    }),
-    /review packet/i
-  );
   const extraPacket = {
     note_id: "note-b",
     content_sha256: "b".repeat(64),
     blockers: []
   };
-  extraPacket.review_packet_sha256 = reviewPacketRevision(extraPacket);
   assert.throws(
     () => mergeResults({
       ...base,
       evidenceReview: { items: [packet, extraPacket] }
     }),
     /out-of-scope/i
-  );
-  assert.throws(
-    () => mergeResults({
-      ...base,
-      review: { items: [{ ...reviewItem, review_packet_sha256: "b".repeat(64) }] }
-    }),
-    /review packet/i
   );
   assert.throws(
     () => mergeResults({
@@ -1458,22 +1414,6 @@ test("an unavailable source is a completed unpublished terminal state", () => {
   assert.deepEqual(quality.report.totals, {
     scoped: 1, accepted: 0, unavailable: 1, pending: 0, rejected: 0, invalid: 0
   });
-  assert.deepEqual(formalCurationDecision({
-    publishable: false,
-    auditEntry: unavailableAudit
-  }), {
-    accepted: false,
-    reason_code: "source_unavailable",
-    summary_source: "metadata",
-    content_sha256: "",
-    evidence_sha256: "",
-    resource_ids: []
-  });
-  assert.deepEqual(publicEvidenceStatus("unavailable", input.audit), {
-    method: "原帖当前不可访问，已保留此前记录并结束补证",
-    locallyAvailable: false
-  });
-
   const merged = mergeResults({
     catalog: input.catalog,
     config: input.config,
@@ -1730,18 +1670,6 @@ test("explicit scope audits the baseline difference instead of post publication 
   const result = auditCuration(input);
   assert.equal(result.report.totals.scoped, 1);
   assert.equal(result.report.totals.accepted, 1);
-});
-
-test("accepted audit is exposed as verified without leaking private evidence", () => {
-  const audit = { notes: { current: { status: "accepted", evidence_methods: ["audio_transcript", "comments"] } } };
-  assert.deepEqual(publicEvidenceStatus("current", audit, false, true), {
-    method: "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
-    locallyAvailable: true
-  });
-  assert.deepEqual(publicEvidenceStatus("current", audit, true, true), {
-    method: "已结合本地视频证据核验内容",
-    locallyAvailable: true
-  });
 });
 
 test("audit initialization preserves accepted work and makes every other scoped item pending", () => {

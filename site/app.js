@@ -3,7 +3,6 @@ import {
   validateLegacySafetyStop,
   validateLocalBridgeBoards,
   validateLocalBridgeConfig,
-  validateLocalNoteOrganizationStatus,
   validateLocalBridgeSession,
   validateLocalBridgeSyncStatus,
   validateOrganizationStatusContract,
@@ -73,7 +72,8 @@ function emptyKnowledgeData() {
     meta: {
       noteCount: 0,
       frameEvidenceCount: 0,
-      verifiedNoteCount: 0,
+      replyCount: 0,
+      transcriptCount: 0,
       resourceCount: 0,
       resourceIndexEnabled: false,
       kindLabels: {},
@@ -96,6 +96,9 @@ function isStringArray(value) {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
+const MAIN_SOURCES = ["diandian", "post-text", "video-transcript", "image-text"];
+const EXTRACTED_KINDS = ["video-transcript", "image-text"];
+
 function validateKnowledgeData(value) {
   const invalid = () => { throw new Error("知识数据格式无效或不完整"); };
   if (!isRecord(value) || !isRecord(value.meta)) invalid();
@@ -105,8 +108,10 @@ function validateKnowledgeData(value) {
   for (const note of value.notes) {
     if (!isRecord(note) || ![note.id, note.title, note.category, note.kind].every((item) => typeof item === "string" && item)) invalid();
     if (typeof note.publishedAt !== "string") invalid();
-    if (![note.themes, note.tools, note.resources].every(isStringArray)) invalid();
-    if (!isRecord(note.evidence) || typeof note.evidence.method !== "string") invalid();
+    if (![note.themes, note.tools, note.unverifiedTools, note.resources].every(isStringArray)) invalid();
+    if (typeof note.mainText !== "string" || !MAIN_SOURCES.includes(note.mainSource)) invalid();
+    if (typeof note.replyDamaged !== "boolean" || typeof note.postUnreachable !== "boolean") invalid();
+    if (note.extracted !== null && !(isRecord(note.extracted) && EXTRACTED_KINDS.includes(note.extracted.kind) && typeof note.extracted.text === "string")) invalid();
   }
   for (const category of value.categories) {
     if (!isRecord(category) || typeof category.name !== "string" || !Number.isFinite(category.count)) invalid();
@@ -231,8 +236,6 @@ const state = {
   boardUpdatePending: false,
   manualSync: { state: "idle" },
   manualSyncStartedHere: false,
-  noteOrganizationStatus: new Map(),
-  noteOrganizationPending: new Set(),
   manualSyncPoll: 0
 };
 
@@ -284,17 +287,13 @@ function persistPersonalData(candidate = personalData()) {
 function noteDescription(note) {
   const override = state.descriptionOverrides[note.id];
   if (!override?.deleted && override?.description) return override.description;
-  const curationStatus = String(
-    note.curationStatus || note.curation_status || note.summaryStatus || note.summary_status || ""
-  );
-  if (showsDianDianReply(note)) return stripDiandianOpener(note.deepSummary).text;
-  if (curationStatus === "accepted") return note.summary || "";
-  return note.deepSummary || note.summary;
+  if (showsDianDianReply(note)) return stripDiandianOpener(note.mainText).text;
+  return note.mainText;
 }
 
-// A card whose usable DianDian reply is the text to show (the reply itself, not the curation summary).
+// A card whose main text is the saved DianDian reply (complete, or the cut one when nothing else exists).
 function showsDianDianReply(note) {
-  return note.deepSummarySource === "xiaohongshu-diandian" && Boolean(String(note.deepSummary || "").trim());
+  return note.mainSource === "diandian" && Boolean(note.mainText.trim());
 }
 
 function hasPersonalRevision(note) {
@@ -484,102 +483,54 @@ function formatDiandianHtml(reply) {
   }).join("");
 }
 
-// The shown summary as HTML: the person's own revision wins, then the DianDian reply, then the curated text.
-function descriptionHtml(note) {
-  return showsDianDianReply(note) && !hasPersonalRevision(note)
-    ? formatDiandianHtml(noteDescription(note))
-    : formatSummaryHtml(noteDescription(note));
+// Post text and extracted text are shown as written: blank lines separate paragraphs, a single line break stays a line break.
+function formatPostHtml(text) {
+  return String(text ?? "").split(/\n{2,}/).map((paragraph) => paragraph.trim()).filter(Boolean)
+    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`).join("");
 }
 
+// The shown text as HTML: the person's own revision wins, then the DianDian reply, then the post's or the extracted text.
+function descriptionHtml(note) {
+  if (hasPersonalRevision(note)) return formatSummaryHtml(noteDescription(note));
+  return showsDianDianReply(note) ? formatDiandianHtml(noteDescription(note)) : formatPostHtml(noteDescription(note));
+}
+
+// A card has text to show when its main text is not empty or the person wrote their own.
+function hasText(note) {
+  return Boolean(note.mainText.trim()) || hasPersonalRevision(note);
+}
+
+const SOURCE_COPY = {
+  damaged: "保存的点点回复缺了内容（是我们采集出错），下一轮重新获取；在那之前先显示原帖自己的文字。",
+  noReply: "这篇没有点点总结；先显示原帖自己的文字。",
+  // Opening of the sentences where extracted text is the main text: a saved-but-damaged reply says so, otherwise there is none.
+  openingDamaged: "保存的点点回复缺了内容（是我们采集出错），下一轮重新获取；",
+  openingNoReply: "这篇没有点点总结；",
+  videoOnlyRest: "原帖只有话题标签、没有正文，所以这里是视频里说的话和画面上的字，未经 AI 改写。",
+  imageOnlyRest: "原帖只有话题标签、没有正文，所以这里是图片上的字，未经 AI 改写。",
+  damagedOnlyRest: "原帖只有话题标签、没有正文，所以先显示已保存的那部分点点回复。",
+  unreachable: "原帖可能已被作者隐藏或删除；已保留现有记录并结束补证，不作为正式核验结果发布。",
+};
+const openingFor = (note) => (note.replyDamaged ? SOURCE_COPY.openingDamaged : SOURCE_COPY.openingNoReply);
+
+// Where the text on a card came from, said once. Precedence: an unreachable post, a cut reply that is the only
+// text, a complete reply, extracted text as the main text, then the post's own text.
 function summarySourcePresentation(note) {
-  const summaryStatus = String(
-    note.summaryState || note.summary_state || note.summaryStatus || note.summary_status || "not_started"
-  );
-  const reason = String(
-    note.summaryReasonCode || note.summary_reason_code || note.summaryReason || note.summary_reason || ""
-  );
-  const curationStatus = String(
-    note.curationStatus || note.curation_status || note.summaryStatus || note.summary_status || ""
-  );
-  if (curationStatus === "unavailable") return {
-    label: "已完成（原帖不可访问）",
-    tone: "metadata",
-    explanation: "原帖可能已被作者隐藏或删除；已保留现有记录并结束补证，不作为正式核验结果发布。"
-  };
-  if (curationStatus === "rejected") return {
-    label: "总结未通过审核",
-    tone: "warning",
-    explanation: "当前证据或质量门不足，因此不会作为正式总结展示；后续获得新证据时会重新审核。"
-  };
-  const media = localEvidenceDescription(note);
-  // A run that failed, was cut short or went stale still says so (it can be resumed); otherwise the gap is the news.
-  const resumable = ["failed", "batch_aborted", "stale"].includes(summaryStatus);
-  if (curationStatus === "pending_review" && reason === "audit_pending" && !resumable) return {
-    label: "证据未补齐，暂不发布",
-    tone: "warning",
-    explanation: `已完成复核：${media.gap}仍不完整，所以只显示原帖公开文字；补齐证据后会重新审核。`
-  };
-  // A card that passed review never shows a run's failure: its text stands on the evidence it was accepted with.
-  const accepted = curationStatus === "accepted";
-  if (!accepted && summaryStatus === "failed") return {
-    label: "本篇总结失败，可在下次继续",
-    tone: "warning",
-    explanation: "核心收藏已保存；本篇深度总结已尝试但未完成。"
-  };
-  if (!accepted && summaryStatus === "batch_aborted") return {
-    label: "本次未尝试，可继续整理",
-    tone: "warning",
-    explanation: "核心收藏已保存；本轮在处理本篇前已经停止。"
-  };
-  if (!accepted && summaryStatus === "stale" && reason === "unknown_legacy") return {
-    label: "历史整理状态待确认，需重新整理",
-    tone: "warning",
-    explanation: "核心收藏已保留；旧版记录无法确认是否曾完成总结。"
-  };
-  if (!accepted && summaryStatus === "stale") return {
-    label: reason === "evidence_changed"
-        ? "证据已变化，需重新核验"
-        : "正文已变化，需重新核验",
-    tone: "warning",
-    explanation: "历史整理结果仍保留，但不会作为当前正式总结展示。"
-  };
-  if (note.deepSummarySource === "xiaohongshu-diandian") {
-    const reply = String(note.deepSummary || "").trim();
+  if (note.postUnreachable) return { label: "已完成（原帖不可访问）", tone: "metadata", explanation: SOURCE_COPY.unreachable };
+  if (note.mainSource === "diandian" && note.replyDamaged) {
+    return { label: "点点 AI 深度总结", tone: "diandian", explanation: SOURCE_COPY.openingDamaged + SOURCE_COPY.damagedOnlyRest };
+  }
+  if (note.mainSource === "diandian") {
+    const reply = note.mainText.trim();
     return {
       label: "点点 AI 深度总结",
       tone: "diandian",
-      explanation: reply
-        ? `点点 AI 的完整回复，原文未改动，共 ${reply.length} 字；${stripDiandianOpener(reply).removed ? "只去掉开头的对话语句，" : ""}按小标题与列表排版。`
-        : "这份内容来自点点 AI 对原帖的总结，并已通过当前知识卡的整理检查。"
+      explanation: `点点 AI 的完整回复，原文未改动，共 ${reply.length} 字；${stripDiandianOpener(reply).removed ? "只去掉开头的对话语句，" : ""}按小标题与列表排版。`
     };
   }
-  if (summaryStatus === "captured" && reason === "audit_pending") return {
-    label: "证据未补齐，暂不发布",
-    tone: "warning",
-    explanation: "该条已完成复核，但正文、媒体或官方资源证据仍不完整；补齐前只展示原帖公开信息。"
-  };
-  if (summaryStatus === "captured" && !accepted) return {
-    label: "总结已保存，尚未完成证据核验",
-    tone: "warning",
-    explanation: "点点总结已安全保存在本机；证据核验完成前不会替换当前公开内容。"
-  };
-  if (accepted || note.deepSummarySource === "curation") return {
-    label: media.label,
-    tone: "evidence",
-    explanation: `这篇没有可用的点点总结；内容根据本机保存的${media.used}整理。`
-  };
-  return {
-    label: "尚未开始深度整理",
-    tone: "metadata",
-    explanation: "核心收藏已保存；这张卡尚未完成深度总结。"
-  };
-}
-
-// What the card's evidence is, by the kind of post: only what the public data records (the media type).
-function localEvidenceDescription(note) {
-  if (note.mediaType === "视频") return { label: "本机视频证据整理", used: "视频转写等证据", gap: "视频转写和画面等证据" };
-  if (note.mediaType === "图文") return { label: "本机图片文字整理", used: "图片文字等证据", gap: "图片文字等证据" };
-  return { label: "本机证据整理", used: "证据", gap: "媒体证据" };
+  if (note.mainSource === "video-transcript") return { label: "视频转写与画面文字", tone: "evidence", explanation: openingFor(note) + SOURCE_COPY.videoOnlyRest };
+  if (note.mainSource === "image-text") return { label: "图片文字", tone: "evidence", explanation: openingFor(note) + SOURCE_COPY.imageOnlyRest };
+  return { label: "原帖公开文字", tone: "metadata", explanation: note.replyDamaged ? SOURCE_COPY.damaged : SOURCE_COPY.noReply };
 }
 
 function safeUrl(value, allowedHosts = null) {
@@ -943,7 +894,7 @@ async function initBoardManager() {
 function filteredNotes() {
   const query = state.query.toLocaleLowerCase("zh-CN").trim();
   const notes = state.data.notes.filter((note) => {
-    const haystack = [note.title, note.author, note.category, note.suggestedCategory, note.summary, noteDescription(note), note.action, ...note.themes, ...note.tools].join(" ").toLocaleLowerCase("zh-CN");
+    const haystack = [note.title, note.author, note.category, note.suggestedCategory, noteDescription(note), note.extracted?.text ?? "", ...note.themes, ...note.tools].join(" ").toLocaleLowerCase("zh-CN");
     return (!query || haystack.includes(query))
       && (state.category === "all" || note.category === state.category)
       && (state.kind === "all" || note.kind === state.kind)
@@ -971,11 +922,23 @@ function renderCategories() {
 
 }
 
+// A tool chip; a tool nobody has matched to an official source says so (spec §3.1).
+// The marker is its own flex item so a long name is cut short instead of the marker being cut off.
+function toolChip(note, name) {
+  if (!note.unverifiedTools.includes(name)) return `<span class="tool-chip">${escapeHtml(name)}</span>`;
+  return `<span class="tool-chip tool-chip--unverified"><span class="tool-name">${escapeHtml(name)}</span> <small class="tool-unverified">未核实</small></span>`;
+}
+
 function noteCard(note) {
-  const tools = note.tools.slice(0, 4).map((tool) => `<span class="tool-chip">${escapeHtml(tool)}</span>`).join("");
+  const tools = note.tools.slice(0, 4).map((tool) => toolChip(note, tool)).join("");
   const bookmarked = state.bookmarks.has(note.id);
   const summarySource = summarySourcePresentation(note);
   const personallyEdited = Boolean(state.descriptionOverrides[note.id] && !state.descriptionOverrides[note.id].deleted);
+  // A card with no text at all (no post text, no extracted text, no saved reply) draws no source line and no text block,
+  // the same as its detail view.
+  const textHtml = hasText(note) ? `
+        <p class="card-summary-source card-summary-source--${summarySource.tone}"><i aria-hidden="true"></i>${personallyEdited ? "个人修订 · " : ""}${escapeHtml(summarySource.label)}</p>
+        <div class="card-summary structured-summary structured-summary--card">${descriptionHtml(note)}</div>` : "";
   return `
     <article class="note-card" style="--accent:${categoryAccent(note.category)}" data-note-id="${escapeHtml(note.id)}" data-kind="${escapeHtml(note.kind)}">
       <div class="card-strip">
@@ -983,9 +946,7 @@ function noteCard(note) {
         <button class="bookmark-button ${bookmarked ? "is-active" : ""}" type="button" data-bookmark-note="${escapeHtml(note.id)}" aria-pressed="${bookmarked}" aria-label="${bookmarked ? "移除书签" : "添加书签"}" title="${bookmarked ? "移除书签" : "添加书签"}">${bookmarkIcon()}</button>
       </div>
       <div class="card-body">
-        <h3 class="card-title">${escapeHtml(note.title)}</h3>
-        <p class="card-summary-source card-summary-source--${summarySource.tone}"><i aria-hidden="true"></i>${personallyEdited ? "个人修订 · " : ""}${escapeHtml(summarySource.label)}</p>
-        <div class="card-summary structured-summary structured-summary--card">${descriptionHtml(note)}</div>
+        <h3 class="card-title">${escapeHtml(note.title)}</h3>${textHtml}
         <div class="tools-row">${tools}</div>
       </div>
       <footer class="card-footer">
@@ -1066,6 +1027,8 @@ function renderResourceSortOptions() {
 }
 
 function descriptionSection(note) {
+  // No text at all: no source box and no wording of our own (the card keeps its title and chips).
+  if (!hasText(note)) return "";
   const override = state.descriptionOverrides[note.id]?.deleted ? null : state.descriptionOverrides[note.id];
   const summarySource = summarySourcePresentation(note);
   const provenanceHtml = (editButton) => `
@@ -1102,10 +1065,12 @@ function descriptionSection(note) {
 function summaryBodyHtml(note) {
   if (!showsDianDianReply(note) || hasPersonalRevision(note)) return `<div class="structured-summary">${descriptionHtml(note)}</div>`;
   const expanded = state.expandedSummaries.has(note.id);
+  // The same number the source box shows: the length of the saved reply.
+  const length = note.mainText.trim().length;
   return `
     <div class="summary-fold" data-expanded="${expanded}">
       <div class="structured-summary summary-fold-body">${descriptionHtml(note)}</div>
-      <button type="button" class="summary-fold-toggle" data-fold-toggle="${escapeHtml(note.id)}" data-fold-label="展开全文 · ${note.deepSummary.length} 字" aria-expanded="${expanded}">${expanded ? "收起" : `展开全文 · ${note.deepSummary.length} 字`}</button>
+      <button type="button" class="summary-fold-toggle" data-fold-toggle="${escapeHtml(note.id)}" data-fold-label="展开全文 · ${length} 字" aria-expanded="${expanded}">${expanded ? "收起" : `展开全文 · ${length} 字`}</button>
     </div>`;
 }
 
@@ -1152,17 +1117,12 @@ function renderDetail(note) {
       }).join("")}
     </div></section>
   ` : "";
-  const localOrganization = state.noteOrganizationStatus?.get(note.id);
-  const localOrganizationHtml = localOrganization ? `
-    <section class="detail-section pending-evidence-overlay" role="status" aria-label="本机补证内容">
-      <div class="pending-evidence-heading"><span>仅本机</span><strong>${escapeHtml(state.statusContract.copy.summary_captured)}</strong></div>
-      <div class="structured-summary">${formatSummaryHtml(localOrganization.display_summary)}</div>
-      <p>证据：${localOrganization.evidence_methods.map((evidence) => evidence.method === "point" ? "点点总结" : escapeHtml(evidence.method)).join(" · ")}。当前证据尚未满足发布门槛，不会进入公开知识库。</p>
-    </section>
-  ` : "";
-  const tags = [...note.themes, ...note.tools];
-  const tagsHtml = tags.length ? `
-    <section class="detail-section"><h3>相关主题与工具</h3><div class="tools-row">${tags.map((item) => `<span class="tool-chip">${escapeHtml(item)}</span>`).join("")}</div></section>
+  const chips = [
+    ...note.themes.map((item) => `<span class="tool-chip">${escapeHtml(item)}</span>`),
+    ...note.tools.map((item) => toolChip(note, item)),
+  ];
+  const tagsHtml = chips.length ? `
+    <section class="detail-section"><h3>相关主题与工具</h3><div class="tools-row">${chips.join("")}</div></section>
   ` : "";
   const categorySuggestionHtml = note.suggestedCategory && note.suggestedCategory !== note.category ? `
     <p class="category-suggestion"><span>内容建议分类</span>${escapeHtml(note.suggestedCategory)}<small>当前仍按收藏夹“${escapeHtml(note.category)}”归档</small></p>
@@ -1187,8 +1147,8 @@ function renderDetail(note) {
     <h2 class="detail-title" id="detail-title">${escapeHtml(note.title)}</h2>
     <div class="detail-meta"><span>${escapeHtml(note.author || "作者未记录")}</span><span>${escapeHtml(formatDate(note.publishedAt))}</span></div>
     ${categorySuggestionHtml}
-    ${localOrganizationHtml}
     ${descriptionSection(note)}
+    ${extractedSectionHtml(note)}
     ${resourceHtml}
     ${tagsHtml}
     <footer class="detail-footer">
@@ -1201,30 +1161,11 @@ function renderDetail(note) {
   settleSummaryFolds();
 }
 
-async function loadLocalNoteOrganizationStatus(note) {
-  if (
-    !state.localBridge
-    || !state.statusContract
-    || note.summaryStatus === "accepted"
-    || note.summaryStatus === "unavailable"
-    || state.noteOrganizationStatus.has(note.id)
-    || state.noteOrganizationPending.has(note.id)
-  ) return;
-  state.noteOrganizationPending.add(note.id);
-  try {
-    const payload = await localBridgeRequest("/notes/organization-status", {
-      method: "POST",
-      body: JSON.stringify({ note_id: note.id })
-    });
-    const status = validateLocalNoteOrganizationStatus(payload, state.statusContract);
-    if (status.note_id !== note.id) throw new Error("本机单篇整理状态不匹配");
-    state.noteOrganizationStatus.set(note.id, status);
-    if (elements.dialog.open && elements.dialogContent.dataset.noteId === note.id) renderDetail(note);
-  } catch {
-    // A missing or stale private overlay must not replace the published safe fallback.
-  } finally {
-    state.noteOrganizationPending.delete(note.id);
-  }
+// Text the reader engine took out of the post's media, shown as its own section after the post's text.
+function extractedSectionHtml(note) {
+  if (!note.extracted) return "";
+  const heading = note.extracted.kind === "video-transcript" ? "视频转写与画面文字" : "图片文字";
+  return `<section class="detail-section extracted-section" aria-label="${heading}"><h3>${heading}</h3><div class="extracted-text">${formatPostHtml(note.extracted.text)}</div></section>`;
 }
 
 function openNote(noteId, updateHash = true) {
@@ -1237,7 +1178,6 @@ function openNote(noteId, updateHash = true) {
   }
   lockDialogBackground();
   settleSummaryFolds();
-  if (typeof loadLocalNoteOrganizationStatus === "function") void loadLocalNoteOrganizationStatus(note);
   if (updateHash) history.replaceState(null, "", `#note=${encodeURIComponent(noteId)}`);
 }
 
@@ -1572,7 +1512,8 @@ async function init() {
   const boardManagerReady = initBoardManager();
 
   try {
-    const response = await fetch(DATA_URL);
+    // Revalidate every time, so a page never pairs new code with a stale cached data file.
+    const response = await fetch(DATA_URL, { cache: "no-cache" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     state.data = validateKnowledgeData(await response.json());
     state.knowledgeReady = true;
@@ -1624,7 +1565,10 @@ async function init() {
 
   document.querySelector("#stat-notes").textContent = state.data.meta.noteCount;
   document.querySelector("#stat-frames").textContent = new Intl.NumberFormat("zh-CN").format(state.data.meta.frameEvidenceCount);
-  document.querySelector("#proof-videos").textContent = state.data.meta.verifiedNoteCount;
+  const { noteCount, replyCount, transcriptCount } = state.data.meta;
+  document.querySelector("#hero-counts").textContent = `${noteCount} 条收藏 · ${replyCount} 条有完整点点总结 · ${transcriptCount} 条有视频转写`;
+  document.querySelector("#proof-replies").textContent = replyCount;
+  document.querySelector("#proof-transcripts").textContent = transcriptCount;
   document.querySelector("#proof-frames").textContent = new Intl.NumberFormat("zh-CN").format(state.data.meta.frameEvidenceCount);
   const generatedAt = new Date(state.data.meta.generatedAt);
   document.querySelector("#proof-updated-at").textContent = Number.isNaN(generatedAt.getTime())

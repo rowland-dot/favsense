@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { auditCuration } from "../scripts/validate-curation.mjs";
-import { hasCompleteAcceptedAudit } from "../scripts/curation-quality.mjs";
 import { curationRevision } from "../scripts/curation-revision.mjs";
 
 // An accepted entry is shown on a public card exactly as curated. These rules refuse five kinds of
@@ -143,27 +142,14 @@ test("guard: real entries that are fine today still pass, including a short summ
 
 // Issue #99 (owner ruling 2026-10-14): cards no longer show a next-step box, so the standard no longer
 // asks every entry for an action. One that is written is still held to the text rules above.
-test("an accepted entry with no action passes, and is published", () => {
+test("an accepted entry with no action passes the standard", () => {
   for (const overrides of [{ action: "" }, { action: undefined }]) {
     const built = accepted(overrides);
     assert.deepEqual(auditCuration(built.input).fatal, [], JSON.stringify(overrides));
-    assert.equal(hasCompleteAcceptedAudit(NOTE_ID, built.input.catalog.notes[NOTE_ID], built.entry, built.input.audit, { config: built.input.config, resources: built.input.resources }), true);
   }
 });
 
 test("an action that is written is still refused when it is a placeholder", () => {
   assert.match(fatal({ action: "继续关注" }), /action-not-specific/);
   assert.match(fatal({ action: PLACEHOLDER_ACTION_SKIP }), /no-chinese:action/);
-});
-
-test("the publish decision refuses the same entries, so a card falls back instead of showing the text", () => {
-  const context = (built) => ({ config: built.input.config, resources: built.input.resources });
-  const publishable = (overrides) => {
-    const built = accepted(overrides);
-    return hasCompleteAcceptedAudit(NOTE_ID, built.input.catalog.notes[NOTE_ID], built.entry, built.input.audit, context(built));
-  };
-  assert.equal(publishable({}), true);
-  assert.equal(publishable({ summary: DIANDIAN_OPENING_SUMMARY }), false);
-  assert.equal(publishable({ action: PLACEHOLDER_ACTION_SKIP }), false);
-  assert.equal(publishable({ summary: TRANSCRIPT_SUMMARY }), false);
 });

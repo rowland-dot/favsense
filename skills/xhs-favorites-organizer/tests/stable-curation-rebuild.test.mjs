@@ -4,7 +4,6 @@ import { createHash } from "node:crypto";
 import { generateCandidates } from "../scripts/generate-curation-candidates.mjs";
 import { attachEvidenceToCandidates, normalizeEvidencePacket, sealCandidateRevision } from "../scripts/normalize-evidence.mjs";
 import { curationRevision } from "../scripts/curation-revision.mjs";
-import { formalCurationDecision } from "../scripts/curation-quality.mjs";
 import { runCurationPipeline } from "../scripts/run-curation-pipeline.mjs";
 
 // A rebuild that sees the same note content and the same evidence must keep a note accepted.
@@ -102,20 +101,4 @@ test("a note whose evidence really changed goes back to review even when its too
   const changed = [{ ...TRANSCRIPT_METHOD, result_sha256: sha("a different transcript") }];
   const rebuilt = await runCurationPipeline(rebuildInput({ methods: changed, stored }));
   assert.equal(rebuilt.curation["note-a"].review_status, "pending");
-});
-
-test("an accepted Skill note with an expired resource check reports resource_stale, not audit_pending", () => {
-  const current = {
-    content_sha256: hex("a"), evidence_sha256: hex("b"), candidate_revision: hex("c"), curation_revision: hex("d"),
-    evidence_dependencies: [{ method: "public_text", provider: "favsense", version: "1", result_sha256: hex("e") }],
-    resource_required: true, resource_id: "", resource_identity_sha256: "", verification_snapshot_sha256: "", resource_fresh: false,
-  };
-  const auditEntry = { status: "accepted", ...current, resource_id: "github-owner-repo", resource_identity_sha256: hex("f"), verification_snapshot_sha256: hex("1") };
-  const expired = formalCurationDecision({ publishable: false, auditEntry, currentRevisions: current, kind: "Skill", resource: null });
-  assert.equal(expired.accepted, false);
-  assert.equal(expired.reason_code, "resource_stale");
-  // Other reasons keep their own codes.
-  assert.equal(formalCurationDecision({ publishable: false, auditEntry, currentRevisions: current, kind: "Note", resource: null }).reason_code, "audit_pending");
-  assert.equal(formalCurationDecision({ publishable: false, auditEntry: { status: "rejected" }, currentRevisions: current, kind: "Skill", resource: null }).reason_code, "audit_rejected");
-  assert.equal(formalCurationDecision({ publishable: false, auditEntry: null, currentRevisions: current, kind: "Skill", resource: null }).reason_code, "audit_pending");
 });

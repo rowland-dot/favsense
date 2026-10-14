@@ -6,21 +6,19 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { curationRevision } from "../scripts/curation-revision.mjs";
 import { expectedResourceRevisions } from "../scripts/resource-quality.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const hex = (character) => character.repeat(64);
 const sealResource = (resource) => Object.assign(resource, expectedResourceRevisions(resource));
 
-test("accepted confirmed Skill produces the safe formal outcome in the public JSON", async () => {
+test("a confirmed Skill produces the safe formal outcome in the public JSON", async () => {
   const work = await mkdtemp(join(tmpdir(), "favsense-formal-output-"));
   const noteId = "synthetic-skill";
-  const pointSummary = "Current accepted point summary for the synthetic confirmed Skill.";
+  const pointSummary = "Current saved point summary for the synthetic confirmed Skill.";
   const pointSummarySha256 = createHash("sha256").update(pointSummary, "utf8").digest("hex");
   const verifiedAt = new Date().toISOString().slice(0, 10);
   const promptVersion = hex("7");
-  const stalePromptVersion = hex("9");
   const resource = sealResource({
     id: "github-owner-repo", name: "Official synthetic Skill", aliases: [], type: "Agent Skill",
     canonical_repo: "owner/repo", repo: "https://github.com/owner/repo",
@@ -38,19 +36,9 @@ test("accepted confirmed Skill produces the safe formal outcome in the public JS
     verified_at: "2020-01-01",
   });
   const profile = JSON.parse(await readFile(join(root, "config/domain-profiles/software.json"), "utf8"));
-  const paths = Object.fromEntries(["catalog", "config", "curation", "audit", "baseline", "profile", "resources", "public"].map((name) => [name, join(work, `${name}.json`)]));
+  const paths = Object.fromEntries(["catalog", "config", "curation", "profile", "resources", "public"].map((name) => [name, join(work, `${name}.json`)]));
   const curationEntry = {
-    category: "Synthetic", themes: ["testing"], summary: "已审核的合成 Skill 总结，写清了对象、工作方式与限制，细节足够用于评审。",
-    action: "先在受控的工作区里检查这个已核验的合成 Skill，再决定是否安装。",
-    tools: [resource.name, staleResource.name], kind: "Skill", evidence_sha256: hex("e"), candidate_revision: hex("f"),
-    evidence_dependencies: [{ method: "diandian_summary", provider: "xiaohongshu-diandian", version: promptVersion, result_sha256: pointSummarySha256 }]
-  };
-  const formalRevisions = {
-    content_sha256: hex("c"), evidence_sha256: curationEntry.evidence_sha256,
-    candidate_revision: curationEntry.candidate_revision, curation_revision: curationRevision(curationEntry),
-    evidence_dependencies: curationEntry.evidence_dependencies, resource_id: resource.id,
-    resource_identity_sha256: resource.resource_identity_sha256,
-    verification_snapshot_sha256: resource.verification_snapshot_sha256
+    category: "Synthetic", themes: ["testing"], tools: [resource.name, staleResource.name], kind: "Skill",
   };
   try {
     await Promise.all([
@@ -59,244 +47,43 @@ test("accepted confirmed Skill produces the safe formal outcome in the public JS
       } } })),
       writeFile(paths.config, JSON.stringify({
         version: 1, domain_profile: paths.profile, curation_file: paths.curation,
-        curation_quality: {
-          publish_only_accepted: true,
-          audit_file: paths.audit,
-          baseline_file: paths.baseline
-        },
         boards: [{ id: "private-board-id", name: "Synthetic", enabled: true }], public_stats: {}
       })),
       writeFile(paths.curation, JSON.stringify({ [noteId]: curationEntry })),
-      writeFile(paths.audit, JSON.stringify({ version: 2, notes: { [noteId]: {
-        status: "accepted", reviewed_at: "2026-08-23", evidence_methods: ["comments", "diandian_summary", "official_source"],
-        comments_checked: true, claims_supported: true, resource_status: "verified", unresolved_facts: [],
-        diandian_summary_sha256: pointSummarySha256, curation_sha256: formalRevisions.curation_revision,
-        ...formalRevisions
-      } } })),
-      writeFile(paths.baseline, JSON.stringify({ version: 1, note_ids: [], curation_hashes: {} })),
       writeFile(paths.profile, JSON.stringify(profile)),
       writeFile(paths.resources, JSON.stringify({ verified_at: verifiedAt, resources: [resource, staleResource] })),
       mkdir(join(work, "point"), { recursive: true })
     ]);
     await writeFile(join(work, "point", `${noteId}.json`), JSON.stringify({
       version: 2, provider: "xiaohongshu-diandian", prompt: "总结", note_id: noteId,
-      title: resource.name, summary: pointSummary, content_sha256: formalRevisions.content_sha256,
+      title: resource.name, summary: pointSummary, content_sha256: hex("c"),
       prompt_version: promptVersion, request_sha256: hex("8"), summary_sha256: pointSummarySha256,
       captured_at: "2026-08-23T00:00:00.000Z"
     }));
-    const common = [
-      "--catalog", paths.catalog, "--config", paths.config, "--curation", paths.curation,
-      "--profile", paths.profile, "--resources", paths.resources, "--build-version", hex("d"),
-      "--diandian-prompt-version", promptVersion
-    ];
-    const site = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
-    assert.equal(site.status, 0, site.stderr || site.stdout);
-
-    const publicData = JSON.parse(await readFile(paths.public, "utf8"));
-    assert.equal(publicData.meta.buildVersion, hex("d"));
-    assert.equal(publicData.notes[0].summaryStatus, "accepted");
-    assert.equal(publicData.notes[0].summaryReason, "");
-    assert.equal(Object.hasOwn(publicData.notes[0], "candidateKind"), false);
-    assert.equal(publicData.notes[0].kind, "Skill");
-    assert.deepEqual(publicData.notes[0].tools, [resource.name]);
-    assert.deepEqual(publicData.notes[0].resources, [resource.name]);
-    assert.deepEqual(publicData.notes[0].resourceIds, ["github-owner-repo"]);
-    assert.equal(publicData.notes[0].deepSummary, pointSummary);
-    assert.doesNotMatch(JSON.stringify(publicData.notes[0]), /Stale synthetic Skill|old\/repo/);
-
-    const staleEntry = structuredClone(curationEntry);
-    staleEntry.evidence_dependencies[0].version = stalePromptVersion;
-    const staleRevision = curationRevision(staleEntry);
-    await writeFile(paths.curation, JSON.stringify({ [noteId]: staleEntry }));
-    await writeFile(paths.audit, JSON.stringify({ version: 2, notes: { [noteId]: {
-      status: "accepted", reviewed_at: "2026-08-23", evidence_methods: ["comments", "diandian_summary", "official_source"],
-      comments_checked: true, claims_supported: true, resource_status: "verified", unresolved_facts: [],
-      diandian_summary_sha256: pointSummarySha256, curation_sha256: staleRevision,
-      ...formalRevisions,
-      curation_revision: staleRevision,
-      evidence_dependencies: staleEntry.evidence_dependencies
-    } } }));
-    await writeFile(join(work, "point", `${noteId}.json`), JSON.stringify({
-      version: 2, provider: "xiaohongshu-diandian", prompt: "总结", note_id: noteId,
-      title: resource.name, summary: pointSummary, content_sha256: formalRevisions.content_sha256,
-      prompt_version: stalePromptVersion, request_sha256: hex("8"), summary_sha256: pointSummarySha256,
-      captured_at: "2026-08-23T00:00:00.000Z"
-    }));
-    const staleSite = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
-    assert.equal(staleSite.status, 0, staleSite.stderr || staleSite.stdout);
-    const stalePublic = JSON.parse(await readFile(paths.public, "utf8")).notes[0];
-    assert.doesNotMatch(JSON.stringify(stalePublic), new RegExp(pointSummary));
-    assert.doesNotMatch(JSON.stringify(stalePublic), new RegExp(curationEntry.summary));
-    assert.notEqual(stalePublic.summaryStatus, "accepted");
-    assert.equal(stalePublic.summary, "Synthetic safe body");
-
-    await writeFile(paths.audit, JSON.stringify({ version: 2, notes: {} }));
-    await writeFile(paths.baseline, JSON.stringify({
-      version: 1,
-      note_ids: [noteId],
-      curation_hashes: { [noteId]: staleRevision }
-    }));
-    const baselineSite = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
-    assert.equal(baselineSite.status, 0, baselineSite.stderr || baselineSite.stdout);
-    const baselinePublic = JSON.parse(await readFile(paths.public, "utf8")).notes[0];
-    assert.doesNotMatch(JSON.stringify(baselinePublic), new RegExp(curationEntry.summary));
-    assert.notEqual(baselinePublic.summaryStatus, "accepted");
-    assert.equal(baselinePublic.summary, "Synthetic safe body");
-
-    const packageJson = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
-    assert.match(packageJson.scripts["test:knowledge"], /test_formal_outputs\.mjs/);
-  } finally {
-    await rm(work, { recursive: true, force: true });
-  }
-});
-
-test("explicit rejected audit overrides a matching baseline in the web builder", async () => {
-  const work = await mkdtemp(join(tmpdir(), "favsense-baseline-override-"));
-  const noteId = "synthetic-baseline-rejected";
-  const metadataText = "Public catalog metadata remains the only allowed fallback.";
-  const privateFormalSummary = "Rejected formal curation summary must not be projected.";
-  const profile = JSON.parse(await readFile(join(root, "config/domain-profiles/software.json"), "utf8"));
-  const paths = Object.fromEntries(
-    ["catalog", "config", "curation", "audit", "baseline", "profile", "resources", "public"]
-      .map((name) => [name, join(work, `${name}.json`)])
-  );
-  const entry = {
-    category: "Synthetic",
-    themes: ["testing"],
-    summary: privateFormalSummary,
-    action: "This rejected action must not be projected.",
-    tools: [],
-    kind: "Note"
-  };
-  try {
-    await Promise.all([
-      writeFile(paths.catalog, JSON.stringify({ version: 1, notes: { [noteId]: {
-        note_id: noteId,
-        title: "Synthetic baseline override",
-        description: metadataText,
-        published_at: "2026-08-26",
-        source_boards: ["Synthetic"],
-        content_sha256: hex("7")
-      } } })),
-      writeFile(paths.config, JSON.stringify({
-        version: 1,
-        domain_profile: paths.profile,
-        curation_file: paths.curation,
-        curation_quality: {
-          publish_only_accepted: true,
-          audit_file: paths.audit,
-          baseline_file: paths.baseline
-        },
-        boards: [{ id: "private-board-id", name: "Synthetic", enabled: true }],
-        public_stats: {}
-      })),
-      writeFile(paths.curation, JSON.stringify({ [noteId]: entry })),
-      writeFile(paths.audit, JSON.stringify({ version: 2, notes: { [noteId]: {
-        status: "rejected",
-        reviewed_at: "2026-08-26",
-        evidence_methods: [],
-        comments_checked: false,
-        claims_supported: false,
-        resource_status: "not_applicable",
-        unresolved_facts: [],
-        reason: "Evidence is insufficient."
-      } } })),
-      writeFile(paths.baseline, JSON.stringify({
-        version: 1,
-        note_ids: [noteId],
-        curation_hashes: { [noteId]: curationRevision(entry) }
-      })),
-      writeFile(paths.profile, JSON.stringify(profile)),
-      writeFile(paths.resources, JSON.stringify({ verified_at: "2026-08-26", resources: [] })),
-      mkdir(join(work, "point"), { recursive: true })
-    ]);
-    const common = [
-      "--catalog", paths.catalog,
-      "--config", paths.config,
-      "--curation", paths.curation,
-      "--profile", paths.profile,
-      "--resources", paths.resources,
-      "--build-version", hex("8")
-    ];
     const site = spawnSync(process.execPath, [
       join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"),
-      ...common,
-      "--diandian-dir", join(work, "point"),
-      "--video-analysis", join(work, "video"),
-      "--output", paths.public
+      "--catalog", paths.catalog, "--config", paths.config, "--curation", paths.curation,
+      "--profile", paths.profile, "--resources", paths.resources, "--build-version", hex("d"),
+      "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public
     ], { cwd: root, encoding: "utf8" });
     assert.equal(site.status, 0, site.stderr || site.stdout);
 
     const publicData = JSON.parse(await readFile(paths.public, "utf8"));
-    assert.equal(publicData.notes[0].summary, metadataText);
-    assert.equal(publicData.notes[0].deepSummary, metadataText);
-    assert.equal(publicData.notes[0].deepSummarySource, "source-metadata");
-    assert.equal(publicData.notes[0].curationStatus, "rejected");
-    assert.doesNotMatch(JSON.stringify(publicData), new RegExp(privateFormalSummary));
-  } finally {
-    await rm(work, { recursive: true, force: true });
-  }
-});
+    const card = publicData.notes[0];
+    assert.equal(publicData.meta.buildVersion, hex("d"));
+    assert.equal(card.mainSource, "diandian");
+    assert.equal(card.mainText, pointSummary);
+    assert.equal(card.replyDamaged, false);
+    assert.equal(card.kind, "Skill");
+    // Both tools the post names are shown; only the one with a fresh official resource is confirmed.
+    assert.deepEqual(card.tools, [resource.name, staleResource.name]);
+    assert.deepEqual(card.unverifiedTools, [staleResource.name]);
+    assert.deepEqual(card.resources, [resource.name]);
+    assert.deepEqual(card.resourceIds, ["github-owner-repo"]);
+    assert.doesNotMatch(JSON.stringify(card), /old\/repo/);
 
-test("unverified Skill stays a pending candidate without a guessed resource or legacy point", async () => {
-  const work = await mkdtemp(join(tmpdir(), "favsense-formal-candidate-"));
-  const noteId = "synthetic-skill-candidate";
-  const legacySummary = "Private legacy candidate summary must never reach formal output.";
-  const profile = JSON.parse(await readFile(join(root, "config/domain-profiles/software.json"), "utf8"));
-  profile.classification.default = "Skill";
-  const paths = Object.fromEntries(["catalog", "config", "curation", "audit", "baseline", "profile", "resources", "public"].map((name) => [name, join(work, `${name}.json`)]));
-  const staleResource = sealResource({
-    id: "github-stale-repo", name: "Stale candidate Skill", aliases: [], type: "Agent Skill",
-    canonical_repo: "stale/repo", repo: "https://github.com/stale/repo",
-    download: "https://github.com/stale/repo/archive/refs/heads/main.zip", stars: "1", stars_numeric: 1,
-    license: "MIT", skill_manifest: "SKILL.md", compatibility: ["Codex"], compatibility_evidence: ["README.md"],
-    verified_at: "2020-01-01", status: "verified", usage_note: "Synthetic stale fixture."
-  });
-  const candidateEntry = {
-    category: "Synthetic", themes: ["testing"], summary: "Candidate summary without verified evidence.",
-    action: "Wait for an official source before installation.", tools: [staleResource.name], kind: "Skill"
-  };
-  try {
-    await Promise.all([
-      writeFile(paths.catalog, JSON.stringify({ version: 1, notes: { [noteId]: {
-        note_id: noteId, title: "Synthetic Skill candidate", description: "Metadata-only candidate with no verified resource.",
-        published_at: "2026-08-23", source_boards: ["Synthetic"], content_sha256: hex("4")
-      } } })),
-      writeFile(paths.config, JSON.stringify({
-        version: 1, domain_profile: paths.profile, curation_file: paths.curation,
-        curation_quality: { publish_only_accepted: true, audit_file: paths.audit, baseline_file: paths.baseline },
-        boards: [{ id: "private-board-id", name: "Synthetic", enabled: true }], public_stats: {}
-      })),
-      writeFile(paths.curation, JSON.stringify({ [noteId]: candidateEntry })),
-      writeFile(paths.audit, JSON.stringify({ version: 2, notes: {} })),
-      writeFile(paths.baseline, JSON.stringify({
-        version: 1,
-        note_ids: [noteId],
-        curation_hashes: { [noteId]: curationRevision(candidateEntry) }
-      })),
-      writeFile(paths.profile, JSON.stringify(profile)),
-      writeFile(paths.resources, JSON.stringify({ verified_at: "2026-08-23", resources: [staleResource] })),
-      mkdir(join(work, "point"), { recursive: true })
-    ]);
-    await writeFile(join(work, "point", `${noteId}.json`), JSON.stringify({
-      version: 1, provider: "xiaohongshu-diandian", prompt: "总结", note_id: noteId,
-      title: "Synthetic Skill candidate", summary: legacySummary, content_sha256: hex("4"),
-      summary_sha256: createHash("sha256").update(legacySummary, "utf8").digest("hex")
-    }));
-    const common = ["--catalog", paths.catalog, "--config", paths.config, "--curation", paths.curation, "--profile", paths.profile, "--resources", paths.resources, "--build-version", hex("5")];
-    const site = spawnSync(process.execPath, [join(root, "skills/xhs-favorites-organizer/scripts/build-public-site.mjs"), ...common, "--diandian-dir", join(work, "point"), "--video-analysis", join(work, "video"), "--output", paths.public], { cwd: root, encoding: "utf8" });
-    assert.equal(site.status, 0, site.stderr || site.stdout);
-
-    const publicData = JSON.parse(await readFile(paths.public, "utf8"));
-    assert.doesNotMatch(JSON.stringify(publicData.notes[0]), /github\.com|stale\/repo|Stale candidate Skill/);
-    assert.equal(publicData.notes[0].kind, "Note");
-    assert.equal(publicData.notes[0].candidateKind, "Skill");
-    assert.equal(publicData.notes[0].summaryStatus, "pending_review");
-    assert.deepEqual(publicData.notes[0].tools, []);
-    assert.deepEqual(publicData.notes[0].resources, []);
-    assert.deepEqual(publicData.notes[0].resourceIds, []);
-    assert.equal(publicData.notes[0].evidence.locallyAvailable, false);
-    assert.doesNotMatch(JSON.stringify(publicData), new RegExp(legacySummary));
+    const packageJson = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+    assert.match(packageJson.scripts["test:knowledge"], /test_formal_outputs\.mjs/);
   } finally {
     await rm(work, { recursive: true, force: true });
   }

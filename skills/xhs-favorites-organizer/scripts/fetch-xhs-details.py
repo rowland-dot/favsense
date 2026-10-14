@@ -145,6 +145,16 @@ def clean_text(value, max_chars: int = 20_000):
     return text[:max_chars] or None
 
 
+def clean_paragraphs(value, max_chars: int = 20_000):
+    """Like clean_text, but keeps the post's line breaks: spaces are tidied line by line and a run of
+    three or more newlines becomes one blank line."""
+    if value is None:
+        return None
+    lines = [" ".join(line.split()) for line in str(value).replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+    text = re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
+    return text[:max_chars] or None
+
+
 def first_list(value):
     if isinstance(value, list):
         return value
@@ -226,7 +236,7 @@ def normalize(raw: dict, note_id: str, comments=None) -> dict:
         "detail_fetched": True,
         "comment_evidence_checked": True,
         "title": clean_text(raw.get("作品标题"), 500),
-        "description": clean_text(raw.get("作品描述"), 20_000),
+        "description": clean_paragraphs(raw.get("作品描述"), 20_000),
         "type": clean_text(raw.get("作品类型"), 100),
         "tags": clean_text(raw.get("作品标签"), 2_000),
         "author": clean_text(raw.get("作者昵称"), 200),

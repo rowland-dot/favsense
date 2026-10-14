@@ -29,7 +29,7 @@ export function stripDiandianOpener(reply) {
   return { text: paragraphs.slice(first).join("\n\n"), removed: first > 0 };
 }
 
-function isBare(line) {
+export function isBareLine(line) {
   const visible = line.replace(INVISIBLE, "");
   return visible.length > 0 && visible.length <= HEADING_MAX_LENGTH && !SENTENCE_MARKS.test(visible);
 }
@@ -54,9 +54,9 @@ export function diandianBlocks(reply) {
     const { text } = lines[index];
     const explicit = text.match(MARKDOWN_HEADING)?.[1] || text.match(BOLD_LINE)?.[1];
     if (explicit) return explicit.trim();
-    const previousBare = index > 0 && !lines[index].blankBefore && isBare(lines[index - 1].text);
-    const nextBare = index + 1 < lines.length && !lines[index + 1].blankBefore && isBare(lines[index + 1].text);
-    return isBare(text) && index + 1 < lines.length && !previousBare && !nextBare ? text : "";
+    const previousBare = index > 0 && !lines[index].blankBefore && isBareLine(lines[index - 1].text);
+    const nextBare = index + 1 < lines.length && !lines[index + 1].blankBefore && isBareLine(lines[index + 1].text);
+    return isBareLine(text) && index + 1 < lines.length && !previousBare && !nextBare ? text : "";
   };
 
   const blocks = [];

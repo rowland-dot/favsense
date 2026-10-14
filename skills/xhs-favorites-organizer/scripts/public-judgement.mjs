@@ -1,14 +1,9 @@
-// The one place that decides what is public about a note. The web builder (knowledge.json) hands a
-// note's inputs to judgePublicNote and only lays the verdict out; it does not judge on its own.
+// The one place that decides a note's category, content kind, resources and tools. The web builder
+// (knowledge.json) hands a note's inputs to judgePublicNote and lays the verdict out. It does not decide
+// whether a card is shown in full: every card is built from its own text (see card-content.mjs).
 
 import { resolveCategoryPolicy } from "./category-policy.mjs";
-import {
-  currentFormalRevisions,
-  formalContentKind,
-  formalCurationDecision,
-  isPublishableCuration,
-  sealedCandidateFor,
-} from "./curation-quality.mjs";
+import { formalContentKind } from "./curation-quality.mjs";
 import { confirmedSkillResource, verificationMaxAgeDays } from "./resource-quality.mjs";
 
 // Both builders check the profile once at start-up; the judgement relies on it being well formed.
@@ -66,7 +61,7 @@ function classify(profile, entry, matchedResources) {
     }
     return entry.kind;
   }
-  const text = `${entry.summary} ${entry.action} ${entry.themes.join(" ")}`;
+  const text = `${entry.summary ?? ""} ${entry.action ?? ""} ${(entry.themes || []).join(" ")}`;
   const resourceTypes = matchedResources.map((resource) => resource.type).join(" ");
   for (const rule of profile.classification?.rules || []) {
     const source = ["resource_type", "project_type"].includes(rule.source) ? resourceTypes : text;
@@ -75,7 +70,8 @@ function classify(profile, entry, matchedResources) {
   return profile.classification.default;
 }
 
-// What the note says about itself, for a note that has no publishable reviewed entry.
+/// What the note says about itself, for a note that has no add-on. Category and kind only: the card's text
+// never comes from here.
 function fallbackEntry(note, profile) {
   const text = [note.title, note.description, note.tags].filter(Boolean).join(" ");
   let category = profile.fallback?.default_category || "未分类";
@@ -98,112 +94,63 @@ function fallbackEntry(note, profile) {
   if (!Object.hasOwn(profile.content_kinds || {}, kind)) {
     throw new Error(`Invalid fallback content kind: ${kind}`);
   }
-  const excerpt = String(note.description || note.title || "").replace(/\s+/g, " ").trim();
-  return {
-    category,
-    themes: [],
-    summary: excerpt ? excerpt.slice(0, 240) : "这条收藏已收录，完整内容尚未解读。",
-    action: "",
-    tools: [],
-    kind,
-  };
+  return { category, themes: [], summary: "", action: "", tools: [], kind };
 }
 
+// What the add-on (a reviewed curation entry, else the candidate sealed for the note) may say about a note: its
+// content kind, category suggestion, topics and tools. Whether the card is shown in full is not decided here.
 export function judgePublicNote({
   noteId,
   note,
-  curation,
-  sealedCandidates,
-  quality,
-  point = null,
+  addOn = null,
+  unreachableIds = new Set(),
   resourceRegistry,
   config,
   profile,
   effectiveDate,
-  promptVersion = "",
 }) {
   // Resolved for every note, so a broken limit is reported whatever kind the note turns out to be.
   const maxAgeDays = verificationMaxAgeDays(profile);
   const matchResources = resourceLookup(profile, resourceRegistry);
-  // The entry the note is judged from: its reviewed entry, else the candidate sealed for it, else
-  // what the note says about itself.
-  const candidateEntry = Object.hasOwn(curation, noteId)
-    ? curation[noteId]
-    : (sealedCandidateFor(sealedCandidates, noteId) ?? fallbackEntry(note, profile));
-  const candidateResources = matchResources(candidateEntry.tools);
-  const candidateKind = classify(profile, candidateEntry, candidateResources);
-  const confirmedResource = candidateKind === "Skill"
-    ? confirmedSkillResource(candidateResources.map((resource) => resource.raw), {
-      today: effectiveDate,
-      maxAgeDays,
-    })
+  const entry = addOn ?? fallbackEntry(note, profile);
+  const matched = [...new Map(matchResources(entry.tools).map((resource) => [resource.name, resource])).values()];
+  const candidateKind = classify(profile, entry, matched);
+  // A Skill is only a Skill with exactly one current, complete, verified official resource.
+  const confirmed = candidateKind === "Skill"
+    ? confirmedSkillResource(matched.map((resource) => resource.raw), { today: effectiveDate, maxAgeDays })
     : null;
-  const currentRevisions = currentFormalRevisions(note, candidateEntry, confirmedResource, promptVersion);
-  const curated = isPublishableCuration(
-    noteId,
-    note,
-    curation,
-    quality.policy,
-    quality.audit,
-    quality.baselineIds,
-    quality.baselineRevisions,
-    { config, resources: resourceRegistry, ...(currentRevisions ? { currentRevisions } : {}) }
-  );
-  // What may be shown: the reviewed entry when it is publishable, otherwise only what the note itself says.
-  const entry = curated ? candidateEntry : fallbackEntry(note, profile);
-  const categoryPolicy = resolveCategoryPolicy({
+  const category = resolveCategoryPolicy({
     entry,
     note,
     config,
     profile,
-    entryOrigin: curated ? "curation" : "content_rule",
+    entryOrigin: addOn ? "curation" : "content_rule",
   });
-  const matchedResources = [...new Map(matchResources(entry.tools).map((resource) => [resource.name, resource])).values()];
-  const auditEntry = quality.audit?.notes?.[noteId];
-  const decision = formalCurationDecision({
-    publishable: curated,
-    auditEntry,
-    currentRevisions,
-    point,
-    kind: candidateKind,
-    resource: confirmedResource,
-  });
-  const curationStatus = decision.accepted
-    ? "accepted"
-    : (auditEntry?.status === "rejected"
-        ? "rejected"
-        : (auditEntry?.status === "unavailable" ? "unavailable" : "pending_review"));
-  const kind = formalContentKind(
-    profile,
-    candidateKind === "Skill" ? candidateKind : classify(profile, entry, matchedResources),
-    decision.accepted && Boolean(confirmedResource)
-  );
-  const projectedResources = candidateKind === "Skill"
-    ? matchedResources.filter((resource) => decision.resource_ids.includes(resource.id))
-    : matchedResources;
-  const summary = String(entry.summary || "");
-  const pointSummary = decision.summary_source === "point" ? point?.summary : "";
+  const actionFields = (profile.resource_index?.actions || []).map((action) => action.field);
+  const hasOfficialSource = (resource) => actionFields.some((name) => String(field(resource.raw, name) || "").trim());
+  // A tool is verified when it matches a resource with an official link; a Skill candidate only when it is
+  // the one confirmed Skill resource.
+  const verified = (tool) => {
+    const found = matchResources([tool]);
+    return candidateKind === "Skill"
+      ? Boolean(confirmed) && found.some((resource) => resource.id === confirmed.id)
+      : found.some(hasOfficialSource);
+  };
+  const tools = [...new Set((entry.tools || []).map((tool) => String(tool).trim()).filter(Boolean))];
+  const shown = candidateKind === "Skill" ? matched.filter((resource) => confirmed && resource.id === confirmed.id) : matched;
   return {
-    accepted: decision.accepted,
-    reasonCode: decision.reason_code,
-    curationStatus,
-    curated,
-    kind,
-    candidateKind: candidateKind === "Skill" && kind !== "Skill" ? candidateKind : "",
-    resourceIds: decision.resource_ids,
-    resourceNames: projectedResources.map((resource) => resource.name),
-    tools: candidateKind === "Skill" ? projectedResources.map((resource) => resource.name) : entry.tools || [],
-    skillResource: decision.accepted ? confirmedResource : null,
-    summarySource: pointSummary ? "point" : (curated ? "curation" : "metadata"),
-    summary,
-    deepSummary: pointSummary || summary,
-    action: String(entry.action || "").trim(),
-    category: categoryPolicy.category,
-    categorySource: categoryPolicy.categorySource,
-    categoryReason: categoryPolicy.categoryReason,
-    suggestedCategory: categoryPolicy.suggestedCategory,
-    sourceBoards: categoryPolicy.sourceBoards,
-    themes: categoryPolicy.themes,
-    entry,
+    kind: formalContentKind(profile, candidateKind, Boolean(confirmed)),
+    tools,
+    unverifiedTools: tools.filter((tool) => !verified(tool)),
+    resourceNames: shown.map((resource) => resource.name),
+    resourceIds: shown.map((resource) => resource.id),
+    category: category.category,
+    categorySource: category.categorySource,
+    categoryReason: category.categoryReason,
+    suggestedCategory: category.suggestedCategory,
+    sourceBoards: category.sourceBoards,
+    themes: category.themes,
+    // Only the source-line label reads this: the review audit's "unavailable" list, or an add-on that says so.
+    postUnreachable: unreachableIds.has(noteId) || addOn?.review_status === "unavailable",
   };
 }

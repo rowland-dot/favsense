@@ -93,8 +93,7 @@ test("review preparation keeps the image-text blocker when only a current DianDi
       } },
       resources: { resources: [] },
       evidenceRoot,
-      diandianRoot: pointRoot,
-      expectedPromptVersion: PROMPT_VERSION
+      diandianRoot: pointRoot
     });
 
     const summaryOnly = prepare().items[0];

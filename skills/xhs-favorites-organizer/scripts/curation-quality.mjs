@@ -4,7 +4,6 @@ import { createHash } from "node:crypto";
 import { curationRevision } from "./curation-revision.mjs";
 import { containsCredentialShape } from "./sensitive-data.mjs";
 import { isDiandianRefusal } from "./diandian-refusal.mjs";
-import { auditCuration } from "./validate-curation.mjs";
 
 function clean(value) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
@@ -55,75 +54,19 @@ export function acceptedRevisionsCurrent(auditEntry, current = {}) {
   return true;
 }
 
-export function loadCurationAudit(workspace, config) {
-  const policy = config.curation_quality || {};
-  if (policy.publish_only_accepted !== true) {
-    return { policy, audit: { notes: {} }, baselineIds: new Set(), baselineRevisions: new Map() };
-  }
-  const filename = path.resolve(workspace, policy.audit_file || ".xhs-favorites/curation-audit.json");
+// Notes whose post can no longer be opened, as the review audit records them. Only the card's source-line
+// label uses this; it never changes a title or text. No audit file configured, or none on disk, means none.
+export function loadUnreachableNoteIds(workspace, config) {
+  const file = config?.curation_quality?.audit_file;
+  if (!file) return new Set();
   let audit;
   try {
-    audit = JSON.parse(fs.readFileSync(filename, "utf8").replace(/^\uFEFF/, ""));
+    audit = JSON.parse(fs.readFileSync(path.resolve(workspace, file), "utf8").replace(/^\uFEFF/, ""));
   } catch (error) {
-    throw new Error(`curation quality audit could not be read: ${error.message}`);
+    if (error?.code === "ENOENT") return new Set();
+    throw new Error(`curation audit could not be read: ${error.message}`);
   }
-  let baselineIds = new Set();
-  let baselineRevisions = new Map();
-  if (policy.baseline_file) {
-    const baselineFilename = path.resolve(workspace, policy.baseline_file);
-    try {
-      const baseline = JSON.parse(fs.readFileSync(baselineFilename, "utf8").replace(/^\uFEFF/, ""));
-      baselineIds = new Set(Array.isArray(baseline.note_ids) ? baseline.note_ids.map(clean).filter(Boolean) : []);
-      baselineRevisions = new Map(Object.entries(baseline.curation_hashes || {})
-        .map(([noteId, revision]) => [clean(noteId), clean(revision)])
-        .filter(([noteId, revision]) => noteId && /^[a-f0-9]{64}$/.test(revision)));
-    } catch (error) {
-      throw new Error(`curation publication baseline could not be read: ${error.message}`);
-    }
-  }
-  return { policy, audit, baselineIds, baselineRevisions };
-}
-
-export function hasCompleteAcceptedAudit(noteId, note, entry, audit, context = {}) {
-  if (!entry || !context.config || !context.resources) return false;
-  if (context.currentRevisions && !acceptedRevisionsCurrent(audit?.notes?.[noteId], context.currentRevisions)) return false;
-  const result = auditCuration({
-    catalog: { notes: { [noteId]: note } },
-    config: context.config,
-    curation: { [noteId]: entry },
-    resources: context.resources,
-    audit: { notes: { [noteId]: audit?.notes?.[noteId] } },
-    scopeIds: [noteId]
-  });
-  return result.fatal.length === 0 && result.report.totals.accepted === 1;
-}
-
-export function isPublishableCuration(
-  noteId,
-  note,
-  curation,
-  policy,
-  audit,
-  baselineIds = new Set(),
-  baselineRevisions = new Map(),
-  context = {}
-) {
-  if (policy.publish_only_accepted !== true) return true;
-  if (!Object.hasOwn(curation, noteId)) return false;
-  const entry = curation[noteId];
-  if (audit?.notes && Object.hasOwn(audit.notes, noteId)) {
-    if (!context.currentRevisions) return false;
-    return hasCompleteAcceptedAudit(noteId, note, entry, audit, context);
-  }
-  if (baselineIds.has(noteId) && baselineRevisions.get(noteId) === curationRevision(entry)) {
-    const dependencies = canonicalDependencies(entry?.evidence_dependencies);
-    if (entry?.evidence_dependencies !== undefined && !dependencies) return false;
-    if (dependencies?.some((dependency) => dependency.method === "diandian_summary")) {
-      return Boolean(context.currentRevisions);
-    }
-    return true;
-  }
-  return hasCompleteAcceptedAudit(noteId, note, entry, audit, context);
+  return new Set(Object.entries(audit?.notes || {}).filter(([, entry]) => entry?.status === "unavailable").map(([id]) => id));
 }
 
 export function parseFormalPointSummaryRecord(record, noteId, expectedPromptVersion = "") {
@@ -243,17 +186,9 @@ export function loadFormalPointSummary(directory, noteId, expectedPromptVersion)
   }
 }
 
-export function currentFormalRevisions(note, entry, resource = null, expectedPromptVersion = "") {
+export function currentFormalRevisions(note, entry, resource = null) {
   const dependencies = canonicalDependencies(entry?.evidence_dependencies);
   if (!dependencies) return null;
-  const pointDependencies = dependencies.filter((dependency) => dependency.method === "diandian_summary");
-  if (
-    pointDependencies.length
-    && (
-      !HASH.test(expectedPromptVersion)
-      || pointDependencies.some((dependency) => dependency.version !== expectedPromptVersion)
-    )
-  ) return null;
   const candidate = {
     content_sha256: clean(note?.content_sha256),
     evidence_sha256: clean(entry?.evidence_sha256),
@@ -278,94 +213,4 @@ export function formalContentKind(profile, candidateKind, accepted = false) {
   if (defaultKind !== "Skill" && Object.hasOwn(profile?.content_kinds || {}, defaultKind)) return defaultKind;
   if (Object.hasOwn(profile?.content_kinds || {}, "Note")) return "Note";
   throw new Error("Skill candidates require a declared non-Skill neutral content kind");
-}
-
-function revisionReason(auditEntry, current) {
-  if (auditEntry?.status === "rejected") return "audit_rejected";
-  if (auditEntry?.status === "unavailable") return "source_unavailable";
-  if (!auditEntry || auditEntry.status !== "accepted") return "audit_pending";
-  if (auditEntry.content_sha256 !== current?.content_sha256) return "content_changed";
-  if (auditEntry.evidence_sha256 !== current?.evidence_sha256) return "evidence_changed";
-  return "audit_pending";
-}
-
-export function formalCurationDecision({
-  publishable = false,
-  auditEntry = null,
-  currentRevisions = null,
-  point = null,
-  kind = "",
-  resource = null,
-} = {}) {
-  const baseReason = auditEntry?.status === "rejected"
-    ? "audit_rejected"
-    : (auditEntry?.status === "unavailable" ? "source_unavailable" : "audit_pending");
-  const base = {
-    accepted: false,
-    reason_code: baseReason,
-    summary_source: "metadata",
-    content_sha256: clean(currentRevisions?.content_sha256),
-    evidence_sha256: clean(currentRevisions?.evidence_sha256),
-    resource_ids: [],
-  };
-  // An accepted Skill whose resource check has expired is stale whether or not it can publish;
-  // without this the expiry surfaces as the generic audit_pending.
-  const skillWithoutFreshResource = clean(kind) === "Skill" && !clean(resource?.id);
-  if (skillWithoutFreshResource && auditEntry?.status === "accepted") return { ...base, reason_code: "resource_stale" };
-  if (!publishable) {
-    // An accepted note that cannot publish because its content or evidence moved says so,
-    // instead of the generic audit_pending.
-    if (auditEntry?.status === "accepted" && currentRevisions) {
-      return { ...base, reason_code: revisionReason(auditEntry, currentRevisions) };
-    }
-    return base;
-  }
-  if (skillWithoutFreshResource) return { ...base, reason_code: "resource_stale" };
-  if (!auditEntry || !currentRevisions || !acceptedRevisionsCurrent(auditEntry, currentRevisions)) {
-    return { ...base, reason_code: revisionReason(auditEntry, currentRevisions) };
-  }
-  const pointDependencyCurrent = Boolean(
-    point?.version === 2
-    && HASH.test(clean(point.prompt_version))
-    && point.content_sha256 === currentRevisions.content_sha256
-    && currentRevisions.evidence_dependencies.some((dependency) => (
-      dependency.method === "diandian_summary"
-      && dependency.provider === point.provider
-      && dependency.version === point.prompt_version
-      && dependency.result_sha256 === point.summary_sha256
-    ))
-  );
-  return {
-    accepted: true,
-    reason_code: "",
-    summary_source: pointDependencyCurrent ? "point" : "curation",
-    content_sha256: clean(currentRevisions?.content_sha256),
-    evidence_sha256: clean(currentRevisions?.evidence_sha256),
-    resource_ids: clean(resource?.id) ? [resource.id] : [],
-  };
-}
-
-export function publicEvidenceStatus(noteId, audit, isFrameVerified = false, acceptedAuditIsCurrent = false) {
-  if (audit?.notes?.[noteId]?.status === "unavailable") {
-    return {
-      method: "原帖当前不可访问，已保留此前记录并结束补证",
-      locallyAvailable: false
-    };
-  }
-  if (isFrameVerified) {
-    return {
-      method: "已结合本地视频证据核验内容",
-      locallyAvailable: true
-    };
-  }
-  if (acceptedAuditIsCurrent) {
-    return {
-      method: "已按媒体类型读取内容、检查评论，并对关键资源完成必要核验",
-      locallyAvailable: true
-    };
-  }
-  return {
-    method: "目前依据原帖公开文字整理，媒体内容尚未完整解读",
-    locallyAvailable: false
-  };
 }

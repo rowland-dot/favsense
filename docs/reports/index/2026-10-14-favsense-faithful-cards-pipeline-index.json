@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "slug": "2026-10-14-favsense-faithful-cards",
+  "generated_at": "2026-10-13T22:06:26.565Z",
+  "spec_file": "C:\\Users\\rowla\\Codex\\小红书收藏整理\\docs\\specs\\2026-10-14-favsense-faithful-cards-spec.md",
+  "checklist_file": "C:\\Users\\rowla\\Codex\\小红书收藏整理\\docs\\specs\\2026-10-14-favsense-faithful-cards-verification-checklist.md",
+  "mockup_files": [
+    "C:\\Users\\rowla\\Codex\\小红书收藏整理\\docs\\designs\\2026-10-14-card-design-rewrite.html",
+    "C:\\Users\\rowla\\Codex\\小红书收藏整理\\docs\\designs\\2026-10-14-card-summary-sources.html"
+  ],
+  "behaviors": [],
+  "mockup_states": [],
+  "handlers": [],
+  "destructive_components": [],
+  "draggable_primitives": []
+}

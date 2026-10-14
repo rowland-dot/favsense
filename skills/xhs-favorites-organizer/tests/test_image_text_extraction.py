@@ -16,6 +16,26 @@ SCRIPT = Path(__file__).parents[1] / "scripts" / "extract-pending-image-text.py"
 RUNNER = Path(__file__).parents[1] / "scripts" / "run-video-analysis.ps1"
 
 
+CODE_PAGE = "oem" if os.name == "nt" else "latin-1"  # "oem" is the console code page; it exists only on Windows
+
+
+def decode_mixed_output(raw):
+    """Read a child's captured bytes line by line: UTF-8 when the line is valid UTF-8, else the Windows code page.
+
+    One PowerShell run writes both: the Python it starts follows PYTHONUTF8, PowerShell's own messages follow the
+    console code page (GBK here). No single encoding reads the stream, and this text is only ever a failure message.
+    """
+    if not raw:
+        return ""
+    lines = []
+    for line in raw.splitlines(keepends=True):
+        try:
+            lines.append(line.decode("utf-8"))
+        except UnicodeDecodeError:
+            lines.append(line.decode(CODE_PAGE, errors="replace"))
+    return "".join(lines)
+
+
 def process_is_running(pid):
     if os.name == "nt":
         listing = subprocess.run(
@@ -442,8 +462,11 @@ class RunnerEncodingTests(unittest.TestCase):
             completed = subprocess.run(
                 [shutil.which("powershell.exe"), "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
                  "-File", str(RUNNER), "-Workspace", str(workspace), "-Config", str(config)],
-                capture_output=True, text=True, timeout=120, env=environment,
+                capture_output=True, timeout=120, env=environment,
             )
+            # Bytes, then read per line: the stream mixes UTF-8 and the Windows code page (see decode_mixed_output).
+            completed.stdout = decode_mixed_output(completed.stdout)
+            completed.stderr = decode_mixed_output(completed.stderr)
             report_path = state_dir / "image-ocr-status.json"
             report = json.loads(report_path.read_text(encoding="utf-8")) if report_path.is_file() else None
             artifact_path = state_dir / "video-analysis" / NOTE_A / "visual-ocr.json"
@@ -466,6 +489,22 @@ class RunnerEncodingTests(unittest.TestCase):
         completed, report, _ = self.run_runner("not-an-encoding")
         self.assertNotEqual(completed.returncode, 0)
         self.assertIsNone(report)
+
+
+class MixedEncodingOutputTests(unittest.TestCase):
+    # Regression: BUG-002 — the runner's error stream mixes the child Python's UTF-8 (the test run sets
+    # PYTHONUTF8=1) with PowerShell's own messages in the Windows code page (GBK). Decoding it as one
+    # encoding crashed subprocess's reader thread with a UnicodeDecodeError and left the output None.
+    # Found by /qa on 2026-10-14. Report: docs/reports/qa/2026-10-14-favsense-faithful-cards-qa-report.md
+    def test_each_line_is_read_in_the_encoding_it_was_written_in(self):
+        # 0xBA 0xD0 is not valid UTF-8 (the byte the real run failed on was 0xBA); it is a code-page pair.
+        code_page_line = b"At \xba\xd0:1 char: 36\r\n"
+        raw = "Traceback 中文\r\n".encode("utf-8") + code_page_line + b"plain\r\n"
+        self.assertEqual(decode_mixed_output(raw), "Traceback 中文\r\n" + code_page_line.decode(CODE_PAGE) + "plain\r\n")
+
+    def test_no_output_is_an_empty_string(self):
+        self.assertEqual(decode_mixed_output(b""), "")
+        self.assertEqual(decode_mixed_output(None), "")
 
 
 CACHED_IMAGES = Path(__file__).parents[1] / "scripts" / "cached_images.py"

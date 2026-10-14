@@ -330,7 +330,7 @@ class SnapshotCommandTest(unittest.TestCase):
         "counts": {"notes": 1, "categories": 1, "resources": 0},
     }
 
-    def final_build(self, root: Path, scope: dict | None) -> list[str]:
+    def final_build(self, root: Path, scope: dict | None, damaged_list: bool = False) -> list[str]:
         """Run the one final build with the real snapshot step; return the command it was given."""
         runner = bridge_support.ScriptRunnerDouble(bridge_support.completed(json.dumps(self.RESULT)))
         bridge = bridge_support.make_bridge(BRIDGE, root, script_runner=runner)
@@ -346,6 +346,8 @@ class SnapshotCommandTest(unittest.TestCase):
             {"schema_version": 1, "outcome": "ready_for_safe_build",
              "scope": {"note_ids": [note]}, "curation": {note: {"review_status": "pending"}}},
         )
+        if damaged_list:
+            BRIDGE.atomic_json(bridge.state_dir / "damaged-diandian-replies.json", {"schema_version": 1, "entries": []})
         bridge.run_curation_pipeline = mock.Mock(return_value={"counts": {"accepted": 0, "pending": 1}})
         published = []
         bridge.run_final_build(
@@ -369,6 +371,26 @@ class SnapshotCommandTest(unittest.TestCase):
                     Path(command[command.index("--public-target") + 1]).resolve(),
                     (root / "site" / "data" / "knowledge.json").resolve(),
                 )
+
+    def test_the_snapshot_is_given_neither_the_run_report_nor_the_prompt_version(self):
+        with tempfile.TemporaryDirectory() as directory:
+            command = self.final_build(Path(directory), None)
+        self.assertNotIn("--diandian-report", command)
+        self.assertNotIn("--diandian-prompt-version", command)
+        # What it still freezes: the saved replies and the post-media folder.
+        self.assertIn("--diandian-dir", command)
+        self.assertIn("--video-analysis", command)
+
+    def test_the_frozen_damaged_list_is_passed_when_the_file_exists_and_left_out_when_it_does_not(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with_list = self.final_build(root, None, damaged_list=True)
+            self.assertEqual(
+                Path(with_list[with_list.index("--damaged-replies") + 1]).name,
+                "damaged-diandian-replies.json",
+            )
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertNotIn("--damaged-replies", self.final_build(Path(directory), None))
 
     def test_a_private_config_that_still_names_a_knowledge_base_folder_does_not_stop_the_bridge_starting(self):
         with tempfile.TemporaryDirectory() as directory:

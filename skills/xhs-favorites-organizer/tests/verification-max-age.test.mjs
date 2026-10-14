@@ -12,7 +12,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { acceptedSkill, hex, profile, root, skillResource, TODAY } from "./public-judgement-fixtures.mjs";
+import { config, hex, note, profile, root, skillResource, TODAY } from "./public-judgement-fixtures.mjs";
 
 // The same profile with a different limit (or a broken one).
 const withLimit = (value) => ({ ...profile, resource_index: { ...profile.resource_index, verification_max_age_days: value } });
@@ -67,8 +67,11 @@ test("freshness takes the limit from its caller and does not invent one", () => 
 // ---- the places that judge freshness all take the profile's limit ----
 
 function judge(limit, verifiedAt = FOUR_DAYS_OLD) {
-  const { input } = acceptedSkill({ resource: skillResource({ verified_at: verifiedAt }) });
-  return judgePublicNote({ ...input, profile: withLimit(limit) });
+  const resource = skillResource({ verified_at: verifiedAt });
+  return judgePublicNote({
+    noteId: "n1", note: note(), addOn: { category: "Synthetic", themes: ["testing"], tools: [resource.name], kind: "Skill" },
+    resourceRegistry: { verified_at: TODAY, resources: [resource] }, config, profile: withLimit(limit), effectiveDate: TODAY,
+  });
 }
 
 async function pipelineResourceStatus(limit) {
@@ -89,10 +92,11 @@ async function pipelineResourceStatus(limit) {
 }
 
 test("public judgement reads the profile's limit: a check four days old is fresh at 30 and stale at 1", () => {
-  assert.equal(judge(30).accepted, true);
+  assert.equal(judge(30).kind, "Skill");
   const strict = judge(1);
-  assert.equal(strict.accepted, false);
-  assert.equal(strict.reasonCode, "resource_stale");
+  // Too old at a limit of one day: not a confirmed Skill, so no resource goes with it.
+  assert.notEqual(strict.kind, "Skill");
+  assert.deepEqual(strict.resourceIds, []);
 });
 
 test("the curation pipeline reads the profile's limit: a check four days old is verified at 30 and not at 1", async () => {
@@ -109,10 +113,9 @@ test("public judgement and the pipeline refuse a broken limit instead of reporti
 });
 
 test("a broken limit is reported even for a note that is not a Skill", () => {
-  const { input } = acceptedSkill();
-  const note = { category: "Synthetic", themes: ["testing"], summary: "A plain note.", action: "Read it.", tools: [], kind: "Note" };
+  const addOn = { category: "Synthetic", themes: ["testing"], tools: [], kind: "Note" };
   assert.throws(
-    () => judgePublicNote({ ...input, curation: { n1: note }, profile: withLimit(null) }),
+    () => judgePublicNote({ noteId: "n1", note: note(), addOn, resourceRegistry: { resources: [] }, config, profile: withLimit(null), effectiveDate: TODAY }),
     (error) => error.code === "RESOURCE_MAX_AGE_INVALID",
   );
 });

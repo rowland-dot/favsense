@@ -19,7 +19,7 @@ const validDate = (value) => {
 // The published site's own code is part of the version (issue 43), so a front-end-only change cannot reuse
 // an already-frozen version. A build with a publish site hashes its content into a version-4 preimage; a
 // build without one keeps the version-3 preimage and therefore the version it always had.
-function canonicalVersion({ sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest, effectiveDate, publishSiteDigest }) {
+export function canonicalVersion({ sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest, effectiveDate, publishSiteDigest }) {
   const digests = [sealedScopeDigest, curationInputDigest, configDigest, inputRevisionDigest, ...(publishSiteDigest === undefined ? [] : [publishSiteDigest])];
   for (const value of digests) if (!HASH.test(value)) throw new Error("SNAPSHOT_DIGEST_INVALID");
   if (!validDate(effectiveDate)) throw new Error("SNAPSHOT_EFFECTIVE_DATE_INVALID");
@@ -31,7 +31,7 @@ function canonicalVersion({ sealedScopeDigest, curationInputDigest, configDigest
     input_revision_sha256: inputRevisionDigest,
     ...(publishSiteDigest === undefined ? {} : { publish_site_sha256: publishSiteDigest }),
     effective_date: effectiveDate,
-    builders: { public_site: 7 },
+    builders: { public_site: 8 },
   };
   return createHash("sha256").update(JSON.stringify(preimage), "utf8").digest("hex");
 }
@@ -520,8 +520,6 @@ async function imageInventory(root, directory, noteId) {
 
 export async function captureBuilderInputs(options, effectiveDate) {
   const root = resolve(options.root);
-  const promptVersion = String(options.diandianPromptVersion || "");
-  if (promptVersion && !HASH.test(promptVersion)) throw new Error("SNAPSHOT_INPUT_INVALID");
   const fixed = {
     catalog: resolve(options.catalog),
     config: resolve(options.config),
@@ -529,9 +527,9 @@ export async function captureBuilderInputs(options, effectiveDate) {
     bundle: resolve(options.curationBundle),
     profile: resolve(options.profile),
     diandian: resolve(options.diandianDir),
-    report: resolve(options.diandianReport),
     video: resolve(options.videoAnalysis),
     ...(options.resources ? { resources: resolve(options.resources) } : {}),
+    ...(options.damagedReplies ? { damaged: resolve(options.damagedReplies) } : {}),
   };
   for (const target of Object.values(fixed)) await assertPlainPath(root, target);
   // Every read is awaited to the end before a failure is reported. Promise.all would report the first
@@ -544,7 +542,8 @@ export async function captureBuilderInputs(options, effectiveDate) {
     boundedFile(root, fixed.bundle, "curation-bundle"),
     boundedFile(root, fixed.profile, "profile"),
     ...(fixed.resources ? [boundedFile(root, fixed.resources, "resources")] : []),
-    boundedFile(root, fixed.report, "diandian-report", { optional: true }),
+    // The frozen list of saved replies that lost text when they were captured; the card step reads it.
+    ...(fixed.damaged ? [boundedFile(root, fixed.damaged, "damaged-replies", { optional: true, maxBytes: 1024 * 1024 })] : []),
   ]);
   const failed = settled.find((result) => result.status === "rejected");
   if (failed) throw failed.reason;
@@ -567,12 +566,9 @@ export async function captureBuilderInputs(options, effectiveDate) {
   const noteIds = Object.keys(catalog?.notes || {}).filter((id) => /^[A-Za-z0-9_-]{1,128}$/.test(id)).sort();
   const quality = config?.curation_quality && typeof config.curation_quality === "object" ? config.curation_quality : {};
   const inputs = [...core];
-  if (promptVersion) inputs.push({ name: "diandian-prompt-version", state: "value", sha256: promptVersion });
-  if (quality.publish_only_accepted === true) {
-    inputs.push(await boundedFile(root, resolve(root, quality.audit_file || ".xhs-favorites/curation-audit.json"), "audit_file"));
-    if (typeof quality.baseline_file === "string" && quality.baseline_file) {
-      inputs.push(await boundedFile(root, resolve(root, quality.baseline_file), "baseline_file"));
-    }
+  // The review audit is read for one fact only: which posts can no longer be opened (the source-line label).
+  if (typeof quality.audit_file === "string" && quality.audit_file) {
+    inputs.push(await boundedFile(root, resolve(root, quality.audit_file), "audit_file", { optional: true }));
   }
   const videoRoot = await exists(fixed.video);
   if (videoRoot && (!videoRoot.isDirectory() || videoRoot.isSymbolicLink())) throw new Error("SNAPSHOT_INPUT_INVALID");
@@ -582,8 +578,17 @@ export async function captureBuilderInputs(options, effectiveDate) {
     if (/^[a-f0-9]{24}$/.test(noteId)) {
       const noteDirectory = join(fixed.video, noteId);
       inputs.push(await boundedFile(root, join(noteDirectory, "analysis.json"), `analysis:${noteId}`, { optional: true, maxBytes: 1024 * 1024 }));
+      // The text taken out of the post's media is shown on the card, so it is part of the build.
+      inputs.push(await boundedFile(root, join(noteDirectory, "transcription.json"), `transcript:${noteId}`, { optional: true, maxBytes: 4 * 1024 * 1024 }));
+      inputs.push(await boundedFile(root, join(noteDirectory, "visual-ocr.json"), `picture-text:${noteId}`, { optional: true, maxBytes: 4 * 1024 * 1024 }));
       inputs.push(...await imageInventory(root, noteDirectory, noteId));
     }
+  }
+  // Saved replies and no list of the cut ones: every cut reply would be published as complete. An empty
+  // list is fine only when there is no saved reply at all.
+  const hasDamagedList = core.some((entry) => entry.name === "damaged-replies" && entry.state === "file");
+  if (!hasDamagedList && inputs.some((entry) => entry.name.startsWith("point:") && entry.state === "file")) {
+    throw new Error("DAMAGED_REPLY_LIST_MISSING");
   }
   const manifest = {
     schema_version: 1,
@@ -624,11 +629,10 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
     profile: join(inputRoot, "profile.json"),
     resources: join(inputRoot, "resources.json"),
     diandian: join(inputRoot, "diandian-summaries"),
-    report: join(inputRoot, "diandian-rerun-report.json"),
     video: join(inputRoot, "video-analysis"),
     candidates: join(inputRoot, "sealed-candidates.json"),
     audit: join(inputRoot, "curation-audit.json"),
-    baseline: join(inputRoot, "curation-baseline.json"),
+    damaged: join(inputRoot, "damaged-replies.json"),
   };
   const entries = new Map(captured.inputs.map((entry) => [entry.name, entry]));
   const writeEntry = async (name, target) => {
@@ -641,7 +645,11 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
   await writeEntry("catalog", paths.catalog);
   await writeEntry("profile", paths.profile);
   const hasResources = await writeEntry("resources", paths.resources);
-  await writeEntry("diandian-report", paths.report);
+  // Always a frozen list, so the build never falls back to a live file: the captured one, else an empty one
+  // (capture has already refused a missing list when there are saved replies).
+  if (!await writeEntry("damaged-replies", paths.damaged)) {
+    await writeFile(paths.damaged, `${JSON.stringify({ schema_version: 1, entries: [] })}\n`, { encoding: "utf8", flag: "wx" });
+  }
   await mkdir(paths.diandian, { recursive: true });
   for (const [name, entry] of entries) {
     if (name.startsWith("point:") && entry.state === "file") await writeEntry(name, join(paths.diandian, `${name.slice(6)}.json`));
@@ -650,6 +658,10 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
   for (const [name, entry] of entries) {
     if (name.startsWith("analysis:") && entry.state === "file") {
       await writeEntry(name, join(paths.video, name.slice(9), "analysis.json"));
+    } else if (name.startsWith("transcript:") && entry.state === "file") {
+      await writeEntry(name, join(paths.video, name.slice(11), "transcription.json"));
+    } else if (name.startsWith("picture-text:") && entry.state === "file") {
+      await writeEntry(name, join(paths.video, name.slice(13), "visual-ocr.json"));
     } else if (name.startsWith("image:") && entry.state === "present") {
       const [, noteId, ...relativeName] = name.split(":");
       const target = join(paths.video, noteId, ...relativeName.join(":").split("/"));
@@ -658,24 +670,19 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
     }
   }
   const config = structuredClone(captured.config);
-  if (config?.curation_quality?.publish_only_accepted === true) {
-    config.curation_quality.audit_file = paths.audit;
-    await writeEntry("audit_file", paths.audit);
-    if (entries.has("baseline_file")) {
-      config.curation_quality.baseline_file = paths.baseline;
-      await writeEntry("baseline_file", paths.baseline);
+  if (config?.curation_quality && typeof config.curation_quality === "object") {
+    delete config.curation_quality.baseline_file;
+    if (typeof config.curation_quality.audit_file === "string" && config.curation_quality.audit_file) {
+      config.curation_quality.audit_file = paths.audit;
+      await writeEntry("audit_file", paths.audit);
     }
   }
   await writeFile(paths.config, `${JSON.stringify(config)}\n`, { encoding: "utf8", flag: "wx" });
   await writeFile(paths.curation, `${JSON.stringify(effectiveCurationValue)}\n`, { encoding: "utf8", flag: "wx" });
   await writeFile(paths.candidates, `${JSON.stringify(unacceptedCandidates(JSON.parse(captured.bundleSource.toString("utf8"))))}\n`, { encoding: "utf8", flag: "wx" });
-  const promptVersion = entries.get("diandian-prompt-version");
   return {
     ...paths,
     ...(hasResources ? {} : { resources: "" }),
-    promptVersion: promptVersion?.state === "value" && HASH.test(promptVersion.sha256)
-      ? promptVersion.sha256
-      : "",
   };
 }
 
@@ -711,8 +718,8 @@ function cliArgs(argv) {
     if (!key?.startsWith("--") || !value) throw new Error("SNAPSHOT_ARGUMENT_INVALID");
     result[key.slice(2)] = value;
   }
-  const required = ["root", "public-target", "catalog", "config", "curation", "curation-bundle", "profile", "sealed-scope-digest", "diandian-dir", "diandian-report", "video-analysis", "effective-date"];
-  const optional = ["resources", "diandian-prompt-version"];
+  const required = ["root", "public-target", "catalog", "config", "curation", "curation-bundle", "profile", "sealed-scope-digest", "diandian-dir", "video-analysis", "effective-date"];
+  const optional = ["resources", "damaged-replies"];
   if (
     Object.keys(result).some((key) => ![...required, ...optional].includes(key))
     || required.some((key) => !result[key])
@@ -739,9 +746,8 @@ async function runCli() {
     curationBundle: options["curation-bundle"],
     profile: options.profile,
     diandianDir: options["diandian-dir"],
-    diandianReport: options["diandian-report"],
-    diandianPromptVersion: options["diandian-prompt-version"],
     videoAnalysis: options["video-analysis"],
+    ...(options["damaged-replies"] ? { damagedReplies: options["damaged-replies"] } : {}),
     ...(options.resources ? { resources: options.resources } : {}),
   };
   let frozen = null;
@@ -766,8 +772,8 @@ async function runCli() {
         };
       },
       buildPublicSite: async ({ target, buildVersion }) => {
-        const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate, ...(frozen.promptVersion ? ["--diandian-prompt-version", frozen.promptVersion] : [])];
-        runBuilder(join(scriptDir, "build-public-site.mjs"), ["--candidates", frozen.candidates, ...shared, "--output", target, "--build-version", buildVersion, "--diandian-dir", frozen.diandian, "--diandian-report", frozen.report, "--video-analysis", frozen.video, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
+        const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate];
+        runBuilder(join(scriptDir, "build-public-site.mjs"), ["--candidates", frozen.candidates, ...shared, "--output", target, "--build-version", buildVersion, "--diandian-dir", frozen.diandian, "--video-analysis", frozen.video, "--damaged-replies", frozen.damaged, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
       },
     });
     process.stdout.write(`${JSON.stringify(result)}\n`);

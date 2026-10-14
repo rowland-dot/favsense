@@ -80,8 +80,7 @@ test("review preparation does not offer a refusal as the body of a video note", 
       } },
       resources: { resources: [] },
       evidenceRoot,
-      diandianRoot: pointRoot,
-      expectedPromptVersion: PROMPT_VERSION
+      diandianRoot: pointRoot
     });
 
     fs.writeFileSync(path.join(pointRoot, `${NOTE_ID}.json`), JSON.stringify(record(normalReply)), "utf8");

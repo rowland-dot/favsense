@@ -151,6 +151,14 @@ function cleanText(value) {
   return String(value).replace(/\s+/g, " ").trim();
 }
 
+// Like cleanText, but keeps the post's line breaks: the same rule as the fetcher's clean_paragraphs.
+function cleanParagraphs(value) {
+  if (value === undefined || value === null) return "";
+  return String(value).replace(/\r\n?/g, "\n").split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim()).join("\n")
+    .replace(/\n{3,}/g, "\n\n").trim();
+}
+
 function safeNoteId(value) {
   return /^[A-Za-z0-9_-]{1,128}$/.test(value);
 }
@@ -209,7 +217,7 @@ function normalizeNote(item, seenAt) {
       ? cleanText(user)
       : cleanText(firstValue(user, ["nickname", "nick_name", "name", "display_name"]))) || undefined,
     author_id: cleanText(firstValue(body, ["author_id", "authorId"]) ?? firstValue(item, ["author_id", "authorId"])) || undefined,
-    description: cleanText(firstValue(body, DESCRIPTION_KEYS)) || undefined,
+    description: cleanParagraphs(firstValue(body, DESCRIPTION_KEYS)) || undefined,
     tags: (() => {
       const value = firstValue(body, TAG_KEYS);
       if (Array.isArray(value)) return value.map(cleanText).filter(Boolean).join(" ") || undefined;
@@ -310,9 +318,11 @@ function noteEntryLines(note, index) {
   ];
   if (note.tags) lines.push(`- 原始标签：${markdownText(note.tags)}`);
   if (note.description) {
-    const description = note.description.length > 500
-      ? `${note.description.slice(0, 500)}…`
-      : note.description;
+    // The private report keeps one line per bullet, whatever the catalog keeps.
+    const oneLine = note.description.replace(/\s+/g, " ");
+    const description = oneLine.length > 500
+      ? `${oneLine.slice(0, 500)}…`
+      : oneLine;
     lines.push(`- 原文描述：${markdownText(description)}`);
   }
   if (note.fetch_error) lines.push("- 详情状态：正文待补充");

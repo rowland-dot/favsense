@@ -28,9 +28,7 @@
   "domain_profile": "config/domain-profiles/software.json",
   "curation_file": "skills/xhs-favorites-organizer/references/skills-board-curation.json",
   "curation_quality": {
-    "publish_only_accepted": true,
     "audit_file": ".xhs-favorites/curation-audit.json",
-    "baseline_file": ".xhs-favorites/published-baseline.json",
     "scope_file": ".xhs-favorites/curation-scope.json"
   },
   "public_stats": { "frame_evidence_count": 0 },

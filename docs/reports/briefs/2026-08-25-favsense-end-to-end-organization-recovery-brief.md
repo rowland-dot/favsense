@@ -10,7 +10,7 @@ Step 4 base：`fc0a22094dcbb1c41e99e333449ab5293baa5421`
 
 批准 Spec：[2026-08-22-favsense-end-to-end-organization-recovery-spec.md](../../specs/2026-08-22-favsense-end-to-end-organization-recovery-spec.md)
 
-批准 Plan：[2026-08-22-favsense-end-to-end-organization-recovery-plan.md](../../plans/2026-08-22-favsense-end-to-end-organization-recovery-plan.md)
+批准 Plan：[2026-08-22-favsense-end-to-end-organization-recovery-plan.md](../../plans/archive/2026-08-22-favsense-end-to-end-organization-recovery-plan.md)
 
 验证清单：[2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md](../../specs/2026-08-22-favsense-end-to-end-organization-recovery-verification-checklist.md)
 

@@ -4,7 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { lstat, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { containsCredentialShape } from "./sensitive-data.mjs";
-import { curationRevision, reviewPacketRevision } from "./curation-revision.mjs";
+import { curationRevision } from "./curation-revision.mjs";
 import { auditCuration } from "./validate-curation.mjs";
 import { currentFormalRevisions, loadFormalPointSummary } from "./curation-quality.mjs";
 import { generateCandidates } from "./generate-curation-candidates.mjs";
@@ -269,15 +269,11 @@ function formalCandidate(noteId, note, candidate, auditEntry, resources, evidenc
 export function mergeResults({
   catalog, config, profile, scope, review, candidates, resources, audit, curation,
   evidenceReview = null, pointSummaries = null, expectedCount = null,
-  expectedPromptVersion = "",
   requirePacketBinding = false,
   today = new Date().toISOString().slice(0, 10)
 }) {
   // The domain profile is a required input: how fresh a Skill resource must be is decided by it alone.
   const maxAgeDays = verificationMaxAgeDays(profile);
-  if (expectedPromptVersion && !/^[a-f0-9]{64}$/.test(expectedPromptVersion)) {
-    throw new Error("DianDian prompt version is invalid");
-  }
   const items = Array.isArray(review?.items) ? review.items : null;
   if (!items) throw new Error("review.items must be an array");
   if (expectedCount !== null && items.length !== expectedCount) throw new Error(`review must contain exactly ${expectedCount} items`);
@@ -316,15 +312,6 @@ export function mergeResults({
     seen.add(noteId);
     const note = (catalog.notes || catalog)[noteId];
     const evidenceItem = evidenceById.get(noteId);
-    const expectedReviewPacket = clean(evidenceItem?.review_packet_sha256);
-    if (
-      (requirePacketBinding || expectedReviewPacket)
-      && (
-        !/^[a-f0-9]{64}$/.test(expectedReviewPacket)
-        || reviewPacketRevision(evidenceItem) !== expectedReviewPacket
-        || clean(item?.review_packet_sha256) !== expectedReviewPacket
-      )
-    ) throw new Error("review packet binding is missing or stale");
     if (
       requirePacketBinding
       && clean(evidenceItem?.content_sha256) !== clean(note?.content_sha256)
@@ -361,8 +348,7 @@ export function mergeResults({
       const current = currentFormalRevisions(
         note,
         formalEntry,
-        formal.assessment.resource,
-        expectedPromptVersion
+        formal.assessment.resource
       );
       if (!current) throw new Error("accepted review could not be bound to current formal revisions");
       Object.assign(auditEntry, current, {
@@ -499,10 +485,6 @@ async function main() {
     let merged;
     try {
       const scope = readJson(options.scope, "scope");
-      const expectedPromptVersion = String(options["diandian-prompt-version"] || "");
-      if (expectedPromptVersion && !/^[a-f0-9]{64}$/.test(expectedPromptVersion)) {
-        throw new Error("DianDian prompt version is invalid");
-      }
       const config = readJson(options.config, "config");
       merged = mergeResults({
         catalog: readJson(options.catalog, "catalog"),
@@ -518,10 +500,9 @@ async function main() {
         pointSummaries: options["diandian-root"]
           ? Object.fromEntries((scope.note_ids || []).map((noteId) => [
               noteId,
-              loadFormalPointSummary(path.resolve(options["diandian-root"]), noteId, expectedPromptVersion)
+              loadFormalPointSummary(path.resolve(options["diandian-root"]), noteId)
             ]))
           : null,
-        expectedPromptVersion,
         requirePacketBinding: true,
         expectedCount: options["expected-count"] === undefined ? null : Number(options["expected-count"])
       });
