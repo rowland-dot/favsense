@@ -98,6 +98,8 @@ function isStringArray(value) {
 
 const MAIN_SOURCES = ["diandian", "post-text", "video-transcript", "image-text"];
 const EXTRACTED_KINDS = ["video-transcript", "image-text"];
+// What a card's source link is: the post itself (a link carrying its own access code) or a search for it.
+const LINK_KINDS = ["post", "search"];
 
 function validateKnowledgeData(value) {
   const invalid = () => { throw new Error("知识数据格式无效或不完整"); };
@@ -111,6 +113,7 @@ function validateKnowledgeData(value) {
     if (![note.themes, note.tools, note.unverifiedTools, note.resources].every(isStringArray)) invalid();
     if (typeof note.mainText !== "string" || !MAIN_SOURCES.includes(note.mainSource)) invalid();
     if (typeof note.replyDamaged !== "boolean" || typeof note.postUnreachable !== "boolean") invalid();
+    if (!LINK_KINDS.includes(note.linkKind)) invalid();
     if (note.extracted !== null && !(isRecord(note.extracted) && EXTRACTED_KINDS.includes(note.extracted.kind) && typeof note.extracted.text === "string")) invalid();
   }
   for (const category of value.categories) {
@@ -1133,7 +1136,7 @@ function renderDetail(note) {
       ? '<button type="button" disabled title="请先启动并登录 SOP 扫描浏览器">SOP 扫描浏览器未就绪</button>'
     : isLocalWorkbenchLocation()
       ? '<button type="button" disabled title="请先启动 FavSense 本地服务">请先启动 FavSense 本地服务</button>'
-      : `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">在小红书搜索原帖</a>`;
+      : `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">${note.linkKind === "post" ? "在小红书中查看原帖" : "在小红书搜索原帖"}</a>`;
   const singleNoteActionHtml = state.localBridge?.diandianAvailable && sopBrowserReady() ? `
     <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${manualSyncRunning(state.manualSync) || state.manualSync.legacy_safety_stop ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
   ` : state.localBridge

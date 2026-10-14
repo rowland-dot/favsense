@@ -31,7 +31,7 @@ export function canonicalVersion({ sealedScopeDigest, curationInputDigest, confi
     input_revision_sha256: inputRevisionDigest,
     ...(publishSiteDigest === undefined ? {} : { publish_site_sha256: publishSiteDigest }),
     effective_date: effectiveDate,
-    builders: { public_site: 8 },
+    builders: { public_site: 9 },
   };
   return createHash("sha256").update(JSON.stringify(preimage), "utf8").digest("hex");
 }
@@ -530,6 +530,7 @@ export async function captureBuilderInputs(options, effectiveDate) {
     video: resolve(options.videoAnalysis),
     ...(options.resources ? { resources: resolve(options.resources) } : {}),
     ...(options.damagedReplies ? { damaged: resolve(options.damagedReplies) } : {}),
+    ...(options.sourceCodes ? { sourceCodes: resolve(options.sourceCodes) } : {}),
   };
   for (const target of Object.values(fixed)) await assertPlainPath(root, target);
   // Every read is awaited to the end before a failure is reported. Promise.all would report the first
@@ -544,6 +545,9 @@ export async function captureBuilderInputs(options, effectiveDate) {
     ...(fixed.resources ? [boundedFile(root, fixed.resources, "resources")] : []),
     // The frozen list of saved replies that lost text when they were captured; the card step reads it.
     ...(fixed.damaged ? [boundedFile(root, fixed.damaged, "damaged-replies", { optional: true, maxBytes: 1024 * 1024 })] : []),
+    // The private store of post access codes: a card links to its post only through a code held here, so the
+    // store is part of the build's identity. A store that is not there leaves every card on its search link.
+    ...(fixed.sourceCodes ? [boundedFile(root, fixed.sourceCodes, "source-codes", { optional: true, maxBytes: 4 * 1024 * 1024 })] : []),
   ]);
   const failed = settled.find((result) => result.status === "rejected");
   if (failed) throw failed.reason;
@@ -633,6 +637,7 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
     candidates: join(inputRoot, "sealed-candidates.json"),
     audit: join(inputRoot, "curation-audit.json"),
     damaged: join(inputRoot, "damaged-replies.json"),
+    sourceCodes: join(inputRoot, "source-codes.json"),
   };
   const entries = new Map(captured.inputs.map((entry) => [entry.name, entry]));
   const writeEntry = async (name, target) => {
@@ -645,6 +650,7 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
   await writeEntry("catalog", paths.catalog);
   await writeEntry("profile", paths.profile);
   const hasResources = await writeEntry("resources", paths.resources);
+  const hasSourceCodes = await writeEntry("source-codes", paths.sourceCodes);
   // Always a frozen list, so the build never falls back to a live file: the captured one, else an empty one
   // (capture has already refused a missing list when there are saved replies).
   if (!await writeEntry("damaged-replies", paths.damaged)) {
@@ -683,6 +689,7 @@ export async function materializeCapturedInputs(root, captured, effectiveCuratio
   return {
     ...paths,
     ...(hasResources ? {} : { resources: "" }),
+    ...(hasSourceCodes ? {} : { sourceCodes: undefined }),
   };
 }
 
@@ -719,7 +726,7 @@ function cliArgs(argv) {
     result[key.slice(2)] = value;
   }
   const required = ["root", "public-target", "catalog", "config", "curation", "curation-bundle", "profile", "sealed-scope-digest", "diandian-dir", "video-analysis", "effective-date"];
-  const optional = ["resources", "damaged-replies"];
+  const optional = ["resources", "damaged-replies", "source-codes"];
   if (
     Object.keys(result).some((key) => ![...required, ...optional].includes(key))
     || required.some((key) => !result[key])
@@ -748,6 +755,7 @@ async function runCli() {
     diandianDir: options["diandian-dir"],
     videoAnalysis: options["video-analysis"],
     ...(options["damaged-replies"] ? { damagedReplies: options["damaged-replies"] } : {}),
+    ...(options["source-codes"] ? { sourceCodes: options["source-codes"] } : {}),
     ...(options.resources ? { resources: options.resources } : {}),
   };
   let frozen = null;
@@ -773,7 +781,7 @@ async function runCli() {
       },
       buildPublicSite: async ({ target, buildVersion }) => {
         const shared = ["--catalog", frozen.catalog, "--config", frozen.config, "--curation", frozen.curation, "--profile", frozen.profile, "--effective-date", effectiveDate];
-        runBuilder(join(scriptDir, "build-public-site.mjs"), ["--candidates", frozen.candidates, ...shared, "--output", target, "--build-version", buildVersion, "--diandian-dir", frozen.diandian, "--video-analysis", frozen.video, "--damaged-replies", frozen.damaged, ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
+        runBuilder(join(scriptDir, "build-public-site.mjs"), ["--candidates", frozen.candidates, ...shared, "--output", target, "--build-version", buildVersion, "--diandian-dir", frozen.diandian, "--video-analysis", frozen.video, "--damaged-replies", frozen.damaged, ...(frozen.sourceCodes ? ["--source-codes", frozen.sourceCodes] : []), ...(frozen.resources ? ["--resources", frozen.resources] : [])]);
       },
     });
     process.stdout.write(`${JSON.stringify(result)}\n`);

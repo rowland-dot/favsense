@@ -145,8 +145,13 @@ This section replaces the `SKILL.md` rule "任一失败都必须放弃当前及�
 | LINK-01 | One live test after the captcha hold clears | Open `/explore/<id>` for 3 notes, in a logged-in and a logged-out browser | Whether the post opens is recorded |
 | LINK-02 | The test passes | The owner clicks a card's post button | The button reads "在小红书中查看原帖" and opens the post; public data contains `/explore/<id>` and never `xsec_token` |
 | LINK-03 | The test fails | Same | The button stays "在小红书搜索原帖" and says beside it that this is a site search |
+| LINK-04 | Public site or local workbench, a card whose note has an access code in the private store (`.xhs-favorites/source-codes.json`) | Open the card | The button reads "在小红书中查看原帖" and its link is `https://www.xiaohongshu.com/explore/<that note's ID>?xsec_token=…&xsec_source=…`; the card's `linkKind` is `post` |
+| LINK-05 | Any card whose note has no access code, or whose code is older than the age setting `source_link.code_max_age_days` (when the domain profile has one) | Open the card | The button reads "在小红书搜索原帖" and opens the site search; `linkKind` is `search`. A code from an earlier sync still counts until the age setting says it is too old; no setting means no age limit |
+| LINK-06 | The public-file check, before the build writes and before the publisher sends | Offered a signed post link | It is allowed only as the whole value of that card's own `sourceUrl`, in exactly the LINK-04 shape, for that card's own note ID; a code anywhere else (note text, another field, another card's link, any other file) and the `xsec_token` JSON key are still refused, as are cookies, the bridge token (bare or labelled), `/user/profile/` and `/board/` |
 
-If LINK-02 holds, the public-file check before publishing (`public-tree-policy.mjs:22–23`) stops refusing `/explore/<id>` and `/discovery/item/<id>`; it still refuses `xsec_token`, profile paths `/user/profile/` and folder paths `/board/`. The `SKILL.md` rule at line 113, "公开网页不得把笔记 ID 拼成裸 `/explore/{id}`", is rewritten to match.
+LINK-04 to LINK-06 come from the owner's ruling of 2026-10-14 (issue 106): "The rule against publishing `xsec_token` is lifted for that code only: cookies, the bridge token, profile and folder IDs, raw media and frame evidence all stay forbidden." Codes are kept only in the private store, written by the sync service from the links a sync already imports; no scheduled or start-up refresh. The code's lifetime is not yet measured, so the age setting does not exist until it is; the live test of at least five post links, logged out, right after a sync and again a day later, comes before the first publish carrying codes.
+
+If LINK-02 holds, the public-file check before publishing (`public-tree-policy.mjs:22–23`) stops refusing `/explore/<id>` and `/discovery/item/<id>`; it still refuses `xsec_token`, profile paths `/user/profile/` and folder paths `/board/` (LINK-06 below makes the one exception for a card's own signed link). The `SKILL.md` rule at line 113, "公开网页不得把笔记 ID 拼成裸 `/explore/{id}`", is rewritten to match.
 
 ### 6.2 Capture completeness `[Slice: B]`
 
@@ -171,7 +176,7 @@ Documents changed to match, so no two rules contradict each other: `SKILL.md`, `
 
 ## 8. Boundaries that do not change
 
-One Xiaohongshu page at a time; read-only capture; stop on any safety signal, with no retry or workaround; never read or output cookies, `xsec_token`, the bridge token, profile, folder IDs, raw media or frames; no scheduled or start-up tasks; the core chain depends on no model; frozen snapshots, at most one publish per run, never force-push; DianDian receives only the fixed prompt "总结".
+One Xiaohongshu page at a time; read-only capture; stop on any safety signal, with no retry or workaround; never read or output cookies, the bridge token, profile, folder IDs, raw media or frames; `xsec_token` only as the whole value of that card's own `sourceUrl` (LINK-04 to LINK-06), nowhere else and never read or printed by an agent; no scheduled or start-up tasks; the core chain depends on no model; frozen snapshots, at most one publish per run, never force-push; DianDian receives only the fixed prompt "总结".
 
 Runs that drive the real mouse, and the watched live checks (CAP-01, LINK-01, COMP-01), start only at a time the owner agrees to.
 

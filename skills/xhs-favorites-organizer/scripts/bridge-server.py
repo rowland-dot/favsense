@@ -61,6 +61,13 @@ if DIANDIAN_REFUSAL_SPEC is None or DIANDIAN_REFUSAL_SPEC.loader is None:
 DIANDIAN_REFUSAL = importlib.util.module_from_spec(DIANDIAN_REFUSAL_SPEC)
 DIANDIAN_REFUSAL_SPEC.loader.exec_module(DIANDIAN_REFUSAL)
 
+SOURCE_CODES_PATH = Path(__file__).with_name("source_codes.py")
+SOURCE_CODES_SPEC = importlib.util.spec_from_file_location("favsense_source_codes", SOURCE_CODES_PATH)
+if SOURCE_CODES_SPEC is None or SOURCE_CODES_SPEC.loader is None:
+    raise RuntimeError("source code store rules are unavailable")
+SOURCE_CODES = importlib.util.module_from_spec(SOURCE_CODES_SPEC)
+SOURCE_CODES_SPEC.loader.exec_module(SOURCE_CODES)
+
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 47631
@@ -4354,6 +4361,24 @@ class Bridge:
     # script copies the share link and reports it), to the DianDian chat, to the next note, and at the
     # end to the next board or closed. Nothing else is ever opened.
 
+    def keep_source_codes(self, links: dict[str, str]) -> None:
+        """Keep the access code of each imported link in the private store, whether or not summaries are on.
+
+        The store is the only place a code is written; a later build reads it to give a card a post link.
+        """
+        captures = SOURCE_CODES.captures_from_links(links)
+        if not captures:
+            return
+        batch = str(self.read_manual_sync().get("batch", ""))
+        path = self.state_dir / SOURCE_CODES.STORE_NAME
+        try:
+            existing = path.read_text(encoding="utf-8-sig")
+        except FileNotFoundError:
+            existing = None
+        atomic_json(path, SOURCE_CODES.merged_store(
+            existing, captures, batch, datetime.now(timezone.utc).isoformat()
+        ))
+
     def keep_run_note_links(self, run_id: str, links: dict[str, str]) -> None:
         """Hold this board's signed links in memory for its summary driver. They are never written anywhere."""
         if not self.diandian_enabled:
@@ -6290,6 +6315,7 @@ class Bridge:
             board_id = payload["board_id"]
             self.record_manual_started(run_id, board_id)
             run_status_path = self.state_dir / "runs" / f"{run_id}.json"
+            self.keep_source_codes(unique)
             self.keep_run_note_links(run_id, unique)
             if run_status_path.exists():
                 existing = json.loads(run_status_path.read_text(encoding="utf-8-sig"))
@@ -6646,6 +6672,10 @@ class Bridge:
         damaged_replies = self.state_dir / "damaged-diandian-replies.json"
         if damaged_replies.is_file() and not path_is_reparse_point(damaged_replies):
             command.extend(["--damaged-replies", str(damaged_replies)])
+        # The private store of post access codes (source_codes.py writes it). Without it every card keeps its search link.
+        source_codes = self.state_dir / SOURCE_CODES.STORE_NAME
+        if source_codes.is_file() and not path_is_reparse_point(source_codes):
+            command.extend(["--source-codes", str(source_codes)])
         if self.resource_registry is not None:
             command.extend(["--resources", str(self.resource_registry)])
         completed = self.script_runner.run(

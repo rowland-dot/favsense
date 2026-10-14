@@ -1,7 +1,9 @@
+import { readFileSync } from "node:fs";
 import { lstat, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { normalizeSensitiveText } from "./sensitive-data.mjs";
+import { withoutOwnSignedLinks } from "./source-links.mjs";
 
 const SECRET_NAMES = new Set([".env", "credentials.json", "secrets.json", "id_rsa"]);
 const SECRET_SUFFIXES = [".pem", ".p12", ".pfx", ".key"];
@@ -43,8 +45,18 @@ function secretLikeName(name) {
     || SECRET_SUFFIXES.some((suffix) => lower.endsWith(suffix));
 }
 
+// A structured file's text with each card's own signed link taken out of its source link (the one place a signed
+// link may sit). Any other text, and a file that does not parse, is returned as it is.
+function withoutAllowedSignedLinks(content, label) {
+  if (![".json", ".webmanifest"].includes(path.extname(label).toLowerCase())) return content;
+  let parsed;
+  try { parsed = JSON.parse(content); } catch { return content; }
+  const masked = withoutOwnSignedLinks(parsed);
+  return masked === parsed || JSON.stringify(masked) === JSON.stringify(parsed) ? content : JSON.stringify(masked);
+}
+
 export function assertPublicTextSafe(content, label, privateIdentifiers = []) {
-  const normalized = normalizeSensitiveText(content);
+  const normalized = normalizeSensitiveText(withoutAllowedSignedLinks(content, label));
   for (const pattern of PUBLIC_FORBIDDEN) {
     if (pattern.test(normalized)) throw new Error(`sensitive public content is not allowed: ${label}`);
   }
@@ -66,6 +78,18 @@ export function assertPublicTextSafe(content, label, privateIdentifiers = []) {
       throw error;
     }
   }
+}
+
+// The local service's access token, to be added to the private identifiers a public check refuses (as the bare
+// value or after any label). The file is the sync service's own; a missing or malformed one adds nothing, and the
+// value is never put in a message.
+export function loadBridgeTokenIdentifiers(tokenFile) {
+  let text;
+  try { text = readFileSync(tokenFile, "utf8").trim(); } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw new Error("the bridge token file could not be read");
+  }
+  return /^[a-f0-9]{64}$/.test(text) ? [text] : [];
 }
 
 export async function atomicWriteTextFile(target, content) {
