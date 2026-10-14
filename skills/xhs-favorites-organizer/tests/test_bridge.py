@@ -161,6 +161,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 port=0,
                 userscript=userscript,
                 userscript_install_state=capability_state,
+                userscript_template_version=bridge_support.USERSCRIPT_VERSION,
                 token=token,
             )
             server = BRIDGE.ThreadingHTTPServer((BRIDGE.HOST, 0), BRIDGE.make_handler(bridge))
@@ -186,10 +187,7 @@ class BridgeHelpersTest(unittest.TestCase):
                 request = Request(
                     f"http://{BRIDGE.HOST}:{bridge.port}/install/complete",
                     data=json.dumps({"capability": capability}).encode("utf-8"),
-                    headers={
-                        "Content-Type": "application/json",
-                        "X-XHS-Bridge-Token": token,
-                    },
+                    headers=bridge_support.userscript_headers(token),
                     method="POST",
                 )
                 with urlopen(request, timeout=2) as response:
@@ -5212,7 +5210,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             def get(board_id, supplied_token):
                 request = Request(
                     f"http://{BRIDGE.HOST}:{bridge.port}/sync/board-context?batch={batch}&board_id={board_id}",
-                    headers={"X-XHS-Bridge-Token": supplied_token},
+                    headers=bridge_support.userscript_headers(supplied_token),
                 )
                 try:
                     with urlopen(request, timeout=2) as response:
@@ -5850,6 +5848,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
         bridge = SimpleNamespace(
             port=0,
             token=token,
+            userscript_template_version=bridge_support.USERSCRIPT_VERSION,
             click_diandian_control=mock.Mock(return_value={"clicked": True}),
         )
         server = BRIDGE.ThreadingHTTPServer((BRIDGE.HOST, 0), BRIDGE.make_handler(bridge))
@@ -5861,10 +5860,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             request = Request(
                 f"http://{BRIDGE.HOST}:{bridge.port}/sync/diandian-click",
                 data=json.dumps(payload).encode("utf-8"),
-                headers={
-                    "Content-Type": "application/json",
-                    "X-XHS-Bridge-Token": supplied_token,
-                },
+                headers=bridge_support.userscript_headers(supplied_token),
                 method="POST",
             )
             try:
