@@ -1,9 +1,9 @@
 {
   "meta": {
-    "buildVersion": "7997bdc02a09d3d0bfbaf199823bdbd29644a671b1861103dff1846348dc6026",
+    "buildVersion": "8210b87069ebcd6195100dec284ac9d145d8d0e2eaa1642b6058553bd03282c2",
     "title": "小红书收藏知识工作台",
     "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
-    "generatedAt": "2026-10-14T19:09:10.975Z",
+    "generatedAt": "2026-10-14T19:48:22.744Z",
     "source": "xiaohongshu",
     "sourceBoards": [
       "Skills",
@@ -1476,7 +1476,7 @@
     {
       "id": "6a25baca000000000803d0c8",
       "number": 34,
-      "title": "一人自媒体公司全流程（内容创作、分发、互动、变现）打通的开源项目 #开源项目 #自媒体 #开发者 #一…",
+      "title": "一人自媒体公司全流程（内容创作、分发、互动、变现）打通的开源项目",
       "author": "阿甘探AI",
       "sourceUrl": "https://www.xiaohongshu.com/explore/6a25baca000000000803d0c8?xsec_token=AB4Qaf-UDQTFzlzsNoQtuZxZ7jbCNh4DtUa5S93DPEuDU%3D&xsec_source=pc_share",
       "linkKind": "post",
@@ -1496,7 +1496,7 @@
         "一人公司",
         "内容自动化"
       ],
-      "mainText": "一人自媒体公司全流程（内容创作、分发、互动、变现）打通的开源项目 #开源项目 #自媒体 #开发者 #一人公司 #效率神器",
+      "mainText": "一人自媒体公司全流程（内容创作、分发、互动、变现）打通的开源项目",
       "mainSource": "post-text",
       "replyDamaged": false,
       "postUnreachable": false,
@@ -6010,7 +6010,7 @@
         "反爬绕过",
         "网页抓取"
       ],
-      "mainText": "这个开源项目Scrapling，不只是爬虫，而是实战级数据采集框架 #开源项目",
+      "mainText": "这个开源项目Scrapling，不只是爬虫，而是实战级数据采集框架",
       "mainSource": "post-text",
       "replyDamaged": false,
       "postUnreachable": false,

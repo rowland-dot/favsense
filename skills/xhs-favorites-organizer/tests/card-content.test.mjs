@@ -83,6 +83,43 @@ test("nothing at all (no post text, no extracted text, no saved reply) gives an 
   assert.deepEqual(cardText({ body: "", point: null, state: "absent", extracted: null }), { mainText: "", mainSource: "post-text", extractedSection: null });
 });
 
+test("postBody drops a run of plain tags at the end of a line, line by line (issue 115)", () => {
+  assert.equal(postBody("正文说明。 #开源项目 #自媒体 #开发者"), "正文说明。");
+  assert.equal(postBody("第一行 #a工具 #b工具\n第二行 #c工具"), "第一行\n第二行");
+  assert.equal(postBody("正文。\n\n#开源项目 #自媒体"), "正文。", "a line made only of plain tags goes entirely");
+  assert.equal(postBody("#开源项目 #自媒体"), "", "a post whose only text is plain tags has an empty body, so the extracted text can take over");
+});
+
+test("postBody leaves 'C#', a bare '#1' and a tag followed by more words alone (issue 115)", () => {
+  assert.equal(postBody("我在学 C#"), "我在学 C#");
+  assert.equal(postBody("用 C# 写 #1 的工具 很好用"), "用 C# 写 #1 的工具 很好用");
+  assert.equal(postBody("榜单排名 #1"), "榜单排名 #1", "digits alone are a number, not a tag");
+  assert.equal(postBody("#开源项目 的项目很多"), "#开源项目 的项目很多", "a tag with words after it is not a trailing run");
+  assert.equal(postBody("C# #开源项目"), "C#", "only the tag run goes; the C# before it stays");
+  assert.equal(postBody("版本 v2#发布"), "版本 v2#发布", "a '#' glued to the word before it is not the start of a tag");
+});
+
+test("a title taken from the first line of the text never ends in a tag run, even the issue's own example (issue 115)", () => {
+  // The post ending 03d0c8: a long first line whose end is plain tags, cut at 52 it ended '#开源项目 #自媒体 #开发者 #一…'.
+  const line = `${"项".repeat(30)} #开源项目 #自媒体 #开发者 #一个人公司 #AI工具`;
+  assert.match(`${Array.from(line).slice(0, 51).join("")}…`, /#\S+…$/, "control: the old cut really ended in a tag run");
+  assert.equal(cardTitle({ title: "", body: postBody(line), author: "甲", noteId: "n" }), "项".repeat(30));
+});
+
+test("the 52-character cut itself never leaves a tag run before the ellipsis (issue 115)", () => {
+  const body = `${"字".repeat(40)} #开源项目 #自媒体 #开发者 接着还有很长很长的说明文字`;
+  const title = cardTitle({ title: "", body, author: "", noteId: "n" });
+  assert.equal(title, `${"字".repeat(40)}…`);
+});
+
+test("a short first line that still carries a tag run is cleaned too, whatever fed cardTitle (issue 115)", () => {
+  assert.equal(cardTitle({ title: "", body: "短标题 #AI工具 #开源项目\n后面", author: "", noteId: "n" }), "短标题");
+});
+
+test("the post's own title is untouched by the tag rule (issue 115)", () => {
+  assert.equal(cardTitle({ title: "我的标题 #AI工具", body: "正文", author: "甲", noteId: "n" }), "我的标题 #AI工具");
+});
+
 test("cardCounts counts complete replies and transcripts shown, never a cut reply or a transcript hidden behind a reply", () => {
   const cards = [
     { mainSource: "diandian", replyDamaged: false, extracted: null },

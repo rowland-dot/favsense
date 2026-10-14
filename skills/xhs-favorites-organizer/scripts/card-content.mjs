@@ -5,6 +5,12 @@
 export const TITLE_LIMIT = 52;
 const tidy = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
 
+// A plain tag is "#word" that starts after a space or the line start and holds at least one non-digit,
+// so "C#" and a bare "#1" are not tags. Only a run of them at the very end of a line is removed.
+const PLAIN_TAG = "#(?=[^\\s#]*[^\\s#\\d])[^\\s#]+";
+const TRAILING_TAG_RUN = new RegExp(`(?:^|\\s)${PLAIN_TAG}(?:\\s*${PLAIN_TAG})*\\s*$`);
+export const stripTrailingTags = (line) => String(line ?? "").replace(TRAILING_TAG_RUN, "").trim();
+
 // The post's own words with its topic tags taken out. Line breaks are kept and nothing is cut.
 export function postBody(description) {
   const lines = String(description ?? "")
@@ -13,17 +19,20 @@ export function postBody(description) {
     .replace(/\[[^\]\n]*话题[^\]\n]*\]/g, " ")
     .split("\n")
     .map((line) => line.replace(/[ \t 　]+/g, " ").trim());
-  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return lines.map(stripTrailingTags).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 // The post's own title; else the first line of its text (cut at 52 with an ellipsis); else the author's collection.
 export function cardTitle({ title, body, author, noteId }) {
   const own = tidy(title);
   if (own) return own;
-  const first = tidy(String(body ?? "").split("\n").find((line) => line.trim()) ?? "");
+  const first = stripTrailingTags(tidy(String(body ?? "").split("\n").find((line) => line.trim()) ?? ""));
   // Count and cut by characters (code points), so an emoji at the limit is never split in half.
   const chars = Array.from(first);
-  if (first) return chars.length > TITLE_LIMIT ? `${chars.slice(0, TITLE_LIMIT - 1).join("")}…` : first;
+  if (first && chars.length <= TITLE_LIMIT) return first;
+  // The cut can land inside a run of tags in the middle of the line, so the tag rule applies to the cut too.
+  const head = first && stripTrailingTags(chars.slice(0, TITLE_LIMIT - 1).join(""));
+  if (head) return `${head}…`;
   const who = tidy(author);
   return who ? `${who}的收藏` : `收藏条目 · ${String(noteId).slice(-6)}`;
 }
