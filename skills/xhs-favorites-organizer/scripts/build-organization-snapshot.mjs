@@ -31,7 +31,7 @@ export function canonicalVersion({ sealedScopeDigest, curationInputDigest, confi
     input_revision_sha256: inputRevisionDigest,
     ...(publishSiteDigest === undefined ? {} : { publish_site_sha256: publishSiteDigest }),
     effective_date: effectiveDate,
-    builders: { public_site: 9 },
+    builders: { public_site: 10 },
   };
   return createHash("sha256").update(JSON.stringify(preimage), "utf8").digest("hex");
 }
