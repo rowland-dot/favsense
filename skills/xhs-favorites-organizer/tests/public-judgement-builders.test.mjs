@@ -105,35 +105,17 @@ test("the web builder reads the resource freshness limit from the profile, and k
   assert.deepEqual(strict.n1.resourceIds, []);
 });
 
-// "Search the original post" searches the post's own words.
+// The link to the original post is the post's own address, whatever the add-on or the post's words say
+// (spec LINK-02; the words of the post are no longer used to search for it).
 
-const postDescription = "用Codex封装亚马逊选品Skill后…#codex[话题]#";
-const searchKeyword = (item) => new URL(item.sourceUrl).searchParams.get("keyword");
 const withAddOn = (noteOverrides = {}) => ({
-  notes: { n1: note({ title: "", description: postDescription, author: "创作者", ...noteOverrides }) },
+  notes: { n1: note({ title: "", description: "用Codex封装亚马逊选品Skill后…#codex[话题]#", author: "创作者", ...noteOverrides }) },
   curation: { n1: { category: "Synthetic", themes: ["testing"], tools: ["Codex"], kind: "Note", title: "Codex 亚马逊选品 Go/No-Go 工作流" } },
 });
 
-test("searching for the original post uses the post's own words, not the tool name or a title in the add-on", async () => {
-  const web = await buildWeb(withAddOn());
-  assert.equal(searchKeyword(web.n1), "用Codex封装亚马逊选品Skill后… 创作者");
-  assert.notEqual(searchKeyword(web.n1), "Codex 创作者");
-  assert.doesNotMatch(searchKeyword(web.n1), /Go\/No-Go/);
-});
-
-test("searching for the original post uses the original post title when there is one", async () => {
-  const web = await buildWeb(withAddOn({ title: "原帖自己的标题" }));
-  assert.equal(searchKeyword(web.n1), "原帖自己的标题 创作者");
-});
-
-test("search words are cut at the same length limit as before but never end in an ellipsis", async () => {
-  const fromDescription = await buildWeb(withAddOn({ description: "字".repeat(80) }));
-  assert.equal(searchKeyword(fromDescription.n1), `${"字".repeat(52)} 创作者`);
-  const fromTitle = await buildWeb(withAddOn({ title: "题".repeat(80) }));
-  assert.equal(searchKeyword(fromTitle.n1), `${"题".repeat(52)} 创作者`);
-});
-
-test("a post with neither title nor text is searched by the card title", async () => {
-  const web = await buildWeb(withAddOn({ description: "" }));
-  assert.equal(searchKeyword(web.n1), "创作者的收藏 创作者");
+test("the link to the original post is its own address, never built from a title or the add-on", async () => {
+  for (const overrides of [{}, { title: "原帖自己的标题" }, { description: "字".repeat(80) }, { title: "题".repeat(80) }, { description: "" }]) {
+    const web = await buildWeb(withAddOn(overrides));
+    assert.equal(web.n1.sourceUrl, "https://www.xiaohongshu.com/explore/n1");
+  }
 });

@@ -447,7 +447,7 @@ test("public site ships complete, structured knowledge data", async () => {
     assert.equal(typeof note.replyDamaged, "boolean");
     assert.equal(typeof note.postUnreachable, "boolean");
     assert.ok(Array.isArray(note.unverifiedTools));
-    assert.match(note.sourceUrl, /^https:\/\/www\.xiaohongshu\.com\/search_result\?/);
+    assert.equal(note.sourceUrl, `https://www.xiaohongshu.com/explore/${note.id}`);
     assert.equal(Object.hasOwn(note, "priority"), false);
     assert.equal(Object.hasOwn(note, "risk"), false);
     assert.match(note.kind, /^(Note|Tool|Skill|Workflow|Product)$/);
@@ -471,7 +471,7 @@ test("public site ships complete, structured knowledge data", async () => {
   assert.equal(Object.hasOwn(data.meta, "videoMethod"), false);
 });
 
-test("missing titles are inferred and public source navigation never publishes expiring direct links", async () => {
+test("missing titles are inferred and public source navigation links the post without any session token", async () => {
   const data = await buildProfileFixture("software.json", {
     uncurated: true,
     note: {
@@ -486,11 +486,8 @@ test("missing titles are inferred and public source navigation never publishes e
   assert.equal(note.category, "Fixture");
   assert.equal(note.suggestedCategory, "AI设计与多媒体");
   assert.equal(note.categorySource, "source_board");
-  const source = new URL(note.sourceUrl);
-  assert.equal(source.pathname, "/search_result");
-  assert.match(source.searchParams.get("keyword"), /丧尸清道夫/);
-  assert.equal(source.searchParams.get("source"), "web_search_result_notes");
-  assert.doesNotMatch(note.sourceUrl, /xsec_token|\/explore\/|\/discovery\/item\//);
+  assert.equal(note.sourceUrl, `https://www.xiaohongshu.com/explore/${note.id}`);
+  assert.doesNotMatch(note.sourceUrl, /xsec_token|search_result/);
 });
 
 test("a saved DianDian reply becomes the card's main text without leaking source links", async () => {
@@ -984,6 +981,7 @@ test("mounted note detail starts one local-only DianDian validation without chan
       id: "note-a",
       title: "Fixture note",
       author: "Fixture author",
+      sourceUrl: "https://www.xiaohongshu.com/explore/note-a",
       publishedAt: "2026-08-01",
       category: "Fixture",
       kind: "Note",
@@ -1006,7 +1004,7 @@ test("mounted note detail starts one local-only DianDian validation without chan
     resourceMap: () => new Map(),
     categoryAccent: () => "#000",
     escapeHtml: (value) => String(value ?? ""),
-    safeUrl: () => "#",
+    safeUrl: (value) => value,
     formatDate: () => "2026-08-01",
     descriptionSection: () => "",
     settleSummaryFolds: () => {},
@@ -1014,7 +1012,8 @@ test("mounted note detail starts one local-only DianDian validation without chan
     window: { location: { protocol: "https:", hostname: "leeroyy1288-favsense.hf.space" } }
   });
   assert.match(rendered.publicHtml, /target="_blank"/);
-  assert.match(rendered.publicHtml, /在小红书搜索原帖/);
+  assert.match(rendered.publicHtml, /<a href="https:\/\/www\.xiaohongshu\.com\/explore\/note-a"[^>]*>在小红书中查看原帖<\/a>/);
+  assert.doesNotMatch(rendered.publicHtml, /搜索原帖/);
   assert.doesNotMatch(rendered.disconnectedLocalHtml, /target="_blank"/);
   assert.match(rendered.disconnectedLocalHtml, /请先启动 FavSense 本地服务/);
   assert.match(rendered.disconnectedLocalHtml, /disabled/);
