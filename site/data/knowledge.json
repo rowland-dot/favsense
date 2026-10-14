@@ -1,9 +1,9 @@
 {
   "meta": {
-    "buildVersion": "055b387127d132acabf867e6f566114aa04c7b4e973f4818956400084536e3ef",
+    "buildVersion": "543f741a80229247a3f9e7be660a7c7ad44e0771844560cd36cbb5e269c9fd3e",
     "title": "小红书收藏知识工作台",
     "description": "把小红书收藏整理成可搜索、可追溯、能直接使用的知识卡片。",
-    "generatedAt": "2026-10-13T23:38:42.005Z",
+    "generatedAt": "2026-10-14T02:50:20.532Z",
     "source": "xiaohongshu",
     "sourceBoards": [
       "Skills",
@@ -35,7 +35,7 @@
     },
     "noteCount": 377,
     "replyCount": 194,
-    "transcriptCount": 103,
+    "transcriptCount": 102,
     "categoryCount": 16,
     "resourceCount": 132,
     "resourceIndexEnabled": true,
@@ -2877,10 +2877,7 @@
       "mainSource": "post-text",
       "replyDamaged": false,
       "postUnreachable": true,
-      "extracted": {
-        "kind": "video-transcript",
-        "text": "K K �ǳ���л��Ҷ��ҵ�ϲ����֧� K K"
-      },
+      "extracted": null,
       "tools": [],
       "unverifiedTools": [],
       "kind": "Tool",
