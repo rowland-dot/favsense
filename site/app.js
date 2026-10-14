@@ -1064,16 +1064,23 @@ function descriptionSection(note) {
     </section>`;
 }
 
-// A DianDian reply is long, so it starts folded to its first lines; the person's own revision and curated text are not.
+// A DianDian reply, a video transcript or picture text is long, so it starts folded to its first lines; the
+// post's own text, the person's own revision and curated text are not.
 function summaryBodyHtml(note) {
-  if (!showsDianDianReply(note) || hasPersonalRevision(note)) return `<div class="structured-summary">${descriptionHtml(note)}</div>`;
-  const expanded = state.expandedSummaries.has(note.id);
-  // The same number the source box shows: the length of the saved reply.
-  const length = note.mainText.trim().length;
+  const foldsLong = showsDianDianReply(note) || (EXTRACTED_KINDS.includes(note.mainSource) && Boolean(note.mainText.trim()));
+  if (!foldsLong || hasPersonalRevision(note)) return `<div class="structured-summary">${descriptionHtml(note)}</div>`;
+  // For a reply, the same number the source box shows: the length of the saved reply.
+  return foldedTextHtml(note.id, note.mainText.trim().length, "structured-summary", descriptionHtml(note));
+}
+
+// Long text starts folded to its first lines behind a button that says how long the whole text is. The key names
+// which fold on the card is open, so a card with two long blocks keeps them apart.
+function foldedTextHtml(key, length, bodyClass, innerHtml) {
+  const expanded = state.expandedSummaries.has(key);
   return `
     <div class="summary-fold" data-expanded="${expanded}">
-      <div class="structured-summary summary-fold-body">${descriptionHtml(note)}</div>
-      <button type="button" class="summary-fold-toggle" data-fold-toggle="${escapeHtml(note.id)}" data-fold-label="展开全文 · ${length} 字" aria-expanded="${expanded}">${expanded ? "收起" : `展开全文 · ${length} 字`}</button>
+      <div class="${bodyClass} summary-fold-body">${innerHtml}</div>
+      <button type="button" class="summary-fold-toggle" data-fold-toggle="${escapeHtml(key)}" data-fold-label="展开全文 · ${length} 字" aria-expanded="${expanded}">${expanded ? "收起" : `展开全文 · ${length} 字`}</button>
     </div>`;
 }
 
@@ -1154,7 +1161,8 @@ function renderDetail(note) {
 function extractedSectionHtml(note) {
   if (!note.extracted) return "";
   const heading = note.extracted.kind === "video-transcript" ? "视频转写与画面文字" : "图片文字";
-  return `<section class="detail-section extracted-section" aria-label="${heading}"><h3>${heading}</h3><div class="extracted-text">${formatPostHtml(note.extracted.text)}</div></section>`;
+  const text = foldedTextHtml(`${note.id}#extracted`, note.extracted.text.trim().length, "extracted-text", formatPostHtml(note.extracted.text));
+  return `<section class="detail-section extracted-section" aria-label="${heading}"><h3>${heading}</h3>${text}</section>`;
 }
 
 function openNote(noteId, updateHash = true) {
