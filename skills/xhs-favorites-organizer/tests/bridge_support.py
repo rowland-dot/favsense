@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 from pathlib import Path
+import re
 import tempfile
 from types import SimpleNamespace
 
@@ -20,6 +21,21 @@ BRIDGE_PORT = 47631
 BRIDGE_TOKEN = "a" * 64
 INSTALL_CAPABILITY = "b" * 64
 PROFILE_URL = "https://www.xiaohongshu.com/user/profile/testprofile"
+USERSCRIPT_TEMPLATE = SKILL_DIR / "assets" / "xhs-favorites.user.js.template"
+# The version the user script template declares today, read straight from the template so a bump follows.
+USERSCRIPT_VERSION = re.search(
+    r"(?m)^// @version\s+(\d+(?:\.\d+){2,})\s*$", USERSCRIPT_TEMPLATE.read_text(encoding="utf-8")
+).group(1)
+
+
+def userscript_headers(token: str = BRIDGE_TOKEN, **extra: str) -> dict:
+    """The headers of a request made by the current user script: the local credential and its version."""
+    return {
+        "Content-Type": "application/json",
+        "X-XHS-Bridge-Token": token,
+        "X-XHS-Userscript-Version": USERSCRIPT_VERSION,
+        **extra,
+    }
 
 
 def completed(stdout: str = "", returncode: int = 0, stderr: str = ""):
@@ -109,6 +125,7 @@ def prepare_workspace(root: Path, config: dict | None = None) -> tuple[Path, Pat
         "digest": hashlib.sha256(INSTALL_CAPABILITY.encode("ascii")).hexdigest(),
         "issued_at": issued_at.isoformat(),
         "expires_at": (issued_at + timedelta(minutes=10)).isoformat(),
+        "template_version": USERSCRIPT_VERSION,
     }))
     _write_if_absent(root / ".xhs-tools" / "XHS-Downloader" / ".venv" / "Scripts" / "python.exe", "")
     sop_runtime = root / ".sop-runtime"

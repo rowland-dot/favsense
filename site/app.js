@@ -670,10 +670,11 @@ function renderManualSync(status = state.manualSync) {
   const failed = status.state === "failed" && !active;
   const safetyStopped = ["safety-stopped", "safety_stopped"].includes(status.state);
   const leftoverStop = active ? null : (status.legacy_safety_stop || null);
+  const scriptOutdated = !active && status.userscript_outdated === true;
   elements.manualSyncControl.classList.toggle("is-running", active);
   elements.manualSyncControl.classList.toggle("is-complete", completed);
-  elements.manualSyncControl.classList.toggle("is-failed", failed || safetyStopped || Boolean(leftoverStop));
-  elements.manualSyncStart.disabled = active || !sopBrowserReady() || Boolean(leftoverStop);
+  elements.manualSyncControl.classList.toggle("is-failed", failed || safetyStopped || Boolean(leftoverStop) || scriptOutdated);
+  elements.manualSyncStart.disabled = active || !sopBrowserReady() || Boolean(leftoverStop) || scriptOutdated;
   elements.manualSyncClearStop.hidden = !leftoverStop;
   elements.manualSyncClearStop.disabled = false;
   elements.manualSyncLocalRebuild.disabled = active;
@@ -682,7 +683,7 @@ function renderManualSync(status = state.manualSync) {
     ? "整理中…"
     : (safetyStopped ? "检查后重试" : (completed || failed ? "再次整理" : "开始整理"));
   const singleNoteButton = elements.dialogContent.querySelector("[data-summarize-note]");
-  if (singleNoteButton) singleNoteButton.disabled = active || !sopBrowserReady();
+  if (singleNoteButton) singleNoteButton.disabled = active || !sopBrowserReady() || scriptOutdated;
 
   if (v2) {
     const copy = state.statusContract?.copy || {};
@@ -726,7 +727,11 @@ function renderManualSync(status = state.manualSync) {
       ? "点击一次即可同步已开启的收藏夹、增量去重，并更新公开网页。"
       : "SOP 扫描浏览器未就绪。请先启动并登录该浏览器；FavSense 不会改用主浏览器或另建登录窗口。";
   }
-  if (leftoverStop) {
+  if (scriptOutdated) {
+    // The installed user script is older than the sync service: one sentence, no counts, until it is reinstalled.
+    elements.manualSyncTitle.textContent = state.statusContract?.copy?.userscript_outdated || "";
+    elements.manualSyncDetail.textContent = "“仅本地重建”不需要用户脚本，不受影响。";
+  } else if (leftoverStop) {
     // An earlier round's stop is still on record: say so before anything about counts, and offer the one way forward.
     const notice = leftoverStop.date ? `${leftoverStop.date} 的安全停止尚未清除` : "有一条安全停止尚未清除";
     if (!safetyStopped) elements.manualSyncTitle.textContent = notice;
@@ -735,7 +740,13 @@ function renderManualSync(status = state.manualSync) {
 }
 
 function reportStartRefusal(error) {
-  // The bridge refuses a start while an earlier round's safety stop is uncleared; that is not a failed run.
+  // The bridge refuses a start while an earlier round's safety stop is uncleared, or while the installed
+  // user script is out of date; neither is a failed run.
+  if (error.payload?.userscript_outdated === true) {
+    renderManualSync({ state: "idle", userscript_outdated: true });
+    showToast("用户脚本版本过旧，没有开始整理");
+    return true;
+  }
   if (!error.payload?.legacy_safety_stop) return false;
   try {
     const leftover = validateLegacySafetyStop(error.payload.legacy_safety_stop);
@@ -1131,7 +1142,7 @@ function renderDetail(note) {
   // The same link on the public site and in the local workbench, whether or not the local service is up.
   const sourceActionHtml = `<a href="${safeUrl(note.sourceUrl, ["xiaohongshu.com"])}" target="_blank" rel="noreferrer">${note.linkKind === "post" ? "在小红书中查看原帖" : "在小红书搜索原帖"}</a>`;
   const singleNoteActionHtml = state.localBridge?.diandianAvailable && sopBrowserReady() ? `
-    <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${manualSyncRunning(state.manualSync) || state.manualSync.legacy_safety_stop ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
+    <button type="button" data-summarize-note="${escapeHtml(note.id)}" ${manualSyncRunning(state.manualSync) || state.manualSync.legacy_safety_stop || state.manualSync.userscript_outdated ? "disabled" : ""}>仅在本机校验并用点点重新总结此卡（不会发布）</button>
   ` : state.localBridge
     ? '<button type="button" disabled title="请检查点点 Skill 设置">点点总结当前不可用</button>'
     : "";
@@ -1404,7 +1415,7 @@ function bindEvents() {
     if (summarizeButton) {
       summarizeButton.disabled = true;
       await startSingleNoteSync(summarizeButton.dataset.summarizeNote);
-      summarizeButton.disabled = manualSyncRunning(state.manualSync) || Boolean(state.manualSync.legacy_safety_stop);
+      summarizeButton.disabled = manualSyncRunning(state.manualSync) || Boolean(state.manualSync.legacy_safety_stop) || state.manualSync.userscript_outdated === true;
       return;
     }
     const copyButton = event.target.closest("[data-copy-note]");

@@ -119,7 +119,8 @@ def project_legacy_manual_state(value):
     if core_stopped:
         run = transition_phase(run, "core", "safety_stopped", "safety_signal")
     else:
-        run = transition_phase(run, "core", "completed" if core_completed else ("running" if legacy_state in {"starting", "running"} else "failed"), "" if core_completed or legacy_state in {"starting", "running"} else "contract_invalid")
+        failure_reason = "userscript_outdated" if value.get("userscript_outdated") is True else "contract_invalid"
+        run = transition_phase(run, "core", "completed" if core_completed else ("running" if legacy_state in {"starting", "running"} else "failed"), "" if core_completed or legacy_state in {"starting", "running"} else failure_reason)
     captured = max(0, int(value.get("summarized", 0) or 0))
     failed = max(0, int(value.get("summary_failed", 0) or 0))
     aborted = max(0, int(value.get("summary_batch_aborted", 0) or 0))
@@ -135,6 +136,8 @@ def project_legacy_manual_state(value):
         and (value.get("summary_halt_reason") or old_halt)
     ):
         reason = "transport_failed" if old_halt or value.get("summary_halt_reason") in {"transport-failed", "transport_failed"} else "contract_invalid"
+        if value.get("summary_halt_reason") == "userscript-outdated":
+            reason = "userscript_outdated"
         run = transition_phase(run, "summary", "failed", reason)
     elif value.get("summary_finalizing") is True or value.get("summary_plan_pending") is True or value.get("summary_pending", 0):
         run = transition_phase(run, "summary", "running")
@@ -240,6 +243,8 @@ def visible_copy_key(run):
     local_rebuild = status("core") == "not_required"
     if run.get("state") == "safety_stopped":
         return "safety_stopped"
+    if any(phase.get("reason_code") == "userscript_outdated" for phase in phases.values()):
+        return "userscript_outdated"
     if local_rebuild and any(phase.get("status") == "running" for phase in phases.values()):
         return "local_rebuild_running"
     if status("core") == "not_started":
@@ -268,7 +273,12 @@ def visible_copy_key(run):
 
 
 def visible_copy(run):
-    return _contract()["copy"][visible_copy_key(run)]
+    return copy_text(visible_copy_key(run))
+
+
+def copy_text(key):
+    """The contract's wording for one sentence key; the text exists nowhere else."""
+    return _contract()["copy"][key]
 
 
 def new_note_state(note_id, content_sha256):
@@ -763,6 +773,20 @@ def _round_failed(working, *, safety, error, remaining=0, completed_at=None):
     if remaining:
         working["summary_batch_aborted"] = int(working.get("summary_batch_aborted", 0) or 0) + remaining
         working["summary_pending"] = 0
+    return working
+
+
+@_event("userscript_outdated")
+def _userscript_outdated(working, *, error, completed_at=None):
+    """The scan browser's installed user script speaks an older protocol; the round stops before importing."""
+    working = _live(working)
+    working.update({
+        "state": "failed",
+        "completed_at": completed_at or _local_now(),
+        "error": error,
+        "userscript_outdated": True,
+        "summary_plan_pending": False,
+    })
     return working
 
 

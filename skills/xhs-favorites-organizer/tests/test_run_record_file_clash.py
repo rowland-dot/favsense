@@ -246,7 +246,7 @@ class StatusRouteReadsARoundFileTest(unittest.TestCase):
             flaky = FlakyRead(round_file, failures=3)
             request = Request(
                 f"http://{BRIDGE.HOST}:{bridge.port}/status?run_id={run_id}",
-                headers={"X-XHS-Bridge-Token": bridge.token},
+                headers=bridge_support.userscript_headers(bridge.token),
             )
             with flaky.patched():
                 with urlopen(request, timeout=30) as response:
