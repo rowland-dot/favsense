@@ -101,7 +101,7 @@ for (const [name, text] of [
   ["a bearer credential", "请求头 Authorization: Bearer abcdefghijkl1234"],
   ["a secret written as secret = value", "配置 secret = abcdefghij12 记得改"],
   ["a cookie value", "复制 cookie: abcdefgh12345678 到请求里"],
-  ["a direct link to a post", "原帖在 https://www.xiaohongshu.com/explore/6a7dc92600000000250090ff 这里"],
+  ["a link to a collection folder page", "收藏夹在 https://www.xiaohongshu.com/board/6a7dc92600000000250090ff 这里"],
 ]) {
   test(`the builder never writes data the publisher would refuse: ${name}`, async () => {
     const outcome = await buildOne({ note: { description: text } });
@@ -112,5 +112,31 @@ for (const [name, text] of [
       assert.match(outcome.stderr, /Public data safety check failed/);
       assert.match(outcome.stderr, /n1/);
     }
+  });
+}
+
+// Spec LINK-02 / AC-LINK: the post button now points at the post itself, so the public-file check lets a
+// token-free post address through and still refuses everything that identifies the owner or opens a session.
+const POST_ID = "6a7dc92600000000250090ff";
+const publicJson = (url) => JSON.stringify({ notes: [{ sourceUrl: url }] });
+
+for (const [name, url] of [
+  ["a post address under /explore/", `https://www.xiaohongshu.com/explore/${POST_ID}`],
+  ["a post address under /discovery/item/", `https://www.xiaohongshu.com/discovery/item/${POST_ID}`],
+]) {
+  test(`the public-file check allows ${name}`, () => {
+    assert.doesNotThrow(() => assertPublicTextSafe(publicJson(url), "data/knowledge.json"));
+  });
+}
+
+for (const [name, url] of [
+  ["a session token on a post address", `https://www.xiaohongshu.com/explore/${POST_ID}?xsec_token=zzz999&xsec_source=pc_share`],
+  ["a profile page address", "https://www.xiaohongshu.com/user/profile/abc123def456"],
+  ["a collection folder address", "https://www.xiaohongshu.com/board/abc123def456"],
+  ["a bare profile path", "/user/profile/abc123def456"],
+  ["a bare folder path", "/board/abc123def456"],
+]) {
+  test(`the public-file check still refuses ${name}`, () => {
+    assert.throws(() => assertPublicTextSafe(publicJson(url), "data/knowledge.json"), /sensitive public content is not allowed/);
   });
 }

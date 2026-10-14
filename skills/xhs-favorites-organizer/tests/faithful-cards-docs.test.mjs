@@ -23,8 +23,15 @@ const contracts = {
       "本机可通过鉴权的待审核 overlay 查看清理后的 captured 证据",
       "公开站不得直接消费 raw 点点记录",
       "明确区分“已深度整理”“使用其他证据整理”和“尚未获得深度总结”",
+      // LINK-02: the post button no longer searches.
+      "公开网页不得把笔记 ID 拼成裸",
+      "应使用标题与作者生成小红书站内检索入口",
+      "在小红书搜索原帖",
+      "无 Token 的小红书站内检索入口",
     ],
     required: [
+      "“在小红书中查看原帖”按钮直接打开笔记本身的无 Token 地址 `https://www.xiaohongshu.com/explore/{id}`",
+      "公共文件检查仍拒绝 `xsec_token`、个人主页 `/user/profile/` 和收藏夹 `/board/`",
       "公开 confirmed Skill 恰好关联一个当前、完整、已核验的官方资源",
       "审核通过（accepted）的条目写入正式 curation，作为卡片的可选附加信息；卡片本身不受审核状态控制",
       "公开卡片展示点点回复原文（只去掉开头的对话语句），不展示其记录里的其他字段",
@@ -40,6 +47,7 @@ const contracts = {
       "笔记按审核条目显示时，就是审核条目自己的 `title`",
       "已通过审核的笔记只使用审核过的字段",
       "是否 accepted 及原因",
+      "搜索原帖文字",
     ],
     required: [
       "不决定卡片是否完整显示",
@@ -54,8 +62,10 @@ const contracts = {
       "--diandian-prompt-version",
       "--diandian-report",
       "深度解读数",
+      "在小红书搜索原帖",
     ],
     required: [
+      "“在小红书中查看原帖”直接打开无 Token 的笔记地址",
       "公开卡片展示点点回复原文（只去掉开头的对话语句），不展示其记录里的其他字段。",
       "有完整点点总结数、有视频转写数",
     ],
@@ -92,8 +102,11 @@ const contracts = {
     retired: [
       "未满足 accepted/current/resource 门",
       "额外输出 `candidateKind",
+      "“标题 + 作者”的小红书站内检索入口",
+      "将按钮明确标为“搜索原帖”",
     ],
     required: [
+      "“在小红书中查看原帖”，直接打开 `https://www.xiaohongshu.com/explore/{id}`",
       "`mainText`",
       "`mainSource`",
       "`postUnreachable`",

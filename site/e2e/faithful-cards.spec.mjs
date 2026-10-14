@@ -192,13 +192,16 @@ test("the footer controls and the source box keep their places", async ({ page, 
   expect(controls.at(-1)).toMatch(/书签/);
   expect(await detail.locator("a[href*='/explore/']").count()).toBe(0);
 
-  // Public origin: same data, same order after the first control; and no link anywhere to /explore/<id>.
-  await page.goto(`http://127.0.0.1:8767/#note=${REPLY}`);
+  // Public origin: same data, same order after the first control; the first control is the link to the post itself (LINK-02).
+  await page.goto(`http://public.localhost:8767/#note=${REPLY}`);
   const publicDetail = page.getByRole("dialog");
   await expect(publicDetail.locator(".detail-title")).toBeVisible();
   await expect(publicDetail.locator(".detail-footer").getByRole("button", { name: "复制卡片链接" })).toBeVisible();
   await expect(publicDetail.locator(".detail-footer .detail-bookmark")).toBeVisible();
-  expect(await page.locator("a[href*='/explore/']").count()).toBe(0);
+  const postLink = publicDetail.locator(".detail-footer > :first-child");
+  await expect(postLink).toHaveText("在小红书中查看原帖");
+  await expect(postLink).toHaveAttribute("href", `https://www.xiaohongshu.com/explore/${REPLY}`);
+  expect(await page.locator("a[href*='xsec_token'], a[href*='search_result']").count()).toBe(0);
 
   // Source box: the edit button sits inside it, to the right of the label; on a phone the sentence has its own row.
   await page.goto(`/#note=${REPLY}`);
