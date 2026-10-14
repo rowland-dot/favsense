@@ -329,3 +329,25 @@ Final verdict: AUDIT-INCOMPLETE — Step 3 — PLAN (reviewed plan audit), 3-pas
 ## Step 5 — REVIEW (review-and-fix self-loop)
 
 Skills: /review then /design-review then /mockup-parity
+- Step 5 Phase 1 (/review) pass 1: CRITICAL=0 HIGH=0 MEDIUM=1 LOW=3 (report docs/reports/reviews/2026-10-14-favsense-faithful-cards-review.md); Fix-First f93455f widened the damaged-reply rule (79 -> 81).
+- Step 5 Phase 2 attempt 1: /design-review hung for ~2h inside one browser-tool call (no browse process alive; log idle since 10:48). Stage B.2 idle condition hit by a tool hang, not an interactive prompt. Stopped and re-dispatched with per-command time limits.
+- Phase 2 retry: Stage A ok; Stage B ok — Design Score=B  AI Slop Score=A  DESIGN_CRIT=0 (report /c/Users/rowla/.gstack/projects/rowland-dot-favsense/designs/design-audit-20261014/design-audit-127.0.0.1-8779.md). Fix-First c00ae93 (transcript section styling). Open: garbled transcript on unreachable card …1ff7a (wrong text encoding) — routed to Step 6 QA; transcript folding undefined by spec — owner decision in brief.
+
+### Step 5 Phase 3
+
+#### Stage A — Environment precheck
+Result: PASS (playwright, mockup, no auth states, live URL 200, mockup-parity skill)
+
+#### Stage B — Mockup readiness
+Result: ready after one remediation pass (12 commits a9ec922..0ca6551: captures -> role=dialog, live-url per state). --validate CRITICAL=0.
+
+#### Stage C — Parity loop
+Pass 1 (base http://127.0.0.1:8780): all six states CRITICAL=2 HIGH=3 (AGG_CRITICAL=12). Shared cause, not per-card drift: (1) loopback origin puts the site in local-workbench mode (no post link, extra buttons); (2) native <dialog> has an implicit role the structural count does not read, mockup used explicit role=dialog; (3) mockup draws each card in a half-width side-by-side column, so width/geometry differ. Region-aware pixel diff skipped by the tool in every state with no reason given. No Class line in any report. Remediation before pass 2: public-mode server on 192.168.0.157:8790; mockup card switched to native dialog at live width (mockup-authoring agent).
+Pass 2 (base http://192.168.0.157:8790, public mode): every state CRITICAL=0; HIGH=2 each (unreachable HIGH=3), AGG_CRITICAL=0, AGG_HIGH=13. Causes: (1) extra button in live = the card's close button, missing from the six new-design drawings although the mockup's own current-card screenshots show it; (2) anchor-position geometry: mockup cards sit in a document column, live card is a modal (offsetTop 12); (3) unreachable height: live shows a garbled transcript section (encoding bug, routed to Step 6).
+Gate remediation "update mockup to match code intent": 0c18f49 added the close button, lifted verbatim from site/index.html:236-238 (id dropped). 0a32dbb changed the six state wrappers from div to section (the region-aware renderer only finds section[data-mockup-state]). --validate CRITICAL=0 after each.
+Re-run after 0c18f49: every state CRITICAL=0 HIGH=1 (geometry only); MEDIUM=1 in five states (height), posttranscript LOW=1. Close-button HIGH gone.
+Stage C PASS (pass 2, AGG_HIGH=6, AGG_MEDIUM=5, AGG_ENV_BLOCKER=0). No Class line in any report, so the class-aware aggregator reads none.
+Residual HIGH=6 = geometry only: a full-height modal card cannot share coordinates with a card drawn inside a comparison document without stacking the six drawings over each other. Not fixable by parity-remediation (HIGH is outside its remit) and not changed by another outer pass (code unchanged since Phase 1/2). Recorded for the brief, not silenced.
+Region-aware pixel diff: never ran inside the pipeline. Three tool defects: the skill's scripts import pixelmatch/pngjs, which are not installed; the runner passes the base URL, not the state's live URL; the renderer requires section[data-mockup-state]. Run by hand from a scratch copy with both packages and each state's live URL: diandian 9.0%, damaged 24.2%, held 13.3%, transcript 16.1%, posttranscript 23.2%, unreachable 9.9% pixels different. Images inspected: same content and layout; differences are a ~35px vertical shift (drawing top padding; mockup not authoritative for spacing), the deferred link label (查看原帖 vs 搜索原帖, Slice B LINK-01..03), the deferred "3 次" source-line wording (Slice B, TODOS), drawing accent colour fixed to purple, transcript shown in full live vs a 600-character excerpt in the drawing (folding = owner decision), and the garbled transcript on …1ff7a (Step 6).
+
+Final verdict: AUDIT-INCOMPLETE-STUCK — Step 5 (review self-loop), HIGH=6 parity geometry unresolved; outer iteration cannot change it (no Phase 1/2 findings to Fix-First). CRITICAL=0.
