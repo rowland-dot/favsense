@@ -923,9 +923,10 @@ function renderCategories() {
 }
 
 // A tool chip; a tool nobody has matched to an official source says so (spec §3.1).
+// The marker is its own flex item so a long name is cut short instead of the marker being cut off.
 function toolChip(note, name) {
-  const badge = note.unverifiedTools.includes(name) ? ' <small class="tool-unverified">未核实</small>' : "";
-  return `<span class="tool-chip">${escapeHtml(name)}${badge}</span>`;
+  if (!note.unverifiedTools.includes(name)) return `<span class="tool-chip">${escapeHtml(name)}</span>`;
+  return `<span class="tool-chip tool-chip--unverified"><span class="tool-name">${escapeHtml(name)}</span> <small class="tool-unverified">未核实</small></span>`;
 }
 
 function noteCard(note) {

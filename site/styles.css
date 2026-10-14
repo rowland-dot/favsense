@@ -270,6 +270,9 @@ main { width: min(1520px, 100%); margin: 0 auto; }
 .detail-section .extracted-text p { margin: 0 0 8px; color: var(--ink); font-size: 13px; line-height: 1.75; }
 .tool-unverified { margin-left: 4px; padding: 1px 5px; border-radius: 5px; background: color-mix(in srgb, var(--sun), var(--surface) 70%); color: var(--ink); font-size: var(--text-xs); font-weight: 700; }
 .tool-chip { max-width: 100%; padding: 5px 8px; overflow: hidden; border-radius: 7px; background: var(--surface-soft); color: var(--ink); font-size: var(--text-xs); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.tool-chip--unverified { display: inline-flex; align-items: center; min-width: 0; }
+.tool-chip--unverified .tool-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tool-chip--unverified .tool-unverified { flex: none; }
 .card-footer { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-top: 1px solid var(--line); }
 .card-metrics { display: flex; gap: 10px; color: var(--ink-soft); font-family: var(--mono); font-size: var(--text-xs); }
 .card-open { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--ink); cursor: pointer; font-size: var(--text-xs); font-weight: 750; }
