@@ -99,7 +99,7 @@ test("a build with no publish site keeps its version", async () => {
     return { root: dir, publicTarget: target };
   })();
   const result = await build({ root, publicTarget, ...COMMON, buildPublicSite: builder() });
-  // Literal for this exact case under builder version 10 (trailing hashtag runs stripped). It moves only when the builder
+  // Literal for this exact case under builder version 11 (closing tag lines stripped from replies and own titles). It moves only when the builder
   // version or the shape of the version preimage moves, so a site-less build never changes by accident.
-  assert.equal(result.build_version, "dac31a00ee4c5d3fbd17316cdbd2bfe592e7f3917938392b308916bb4d0482e9");
+  assert.equal(result.build_version, "3efed686b40a959e4e9666f5ea17c5163166d44b2941c4e9f5d2951b26bc20bd");
 });
