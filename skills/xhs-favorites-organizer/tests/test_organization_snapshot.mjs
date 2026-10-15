@@ -464,20 +464,20 @@ test("the command line no longer takes the run report or the prompt version", as
   assert.doesNotMatch(run({ "--source-codes": "x" }).stderr, /SNAPSHOT_ARGUMENT_INVALID/);
 });
 
-test("the builder version is 11, so a silent revert changes the version", async () => {
+test("the builder version is 12, so a silent revert changes the version", async () => {
   const { canonicalVersion } = await import("../scripts/build-organization-snapshot.mjs");
   const sha = (value) => createHash("sha256").update(value, "utf8").digest("hex");
   const without = canonicalVersion({ ...COMMON });
   assert.equal(without, sha(JSON.stringify({
     schema_version: 3, sealed_scope_sha256: COMMON.sealedScopeDigest, curation_input_sha256: COMMON.curationInputDigest,
     public_config_sha256: COMMON.configDigest, input_revision_sha256: COMMON.inputRevisionDigest,
-    effective_date: COMMON.effectiveDate, builders: { public_site: 11 },
+    effective_date: COMMON.effectiveDate, builders: { public_site: 12 },
   })));
   const withSite = canonicalVersion({ ...COMMON, publishSiteDigest: "f".repeat(64) });
   assert.equal(withSite, sha(JSON.stringify({
     schema_version: 4, sealed_scope_sha256: COMMON.sealedScopeDigest, curation_input_sha256: COMMON.curationInputDigest,
     public_config_sha256: COMMON.configDigest, input_revision_sha256: COMMON.inputRevisionDigest,
-    publish_site_sha256: "f".repeat(64), effective_date: COMMON.effectiveDate, builders: { public_site: 11 },
+    publish_site_sha256: "f".repeat(64), effective_date: COMMON.effectiveDate, builders: { public_site: 12 },
   })));
 });
 

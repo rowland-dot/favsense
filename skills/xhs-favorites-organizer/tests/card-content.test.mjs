@@ -96,7 +96,28 @@ test("postBody leaves 'C#', a bare '#1' and a tag followed by more words alone (
   assert.equal(postBody("榜单排名 #1"), "榜单排名 #1", "digits alone are a number, not a tag");
   assert.equal(postBody("#开源项目 的项目很多"), "#开源项目 的项目很多", "a tag with words after it is not a trailing run");
   assert.equal(postBody("C# #开源项目"), "C#", "only the tag run goes; the C# before it stays");
-  assert.equal(postBody("版本 v2#发布"), "版本 v2#发布", "a '#' glued to the word before it is not the start of a tag");
+  assert.equal(postBody("版本 v2#发布 的变化 很多"), "版本 v2#发布 的变化 很多", "a glued '#' that is not at the end of the line is left alone");
+});
+
+// The real description of the post ending 00255e: no title field, and the first tag is glued to the last word.
+const GLUED_DESCRIPTION = "YouTube推荐的5个AI博主#Ai#油管推荐博主[话题]# #个人成长[话题]# #知识付费[话题]# #小鹅通[话题]# #好视频扶持计划[话题]#";
+
+test("a tag glued to the last word of the post text goes, so the title taken from it is clean (issue 115 reopened)", () => {
+  const body = postBody(GLUED_DESCRIPTION);
+  assert.equal(body, "YouTube推荐的5个AI博主");
+  assert.equal(cardTitle({ title: undefined, body, author: "甲", noteId: "n" }), "YouTube推荐的5个AI博主");
+  assert.equal(postBody("版本 v2#发布"), "版本 v2", "a glued tag at the end of the line goes whatever it is glued to");
+  assert.equal(postBody("学C#入门"), "学C#入门", "a lone letter before '#' is a language name");
+  assert.equal(postBody("本周第#1名"), "本周第#1名", "a glued '#' followed by a digit is a number");
+});
+
+test("a closing label wrapped in zero-width spaces goes with its tags (issue 115 reopened)", () => {
+  const zw = "​​";
+  assert.equal(replyText(`这是总结。\n\n${zw}标签${zw}：#AI视频`), "这是总结。", "the real reply tail on the live card");
+  assert.equal(replyText(`这是总结。\n${zw}笔${zw}记标签：#AI视频 #开源`), "这是总结。", "zero-width spaces anywhere inside the label");
+  assert.equal(replyText(`这是总结。\n${zw}\n${zw}标签：#AI视频`), "这是总结。", "a line holding only zero-width spaces counts as blank");
+  assert.equal(replyText(`这是总结。\n\n${zw}#AI视频`), "这是总结。", "a closing line left holding only zero-width spaces goes too");
+  assert.equal(replyText(`这是总结。${zw}\n`), `这是总结。${zw}\n`, "zero-width spaces with no tags are left exactly as saved");
 });
 
 test("postBody drops a closing 标签 label line with its tags too (issue 115 reopened)", () => {
