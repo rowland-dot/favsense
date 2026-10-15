@@ -96,7 +96,33 @@ test("postBody leaves 'C#', a bare '#1' and a tag followed by more words alone (
   assert.equal(postBody("榜单排名 #1"), "榜单排名 #1", "digits alone are a number, not a tag");
   assert.equal(postBody("#开源项目 的项目很多"), "#开源项目 的项目很多", "a tag with words after it is not a trailing run");
   assert.equal(postBody("C# #开源项目"), "C#", "only the tag run goes; the C# before it stays");
-  assert.equal(postBody("版本 v2#发布"), "版本 v2#发布", "a '#' glued to the word before it is not the start of a tag");
+  assert.equal(postBody("版本 v2#发布 的变化 很多"), "版本 v2#发布 的变化 很多", "a glued '#' that is not at the end of the line is left alone");
+});
+
+// The real description of the post ending 00255e: no title field, and the first tag is glued to the last word.
+const GLUED_DESCRIPTION = "YouTube推荐的5个AI博主#Ai#油管推荐博主[话题]# #个人成长[话题]# #知识付费[话题]# #小鹅通[话题]# #好视频扶持计划[话题]#";
+
+test("a tag glued to the last word of the post text goes, so the title taken from it is clean (issue 115 reopened)", () => {
+  const body = postBody(GLUED_DESCRIPTION);
+  assert.equal(body, "YouTube推荐的5个AI博主");
+  assert.equal(cardTitle({ title: undefined, body, author: "甲", noteId: "n" }), "YouTube推荐的5个AI博主");
+  assert.equal(postBody("版本 v2#发布"), "版本 v2", "a glued tag at the end of the line goes whatever it is glued to");
+  assert.equal(postBody("学C#入门"), "学C#入门", "a lone letter before '#' is a language name");
+  assert.equal(postBody("本周第#1名"), "本周第#1名", "a glued '#' followed by a digit is a number");
+});
+
+test("a closing label wrapped in zero-width spaces goes with its tags (issue 115 reopened)", () => {
+  const zw = "​​";
+  assert.equal(replyText(`这是总结。\n\n${zw}标签${zw}：#AI视频`), "这是总结。", "the real reply tail on the live card");
+  assert.equal(replyText(`这是总结。\n${zw}笔${zw}记标签：#AI视频 #开源`), "这是总结。", "zero-width spaces anywhere inside the label");
+  assert.equal(replyText(`这是总结。\n${zw}\n${zw}标签：#AI视频`), "这是总结。", "a line holding only zero-width spaces counts as blank");
+  assert.equal(replyText(`这是总结。\n\n${zw}#AI视频`), "这是总结。", "a closing line left holding only zero-width spaces goes too");
+  assert.equal(replyText(`这是总结。${zw}\n`), `这是总结。${zw}\n`, "zero-width spaces with no tags are left exactly as saved");
+});
+
+test("postBody drops a closing 标签 label line with its tags too (issue 115 reopened)", () => {
+  assert.equal(postBody("正文说明。\n笔记标签：#开源项目 #自媒体"), "正文说明。");
+  assert.equal(postBody("标签是一种分类方式。\n标签：#a工具 的说明"), "标签是一种分类方式。\n标签：#a工具 的说明");
 });
 
 test("a title taken from the first line of the text never ends in a tag run, even the issue's own example (issue 115)", () => {
@@ -116,8 +142,62 @@ test("a short first line that still carries a tag run is cleaned too, whatever f
   assert.equal(cardTitle({ title: "", body: "短标题 #AI工具 #开源项目\n后面", author: "", noteId: "n" }), "短标题");
 });
 
-test("the post's own title is untouched by the tag rule (issue 115)", () => {
-  assert.equal(cardTitle({ title: "我的标题 #AI工具", body: "正文", author: "甲", noteId: "n" }), "我的标题 #AI工具");
+test("the post's own title is untouched except for a closing tag run (issue 115)", () => {
+  assert.equal(cardTitle({ title: "  我的 #AI 标题，不裁剪  ", body: "正文", author: "甲", noteId: "n" }), "我的 #AI 标题，不裁剪", "a tag in the middle stays");
+});
+
+const ownTitle = (title, body = "正文") => cardTitle({ title, body, author: "甲", noteId: "n" });
+
+test("an own title loses a closing tag run, spaced or glued to its last word (issue 115 reopened)", () => {
+  assert.equal(ownTitle("我的标题 #AI工具 #开源项目"), "我的标题");
+  assert.equal(ownTitle("YouTube推荐的5个AI博主#Ai"), "YouTube推荐的5个AI博主", "the issue's own glued example");
+  assert.equal(ownTitle("推荐博主#Ai#工具 #开源"), "推荐博主", "glued tags and spaced tags in one run");
+  assert.equal(ownTitle("标题 标签：#Ai #开源"), "标题", "a label run goes with its label");
+});
+
+test("an own title keeps 'C#', digit-only tags and a '#' that is not at the end (issue 115 reopened)", () => {
+  assert.equal(ownTitle("我在学 C#"), "我在学 C#");
+  assert.equal(ownTitle("C#入门教程"), "C#入门教程");
+  assert.equal(ownTitle("学C#入门"), "学C#入门", "a lone letter before '#' is a language name even without a space");
+  assert.equal(ownTitle("榜单排名 #1"), "榜单排名 #1");
+  assert.equal(ownTitle("本周第#1名"), "本周第#1名", "a glued '#' followed by a digit is a number");
+  assert.equal(ownTitle("#开源项目 的项目很多"), "#开源项目 的项目很多");
+});
+
+test("an own title made only of tags is no title, so the first line of the text takes over (issue 115 reopened)", () => {
+  assert.equal(ownTitle("#开源项目 #自媒体", "正文第一行\n第二行"), "正文第一行");
+  assert.equal(ownTitle("#开源项目 #自媒体", ""), "甲的收藏");
+});
+
+const replyText = (summary, state = "complete") => cardText({ body: "原帖文字", point: point(summary), state, extracted: null }).mainText;
+
+test("a DianDian reply loses a closing line made of a 标签 label and tags, label included (issue 115 reopened)", () => {
+  assert.equal(replyText("这是总结。\n标签：#开源项目 #自媒体"), "这是总结。");
+  assert.equal(replyText("这是总结。\n笔记标签：#开源项目 #自媒体"), "这是总结。");
+  assert.equal(replyText("这是总结。\n\n标签包括：#开源项目、#自媒体等。"), "这是总结。", "the Chinese list comma and the closing 等。 go with the line");
+  assert.equal(replyText("这是总结。\n标签: #开源项目"), "这是总结。", "an ASCII colon and a single tag");
+});
+
+test("a DianDian reply loses a bare closing line of tags and tags at the end of its last line (issue 115 reopened)", () => {
+  assert.equal(replyText("这是总结。\n\n#开源项目 #自媒体\n"), "这是总结。");
+  assert.equal(replyText("这是总结。 #开源项目 #自媒体"), "这是总结。");
+  assert.equal(replyText("这是总结。\n标签：#a工具\n#b工具"), "这是总结。", "two closing lines in a row both go");
+  assert.equal(replyText("这是总结。 标签：#a工具 #b工具"), "这是总结。", "a label glued to prose on the same line goes with its tags");
+});
+
+test("a cut (damaged) reply is cleaned the same way when it is all that is left (issue 115 reopened)", () => {
+  assert.equal(cardText({ body: "", point: point("被截断的回复。\n标签：#a工具"), state: "damaged", extracted: null }).mainText, "被截断的回复。");
+});
+
+test("a DianDian reply keeps everything that is not a closing tag run (issue 115 reopened)", () => {
+  assert.equal(replyText("# 标题\n\n用 C# 写 #1 的工具。\n标签：#a工具 的说明很多"), "# 标题\n\n用 C# 写 #1 的工具。\n标签：#a工具 的说明很多", "a heading, C#, #1 and a label whose tag is followed by words all stay");
+  assert.equal(replyText("第一行 #a工具 #b工具\n第二行是正文"), "第一行 #a工具 #b工具\n第二行是正文", "tags on a line that is not the last stay; only the closing lines are cleaned");
+  assert.equal(replyText("标签是一种分类方式。"), "标签是一种分类方式。", "the word 标签 with no colon and tags is just prose");
+  assert.equal(replyText("总结。\n这个标签 #a工具"), "总结。\n这个标签", "without a colon the word 标签 is prose; only the tag goes");
+  assert.equal(replyText("第一行 #a工具\n总结。 #b工具"), "第一行 #a工具\n总结。", "stripping stops after the last line that had text");
+  assert.equal(replyText("总结。\n#a工具\n\n#b工具"), "总结。", "a blank line between two closing tag lines does not stop the strip");
+  const crlf = "第一行\r\n第二行";
+  assert.equal(replyText(crlf), crlf, "a reply with nothing to strip comes back byte for byte");
 });
 
 test("cardCounts counts complete replies and transcripts shown, never a cut reply or a transcript hidden behind a reply", () => {
