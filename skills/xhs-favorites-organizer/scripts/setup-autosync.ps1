@@ -131,6 +131,40 @@ function Open-SopBrowserTab {
     return $tab
 }
 
+# The id of every Xiaohongshu tab setup opens goes into a small private record, and the sync service closes the
+# recorded tabs that are still open when its next round starts. The tab's address is the bare home address that
+# the SOP launcher's own page also has, so the id is the only thing that tells the two apart. Only ids are stored.
+function Add-SetupScanTabRecord {
+    param(
+        [Parameter(Mandatory)][string]$StateDirectory,
+        [Parameter(Mandatory)][object]$Tab
+    )
+    $idPattern = '^[A-Za-z0-9._-]{1,160}$'
+    $recordPath = Join-Path $StateDirectory 'setup-pages.json'
+    try {
+        $tabId = [string]$Tab.id
+        if ($tabId -notmatch $idPattern) { throw 'the scan browser did not return a usable tab id' }
+        $tabIds = [System.Collections.Generic.List[string]]::new()
+        if (Test-Path -LiteralPath $recordPath -PathType Leaf) {
+            try {
+                $earlier = Get-Content -LiteralPath $recordPath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+                foreach ($earlierId in @($earlier.tab_ids)) {
+                    $earlierText = [string]$earlierId
+                    if ($earlierText -match $idPattern -and -not $tabIds.Contains($earlierText)) { $tabIds.Add($earlierText) }
+                }
+            } catch {
+                # An unreadable record holds nothing worth keeping; the new id still gets written.
+            }
+        }
+        if (-not $tabIds.Contains($tabId)) { $tabIds.Add($tabId) }
+        $json = [ordered]@{ version = 1; tab_ids = @($tabIds) } | ConvertTo-Json -Compress
+        Set-SetupFileBytesAtomically -Path $recordPath -Bytes ([System.Text.UTF8Encoding]::new($false).GetBytes($json))
+    } catch {
+        # The tab is already open, and failing here would roll back a good installation over a leftover tab.
+        Write-Warning "Could not record the Xiaohongshu tab that setup opened ($($_.Exception.Message)). Close that extra tab by hand."
+    }
+}
+
 function Test-SopTampermonkeyInstallation {
     param(
         [Parameter(Mandatory)][string]$ProfilePath,
@@ -535,7 +569,8 @@ Invoke-FavSenseSetupUnderLock -StateDirectory $stateDirectory -SetupAction {
 
     if (-not $tampermonkeyInstalled) {
         Open-SopBrowserTab -Channel $channel -Url $tampermonkeyStoreUrl | Out-Null
-        Open-SopBrowserTab -Channel $channel -Url $xhsLoginUrl | Out-Null
+        $xhsTab = Open-SopBrowserTab -Channel $channel -Url $xhsLoginUrl
+        Add-SetupScanTabRecord -StateDirectory $stateDirectory -Tab $xhsTab
         Write-Output 'Opened Tampermonkey and Xiaohongshu in the existing SOP scanner browser. Complete installation and login there, then run setup again.'
         Write-Output 'No private installer capability or bridge token was issued.'
         return
@@ -595,7 +630,8 @@ Invoke-FavSenseSetupUnderLock -StateDirectory $stateDirectory -SetupAction {
     $startAction = {
         & (Join-Path $PSScriptRoot 'start-autosync.ps1') -Workspace $workspacePath -Config $configPath -Port $Port -SopRuntime $channel.RuntimePath
         Open-SopBrowserTab -Channel $channel -Url $installSourceUrl | Out-Null
-        Open-SopBrowserTab -Channel $channel -Url $xhsLoginUrl | Out-Null
+        $xhsTab = Open-SopBrowserTab -Channel $channel -Url $xhsLoginUrl
+        Add-SetupScanTabRecord -StateDirectory $stateDirectory -Tab $xhsTab
     }
     $cleanupProcessAction = {
         param([int[]]$InitialProcessIds)

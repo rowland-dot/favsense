@@ -3759,6 +3759,19 @@ test("setup restores the previous private installation when bridge startup fails
   assert.match(result.stdout, /Credential setup lock, crash-temp cleanup, exact rollback, service restoration, and success commit were accepted/);
 });
 
+test("setup records the tab id of each Xiaohongshu page it opens, so the next round can close it", {
+  skip: process.platform !== "win32"
+}, () => {
+  const result = spawnSync("powershell.exe", [
+    "-NoProfile",
+    "-ExecutionPolicy", "Bypass",
+    "-File", resolve(root, "skills/xhs-favorites-organizer/tests/test_setup_scan_tab_record.ps1"),
+    "-ScriptPath", resolve(root, "skills/xhs-favorites-organizer/scripts/setup-autosync.ps1")
+  ], { cwd: root, encoding: "utf8" });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /Setup tab record on both paths, earlier ids kept, tab ids only, and a failed write that only warns were accepted/);
+});
+
 test("XHS-Downloader setup is pinned, locked and transactional without network access", {
   skip: process.platform !== "win32"
 }, () => {

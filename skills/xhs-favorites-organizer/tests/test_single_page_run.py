@@ -846,6 +846,115 @@ class LeftoverPagesTest(unittest.TestCase):
         self.assertIn("run-page-cleanup", log)
 
 
+class SetupPagesTest(unittest.TestCase):
+    """The page setup opens in the scan browser is closed by the next round, by its recorded tab id (issue 137).
+
+    Setup writes the id of each Xiaohongshu tab it opens to a small private record. That page has the bare
+    home address the SOP launcher's page also has, so the address alone can never tell the two apart.
+    """
+
+    HOME = "https://www.xiaohongshu.com/explore"
+
+    def record(self, run: Round, *tab_ids: object) -> Path:
+        path = run.bridge.state_dir / "setup-pages.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"version": 1, "tab_ids": list(tab_ids)}), encoding="utf-8")
+        return path
+
+    @staticmethod
+    def recorded(path: Path) -> list:
+        return json.loads(path.read_text(encoding="utf-8"))["tab_ids"]
+
+    def test_a_page_setup_recorded_is_closed_before_the_round_opens_its_own(self):
+        run = Round(self)
+        browser = run.browser
+        browser.pages.update({"setup-tab": self.HOME, "launcher-home": self.HOME})
+        record = self.record(run, "setup-tab")
+
+        run.start()
+        state = run.finish()
+
+        self.assertEqual(state["state"], "completed")
+        kinds = [(kind, page) for kind, page, _url in browser.log]
+        self.assertIn(("close", "setup-tab"), kinds[:kinds.index(("open", "page-1"))])
+        self.assertEqual(set(browser.pages), {"launcher-home"})
+        self.assertEqual(browser.pages["launcher-home"], self.HOME, "a page at the same address, not recorded, is never navigated")
+        self.assertEqual([page for _kind, page, _url in browser.log if page == "launcher-home"], [])
+        self.assertEqual(browser.max_sync_service_pages, 1)
+        self.assertEqual(self.recorded(record), [])
+
+    def test_a_recorded_page_the_browser_no_longer_lists_is_dropped_without_a_close_request(self):
+        run = Round(self)
+        run.browser.pages["launcher-home"] = self.HOME
+        record = self.record(run, "gone-tab")
+        run.bridge.close_sop_browser_page = mock.Mock(side_effect=run.browser.close_page)
+
+        run.start()
+        state = run.finish()
+
+        self.assertEqual(state["state"], "completed")
+        closed = [call.args[0] for call in run.bridge.close_sop_browser_page.call_args_list]
+        self.assertNotIn("gone-tab", closed)
+        self.assertEqual(self.recorded(record), [])
+        self.assertIn("launcher-home", run.browser.pages)
+
+    def test_a_close_the_browser_refuses_is_logged_and_retried_by_the_next_round_and_the_id_stays_private(self):
+        run = Round(self)
+        run.browser.pages["setup-tab-x"] = self.HOME
+        record = self.record(run, "setup-tab-x")
+        real_close = run.browser.close_page
+        refusing = {"on": True}
+
+        def close(page_id):
+            if refusing["on"] and page_id == "setup-tab-x":
+                raise RuntimeError("SOP DevTools endpoint is unavailable")
+            real_close(page_id)
+
+        run.bridge.close_sop_browser_page = close
+
+        run.start()
+        state = run.finish()
+
+        self.assertEqual(state["state"], "completed")
+        self.assertEqual(self.recorded(record), ["setup-tab-x"], "kept, so a later round tries again")
+        log = (run.bridge.state_dir / BRIDGE.BRIDGE_LOG_NAME).read_text(encoding="utf-8")
+        self.assertIn("run-page-cleanup", log)
+        for place in (log, json.dumps(run.bridge.manual_sync_status()), run.bridge.manual_sync_path.read_text(encoding="utf-8")):
+            self.assertNotIn("setup-tab-x", place)
+
+        refusing["on"] = False
+        run.start()
+        run.finish()
+        self.assertNotIn("setup-tab-x", run.browser.pages)
+        self.assertEqual(self.recorded(record), [])
+
+    def test_a_browser_that_cannot_list_pages_leaves_the_record_as_it_was(self):
+        run = Round(self)
+        record = self.record(run, "setup-tab")
+        run.bridge.list_sop_browser_pages = mock.Mock(side_effect=RuntimeError("SOP DevTools endpoint is unavailable"))
+
+        run.start()
+        state = run.finish()
+
+        self.assertEqual(state["state"], "completed")
+        self.assertEqual(self.recorded(record), ["setup-tab"])
+
+    def test_an_unreadable_record_is_ignored_and_the_round_starts(self):
+        for content in ("not json", "[]", '{"tab_ids": "setup-tab"}', '{"tab_ids": [5, null, "../x", ""]}'):
+            with self.subTest(content=content):
+                run = Round(self)
+                run.browser.pages["launcher-home"] = self.HOME
+                path = run.bridge.state_dir / "setup-pages.json"
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8")
+
+                run.start()
+                state = run.finish()
+
+                self.assertEqual(state["state"], "completed")
+                self.assertEqual(run.browser.pages, {"launcher-home": self.HOME})
+
+
 class PageTaskTest(unittest.TestCase):
     def registered(self):
         run = Round(self)
