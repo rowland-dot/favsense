@@ -88,6 +88,8 @@ FILE_CLASH_WAIT_SECONDS = 2
 MAX_DETAIL_FETCH_BYTES = 32 * 1024 * 1024
 MAX_DETAIL_FETCH_ERROR_BYTES = 1024 * 1024
 MAX_RUN_BOARD_COUNT = 200
+# The most posts one folder may hold in an import and its summary plan. The details fetcher already takes 1000.
+MAX_NOTES_PER_BOARD = 1000
 DIANDIAN_RECORD_MAX_BYTES = 512 * 1024
 DIANDIAN_REPORT_MAX_BYTES = 8 * 1024 * 1024
 NOTE_PATH = re.compile(r"^/(?:explore|discovery/item)/([A-Za-z0-9_-]{1,128})$")
@@ -4315,7 +4317,7 @@ class Bridge:
         titles = payload.get("titles", {})
         if (
             not isinstance(titles, dict)
-            or len(titles) > 200
+            or len(titles) > MAX_NOTES_PER_BOARD
             or not all(
                 isinstance(note_id, str) and NOTE_ID.fullmatch(note_id) and isinstance(title, str)
                 for note_id, title in titles.items()
@@ -4347,7 +4349,7 @@ class Bridge:
             raise ValueError("DianDian plan run_id and board_id must be strings")
         if (
             not isinstance(note_ids, list)
-            or len(note_ids) > 200
+            or len(note_ids) > MAX_NOTES_PER_BOARD
             or not all(isinstance(value, str) and NOTE_ID.fullmatch(value) for value in note_ids)
             or len(set(note_ids)) != len(note_ids)
         ):
@@ -6379,8 +6381,8 @@ class Bridge:
         if board_id not in self.boards or not BOARD_ID.fullmatch(str(board_id)):
             raise ValueError("unexpected board_id")
         self.validate_manual_board_run(run_id, str(board_id))
-        if not isinstance(urls, list) or not 1 <= len(urls) <= 200 or not all(isinstance(v, str) for v in urls):
-            raise ValueError("urls must contain between 1 and 200 strings")
+        if not isinstance(urls, list) or not 1 <= len(urls) <= MAX_NOTES_PER_BOARD or not all(isinstance(v, str) for v in urls):
+            raise ValueError(f"urls must contain between 1 and {MAX_NOTES_PER_BOARD} strings")
 
         unique: dict[str, str] = {}
         for value in urls:

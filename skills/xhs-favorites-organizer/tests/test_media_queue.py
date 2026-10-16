@@ -129,6 +129,12 @@ class PendingMediaQueueTests(unittest.TestCase):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 self.module.build_signed_queue(invalid, max_items=3)
 
+    def test_signed_queue_takes_the_media_of_a_folder_past_200_posts(self):
+        urls = " ".join(
+            f"https://www.xiaohongshu.com/discovery/item/{index:024d}?xsec_token=temporary" for index in range(260)
+        )
+        self.assertEqual(len(self.module.build_signed_queue(urls, max_items=260)), 260)
+
     def test_error_classification_never_returns_request_content(self):
         self.assertEqual(self.module.classify_error(RuntimeError("client has been closed xsec_token=secret")), "client-closed")
         self.assertEqual(self.module.classify_error(TimeoutError("https://example.invalid/private")), "timeout")
