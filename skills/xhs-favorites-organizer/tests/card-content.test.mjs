@@ -193,11 +193,47 @@ test("a DianDian reply keeps everything that is not a closing tag run (issue 115
   assert.equal(replyText("# 标题\n\n用 C# 写 #1 的工具。\n标签：#a工具 的说明很多"), "# 标题\n\n用 C# 写 #1 的工具。\n标签：#a工具 的说明很多", "a heading, C#, #1 and a label whose tag is followed by words all stay");
   assert.equal(replyText("第一行 #a工具 #b工具\n第二行是正文"), "第一行 #a工具 #b工具\n第二行是正文", "tags on a line that is not the last stay; only the closing lines are cleaned");
   assert.equal(replyText("标签是一种分类方式。"), "标签是一种分类方式。", "the word 标签 with no colon and tags is just prose");
-  assert.equal(replyText("总结。\n这个标签 #a工具"), "总结。\n这个标签", "without a colon the word 标签 is prose; only the tag goes");
+  assert.equal(replyText("总结。\n这个标签是作者自己起的名字不是平台分类 #a工具"), "总结。\n这个标签是作者自己起的名字不是平台分类", "without a colon the word 标签 is prose; only the tag goes");
   assert.equal(replyText("第一行 #a工具\n总结。 #b工具"), "第一行 #a工具\n总结。", "stripping stops after the last line that had text");
   assert.equal(replyText("总结。\n#a工具\n\n#b工具"), "总结。", "a blank line between two closing tag lines does not stop the strip");
   const crlf = "第一行\r\n第二行";
   assert.equal(replyText(crlf), crlf, "a reply with nothing to strip comes back byte for byte");
+});
+
+// Issue 115, reopened a third time: the closing line introduced its tags in words the label pattern does not know, so the tags
+// went and the lead-in stayed. These are the three saved replies' real tails (U+200B pairs wrap the tags exactly as saved).
+const ZW = "​​";
+const BODY = "这是总结。";
+
+test("a reply whose closing line is a short lead-in plus tags loses the whole line (issue 115 reopened again)", () => {
+  assert.equal(replyText(`${BODY}\n\n笔记标签涉及 ${ZW}#视频下载${ZW}、${ZW}#github开源项目推荐${ZW}、${ZW}#办公技巧${ZW}，整体定位是一个实用型工具推荐。`), BODY, "ending 1: 笔记标签涉及");
+  assert.equal(replyText(`${BODY}\n\n笔记作者还附带了话题标签：#GitHub #开源 #AI #程序员 #科技，适合对开源项目和前沿技术感兴趣的读者关注。`), BODY, "ending 2: 笔记作者还附带了话题 + 标签：");
+  assert.equal(replyText(`${BODY}\n标签\n\n笔记带上了 ${ZW}#vibecoding${ZW}、${ZW}#openclaw${ZW}、${ZW}#ai设计${ZW}、`), BODY, "ending 3: a bare 标签 heading, then 笔记带上了 and cut-off tags");
+  assert.equal(replyText(`${BODY}\n笔记带上了 #a工具 #b工具`), BODY, "plain spaced tags after a lead-in");
+  assert.equal(replyText(`${BODY}\n\n（笔记标签：#AI人工智能 #AI工具测评 #skill #插件）`), BODY, "a parenthesis opening the closing line is a lead-in too (the card ending 0231c0 showed a dangling '（')");
+});
+
+test("the lead-in rule keeps real sentences: punctuation, length, or a line that is not the closing one (issue 115 reopened again)", () => {
+  assert.equal(replyText(`${BODY}\n好用。笔记标签涉及 #a工具 #b工具`), `${BODY}\n好用。笔记标签涉及`, "a lead-in holding a sentence end is text, only the tags go");
+  const twelve = "字".repeat(12);
+  const thirteen = "字".repeat(13);
+  assert.equal(replyText(`${BODY}\n${twelve} #a工具 #b工具`), BODY, "twelve characters is still a lead-in");
+  assert.equal(replyText(`${BODY}\n${thirteen} #a工具 #b工具`), `${BODY}\n${thirteen}`, "thirteen characters is a sentence that merely ends before its tags");
+  assert.equal(replyText(`${BODY}\n笔记带上了 #a工具 #b工具\n后面还有正文`), `${BODY}\n笔记带上了 #a工具 #b工具\n后面还有正文`, "tags on a line that is not the closing one stay");
+});
+
+test("the lead-in rule is for the closing line of a reply only: a short post line before its tags keeps its words (issue 115 reopened again)", () => {
+  assert.equal(postBody("今天去了咖啡店 #探店 #咖啡"), "今天去了咖啡店");
+  assert.equal(postBody("笔记带上了 #a工具"), "笔记带上了");
+});
+
+test("a bare 标签 heading goes only when the tags under it were removed (issue 115 reopened again)", () => {
+  assert.equal(replyText(`${BODY}\n笔记标签\n\n#a工具 #b工具`), BODY, "a label-only heading above a tags-only line");
+  assert.equal(replyText(`${BODY}\n标签：\n#a工具`), BODY, "a heading with a colon");
+  assert.equal(replyText("标签：#a工具"), "", "a reply made only of a label line and tags has nothing left");
+  assert.equal(replyText(`${BODY}\n标签`), `${BODY}\n标签`, "with no tags removed the reply is left exactly as saved");
+  assert.equal(replyText("第一行 #a工具\n标签"), "第一行 #a工具\n标签", "a heading that closes the reply with no tags under it stays, and the line above it is not touched");
+  assert.equal(replyText(`${BODY}\n${"🥝".repeat(7)} #a工具`), BODY, "the lead-in length counts characters, so seven emoji (fourteen code units) are still short");
 });
 
 test("cardCounts counts complete replies and transcripts shown, never a cut reply or a transcript hidden behind a reply", () => {
