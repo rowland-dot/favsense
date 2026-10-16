@@ -106,6 +106,12 @@ class ScanBrowser:
             self.sync_service_pages.discard(page_id)
             self.log.append(("close", page_id, url))
 
+    def activate_page(self, page_id: str) -> None:
+        with self.lock:
+            if page_id not in self.pages:
+                raise RuntimeError("SOP DevTools endpoint is unavailable")
+            self.log.append(("activate", page_id, self.pages[page_id]))
+
     def navigate(self, page_id: str, url: str) -> None:
         with self.lock:
             if page_id not in self.pages:
@@ -247,6 +253,7 @@ class Round:
         bridge.open_sop_browser_page = self.browser.open_page
         bridge.list_sop_browser_pages = self.browser.list_pages
         bridge.close_sop_browser_page = self.browser.close_page
+        bridge.activate_sop_browser_page = self.browser.activate_page
         bridge.attach_run_page = lambda run_id: self.browser.attach(bridge.read_manual_sync().get("run_page_id"))
         bridge.diandian_cdp_ask = mock.Mock(side_effect=self.ask) if cdp else None
         catalog = {"version": 1, "notes": {}}
@@ -847,6 +854,105 @@ class PageTaskTest(unittest.TestCase):
         })
         self.assertEqual(status, 200)
         self.assertEqual(call("POST", "/sync/diandian-cdp", {"run_id": "x"})[0], 404)
+
+
+class ScanPageToFrontTest(unittest.TestCase):
+    """A folder page in a background tab cannot scroll, so the scanning page can ask to be shown.
+
+    The round's one page is the only page ever shown; any other page is left exactly as it is.
+    """
+
+    def started(self):
+        run = Round(self)
+        run.browser.script = None  # no user script reacts, so the round stays where it started
+        run.start()
+        state = run.bridge.read_manual_sync()
+        return run, {"run_id": run.bridge.manual_run_id(state["batch"], "first"), "board_id": "first"}
+
+    @staticmethod
+    def shown(run):
+        return [page for kind, page, _url in run.browser.log if kind == "activate"]
+
+    def test_the_round_page_is_shown_when_the_scanning_page_asks(self):
+        run, request = self.started()
+        run.browser.pages["home"] = "https://www.xiaohongshu.com/explore"
+
+        self.assertEqual(run.bridge.bring_run_page_to_front(request), {"activated": True})
+
+        self.assertEqual(self.shown(run), [run.bridge.read_manual_sync()["run_page_id"]])
+        self.assertIn(run.bridge.read_manual_sync()["state"], {"starting", "running"})
+        self.assertEqual(run.browser.pages["home"], "https://www.xiaohongshu.com/explore")
+
+    def test_a_request_for_another_round_or_folder_shows_nothing(self):
+        run, request = self.started()
+        for bad in (
+            {**request, "run_id": "manualother_first"},
+            {**request, "board_id": "unknown"},
+            {"run_id": request["run_id"]},
+            {**request, "extra": 1},
+        ):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                run.bridge.bring_run_page_to_front(bad)
+        self.assertEqual(self.shown(run), [])
+
+    def test_a_browser_that_cannot_show_the_page_is_reported_and_does_not_stop_the_round(self):
+        run, request = self.started()
+        run.bridge.activate_sop_browser_page = mock.Mock(side_effect=RuntimeError("SOP DevTools endpoint is unavailable"))
+
+        self.assertEqual(run.bridge.bring_run_page_to_front(request), {"activated": False})
+
+        self.assertIn(run.bridge.read_manual_sync()["state"], {"starting", "running"})
+        log = (run.bridge.state_dir / BRIDGE.BRIDGE_LOG_NAME).read_text(encoding="utf-8")
+        self.assertIn("run-page-front", log)
+
+    def test_a_round_with_no_recorded_page_shows_nothing(self):
+        run, request = self.started()
+        with run.bridge.get_manual_sync_lock():
+            run.bridge.report_run_event("run_page_closed", page_id=run.bridge.read_manual_sync()["run_page_id"])
+
+        self.assertEqual(run.bridge.bring_run_page_to_front(request), {"activated": False})
+        self.assertEqual(self.shown(run), [])
+
+    def test_showing_a_page_asks_the_scan_browser_to_activate_exactly_that_tab(self):
+        bridge = Round(self).bridge
+        endpoint = BRIDGE.DevToolsEndpoint(9224, "/devtools/browser/browser-id")
+        with mock.patch.object(BRIDGE, "read_sop_devtools_endpoint", return_value=endpoint), mock.patch.object(
+            BRIDGE, "loopback_devtools_action"
+        ) as action:
+            BRIDGE.Bridge.activate_sop_browser_page(bridge, "page-1")
+            with self.assertRaises(ValueError):
+                BRIDGE.Bridge.activate_sop_browser_page(bridge, "../page-1")
+        action.assert_called_once_with(endpoint, "/json/activate/page-1")
+
+    def test_the_route_needs_the_token_and_answers_the_page(self):
+        run, request = self.started()
+        bridge = run.bridge
+        server = BRIDGE.ThreadingHTTPServer((BRIDGE.HOST, 0), BRIDGE.make_handler(bridge))
+        bridge.port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        self.addCleanup(thread.join, 2)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+
+        def call(body, token=bridge.token):
+            http_request = Request(
+                f"http://{BRIDGE.HOST}:{bridge.port}/sync/scan-page-front",
+                data=json.dumps(body).encode("utf-8"),
+                headers=bridge_support.userscript_headers(token),
+                method="POST",
+            )
+            try:
+                with urlopen(http_request, timeout=3) as response:
+                    return response.status, json.loads(response.read().decode("utf-8"))
+            except HTTPError as error:
+                return error.code, json.loads(error.read().decode("utf-8"))
+
+        status, body = call(request)
+        self.assertEqual((status, body["ok"], body["activated"]), (200, True, True))
+        self.assertEqual(call(request, token="b" * 64)[0], 401)
+        self.assertEqual(call({"run_id": "x", "board_id": "first"})[0], 400)
+        self.assertEqual(len(self.shown(run)), 1)
 
 
 if __name__ == "__main__":
