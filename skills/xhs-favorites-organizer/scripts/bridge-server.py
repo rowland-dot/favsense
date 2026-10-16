@@ -133,6 +133,9 @@ USERSCRIPT_INSTALL_PATH = re.compile(
     r"^/install/([a-f0-9]{64})/xhs-favorites\.user\.js$"
 )
 USERSCRIPT_INSTALL_TTL_SECONDS = 10 * 60
+# The install record is read, changed and rewritten by both the install completion and the version
+# recording of ordinary script requests, which arrive on separate handler threads.
+USERSCRIPT_INSTALL_RECORD_LOCK = threading.Lock()
 USERSCRIPT_VERSION_HEADER = "X-XHS-Userscript-Version"
 USERSCRIPT_OUTDATED_REASON = "userscript-outdated"
 # Every path the installed user script calls. A request to one of these must name the template version
@@ -657,19 +660,35 @@ def valid_userscript_install_capability(path: Path, candidate: str) -> bool:
 
 def invalidate_userscript_install_capability(path: Path, candidate: str, template_version: str) -> bool:
     """Spend the install capability and record which template the script that spent it came from."""
-    if not valid_userscript_install_capability(path, candidate):
-        return False
-    value = userscript_install_capability_record(path)
-    if value is None:
-        return False
-    value["completed_at"] = datetime.now().astimezone().isoformat()
-    value["template_version"] = template_version
-    atomic_json(path, value)
-    return True
+    with USERSCRIPT_INSTALL_RECORD_LOCK:
+        if not valid_userscript_install_capability(path, candidate):
+            return False
+        value = userscript_install_capability_record(path)
+        if value is None:
+            return False
+        value["completed_at"] = datetime.now().astimezone().isoformat()
+        value["template_version"] = template_version
+        atomic_json(path, value)
+        return True
+
+
+def record_installed_userscript_version(path: Path, template_version: str) -> bool:
+    """Record the template a running script came from; only the version changes, never the install's spent state.
+
+    Called for a request that already proved its version through the header, so a script that never got to
+    post its install completion is still known. Returns True when the record changed.
+    """
+    with USERSCRIPT_INSTALL_RECORD_LOCK:
+        value = userscript_install_capability_record(path)
+        if value is None or value.get("template_version") == template_version:
+            return False
+        value["template_version"] = template_version
+        atomic_json(path, value)
+        return True
 
 
 def installed_userscript_version(path: Path) -> str | None:
-    """The template version of the script that completed the last install, or None when none is recorded."""
+    """The template version recorded for the installed script, or None when none has been recorded yet."""
     value = userscript_install_capability_record(path)
     version = None if value is None else value.get("template_version")
     return version if isinstance(version, str) and version else None
@@ -3013,11 +3032,13 @@ class Bridge:
         return PLATFORM_ACCESS.legacy_stop(self.state_dir, self.active_round_started_at())
 
     def userscript_is_outdated(self) -> bool:
-        """True unless the script that completed the last install came from today's template.
+        """True when a version is recorded for the installed script and it is not today's template.
 
-        An install record from before versions were recorded has none, so it reads as outdated too.
+        Nothing recorded (a fresh install no request has come from yet) is not outdated: the version is
+        only learned from a script request, so refusing the start would keep the script from ever running.
         """
-        return installed_userscript_version(self.userscript_install_state) != self.userscript_template_version
+        recorded = installed_userscript_version(self.userscript_install_state)
+        return recorded is not None and recorded != self.userscript_template_version
 
     def stop_round_for_outdated_userscript(self, worker_id: str = "") -> None:
         """A request from an outdated script arrived: end the round it belongs to, with the reinstall sentence.
@@ -6989,6 +7010,19 @@ def make_handler(bridge: Bridge):
             # A version is not a secret, so a plain comparison; it also tolerates non-ASCII junk.
             return self.headers.get(USERSCRIPT_VERSION_HEADER, "") == bridge.userscript_template_version
 
+        def record_userscript_version(self) -> None:
+            """A current, authorized script request is the proof of which script runs: remember its version.
+
+            A failed write never fails the request; the next current request tries again.
+            """
+            try:
+                record_installed_userscript_version(bridge.userscript_install_state, bridge.userscript_template_version)
+            except OSError as error:
+                append_bridge_log(
+                    getattr(bridge, "state_dir", None), "INTERNAL", "script-version", "-",
+                    type(error).__name__, sanitize_error(str(error)),
+                )
+
         @staticmethod
         def worker_id_in(body: bytes) -> str:
             """The page worker a script request names, when its body is JSON that does; otherwise empty."""
@@ -7093,9 +7127,11 @@ def make_handler(bridge: Bridge):
                 self.end_headers()
                 self.wfile.write(body)
                 return
-            if parsed.path in USERSCRIPT_ROUTES and self.authorized() and not self.userscript_is_current():
-                self.refuse_outdated_userscript(parse_qs(parsed.query).get("worker_id", [""])[0])
-                return
+            if parsed.path in USERSCRIPT_ROUTES and self.authorized():
+                if not self.userscript_is_current():
+                    self.refuse_outdated_userscript(parse_qs(parsed.query).get("worker_id", [""])[0])
+                    return
+                self.record_userscript_version()
             if parsed.path == "/health":
                 if not self.authorized():
                     self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
@@ -7222,9 +7258,11 @@ def make_handler(bridge: Bridge):
             } and not is_manager_origin(self.headers.get("Origin")):
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"ok": False})
                 return
-            if self.path in USERSCRIPT_ROUTES and not self.userscript_is_current():
-                self.refuse_outdated_userscript(self.worker_id_in(body))
-                return
+            if self.path in USERSCRIPT_ROUTES:
+                if not self.userscript_is_current():
+                    self.refuse_outdated_userscript(self.worker_id_in(body))
+                    return
+                self.record_userscript_version()
             try:
                 length = int(self.headers.get("Content-Length", "0"))
                 if length < 1 or length > MAX_BODY_BYTES:

@@ -5849,6 +5849,7 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             port=0,
             token=token,
             userscript_template_version=bridge_support.USERSCRIPT_VERSION,
+            userscript_install_state=Path(__file__).with_name("no-install-record.json"),
             click_diandian_control=mock.Mock(return_value={"clicked": True}),
         )
         server = BRIDGE.ThreadingHTTPServer((BRIDGE.HOST, 0), BRIDGE.make_handler(bridge))

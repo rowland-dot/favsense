@@ -148,7 +148,7 @@ python -m http.server 8000 --directory site
 - SOP 扫描浏览器未启动或未登录：运行 SOP 的 `启动扫描浏览器.bat`，只在该窗口恢复登录和安全验证，然后回到本地设置页再次点击“开始整理”。不要改用主浏览器，也不要创建 FavSense 第二 profile。
 - 本地服务未启动：运行 `start-autosync.ps1`。
 - 协议或配置不匹配：先运行 `stop-autosync.ps1`，再运行 `setup-autosync.ps1`。
-- 用户脚本过旧：用户脚本模板的数字版本（`assets/xhs-favorites.user.js.template` 的 `@version`，协议一变就升）是同步服务与脚本共用的唯一比较值。安装完成时（新脚本用掉安装凭据）安装记录 `userscript-install.json` 记下 `template_version`；“开始整理”在记录里没有它或与模板不同时，在打开任何小红书页面之前拒绝，工作台一加载就显示契约里 `userscript_outdated` 那句话，处理方法只有一个：重新运行 `setup-autosync.ps1` 并在扫描浏览器里确认一次安装。用户脚本调用的每个路由（`bridge-server.py` 的 `USERSCRIPT_ROUTES`）都要求请求头 `X-XHS-Userscript-Version` 等于当前模板版本，缺失或不同回 409、原因 `userscript-outdated`，正在进行的一轮以同一句话停止。新增用户脚本要调用的路由时必须加进这张表；工作台自己的路由不在其中。“仅本地重建”不依赖用户脚本，不受影响。
+- 用户脚本过旧：用户脚本模板的数字版本（`assets/xhs-favorites.user.js.template` 的 `@version`，协议一变就升）是同步服务与脚本共用的唯一比较值。安装记录 `userscript-install.json` 的 `template_version` 由首个经授权的用户脚本请求写入：请求头版本等于当前模板版本就记下，不受十分钟安装凭据限制（安装完成请求同样记下）。刚装好的脚本只有在小红书页面加载后才会发出请求，所以记录里还没有版本时“开始整理”照常开始，由该脚本的首个请求记下版本，或（请求头缺失、过旧时）以同一句话停止这一轮。只有记录里已有版本且与模板不同，“开始整理”才在打开任何小红书页面之前拒绝，工作台一加载就显示契约里 `userscript_outdated` 那句话，处理方法只有一个：重新运行 `setup-autosync.ps1` 并在扫描浏览器里确认一次安装。用户脚本调用的每个路由（`bridge-server.py` 的 `USERSCRIPT_ROUTES`）都要求请求头 `X-XHS-Userscript-Version` 等于当前模板版本，缺失或不同回 409、原因 `userscript-outdated`，正在进行的一轮以同一句话停止。新增用户脚本要调用的路由时必须加进这张表；工作台自己的路由不在其中。“仅本地重建”不依赖用户脚本，不受影响。
 - 页面无链接：检查 Tampermonkey 是否启用及页面是否为白名单面板。
 - 详情失败：本次不写新增详情，保留现有 catalog 和网页数据；不循环请求。
 - 页面提示“无法连接本地同步服务”：Bridge 对每个请求都会回复 JSON，页面在导入请求断线时会改查该收藏夹的运行状态，仍在处理就继续等待（不超过导入本身的时限），不会提前上报失败。原因查看被 Git 忽略的 `.xhs-favorites/bridge.log`（有大小上限）：每个失败请求、未捕获异常、媒体下载失败和最终构建失败（同步收尾与“仅本地重建”都写，带失败阶段与错误码，如 `SNAPSHOT_PUBLISH_MANIFEST_MISMATCH`）各一行，只记录时间、方法、不含查询串的路径、状态码、异常类型和脱敏后的消息，不含 token、运行标识或收藏夹 ID。
