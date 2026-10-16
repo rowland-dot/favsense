@@ -338,10 +338,13 @@ class Round:
         task = bridge.page_task(worker_id)
         self.test.assertEqual((task["stage"], task["note_id"]), ("share", note_id))
         self.test.assertNotIn("url", task, "the share task never carries a signed link")
-        if self.behaviour.get(("share", note_id)) == "safety":
+        outcome = self.behaviour.get(("share", note_id))
+        if outcome == "safety":
             result = {"ok": False, "error": "xhs-safety-stop"}
-        elif self.behaviour.get(("share", note_id)) == "silent":
+        elif outcome == "silent":
             return
+        elif isinstance(outcome, str) and outcome.startswith("error:"):
+            result = {"ok": False, "error": outcome.removeprefix("error:")}
         else:
             result = {"ok": True, "url": copied_note_url(note_id)}
         bridge.record_page_result({"worker_id": worker_id, "stage": "share", **result})
@@ -549,6 +552,168 @@ class AFailureLeavesTheFailingPageTest(unittest.TestCase):
         self.assertEqual(state["state"], "failed")
         self.assertEqual(state["summary_halt_reason"], "share-worker-not-ready")
         self.assert_stopped_on_the_failing_page(run, state, "note")
+
+
+SHARE_CASES = json.loads(
+    (Path(__file__).parents[1] / "test-fixtures" / "share-link-failure-cases.json").read_text(encoding="utf-8")
+)
+ALL_NOTES = [note_id for notes in NOTES.values() for note_id in notes]
+
+
+class AShareLinkFailureCostsOnlyThatNoteTest(unittest.TestCase):
+    """One note whose share link cannot be copied is recorded and passed over; the round goes on."""
+
+    def stored_code_notes(self, run: Round) -> set[str]:
+        store = json.loads((run.bridge.state_dir / "source-codes.json").read_text(encoding="utf-8"))
+        return set(store["notes"])
+
+    def test_a_clean_round_records_no_missing_share_links(self):
+        run = Round(self)
+        run.start()
+        state = run.finish()
+
+        self.assertEqual(state["share_link_missing"], 0)
+        self.assertEqual(state["share_link_missing_reasons"], {})
+
+    def test_a_share_timeout_on_one_note_still_scans_every_board_and_stores_every_code(self):
+        for cdp in (True, False):
+            with self.subTest(cdp=cdp):
+                first, second, third = NOTES["first"]
+                run = Round(self, cdp=cdp, behaviour={("share", second): "error:share-control-timeout"})
+                run.start()
+                state = run.finish()
+
+                self.assertEqual(state["state"], "completed")
+                self.assertNotIn("summary_halt_reason", state)
+                self.assertEqual(
+                    run.browser.kinds(),
+                    ["open:profile", "navigate:board:first"]
+                    + note_kinds([first])
+                    + ["navigate:note:b"]
+                    + note_kinds([third])
+                    + ["navigate:board:second"]
+                    + note_kinds(NOTES["second"])
+                    + ["close:ai"],
+                    "the failed note is visited once, never again within the round",
+                )
+                self.assertEqual(self.stored_code_notes(run), set(ALL_NOTES))
+                for note_id in ALL_NOTES:
+                    self.assertEqual(run.saved(note_id), note_id != second, note_id)
+                self.assertEqual(run.unresolved(), {second: "failed"})
+                self.assertEqual(run.browser.pages, {})
+                self.assertEqual(run.browser.max_sync_service_pages, 1)
+                self.assertEqual(run.bridge.run_curation_pipeline.call_count, 1)
+                run.assert_nothing_secret_is_kept()
+
+    def test_the_run_record_says_how_many_notes_had_no_share_link_and_why(self):
+        first, second, third = NOTES["first"]
+        run = Round(self, behaviour={
+            ("share", first): "error:share-control-timeout",
+            ("share", third): "error:share-menu-timeout",
+            ("share", NOTES["second"][0]): "error:share-control-timeout",
+        })
+        run.start()
+        state = run.finish()
+
+        self.assertEqual(state["state"], "completed")
+        self.assertEqual(state["share_link_missing"], 3)
+        self.assertEqual(
+            state["share_link_missing_reasons"],
+            {"share-control-timeout": 2, "share-menu-timeout": 1},
+        )
+        self.assertEqual(state["summary_failed"], 3)
+        self.assertEqual(run.unresolved(), {first: "failed", third: "failed", NOTES["second"][0]: "failed"})
+        self.assertNotIn("share_link_missing", json.dumps(run.bridge.manual_sync_status()), "the public status is unchanged")
+
+    def test_every_note_of_a_board_failing_to_share_still_reaches_the_next_board(self):
+        behaviour = {("share", note_id): "error:share-control-timeout" for note_id in NOTES["first"]}
+        run = Round(self, behaviour=behaviour)
+        run.start()
+        state = run.finish()
+
+        self.assertEqual(state["state"], "completed")
+        self.assertEqual(state["share_link_missing"], 3)
+        self.assertEqual(
+            run.browser.kinds(),
+            ["open:profile", "navigate:board:first"]
+            + [f"navigate:note:{note_id[0]}" for note_id in NOTES["first"]]
+            + ["navigate:board:second"]
+            + note_kinds(NOTES["second"])
+            + ["close:ai"],
+        )
+        self.assertEqual(self.stored_code_notes(run), set(ALL_NOTES))
+
+    def test_each_page_reported_failure_is_skipped_or_stops_the_round_as_the_table_says(self):
+        second = NOTES["first"][1]
+        for code in SHARE_CASES["skip"]:
+            with self.subTest(skip=code):
+                run = Round(self, behaviour={("share", second): f"error:{code}"})
+                run.start()
+                state = run.finish()
+                self.assertEqual(state["state"], "completed")
+                self.assertEqual(state["share_link_missing_reasons"], {code: 1})
+                self.assertIn("navigate:board:second", run.browser.kinds())
+        for code in SHARE_CASES["halt"]:
+            with self.subTest(halt=code):
+                run = Round(self, behaviour={("share", second): f"error:{code}"})
+                run.start()
+                state = run.finish()
+                self.assertEqual(state["state"], "failed")
+                self.assertEqual(state["summary_halt_reason"], code)
+                self.assertEqual(state["share_link_missing"], 0)
+                self.assertNotIn("navigate:board:second", run.browser.kinds())
+
+    def test_a_note_with_no_held_share_link_is_skipped_like_any_other(self):
+        second = NOTES["first"][1]
+        run = Round(self)
+        keep = run.bridge.keep_run_note_links
+        run.bridge.keep_run_note_links = lambda run_id, links: keep(
+            run_id, {note_id: link for note_id, link in links.items() if note_id != second}
+        )
+        run.start()
+        state = run.finish()
+
+        self.assertEqual(state["state"], "completed")
+        self.assertEqual(state["share_link_missing_reasons"], {"share-link-unavailable": 1})
+        self.assertFalse(run.saved(second))
+        self.assertIn("navigate:board:second", run.browser.kinds())
+
+    def test_a_safety_stop_after_a_skipped_note_still_stops_the_round_at_once(self):
+        first, second, third = NOTES["first"]
+        run = Round(self, behaviour={
+            ("share", first): "error:share-control-timeout",
+            ("share", second): "safety",
+        })
+        run.start()
+        state = run.finish()
+
+        self.assertEqual(state["state"], "safety-stopped")
+        self.assertEqual(state["share_link_missing"], 1)
+        self.assertEqual(
+            run.browser.kinds(),
+            ["open:profile", "navigate:board:first", "navigate:note:a", "navigate:note:b"],
+        )
+        self.assertEqual(run.unresolved(), {first: "failed", second: "failed", third: "batch_aborted"})
+
+    def test_the_skipped_note_is_planned_again_by_the_next_sync_and_not_before(self):
+        first, second, third = NOTES["first"]
+        run = Round(self, behaviour={("share", second): "error:share-control-timeout"})
+        run.start()
+        run.finish()
+        self.assertEqual(run.browser.kinds().count("navigate:note:b"), 1)
+
+        run.behaviour.clear()
+        before = len(run.browser.log)
+        run.start()
+        state = run.finish()
+        later = [f"{kind}:{classify(url)}" for kind, _page, url in run.browser.log[before:]]
+
+        self.assertEqual(state["state"], "completed")
+        self.assertIn("navigate:note:b", later)
+        self.assertNotIn("navigate:note:a", later)
+        self.assertNotIn("navigate:note:c", later)
+        self.assertTrue(run.saved(second))
+        self.assertEqual(run.unresolved(), {})
 
 
 class LeftoverPagesTest(unittest.TestCase):

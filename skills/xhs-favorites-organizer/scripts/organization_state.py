@@ -547,6 +547,8 @@ def _round_started(_working, *, batch, started_at, run_board_ids, mode, requeste
         "summary_pending": 0,
         "summary_failed": 0,
         "summary_batch_aborted": 0,
+        "share_link_missing": 0,
+        "share_link_missing_reasons": {},
         "summary_plan_pending": False,
         "summary_finalizing": False,
         "processed_run_ids": [],
@@ -720,11 +722,19 @@ def _summary_plan_empty(working, *, run_id, abandoned, already_abandoned, pendin
 
 
 @_event("summary_progress")
-def _summary_progress(working, *, summarized_delta=0, failed_delta=0, pending=0):
+def _summary_progress(working, *, summarized_delta=0, failed_delta=0, pending=0, share_link_missing_reason=None):
+    """`share_link_missing_reason` names why a note's share link was not copied; that note is counted as
+    failed too (the caller passes `failed_delta`), and the record keeps the count and the reasons."""
     working = _live(working)
     working["summarized"] = int(working.get("summarized", 0) or 0) + summarized_delta
     working["summary_failed"] = int(working.get("summary_failed", 0) or 0) + failed_delta
     working["summary_pending"] = pending
+    if share_link_missing_reason is not None:
+        working["share_link_missing"] = int(working.get("share_link_missing", 0) or 0) + 1
+        reasons = working.get("share_link_missing_reasons")
+        reasons = dict(reasons) if isinstance(reasons, dict) else {}
+        reasons[share_link_missing_reason] = int(reasons.get(share_link_missing_reason, 0) or 0) + 1
+        working["share_link_missing_reasons"] = reasons
     return working
 
 

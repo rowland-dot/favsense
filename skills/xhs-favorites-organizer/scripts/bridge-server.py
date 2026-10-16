@@ -149,6 +149,9 @@ USERSCRIPT_ROUTES = frozenset({
 MANUAL_TERMINAL_STATES = frozenset({"completed", "failed", "safety-stopped"})
 DIANDIAN_SAFETY_STOP_REASON = "xhs-safety-stop"
 PLATFORM_SAFETY_SIGNAL = PLATFORM_ACCESS.SAFETY_SIGNAL
+# A note page that reports it could not copy its share link costs only that note. These reports end the
+# round instead: the page never got its job, or it could not reach this service. A safety stop always ends it.
+SHARE_FAILURES_THAT_STOP_THE_ROUND = frozenset({"share-worker-not-ready", "share-service-request-failed"})
 DIANDIAN_LEGACY_HALT_REASONS = {
     "diandian-cdp-failed": "transport-failed",
 }
@@ -3880,6 +3883,7 @@ class Bridge:
         *,
         summarized_delta: int = 0,
         failed_delta: int = 0,
+        share_link_missing_reason: str | None = None,
     ) -> None:
         with self.get_manual_sync_lock():
             state = self.read_manual_sync()
@@ -3889,6 +3893,7 @@ class Bridge:
                 summarized_delta=summarized_delta,
                 failed_delta=failed_delta,
                 pending=len(self.summary_plans.get(run_id, set())),
+                share_link_missing_reason=share_link_missing_reason,
             )
 
     def finalization_is_active(self, run_id: str) -> bool:
@@ -4662,13 +4667,16 @@ class Bridge:
     def drive_note_summary(
         self, run_id: str, board_id: str, note_id: str, link: str | None, title: str
     ) -> bool:
-        """One note: share link on its own page, then the DianDian chat in the same page. True when it was saved."""
+        """One note: share link on its own page, then the DianDian chat in the same page.
+
+        True when the round may go on to the next note: the note was saved, or only its share link was
+        missing and it was recorded as such. False when the round was stopped.
+        """
         if link is None:
-            self.halt_driven_step(run_id, board_id, note_id, "share-link-unavailable")
-            return False
-        signed_url = self.share_note_link(run_id, board_id, note_id, link, title)
+            return self.pass_over_note_without_share_link(run_id, board_id, note_id, "share-link-unavailable")
+        signed_url, carry_on = self.share_note_link(run_id, board_id, note_id, link, title)
         if signed_url is None:
-            return False
+            return carry_on
         if self.diandian_cdp_enabled:
             result = self.run_diandian_cdp({
                 "run_id": run_id, "board_id": board_id, "note_id": note_id,
@@ -4677,9 +4685,24 @@ class Bridge:
             return result.get("saved") is True and result.get("halted") is not True
         return self.summarize_on_chat_page(run_id, board_id, note_id, signed_url, title)
 
+    def pass_over_note_without_share_link(
+        self, run_id: str, board_id: str, note_id: str, reason: str
+    ) -> bool:
+        """This one note has no share link: record it as failed with the reason, and let the round go on.
+
+        The note is planned again by the next sync (it has no saved summary); it is not retried now.
+        """
+        if self.diandian_is_halted(run_id):
+            return False
+        self.skip_planned_note(
+            run_id, board_id, note_id, safe_diandian_fallback_reason(reason), share_link_missing=True,
+        )
+        return True
+
     def share_note_link(
         self, run_id: str, board_id: str, note_id: str, link: str, title: str
-    ) -> str | None:
+    ) -> tuple[str | None, bool]:
+        """The note's signed link and True; or no link and whether the round may carry on without it."""
         worker_id = str(uuid.uuid4())
         task = self.register_page_task(
             worker_id, "share", run_id=run_id, board_id=board_id, note_id=note_id, title=title,
@@ -4692,18 +4715,21 @@ class Bridge:
                 )
             except (CDPTransportError, OSError, RuntimeError):
                 self.halt_driven_step(run_id, board_id, note_id, "transport-failed")
-                return None
+                return None, False
             if not self.wait_for_page_task(run_id, task, self.timing_seconds("share_result_wait", 30_000)):
                 if not self.diandian_is_halted(run_id):
                     self.halt_driven_step(run_id, board_id, note_id, "share-worker-not-ready")
-                return None
+                return None, False
             outcome = task.outcome or {}
             if outcome.get("ok") is True and isinstance(outcome.get("url"), str):
-                return outcome["url"]
+                return outcome["url"], True
             error = str(outcome.get("error") or "share-link-failed")
+            if error != DIANDIAN_SAFETY_STOP_REASON and error not in SHARE_FAILURES_THAT_STOP_THE_ROUND:
+                # This note's page gave no link. Only this note is affected: record why and go on.
+                return None, self.pass_over_note_without_share_link(run_id, board_id, note_id, error)
             reason = error if error == DIANDIAN_SAFETY_STOP_REASON or error in DIANDIAN_HALT_DIAGNOSTICS else "share-link-failed"
             self.halt_driven_step(run_id, board_id, note_id, reason)
-            return None
+            return None, False
         finally:
             self.drop_page_task(worker_id)
 
@@ -5777,6 +5803,16 @@ class Bridge:
         safe_reason = safe_diandian_fallback_reason(reason)
         if safe_reason == DIANDIAN_SAFETY_STOP_REASON:
             raise ValueError("DianDian safety stops must use the halt endpoint")
+        return self.skip_planned_note(run_id, board_id, note_id, safe_reason)
+
+    def skip_planned_note(
+        self, run_id: str, board_id: str, note_id: str, safe_reason: str, *, share_link_missing: bool = False
+    ) -> dict:
+        """Record one planned note as failed and take it out of the plan; the rest of the plan stands.
+
+        `share_link_missing` marks a note whose share link could not be copied, so the run record also
+        counts it and keeps the reason.
+        """
         with self.summary_run_lock(run_id):
             with self.get_manual_sync_lock():
                 state = self.read_manual_sync()
@@ -5791,7 +5827,10 @@ class Bridge:
                 self.record_diandian_unresolved(note_id, safe_reason, "failed")
                 pending.remove(note_id)
                 try:
-                    self.update_diandian_progress(run_id, board_id, failed_delta=1)
+                    self.update_diandian_progress(
+                        run_id, board_id, failed_delta=1,
+                        share_link_missing_reason=safe_reason if share_link_missing else None,
+                    )
                 except OSError:
                     pending.add(note_id)
                     raise
