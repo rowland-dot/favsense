@@ -81,6 +81,8 @@ class ScanBrowser:
         self.errors: list[BaseException] = []
         self.script = None
         self.counter = 0
+        # Kinds of page (as `classify` names them) whose navigation the browser refuses.
+        self.refused_navigations: set[str] = set()
 
     # --- what the sync service can ask of the browser -------------------------------------------
     def list_pages(self) -> list[dict]:
@@ -116,6 +118,9 @@ class ScanBrowser:
         with self.lock:
             if page_id not in self.pages:
                 raise BRIDGE.CDPTransportError("CDP connection failed")
+            if classify(url) in self.refused_navigations:
+                # Like the real browser's error text, this one carries the address it was sent to.
+                raise BRIDGE.CDPTransportError(f"could not navigate to {url}")
             self.pages[page_id] = url
             self.log.append(("navigate", page_id, url))
             state = self.ai_state.setdefault(page_id, {"value": "", "finished": ""})
@@ -733,6 +738,72 @@ class AShareLinkFailureCostsOnlyThatNoteTest(unittest.TestCase):
         self.assertNotIn("navigate:note:c", later)
         self.assertTrue(run.saved(second))
         self.assertEqual(run.unresolved(), {})
+
+
+class ATransportFailureThatEndsTheRoundLeavesALogLineTest(unittest.TestCase):
+    """The workbench shows no error text, so the failure that ends a round must name itself in bridge.log."""
+
+    def log_lines(self, run: Round) -> list[list[str]]:
+        path = run.bridge.state_dir / "bridge.log"
+        if not path.exists():
+            return []
+        return [line.split("\t") for line in path.read_text(encoding="utf-8").splitlines()]
+
+    def assert_one_line(self, run: Round, step: str, error_type: str, position: str) -> None:
+        state = run.finish()
+        self.assertEqual(state["state"], "failed")
+        self.assertEqual(state["summary_halt_reason"], "transport-failed", "the round ends exactly as before")
+        lines = self.log_lines(run)
+        self.assertEqual(len(lines), 1, lines)
+        time_field, method, path, status, logged_type, message = lines[0]
+        self.assertRegex(time_field, r"^\d{4}-\d{2}-\d{2}T")
+        self.assertEqual((method, path, status, logged_type), ("ROUND", step, "-", error_type))
+        self.assertEqual(message, f"transport failure ended the round at {position}")
+        text = (run.bridge.state_dir / "bridge.log").read_text(encoding="utf-8")
+        secrets = [
+            "xiaohongshu", "http", "xsec", "private-", "token", run.bridge.token, *ALL_NOTES, *NOTES,
+            run.bridge.manual_run_id(state["batch"], "first"),
+        ]
+        for secret in secrets:
+            self.assertNotIn(secret, text)
+        run.assert_nothing_secret_is_kept()
+
+    def test_a_failed_move_to_a_notes_share_page_is_logged_with_its_step_and_position(self):
+        for cdp in (True, False):
+            with self.subTest(cdp=cdp):
+                run = Round(self, cdp=cdp)
+                run.browser.refused_navigations.add("note:b")
+                run.start()
+                self.assert_one_line(
+                    run, "share-page-move", "CDPTransportError", "post 2 of 3 on board 1 of 2",
+                )
+
+    def test_a_failure_on_the_second_board_names_that_board_and_the_post_within_it(self):
+        run = Round(self)
+        run.browser.refused_navigations.add("note:e")
+        run.start()
+        self.assert_one_line(run, "share-page-move", "CDPTransportError", "post 2 of 2 on board 2 of 2")
+
+    def test_a_failed_move_to_the_chat_page_is_logged_whichever_route_drives_the_chat(self):
+        for cdp in (True, False):
+            with self.subTest(cdp=cdp):
+                run = Round(self, cdp=cdp)
+                run.browser.refused_navigations.add("ai")
+                run.start()
+                self.assert_one_line(
+                    run, "chat-page-move", "CDPTransportError", "post 1 of 3 on board 1 of 2",
+                )
+
+    def test_a_chat_that_loses_its_connection_is_logged_as_the_chat_step(self):
+        run = Round(self, behaviour={("ask", NOTES["first"][1]): "transport"})
+        run.start()
+        self.assert_one_line(run, "chat-conversation", "CDPTransportError", "post 2 of 3 on board 1 of 2")
+
+    def test_a_round_that_ends_for_any_other_reason_writes_no_such_line(self):
+        run = Round(self, behaviour={("share", NOTES["first"][1]): "safety"})
+        run.start()
+        run.finish()
+        self.assertEqual(self.log_lines(run), [])
 
 
 class LeftoverPagesTest(unittest.TestCase):
