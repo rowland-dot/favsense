@@ -203,6 +203,16 @@ export function syncStatusCopy(status, sourceContract) {
   return contract.copy[status.copy_key];
 }
 
+// The line under the sentence: what was scanned, and (when there were any) how many posts DianDian
+// refused to read or answered incompletely. Those posts are in summary_failed too and are tried again.
+export function syncCountsDetail(counts) {
+  const scanned = `已扫描 ${counts.scanned} 条，新增 ${counts.new === null ? "未知" : String(counts.new || 0)} 条。`;
+  const parts = [];
+  if (counts.summary_refused > 0) parts.push(`点点拒答 ${counts.summary_refused} 篇`);
+  if (counts.summary_incomplete > 0) parts.push(`回复不完整 ${counts.summary_incomplete} 篇`);
+  return parts.length ? `${scanned}${parts.join("，")}，下次整理会再试。` : scanned;
+}
+
 function validateV2SyncStatus(value, sourceContract) {
   const contract = organizationContract(sourceContract);
   const { legacy_safety_stop: leftoverStop, userscript_outdated: outdatedScript, ...organizationKeys } = value;
@@ -226,7 +236,7 @@ function validateV2SyncStatus(value, sourceContract) {
     if ("artifact_status" in phase && phase.artifact_status !== "held_previous") throw new Error("本机整理状态不可用");
     phases[name] = { ...phase };
   }
-  const countKeys = ["scanned", "new", "summary_captured", "summary_failed", "summary_batch_aborted", "curation_accepted", "curation_pending"];
+  const countKeys = ["scanned", "new", "summary_captured", "summary_failed", "summary_refused", "summary_incomplete", "summary_batch_aborted", "curation_accepted", "curation_pending"];
   if (!value.counts || Object.keys(value.counts).sort().join(",") !== [...countKeys].sort().join(",")) throw new Error("本机整理状态不可用");
   for (const key of countKeys) {
     const unknown = SYNC_NULLABLE_NUMBERS.has(key) && value.counts[key] === null;

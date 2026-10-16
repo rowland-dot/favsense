@@ -89,35 +89,35 @@ def incomplete_text() -> str:
 
 
 class CollectionStepTests(unittest.TestCase):
-    def test_an_incomplete_reply_fails_the_note_aborts_the_rest_and_saves_nothing(self):
+    def test_an_incomplete_reply_fails_only_that_note_and_saves_nothing(self):
         # The rule must not be caught by the refusal rule that runs first, or this proves nothing.
         self.assertIs(REFUSAL.is_refusal(incomplete_text()), False)
         with collection_step(incomplete_text()) as step:
             bridge, target = step.bridge, step.target
             failed_id, waiting_id = step.failed_id, step.waiting_id
-            self.assertEqual(step.result, {"saved": False, "halted": True, "reason": "diandian-incomplete"})
+            self.assertEqual(
+                (step.result["saved"], step.result["halted"], step.result["skipped"], step.result["reason"]),
+                (False, False, True, "diandian-incomplete"),
+            )
             self.assertFalse((bridge.diandian_dir / f"{failed_id}.json").exists())
             self.assertEqual(
                 [path.name for path in bridge.diandian_dir.glob("*")] if bridge.diandian_dir.exists() else [],
                 [],
             )
             self.assertIsNone(bridge.saved_diandian_record(failed_id))
-            # The failed page is kept as it is: released to the round, never closed.
             target.close.assert_not_called()
             target.release.assert_called_once()
-            # Failed for this note, aborted for the one waiting behind it: both are tried again next round.
+            # Failed for this note only: the note waiting behind it is still planned for this round.
             report = json.loads(bridge.diandian_report_path.read_text(encoding="utf-8"))
             statuses = {entry["note_id"]: entry["summary_status"] for entry in report["unresolved"]}
-            self.assertEqual(statuses, {failed_id: "failed", waiting_id: "batch_aborted"})
+            self.assertEqual(statuses, {failed_id: "failed"})
+            self.assertEqual(bridge.summary_plans["manual_board"], {waiting_id})
             record = bridge.read_manual_sync()
-            self.assertEqual(record["summary_halt_reason"], "diandian-incomplete")
-            # Its own message: it says the reply came back incomplete, not that DianDian refused to read.
-            self.assertIn("不完整", record["error"])
-            self.assertNotIn("没有读取这篇笔记", record["error"])
-            self.assertIn("核心整理结果已保留", record["error"])
-            self.assertIn("下一轮", record["error"])
+            self.assertNotIn("summary_halt_reason", record)
+            self.assertEqual(record["state"], "running")
+            self.assertEqual((record["summary_failed"], record["diandian_incomplete"]), (1, 1))
+            self.assertNotIn("diandian_refused", record)
             self.assertNotIn("private-token", json.dumps(record, ensure_ascii=False))
-            self.assertEqual(bridge.manual_sync_status()["phases"]["summary"]["status"], "failed")
 
 
 class SaveRequestTests(unittest.TestCase):

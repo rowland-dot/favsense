@@ -1,0 +1,15 @@
+{
+  "description": "The two DianDian replies that cost only their own post (issue 130). Each names the case in an existing reply table (the text itself lives there, once) and the reason code the run record must keep for it. Safety signals are not here: they stop the round and are tested separately.",
+  "replies": {
+    "refused": {
+      "table": "diandian-refusal-cases.json",
+      "id": "refusal-cannot-open-link-asks-for-copy",
+      "reason": "diandian-refused"
+    },
+    "incomplete": {
+      "table": "diandian-incomplete-cases.json",
+      "id_prefix": "reported-",
+      "reason": "diandian-incomplete"
+    }
+  }
+}

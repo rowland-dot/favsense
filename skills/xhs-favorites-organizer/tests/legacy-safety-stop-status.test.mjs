@@ -28,7 +28,7 @@ const v2Status = (extra = {}) => ({
     curation: phase("validated"), build: phase("succeeded"), publish: phase("unchanged")
   },
   counts: {
-    scanned: 2, new: 0, summary_captured: 0, summary_failed: 0, summary_batch_aborted: 0,
+    scanned: 2, new: 0, summary_captured: 0, summary_failed: 0, summary_refused: 0, summary_incomplete: 0, summary_batch_aborted: 0,
     curation_accepted: 0, curation_pending: 0
   },
   ...extra

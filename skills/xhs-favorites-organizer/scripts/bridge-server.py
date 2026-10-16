@@ -3884,6 +3884,7 @@ class Bridge:
         summarized_delta: int = 0,
         failed_delta: int = 0,
         share_link_missing_reason: str | None = None,
+        unusable_reply_reason: str | None = None,
     ) -> None:
         with self.get_manual_sync_lock():
             state = self.read_manual_sync()
@@ -3894,6 +3895,7 @@ class Bridge:
                 failed_delta=failed_delta,
                 pending=len(self.summary_plans.get(run_id, set())),
                 share_link_missing_reason=share_link_missing_reason,
+                unusable_reply_reason=unusable_reply_reason,
             )
 
     def finalization_is_active(self, run_id: str) -> bool:
@@ -4670,7 +4672,8 @@ class Bridge:
         """One note: share link on its own page, then the DianDian chat in the same page.
 
         True when the round may go on to the next note: the note was saved, or only its share link was
-        missing and it was recorded as such. False when the round was stopped.
+        missing, or DianDian's reply could not be a summary, and it was recorded as such. False when the
+        round was stopped.
         """
         if link is None:
             return self.pass_over_note_without_share_link(run_id, board_id, note_id, "share-link-unavailable")
@@ -4682,7 +4685,7 @@ class Bridge:
                 "run_id": run_id, "board_id": board_id, "note_id": note_id,
                 "title": title, "url": signed_url,
             })
-            return result.get("saved") is True and result.get("halted") is not True
+            return (result.get("saved") is True or result.get("skipped") is True) and result.get("halted") is not True
         return self.summarize_on_chat_page(run_id, board_id, note_id, signed_url, title)
 
     def pass_over_note_without_share_link(
@@ -4765,6 +4768,12 @@ class Bridge:
             if error == DIANDIAN_SAFETY_STOP_REASON:
                 self.halt_driven_step(run_id, board_id, note_id, error)
                 return False
+            if error in ORGANIZATION_STATE.UNUSABLE_REPLY_COUNTERS:
+                # DianDian's reply for this one note cannot be a summary: only this note is affected.
+                if self.diandian_is_halted(run_id):
+                    return False
+                self.skip_planned_note(run_id, board_id, note_id, error)
+                return True
             # An ordinary failure: this note is recorded as failed and the rest of the board's plan is dropped.
             self.skip_diandian_result({
                 "run_id": run_id, "board_id": board_id, "note_id": note_id, "reason": error,
@@ -5618,14 +5627,22 @@ class Bridge:
             minimum = int(spec.get("minimum_summary_chars", 20))
             if not minimum <= len(summary) <= 100_000:
                 raise DiandianPageStop("invalid-summary")
-            # DianDian sometimes answers that it cannot open the link instead of reading the note. That is a
-            # failure of this note, not a summary: stop the batch and write nothing.
-            if DIANDIAN_REFUSAL.is_refusal(summary):
-                raise DiandianPageStop("diandian-refused")
-            # A reply that lost text where list items were joined is not a summary either: the same handling,
-            # with its own reason so the workbench does not say DianDian refused to read the note.
-            if DIANDIAN_REFUSAL.is_incomplete(summary):
-                raise DiandianPageStop("diandian-incomplete")
+            # DianDian sometimes answers that it cannot open the link instead of reading the note, or its reply
+            # lost text where list items were joined. Neither is a summary, and each costs only this note: it
+            # is recorded as failed with its own reason (nothing is written to the private record), the round
+            # carries on, and the next sync plans the note again.
+            unusable = (
+                "diandian-refused" if DIANDIAN_REFUSAL.is_refusal(summary)
+                else "diandian-incomplete" if DIANDIAN_REFUSAL.is_incomplete(summary)
+                else None
+            )
+            if unusable is not None:
+                ensure_run_active()
+                skipped = self.skip_planned_note(run_id, board_id, note_id, unusable)
+                result = {"saved": False, "halted": False, **skipped, "reason": unusable}
+                with guard:
+                    completed[key] = result
+                return dict(result)
             before_save = read_ai_page_state(session, state_expression)
             if self.diandian_is_halted(run_id):
                 raise DiandianPageStop("run-halted")
@@ -5830,6 +5847,9 @@ class Bridge:
                     self.update_diandian_progress(
                         run_id, board_id, failed_delta=1,
                         share_link_missing_reason=safe_reason if share_link_missing else None,
+                        unusable_reply_reason=(
+                            safe_reason if safe_reason in ORGANIZATION_STATE.UNUSABLE_REPLY_COUNTERS else None
+                        ),
                     )
                 except OSError:
                     pending.add(note_id)

@@ -70,7 +70,7 @@ test("a finished round's status keeps the flag next to its own sentence", () => 
       core: phase("completed"), summary: phase("completed"), evidence: phase("ready"),
       curation: phase("validated"), build: phase("succeeded"), publish: phase("unchanged")
     },
-    counts: { scanned: 2, new: 0, summary_captured: 0, summary_failed: 0, summary_batch_aborted: 0, curation_accepted: 0, curation_pending: 0 }
+    counts: { scanned: 2, new: 0, summary_captured: 0, summary_failed: 0, summary_refused: 0, summary_incomplete: 0, summary_batch_aborted: 0, curation_accepted: 0, curation_pending: 0 }
   }, contract);
   assert.equal(status.userscript_outdated, true);
 });

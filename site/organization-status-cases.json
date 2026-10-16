@@ -21,7 +21,7 @@
           "core": ["completed", ""], "summary": ["not_required", ""], "evidence": ["ready", ""],
           "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["published", ""]
         },
-        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 2, "curation_pending": 0},
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 2, "curation_pending": 0},
         "copy_key": "core_completed"
       }
     },
@@ -39,7 +39,7 @@
           "core": ["safety_stopped", "safety_signal"], "summary": ["not_started", ""], "evidence": ["not_started", ""],
           "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 30, "new": null, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "counts": {"scanned": 30, "new": null, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
         "copy_key": "safety_stopped"
       }
     },
@@ -60,7 +60,7 @@
           "core": ["completed", ""], "summary": ["safety_stopped", "safety_signal"], "evidence": ["missing", "evidence_missing"],
           "curation": ["pending_review", "audit_pending"], "build": ["not_started", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 30, "new": 4, "summary_captured": 1, "summary_failed": 1, "summary_batch_aborted": 1, "curation_accepted": 0, "curation_pending": 0},
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 1, "summary_failed": 1, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 1, "curation_accepted": 0, "curation_pending": 0},
         "copy_key": "safety_stopped"
       }
     },
@@ -82,7 +82,7 @@
           "core": ["completed", ""], "summary": ["batch_aborted", "batch_aborted"], "evidence": ["missing", "evidence_missing"],
           "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 2, "curation_accepted": 1, "curation_pending": 0},
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 2, "curation_accepted": 1, "curation_pending": 0},
         "copy_key": "summary_batch_aborted"
       }
     },
@@ -104,7 +104,7 @@
           "core": ["completed", ""], "summary": ["failed", "contract_invalid"], "evidence": ["missing", "evidence_missing"],
           "curation": ["pending_review", "audit_pending"], "build": ["succeeded", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 1, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 1},
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 1, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 1},
         "copy_key": "summary_failed"
       }
     },
@@ -127,7 +127,7 @@
           "core": ["completed", ""], "summary": ["partial", "batch_aborted"], "evidence": ["missing", "evidence_missing"],
           "curation": ["pending_review", "audit_pending"], "build": ["succeeded", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 30, "new": 4, "summary_captured": 1, "summary_failed": 0, "summary_batch_aborted": 2, "curation_accepted": 1, "curation_pending": 2},
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 1, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 2, "curation_accepted": 1, "curation_pending": 2},
         "copy_key": "evidence_missing"
       }
     },
@@ -148,7 +148,7 @@
           "core": ["completed", ""], "summary": ["not_required", ""], "evidence": ["ready", ""],
           "curation": ["pending_review", "audit_pending"], "build": ["failed", "build_failed"], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
         "copy_key": "build_failed"
       }
     },
@@ -171,7 +171,7 @@
           "core": ["completed", ""], "summary": ["not_required", ""], "evidence": ["ready", ""],
           "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["failed", "publish_failed"]
         },
-        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 1, "curation_pending": 0},
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 1, "curation_pending": 0},
         "copy_key": "publish_failed"
       }
     },
@@ -194,7 +194,7 @@
           "core": ["completed", ""], "summary": ["not_required", ""], "evidence": ["ready", ""],
           "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["unchanged", ""]
         },
-        "counts": {"scanned": 30, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 1, "curation_pending": 0},
+        "counts": {"scanned": 30, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 1, "curation_pending": 0},
         "copy_key": "publish_unchanged"
       }
     },
@@ -211,7 +211,7 @@
           "core": ["failed", "contract_invalid"], "summary": ["not_started", ""], "evidence": ["not_started", ""],
           "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
         "copy_key": "core_failed"
       }
     },
@@ -228,7 +228,7 @@
           "core": ["failed", "userscript_outdated"], "summary": ["not_started", ""], "evidence": ["not_started", ""],
           "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
         "copy_key": "userscript_outdated"
       }
     },
@@ -248,7 +248,7 @@
           "core": ["completed", ""], "summary": ["failed", "userscript_outdated"], "evidence": ["missing", "evidence_missing"],
           "curation": ["pending_review", "audit_pending"], "build": ["not_started", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 1, "summary_batch_aborted": 1, "curation_accepted": 0, "curation_pending": 0},
+        "counts": {"scanned": 30, "new": 4, "summary_captured": 0, "summary_failed": 1, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 1, "curation_accepted": 0, "curation_pending": 0},
         "copy_key": "userscript_outdated"
       }
     },
@@ -265,7 +265,7 @@
           "core": ["running", ""], "summary": ["not_started", ""], "evidence": ["not_started", ""],
           "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
         "copy_key": "core_running"
       }
     },
@@ -281,7 +281,7 @@
           "core": ["running", ""], "summary": ["not_started", ""], "evidence": ["not_started", ""],
           "curation": ["not_started", ""], "build": ["not_started", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
         "copy_key": "core_running"
       }
     },
@@ -299,7 +299,7 @@
           "core": ["not_required", ""], "summary": ["not_required", ""], "evidence": ["not_started", ""],
           "curation": ["validated", ""], "build": ["running", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 2, "curation_pending": 0},
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 2, "curation_pending": 0},
         "copy_key": "local_rebuild_running"
       }
     },
@@ -318,7 +318,7 @@
           "core": ["not_required", ""], "summary": ["not_required", ""], "evidence": ["not_started", ""],
           "curation": ["validated", ""], "build": ["succeeded", ""], "publish": ["not_enabled", ""]
         },
-        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 2, "curation_pending": 0},
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 2, "curation_pending": 0},
         "copy_key": "local_rebuild_ready"
       }
     }

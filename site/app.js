@@ -1,5 +1,6 @@
 import { resourceGroup, resourceSortsForGroup, sortResources, validateResourceIndex } from "./resource-utils.mjs";
 import {
+  syncCountsDetail,
   validateLegacySafetyStop,
   validateLocalBridgeBoards,
   validateLocalBridgeConfig,
@@ -691,7 +692,7 @@ function renderManualSync(status = state.manualSync) {
     elements.manualSyncTitle.textContent = copy[status.copy_key] || "";
     elements.manualSyncDetail.textContent = status.copy_key.startsWith("local_rebuild")
       ? copy.local_rebuild_detail
-      : `已扫描 ${status.counts.scanned} 条，新增 ${countText(status.counts.new)} 条。`;
+      : syncCountsDetail(status.counts);
   } else if (status.state === "starting") {
     elements.manualSyncTitle.textContent = "正在使用 SOP 小红书扫描浏览器";
     elements.manualSyncDetail.textContent = "请在 SOP 扫描浏览器中保持小红书登录；扫描与整理进度会自动回到这里。";
