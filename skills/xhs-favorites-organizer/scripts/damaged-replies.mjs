@@ -60,14 +60,20 @@ function option(name) {
   return resolve(process.argv[index + 1]);
 }
 
-function main() {
-  const catalog = JSON.parse(readFileSync(option("catalog"), "utf8").replace(/^﻿/, ""));
-  const entries = findDamagedReplies({ diandianDir: option("diandian-dir"), noteIds: Object.keys(catalog.notes || {}).filter((id) => NOTE_ID.test(id)) });
-  const output = option("output");
+// Judges every saved reply of the catalog's notes and replaces the list file in one step. The snapshot step
+// calls this just before it freezes its inputs; the command below is the same thing run by hand.
+export function writeDamagedReplies({ catalog, diandianDir, output }) {
+  const notes = JSON.parse(readFileSync(catalog, "utf8").replace(/^﻿/, "")).notes || {};
+  const entries = findDamagedReplies({ diandianDir, noteIds: Object.keys(notes).filter((id) => NOTE_ID.test(id)) });
   mkdirSync(dirname(output), { recursive: true });
   const staging = `${output}.${process.pid}.tmp`;
   writeFileSync(staging, `${JSON.stringify({ schema_version: 1, signs: ["joined-list-items", "ends-on-comma-or-colon", "ends-on-bare-heading"], entries }, null, 2)}\n`, "utf8");
   renameSync(staging, output);
+  return entries;
+}
+
+function main() {
+  const entries = writeDamagedReplies({ catalog: option("catalog"), diandianDir: option("diandian-dir"), output: option("output") });
   process.stdout.write(`${JSON.stringify({ count: entries.length, ids: entries.map((entry) => entry.note_id) })}\n`);
 }
 

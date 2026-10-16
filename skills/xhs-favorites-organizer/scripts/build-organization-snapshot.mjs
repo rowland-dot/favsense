@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { executeJournaledTransaction, recoverJournaledTransaction } from "./journaled-transaction.mjs";
 import { acquireOrganizationMutationLock, claimLockFolder, releaseLockFolder } from "./organization-mutation-lock.mjs";
+import { writeDamagedReplies } from "./damaged-replies.mjs";
 
 const HASH = /^[a-f0-9]{64}$/;
 const validDate = (value) => {
@@ -765,6 +766,12 @@ async function runCli() {
       publishSite: join(root, "site"),
       effectiveDate,
       prepareSnapshot: async () => {
+        // The list of cut replies is judged again from the catalog and reply folder as they are now, so it can
+        // never be older than the replies it judges. A build that names no list keeps the old refusal.
+        if (captureOptions.damagedReplies) {
+          await assertPlainPath(root, resolve(captureOptions.damagedReplies));
+          writeDamagedReplies({ catalog: resolve(captureOptions.catalog), diandianDir: resolve(captureOptions.diandianDir), output: resolve(captureOptions.damagedReplies) });
+        }
         const captured = await captureBuilderInputs(captureOptions, effectiveDate);
         if (captured.sealedScopeDigest !== options["sealed-scope-digest"]) throw new Error("SNAPSHOT_SCOPE_DIGEST_MISMATCH");
         const effective = effectiveCuration(

@@ -6840,11 +6840,10 @@ class Bridge:
             "--video-analysis", str(self.state_dir / "video-analysis"),
             "--effective-date", datetime.now(timezone.utc).date().isoformat(),
         ]
-        # The frozen list of saved replies that lost text (damaged-replies.mjs writes it). The snapshot
-        # stops if there are saved replies and no list, so a cut reply is never published as complete.
-        damaged_replies = self.state_dir / "damaged-diandian-replies.json"
-        if damaged_replies.is_file() and not path_is_reparse_point(damaged_replies):
-            command.extend(["--damaged-replies", str(damaged_replies)])
+        # The list of saved replies that lost text. The snapshot step writes it fresh from the catalog and the
+        # reply folder just before it freezes its inputs, so it is always named, whether or not a file exists yet
+        # (a linked file is refused by the snapshot's own path check).
+        command.extend(["--damaged-replies", str(self.state_dir / "damaged-diandian-replies.json")])
         # The private store of post access codes (source_codes.py writes it). Without it every card keeps its search link.
         source_codes = self.state_dir / SOURCE_CODES.STORE_NAME
         if source_codes.is_file() and not path_is_reparse_point(source_codes):

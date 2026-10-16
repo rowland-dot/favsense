@@ -75,7 +75,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
 
 一次性历史回溯使用 `-Mode history`。历史模式从上到下分段滚动每个启用面板（每步不超过半个屏幕高度，因为收藏夹页面同一时刻只在页面里保留约 30 篇），直到页面到底、高度不再增长，读完整个面板；触发风控即停止。后台标签页不排版、不能滚动，所以每一步先确认收藏夹页面在前台：在后台就请求同步服务把整轮唯一的这一页切到前面（`POST /sync/scan-page-front`），持续请求并至多等 30 秒，仍切不到前面就以“收藏夹页面一直在浏览器的后台标签页里”停止这一轮，不导入只读到第一屏的列表。不得把历史模式设为每日任务。
 
-正式网页数据只由快照步骤写入（同步的最终构建与下文的“仅本地重建”），不访问平台网络。快照步骤冻结受损回复名单（见下文）、各笔记的提取文字和访问码存放文件（它计入构建版本；文件不存在时所有卡片保持检索链接）。Agent 改完策展后，用“仅本地重建”刷新正式输出。
+正式网页数据只由快照步骤写入（同步的最终构建与下文的“仅本地重建”），不访问平台网络。快照步骤先按当前的 catalog 和点点回复文件夹重新生成受损回复名单（见下文），再冻结它，同时冻结各笔记的提取文字和访问码存放文件（它计入构建版本；文件不存在时所有卡片保持检索链接）。Agent 改完策展后，用“仅本地重建”刷新正式输出。
 
 仅在测试隔离环境中才可直接运行网页构建器（它读取点点回复时不比对 `prompt_version`；不传 `--damaged-replies` 就当作没有受损回复，不传 `--source-codes` 就没有任何卡片带原帖链接）：
 
@@ -162,7 +162,7 @@ python -m http.server 8000 --directory site
 
 每张卡片都由确定性的卡片步骤（`scripts/card-content.mjs`，由网页构建器调用）生成，不需要任何模型：标题取原帖自己的标题，没有则取正文第一行，再没有则取作者的收藏；主要文字取点点回复全文（只去掉开头的对话语句）。点点回复缺失、被拒答或属于下面的受损名单时，主要文字取原帖自己的文字；帖子只有话题标签时取视频转写或图片文字；这些文字原样展示，不经 AI 改写。策展文件或封存候选只是可选的附加信息，补充主题、工具、分类建议和内容形态，从不决定卡片的标题和主要文字。点点那条规则“任一失败都必须放弃当前及剩余点点计划并停止”在需要接触小红书的第二阶段改动上线之前保持不变。
 
-受损回复名单：点点回复偶尔在采集时丢了文字。运行 `node skills/xhs-favorites-organizer/scripts/damaged-replies.mjs --catalog .xhs-favorites/catalog.json --diandian-dir .xhs-favorites/diandian-summaries --output .xhs-favorites/damaged-diandian-replies.json`，它按两个特征找出这样的回复：一行中间的逗号、分号、冒号或顿号后面直接跟着列表符号；或回复停在逗号、冒号，或一个下面没有内容的小标题上。结果写入私有文件 `.xhs-favorites/damaged-diandian-replies.json`（被 Git 忽略，不进入公开数据）。快照步骤冻结这份名单，卡片读取它：名单上的回复改用原帖自己的文字，并在来源行里说明是我们采集出错；重新获取回复之后重新生成名单，换了内容的回复自动回到完整状态。
+受损回复名单：点点回复偶尔在采集时丢了文字。运行 `node skills/xhs-favorites-organizer/scripts/damaged-replies.mjs --catalog .xhs-favorites/catalog.json --diandian-dir .xhs-favorites/diandian-summaries --output .xhs-favorites/damaged-diandian-replies.json`，它按两个特征找出这样的回复：一行中间的逗号、分号、冒号或顿号后面直接跟着列表符号；或回复停在逗号、冒号，或一个下面没有内容的小标题上。结果写入私有文件 `.xhs-favorites/damaged-diandian-replies.json`（被 Git 忽略，不进入公开数据）。每次快照构建都会在冻结输入之前，按当前的 catalog 和点点回复文件夹重新生成这份名单（同步的最终构建与“仅本地重建”都一样；名单的格式、位置和私有性不变），所以名单不会比它所评判的回复更旧，不需要手动运行上面的命令，该命令仍可手动使用。快照步骤冻结刚生成的名单，卡片读取它：名单上的回复改用原帖自己的文字，并在来源行里说明是我们采集出错；回复被重新获取后，换了内容的回复在下一次构建自动回到完整状态。
 
 完整链路见 [automatic-workflow.md](references/automatic-workflow.md)，知识卡片规则见 [organization-schema.md](references/organization-schema.md)。
 
