@@ -78,6 +78,17 @@ test("the skill document tells the next reader how an outdated script is detecte
   }
 });
 
+test("the skill document says the first authorized script request records the version, so a fresh install is never refused up front", async () => {
+  const skill = await read("skills/xhs-favorites-organizer/SKILL.md");
+  const context = await read("CONTEXT.md");
+  for (const [name, text] of [["SKILL.md", skill], ["CONTEXT.md", context]]) {
+    assert.ok(text.includes("首个经授权的用户脚本请求"), `${name} names the request that records the version`);
+    for (const old of ["没有它或与模板不同", "或记录里没有"]) {
+      assert.ok(!text.includes(old), `${name} no longer refuses a start for a version that was never recorded`);
+    }
+  }
+});
+
 test("the version the script reports is filled in at generation, not written into the template", () => {
   assert.match(TEMPLATE, /"__TEMPLATE_VERSION__"/);
 });

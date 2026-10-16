@@ -56,8 +56,8 @@ def set_installed_version(bridge, version: str | None) -> None:
 
 
 class StartRefusalTests(unittest.TestCase):
-    def test_a_start_is_refused_unless_the_installed_version_is_the_templates_current_one(self):
-        outdated = {"no stored version": None, "older": "3.0.3", "newer": "99.0.0", "empty": ""}
+    def test_a_start_is_refused_when_the_recorded_version_is_not_the_templates_current_one(self):
+        outdated = {"older": "3.0.3", "newer": "99.0.0"}
         for name, version in outdated.items():
             with self.subTest(installed=name), tempfile.TemporaryDirectory() as directory:
                 bridge = make_bridge(Path(directory))
@@ -75,6 +75,21 @@ class StartRefusalTests(unittest.TestCase):
                 # A refusal is not a round: it leaves no manual-sync record behind.
                 self.assertFalse(bridge.manual_sync_path.exists())
 
+    def test_a_fresh_install_with_no_recorded_version_still_starts_the_round(self):
+        # The version is only ever learned from a script request, and a script only runs once a page loads,
+        # so refusing here would be a deadlock: the sync would never open the page that records it.
+        for name, version in {"no stored version": None, "empty": ""}.items():
+            with self.subTest(installed=name), tempfile.TemporaryDirectory() as directory:
+                bridge = make_bridge(Path(directory))
+                set_installed_version(bridge, version)
+
+                with mock.patch.object(BRIDGE.subprocess, "Popen"):
+                    result = bridge.trigger_manual_sync()
+
+                self.assertNotIn("refused", result)
+                self.assertEqual(result["phases"]["core"]["status"], "running")
+                bridge.open_sop_browser_page.assert_called_once()
+
     def test_the_current_version_starts_the_round(self):
         with tempfile.TemporaryDirectory() as directory:
             bridge = make_bridge(Path(directory))
@@ -89,7 +104,11 @@ class StartRefusalTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             bridge = make_bridge(Path(directory))
             self.assertNotIn("userscript_outdated", bridge.manual_sync_status())
+            # Nothing recorded yet is not "outdated": the workbench must not tell the owner to reinstall
+            # a script he has just installed.
             set_installed_version(bridge, None)
+            self.assertNotIn("userscript_outdated", bridge.manual_sync_status())
+            set_installed_version(bridge, "3.0.3")
             status = bridge.manual_sync_status()
             self.assertIs(status["userscript_outdated"], True)
             self.assertEqual(status["state"], "idle")
@@ -254,7 +273,6 @@ class RouteTests(unittest.TestCase):
             bridge = self.serve(make_bridge(Path(directory)))
             set_installed_version(bridge, None)
             self.assertEqual(set(install_record(bridge)), CAPABILITY_RECORD_KEYS)
-            self.assertTrue(bridge.userscript_is_outdated())
 
             status, reply = self.call(
                 bridge, "POST", "/install/complete", {"capability": bridge_support.INSTALL_CAPABILITY}
@@ -279,6 +297,97 @@ class RouteTests(unittest.TestCase):
 
             self.assertEqual(status, BRIDGE.HTTPStatus.CONFLICT)
             self.assertEqual(set(install_record(bridge)), CAPABILITY_RECORD_KEYS)
+
+
+    # A freshly installed script is known by its first request: the header is the proof of what runs.
+
+    def test_a_fresh_install_starts_then_its_first_request_records_the_version_and_later_starts_are_not_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            bridge = self.serve(make_bridge(Path(directory)))
+            set_installed_version(bridge, None)
+            self.assertEqual(set(install_record(bridge)), CAPABILITY_RECORD_KEYS)
+
+            # No Xiaohongshu page has been visited and the install was never completed by the script.
+            with mock.patch.object(BRIDGE.subprocess, "Popen"):
+                started = bridge.trigger_manual_sync()
+            self.assertNotIn("refused", started)
+            bridge.open_sop_browser_page.assert_called_once()
+            self.assertEqual(set(install_record(bridge)), CAPABILITY_RECORD_KEYS)
+
+            status, _reply = self.call(bridge, "GET", "/sync/page-task?worker_id=bad")
+
+            self.assertEqual(status, BRIDGE.HTTPStatus.BAD_REQUEST)
+            self.assertEqual(install_record(bridge)["template_version"], bridge_support.USERSCRIPT_VERSION)
+            self.assertEqual(bridge.read_manual_sync()["state"], "starting", "the round the request belongs to goes on")
+
+            BRIDGE.atomic_json(bridge.manual_sync_path, {**bridge.read_manual_sync(), "state": "completed"})
+            with mock.patch.object(BRIDGE.subprocess, "Popen"):
+                again = bridge.trigger_manual_sync()
+            self.assertNotIn("refused", again)
+
+    def test_every_kind_of_script_route_records_the_version_from_a_current_request(self):
+        calls = [
+            ("GET", "/sync/page-task?worker_id=bad", None),
+            ("POST", "/sync/discover", {"batch": "b", "boards": []}),
+        ]
+        for method, path, body in calls:
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
+                bridge = self.serve(make_bridge(Path(directory)))
+                set_installed_version(bridge, None)
+
+                self.call(bridge, method, path, body)
+
+                self.assertEqual(install_record(bridge)["template_version"], bridge_support.USERSCRIPT_VERSION)
+
+    def test_a_request_that_is_not_a_current_authorized_script_request_records_nothing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            bridge = self.serve(make_bridge(Path(directory)))
+            set_installed_version(bridge, None)
+
+            # An old or header-less script is refused and teaches the server nothing.
+            for version in (None, "3.0.3"):
+                self.call(bridge, "POST", "/sync/discover", {"batch": "b", "boards": []}, version=version)
+            # A request with the right header but not the local credential is not the script either.
+            request = Request(
+                f"http://{BRIDGE.HOST}:{bridge.port}/sync/page-task?worker_id=bad",
+                headers={"X-XHS-Bridge-Token": "c" * 64, VERSION_HEADER: bridge_support.USERSCRIPT_VERSION},
+            )
+            with self.assertRaises(HTTPError):
+                urlopen(request, timeout=3)
+            # A workbench route carries no version and does not count either.
+            self.call(bridge, "GET", "/sync/status", version=bridge_support.USERSCRIPT_VERSION, origin=BRIDGE.MANAGER_ORIGIN)
+
+            self.assertEqual(set(install_record(bridge)), CAPABILITY_RECORD_KEYS)
+
+    def test_a_current_request_corrects_a_recorded_version_that_differs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            bridge = self.serve(make_bridge(Path(directory)))
+            set_installed_version(bridge, "3.0.3")
+            self.assertTrue(bridge.userscript_is_outdated())
+
+            self.call(bridge, "GET", "/sync/page-task?worker_id=bad")
+
+            self.assertEqual(install_record(bridge)["template_version"], bridge_support.USERSCRIPT_VERSION)
+            self.assertFalse(bridge.userscript_is_outdated())
+
+    def test_recording_the_version_keeps_a_completed_install_completed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            bridge = self.serve(make_bridge(Path(directory)))
+            completed_at = "2026-10-16T09:00:00+00:00"
+            BRIDGE.atomic_json(bridge.userscript_install_state, {
+                **install_record(bridge), "completed_at": completed_at, "template_version": "3.0.3",
+            })
+
+            self.call(bridge, "GET", "/sync/page-task?worker_id=bad")
+
+            record = install_record(bridge)
+            self.assertEqual(record["completed_at"], completed_at)
+            self.assertEqual(record["template_version"], bridge_support.USERSCRIPT_VERSION)
+            # The spent install address stays spent.
+            status, _reply = self.call(
+                bridge, "GET", f"/install/{bridge_support.INSTALL_CAPABILITY}/xhs-favorites.user.js", version=None
+            )
+            self.assertEqual(status, BRIDGE.HTTPStatus.NOT_FOUND)
 
 
 if __name__ == "__main__":

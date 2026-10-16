@@ -36,6 +36,8 @@ class RunningHandler:
         self.server = BRIDGE.ThreadingHTTPServer((BRIDGE.HOST, 0), BRIDGE.make_handler(bridge))
         bridge.port = self.server.server_address[1]
         bridge.userscript_template_version = bridge_support.USERSCRIPT_VERSION
+        # No install record exists for a stand-in, so a current script request has nothing to record into.
+        bridge.userscript_install_state = Path(__file__).with_name("no-install-record.json")
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
     def __enter__(self):

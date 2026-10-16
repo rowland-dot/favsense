@@ -538,12 +538,12 @@ class LocalRebuildTest(unittest.TestCase):
             self.rebuild(run)
             self.assertEqual(bridge.build_organization_snapshot.call_count, 1)
 
-    def test_rebuild_runs_with_an_outdated_or_missing_user_script_version(self):
+    def test_rebuild_runs_with_an_outdated_user_script_version(self):
         with tempfile.TemporaryDirectory() as directory:
             run = self.prepared(Path(directory))
             bridge = run.bridge
             record = json.loads(bridge.userscript_install_state.read_text(encoding="utf-8"))
-            record.pop("template_version", None)
+            record["template_version"] = "3.0.3"
             BRIDGE.atomic_json(bridge.userscript_install_state, record)
             self.assertTrue(bridge.userscript_is_outdated())
 
