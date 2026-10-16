@@ -370,6 +370,32 @@ class RouteTests(unittest.TestCase):
             self.assertEqual(install_record(bridge)["template_version"], bridge_support.USERSCRIPT_VERSION)
             self.assertFalse(bridge.userscript_is_outdated())
 
+    def test_recording_the_version_never_starts_a_round_or_touches_the_platform(self):
+        with tempfile.TemporaryDirectory() as directory:
+            bridge = self.serve(make_bridge(Path(directory)))
+            set_installed_version(bridge, None)
+            self.assertEqual(bridge.manual_sync_status()["state"], "idle")
+
+            def files():
+                # A failed request is logged, which is not a run record; everything else must stay as it was.
+                return sorted(
+                    str(path.relative_to(bridge.state_dir)) for path in bridge.state_dir.rglob("*")
+                    if path.is_file() and path.name != BRIDGE.BRIDGE_LOG_NAME
+                )
+
+            before = files()
+
+            with mock.patch.object(BRIDGE.subprocess, "Popen") as popen:
+                status, _reply = self.call(bridge, "GET", "/sync/page-task?worker_id=bad")
+
+            self.assertEqual(status, BRIDGE.HTTPStatus.BAD_REQUEST)
+            self.assertEqual(install_record(bridge)["template_version"], bridge_support.USERSCRIPT_VERSION)
+            self.assertEqual(bridge.manual_sync_status()["state"], "idle")
+            self.assertFalse(bridge.manual_sync_path.exists())
+            self.assertEqual(files(), before)
+            bridge.open_sop_browser_page.assert_not_called()
+            popen.assert_not_called()
+
     def test_recording_the_version_keeps_a_completed_install_completed(self):
         with tempfile.TemporaryDirectory() as directory:
             bridge = self.serve(make_bridge(Path(directory)))
