@@ -128,8 +128,8 @@ def note_is_in_scope(note: dict, published_since: str | None) -> bool:
 
 
 def build_signed_queue(text: str, max_items: int) -> list[dict]:
-    if max_items < 1 or max_items > 200:
-        raise ValueError("--max-items must be between 1 and 200 for signed URLs")
+    if max_items < 1 or max_items > 1000:
+        raise ValueError("--max-items must be between 1 and 1000 for signed URLs")
     queue = []
     seen = set()
     for value in text.split():

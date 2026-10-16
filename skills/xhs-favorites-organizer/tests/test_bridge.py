@@ -5277,6 +5277,43 @@ Path(result_path).write_text(json.dumps(result), encoding="utf-8")
             self.assertEqual(accepted_run_id, run_id)
             self.assertEqual(set(accepted), {target_id})
 
+    def test_a_history_scan_of_260_posts_passes_the_import_and_summary_plan_size_checks(self):
+        # The user script no longer stops a history scan at 200 posts, so the service must take what it lists.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            batch = "manualbig"
+            board_id = "board"
+            bridge = make_bridge(root)
+            bridge.manual_sync_path = root / "manual-sync.json"
+            bridge.boards = {board_id: "Board"}
+            bridge.board_order = [board_id]
+            run_id = bridge.manual_run_id(batch, board_id)
+            BRIDGE.atomic_json(bridge.manual_sync_path, {
+                "batch": batch,
+                "state": "running",
+                "run_board_ids": [board_id],
+                "run_mode": "history",
+            })
+            note_ids = [f"{index:024d}" for index in range(260)]
+
+            accepted_run_id, accepted = bridge.prepare_import({
+                "run_id": run_id,
+                "board_id": board_id,
+                "urls": [f"https://www.xiaohongshu.com/explore/{note_id}" for note_id in note_ids],
+            })
+            self.assertEqual(accepted_run_id, run_id)
+            self.assertEqual(set(accepted), set(note_ids))
+
+            # Nothing was imported here, so the plan is refused for its note scope; the size checks that
+            # come before that must not be what refuses it.
+            with self.assertRaisesRegex(ValueError, "core organization note scope"):
+                bridge.diandian_summary_plan({
+                    "run_id": run_id,
+                    "board_id": board_id,
+                    "note_ids": note_ids,
+                    "titles": {note_id: f"Title {note_id}" for note_id in note_ids},
+                })
+
     def test_single_note_summary_plan_rejects_mismatches_and_allows_safe_empty_abandonment(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

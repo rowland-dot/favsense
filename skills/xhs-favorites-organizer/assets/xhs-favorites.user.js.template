@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小红书收藏知识库按需整理
 // @namespace    local.xhs-favorites-organizer
-// @version      3.1.0
+// @version      3.2.0
 // @description  用户主动触发后，刷新收藏夹、按需调用点点 AI 深度总结，再整理成公开网页数据
 // @match        https://www.xiaohongshu.com/board/*
 // @match        https://www.xiaohongshu.com/user/profile/*
@@ -283,11 +283,21 @@ __DIANDIAN_MATCH_LINE__
     return found;
   }
 
+  // A folder page keeps only about 30 posts in the page at a time, so a history scan walks the folder from the
+  // top in steps of at most half a viewport; a jump to the bottom would never read the posts in between. The
+  // scan is over when neither the scroll position nor the page height has changed for several checks in a row:
+  // the bottom is in view and nothing more is loading.
+  const HISTORY_SCAN_LIMIT_MS = 30 * 60 * 1000;
+  const HISTORY_IDLE_CHECKS = 6;
+
   async function scan(board, mode, targetNoteId = "") {
     const history = mode === "history" || Boolean(targetNoteId);
     const collected = new Map();
     let stable = 0;
-    const deadline = Date.now() + (history ? 300000 : 30000);
+    let idleChecks = 0;
+    let lastTop;
+    let lastHeight;
+    const deadline = Date.now() + (history ? HISTORY_SCAN_LIMIT_MS : 30000);
     while (Date.now() < deadline) {
       assertSafePage();
       const before = collected.size;
@@ -297,19 +307,26 @@ __DIANDIAN_MATCH_LINE__
       show(targetNoteId
         ? `正在 ${board.name} 中定位指定收藏：已检查 ${collected.size} 篇`
         : `正在扫描 ${board.name}：${collected.size}${board.advertised_count ? ` / ${board.advertised_count}` : ""} 篇`);
-      if (!history && collected.size > 0 && stable >= 2) break;
-      if (history && (collected.size >= Math.min(board.advertised_count || 200, 200) || stable >= 20)) break;
-      if (history) {
-        if (stable > 0 && stable % 8 === 0) window.scrollBy({ top: -Math.round(innerHeight * 0.8), behavior: "instant" });
-        else window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+      if (!history) {
+        if (collected.size > 0 && stable >= 2) break;
+        await sleep(1300);
+        continue;
       }
-      await sleep(history ? 2200 : 1300);
+      const height = document.documentElement.scrollHeight;
+      const top = window.scrollY;
+      idleChecks = top === lastTop && height === lastHeight ? idleChecks + 1 : 0;
+      lastTop = top;
+      lastHeight = height;
+      if (idleChecks >= HISTORY_IDLE_CHECKS) break;
+      window.scrollTo({ top: Math.min(top + Math.round(innerHeight / 2), height - innerHeight), behavior: "instant" });
+      await sleep(2200);
     }
     if (targetNoteId) {
       throw workflowError("target-note-not-on-board", "当前收藏夹中没有找到指定收藏；本轮没有导入或打开其他笔记");
     }
     if (!collected.size) throw new Error("没有找到可同步的收藏链接；请确认登录状态");
-    return [...collected.values()].slice(0, history ? 200 : 60);
+    const notes = [...collected.values()];
+    return history ? notes : notes.slice(0, 60);
   }
 
   function workflowError(code, message) {
