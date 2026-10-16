@@ -18,7 +18,7 @@
   -> 无法附着且未触发安全限制：只使用已有缓存进入音频/OCR/评论证据回退，不伪造成功
   -> 确定性编排 candidate -> evidence -> resource -> audit；缺证据保持 pending，只有完整当前记录进入 accepted
   -> 关键词只让策展层留下 Skill 候选；confirmed Skill 必须恰好关联一个 verified resource
-  -> build-organization-snapshot.mjs 冻结受损回复名单与各笔记的提取文字，生成带 build_version 的脱敏网页数据快照
+  -> build-organization-snapshot.mjs 先重新生成受损回复名单，再冻结它与各笔记的提取文字，生成带 build_version 的脱敏网页数据快照
   -> 网页数据 staging 验证并交换成功后，按配置最多发布一次到 Hugging Face Static Space
   -> 本地设置页显示真实阶段结果；每张卡片由确定性的卡片步骤用原帖文字、点点回复或提取文字生成
 ```
@@ -89,7 +89,7 @@
 - `.xhs-favorites/runs/*.json`：每个面板的运行状态；不含临时链接。
 - `.xhs-favorites/diandian-summaries/<note-id>.json`：可选点点回复；只含稳定 ID、标题和清理后的正文，不含来源链接或登录凭据。
 - `.xhs-favorites/diandian-rerun-report.json`：本轮点点覆盖统计和待补证 ID；不含临时链接。
-- `.xhs-favorites/damaged-diandian-replies.json`：受损点点回复名单（`scripts/damaged-replies.mjs` 生成，列出笔记 ID 与那份回复的哈希）；私有，快照步骤冻结它，卡片据此改用原帖文字。
+- `.xhs-favorites/damaged-diandian-replies.json`：受损点点回复名单（`scripts/damaged-replies.mjs` 生成，列出笔记 ID 与那份回复的哈希）；私有；每次快照构建都会在冻结输入之前按当前的 catalog 和点点回复文件夹重新生成它，再冻结，卡片据此改用原帖文字。
 - `.xhs-favorites/organization-state/`：正交 run/note 状态和恢复依据；状态使用 `captured`、`failed`、`batch_aborted`、`pending_review`、`accepted` 等封闭枚举。
 - `.xhs-favorites/resource-assessments.json`：候选、歧义、缺失或过期资源的私有评估；只有完整 verified 快照进入正式资源注册表。
 - `xhs-favorites/YYYY-MM-DD.md`：同步日报。

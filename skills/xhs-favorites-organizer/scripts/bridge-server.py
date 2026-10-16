@@ -316,6 +316,9 @@ class CDPTransportError(RuntimeError):
 # and left over from an earlier round is FavSense's to close; a page without them never is.
 SYNC_PAGE_QUERY_KEYS = frozenset({"xhs_kb_sync", "xhs_kb_worker", "xhs_kb_share_worker"})
 PAGE_ID = re.compile(r"^[A-Za-z0-9._-]{1,200}$")
+# Setup writes the tab id of each Xiaohongshu page it opens in the scan browser here (ids only). The page has the
+# bare home address the SOP launcher's page also has, so the id is the only way to tell the two apart.
+SETUP_PAGES_NAME = "setup-pages.json"
 PAGE_FAILURE_CODE = re.compile(r"^[a-z][a-z0-9-]{2,79}$")
 PAGE_RESULT_FIELDS = frozenset({"worker_id", "stage", "ok", "url", "error"})
 
@@ -3219,29 +3222,56 @@ class Bridge:
         with self.get_manual_sync_lock():
             self.report_run_event("run_page_closed", page_id=page_id)
 
+    def read_setup_page_ids(self) -> list[str]:
+        """The tab ids setup recorded for the Xiaohongshu pages it opened. A record that cannot be read holds none."""
+        try:
+            value = json.loads((self.state_dir / SETUP_PAGES_NAME).read_text(encoding="utf-8-sig"))
+        except (OSError, ValueError):
+            return []
+        recorded = value.get("tab_ids") if isinstance(value, dict) else None
+        ids: list[str] = []
+        for item in recorded if isinstance(recorded, list) else []:
+            if isinstance(item, str) and PAGE_ID.fullmatch(item) and item not in ids:
+                ids.append(item)
+        return ids
+
     def close_leftover_run_pages(self, recorded_page_id: object) -> None:
         """Before a round opens its page, close the pages earlier rounds left behind.
 
-        Only two kinds are FavSense's: a page whose address carries a sync marker, and the page the
-        previous round recorded (a failed round keeps one, and the DianDian address cannot be marked).
+        Only three kinds are FavSense's: a page whose address carries a sync marker, the page the
+        previous round recorded (a failed round keeps one, and the DianDian address cannot be marked),
+        and a page setup opened, which is known by the tab id setup recorded, never by its address.
         Every other Xiaohongshu page belongs to someone else and is neither closed nor moved.
+        The record is read now, not when the service started: setup can run while the service is up.
         """
+        setup_ids = self.read_setup_page_ids()
         try:
             pages = self.list_sop_browser_pages()
         except (OSError, RuntimeError, ValueError) as error:
             append_bridge_log(self.state_dir, "INTERNAL", "run-page-cleanup", "-", type(error).__name__, str(error))
             return
+        refused: list[str] = []
         for page in pages:
             parsed = urlparse(page["url"])
             marked = (
                 parsed.hostname == "www.xiaohongshu.com"
                 and bool(SYNC_PAGE_QUERY_KEYS & set(parse_qs(parsed.query)))
             )
-            if not marked and page["id"] != recorded_page_id:
+            from_setup = page["id"] in setup_ids
+            if not marked and not from_setup and page["id"] != recorded_page_id:
                 continue
             try:
                 self.close_sop_browser_page(page["id"])
             except (OSError, RuntimeError, ValueError) as error:
+                append_bridge_log(self.state_dir, "INTERNAL", "run-page-cleanup", "-", type(error).__name__, str(error))
+                if from_setup:
+                    refused.append(page["id"])
+        if setup_ids:
+            # Closed ids and ids the browser no longer lists leave the record; one the browser refused to close stays,
+            # so the next round tries again.
+            try:
+                atomic_json(self.state_dir / SETUP_PAGES_NAME, {"version": 1, "tab_ids": refused})
+            except OSError as error:
                 append_bridge_log(self.state_dir, "INTERNAL", "run-page-cleanup", "-", type(error).__name__, str(error))
 
     def browser_session_ready(self) -> bool:
@@ -6810,11 +6840,10 @@ class Bridge:
             "--video-analysis", str(self.state_dir / "video-analysis"),
             "--effective-date", datetime.now(timezone.utc).date().isoformat(),
         ]
-        # The frozen list of saved replies that lost text (damaged-replies.mjs writes it). The snapshot
-        # stops if there are saved replies and no list, so a cut reply is never published as complete.
-        damaged_replies = self.state_dir / "damaged-diandian-replies.json"
-        if damaged_replies.is_file() and not path_is_reparse_point(damaged_replies):
-            command.extend(["--damaged-replies", str(damaged_replies)])
+        # The list of saved replies that lost text. The snapshot step writes it fresh from the catalog and the
+        # reply folder just before it freezes its inputs, so it is always named, whether or not a file exists yet
+        # (a linked file is refused by the snapshot's own path check).
+        command.extend(["--damaged-replies", str(self.state_dir / "damaged-diandian-replies.json")])
         # The private store of post access codes (source_codes.py writes it). Without it every card keeps its search link.
         source_codes = self.state_dir / SOURCE_CODES.STORE_NAME
         if source_codes.is_file() and not path_is_reparse_point(source_codes):

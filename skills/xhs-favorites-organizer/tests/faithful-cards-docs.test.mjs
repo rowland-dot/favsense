@@ -23,8 +23,11 @@ const contracts = {
       "本机可通过鉴权的待审核 overlay 查看清理后的 captured 证据",
       "公开站不得直接消费 raw 点点记录",
       "明确区分“已深度整理”“使用其他证据整理”和“尚未获得深度总结”",
+      // Issue 142: the list is no longer something a person regenerates after a re-fetch; every build does it, in the workflow document too.
+      "重新获取回复之后重新生成名单",
     ],
     required: [
+      "每次快照构建都会在冻结输入之前",
       "公开 confirmed Skill 恰好关联一个当前、完整、已核验的官方资源",
       "审核通过（accepted）的条目写入正式 curation，作为卡片的可选附加信息；卡片本身不受审核状态控制",
       "公开卡片展示点点回复原文（只去掉开头的对话语句），不展示其记录里的其他字段",
@@ -85,6 +88,7 @@ const contracts = {
       "`mainText`",
       "`replyDamaged`",
       "damaged-diandian-replies.json",
+      "每次快照构建都会在冻结输入之前",
       "`accepted` 才能写入正式 curation；卡片不受审核状态控制",
     ],
   },

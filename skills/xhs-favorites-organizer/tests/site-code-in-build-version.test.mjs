@@ -99,7 +99,7 @@ test("a build with no publish site keeps its version", async () => {
     return { root: dir, publicTarget: target };
   })();
   const result = await build({ root, publicTarget, ...COMMON, buildPublicSite: builder() });
-  // Literal for this exact case under builder version 12 (closing tags stripped, glued and zero-width forms included). It moves only when the builder
+  // Literal for this exact case under builder version 13 (closing tags stripped, glued and zero-width forms included, and a closing lead-in line goes whole). It moves only when the builder
   // version or the shape of the version preimage moves, so a site-less build never changes by accident.
-  assert.equal(result.build_version, "4863dbeb5ae60c314a28090924cd7b84aedfc602436379cd45b12bda0398544c");
+  assert.equal(result.build_version, "420d9021d9a9db92db72a0791c13bea5d32ac75d9830d0e18568450eb5229b74");
 });

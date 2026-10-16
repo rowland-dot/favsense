@@ -24,9 +24,19 @@ const GLUED_TAG_RUN = new RegExp(`(?<!(?:^|[^A-Za-z])[A-Za-z])(?<=[^\\s#])#(?=[^
 export const stripTrailingTags = (line) => String(line ?? "")
   .replace(LABELLED_TAG_RUN, "").replace(TRAILING_TAG_RUN, "").replace(GLUED_TAG_RUN, "").trim();
 
+// A closing line that introduced its tags in words no label pattern can list ("笔记标签涉及", "笔记作者还附带了话题",
+// "笔记带上了") is left holding only that lead-in once the tags go. A remainder this short with no sentence end is
+// a lead-in, not text, so the whole line goes. 12 is measured against the three saved endings (6, 10 and 5 characters).
+const LEAD_IN_MAX = 12;
+const SENTENCE_END = /[。！？.!?]/;
+const isLeadIn = (text) => Array.from(bare(text)).length <= LEAD_IN_MAX && !SENTENCE_END.test(text);
+// The heading of a tag section ("标签", "笔记标签：") whose tags were just removed.
+const TAG_HEADING = /^(?:笔记)?(?:话题)?标签[：:]?$/;
+
 // A DianDian reply with its closing tag lines removed: the last line loses its tags, and a last line that
-// was only tags (or a label and tags) goes whole, repeatedly. Lines above the closing ones are never touched,
-// and a reply with nothing to remove comes back exactly as saved.
+// was only tags (or a label and tags, or a short lead-in and tags) goes whole, repeatedly. A bare tag heading
+// above removed tags goes too. Lines above the closing ones are never touched, and a reply with nothing to
+// remove comes back exactly as saved.
 export function replyBody(summary) {
   const original = String(summary ?? "");
   const lines = original.replace(/\r\n?/g, "\n").trimEnd().split("\n");
@@ -34,10 +44,11 @@ export function replyBody(summary) {
   while (lines.length) {
     const last = lines.pop();
     if (!bare(last)) continue;
+    if (changed && TAG_HEADING.test(bare(last))) continue;
     const kept = stripTrailingTags(last);
     if (kept === last.trim()) { lines.push(last); break; }
     changed = true;
-    if (bare(kept)) { lines.push(kept); break; }
+    if (bare(kept) && !isLeadIn(kept)) { lines.push(kept); break; }
   }
   return changed ? lines.join("\n").trimEnd() : original;
 }

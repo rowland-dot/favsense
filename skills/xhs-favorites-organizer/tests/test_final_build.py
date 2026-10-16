@@ -383,16 +383,20 @@ class SnapshotCommandTest(unittest.TestCase):
         self.assertIn("--diandian-dir", command)
         self.assertIn("--video-analysis", command)
 
-    def test_the_frozen_damaged_list_is_passed_when_the_file_exists_and_left_out_when_it_does_not(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            with_list = self.final_build(root, None, damaged_list=True)
-            self.assertEqual(
-                Path(with_list[with_list.index("--damaged-replies") + 1]).name,
-                "damaged-diandian-replies.json",
-            )
-        with tempfile.TemporaryDirectory() as directory:
-            self.assertNotIn("--damaged-replies", self.final_build(Path(directory), None))
+    def test_the_damaged_list_is_always_named_so_the_snapshot_can_regenerate_it(self):
+        # The snapshot step writes the list itself before it freezes its inputs (issue 142), so a first
+        # build with no list file yet, and a sync and a local rebuild alike, are all told where it lives.
+        for label, scope, damaged_list in (
+            ("file there", None, True),
+            ("no file yet", None, False),
+            ("local rebuild", {"batch": "localrebuild20261011"}, False),
+        ):
+            with self.subTest(label), tempfile.TemporaryDirectory() as directory:
+                command = self.final_build(Path(directory), scope, damaged_list=damaged_list)
+                self.assertEqual(
+                    Path(command[command.index("--damaged-replies") + 1]).name,
+                    "damaged-diandian-replies.json",
+                )
 
     def test_the_private_source_code_store_is_passed_when_the_file_exists_and_left_out_when_it_does_not(self):
         with tempfile.TemporaryDirectory() as directory:
