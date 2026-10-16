@@ -17,6 +17,8 @@ LEGACY_DIANDIAN_HALT_ERROR = "DianDian CDP summarization stopped; core import wa
 # the sync service's atomic write (bridge-server.py FILE_CLASH_WAIT_SECONDS): the busiest measured
 # wait was a quarter of a second.
 FILE_CLASH_WAIT_SECONDS = 2
+# A DianDian reply that cannot be a summary costs only its own note; the run record counts each kind.
+UNUSABLE_REPLY_COUNTERS = {"diandian-refused": "diandian_refused", "diandian-incomplete": "diandian_incomplete"}
 
 
 def _contract():
@@ -49,7 +51,7 @@ def new_run_state(run_id):
             "core": _phase(), "summary": _phase(), "evidence": _phase(),
             "curation": _phase(), "build": _phase(), "publish": _phase("not_enabled"),
         },
-        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
+        "counts": {"scanned": 0, "new": 0, "summary_captured": 0, "summary_failed": 0, "summary_refused": 0, "summary_incomplete": 0, "summary_batch_aborted": 0, "curation_accepted": 0, "curation_pending": 0},
     }
     run["state"] = derive_overall_state(run)
     return run
@@ -155,6 +157,9 @@ def project_legacy_manual_state(value):
         "new": None if value.get("new", 0) is None else max(0, int(value.get("new", 0) or 0)),
         "summary_captured": captured,
         "summary_failed": failed,
+        # Of the failed notes, how many DianDian refused to read and how many it answered incompletely.
+        "summary_refused": max(0, int(value.get("diandian_refused", 0) or 0)),
+        "summary_incomplete": max(0, int(value.get("diandian_incomplete", 0) or 0)),
         "summary_batch_aborted": aborted,
         "curation_accepted": max(0, int(value.get("curation_accepted", 0) or 0)),
         "curation_pending": max(0, int(value.get("curation_pending", 0) or 0)),
@@ -549,6 +554,7 @@ def _round_started(_working, *, batch, started_at, run_board_ids, mode, requeste
         "summary_batch_aborted": 0,
         "share_link_missing": 0,
         "share_link_missing_reasons": {},
+        **{counter: 0 for counter in UNUSABLE_REPLY_COUNTERS.values()},
         "summary_plan_pending": False,
         "summary_finalizing": False,
         "processed_run_ids": [],
@@ -722,13 +728,21 @@ def _summary_plan_empty(working, *, run_id, abandoned, already_abandoned, pendin
 
 
 @_event("summary_progress")
-def _summary_progress(working, *, summarized_delta=0, failed_delta=0, pending=0, share_link_missing_reason=None):
+def _summary_progress(
+    working, *, summarized_delta=0, failed_delta=0, pending=0, share_link_missing_reason=None,
+    unusable_reply_reason=None,
+):
     """`share_link_missing_reason` names why a note's share link was not copied; that note is counted as
-    failed too (the caller passes `failed_delta`), and the record keeps the count and the reasons."""
+    failed too (the caller passes `failed_delta`), and the record keeps the count and the reasons.
+    `unusable_reply_reason` is one of UNUSABLE_REPLY_COUNTERS: DianDian refused to read the note or its
+    reply lost text; the record keeps a count for each."""
     working = _live(working)
     working["summarized"] = int(working.get("summarized", 0) or 0) + summarized_delta
     working["summary_failed"] = int(working.get("summary_failed", 0) or 0) + failed_delta
     working["summary_pending"] = pending
+    if unusable_reply_reason is not None:
+        counter = UNUSABLE_REPLY_COUNTERS[unusable_reply_reason]
+        working[counter] = int(working.get(counter, 0) or 0) + 1
     if share_link_missing_reason is not None:
         working["share_link_missing"] = int(working.get("share_link_missing", 0) or 0) + 1
         reasons = working.get("share_link_missing_reasons")

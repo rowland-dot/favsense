@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
 import {
   normalizeLocalBridgeDiagnostic,
+  syncCountsDetail,
   syncStatusCopy,
   validateLocalBridgeSyncStatus
 } from "../../../site/local-bridge-utils.mjs";
@@ -83,7 +84,7 @@ test("the workbench title is the contract sentence the server chose, for every c
     };
     const status = validateLocalBridgeSyncStatus(statusFor(entry.expect), contract);
     runInNewContext(`${readySource}\n${renderSource}\nrenderManualSync(status);`, {
-      state, elements, status, normalizeLocalBridgeDiagnostic, countText: (value) => (value === null ? "未知" : String(value))
+      state, elements, status, normalizeLocalBridgeDiagnostic, syncCountsDetail, countText: (value) => (value === null ? "未知" : String(value))
     });
     assert.equal(elements.manualSyncTitle.textContent, contract.copy[entry.expect.copy_key], entry.name);
   }

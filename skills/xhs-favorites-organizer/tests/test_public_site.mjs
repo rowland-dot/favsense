@@ -2020,7 +2020,7 @@ test("local board manager accepts only protocol 11 with a redacted SOP browser s
       build: { status: "failed", artifact_status: "held_previous", reason_code: "build_failed", updated_at: "2026-08-23T00:00:00Z" },
       publish: { status: "not_started", reason_code: "", updated_at: "2026-08-23T00:00:00Z" },
     },
-    counts: { scanned: 1, new: 1, summary_captured: 1, summary_failed: 0, summary_batch_aborted: 0, curation_accepted: 1, curation_pending: 0 },
+    counts: { scanned: 1, new: 1, summary_captured: 1, summary_failed: 0, summary_refused: 0, summary_incomplete: 0, summary_batch_aborted: 0, curation_accepted: 1, curation_pending: 0 },
   }, ORGANIZATION_STATUS_CONTRACT);
   assert.equal(v2.phases.build.reason_code, "build_failed");
   assert.throws(() => validateLocalBridgeSyncStatus({ ...v2, state: "completed" }, ORGANIZATION_STATUS_CONTRACT));

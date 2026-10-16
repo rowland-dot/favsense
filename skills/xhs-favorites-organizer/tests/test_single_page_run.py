@@ -283,7 +283,11 @@ class Round:
         session.call("Input.insertText", text=" 总结")
         session.call("Input.dispatchKeyEvent", type="keyDown", key="Enter")
         session.call("Input.dispatchKeyEvent", type="keyUp", key="Enter")
-        session._session.finished = f"Stable DianDian summary of {note_id[0]} with enough safe content."
+        reply = self.behaviour.get(("reply", note_id))
+        session._session.finished = (
+            reply if reply is not None
+            else f"Stable DianDian summary of {note_id[0]} with enough safe content."
+        )
         return session._session.finished
 
     # --- the user script on each kind of page ---------------------------------------------------
@@ -357,10 +361,18 @@ class Round:
         if self.behaviour.get(("ai", task["note_id"])) == "fail":
             bridge.record_page_result({"worker_id": worker_id, "stage": "ai", "ok": False, "error": "ai-response-timeout"})
             return
-        bridge.save_diandian_result({
-            "run_id": task["run_id"], "board_id": task["board_id"], "note_id": task["note_id"],
-            "title": task["title"], "summary": f"Stable DianDian summary of {task['note_id'][0]} with enough safe content.",
-        })
+        reply = self.behaviour.get(("reply", task["note_id"]))
+        try:
+            bridge.save_diandian_result({
+                "run_id": task["run_id"], "board_id": task["board_id"], "note_id": task["note_id"],
+                "title": task["title"],
+                "summary": reply if reply is not None
+                else f"Stable DianDian summary of {task['note_id'][0]} with enough safe content.",
+            })
+        except ValueError as refusal:
+            # The real script reports the save request's refusal message as its failure code.
+            bridge.record_page_result({"worker_id": worker_id, "stage": "ai", "ok": False, "error": str(refusal)})
+            return
         bridge.record_page_result({"worker_id": worker_id, "stage": "ai", "ok": True})
 
     # --- running it -----------------------------------------------------------------------------

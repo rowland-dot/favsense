@@ -262,29 +262,32 @@ def collection_step(reply: str):
 
 
 class CollectionStepTests(unittest.TestCase):
-    def test_a_refused_reply_fails_the_note_aborts_the_rest_and_saves_nothing(self):
+    def test_a_refused_reply_fails_only_that_note_and_saves_nothing(self):
         with collection_step(refusal_text()) as step:
             bridge, target = step.bridge, step.target
             refused_id, waiting_id = step.failed_id, step.waiting_id
-            self.assertEqual(step.result, {"saved": False, "halted": True, "reason": "diandian-refused"})
+            self.assertEqual(
+                (step.result["saved"], step.result["halted"], step.result["skipped"], step.result["reason"]),
+                (False, False, True, "diandian-refused"),
+            )
             self.assertFalse((bridge.diandian_dir / f"{refused_id}.json").exists())
             self.assertEqual(
                 [path.name for path in bridge.diandian_dir.glob("*")] if bridge.diandian_dir.exists() else [],
                 [],
             )
-            # The failed page is kept as it is: released to the round, never closed.
+            # The page goes back to the round, never closed; the round moves it on to the next note.
             target.close.assert_not_called()
             target.release.assert_called_once()
+            # Failed for this note only: the note waiting behind it is still planned for this round.
             report = json.loads(bridge.diandian_report_path.read_text(encoding="utf-8"))
             statuses = {entry["note_id"]: entry["summary_status"] for entry in report["unresolved"]}
-            self.assertEqual(statuses, {refused_id: "failed", waiting_id: "batch_aborted"})
+            self.assertEqual(statuses, {refused_id: "failed"})
+            self.assertEqual(bridge.summary_plans["manual_board"], {waiting_id})
             record = bridge.read_manual_sync()
-            self.assertEqual(record["summary_halt_reason"], "diandian-refused")
-            self.assertIn("没有读取这篇笔记", record["error"])
-            self.assertIn("核心整理结果已保留", record["error"])
-            self.assertIn("下一轮", record["error"])
+            self.assertNotIn("summary_halt_reason", record)
+            self.assertEqual(record["state"], "running")
+            self.assertEqual((record["summary_failed"], record["diandian_refused"]), (1, 1))
             self.assertNotIn("private-token", json.dumps(record, ensure_ascii=False))
-            self.assertEqual(bridge.manual_sync_status()["phases"]["summary"]["status"], "failed")
 
 
 if __name__ == "__main__":

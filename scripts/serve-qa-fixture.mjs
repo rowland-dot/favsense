@@ -70,7 +70,7 @@ function syncStatus() {
   const common = {
     ok: true, schema_version: 2, run_id: "fixture-run", build_version: "a".repeat(64), copy_key: "publish_unchanged",
     phases: { core: phase("completed"), summary: phase("completed"), evidence: phase("ready"), curation: phase("validated"), build: phase("succeeded"), publish: phase("unchanged") },
-    counts: { scanned: 2, new: 0, summary_captured: 2, summary_failed: 0, summary_batch_aborted: 0, curation_accepted: 1, curation_pending: 1 },
+    counts: { scanned: 2, new: 0, summary_captured: 2, summary_failed: 0, summary_refused: 0, summary_incomplete: 0, summary_batch_aborted: 0, curation_accepted: 1, curation_pending: 1 },
   };
   if (resuming() && statusReads++ < 2) {
     const core = scenario === "resume-core-running";
@@ -107,12 +107,12 @@ function syncStatus() {
   if (scenario === "local-rebuild") return {
     ...common, run_id: "localrebuild-fixture", state: "published", copy_key: "local_rebuild_ready",
     phases: { ...common.phases, core: phase("not_required"), summary: phase("not_required"), evidence: phase("not_started"), publish: phase("published") },
-    counts: { scanned: 0, new: 0, summary_captured: 0, summary_failed: 0, summary_batch_aborted: 0, curation_accepted: 2, curation_pending: 0 },
+    counts: { scanned: 0, new: 0, summary_captured: 0, summary_failed: 0, summary_refused: 0, summary_incomplete: 0, summary_batch_aborted: 0, curation_accepted: 2, curation_pending: 0 },
   };
   if (scenario === "build-failed") return { ...common, state: "failed", copy_key: "build_failed", phases: { ...common.phases, build: phase("failed", "build_failed", "held_previous"), publish: phase("not_started") } };
   if (scenario === "publish-failed") return { ...common, state: "completed_with_warnings", copy_key: "publish_failed", phases: { ...common.phases, publish: phase("failed", "publish_failed", "held_previous") } };
   if (scenario === "safety-stopped") return { ...common, state: "safety_stopped", copy_key: "safety_stopped", phases: { ...common.phases, summary: phase("safety_stopped", "safety_signal"), evidence: phase("safety_stopped", "safety_signal"), curation: phase("not_started"), build: phase("not_started"), publish: phase("not_started") } };
-  if (scenario === "partial") return { ...common, state: "organization_partial", copy_key: "summary_failed", phases: { ...common.phases, summary: phase("failed", "transport_failed"), evidence: phase("missing", "evidence_missing"), curation: phase("pending_review", "audit_pending") }, counts: { ...common.counts, summary_captured: 1, summary_failed: 1, curation_accepted: 0, curation_pending: 2 } };
+  if (scenario === "partial") return { ...common, state: "organization_partial", copy_key: "summary_failed", phases: { ...common.phases, summary: phase("failed", "transport_failed"), evidence: phase("missing", "evidence_missing"), curation: phase("pending_review", "audit_pending") }, counts: { ...common.counts, summary_captured: 1, summary_failed: 1, summary_refused: 0, summary_incomplete: 0, curation_accepted: 0, curation_pending: 2 } };
   return { ...common, state: "published" };
 }
 
