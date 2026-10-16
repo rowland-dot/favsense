@@ -2811,6 +2811,9 @@ class Bridge:
         self.page_tasks: dict[str, PageTask] = {}
         self.run_note_links: dict[str, dict[str, str]] = {}
         self.summary_drivers: dict[str, threading.Thread] = {}
+        # Where the driver is in a board's plan, as (post number, posts in the plan), so a failure that
+        # ends the round can say where it fell without naming the post.
+        self.driven_post_positions: dict[str, tuple[int, int]] = {}
 
     @staticmethod
     def manual_run_id(batch: str, board_id: str) -> str:
@@ -4660,6 +4663,7 @@ class Bridge:
                 if self.diandian_is_halted(run_id):
                     return
                 title = titles.get(note_id) or f"小红书收藏 {note_id[-8:]}"
+                self.driven_post_positions[run_id] = (index + 1, len(note_ids))
                 if not self.drive_note_summary(run_id, board_id, note_id, links.pop(note_id, None), title):
                     return
                 if index + 1 < len(note_ids):
@@ -4677,8 +4681,29 @@ class Bridge:
                     self.state_dir, "INTERNAL", "summary-driver", "-", type(halt_error).__name__, str(halt_error),
                 )
         finally:
+            self.driven_post_positions.pop(run_id, None)
             links.clear()
             self.clear_run_secrets(run_id)
+
+    def log_round_transport_failure(
+        self, run_id: str, board_id: str, step: str, error: BaseException
+    ) -> None:
+        """Leave one bridge.log line for the transport failure that is about to end the round.
+
+        The error's own text is never written (the browser puts the page address in it): the line names
+        the step, the error's type, and where in the round the failure fell.
+        """
+        position = self.driven_post_positions.get(run_id)
+        where = "a post of unknown position" if position is None else f"post {position[0]} of {position[1]}"
+        try:
+            boards = self.run_board_order(str(self.read_manual_sync().get("batch", "")))
+            where += f" on board {boards.index(board_id) + 1} of {len(boards)}"
+        except ValueError:
+            pass  # the board's place in the round is unknown; the rest of the line still stands
+        append_bridge_log(
+            self.state_dir, "ROUND", step, "-", type(error).__name__,
+            f"transport failure ended the round at {where}",
+        )
 
     def halt_driven_step(self, run_id: str, board_id: str, note_id: str | None, reason: str) -> dict:
         """Stop the round at the step that failed; the page stays exactly where it failed."""
@@ -4746,7 +4771,8 @@ class Bridge:
                 self.navigate_run_page(
                     run_id, f"{link}{'&' if '?' in link else '?'}xhs_kb_share_worker={worker_id}",
                 )
-            except (CDPTransportError, OSError, RuntimeError):
+            except (CDPTransportError, OSError, RuntimeError) as error:
+                self.log_round_transport_failure(run_id, board_id, "share-page-move", error)
                 self.halt_driven_step(run_id, board_id, note_id, "transport-failed")
                 return None, False
             if not self.wait_for_page_task(run_id, task, self.timing_seconds("share_result_wait", 30_000)):
@@ -4781,7 +4807,8 @@ class Bridge:
                 self.navigate_run_page(
                     run_id, f"{ai_url}{'&' if '?' in ai_url else '?'}xhs_kb_worker={worker_id}",
                 )
-            except (CDPTransportError, OSError, RuntimeError):
+            except (CDPTransportError, OSError, RuntimeError) as error:
+                self.log_round_transport_failure(run_id, board_id, "chat-page-move", error)
                 self.halt_driven_step(run_id, board_id, note_id, "transport-failed")
                 return False
             if not self.wait_for_page_task(run_id, task, self.timing_seconds("single_note_wait", 480_000)):
@@ -5506,6 +5533,8 @@ class Bridge:
         saved_committed = False
         note_started = time.monotonic()
         cancellation_registered = True
+        # Which part of the chat a transport failure fell in: moving the page there, or talking in it.
+        step = "chat-page-move"
 
         def ensure_run_active() -> None:
             if self.diandian_is_halted(run_id):
@@ -5589,6 +5618,7 @@ class Bridge:
             ):
                 raise DiandianPageStop("stale-target")
 
+            step = "chat-conversation"
             guarded = GuardedDiandianSession(
                 session,
                 canonical_url,
@@ -5713,7 +5743,8 @@ class Bridge:
             with guard:
                 completed[key] = result
             return dict(result)
-        except CDPTransportError:
+        except CDPTransportError as error:
+            self.log_round_transport_failure(run_id, board_id, step, error)
             result = self.halt_diandian_transport_failure(
                 run_id,
                 board_id,
