@@ -146,7 +146,7 @@ USERSCRIPT_ROUTES = frozenset({
     "/import-sync", "/install/complete", "/status",
     "/sync/board-context", "/sync/diandian-click", "/sync/diandian-halt", "/sync/diandian-result",
     "/sync/diandian-skip", "/sync/discover", "/sync/failure", "/sync/page-result", "/sync/page-task",
-    "/sync/summary-plan",
+    "/sync/scan-page-front", "/sync/summary-plan",
 })
 MANUAL_TERMINAL_STATES = frozenset({"completed", "failed", "safety-stopped"})
 DIANDIAN_SAFETY_STOP_REASON = "xhs-safety-stop"
@@ -3145,6 +3145,34 @@ class Bridge:
             raise ValueError("browser page id is invalid")
         endpoint = read_sop_devtools_endpoint(self.sop_port_file)
         loopback_devtools_action(endpoint, f"/json/close/{quote(page_id, safe='')}")
+
+    def activate_sop_browser_page(self, page_id: str) -> None:
+        """Bring one tab of the scan browser to the front of its window."""
+        if not isinstance(page_id, str) or not PAGE_ID.fullmatch(page_id):
+            raise ValueError("browser page id is invalid")
+        endpoint = read_sop_devtools_endpoint(self.sop_port_file)
+        loopback_devtools_action(endpoint, f"/json/activate/{quote(page_id, safe='')}")
+
+    def bring_run_page_to_front(self, payload: dict) -> dict:
+        """The scanning page found itself in a background tab: show the round's one page.
+
+        A background tab is not laid out, so the folder page cannot scroll and a history scan would list only
+        its first screen. Only the page this round opened is shown; no other page is touched. A browser that
+        cannot do it is logged and answered with `activated: False`, so the page keeps waiting on its own limit.
+        """
+        if set(payload) != {"run_id", "board_id"}:
+            raise ValueError("scan page request contains unsupported fields")
+        run_id, board_id = payload["run_id"], payload["board_id"]
+        if not isinstance(run_id, str) or not isinstance(board_id, str):
+            raise ValueError("scan page request fields must be strings")
+        self.validate_manual_board_run(run_id, board_id)
+        try:
+            # A round with no recorded page raises ValueError here, which is logged and answered like any other refusal.
+            self.activate_sop_browser_page(self.read_manual_sync().get("run_page_id"))
+        except (OSError, RuntimeError, ValueError) as error:
+            append_bridge_log(self.state_dir, "INTERNAL", "run-page-front", "-", type(error).__name__, str(error))
+            return {"activated": False}
+        return {"activated": True}
 
     def attach_run_page(self, run_id: str) -> CDPTarget:
         """Connect to the page this round works in. Release the target afterwards; the page stays open."""
@@ -7304,7 +7332,7 @@ def make_handler(bridge: Bridge):
                 "/import-sync", "/boards", "/sync/start", "/sync/local-rebuild", "/sync/safety-stop/clear",
                 "/sync/failure", "/sync/discover",
                 "/sync/summary-plan", "/sync/diandian-result", "/sync/diandian-skip",
-                "/sync/diandian-halt", "/sync/diandian-click", "/sync/page-result",
+                "/sync/diandian-halt", "/sync/diandian-click", "/sync/page-result", "/sync/scan-page-front",
                 "/notes/organization-status",
                 "/install/complete",
             }:
@@ -7401,6 +7429,9 @@ def make_handler(bridge: Bridge):
                     return
                 if self.path == "/sync/page-result":
                     self.send_json(HTTPStatus.OK, {"ok": True, **bridge.record_page_result(payload)})
+                    return
+                if self.path == "/sync/scan-page-front":
+                    self.send_json(HTTPStatus.OK, {"ok": True, **bridge.bring_run_page_to_front(payload)})
                     return
                 if self.path == "/notes/organization-status":
                     if set(payload) != {"note_id"}:

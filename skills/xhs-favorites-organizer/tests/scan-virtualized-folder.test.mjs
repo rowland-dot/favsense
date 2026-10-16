@@ -39,24 +39,41 @@ function renderUserscript() {
     .replace(EXPORT_MARKER, `  globalThis.__FAVSENSE_TEST_HOOKS__ = { runBoard };\n${EXPORT_MARKER}`);
 }
 
-const schedule = (callback, delay = 0) => {
-  if (delay < 5000) queueMicrotask(callback);
-  return 1;
-};
-
 // Runs one board page through the real user script. The fake folder holds `total` posts; `captchaAfterMoves`
 // makes a captcha appear after that many scroll moves; `targetNoteId` makes it a single-note check.
-async function scanFolder({ mode = "history", total, advertisedCount = 0, captchaAfterMoves = Infinity, targetNoteId = "" }) {
-  const state = { loaded: Math.min(BATCH, total), scrollY: 0, moves: [] };
+// `hiddenAtStart` puts the folder page in a background tab: it has never been laid out, so it cannot scroll and
+// its height stays one screen, until the sync service brings it to the front (`frontWorks` says whether that
+// request has any effect). `hiddenAfterMoves` sends the page to the background after that many scroll moves.
+// Time is virtual: every sleep the script asks for moves the clock, so a long wait costs nothing.
+async function scanFolder({
+  mode = "history",
+  total,
+  advertisedCount = 0,
+  captchaAfterMoves = Infinity,
+  targetNoteId = "",
+  hiddenAtStart = false,
+  hiddenAfterMoves = Infinity,
+  frontWorks = true
+}) {
+  const clock = { now: 1_700_000_000_000 };
+  const startedAt = clock.now;
+  const schedule = (callback, delay = 0) => {
+    clock.now += delay;
+    if (delay < 5000) queueMicrotask(callback);
+    return 1;
+  };
+  const state = { loaded: Math.min(BATCH, total), scrollY: 0, moves: [], visible: !hiddenAtStart, laidOut: !hiddenAtStart };
   const requests = [];
   let statusBox = null;
-  const pageHeight = () => state.loaded * ROW;
+  const pageHeight = () => (state.laidOut ? state.loaded * ROW : VIEWPORT);
   const scrollTo = (top) => {
+    if (!state.visible) return; // a page in a background tab does not scroll
     if (state.moves.length >= RUNAWAY_MOVES) throw new Error("the scan never finished");
     const to = Math.max(0, Math.min(top, pageHeight() - VIEWPORT));
     state.moves.push({ from: state.scrollY, to });
     state.scrollY = to;
     if (state.scrollY + 2 * VIEWPORT >= pageHeight()) state.loaded = Math.min(total, state.loaded + BATCH);
+    if (state.moves.length === hiddenAfterMoves) state.visible = false;
   };
   const ids = noteIds(total);
   const anchorFor = (index) => ({
@@ -72,6 +89,7 @@ async function scanFolder({ mode = "history", total, advertisedCount = 0, captch
   };
   const context = {
     globalThis: null,
+    Date: { now: () => clock.now },
     location: {
       origin: "https://www.xiaohongshu.com",
       pathname: "/board/board1",
@@ -83,6 +101,7 @@ async function scanFolder({ mode = "history", total, advertisedCount = 0, captch
     history: { state: null, replaceState() {} },
     document: {
       body: { innerText: "" },
+      get visibilityState() { return state.visible ? "visible" : "hidden"; },
       documentElement: { get scrollHeight() { return pageHeight(); }, appendChild(element) { statusBox = element; } },
       getElementById(id) { return statusBox?.id === id ? statusBox : null; },
       createElement: () => ({ id: "", style: {}, textContent: "" }),
@@ -119,6 +138,12 @@ async function scanFolder({ mode = "history", total, advertisedCount = 0, captch
       let payload = { ok: true };
       if (pathname === "/sync/board-context") {
         payload = { ok: true, board: { id: "board1", name: "Folder", advertised_count: advertisedCount,...(targetNoteId ? { target_note_id: targetNoteId } : {}) } };
+      } else if (pathname === "/sync/scan-page-front") {
+        if (frontWorks) {
+          state.visible = true;
+          state.laidOut = true;
+        }
+        payload = { ok: true, activated: frontWorks };
       } else if (pathname === "/import-sync") {
         payload = { ok: true, scanned: body.urls.length, new: body.urls.length };
       } else if (pathname === "/sync/summary-plan") {
@@ -138,7 +163,9 @@ async function scanFolder({ mode = "history", total, advertisedCount = 0, captch
     moves: state.moves,
     importedIds: imported ? imported.body.urls.map((url) => new URL(url).pathname.split("/").pop()) : null,
     reachedBottom: state.scrollY + VIEWPORT >= pageHeight(),
-    allLoaded: state.loaded === total
+    allLoaded: state.loaded === total,
+    fronts: requests.filter((request) => request.pathname === "/sync/scan-page-front").map((request) => request.body),
+    elapsedMs: clock.now - startedAt
   };
 }
 
@@ -185,5 +212,49 @@ test("a single-note check finds a post from the middle of the folder", async () 
 test("an incremental scan still reads only what is on screen and does not scroll", async () => {
   const result = await scanFolder({ mode: "incremental", total: FOLDER });
   assert.deepEqual(result.moves, []);
+  assert.deepEqual([...result.importedIds].sort(), noteIds(IN_PAGE));
+});
+
+// A tab in the background is not laid out, so the folder page cannot scroll and its height stays one screen.
+// The first full sync with the half-screen walk listed 30 of 158 posts for that reason: the idle check
+// ended the walk after the first screen. The walk needs the page in front, and says so when it cannot get it.
+
+test("a folder page that starts in a background tab is brought to the front and then every post is listed", async () => {
+  const result = await scanFolder({ total: FOLDER, hiddenAtStart: true });
+  assert.ok(result.fronts.length >= 1, "the sync service was asked to show the page");
+  assert.deepEqual(result.fronts[0], { run_id: "batch1_board1", board_id: "board1" });
+  assert.deepEqual([...(result.importedIds ?? [])].sort(), noteIds(FOLDER));
+});
+
+test("a page sent to a background tab part way through the walk is brought back and the walk goes on", async () => {
+  const result = await scanFolder({ total: FOLDER, hiddenAfterMoves: 20 });
+  assert.ok(result.fronts.length >= 1, "the sync service was asked to show the page again");
+  assert.deepEqual([...(result.importedIds ?? [])].sort(), noteIds(FOLDER));
+});
+
+test("a folder page that never reaches the front stops the round with a reason and imports nothing", async () => {
+  const result = await scanFolder({ total: FOLDER, hiddenAtStart: true, frontWorks: false });
+  assert.equal(result.importedIds, null, "a first screen is not listed as if it were the folder");
+  assert.ok(result.fronts.length > 1, "it kept asking while it waited");
+  assert.deepEqual(result.moves, []);
+  assert.ok(result.elapsedMs <= 2 * 60 * 1000, `it waited ${result.elapsedMs} ms`);
+  const failure = result.requests.find((request) => request.pathname === "/sync/failure");
+  assert.match(failure?.body.error ?? "", /后台/);
+});
+
+test("a single-note check on a background page is brought to the front before it walks", async () => {
+  const result = await scanFolder({ total: FOLDER, targetNoteId: "note-080", hiddenAtStart: true });
+  assert.ok(result.fronts.length >= 1, "the sync service was asked to show the page");
+  assert.deepEqual(result.importedIds, ["note-080"]);
+});
+
+test("a folder page that is in front all along never asks for it", async () => {
+  const result = await scanFolder({ total: FOLDER });
+  assert.deepEqual(result.fronts, []);
+});
+
+test("an incremental scan does not ask for the front: it reads the links a background page already holds", async () => {
+  const result = await scanFolder({ mode: "incremental", total: FOLDER, hiddenAtStart: true });
+  assert.deepEqual(result.fronts, []);
   assert.deepEqual([...result.importedIds].sort(), noteIds(IN_PAGE));
 });

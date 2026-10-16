@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小红书收藏知识库按需整理
 // @namespace    local.xhs-favorites-organizer
-// @version      3.2.0
+// @version      3.3.0
 // @description  用户主动触发后，刷新收藏夹、按需调用点点 AI 深度总结，再整理成公开网页数据
 // @match        https://www.xiaohongshu.com/board/*
 // @match        https://www.xiaohongshu.com/user/profile/*
@@ -290,7 +290,30 @@ __DIANDIAN_MATCH_LINE__
   const HISTORY_SCAN_LIMIT_MS = 30 * 60 * 1000;
   const HISTORY_IDLE_CHECKS = 6;
 
-  async function scan(board, mode, targetNoteId = "") {
+  // A page in a background tab is not laid out: it cannot scroll and its height stays one screen, so the walk
+  // above would end after the first screen and list only that. The walk needs the page in front. When it is
+  // hidden, ask the sync service to show it and keep asking while waiting; if it never appears, stop the
+  // round with a reason instead of importing a first screen as if it were the folder.
+  const PAGE_SHOWN_WAIT_MS = 30000;
+  const PAGE_SHOWN_POLL_MS = 1500;
+
+  async function waitUntilPageIsShown(board, runId) {
+    const deadline = Date.now() + PAGE_SHOWN_WAIT_MS;
+    while (document.visibilityState === "hidden") {
+      assertSafePage();
+      if (Date.now() >= deadline) {
+        throw workflowError(
+          "scan-page-hidden",
+          "收藏夹页面一直在浏览器的后台标签页里，没有显示在前面，无法滚动读完整个收藏夹；本轮已停止，没有导入不完整的列表。请把扫描浏览器里的小红书标签页切到前面后重新开始整理。",
+        );
+      }
+      show(`${board.name} 的页面在后台标签页里，正在请求把它切到前面`);
+      await post("/sync/scan-page-front", { run_id: runId, board_id: board.id }, 10000).catch(() => {});
+      await sleep(PAGE_SHOWN_POLL_MS);
+    }
+  }
+
+  async function scan(board, mode, targetNoteId = "", runId = "") {
     const history = mode === "history" || Boolean(targetNoteId);
     const collected = new Map();
     let stable = 0;
@@ -300,6 +323,7 @@ __DIANDIAN_MATCH_LINE__
     const deadline = Date.now() + (history ? HISTORY_SCAN_LIMIT_MS : 30000);
     while (Date.now() < deadline) {
       assertSafePage();
+      if (history) await waitUntilPageIsShown(board, runId);
       const before = collected.size;
       for (const [id, note] of collectNotes(board.id)) collected.set(id, note);
       if (targetNoteId && collected.has(targetNoteId)) return [collected.get(targetNoteId)];
@@ -900,7 +924,7 @@ __DIANDIAN_MATCH_LINE__
       activeBoard = board;
       runId = await manualRunId(batch, board.id);
       show(targetMode ? `准备在 ${board.name} 中校验一张指定卡片` : `准备扫描 ${board.name}`);
-      const notes = await scan(board, targetMode ? "history" : mode, targetNoteId);
+      const notes = await scan(board, targetMode ? "history" : mode, targetNoteId, runId);
       if (targetMode && (notes.length !== 1 || notes[0]?.id !== targetNoteId)) {
         throw workflowError("target-note-selection-invalid", "没有安全选中指定收藏；本轮已停止");
       }

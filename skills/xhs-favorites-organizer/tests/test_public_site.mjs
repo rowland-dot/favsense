@@ -3533,7 +3533,7 @@ test("long board IDs derive collision-resistant run IDs consistently", async () 
 
 test("userscript metadata identifies the one-page workflow release and asks for no tab-opening grant", async () => {
   const template = await read("skills/xhs-favorites-organizer/assets/xhs-favorites.user.js.template");
-  assert.equal(template.match(/^\/\/ @version\s+(\S+)$/m)?.[1], "3.2.0");
+  assert.equal(template.match(/^\/\/ @version\s+(\S+)$/m)?.[1], "3.3.0");
   assert.deepEqual(
     [...template.matchAll(/^\/\/ @grant\s+(\S+)$/gm)].map((match) => match[1]),
     ["GM_xmlhttpRequest", "GM_registerMenuCommand"]
