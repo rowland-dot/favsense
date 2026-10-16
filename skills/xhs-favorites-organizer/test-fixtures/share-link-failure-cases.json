@@ -1,0 +1,15 @@
+{
+  "description": "What the sync service does when a note's page reports that its share link was not copied. 'skip' = only that note is recorded as having no share link and the round carries on; 'halt' = the round stops. A safety stop always halts.",
+  "skip": [
+    "share-control-timeout",
+    "share-menu-timeout",
+    "share-link-failed",
+    "share-link-unavailable",
+    "native-click-share-unavailable"
+  ],
+  "halt": [
+    "share-service-request-failed",
+    "share-worker-not-ready"
+  ],
+  "safety": "xhs-safety-stop"
+}
